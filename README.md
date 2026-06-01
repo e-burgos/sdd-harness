@@ -1,4 +1,4 @@
-# @e-burgos/harness
+# @e-burgos/sdd-harness
 
 > CLI to bootstrap AI-agent-ready Nx monorepos with SDD (Spec-Driven Development) methodology.
 
@@ -17,14 +17,14 @@
 
 ```bash
 # Run directly with npx (recommended)
-npx @e-burgos/harness init
+npx @e-burgos/sdd-harness init
 
 # Or install globally
-npm install -g @e-burgos/harness
+npm install -g @e-burgos/sdd-harness
 harness init
 
 # With pnpm
-pnpm dlx @e-burgos/harness init
+pnpm dlx @e-burgos/sdd-harness init
 ```
 
 **Requirements:** Node.js ≥ 18
@@ -32,7 +32,7 @@ pnpm dlx @e-burgos/harness init
 ## Quick Start
 
 ```bash
-$ npx @e-burgos/harness init
+$ npx @e-burgos/sdd-harness init
 
 ┌  harness init
 │
@@ -421,7 +421,7 @@ SDD is a methodology where every feature goes through a structured cycle of spec
 For repeatable setups, define a config file:
 
 ```typescript
-import { defineConfig } from '@e-burgos/harness';
+import { defineConfig } from '@e-burgos/sdd-harness';
 
 export default defineConfig({
   project: {
@@ -543,7 +543,7 @@ harness info
 ## Programmatic API
 
 ```typescript
-import { defineConfig } from '@e-burgos/harness';
+import { defineConfig } from '@e-burgos/sdd-harness';
 
 export default defineConfig({
   name: 'my-project',
