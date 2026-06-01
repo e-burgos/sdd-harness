@@ -1,0 +1,22 @@
+---
+name: sdd-orchestrator
+description: Skill del Agente Orquestador SDD. Prepara el brief del ciclo con el contexto mínimo para cada agente. Invocar al iniciar cualquier ciclo nuevo.
+---
+
+# Skill: sdd-orchestrator
+
+## Cuándo invocarlo
+
+Siempre que se inicie un ciclo nuevo de desarrollo.
+
+## Qué hace
+
+1. Lee `sdd/global.json` para verificar el estado actual
+2. Verifica dependencias
+3. Lee solo la sección relevante de la especificación bajo `sdd/specs/`
+4. Prepara el brief con el contexto mínimo por agente
+5. Mueve el módulo a `in_progress_modules` en `sdd/global.json`
+
+## Archivos que modifica
+
+- `sdd/global.json`

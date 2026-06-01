@@ -1,0 +1,62 @@
+{
+  "name": "@e-burgos/sdd-harness",
+  "version": "0.1.0",
+  "description": "CLI to bootstrap AI-agent-ready Nx monorepos with SDD methodology",
+  "type": "module",
+  "bin": {
+    "harness": "./bin/harness.mjs"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "bin/",
+    "dist/",
+    "templates/"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "nx",
+    "monorepo",
+    "ai-agents",
+    "sdd",
+    "harness",
+    "scaffold",
+    "cli"
+  ],
+  "author": "e-burgos",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/e-burgos/sdd-harness.git"
+  },
+  "scripts": {
+    "build": "node build.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit -p tsconfig.lib.json && tsc --noEmit -p tsconfig.spec.json"
+  },
+  "dependencies": {
+    "citty": "^0.1.6",
+    "@clack/prompts": "^0.9.1",
+    "ejs": "^3.1.10",
+    "fs-extra": "^11.2.0",
+    "picocolors": "^1.1.1",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/ejs": "^3.1.5",
+    "@types/fs-extra": "^11.0.4",
+    "@types/node": "^20.19.9",
+    "esbuild": "^0.28.0",
+    "typescript": "~5.9.2",
+    "vitest": "~4.1.0"
+  }
+}

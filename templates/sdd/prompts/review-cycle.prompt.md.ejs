@@ -1,0 +1,27 @@
+# Prompt: Revisar y Cerrar Ciclo
+> Para uso en el proyecto <%= project.name %>
+
+## Cómo usarlo
+
+```
+Revisar el Ciclo [N] — Módulo [nombre].
+
+Invocar el agente sdd-reviewer con el output completo del ciclo:
+- Historias de usuario generadas
+- Tasks del Planner
+- Schema y contratos del Arquitecto
+- Código del Implementador Backend
+- Código del Implementador Frontend
+
+Si el reviewer aprueba:
+1. Actualizar sdd/global.json:
+   - Mover [módulo] de in_progress_modules a completed_modules
+   - Incrementar current_cycle en 1
+2. Crear sdd/cycles/cycle-[N].json con el resumen del ciclo
+3. Confirmar que sdd/schema.json y sdd/api.json están actualizados
+
+Si requiere cambios:
+1. Identificar el agente responsable de cada issue
+2. Re-ejecutar solo ese agente con el issue específico
+3. Re-ejecutar el reviewer
+```

@@ -1,0 +1,19 @@
+---
+name: sdd-reviewer
+description: Skill del Agente Reviewer SDD. Valida la calidad de todo el output del ciclo. Invocar al finalizar todas las tasks de implementación del ciclo.
+---
+
+# Skill: sdd-reviewer
+
+## Checklist de revisión
+
+- [ ] Schema compatible con `sdd/schema.json` existente
+- [ ] `sdd/api.json` actualizado
+- [ ] `sdd/components.json` actualizado
+- [ ] `sdd/schema.json` actualizado con nuevas tablas
+- [ ] `sdd/tasks.json` con tasks del ciclo
+
+## Archivos que modifica al aprobar
+
+- `sdd/global.json` — mueve módulo de `in_progress_modules` a `completed_modules`, incrementa `current_cycle`
+- `sdd/cycles/cycle-[N].json` — crea el resumen del ciclo cerrado

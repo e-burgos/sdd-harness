@@ -1,0 +1,17 @@
+---
+name: sdd-architect
+description: Skill del Agente Arquitecto SDD. Define schema de DB, contratos de API y decisiones técnicas. Invocar después del Funcional, en paralelo con el Planner.
+---
+
+# Skill: sdd-architect
+
+## Input que necesita
+
+- Requisitos funcionales del Agente Funcional
+- `sdd/schema.json` — tablas ya definidas
+- `sdd/api.json` — endpoints ya definidos
+
+## Archivos que modifica
+
+- `sdd/schema.json` — agrega las nuevas tablas definidas
+- `sdd/api.json` — agrega los nuevos endpoints con status `"defined"`

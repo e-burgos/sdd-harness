@@ -1,0 +1,62 @@
+# Constitución del Proyecto — <%= project.name %>
+> Versión 1.0 | Metodología: SDD (Spec-Driven Development)
+> Este documento representa la base institucional, tecnológica y metodológica del proyecto <%= project.name %>.
+
+---
+
+## 1. Resumen Ejecutivo y Visión
+
+### 1.1 Resumen del Producto
+- **Nombre:** <%= project.name %>
+- **Descripción:** <%= project.description %>
+
+### 1.2 Objetivos de Desarrollo
+- Establecer un proceso de desarrollo guiado por especificaciones (SDD) robusto y de calidad.
+- Garantizar que todo cambio pase por una fase de diseño funcional, de planificación y de arquitectura antes de codificar.
+
+---
+
+## 2. Arquitectura del Sistema
+<% if (project.architecture) { %>
+<%= project.architecture %>
+<% } else { %>
+### 2.1 Estructura General
+El sistema está organizado como un monorepo administrado con Nx:
+<% apps.forEach(function(app) { %>
+- **<%= app.name %>** (<%= app.type %>): aplicación o servicio del sistema.
+<% }); %>
+<% } %>
+
+---
+
+## 3. Stack Tecnológico
+<% if (project.stack) { %>
+<%= project.stack %>
+<% } else { %>
+Las siguientes tecnologías son las bases del proyecto:
+<% apps.forEach(function(app) { %>
+* **<%= app.name %>**: <%= app.type %>
+<% }); %>
+<% } %>
+
+---
+
+## 4. Metodología SDD (Spec-Driven Development)
+
+El proyecto se rige estrictamente por SDD. Ninguna funcionalidad se codifica sin antes completar el ciclo de diseño.
+
+### 4.1 Ciclo de Agentes y Roles
+1. **Orquestador:** Lee la especificación (`sdd/specs/`) y el estado (`sdd/global.json`), valida dependencias y prepara el `cycle_brief` con contexto mínimo para cada agente especializado.
+2. **Funcional:** Toma el `cycle_brief` y genera historias de usuario (HU) y requisitos funcionales (RF) en lenguaje de negocio.
+3. **Planner:** Descompone las historias en tareas técnicas ordenadas y estimadas (story points).
+4. **Arquitecto:** (En paralelo con el Planner) Diseña la estructura técnica, define el esquema de datos y los contratos de la API.
+5. **Implementador Backend:** Desarrolla la API y lógica de backend siguiendo los contratos y la tarea asignada.
+6. **Implementador Frontend:** Desarrolla la UI y vistas del frontend.
+7. **Reviewer:** Valida la calidad, tests, cumplimiento de requisitos y aprueba para cerrar el ciclo.
+
+### 4.2 Reglas Estrictas del Proyecto
+1. **Memoria como Fuente de Estado:** El estado del proyecto reside en `sdd/global.json`, `sdd/schema.json`, `sdd/api.json`, `sdd/components.json` y `sdd/tasks.json`.
+2. **Lectura Obligatoria:** Es obligatorio leer `sdd/global.json` antes de iniciar cualquier tarea.
+3. **Prohibido el Cambio Manual:** Nunca edites manualmente los archivos de estado de `sdd/` (solo los agentes en su flujo SDD los actualizan al inicio o fin del ciclo).
+4. **Comentarios:** Todos los comentarios en el código deben estar en español (o el idioma definido en el proyecto).
+5. **Ejecución Nx:** Siempre prefiere utilizar `pnpm nx` (o el package manager configurado) para ejecutar tareas del monorepo.

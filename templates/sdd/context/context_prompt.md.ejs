@@ -1,0 +1,83 @@
+# CONTEXT PROMPT — Proyecto <%= project.name %>
+> Este documento es el punto de entrada para cualquier agente (Claude Code o GitHub Copilot).
+> Leerlo completo antes de hacer cualquier tarea en este repositorio.
+
+---
+
+## 1. Quiénes somos y qué estamos construyendo
+
+Estamos construyendo **<%= project.name %>**.
+<%= project.description %>
+
+---
+
+## 2. Estructura del Monorepo
+
+El proyecto usa **Nx** como monorepo manager con **<%= project.packageManager || 'pnpm' %>** como package manager.
+
+```
+<%= project.name %>/
+  apps/
+<% apps.forEach(function(app) { %>
+    <%= app.name %>/              → Aplicación tipo <%= app.type %>
+<% }); %>
+  libs/               → Librerías compartidas entre apps
+  tools/              → Herramientas del workspace
+  sdd/                → Directorio del sistema SDD (NO modificar manualmente)
+    context/
+      constitution.md   → Constitución del proyecto (reglas, stack)
+      context_prompt.md → Este documento
+    global.json       → Estado general del proyecto
+    schema.json       → Tablas ya definidas
+    api.json          → Endpoints ya implementados
+    components.json   → Componentes frontend creados
+    tasks.json        → Tareas por ciclo
+    cycles/           → Resúmenes de ciclos completados
+    specs/            → Carpeta de especificaciones técnicas
+      artifacts/      → Documentos adicionales de apoyo a las specs
+  CLAUDE.md           → Instrucciones base Nx y redirección a SDD
+  AGENTS.md           → Instrucciones para Copilot y redirección a SDD
+```
+
+---
+
+## 3. Metodología: SDD (Spec-Driven Development)
+
+Este proyecto usa **SDD**. Toda funcionalidad pasa por un ciclo de agentes antes de ser implementada. **NUNCA escribir código sin haber pasado por el ciclo.**
+
+### Los 7 agentes y su orden obligatorio
+
+```
+1. Orquestador  → lee especificación (sdd/specs/), prepara el brief del ciclo
+2. Funcional    → genera historias de usuario y requisitos en lenguaje de negocio
+3. Planner      → genera tasks técnicas estimadas (corre en paralelo con Arquitecto)
+4. Arquitecto   → define schema y contratos de API (corre en paralelo con Planner)
+5. Impl. Back   → implementa backend, una task por vez
+6. Impl. Front  → implementa frontend, una task por vez (después del BE)
+7. Reviewer     → valida calidad, cierra el ciclo
+```
+
+---
+
+## 4. Reglas generales del proyecto
+
+1. **Leer `sdd/global.json` antes de cualquier tarea**
+2. **Nunca escribir código sin haber pasado por el ciclo SDD**
+3. **Un módulo a la vez, en el orden de ciclos definido**
+4. **Nunca modificar archivos de `sdd/` manualmente**
+5. **Siempre usar `<%= project.packageManager || 'pnpm' %> nx` para correr tareas del workspace**
+6. **Comentarios siempre en español** (o según defina la Constitución)
+7. **TypeScript estricto — sin `any` en ningún caso**
+
+---
+
+## 5. Documentos de referencia en el repositorio
+
+| Documento | Ubicación | Para qué sirve |
+|---|---|---|
+| Constitución del Proyecto | `sdd/context/constitution.md` | Visión, arquitectura, stack y reglas de desarrollo |
+| Estado del proyecto | `sdd/global.json` | Ver qué está hecho y qué falta |
+| Tablas de DB | `sdd/schema.json` | Referencia del schema actual |
+| Endpoints | `sdd/api.json` | Qué endpoints existen y su estado |
+| Componentes | `sdd/components.json` | Qué componentes frontend existen |
+| Agentes y Skills | `sdd/agents/` y `sdd/skills/` | Definiciones del comportamiento del arnés |

@@ -1,0 +1,78 @@
+# Especificación <%= spec.number %>: <%= spec.title %>
+> Versión 1.0 | Metodología: SDD (Spec-Driven Development)
+
+Este documento detalla la especificación para <%= spec.title %>.
+
+---
+
+## Índice
+
+1. [Visión general](#1-visión-general)
+2. [Lógica de negocio y Módulos](#2-lógica-de-negocio-y-módulos)
+3. [Modelo de datos](#3-modelo-de-datos)
+4. [Contratos de API](#4-contratos-de-api)
+5. [Decisiones de diseño](#5-decisiones-de-diseño)
+
+---
+
+## 1. Visión general
+
+<%= spec.description %>
+
+---
+
+## 2. Lógica de negocio y Módulos
+
+### 2.1 Módulo: [Nombre del Módulo]
+* **Responsabilidad:** [Describir la responsabilidad]
+* **Flujos principales:**
+  - [ ] Flujo 1
+  - [ ] Flujo 2
+
+---
+
+## 3. Modelo de datos
+
+[Definir aquí el esquema de datos Prisma o SQL relacionado con esta especificación]
+
+```prisma
+// Modelo sugerido
+model Example {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+}
+```
+
+---
+
+## 4. Contratos de API
+
+[Definir aquí los endpoints REST o canales de comunicación en tiempo real que se van a implementar]
+
+### POST /api/v1/example
+**Descripción:** [Qué hace el endpoint]
+**Auth:** Bearer JWT
+
+**Request Body:**
+```json
+{
+  "name": "string"
+}
+```
+
+**Response 201:**
+```json
+{
+  "id": "uuid",
+  "name": "string"
+}
+```
+
+---
+
+## 5. Decisiones de diseño
+
+### DEC-<%= spec.number %>-01: [Título de la decisión]
+* **Contexto:** [Por qué es necesaria la decisión]
+* **Decisión:** [Qué se determinó]
+* **Alternativas consideradas:** [Qué otras opciones había y por qué se descartaron]

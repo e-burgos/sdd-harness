@@ -1,0 +1,23 @@
+# Prompt: Iniciar Ciclo SDD
+> Para uso en el proyecto <%= project.name %>
+
+## Cómo usarlo
+
+Copiar y completar este prompt para iniciar un ciclo:
+
+```
+Iniciá el Ciclo [N] del proyecto <%= project.name %> siguiendo el flujo SDD.
+
+Módulo a desarrollar: [nombre del módulo]
+
+Pasos a seguir en orden:
+1. Invocar el agente sdd-orchestrator para preparar el brief del ciclo
+2. Con el brief listo, invocar sdd-functional para generar las historias
+3. Con las historias listas, invocar sdd-planner y sdd-architect en paralelo
+4. Con el output del arquitecto y el planner, implementar TASK por TASK:
+   - sdd-implementor-back para cada TASK-BE
+   - sdd-implementor-front para cada TASK-FE (solo después de que el BE esté listo)
+5. Al finalizar todas las tasks, invocar sdd-reviewer para cerrar el ciclo
+
+Antes de empezar, leer sdd/global.json para verificar el estado actual.
+```
