@@ -112,7 +112,7 @@ export async function generateWorkspace(opts: WorkspaceOptions): Promise<void> {
   logger.step('Inicializando repositorio git...');
   exec('git init', { cwd: root, silent: true });
   exec('git add -A', { cwd: root, silent: true });
-  exec('git commit -m "chore: initial workspace setup via @e-burgos/harness"', {
+  exec('git commit -m "chore: initial workspace setup via @e-burgos/sdd-harness"', {
     cwd: root,
     silent: true,
   });

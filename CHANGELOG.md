@@ -1,9 +1,20 @@
 # Changelog
 
-All notable changes to `@e-burgos/harness` will be documented in this file.
+All notable changes to `@e-burgos/sdd-harness` will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [0.1.1] - 2026-05-31
+
+### Added
+- **GitHub Actions Workflow** for automated NPM publishing using Trusted Publishing (OIDC).
+- **TypeScript Typings Generation** integrated directly into the build command, outputting declaration files (`.d.ts`) directly inside `dist/`.
+
+### Fixed
+- **Module Resolution**: Switched compiled JS files extension to `.js` under ESM configuration and updated entrypoints in `package.json`.
+- **CLI Import Path**: Updated binary launcher `bin/harness.mjs` to target the correct built path at `dist/cli.js`.
+- **Clean Distribution**: Removed duplicate `bin/` and `templates/` folders from the compiled output `dist/`.
 
 ## [0.1.0] - 2025-05-20
 
