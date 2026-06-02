@@ -17,7 +17,17 @@
     "sharedGlobals": []
   },
   "plugins": [
-<%- nx.plugins.map(p => `    { "plugin": "${p}" }`).join(',\n') %>
-  ],
+<% nx.plugins.forEach(function(p, i) { var isLast = i === nx.plugins.length - 1; %>
+<% if (p === '@nx/gradle') { %>    {
+      "plugin": "@nx/gradle",
+      "include": ["apps/**/*"],
+      "options": {
+        "testTargetName": "test",
+        "ciTestTargetName": "test-ci"
+      }
+    }<%= isLast ? '' : ',' %>
+<% } else { %>    { "plugin": "<%= p %>" }<%= isLast ? '' : ',' %>
+<% } %>
+<% }) %>  ],
   "defaultProject": "<%= nx.defaultProject || apps[0]?.name || 'app' %>"
 }
