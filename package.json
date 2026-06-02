@@ -1,6 +1,6 @@
 {
   "name": "@e-burgos/sdd-harness",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "CLI to bootstrap AI-agent-ready Nx monorepos with SDD methodology",
   "type": "module",
   "bin": {
