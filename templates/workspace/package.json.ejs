@@ -1,33 +1,93 @@
-{
+<%
+var hasNestjs   = apps.some(function(a){ return a.type === 'nestjs';     });
+var hasReact    = apps.some(function(a){ return a.type === 'react';      });
+var hasNextjs   = apps.some(function(a){ return a.type === 'nextjs';     });
+var hasFastify  = apps.some(function(a){ return a.type === 'fastify';    });
+var hasHono     = apps.some(function(a){ return a.type === 'hono';       });
+
+// ── Runtime dependencies ──────────────────────────────────────────────────
+var deps = {};
+if (hasNestjs) {
+  deps['@nestjs/common']            = '^10.0.0';
+  deps['@nestjs/core']              = '^10.0.0';
+  deps['@nestjs/platform-express']  = '^10.0.0';
+  deps['reflect-metadata']          = '^0.2.0';
+  deps['rxjs']                      = '^7.8.0';
+}
+if (hasReact || hasNextjs) {
+  deps['react']     = '^19.0.0';
+  deps['react-dom'] = '^19.0.0';
+}
+if (hasNextjs)  deps['next']    = '^15.0.0';
+if (hasFastify) deps['fastify'] = '^5.0.0';
+if (hasHono) {
+  deps['hono']              = '^4.7.0';
+  deps['@hono/node-server'] = '^1.14.0';
+}
+var depKeys = Object.keys(deps);
+
+// ── Dev dependencies ──────────────────────────────────────────────────────
+var devDeps = {};
+devDeps['nx']           = '^21.0.0';
+devDeps['typescript']   = '^5.8.0';
+devDeps['@nx/js']       = '^21.0.0';
+devDeps['@nx/devkit']   = '^21.0.0';
+devDeps['@nx/eslint']   = '^21.0.0';
+devDeps['@nx/workspace']= '^21.0.0';
+
+if (nx.plugins.includes('@nx/gradle')) devDeps['@nx/gradle'] = '^21.0.0';
+if (nx.plugins.includes('@nx/nest') || nx.plugins.includes('@nx/node')) devDeps['@nx/node'] = '^21.0.0';
+if (nx.plugins.includes('@nx/nest')) {
+  devDeps['@nx/nest']          = '^21.0.0';
+  devDeps['@nx/webpack']       = '^21.0.0';
+  devDeps['@nx/jest']          = '^21.0.0';
+  devDeps['@nestjs/testing']   = '^10.0.0';
+  devDeps['@types/express']    = '^5.0.0';
+  devDeps['jest']              = '^29.0.0';
+  devDeps['ts-jest']           = '^29.0.0';
+  devDeps['@types/jest']       = '^29.0.0';
+}
+if (nx.plugins.includes('@nx/react')) {
+  devDeps['@nx/react']            = '^21.0.0';
+  devDeps['@nx/vite']             = '^21.0.0';
+  devDeps['@vitejs/plugin-react'] = '^4.0.0';
+  devDeps['vite']                 = '^6.0.0';
+  devDeps['vitest']               = '^3.0.0';
+  devDeps['@types/react']         = '^19.0.0';
+  devDeps['@types/react-dom']     = '^19.0.0';
+}
+if (nx.plugins.includes('@nx/next')) {
+  devDeps['@nx/next']         = '^21.0.0';
+  devDeps['@types/react']     = '^19.0.0';
+  devDeps['@types/react-dom'] = '^19.0.0';
+}
+if (hasFastify) devDeps['@nx/esbuild'] = '^21.0.0';
+if (hasHono) {
+  devDeps['vite']   = '^6.0.0';
+  devDeps['vitest'] = '^3.0.0';
+}
+if (hasNestjs || hasFastify || hasHono) devDeps['@types/node'] = '^22.0.0';
+
+var devDepKeys = Object.keys(devDeps);
+%>{
   "name": "<%= project.packageScope %>/source",
   "version": "0.0.0",
   "private": true,
   "license": "MIT",
   "packageManager": "pnpm@10.11.0",
   "scripts": {
-<% apps.forEach((app, i) => { %>
+<% apps.forEach(function(app, i) { %>
     "<%= app.name %>": "nx serve <%= app.name %>",
     "build:<%= app.name %>": "nx build <%= app.name %>",
     "test:<%= app.name %>": "nx test <%= app.name %>",
     "lint:<%= app.name %>": "nx lint <%= app.name %>"<%= i < apps.length - 1 ? ',' : '' %>
-<% }) %>
+<% }); %>
   },
   "nx": {},
-  "dependencies": {<% var hasHono = apps.some(function(a){ return a.type === 'hono'; }); %>
-<% if (hasHono) { %>    "hono": "^4.7.0",
-    "@hono/node-server": "^1.14.0"<% } else { %><% } %>
-  },
+  "dependencies": {
+<% depKeys.forEach(function(k, i) { %>    "<%= k %>": "<%= deps[k] %>"<%= i < depKeys.length - 1 ? ',' : '' %>
+<% }); %>  },
   "devDependencies": {
-    "nx": "^21.0.0",
-    "@nx/js": "^21.0.0",
-    "@nx/devkit": "^21.0.0",
-    "@nx/eslint": "^21.0.0",
-    "@nx/workspace": "^21.0.0"<% if (nx.plugins.includes('@nx/gradle')) { %>,
-    "@nx/gradle": "^21.0.0"<% } %><% if (nx.plugins.includes('@nx/nest') || nx.plugins.includes('@nx/node')) { %>,
-    "@nx/node": "^21.0.0"<% } %><% if (nx.plugins.includes('@nx/nest')) { %>,
-    "@nx/nest": "^21.0.0"<% } %><% if (nx.plugins.includes('@nx/react')) { %>,
-    "@nx/react": "^21.0.0",
-    "@nx/vite": "^21.0.0"<% } %><% if (nx.plugins.includes('@nx/next')) { %>,
-    "@nx/next": "^21.0.0"<% } %>
-  }
+<% devDepKeys.forEach(function(k, i) { %>    "<%= k %>": "<%= devDeps[k] %>"<%= i < devDepKeys.length - 1 ? ',' : '' %>
+<% }); %>  }
 }
