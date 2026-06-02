@@ -5,13 +5,14 @@
 ## Features
 
 - **Interactive scaffolding** — guided prompts to configure your entire workspace
-- **5 app types** — NestJS, React, Next.js, Fastify, Python
+- **7 app types** — NestJS, React, Next.js, Fastify, Hono, Spring Boot 3, Python
 - **5 shared library types** — Types, Utils, UI Kit, API Client, Config
 - **4 Docker services** — PostgreSQL, Redis, RabbitMQ, MinIO (with healthchecks)
 - **SDD methodology** — built-in Spec-Driven Development agent infrastructure
 - **MCP server configuration** — Nx, GitHub, Playwright, Figma, Notion, Filesystem
 - **Config-as-code** — optional `harness.config.ts` with Zod validation
 - **Incremental** — add apps, services, and skills to existing workspaces
+- **3-phase NX bootstrap** — installs and initializes NX before generating any app or lib
 
 ## Installation
 
@@ -168,10 +169,10 @@ Add a new application to an existing workspace.
 harness add app [type] [--name <name>]
 ```
 
-| Argument | Description                                                                     |
-| -------- | ------------------------------------------------------------------------------- |
-| `type`   | (positional, optional) One of: `nestjs`, `react`, `nextjs`, `python`, `fastify` |
-| `--name` | App name in kebab-case                                                          |
+| Argument | Description                                                                                           |
+| -------- | ----------------------------------------------------------------------------------------------------- |
+| `type`   | (positional, optional) One of: `nestjs`, `react`, `nextjs`, `python`, `fastify`, `hono`, `springboot` |
+| `--name` | App name in kebab-case                                                                                |
 
 If arguments are omitted, interactive prompts will guide you.
 
@@ -349,13 +350,18 @@ Example output:
 
 ## App Catalog
 
-| Type      | Default Name   | Framework            | Targets                  | Key Files Generated                                               |
-| --------- | -------------- | -------------------- | ------------------------ | ----------------------------------------------------------------- |
-| `nestjs`  | `api`          | NestJS 10+           | build, serve, lint, test | `main.ts`, `app.module.ts`, `app.controller.ts`, `app.service.ts` |
-| `react`   | `webapp`       | React 19 + Vite      | build, serve, lint, test | `main.tsx`, `app.tsx`, `index.html`, `vite.config.ts`             |
-| `nextjs`  | `web`          | Next.js (App Router) | build, serve, lint       | `app/layout.tsx`, `app/page.tsx`, `next.config.js`                |
-| `fastify` | `api`          | Fastify + esbuild    | build, serve, lint       | `main.ts` with health endpoint                                    |
-| `python`  | (same as type) | Python 3.11+         | serve, lint, test        | `__main__.py`, `pyproject.toml`, `tests/`                         |
+| Type         | Default Name | Framework                  | NX Plugin    | Targets                                               | Key Files Generated                                                       |
+| ------------ | ------------ | -------------------------- | ------------ | ----------------------------------------------------- | ------------------------------------------------------------------------- |
+| `nestjs`     | `api`        | NestJS 10+                 | `@nx/nest`   | build, serve, lint, test                              | `main.ts`, `app.module.ts`, `app.controller.ts`, `app.service.ts`         |
+| `react`      | `webapp`     | React 19 + Vite            | `@nx/react`  | build, serve, lint, test                              | `main.tsx`, `app.tsx`, `index.html`, `vite.config.ts`                     |
+| `nextjs`     | `web`        | Next.js (App Router)       | `@nx/next`   | build, serve, lint                                    | `app/layout.tsx`, `app/page.tsx`, `next.config.js`                        |
+| `fastify`    | `api`        | Fastify + esbuild          | `@nx/node`   | build, serve, lint                                    | `main.ts` with health endpoint                                            |
+| `hono`       | `api`        | Hono 4 + @hono/node-server | `@nx/node`   | build, serve, lint, test                              | `main.ts`, `vite.config.ts`, tsconfig files                               |
+| `springboot` | `service`    | Spring Boot 3.5 + Java 21  | `@nx/gradle` | inferred: build, test, bootRun, bootJar, clean, check | `Application.java`, `HealthController.java`, `build.gradle`, `Dockerfile` |
+| `python`     | (same)       | Python 3.11+               | —            | serve, lint, test                                     | `__main__.py`, `pyproject.toml`, `tests/`                                 |
+
+> **Spring Boot**: los targets se infieren automáticamente desde Gradle mediante el plugin `dev.nx.gradle.project-graph`. Requiere Java 21 y Gradle 8+ instalados en el sistema.
+> **Hono**: usa `@nx/vite:build` en modo librería con `target: node18`. Las dependencias `hono` y `@hono/node-server` se añaden a `dependencies` del workspace.
 
 ## Lib Catalog
 
@@ -384,19 +390,19 @@ SDD is a methodology where every feature goes through a structured cycle of spec
 
 ### What Gets Generated
 
-| File/Dir                 | Purpose                                    |
-| ------------------------ | ------------------------------------------ |
-| `AGENTS.md` / `CLAUDE.md`| Redirections to main context prompt        |
-| `sdd/context/`           | Project constitution and context prompt    |
-| `sdd/specs/`             | Standard numbered project specifications   |
-| `sdd/global.json`        | Current cycle state and completed modules  |
-| `sdd/schema.json`        | Database tables defined so far             |
-| `sdd/api.json`           | API endpoints implemented                  |
-| `sdd/components.json`    | Frontend components created                |
-| `sdd/tasks.json`         | Technical tasks organized by cycle         |
-| `sdd/skills/`            | Agent skill definitions                    |
-| `sdd/agents/`            | Agent configurations                       |
-| `sdd/prompts/`           | Prompts for starting/reviewing cycles      |
+| File/Dir                  | Purpose                                   |
+| ------------------------- | ----------------------------------------- |
+| `AGENTS.md` / `CLAUDE.md` | Redirections to main context prompt       |
+| `sdd/context/`            | Project constitution and context prompt   |
+| `sdd/specs/`              | Standard numbered project specifications  |
+| `sdd/global.json`         | Current cycle state and completed modules |
+| `sdd/schema.json`         | Database tables defined so far            |
+| `sdd/api.json`            | API endpoints implemented                 |
+| `sdd/components.json`     | Frontend components created               |
+| `sdd/tasks.json`          | Technical tasks organized by cycle        |
+| `sdd/skills/`             | Agent skill definitions                   |
+| `sdd/agents/`             | Agent configurations                      |
+| `sdd/prompts/`            | Prompts for starting/reviewing cycles     |
 
 ### The SDD Cycle
 
@@ -421,46 +427,46 @@ SDD is a methodology where every feature goes through a structured cycle of spec
 For repeatable setups, define a config file:
 
 ```typescript
-import { defineConfig } from '@e-burgos/sdd-harness';
+import { defineConfig } from "@e-burgos/sdd-harness";
 
 export default defineConfig({
   project: {
-    name: 'my-saas',
-    description: 'Multi-tenant SaaS platform',
-    packageScope: '@my-saas',
+    name: "my-saas",
+    description: "Multi-tenant SaaS platform",
+    packageScope: "@my-saas",
   },
   apps: [
-    { name: 'api', type: 'nestjs', port: 3000, features: [] },
-    { name: 'webapp', type: 'react', port: 4200, features: [] },
-    { name: 'worker', type: 'python', features: [] },
+    { name: "api", type: "nestjs", port: 3000, features: [] },
+    { name: "webapp", type: "react", port: 4200, features: [] },
+    { name: "worker", type: "python", features: [] },
   ],
   services: [
-    { type: 'postgres', port: 5432 },
-    { type: 'redis', port: 6379 },
+    { type: "postgres", port: 5432 },
+    { type: "redis", port: 6379 },
   ],
   sdd: {
     enabled: true,
-    modules: ['auth', 'users', 'billing'],
+    modules: ["auth", "users", "billing"],
     cycles: [
-      { cycle: 1, modules: ['auth', 'users'], weeks: 2 },
-      { cycle: 2, modules: ['billing'], weeks: 1 },
+      { cycle: 1, modules: ["auth", "users"], weeks: 2 },
+      { cycle: 2, modules: ["billing"], weeks: 1 },
     ],
     skills: {
-      include: ['sdd-*', 'generate-*', 'nx-*'],
-      custom: ['data-import'],
+      include: ["sdd-*", "generate-*", "nx-*"],
+      custom: ["data-import"],
     },
     agents: {
-      instructionFile: 'AGENTS.md',
-      claudeFile: 'CLAUDE.md',
+      instructionFile: "AGENTS.md",
+      claudeFile: "CLAUDE.md",
       copilotInstructions: true,
     },
   },
   nx: {
-    plugins: ['@nx/webpack', '@nx/vite', '@nx/eslint'],
-    defaultProject: 'api',
+    plugins: ["@nx/webpack", "@nx/vite", "@nx/eslint"],
+    defaultProject: "api",
   },
   infra: {
-    provider: 'digitalocean',
+    provider: "digitalocean",
   },
 });
 ```
@@ -543,24 +549,24 @@ harness info
 ## Programmatic API
 
 ```typescript
-import { defineConfig } from '@e-burgos/sdd-harness';
+import { defineConfig } from "@e-burgos/sdd-harness";
 
 export default defineConfig({
-  name: 'my-project',
-  scope: '@my-org',
+  name: "my-project",
+  scope: "@my-org",
   apps: [
-    { name: 'api', type: 'nestjs', port: 3000 },
-    { name: 'webapp', type: 'react', port: 4200 },
+    { name: "api", type: "nestjs", port: 3000 },
+    { name: "webapp", type: "react", port: 4200 },
   ],
   services: [
-    { type: 'postgres', port: 5432 },
-    { type: 'redis', port: 6379 },
+    { type: "postgres", port: 5432 },
+    { type: "redis", port: 6379 },
   ],
   sdd: {
     enabled: true,
-    cycles: [{ cycle: 1, modules: ['auth', 'users'] }],
+    cycles: [{ cycle: 1, modules: ["auth", "users"] }],
   },
-  infra: { provider: 'digitalocean' },
+  infra: { provider: "digitalocean" },
 });
 ```
 
