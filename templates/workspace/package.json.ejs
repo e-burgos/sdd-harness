@@ -13,6 +13,21 @@
 <% }) %>
   },
   "nx": {},
-  "dependencies": {},
-  "devDependencies": {}
+  "dependencies": {<% var hasHono = apps.some(function(a){ return a.type === 'hono'; }); %>
+<% if (hasHono) { %>    "hono": "^4.7.0",
+    "@hono/node-server": "^1.14.0"<% } else { %><% } %>
+  },
+  "devDependencies": {
+    "nx": "^21.0.0",
+    "@nx/js": "^21.0.0",
+    "@nx/devkit": "^21.0.0",
+    "@nx/eslint": "^21.0.0",
+    "@nx/workspace": "^21.0.0"<% if (nx.plugins.includes('@nx/gradle')) { %>,
+    "@nx/gradle": "^21.0.0"<% } %><% if (nx.plugins.includes('@nx/nest') || nx.plugins.includes('@nx/node')) { %>,
+    "@nx/node": "^21.0.0"<% } %><% if (nx.plugins.includes('@nx/nest')) { %>,
+    "@nx/nest": "^21.0.0"<% } %><% if (nx.plugins.includes('@nx/react')) { %>,
+    "@nx/react": "^21.0.0",
+    "@nx/vite": "^21.0.0"<% } %><% if (nx.plugins.includes('@nx/next')) { %>,
+    "@nx/next": "^21.0.0"<% } %>
+  }
 }
