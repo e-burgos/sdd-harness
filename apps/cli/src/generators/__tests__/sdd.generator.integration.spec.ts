@@ -1,0 +1,198 @@
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { resolve } from 'node:path';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { tmpdir } from 'node:os';
+import fs from 'fs-extra';
+
+import { generateSDD } from '../sdd.generator.js';
+import { generateApp } from '../app.generator.js';
+import { generateLib } from '../lib.generator.js';
+
+// Integración real: sin mock de exec — setup-agents.sh corre de verdad y el
+// sdd/ generado se valida con el validate-sdd.mjs del propio kit.
+const REPO_ROOT = resolve(__dirname, '../../..');
+
+describe.skipIf(process.platform === 'win32')(
+  'sdd.generator (integration)',
+  () => {
+    let ws: string;
+
+    beforeAll(async () => {
+      ws = mkdtempSync(resolve(tmpdir(), 'harness-sdd-int-'));
+
+      await generateSDD(ws, {
+        projectName: 'smoke-proj',
+        description: 'Smoke test project used to validate the generated SDD kit.',
+        packageScope: '@smoke',
+        apps: [
+          { name: 'portal', type: 'react' },
+          { name: 'orders-api', type: 'springboot' },
+        ],
+        libs: [{ name: 'shared-types', type: 'shared-types' }],
+        services: [],
+      });
+
+      await generateApp(ws, { name: 'portal', type: 'react' }, '@smoke');
+      await generateApp(ws, { name: 'orders-api', type: 'springboot' }, '@smoke');
+      await generateLib(ws, { name: 'shared-types', type: 'shared-types' }, '@smoke');
+
+      // validate-sdd.mjs importa ajv/ajv-formats: resolverlos desde este repo
+      await fs.ensureDir(resolve(ws, 'node_modules'));
+      for (const dep of ['ajv', 'ajv-formats', 'fast-deep-equal', 'fast-uri', 'json-schema-traverse', 'require-from-string']) {
+        const src = resolve(REPO_ROOT, 'node_modules', dep);
+        if (fs.existsSync(src)) {
+          await fs.ensureSymlink(src, resolve(ws, 'node_modules', dep));
+        }
+      }
+    }, 30_000);
+
+    afterAll(() => {
+      rmSync(ws, { recursive: true, force: true });
+    });
+
+    it('setup-agents crea los symlinks del arnés dual', () => {
+      expect(fs.lstatSync(resolve(ws, 'AGENTS.md')).isSymbolicLink()).toBe(true);
+      expect(fs.lstatSync(resolve(ws, 'CLAUDE.md')).isSymbolicLink()).toBe(true);
+      expect(fs.lstatSync(resolve(ws, '.claude/agents')).isSymbolicLink()).toBe(true);
+      expect(fs.lstatSync(resolve(ws, '.claude/skills')).isSymbolicLink()).toBe(true);
+      expect(fs.existsSync(resolve(ws, '.github/agents'))).toBe(true);
+      expect(fs.readFileSync(resolve(ws, 'AGENTS.md'), 'utf-8')).toContain('SDD');
+    });
+
+    it('el sdd/ generado pasa validate-sdd.mjs (schemas + portabilidad + catálogo)', () => {
+      const output = execFileSync(
+        'node',
+        [resolve(ws, 'sdd/scripts/validate-sdd.mjs')],
+        { encoding: 'utf-8' },
+      );
+      expect(output).toContain('OK');
+    });
+
+    it('el blueprint java-api queda renombrado sin restos de example-api', () => {
+      let leftovers = '';
+      try {
+        leftovers = execFileSync(
+          'grep',
+          ['-rl', '-e', 'example-api', '-e', 'exampleapi', resolve(ws, 'apps/orders-api')],
+          { encoding: 'utf-8' },
+        );
+      } catch {
+        // grep exits 1 when there are no matches — that is the expected outcome
+      }
+      expect(leftovers).toBe('');
+    });
+  },
+);
+
+describe.skipIf(process.platform === 'win32')(
+  'sdd.generator standalone + existing project (integration)',
+  () => {
+    let ws: string;
+
+    const linkAjv = async (root: string) => {
+      await fs.ensureDir(resolve(root, 'node_modules'));
+      for (const dep of ['ajv', 'ajv-formats', 'fast-deep-equal', 'fast-uri', 'json-schema-traverse', 'require-from-string']) {
+        const src = resolve(REPO_ROOT, 'node_modules', dep);
+        if (fs.existsSync(src)) {
+          await fs.ensureSymlink(src, resolve(root, 'node_modules', dep));
+        }
+      }
+    };
+
+    beforeAll(() => {
+      ws = mkdtempSync(resolve(tmpdir(), 'harness-sdd-modes-'));
+    });
+
+    afterAll(() => {
+      rmSync(ws, { recursive: true, force: true });
+    });
+
+    it('layout standalone pasa validate-sdd.mjs con la app lógica única', async () => {
+      const root = resolve(ws, 'standalone');
+      await fs.ensureDir(root);
+
+      await generateSDD(
+        root,
+        {
+          projectName: 'solo-api',
+          description: 'Standalone integration smoke.',
+          packageScope: '@solo-api',
+          apps: [{ name: 'solo-api', type: 'springboot' }],
+          libs: [],
+          services: [],
+        },
+        { layout: 'standalone', mergePackageJson: true },
+      );
+
+      expect(fs.existsSync(resolve(root, '.nxignore'))).toBe(false);
+      expect(
+        fs.lstatSync(resolve(root, 'AGENTS.md')).isSymbolicLink(),
+      ).toBe(true);
+
+      await linkAjv(root);
+      const output = execFileSync(
+        'node',
+        [resolve(root, 'sdd/scripts/validate-sdd.mjs')],
+        { encoding: 'utf-8' },
+      );
+      expect(output).toContain('OK');
+    });
+
+    it('absorbe AGENTS.md/CLAUDE.md previos dentro de sdd/dual-harness', async () => {
+      const root = resolve(ws, 'existing');
+      await fs.ensureDir(root);
+      await fs.writeFile(
+        resolve(root, 'AGENTS.md'),
+        '# Reglas históricas\n\nUsar siempre pnpm.\n',
+        'utf-8',
+      );
+      await fs.writeFile(
+        resolve(root, 'CLAUDE.md'),
+        '# Notas Claude\n\nNo tocar la carpeta legacy/.\n',
+        'utf-8',
+      );
+
+      await generateSDD(
+        root,
+        {
+          projectName: 'legacy-repo',
+          description: 'Existing repo integration smoke.',
+          packageScope: '@legacy-repo',
+          apps: [{ name: 'legacy-repo', type: 'app' }],
+          libs: [],
+          services: [],
+        },
+        {
+          layout: 'standalone',
+          mergePackageJson: true,
+          absorbExistingHarness: true,
+        },
+      );
+
+      // Los originales ahora son symlinks al dual-harness
+      expect(fs.lstatSync(resolve(root, 'AGENTS.md')).isSymbolicLink()).toBe(true);
+      expect(fs.lstatSync(resolve(root, 'CLAUDE.md')).isSymbolicLink()).toBe(true);
+
+      // El contenido previo quedó absorbido, no perdido
+      const agents = fs.readFileSync(
+        resolve(root, 'sdd/dual-harness/AGENTS.md'),
+        'utf-8',
+      );
+      expect(agents).toContain('Instrucciones previas del proyecto');
+      expect(agents).toContain('Usar siempre pnpm.');
+
+      const claude = fs.readFileSync(
+        resolve(root, 'sdd/dual-harness/CLAUDE.md'),
+        'utf-8',
+      );
+      expect(claude).toContain('No tocar la carpeta legacy/.');
+
+      // package.json creado desde cero con el arnés
+      const pkg = fs.readJSONSync(resolve(root, 'package.json'));
+      expect(pkg.name).toBe('legacy-repo');
+      expect(pkg.scripts['sdd:validate']).toBeDefined();
+      expect(pkg.devDependencies['ajv']).toBeDefined();
+    });
+  },
+);

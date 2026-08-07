@@ -1,0 +1,15 @@
+{
+  "$schema": "./schemas/global.schema.json",
+  "project": "my project",
+  "description": "Describe your project here: what it does, main stack, and methodology (SDD).",
+  "version": "0.1.0",
+  "completed_modules": [],
+  "in_progress_modules": [],
+  "pending_modules": [],
+  "monorepo": {
+    "tool": "Nx",
+    "package_manager": "pnpm",
+    "apps": {},
+    "libs": "libs/ — Shared libraries"
+  }
+}
