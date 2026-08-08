@@ -40,5 +40,18 @@ jobs:
       - name: Build Package
         run: pnpm build
 
+      - name: Check if version is already published
+        id: version_check
+        run: |
+          PKG_VERSION=$(node -p "require('./apps/cli/package.json').version")
+          echo "version=$PKG_VERSION" >> "$GITHUB_OUTPUT"
+          if npm view "@e-burgos/sdd-harness@$PKG_VERSION" version >/dev/null 2>&1; then
+            echo "already_published=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::@e-burgos/sdd-harness@$PKG_VERSION is already on npm, skipping publish."
+          else
+            echo "already_published=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Publish to NPM
+        if: steps.version_check.outputs.already_published == 'false'
         run: pnpm --filter @e-burgos/sdd-harness publish --access public --no-git-checks --provenance
