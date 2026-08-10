@@ -649,7 +649,7 @@ Responde: **¿Qué módulos están completados, en progreso o pendientes?**
     "tool": "Nx",
     "package_manager": "pnpm",
     "apps": {},
-    "libs": "libs/ — Shared libraries"
+    "libs": {}
   }
 }
 ```

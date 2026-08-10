@@ -91,10 +91,11 @@ export async function registerSubprojectInSDD(
   const globalPath = resolve(root, 'sdd/global.json');
   if (await fs.pathExists(globalPath)) {
     const globalJson = await fs.readJSON(globalPath);
-    if (category === 'apps') {
-      globalJson.monorepo.apps[name] = `apps/${name} — ${type}`;
-      await fs.writeJSON(globalPath, globalJson, { spaces: 2 });
+    if (typeof globalJson.monorepo[category] !== 'object') {
+      globalJson.monorepo[category] = {};
     }
+    globalJson.monorepo[category][name] = `${category}/${name} — ${type}`;
+    await fs.writeJSON(globalPath, globalJson, { spaces: 2 });
   }
   await createSubprojectContext(root, category, name, type, 'nx');
 }
@@ -178,6 +179,11 @@ async function writeGlobalJson(
         : `apps/${app.name} — ${app.type}`;
   }
 
+  const libs: Record<string, string> = {};
+  for (const lib of opts.libs) {
+    libs[lib.name] = `libs/${lib.name} — ${lib.type}`;
+  }
+
   // La forma debe cumplir sdd/schemas/global.schema.json (additionalProperties: false).
   await fs.writeJSON(
     resolve(root, 'sdd/global.json'),
@@ -193,10 +199,7 @@ async function writeGlobalJson(
         tool: layout === 'standalone' ? 'none (standalone repo)' : 'Nx',
         package_manager: 'pnpm',
         apps,
-        libs:
-          layout === 'standalone'
-            ? 'n/a — repo standalone, sin libs'
-            : 'libs/ — Shared libraries',
+        libs,
       },
     },
     { spaces: 2 },
