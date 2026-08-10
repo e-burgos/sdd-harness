@@ -60,6 +60,17 @@ describe.skipIf(process.platform === 'win32')(
       expect(fs.readFileSync(resolve(ws, 'AGENTS.md'), 'utf-8')).toContain('SDD');
     });
 
+    it('global.json registra apps y libs como mapas (de ahí los descubre el visor)', async () => {
+      const global = await fs.readJSON(resolve(ws, 'sdd/global.json'));
+      expect(Object.keys(global.monorepo.apps).sort()).toEqual([
+        'orders-api',
+        'portal',
+      ]);
+      expect(global.monorepo.libs).toEqual({
+        'shared-types': 'libs/shared-types — shared-types',
+      });
+    });
+
     it('el sdd/ generado pasa validate-sdd.mjs (schemas + portabilidad + catálogo)', () => {
       const output = execFileSync(
         'node',
