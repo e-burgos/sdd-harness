@@ -181,7 +181,7 @@ symlinks como archivos de texto.
     "tool": "Nx",
     "package_manager": "pnpm",
     "apps": {},
-    "libs": "libs/ — Shared libraries"
+    "libs": {}
   }
 }
 ```

@@ -40,7 +40,9 @@ description: >
 | `"libs/api-client"`  | Librería compartida (libs/api-client)   |
 | `"apps/example-api"` | Spring Boot template (apps/example-api) |
 
-> Agregar nuevas apps/libs según el `monorepo.apps` de `sdd/global.json`.
+> Agregar nuevas apps/libs según `monorepo.apps` y `monorepo.libs` de `sdd/global.json`.
+> Ambos son mapas `nombre -> descripción`; el visor de `pnpm sdd:docs` descubre el contexto de
+> cada subproyecto a partir de ellos, así que una lib ausente del mapa no aparece listada.
 
 ---
 
@@ -96,7 +98,7 @@ description: >
     "tool": "Nx",
     "package_manager": "pnpm",
     "apps": {},
-    "libs": "libs/ — Shared libraries"
+    "libs": {}
   }
 }
 ```

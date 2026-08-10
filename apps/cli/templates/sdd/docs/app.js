@@ -155,11 +155,7 @@ const CATALOG = Object.freeze({
       writers: 'Orquestador (FIX GATE) · dev · Reviewer',
     },
   ],
-  contextSeeds: [
-    { category: 'tools', name: 'sdd-docs' },
-    { category: 'libs', name: 'api-client' },
-    { category: 'libs', name: 'config' },
-  ],
+  contextSeeds: [],
   helpDocs: [
     {
       id: 'how-to',
@@ -4225,6 +4221,12 @@ function collectContextCandidates({
     const ref = deriveMonorepoAppRef(name, description);
     addContextCandidate(candidates, ref.category, ref.name);
     if (ref.category === 'apps') knownAppNames.add(ref.name);
+  }
+
+  const monorepoLibs = global?.monorepo?.libs;
+  if (monorepoLibs && typeof monorepoLibs === 'object') {
+    for (const name of Object.keys(monorepoLibs))
+      addContextCandidate(candidates, 'libs', name);
   }
 
   const modules = [

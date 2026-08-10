@@ -47,7 +47,13 @@
           "type": "object",
           "additionalProperties": { "type": "string" }
         },
-        "libs": { "type": "string" }
+        "libs": {
+          "description": "Name -> description map, same shape as `apps`, so the docs viewer can discover each lib's context. A plain string is still accepted for kits installed before this shape existed, but in that form libs are not listed in sdd:docs.",
+          "oneOf": [
+            { "type": "object", "additionalProperties": { "type": "string" } },
+            { "type": "string" }
+          ]
+        }
       }
     }
   },
