@@ -5,6 +5,23 @@ All notable changes to `@e-burgos/sdd-harness` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.3.1] - 2026-08-10
+
+### Fixed
+
+- **`monorepo.libs` ahora es un mapa `nombre -> descripción`, igual que `monorepo.apps`.** Antes era
+  un string fijo (`"libs/ — Shared libraries"`), así que el visor de `pnpm sdd:docs` no tenía de
+  dónde sacar las libs: las únicas que listaba venían de un array `contextSeeds` hardcodeado con
+  nombres del repo del que se extrajo el kit (`api-client`, `config`, `sdd-docs`). En un workspace
+  real eso significaba libs ausentes del dashboard y cuatro 404 por carga de página.
+  - `schemas/global.schema.json`: `libs` acepta el mapa. El string sigue siendo válido para que los
+    kits instalados antes de este cambio no fallen la validación (en esa forma las libs no se
+    listan en `sdd:docs`).
+  - `docs/app.js`: `collectContextCandidates()` lee `monorepo.libs` y `contextSeeds` queda vacío —
+    los subproyectos salen de los datos, no de nombres horneados en el visor.
+  - `sdd.generator.ts`: `registerSubprojectInSDD()` registraba solo apps; ahora registra ambas
+    categorías, y el `global.json` inicial se siembra con las libs elegidas por el usuario.
+
 ## [0.3.0] - 2026-08-07
 
 ### Added — the three product modes
