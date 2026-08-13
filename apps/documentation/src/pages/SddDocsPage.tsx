@@ -8,6 +8,7 @@ import {
   VIEWER_SECTIONS,
   VIEWER_SHOTS,
 } from '../data/content';
+import costsShot from '../assets/sdd-docs/costs.png';
 import dashboardShot from '../assets/sdd-docs/dashboard.png';
 import agentsShot from '../assets/sdd-docs/agents.png';
 import skillsShot from '../assets/sdd-docs/skills.png';
@@ -15,6 +16,7 @@ import schemasShot from '../assets/sdd-docs/schemas.png';
 import helpShot from '../assets/sdd-docs/help.png';
 
 const SHOT_SRC: Record<string, string> = {
+  costs: costsShot,
   dashboard: dashboardShot,
   agents: agentsShot,
   skills: skillsShot,

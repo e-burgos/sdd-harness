@@ -78,8 +78,31 @@ Permite reconfigurar módulos específicos del espacio de trabajo:
 - `harness configure sdd`: Reinicia o actualiza la infraestructura de agentes y esquemas de SDD.
 - `harness configure docker`: Regenera completamente el `docker-compose.yml` basándose en una selección interactiva.
 - `harness configure mcp`: Genera un archivo `.mcp.json` para dar superpoderes de contexto a las IAs conectándose a servicios externos.
+- `harness configure memory`: Proveedores de memoria MCP **opt-in** (basic-memory, knowledge-graph oficial persistido en `sdd/memory/`) sobre la capa base portable del kit. Merge no destructivo de `.mcp.json`.
 
-### 6. `harness info`
+### 6. `harness idea` — la entrada del punta a punta
+Registra una idea de producto en lenguaje natural y deja todo listo para que un agente AI la lleve a producto (flujo **Hermes** — ver [`docs/hermes.md`](hermes.md)):
+```bash
+harness idea "una app de turnos para peluquerías con recordatorios"
+# → harness.idea.md            (la idea + el protocolo con checkpoints humanos)
+# → harness.config.json        (stub del stack — lo completa el agente)
+# → harness.config.schema.json (JSON Schema para validar el config)
+```
+En un repo vacío el agente completa el config y corre `init --config` (cero prompts). En un workspace SDD existente, el protocolo cambia a análisis de gaps (`harness add app|service|spec`).
+
+### 7. `harness config schema`
+Imprime el JSON Schema del contrato de `init --config`, derivado del mismo schema zod con el que valida la CLI — agentes y editores validan configs sin ejecutarla:
+```bash
+harness config schema [--out harness.config.schema.json]
+```
+
+### 8. `harness update sdd`
+Actualiza el kit SDD instalado a la versión de la CLI **preservando todo lo tuyo**: specs, ciclos, contextos, memoria y tarifas nunca se tocan; los archivos del kit modificados localmente se preservan (la versión nueva queda como `.new`).
+```bash
+npx @e-burgos/sdd-harness@latest update sdd
+```
+
+### 9. `harness info`
 Muestra un reporte resumido del estado del monorepo, incluyendo aplicaciones detectadas, librerías compartidas, servicios de Docker activos y el ciclo actual de desarrollo SDD.
 ```bash
 harness info
@@ -167,3 +190,22 @@ Una vez creado el archivo, puedes levantar la estructura ejecutando:
 ```bash
 npx @e-burgos/sdd-harness init --config harness.config.ts --yes
 ```
+
+---
+
+## 🧠 Memoria, telemetría y dashboard de Costos
+
+Todo repo generado incluye (detalle de arquitectura en [`docs/hermes.md`](hermes.md)):
+
+- **Memoria portable** (`sdd/memory/`): `lessons.md` destilado que los agentes leen al iniciar
+  cada sesión + `journal/` episódico al cerrar ciclos. Autoaprendizaje versionado en git,
+  sin servicios externos (regla 🧠 MEMORIA GATE del dual-harness).
+- **Telemetría de uso**: al cerrar cada ciclo se registran tokens y tiempo aproximados
+  (`cycle.json → metrics.usage`, por tier de modelo) — campos opcionales de los schemas estrictos.
+- **Dashboard de Costos** (`pnpm sdd:docs` → vista *Costos*): comparativa del costo agéntico
+  (tokens × tarifa por tier) contra la estimación tradicional (`estimation_hours` × tarifa hora),
+  ahorro proyectado y tabla exacta por ciclo. Tarifas editables en `sdd/pricing.json`.
+- **Visor reactivo en local**: el visor pollea un fingerprint por área de los registros — cerrás
+  un ciclo y la vista activa se actualiza sola, sin recargar y preservando el estado de la UI
+  (secciones expandidas, búsquedas, scroll). Solo se re-renderiza si cambió un área de la que
+  la vista depende.

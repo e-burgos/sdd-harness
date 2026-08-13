@@ -140,12 +140,18 @@ ediciones locales); tokens sin tier declarado se tarifan como `sonnet` y se marc
 paleta de series se validó con chequeos de daltonismo/contraste sobre la superficie dark
 del visor; tooltips de hover y labels directos incluidos.
 
-**Reactividad en JS vanilla:** `serve.mjs` expone `/sdd/docs/__state` — un fingerprint
-sha1 de los mtimes de todos los registros (`docs/` y `templates/` excluidos). El visor lo
-pollea cada 4 segundos en localhost y, ante un cambio, invalida el cache y re-renderiza la
-vista activa: task done, ciclo cerrado o spec completada se manifiestan sin recargar. En
-hosting estático (sin `serve.mjs`) queda el refresh manual de siempre; el polling se pausa
-con la pestaña oculta o un modal abierto y se apaga tras fallas repetidas.
+**Reactividad en JS vanilla (selectiva):** `serve.mjs` expone `/sdd/docs/__state` — un
+fingerprint sha1 **por área** de los registros (`global`, `specs`, `tasks`, `fixes`,
+`context`, `memory`, `arch`, `pricing`, `catalog`…; `docs/` y `templates/` excluidos). El
+visor lo pollea cada 4 segundos en localhost; cada vista declara sus dependencias
+(`deps` en el registro de vistas) y **solo se re-renderiza si cambió un área de la que
+depende** — cerrar un ciclo actualiza Costos y Ciclos sin tocar la vista de Agentes. El
+cache se invalida igual ante cualquier cambio, así la próxima navegación siempre ve datos
+frescos. En cada re-render se **preserva el estado de la UI**: secciones expandidas y
+pestañas se restauran re-aplicando sus toggles (los handlers reales, no manipulación
+directa del DOM), y búsquedas y scroll se restauran con sus valores. En hosting estático
+queda el refresh manual; el polling se pausa con la pestaña oculta o un modal abierto y se
+apaga tras fallas repetidas.
 
 ## Decisiones registradas
 

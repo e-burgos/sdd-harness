@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed — selective viewer reactivity + end-to-end documentation
+
+- **Selective live sync in the SDD viewer.** `/sdd/docs/__state` now reports a sha1
+  fingerprint **per registry area** (`global`, `specs`, `tasks`, `fixes`, `context`,
+  `memory`, `arch`, `pricing`, `catalog`, …) alongside the global one. Each viewer
+  view declares its area dependencies; a change only re-renders the active view when
+  it touches an area the view depends on (closing a cycle refreshes Costos/Ciclos
+  without touching Agentes), while the data cache is always invalidated so navigation
+  stays fresh. Re-renders now **preserve UI state**: expanded sections and tabs are
+  restored by replaying their real toggles, and search inputs and scroll position are
+  restored in place. Backwards compatible with an older `serve.mjs` (single
+  fingerprint → treated as "everything changed").
+- **Documentation overhaul.** Kit docs gained the hermes-era chapters: HOW-TO section
+  10 (idea → producto, memoria, telemetría y Costos con ejemplos concretos), kit
+  README MEMORIA GATE section + `memory/`/`pricing.json` in the structure tree.
+  The full Spanish guide (`docs/README.md`) documents `harness idea`,
+  `config schema`, `configure memory` and `update sdd` with examples. The published
+  docs site gained two sections: **Idea → producto** (interactive 5-phase hermes
+  walkthrough with real commands) and **Costos en vivo** (an animated simulation of
+  the live dashboard closing a cycle), per-mode working-session examples in the
+  three-modes section, and the real Costos screenshot as the featured sdd:docs shot.
+
 ### Added — Hermes phases 3–5: usage telemetry, loop automation, opt-in memory, Costs dashboard
 
 - **Usage telemetry (F3).** Optional, strictly-typed `usage` fields in the kit schemas:
