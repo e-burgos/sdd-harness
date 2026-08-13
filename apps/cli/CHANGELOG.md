@@ -5,6 +5,39 @@ All notable changes to `@e-burgos/sdd-harness` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added — Hermes phase 1: portable memory, non-interactive init, end-to-end loop skill
+
+- **Portable memory system (`sdd/memory/` — MEMORIA GATE 🧠).** The kit now ships a
+  versioned, agent-agnostic self-learning layer: `memory/lessons.md` (distilled lessons,
+  hard 120-line cap, read whole at every session start) + `memory/journal/` (append-only
+  episodic entries written at cycle/fix close, never bulk-read — grep on demand). Same
+  unique-by-construction naming and single-actor merge pattern as the additive context
+  fragments: the orchestrator distills the journal into `lessons.md` at ≥5 entries.
+  Enforced across the kit: new 🧠 section in `dual-harness/AGENTS.md`/`CLAUDE.md`,
+  reviewer checklist item + close step, orchestrator distillation step, and
+  `validate-sdd.mjs` checks (journal entry naming, distillation threshold warning,
+  lessons line-cap warning — all tolerant of pre-memory installs). Update boundary:
+  `memory/lessons.md` is hybrid (local edits win by hash), `memory/journal/` is user
+  data (`harness update sdd` never touches it); existing installs receive `memory/`
+  automatically on update.
+- **`harness init --config <file>` actually works now** — the flag existed but was never
+  consumed. Fully non-interactive, agent/CI-friendly init: JSON (or `.mjs`/`.js` with
+  `defineConfig`) validated with zod — clear per-path errors — and mapped straight to the
+  generators. Schema gains `mode: "nx" | "standalone"` and `libs`; `nx` block and service
+  `port` are now optional (generator defaults apply). New `HarnessConfigInput`/`LibConfig`
+  exports in the programmatic API.
+- **New kit skill `sdd-hermes`** — the end-to-end conductor: natural-language idea →
+  discovery (max one round of questions) → stack decision matrix + human checkpoint →
+  workspace configuration via `init --config` / `harness add` → one spec per module +
+  human checkpoint → chained SDD cycles until the backlog is done. Declares a
+  model/effort budget per phase and mandatory stop conditions (repeated red validation,
+  out-of-spec product decisions, exhausted usage budget) — all state lives in the SDD
+  registries so any future session can resume the loop. Never bypasses SPEC/CONTEXTO/
+  MEMORIA gates.
+- Architecture & roadmap document for the initiative: `docs/hermes.md` (root repo docs).
+
 ## [0.3.1] - 2026-08-10
 
 ### Fixed
