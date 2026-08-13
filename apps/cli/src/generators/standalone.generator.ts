@@ -38,24 +38,24 @@ export async function generateStandalone(
 
   // ─── FASE 1: App en la raíz ───────────────────────────────────────────────
 
-  logger.step(`Generando app standalone (${opts.appType}) en la raíz...`);
+  logger.step(`Generating standalone app (${opts.appType}) at the repo root...`);
   await scaffoldStandaloneApp(root, opts.projectName, opts.appType);
   await writeGitignore(root, opts.appType);
 
   // ─── FASE 2: Arnés SDD ────────────────────────────────────────────────────
 
-  logger.step("Registrando scripts del arnés SDD en package.json...");
+  logger.step("Registering SDD harness scripts in package.json...");
   await ensureHarnessPackageJson(root, opts.projectName);
 
-  logger.step("Instalando dependencias (pnpm install)...");
+  logger.step("Installing dependencies (pnpm install)...");
   exec("pnpm install", { cwd: root });
 
   if (opts.services.length > 0) {
-    logger.step("Generando Docker Compose...");
+    logger.step("Generating Docker Compose...");
     await generateDockerCompose(root, opts.services);
   }
 
-  logger.step("Configurando SDD (Spec-Driven Development)...");
+  logger.step("Configuring SDD (Spec-Driven Development)...");
   await generateSDD(
     root,
     {
@@ -71,7 +71,7 @@ export async function generateStandalone(
 
   // ─── FASE 3: Finalización ─────────────────────────────────────────────────
 
-  logger.step("Validando registros SDD (sdd:validate)...");
+  logger.step("Validating SDD registries (sdd:validate)...");
   try {
     exec("node sdd/scripts/validate-sdd.mjs", { cwd: root, silent: true });
     logger.success("sdd:validate OK");
@@ -81,7 +81,7 @@ export async function generateStandalone(
     );
   }
 
-  logger.step("Inicializando repositorio git...");
+  logger.step("Initializing git repository...");
   exec("git init", { cwd: root, silent: true });
   exec("git add -A", { cwd: root, silent: true });
   exec(
@@ -89,7 +89,7 @@ export async function generateStandalone(
     { cwd: root, silent: true },
   );
 
-  logger.success(`Repo standalone "${opts.projectName}" creado exitosamente.`);
+  logger.success(`Standalone repo "${opts.projectName}" created successfully.`);
 }
 
 async function scaffoldStandaloneApp(

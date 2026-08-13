@@ -44,13 +44,13 @@ export async function generateWorkspace(opts: WorkspaceOptions): Promise<void> {
 
   // ─── FASE 1: Bootstrap NX ─────────────────────────────────────────────────
 
-  logger.step("Creando estructura de directorios...");
+  logger.step("Creating directory structure...");
   for (const dir of ["apps", "libs", "tools"]) {
     await fs.ensureDir(resolve(root, dir));
     await fs.writeFile(resolve(root, dir, ".gitkeep"), "", "utf-8");
   }
 
-  logger.step("Generando archivos de configuración Nx...");
+  logger.step("Generating Nx configuration files...");
   await writeRootPackageJson(root, nxWorkspaceDir, opts);
   await writeNxJson(root, nxWorkspaceDir, opts);
   await writeTsconfigBase(root, nxWorkspaceDir, opts);
@@ -62,10 +62,10 @@ export async function generateWorkspace(opts: WorkspaceOptions): Promise<void> {
   await fs.copy(resolve(nxWorkspaceDir, "npmrc"), resolve(root, ".npmrc"));
   await copyTemplate("workspace/eslint.config.mjs", resolve(root, "eslint.config.mjs"));
 
-  logger.step("Instalando dependencias Nx (pnpm install)...");
+  logger.step("Installing Nx dependencies (pnpm install)...");
   exec("pnpm install", { cwd: root });
 
-  logger.step("Inicializando Nx workspace (nx reset)...");
+  logger.step("Initializing Nx workspace (nx reset)...");
   exec("pnpm exec nx reset", { cwd: root, silent: true });
 
   // Cambiar al directorio del proyecto para que todos los comandos
@@ -75,26 +75,26 @@ export async function generateWorkspace(opts: WorkspaceOptions): Promise<void> {
   // ─── FASE 2: Generación selectiva ─────────────────────────────────────────
 
   if (opts.services.length > 0) {
-    logger.step("Generando Docker Compose...");
+    logger.step("Generating Docker Compose...");
     await generateDockerCompose(root, opts.services);
   }
 
-  logger.step("Configurando SDD (Spec-Driven Development)...");
+  logger.step("Configuring SDD (Spec-Driven Development)...");
   await generateSDD(root, opts);
 
   for (const app of opts.apps) {
-    logger.step(`Generando app: ${app.name} (${app.type})...`);
+    logger.step(`Generating app: ${app.name} (${app.type})...`);
     await generateApp(root, app, opts.packageScope);
   }
 
   for (const lib of opts.libs) {
-    logger.step(`Generando lib: ${lib.name} (${lib.type})...`);
+    logger.step(`Generating lib: ${lib.name} (${lib.type})...`);
     await generateLib(root, lib, opts.packageScope);
   }
 
   // ─── FASE 3: Finalización ──────────────────────────────────────────────────
 
-  logger.step("Validando registros SDD (sdd:validate)...");
+  logger.step("Validating SDD registries (sdd:validate)...");
   try {
     exec("node sdd/scripts/validate-sdd.mjs", { cwd: root, silent: true });
     logger.success("sdd:validate OK");
@@ -104,7 +104,7 @@ export async function generateWorkspace(opts: WorkspaceOptions): Promise<void> {
     );
   }
 
-  logger.step("Inicializando repositorio git...");
+  logger.step("Initializing git repository...");
   exec("git init", { cwd: root, silent: true });
   exec("git add -A", { cwd: root, silent: true });
   exec(
@@ -112,7 +112,7 @@ export async function generateWorkspace(opts: WorkspaceOptions): Promise<void> {
     { cwd: root, silent: true },
   );
 
-  logger.success(`Workspace "${opts.projectName}" creado exitosamente.`);
+  logger.success(`Workspace "${opts.projectName}" created successfully.`);
 }
 
 /**

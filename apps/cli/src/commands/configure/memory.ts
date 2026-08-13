@@ -23,22 +23,22 @@ const MEMORY_CATALOG: Record<
 > = {
   'basic-memory': {
     label: 'basic-memory',
-    hint: 'Markdown + wikilinks, local-first (requiere uv)',
+    hint: 'Markdown + wikilinks, local-first (requires uv)',
     config: {
       command: 'uvx',
       args: ['basic-memory', 'mcp'],
     },
-    note: 'Requiere uv instalado (https://docs.astral.sh/uv/). Las notas son Markdown plano — pueden apuntarse a un directorio del repo.',
+    note: 'Requires uv (https://docs.astral.sh/uv/). Notes are plain Markdown — they can live inside a repo directory.',
   },
   'knowledge-graph': {
     label: 'Knowledge graph (oficial MCP)',
-    hint: 'Grafo entidades/relaciones en JSON local vía npx',
+    hint: 'Entity/relation graph in local JSON via npx',
     config: {
       command: 'npx',
       args: ['-y', '@modelcontextprotocol/server-memory'],
       env: { MEMORY_FILE_PATH: 'sdd/memory/knowledge-graph.json' },
     },
-    note: 'Persiste en sdd/memory/knowledge-graph.json — viaja con git como el resto de la memoria del kit.',
+    note: 'Persists at sdd/memory/knowledge-graph.json — travels with git like the rest of the kit memory.',
   },
 };
 
@@ -53,11 +53,11 @@ export const configureMemoryCommand = defineCommand({
 
     p.note(
       [
-        'La memoria base del kit (sdd/memory/: lessons.md + journal/) ya funciona',
-        'sin nada de esto — es archivos versionados en git, cero dependencias.',
-        'Estos proveedores MCP agregan recuperación semántica opcional encima.',
+        "The kit's base memory (sdd/memory/: lessons.md + journal/) already works",
+        'without any of this — versioned files in git, zero dependencies.',
+        'These MCP providers add optional semantic retrieval on top.',
       ].join('\n'),
-      'Capa base vs proveedores',
+      'Base layer vs providers',
     );
 
     const cwd = process.cwd();

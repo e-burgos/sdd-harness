@@ -3,11 +3,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { ArrowLeftIcon, MonitorIcon, PlayIcon } from '@phosphor-icons/react';
 import { CopyCommand } from '../components/CopyCommand';
 import { Section, cascade, rise } from '../components/Section';
-import {
-  VIEWER_PRINCIPLES,
-  VIEWER_SECTIONS,
-  VIEWER_SHOTS,
-} from '../data/content';
+import { useContent } from '../i18n';
 import costsShot from '../assets/sdd-docs/costs.png';
 import dashboardShot from '../assets/sdd-docs/dashboard.png';
 import agentsShot from '../assets/sdd-docs/agents.png';
@@ -36,6 +32,8 @@ export function SddDocsPage() {
 }
 
 function ViewerHero() {
+  const { UI } = useContent();
+  const v = UI.viewer;
   return (
     <div className="py-16 md:py-24">
       <motion.div variants={cascade} initial="hidden" animate="show">
@@ -45,35 +43,35 @@ function ViewerHero() {
           className="mb-10 inline-flex items-center gap-2 font-mono text-[12px] text-zinc-500 transition-colors hover:text-accent-300"
         >
           <ArrowLeftIcon size={13} />
-          volver a la documentación
+          {v.back}
         </motion.a>
         <motion.p
           variants={rise}
           className="mb-5 font-mono text-[11px] uppercase tracking-[0.3em] text-accent-400"
         >
-          sdd:docs — la herramienta estrella
+          {v.kicker}
         </motion.p>
         <motion.h1
           variants={rise}
           className="max-w-[18ch] text-4xl font-medium leading-[1.03] tracking-tighter text-zinc-50 md:text-[3.2rem]"
         >
-          El sistema SDD tiene su propia cara.
-          <span className="text-zinc-500"> Y vive dentro del kit.</span>
+          {v.h1a}
+          <span className="text-zinc-500">{v.h1b}</span>
         </motion.h1>
         <motion.p
           variants={rise}
           className="mt-6 max-w-[58ch] text-[15px] leading-relaxed text-zinc-400"
         >
-          Los registros de SDD son JSON pensados para máquinas.{' '}
-          <code className="text-zinc-200">sdd:docs</code> es su cara humana: un
-          visor que lee <code className="text-zinc-300">global.json</code>,
-          specs, ciclos, tareas y catálogos <em>en vivo</em> y los convierte en
-          un dashboard navegable — sin instalar nada, sin build, sin CDN.
+          {v.b1}
+          <code className="text-zinc-200">sdd:docs</code>
+          {v.b2}
+          <em>{v.bLive}</em>
+          {v.b3}
         </motion.p>
         <motion.div variants={rise} className="mt-9">
           <CopyCommand command="pnpm sdd:docs" />
           <p className="mt-3 pl-1 font-mono text-[11.5px] text-zinc-600">
-            → http://127.0.0.1:4310/sdd/docs/
+            {v.cmdNote}
           </p>
         </motion.div>
       </motion.div>
@@ -82,7 +80,10 @@ function ViewerHero() {
 }
 
 function ViewerGallery() {
-  const [shot, setShot] = useState(VIEWER_SHOTS[0]);
+  const { UI, VIEWER_SHOTS } = useContent();
+  const v = UI.viewer;
+  const [shotId, setShotId] = useState(VIEWER_SHOTS[0].id);
+  const shot = VIEWER_SHOTS.find((s) => s.id === shotId) ?? VIEWER_SHOTS[0];
 
   return (
     <section className="border-t hairline py-16 md:py-20">
@@ -90,7 +91,7 @@ function ViewerGallery() {
         {VIEWER_SHOTS.map((s) => (
           <button
             key={s.id}
-            onClick={() => setShot(s)}
+            onClick={() => setShotId(s.id)}
             className={`rounded-full border px-4 py-2 font-mono text-[12.5px] transition-all active:scale-[0.97] ${
               shot.id === s.id
                 ? 'border-accent-500/50 bg-accent-dim text-accent-300'
@@ -121,7 +122,7 @@ function ViewerGallery() {
             </div>
             <img
               src={SHOT_SRC[shot.id]}
-              alt={`Vista ${shot.tab} del visor sdd:docs`}
+              alt={`${v.shotAltPre}${shot.tab}${v.shotAltPost}`}
               className="block w-full"
               loading="lazy"
             />
@@ -133,43 +134,25 @@ function ViewerGallery() {
       </AnimatePresence>
 
       <p className="mt-6 pl-1 font-mono text-[11.5px] text-zinc-600">
-        Capturas reales del visor corriendo sobre un workspace generado con
-        harness init.
+        {v.realNote}
       </p>
     </section>
   );
 }
 
 function ViewerUsage() {
+  const { UI, VIEWER_SECTIONS } = useContent();
+  const u = UI.viewer.usage;
   return (
     <Section
       id="viewer-uso"
-      kicker="cómo se usa"
-      title="Un comando, quince vistas"
-      lead="El visor se instala solo — viene adentro de sdd/docs/ en cada repo generado. No hay setup."
+      kicker={u.kicker}
+      title={u.title}
+      lead={u.lead}
     >
       <div className="grid gap-12 lg:grid-cols-[5fr_6fr]">
         <div className="space-y-7">
-          {[
-            {
-              n: '01',
-              t: 'Levantalo',
-              c: 'pnpm sdd:docs',
-              d: 'Un server de solo módulos node:* sirve el visor en el puerto 4310. Sin npm install extra, sin build.',
-            },
-            {
-              n: '02',
-              t: 'Navegá por hash',
-              c: '#/specs · #/cycles · #/agents',
-              d: 'Router por hash con 15 vistas en 5 secciones. Cada spec, ciclo, task y fix con su detalle.',
-            },
-            {
-              n: '03',
-              t: 'Trabajá y actualizá',
-              c: 'Actualizar → re-lee el filesystem',
-              d: 'El visor no cachea un export: lee los registros vivos. Cerraste un ciclo, se ve. El validador lo mantiene honesto.',
-            },
-          ].map((s) => (
+          {u.steps.map((s) => (
             <motion.div
               key={s.n}
               initial={{ opacity: 0, y: 14 }}
@@ -201,7 +184,7 @@ function ViewerUsage() {
 
         <div>
           <h3 className="mb-4 font-mono text-[12px] uppercase tracking-[0.2em] text-zinc-500">
-            Las 15 vistas
+            {u.viewsHeading}
           </h3>
           <div className="divide-y divide-zinc-800/60 rounded-2xl border hairline bg-ink-900/50">
             {VIEWER_SECTIONS.map((s) => (
@@ -213,9 +196,9 @@ function ViewerUsage() {
                   {s.section}
                 </span>
                 <div className="flex flex-wrap gap-x-4 gap-y-1.5">
-                  {s.views.map((v) => (
-                    <span key={v} className="font-mono text-[12.5px] text-zinc-300">
-                      {v}
+                  {s.views.map((view) => (
+                    <span key={view} className="font-mono text-[12.5px] text-zinc-300">
+                      {view}
                     </span>
                   ))}
                 </div>
@@ -229,12 +212,14 @@ function ViewerUsage() {
 }
 
 function ViewerPrinciples() {
+  const { UI, VIEWER_PRINCIPLES } = useContent();
+  const pr = UI.viewer.principles;
   return (
     <Section
       id="viewer-diseno"
-      kicker="por qué es así"
-      title="Portable a propósito"
-      lead="Cada decisión del visor sale de la misma regla que gobierna el kit: copiar sdd/ a otro repo tiene que funcionar sin editar nada."
+      kicker={pr.kicker}
+      title={pr.title}
+      lead={pr.lead}
     >
       <motion.div
         variants={cascade}
@@ -257,7 +242,7 @@ function ViewerPrinciples() {
       <div className="mt-16 flex flex-wrap items-center gap-5 border-t hairline pt-8">
         <CopyCommand command="npx @e-burgos/sdd-harness init" />
         <p className="font-mono text-[12px] text-zinc-600">
-          Todo repo generado trae el visor adentro.
+          {pr.footNote}
         </p>
       </div>
     </Section>

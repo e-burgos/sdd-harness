@@ -5,68 +5,23 @@ import {
   PauseIcon,
   PlayIcon,
 } from '@phosphor-icons/react';
+import { useContent, useLang } from '../i18n';
 
 const TRADITIONAL_COLOR = '#8b5cf6';
 const AGENTIC_COLOR = '#34d399';
 
-type DemoStep = {
-  feed: string;
-  actor: string;
-  tokens: number;
-  agentic: number;
-  tasksDone: number;
-};
+// Numeric telemetry of the simulated cycle — language-independent.
+// The actor/feed texts for each step come from UI.live.demo.steps (same order).
+const STEP_DATA = [
+  { tokens: 0, agentic: 0, tasksDone: 0 },
+  { tokens: 352_000, agentic: 1.68, tasksDone: 1 },
+  { tokens: 960_000, agentic: 4.44, tasksDone: 2 },
+  { tokens: 1_131_000, agentic: 5.72, tasksDone: 3 },
+  { tokens: 1_131_000, agentic: 5.72, tasksDone: 3 },
+];
 
 const TRADITIONAL_COST = 1000;
 const TOTAL_TASKS = 3;
-
-const STEPS: DemoStep[] = [
-  {
-    actor: 'sdd-orchestrator',
-    feed: 'SPEC GATE OK · abre cycle-01 (auth) · brief + cycle.json',
-    tokens: 0,
-    agentic: 0,
-    tasksDone: 0,
-  },
-  {
-    actor: 'sdd-implementor-back',
-    feed: 'TASK-001 done · modelo de usuario · 352k tokens (sonnet)',
-    tokens: 352_000,
-    agentic: 1.68,
-    tasksDone: 1,
-  },
-  {
-    actor: 'sdd-implementor-back',
-    feed: 'TASK-002 done · endpoints login/refresh · 608k tokens (sonnet)',
-    tokens: 960_000,
-    agentic: 4.44,
-    tasksDone: 2,
-  },
-  {
-    actor: 'sdd-architect',
-    feed: 'TASK-003 done · revisión y hardening · 171k tokens (opus)',
-    tokens: 1_131_000,
-    agentic: 5.72,
-    tasksDone: 3,
-  },
-  {
-    actor: 'sdd-reviewer',
-    feed: 'cierra cycle-01 ✓ · CONTEXTO + MEMORIA GATE · lección → journal',
-    tokens: 1_131_000,
-    agentic: 5.72,
-    tasksDone: 3,
-  },
-];
-
-const tokensFormat = new Intl.NumberFormat('es-AR', {
-  notation: 'compact',
-  maximumFractionDigits: 1,
-});
-const moneyFormat = new Intl.NumberFormat('es-AR', {
-  style: 'currency',
-  currency: 'USD',
-  maximumFractionDigits: 2,
-});
 
 function Kpi({
   value,
@@ -134,9 +89,37 @@ function CostBar({
 }
 
 export function LiveCostsDemo() {
+  const { UI } = useContent();
+  const { lang } = useLang();
+  const demo = UI.live.demo;
   const [index, setIndex] = useState(0);
   const [playing, setPlaying] = useState(true);
-  const done = index >= STEPS.length - 1;
+
+  const steps = useMemo(
+    () =>
+      STEP_DATA.map((data, i) => ({
+        ...data,
+        actor: demo.steps[i].actor,
+        feed: demo.steps[i].feed,
+      })),
+    [demo],
+  );
+  const done = index >= steps.length - 1;
+
+  const { tokensFormat, moneyFormat } = useMemo(() => {
+    const locale = lang === 'es' ? 'es-AR' : 'en-US';
+    return {
+      tokensFormat: new Intl.NumberFormat(locale, {
+        notation: 'compact',
+        maximumFractionDigits: 1,
+      }),
+      moneyFormat: new Intl.NumberFormat(locale, {
+        style: 'currency',
+        currency: 'USD',
+        maximumFractionDigits: 2,
+      }),
+    };
+  }, [lang]);
 
   useEffect(() => {
     if (!playing || done) return;
@@ -144,8 +127,8 @@ export function LiveCostsDemo() {
     return () => clearTimeout(timer);
   }, [playing, index, done]);
 
-  const step = STEPS[index];
-  const feed = useMemo(() => STEPS.slice(0, index + 1), [index]);
+  const step = steps[index];
+  const feed = useMemo(() => steps.slice(0, index + 1), [steps, index]);
   const saving = TRADITIONAL_COST - step.agentic;
   const savingPct = Math.round((saving / TRADITIONAL_COST) * 100);
 
@@ -158,17 +141,17 @@ export function LiveCostsDemo() {
             <span className="relative inline-flex size-2 rounded-full bg-accent-400" />
           </span>
           <span className="font-mono text-[10.5px] uppercase tracking-[0.22em] text-accent-300">
-            local · live
+            {demo.live}
           </span>
           <span className="hidden font-mono text-[10.5px] text-zinc-600 sm:inline">
-            — el visor mientras el loop trabaja
+            {demo.tagline}
           </span>
         </div>
         <div className="flex items-center gap-2">
           {!done && (
             <button
               onClick={() => setPlaying((p) => !p)}
-              aria-label={playing ? 'Pausar simulación' : 'Reanudar simulación'}
+              aria-label={playing ? demo.pause : demo.resume}
               className="rounded-lg border hairline p-1.5 text-zinc-400 transition-colors hover:text-accent-300"
             >
               {playing ? <PauseIcon size={13} /> : <PlayIcon size={13} />}
@@ -179,11 +162,11 @@ export function LiveCostsDemo() {
               setIndex(0);
               setPlaying(true);
             }}
-            aria-label="Reiniciar simulación"
+            aria-label={demo.replay}
             className="inline-flex items-center gap-1.5 rounded-lg border hairline px-2.5 py-1.5 font-mono text-[11px] text-zinc-400 transition-colors hover:text-accent-300"
           >
             <ArrowCounterClockwiseIcon size={12} />
-            replay
+            {demo.replay}
           </button>
         </div>
       </div>
@@ -193,16 +176,16 @@ export function LiveCostsDemo() {
           <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
             <Kpi
               value={`${step.tasksDone}/${TOTAL_TASKS}`}
-              label="tasks done"
+              label={demo.kpiTasks}
             />
-            <Kpi value={tokensFormat.format(step.tokens)} label="tokens" />
+            <Kpi value={tokensFormat.format(step.tokens)} label={demo.kpiTokens} />
             <Kpi
               value={moneyFormat.format(step.agentic)}
-              label="costo agéntico"
+              label={demo.kpiCost}
             />
             <Kpi
               value={done ? `${savingPct}%` : '…'}
-              label="ahorro"
+              label={demo.kpiSaving}
               accent={done}
             />
           </div>
@@ -218,34 +201,33 @@ export function LiveCostsDemo() {
                     className="size-2 rounded-sm"
                     style={{ background: TRADITIONAL_COLOR }}
                   />
-                  tradicional
+                  {demo.legendTraditional}
                 </span>
                 <span className="inline-flex items-center gap-1.5">
                   <span
                     className="size-2 rounded-sm"
                     style={{ background: AGENTIC_COLOR }}
                   />
-                  agéntico
+                  {demo.legendAgentic}
                 </span>
               </span>
             </div>
             <CostBar
-              label="Tradicional"
+              label={demo.legendTraditional}
               value={TRADITIONAL_COST}
               max={TRADITIONAL_COST}
               color={TRADITIONAL_COLOR}
               display={moneyFormat.format(TRADITIONAL_COST)}
             />
             <CostBar
-              label="Agéntico"
+              label={demo.legendAgentic}
               value={Math.max(step.agentic, TRADITIONAL_COST * 0.004)}
               max={TRADITIONAL_COST}
               color={AGENTIC_COLOR}
               display={moneyFormat.format(step.agentic)}
             />
             <p className="pt-2 font-mono text-[10.5px] leading-relaxed text-zinc-600">
-              tradicional = 20 h estimadas × US$ 50/h · agéntico = tokens ×
-              tarifa por tier (sdd/pricing.json)
+              {demo.footnote}
             </p>
           </div>
         </div>
@@ -253,7 +235,7 @@ export function LiveCostsDemo() {
         <div className="flex flex-col justify-between p-5">
           <div>
             <p className="mb-3 font-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">
-              actividad del loop
+              {demo.activity}
             </p>
             <div className="space-y-2">
               {feed.map((entry, i) => (
@@ -281,13 +263,13 @@ export function LiveCostsDemo() {
                 animate={{ opacity: 1, y: 0 }}
                 className="mt-5 rounded-xl border border-accent-500/30 bg-accent-dim px-4 py-3 text-[12.5px] leading-relaxed text-zinc-200"
               >
-                Ciclo cerrado: el dashboard lo reflejó <em>solo</em> — sin
-                recargar, sin tocar nada, y sin perder lo que tenías expandido.
-                Ahorro proyectado del ciclo:{' '}
+                {demo.donePre}
+                <em>{demo.doneEm}</em>
+                {demo.doneMid}
                 <span className="font-mono text-accent-300">
                   {moneyFormat.format(saving)} ({savingPct}%)
                 </span>
-                .
+                {demo.donePost}
               </motion.p>
             )}
           </AnimatePresence>
