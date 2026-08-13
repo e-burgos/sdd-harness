@@ -5715,6 +5715,14 @@ function renderHelpShell(docs) {
     <div role="tablist" aria-label="Documentación SDD" style="display:flex;gap:var(--space-2);flex-wrap:wrap">${pills}</div>
     <div data-help-description>${renderHelpDescription(docs[0])}</div>
     <div data-help-content role="tabpanel">${renderHelpContent(docs[0])}</div>
+    <section class="card" style="margin-top:16px">
+      <div class="card-header"><span class="card-title">Ejemplos completos</span></div>
+      <p class="card-hint" style="margin:0">
+        Repos SDD reales generados por la CLI, uno por modo (monorepo Nx, standalone y proyecto
+        existente), regenerados desde npm en cada release:
+        <a href="https://github.com/e-burgos/sdd-harness-examples" target="_blank" rel="noreferrer" style="color:var(--text-bright)">github.com/e-burgos/sdd-harness-examples</a>
+      </p>
+    </section>
   `;
 }
 

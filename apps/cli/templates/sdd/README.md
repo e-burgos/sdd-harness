@@ -38,6 +38,12 @@ Antes de escribir código, un equipo de **agentes especializados** revisa la esp
 4. **Ciclos iterativos:** El trabajo se divide en ciclos de 1-2 semanas, cada uno con artifacts documentados.
 5. **Automatización agentica:** Agentes especializados generan documentación, tasks y validaciones.
 
+> 💡 **¿Querés ver un repo SDD completo además de este?**
+> [e-burgos/sdd-harness-examples](https://github.com/e-burgos/sdd-harness-examples) tiene un
+> ejemplo real por cada modo de instalación — monorepo Nx, app standalone, y un proyecto
+> existente que adoptó SDD — regenerados desde npm en cada release. Sirven como referencia
+> navegable de cómo se ve este mismo sistema en otros contextos.
+
 ---
 
 ## Estructura del sistema SDD
