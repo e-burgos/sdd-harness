@@ -102,19 +102,19 @@ export function App() {
   return (
     <div className="grain min-h-[100dvh]">
       <header className="sticky top-0 z-30 border-b hairline bg-ink-950/80 backdrop-blur-md">
-        <div className="mx-auto flex max-w-[1200px] items-center justify-between px-5 py-4 md:px-8">
+        <div className="mx-auto flex max-w-[1440px] items-center justify-between px-5 py-4 md:px-8">
           <a href="#top" className="flex items-center gap-2.5">
             <TerminalWindowIcon size={20} className="text-accent-400" />
             <span className="font-mono text-sm tracking-tight text-zinc-100">
               sdd-harness
             </span>
           </a>
-          <nav className="hidden items-center gap-6 lg:flex">
+          <nav className="hidden items-center gap-4 xl:flex">
             {UI.nav.items.map((n) => (
               <a
                 key={n.id}
                 href={`#${n.id}`}
-                className={`text-[13px] transition-colors ${
+                className={`whitespace-nowrap text-[12.5px] transition-colors ${
                   !onSubPage && active === n.id
                     ? 'text-accent-300'
                     : 'text-zinc-500 hover:text-zinc-200'
@@ -158,7 +158,7 @@ export function App() {
               onClick={() => setMenuOpen((v) => !v)}
               aria-label={menuOpen ? UI.nav.closeMenu : UI.nav.openMenu}
               aria-expanded={menuOpen}
-              className="rounded-lg border hairline p-2 text-zinc-300 transition-colors active:scale-[0.95] lg:hidden"
+              className="rounded-lg border hairline p-2 text-zinc-300 transition-colors active:scale-[0.95] xl:hidden"
             >
               {menuOpen ? <XIcon size={17} /> : <ListIcon size={17} />}
             </button>
@@ -171,7 +171,7 @@ export function App() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -8 }}
               transition={{ type: 'spring', stiffness: 260, damping: 30 }}
-              className="absolute inset-x-0 top-full border-b border-t hairline bg-ink-950/95 shadow-[0_24px_48px_-24px_rgba(0,0,0,0.8)] backdrop-blur-xl lg:hidden"
+              className="absolute inset-x-0 top-full border-b border-t hairline bg-ink-950/95 shadow-[0_24px_48px_-24px_rgba(0,0,0,0.8)] backdrop-blur-xl xl:hidden"
             >
               <motion.div
                 variants={cascade}
@@ -239,7 +239,7 @@ export function App() {
         </AnimatePresence>
       </header>
 
-      <main id="top" className="mx-auto max-w-[1200px] px-5 md:px-8">
+      <main id="top" className="mx-auto max-w-[1440px] px-5 md:px-8">
         {onDocsPage ? (
           <SddDocsPage />
         ) : onGuiaPage ? (
@@ -260,7 +260,7 @@ export function App() {
       </main>
 
       <footer className="border-t hairline">
-        <div className="mx-auto flex max-w-[1200px] flex-col gap-2 px-5 py-10 font-mono text-[12px] text-zinc-600 md:flex-row md:items-center md:justify-between md:px-8">
+        <div className="mx-auto flex max-w-[1440px] flex-col gap-2 px-5 py-10 font-mono text-[12px] text-zinc-600 md:flex-row md:items-center md:justify-between md:px-8">
           <span>@e-burgos/sdd-harness — MIT</span>
           <a
             href="https://www.estebanburgos.com.ar"

@@ -51,7 +51,7 @@ const SDD_TREE: TreeNode = {
   children: [
     { name: 'global.json', note: 'única fuente del nombre' },
     { name: 'agents/', note: '7 agentes del ciclo' },
-    { name: 'skills/', note: '16+ skills' },
+    { name: 'skills/', note: '18 skills' },
     { name: 'prompts/', note: 'gates como slash commands' },
     { name: 'schemas/', note: 'JSON Schema estricto' },
     { name: 'scripts/', note: 'validate · rebuild · setup' },
