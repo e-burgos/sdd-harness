@@ -81,7 +81,7 @@ npx vitest run       # suite completa (incluye integración real)
 | `apps/cli/src/utils/blueprint.ts`              | Copia de blueprints con renombre de tokens                          |
 | `apps/cli/templates/sdd/`                      | **Kit SDD portable canónico** (se publica en npm)                   |
 | `apps/cli/templates/workspace/`                | `eslint.config.mjs` del modo nx (la CLI agrega `@nx/eslint-plugin` + `typescript-eslint` a las deps) |
-| `apps/documentation/`                          | Sitio de docs interactivo (React/Vite/Tailwind v4, independiente, deploy Cloudflare Pages). Contenido en `src/data/content.ts` — si cambia la CLI, actualizar ahí |
+| `apps/documentation/`                          | Sitio de docs interactivo (React/Vite/Tailwind v4, independiente). Contenido bilingüe en `src/data/content.ts` + `content.en.ts` — si cambia la CLI, actualizar ambos. Deploy automático a Cloudflare Pages vía `.github/workflows/deploy-docs.yml` (el proyecto de Pages es direct upload: no buildea solo) |
 
 ## 🔎 Búsqueda y exploración del repo (graphify — OPCIONAL)
 

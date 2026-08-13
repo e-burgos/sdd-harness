@@ -19,20 +19,26 @@ pnpm preview
 
 ## Deploy en Cloudflare Pages
 
-| Setting                    | Valor                |
-| -------------------------- | -------------------- |
-| Root directory             | `apps/documentation` |
-| Build command              | `pnpm build`         |
-| Build output directory     | `dist`               |
+El proyecto de Pages es **direct upload** (`sdd-harness-docs`, dominio
+`sdd.estebanburgos.com.ar`): **no** está conectado a GitHub, así que Cloudflare nunca buildea
+por su cuenta. El deploy lo hace el workflow `.github/workflows/deploy-docs.yml`, que corre en
+cada push a `main` que toque `apps/documentation/**` (y a mano vía *Run workflow*).
+
+Requiere dos secrets en el repo:
+
+| Secret                 | Valor                                                        |
+| ---------------------- | ------------------------------------------------------------ |
+| `CLOUDFLARE_API_TOKEN` | Token con permiso **Cloudflare Pages: Edit**                  |
+| `CLOUDFLARE_ACCOUNT_ID`| Account ID de Cloudflare                                      |
 
 SPA de una sola página sin routing — no necesita `_redirects` ni funciones. Todos los assets
 (fuentes incluidas) son self-hosted: funciona sin requests externos.
 
-Con Wrangler directo:
+Deploy manual de emergencia (requiere `wrangler login`):
 
 ```bash
 pnpm build
-npx wrangler pages deploy dist --project-name sdd-harness-docs
+npx wrangler pages deploy dist --project-name sdd-harness-docs --branch main
 ```
 
 ## Estructura
