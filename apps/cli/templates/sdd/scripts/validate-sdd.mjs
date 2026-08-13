@@ -239,6 +239,18 @@ function updatesDir(category, name) {
   return join(SDD, 'context', category, name, 'updates');
 }
 
+// Consolidation legitimately deletes fragments, so a completed cycle is also satisfied by a
+// subproject context consolidated at/after the cycle's completion date.
+function consolidatedSince(category, name, completedAt) {
+  if (!completedAt) return false;
+  const promptPath = join(SDD, 'context', category, name, 'context_prompt.md');
+  if (!existsSync(promptPath)) return false;
+  const header = /actualizaci[oó]n:.*Fecha:\s*(\d{4}-\d{2}-\d{2})/i.exec(
+    readFileSync(promptPath, 'utf8'),
+  );
+  return header !== null && header[1] >= completedAt;
+}
+
 for (const category of CONTEXT_CATEGORIES) {
   const categoryDir = join(SDD, 'context', category);
   if (!existsSync(categoryDir)) continue;
@@ -293,10 +305,10 @@ for (const [file, c] of cycles) {
       `^\\d{4}-\\d{2}-\\d{2}-${escapeRegExp(shortSpecId)}(-[a-z0-9-]+)?-${cycleKey}\\.md$`,
     );
     const hasFragment = readdirSync(dir).some((f) => fragmentRe.test(f));
-    if (!hasFragment) {
+    if (!hasFragment && !consolidatedSince(category, name, c.completed_at)) {
       fail(
         file,
-        `completed without an additive context fragment in ${label} (expected YYYY-MM-DD-${shortSpecId}[-slug]-${cycleKey}.md)`,
+        `completed without an additive context fragment in ${label} (expected YYYY-MM-DD-${shortSpecId}[-slug]-${cycleKey}.md) and the base context_prompt.md header shows no consolidation at/after ${c.completed_at}`,
       );
     }
   }

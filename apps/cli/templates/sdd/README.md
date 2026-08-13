@@ -334,6 +334,10 @@ y el conflicto es imposible, no "fácil de resolver".
 > subproyecto, ni su línea `> Última actualización:` — esa línea solo cambia en la consolidación,
 > y es el principal imán de conflictos. La consolidación va en commit dedicado
 > (`chore(sdd): consolidate context updates for [nombre]`) y nunca en paralelo con un ciclo abierto.
+>
+> El validador acepta el estado consolidado: si el fragmento de un ciclo cerrado ya no existe,
+> `pnpm sdd:validate` da el CONTEXTO GATE por cumplido cuando el header del `context_prompt.md`
+> base del subproyecto muestra `Fecha:` ≥ `completed_at` del ciclo (solo la consolidación toca ese header).
 
 ### Template del fragmento
 

@@ -642,6 +642,8 @@ CYCLE DOCS:
    si se acumulan ≥5 fragmentos, funde los fragmentos en `constitution.md`/
    `context_prompt.md`, actualiza el header, **borra los fragmentos consolidados** y
    commitea como cambio dedicado (`chore(sdd): consolidate context updates for [nombre]`).
+   El validador acepta este estado: sin fragmento, el CONTEXTO GATE de un ciclo cerrado se da
+   por cumplido cuando el header del `context_prompt.md` base muestra `Fecha:` ≥ `completed_at`.
 
 Header obligatorio en `constitution.md` y `context_prompt.md` de subproyecto — **solo
 la consolidación lo toca**:
