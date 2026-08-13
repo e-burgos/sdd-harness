@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.4.0] - 2026-08-13
 
+### Changed — English CLI output + bilingual docs site
+
+- **CLI console output is now fully English.** The interactive wizard prompts were
+  already English; the generator progress logs (`Creating directory structure...`,
+  `Generating app: ...`, `Workspace "..." created successfully.`) and the
+  `configure memory` notes/hints now match, so the CLI no longer mixes languages.
+- **Bilingual documentation site (ES/EN).** sdd.estebanburgos.com.ar now ships a
+  language switch in the header (persisted in `localStorage`, defaulting to the
+  browser language). All sections, the live-costs demo, the sdd:docs viewer page and
+  the guide page chrome are fully translated; the kit manuals themselves remain in
+  Spanish (the kit's working language) with an explanatory note in English mode.
+  The hero terminal animation now replays the **real** `harness init` wizard
+  end-to-end (prompts, generator steps, `sdd:validate`, git init).
+
 ### Changed — selective viewer reactivity + end-to-end documentation
 
 - **Selective live sync in the SDD viewer.** `/sdd/docs/__state` now reports a sha1

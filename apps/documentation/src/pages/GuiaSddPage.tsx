@@ -1,31 +1,38 @@
 import { useMemo, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { ArrowLeftIcon, BookOpenTextIcon, ListChecksIcon } from '@phosphor-icons/react';
+import {
+  ArrowLeftIcon,
+  BookOpenTextIcon,
+  InfoIcon,
+  ListChecksIcon,
+} from '@phosphor-icons/react';
 import { Markdown, extractH2 } from '../components/Markdown';
 import { cascade, rise } from '../components/Section';
+import { useContent } from '../i18n';
 import readmeSource from '../content/sdd-readme.md?raw';
 import howToSource from '../content/sdd-how-to.md?raw';
 
-const DOCS = [
-  {
-    id: 'readme',
-    tab: 'README — el sistema',
-    file: 'sdd/README.md',
-    source: readmeSource,
-    icon: BookOpenTextIcon,
-  },
-  {
-    id: 'how-to',
-    tab: 'HOW-TO — paso a paso',
-    file: 'sdd/HOW-TO-USE-SDD.md',
-    source: howToSource,
-    icon: ListChecksIcon,
-  },
+// The manuals themselves ship inside the kit and are maintained in Spanish
+// (the kit's working language) — only the page chrome is translated.
+const DOC_FILES = [
+  { id: 'readme', file: 'sdd/README.md', source: readmeSource, icon: BookOpenTextIcon },
+  { id: 'how-to', file: 'sdd/HOW-TO-USE-SDD.md', source: howToSource, icon: ListChecksIcon },
 ];
 
 export function GuiaSddPage() {
-  const [doc, setDoc] = useState(DOCS[0]);
-  const toc = useMemo(() => extractH2(doc.source), [doc]);
+  const { UI } = useContent();
+  const g = UI.guia;
+  const docs = useMemo(
+    () =>
+      DOC_FILES.map((d) => ({
+        ...d,
+        tab: g.tabs.find((t) => t.id === d.id)?.tab ?? d.id,
+      })),
+    [g],
+  );
+  const [docId, setDocId] = useState(DOC_FILES[0].id);
+  const doc = docs.find((d) => d.id === docId) ?? docs[0];
+  const toc = useMemo(() => extractH2(doc.source), [doc.source]);
 
   return (
     <>
@@ -37,40 +44,46 @@ export function GuiaSddPage() {
             className="mb-10 inline-flex items-center gap-2 font-mono text-[12px] text-zinc-500 transition-colors hover:text-accent-300"
           >
             <ArrowLeftIcon size={13} />
-            volver a la documentación
+            {g.back}
           </motion.a>
           <motion.p
             variants={rise}
             className="mb-5 font-mono text-[11px] uppercase tracking-[0.3em] text-accent-400"
           >
-            guía sdd — la documentación que viaja con el kit
+            {g.kicker}
           </motion.p>
           <motion.h1
             variants={rise}
             className="max-w-[20ch] text-4xl font-medium leading-[1.03] tracking-tighter text-zinc-50 md:text-[3rem]"
           >
-            El manual completo del sistema,
-            <span className="text-zinc-500"> antes de instalarlo.</span>
+            {g.h1a}
+            <span className="text-zinc-500">{g.h1b}</span>
           </motion.h1>
           <motion.p
             variants={rise}
             className="mt-6 max-w-[58ch] text-[15px] leading-relaxed text-zinc-400"
           >
-            Estos dos documentos viven dentro de <code className="text-zinc-200">sdd/</code>{' '}
-            en cada repo generado — acá los podés leer completos: la referencia
-            del sistema (gates, agentes, registros, reglas) y la guía paso a
-            paso para el día a día de un dev.
+            {g.body}
           </motion.p>
+          {g.langNote && (
+            <motion.p
+              variants={rise}
+              className="mt-6 flex max-w-[62ch] items-start gap-2.5 rounded-xl border border-accent-500/30 bg-accent-dim px-4 py-3 text-[13px] leading-relaxed text-zinc-300"
+            >
+              <InfoIcon size={16} className="mt-0.5 shrink-0 text-accent-400" />
+              <span>{g.langNote}</span>
+            </motion.p>
+          )}
         </motion.div>
       </div>
 
       <div className="border-t hairline pt-10">
         <div className="mb-10 flex flex-wrap gap-2">
-          {DOCS.map((d) => (
+          {docs.map((d) => (
             <button
               key={d.id}
               onClick={() => {
-                setDoc(d);
+                setDocId(d.id);
                 window.scrollTo({ top: 0 });
               }}
               className={`inline-flex items-center gap-2 rounded-full border px-4 py-2 font-mono text-[12.5px] transition-all active:scale-[0.97] ${
@@ -96,7 +109,8 @@ export function GuiaSddPage() {
               className="min-w-0"
             >
               <p className="mb-8 font-mono text-[11.5px] text-zinc-600">
-                {doc.file} — se instala tal cual en cada repo
+                {doc.file}
+                {g.installedNote}
               </p>
               <Markdown source={doc.source} />
             </motion.article>
@@ -105,7 +119,7 @@ export function GuiaSddPage() {
           <aside className="hidden lg:block">
             <nav className="sticky top-24">
               <p className="mb-3 font-mono text-[11px] uppercase tracking-[0.2em] text-zinc-600">
-                En este documento
+                {g.tocHeading}
               </p>
               <ul className="space-y-0.5 border-l hairline">
                 {toc.map((h) => (

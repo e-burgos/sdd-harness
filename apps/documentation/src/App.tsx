@@ -16,29 +16,7 @@ import { LiveCostsDemo } from './components/LiveCostsDemo';
 import { Section, cascade, rise } from './components/Section';
 import { SddDocsPage } from './pages/SddDocsPage';
 import { GuiaSddPage } from './pages/GuiaSddPage';
-import {
-  AGENTS,
-  APP_CATALOG,
-  COMMANDS,
-  GATES,
-  HERMES_PHASES,
-  LIB_CATALOG,
-  MODES,
-  PORTABILITY_POINTS,
-  SDD_SCRIPTS,
-  SERVICE_CATALOG,
-} from './data/content';
-
-const NAV = [
-  { id: 'modos', label: 'Los 3 modos' },
-  { id: 'hermes', label: 'Idea → producto' },
-  { id: 'en-vivo', label: 'Costos en vivo' },
-  { id: 'comandos', label: 'Comandos' },
-  { id: 'metodologia', label: 'Metodología SDD' },
-  { id: 'catalogo', label: 'Catálogo' },
-  { id: 'kit', label: 'El kit portable' },
-  { id: 'empezar', label: 'Empezar' },
-];
+import { useContent, useLang, type Lang } from './i18n';
 
 function useHashRoute() {
   const [hash, setHash] = useState(window.location.hash);
@@ -50,7 +28,7 @@ function useHashRoute() {
   return hash.startsWith('#/') ? hash.slice(2) : '';
 }
 
-function useScrollSpy(ids: string[]) {
+function useScrollSpy(ids: readonly string[]) {
   const [active, setActive] = useState('');
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -70,9 +48,39 @@ function useScrollSpy(ids: string[]) {
   return active;
 }
 
+function LangSwitch({ compact = false }: { compact?: boolean }) {
+  const { lang, setLang } = useLang();
+  return (
+    <div
+      role="group"
+      aria-label="Language / Idioma"
+      className={`inline-flex items-center overflow-hidden rounded-lg border hairline font-mono text-[11px] ${
+        compact ? '' : 'shrink-0'
+      }`}
+    >
+      {(['es', 'en'] as Lang[]).map((l) => (
+        <button
+          key={l}
+          onClick={() => setLang(l)}
+          aria-pressed={lang === l}
+          className={`px-2.5 py-1.5 uppercase transition-colors ${
+            lang === l
+              ? 'bg-accent-dim text-accent-300'
+              : 'text-zinc-500 hover:text-zinc-200'
+          }`}
+        >
+          {l}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function App() {
+  const { UI } = useContent();
   const route = useHashRoute();
-  const active = useScrollSpy(NAV.map((n) => n.id));
+  const navIds = UI.nav.items.map((n) => n.id);
+  const active = useScrollSpy(navIds);
   const [menuOpen, setMenuOpen] = useState(false);
   const onDocsPage = route === 'sdd-docs';
   const onGuiaPage = route === 'guia-sdd';
@@ -102,7 +110,7 @@ export function App() {
             </span>
           </a>
           <nav className="hidden items-center gap-6 lg:flex">
-            {NAV.map((n) => (
+            {UI.nav.items.map((n) => (
               <a
                 key={n.id}
                 href={`#${n.id}`}
@@ -133,10 +141,11 @@ export function App() {
                   : 'hairline text-zinc-400 hover:border-accent-500/40 hover:text-accent-300'
               }`}
             >
-              guía sdd
+              {UI.nav.guiaLabel}
             </a>
           </nav>
           <div className="flex items-center gap-3">
+            <LangSwitch />
             <a
               href="https://www.npmjs.com/package/@e-burgos/sdd-harness"
               target="_blank"
@@ -147,7 +156,7 @@ export function App() {
             </a>
             <button
               onClick={() => setMenuOpen((v) => !v)}
-              aria-label={menuOpen ? 'Cerrar menú' : 'Abrir menú'}
+              aria-label={menuOpen ? UI.nav.closeMenu : UI.nav.openMenu}
               aria-expanded={menuOpen}
               className="rounded-lg border hairline p-2 text-zinc-300 transition-colors active:scale-[0.95] lg:hidden"
             >
@@ -170,7 +179,7 @@ export function App() {
                 animate="show"
                 className="flex flex-col px-5 py-3"
               >
-                {NAV.map((n) => (
+                {UI.nav.items.map((n, i) => (
                   <motion.a
                     key={n.id}
                     variants={rise}
@@ -183,7 +192,7 @@ export function App() {
                     }`}
                   >
                     <span className="mr-3 text-zinc-600">
-                      {String(NAV.indexOf(n) + 1).padStart(2, '0')}
+                      {String(i + 1).padStart(2, '0')}
                     </span>
                     {n.label}
                   </motion.a>
@@ -197,19 +206,22 @@ export function App() {
                   }`}
                 >
                   <span className="mr-3 text-zinc-600">09</span>
-                  sdd:docs — el visor
+                  {UI.nav.sddDocsMenu}
                 </motion.a>
                 <motion.a
                   variants={rise}
                   href="#/guia-sdd"
                   onClick={() => setMenuOpen(false)}
-                  className={`py-3.5 font-mono text-[13px] ${
+                  className={`border-b hairline py-3.5 font-mono text-[13px] ${
                     onGuiaPage ? 'text-accent-300' : 'text-zinc-400'
                   }`}
                 >
                   <span className="mr-3 text-zinc-600">10</span>
-                  guía sdd — el manual completo
+                  {UI.nav.guiaMenu}
                 </motion.a>
+                <div className="py-3.5">
+                  <LangSwitch compact />
+                </div>
               </motion.div>
             </motion.nav>
           )}
@@ -245,7 +257,7 @@ export function App() {
             rel="noreferrer"
             className="transition-colors hover:text-accent-300"
           >
-            Desarrollado por{' '}
+            {UI.footer.by}
             <span className="text-zinc-400">Esteban Burgos</span>
           </a>
         </div>
@@ -255,6 +267,7 @@ export function App() {
 }
 
 function Hero() {
+  const { UI } = useContent();
   return (
     <div className="grid items-center gap-12 py-16 md:min-h-[78dvh] md:grid-cols-[7fr_5fr] md:gap-14 md:py-20">
       <motion.div variants={cascade} initial="hidden" animate="show">
@@ -262,23 +275,21 @@ function Hero() {
           variants={rise}
           className="mb-5 font-mono text-[11px] uppercase tracking-[0.3em] text-accent-400"
         >
-          Spec-Driven Development CLI
+          {UI.hero.kicker}
         </motion.p>
         <motion.h1
           variants={rise}
           className="max-w-[16ch] text-4xl font-medium leading-[1.02] tracking-tighter text-zinc-50 md:text-[3.6rem]"
         >
-          Repos listos para agentes.
-          <span className="text-zinc-500"> Specs antes que código.</span>
+          {UI.hero.title1}
+          <span className="text-zinc-500">{UI.hero.title2}</span>
         </motion.h1>
         <motion.p
           variants={rise}
           className="mt-6 max-w-[52ch] text-[15px] leading-relaxed text-zinc-400"
         >
-          <code className="text-zinc-200">harness</code> genera repos con la
-          metodología SDD integrada: 7 agentes especializados, gates que
-          impiden codear sin diseño, registros validados por schema y un arnés
-          dual que Claude Code y GitHub Copilot leen por igual.
+          <code className="text-zinc-200">harness</code>
+          {UI.hero.body}
         </motion.p>
         <motion.div variants={rise} className="mt-9 flex flex-wrap items-center gap-4">
           <CopyCommand command="npx @e-burgos/sdd-harness init" />
@@ -286,7 +297,7 @@ function Hero() {
             href="#modos"
             className="group inline-flex items-center gap-2 text-[13px] text-zinc-400 transition-colors hover:text-accent-300"
           >
-            Ver los 3 modos
+            {UI.hero.cta}
             <ArrowRightIcon
               size={14}
               className="transition-transform group-hover:translate-x-0.5"
@@ -297,13 +308,9 @@ function Hero() {
           variants={rise}
           className="mt-12 flex flex-wrap gap-x-8 gap-y-3 font-mono text-[11.5px] text-zinc-500"
         >
-          <span>7 agentes SDD</span>
-          <span>18 skills</span>
-          <span>4 gates</span>
-          <span>schemas estrictos</span>
-          <span>costos en vivo</span>
-          <span>memoria portable</span>
-          <span>Nx · standalone · existente</span>
+          {UI.hero.chips.map((chip) => (
+            <span key={chip}>{chip}</span>
+          ))}
         </motion.div>
       </motion.div>
       <motion.div
@@ -318,20 +325,22 @@ function Hero() {
 }
 
 function ModesSection() {
-  const [mode, setMode] = useState(MODES[0]);
+  const { UI, MODES } = useContent();
+  const [modeId, setModeId] = useState(MODES[0].id);
+  const mode = MODES.find((m) => m.id === modeId) ?? MODES[0];
 
   return (
     <Section
       id="modos"
-      kicker="01 — los tres modos"
-      title="Un producto, tres formas de entrar"
-      lead="Monorepo nuevo, app suelta, o un proyecto que ya existe: el sistema SDD que se instala es exactamente el mismo."
+      kicker={UI.modes.kicker}
+      title={UI.modes.title}
+      lead={UI.modes.lead}
     >
       <div className="mb-8 flex flex-wrap gap-2">
         {MODES.map((m) => (
           <button
             key={m.id}
-            onClick={() => setMode(m)}
+            onClick={() => setModeId(m.id)}
             className={`rounded-full border px-4 py-2 font-mono text-[12.5px] transition-all active:scale-[0.97] ${
               mode.id === m.id
                 ? 'border-accent-500/50 bg-accent-dim text-accent-300'
@@ -400,7 +409,7 @@ function ModesSection() {
   );
 }
 
-function CodeLines({ lines }: { lines: string[] }) {
+function CodeLines({ lines }: { lines: readonly string[] }) {
   return (
     <div className="space-y-1.5 font-mono text-[12.5px] leading-relaxed">
       {lines.map((line, i) => (
@@ -424,7 +433,7 @@ function CodeLines({ lines }: { lines: string[] }) {
               {line.slice(2)}
             </>
           ) : (
-            line || ' '
+            line || ' '
           )}
         </div>
       ))}
@@ -433,20 +442,22 @@ function CodeLines({ lines }: { lines: string[] }) {
 }
 
 function HermesSection() {
-  const [phase, setPhase] = useState(HERMES_PHASES[0]);
+  const { UI, HERMES_PHASES } = useContent();
+  const [phaseId, setPhaseId] = useState(HERMES_PHASES[0].id);
+  const phase = HERMES_PHASES.find((p) => p.id === phaseId) ?? HERMES_PHASES[0];
 
   return (
     <Section
       id="hermes"
-      kicker="02 — hermes, el punta a punta"
-      title="De una idea en una frase a un producto con specs"
-      lead="Le pasás una idea en lenguaje natural y el sistema configura el stack, siembra el backlog y conduce el loop de ciclos — con checkpoints humanos donde importa y sin bypassear un solo gate."
+      kicker={UI.hermes.kicker}
+      title={UI.hermes.title}
+      lead={UI.hermes.lead}
     >
       <div className="mb-8 flex flex-wrap gap-2">
         {HERMES_PHASES.map((p) => (
           <button
             key={p.id}
-            onClick={() => setPhase(p)}
+            onClick={() => setPhaseId(p.id)}
             className={`rounded-full border px-4 py-2 font-mono text-[12px] transition-all active:scale-[0.97] ${
               phase.id === p.id
                 ? 'border-accent-500/50 bg-accent-dim text-accent-300'
@@ -476,10 +487,9 @@ function HermesSection() {
             </p>
             {phase.id === 'loop' && (
               <p className="mt-4 max-w-[48ch] text-[12.5px] leading-relaxed text-zinc-500">
-                Y cada ciclo deja lecciones en{' '}
-                <code className="text-zinc-300">sdd/memory/</code>: el sistema
-                aprende del proyecto y no vuelve a pagar dos veces el mismo
-                descubrimiento.
+                {UI.hermes.loopNotePre}
+                <code className="text-zinc-300">sdd/memory/</code>
+                {UI.hermes.loopNotePost}
               </p>
             )}
           </div>
@@ -493,30 +503,18 @@ function HermesSection() {
 }
 
 function LiveSection() {
+  const { UI } = useContent();
   return (
     <Section
       id="en-vivo"
-      kicker="03 — la feature estrella"
-      title="Un tablero que trabaja mientras los agentes trabajan"
-      lead="Cada ciclo registra tokens y tiempos. El visor los convierte en una comparativa de costos contra la estimación tradicional — y en local se actualiza solo, mientras el loop corre. Dale play:"
+      kicker={UI.live.kicker}
+      title={UI.live.title}
+      lead={UI.live.lead}
     >
       <LiveCostsDemo />
 
       <div className="mt-10 grid gap-8 md:grid-cols-3">
-        {[
-          {
-            t: 'Telemetría honesta',
-            d: 'Al cerrar cada ciclo se registran tokens por tier de modelo y minutos en cycle.json → metrics.usage. El costo agéntico sale de tarifas editables en sdd/pricing.json; la estimación tradicional, de las horas que ya estiman tus tasks.',
-          },
-          {
-            t: 'Reactividad quirúrgica',
-            d: 'El visor pollea un fingerprint POR ÁREA de los registros cada 4 segundos. Solo re-renderiza tu vista si cambió un área de la que depende: cerrar un ciclo actualiza Costos y Ciclos, pero no te toca la vista de Agentes.',
-          },
-          {
-            t: 'Tu UI queda intacta',
-            d: 'Secciones expandidas, búsquedas escritas y posición de scroll se preservan en cada actualización. Y si tenés un documento abierto o la pestaña oculta, el refresh espera. En hosting estático, el botón Actualizar de siempre.',
-          },
-        ].map((f, i) => (
+        {UI.live.features.map((f, i) => (
           <motion.div
             key={f.t}
             initial={{ opacity: 0, y: 16 }}
@@ -545,7 +543,7 @@ function LiveSection() {
           href="#/sdd-docs"
           className="group inline-flex items-center gap-2 text-[13.5px] text-zinc-300 transition-colors hover:text-accent-300"
         >
-          Ver el visor completo, con capturas reales
+          {UI.live.cta}
           <ArrowRightIcon
             size={14}
             className="transition-transform group-hover:translate-x-0.5"
@@ -557,12 +555,13 @@ function LiveSection() {
 }
 
 function CommandsSection() {
+  const { UI, COMMANDS } = useContent();
   return (
     <Section
       id="comandos"
-      kicker="04 — referencia"
-      title="Comandos"
-      lead="Todo interactivo con prompts guiados; todo automatizable con flags y -y."
+      kicker={UI.commands.kicker}
+      title={UI.commands.title}
+      lead={UI.commands.lead}
     >
       <motion.div
         variants={cascade}
@@ -602,12 +601,13 @@ function CommandsSection() {
 }
 
 function MethodologySection() {
+  const { UI, AGENTS, GATES } = useContent();
   return (
     <Section
       id="metodologia"
-      kicker="05 — la metodología"
-      title="Siete agentes, tres gates, cero improvisación"
-      lead="Cada feature atraviesa un ciclo de diseño antes de tocar código. Los agentes escriben artefactos verificables; los gates los exigen."
+      kicker={UI.methodology.kicker}
+      title={UI.methodology.title}
+      lead={UI.methodology.lead}
     >
       <div className="grid gap-14 lg:grid-cols-[6fr_5fr]">
         <motion.ol
@@ -665,9 +665,9 @@ function MethodologySection() {
             </motion.div>
           ))}
           <p className="pl-1 pt-1 font-mono text-[11.5px] leading-relaxed text-zinc-600">
-            specs por autor: spec-jdoe-001-user-onboarding / cycles/cycle-01/
-            <br />6 artefactos por ciclo — brief · functional · planner ·
-            architect · tasks · cycle
+            {UI.methodology.footnote1}
+            <br />
+            {UI.methodology.footnote2}
           </p>
         </div>
       </div>
@@ -676,16 +676,17 @@ function MethodologySection() {
 }
 
 function CatalogSection() {
+  const { UI, APP_CATALOG, LIB_CATALOG, SERVICE_CATALOG } = useContent();
   return (
     <Section
       id="catalogo"
-      kicker="06 — catálogo"
-      title="Lo que puede generar"
+      kicker={UI.catalog.kicker}
+      title={UI.catalog.title}
     >
       <div className="grid gap-12 lg:grid-cols-[7fr_5fr]">
         <div>
           <h3 className="mb-4 flex items-center gap-2 font-mono text-[12px] uppercase tracking-[0.2em] text-zinc-500">
-            <StackIcon size={14} /> Apps — 7 tipos
+            <StackIcon size={14} /> {UI.catalog.apps}
           </h3>
           <div className="divide-y divide-zinc-800/60 border-y hairline">
             {APP_CATALOG.map((a) => (
@@ -707,7 +708,7 @@ function CatalogSection() {
         <div className="space-y-10">
           <div>
             <h3 className="mb-4 flex items-center gap-2 font-mono text-[12px] uppercase tracking-[0.2em] text-zinc-500">
-              <GitBranchIcon size={14} /> Libs compartidas
+              <GitBranchIcon size={14} /> {UI.catalog.libs}
             </h3>
             <div className="flex flex-wrap gap-2">
               {LIB_CATALOG.map((l) => (
@@ -722,7 +723,7 @@ function CatalogSection() {
           </div>
           <div>
             <h3 className="mb-4 font-mono text-[12px] uppercase tracking-[0.2em] text-zinc-500">
-              Servicios Docker
+              {UI.catalog.services}
             </h3>
             <div className="flex flex-wrap gap-2">
               {SERVICE_CATALOG.map((s) => (
@@ -735,8 +736,7 @@ function CatalogSection() {
               ))}
             </div>
             <p className="mt-4 max-w-[40ch] text-[12.5px] leading-relaxed text-zinc-500">
-              docker-compose.yml con healthchecks, listo para levantar la
-              infraestructura local del ciclo.
+              {UI.catalog.dockerNote}
             </p>
           </div>
         </div>
@@ -746,12 +746,13 @@ function CatalogSection() {
 }
 
 function KitSection() {
+  const { UI, PORTABILITY_POINTS, SDD_SCRIPTS } = useContent();
   return (
     <Section
       id="kit"
-      kicker="07 — el corazón"
-      title="El kit SDD portable"
-      lead="Todo lo que la CLI instala vive en una sola carpeta sdd/ copiada verbatim — diseñada para moverse entre repos sin editar un solo archivo."
+      kicker={UI.kit.kicker}
+      title={UI.kit.title}
+      lead={UI.kit.lead}
     >
       <div className="grid gap-12 lg:grid-cols-[5fr_6fr]">
         <motion.div
@@ -774,7 +775,7 @@ function KitSection() {
         </motion.div>
         <div>
           <h3 className="mb-4 font-mono text-[12px] uppercase tracking-[0.2em] text-zinc-500">
-            Scripts que viajan con el kit
+            {UI.kit.scripts}
           </h3>
           <div className="divide-y divide-zinc-800/60 rounded-2xl border hairline bg-ink-900/50">
             {SDD_SCRIPTS.map((s) => (
@@ -792,8 +793,9 @@ function KitSection() {
             href="#/sdd-docs"
             className="group mt-5 inline-flex items-center gap-2 text-[13.5px] text-zinc-300 transition-colors hover:text-accent-300"
           >
-            Conocé <code className="text-accent-300">sdd:docs</code> a fondo —
-            capturas reales y las 16 vistas
+            {UI.kit.linkPre}
+            <code className="text-accent-300">sdd:docs</code>
+            {UI.kit.linkPost}
             <ArrowRightIcon
               size={14}
               className="transition-transform group-hover:translate-x-0.5"
@@ -810,41 +812,24 @@ function KitSection() {
         className="mt-14 rounded-2xl border hairline bg-ink-900/50 p-6 md:p-8"
       >
         <p className="mb-2 font-mono text-[11px] uppercase tracking-[0.22em] text-accent-400">
-          Actualizar el kit — sin miedo
+          {UI.kit.update.kicker}
         </p>
         <h3 className="max-w-[40ch] text-xl font-medium tracking-tight text-zinc-100">
-          Un comando trae todo lo nuevo. Lo tuyo no se toca.
+          {UI.kit.update.title}
         </h3>
         <div className="mt-6 grid gap-8 md:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
           <div>
             <CopyCommand command="npx @e-burgos/sdd-harness@latest update sdd" />
             <p className="mt-4 max-w-[48ch] text-[13.5px] leading-relaxed text-zinc-400">
-              El update se gobierna por los hashes de{' '}
-              <code className="text-zinc-300">sdd/kit.json</code>: sabe
-              exactamente qué archivo es del kit, cuál es tuyo y cuál
-              modificaste. Al cierre regenera el catálogo, refresca los
-              symlinks y corre <code className="text-zinc-300">sdd:validate</code>.
+              {UI.kit.update.p1}
+              <code className="text-zinc-300">sdd/kit.json</code>
+              {UI.kit.update.p2}
+              <code className="text-zinc-300">sdd:validate</code>
+              {UI.kit.update.p3}
             </p>
           </div>
           <div className="divide-y divide-zinc-800/60 border-y hairline font-mono text-[12px]">
-            {[
-              {
-                k: 'Tus datos',
-                v: 'specs, ciclos, fixes, contextos, memoria — jamás se tocan',
-              },
-              {
-                k: 'Kit sin modificar',
-                v: 'se reemplaza por la versión nueva, silenciosamente',
-              },
-              {
-                k: 'Archivos nuevos',
-                v: 'se agregan solos (memoria, pricing, skills nuevas…)',
-              },
-              {
-                k: 'Lo que editaste',
-                v: 'queda intacto; la versión nueva aterriza al lado como *.new para fundir a mano',
-              },
-            ].map((row) => (
+            {UI.kit.update.rows.map((row) => (
               <div
                 key={row.k}
                 className="grid grid-cols-[130px_1fr] gap-4 py-3 sm:grid-cols-[170px_1fr]"
@@ -861,33 +846,15 @@ function KitSection() {
 }
 
 function StartSection() {
+  const { UI } = useContent();
   return (
     <Section
       id="empezar"
-      kicker="08 — empezar"
-      title="Tres comandos y estás adentro"
+      kicker={UI.start.kicker}
+      title={UI.start.title}
     >
       <div className="grid gap-8 md:grid-cols-3">
-        {[
-          {
-            n: '01',
-            t: 'Generá o instalá',
-            c: 'npx @e-burgos/sdd-harness init',
-            d: 'Monorepo Nx o standalone. Para un repo existente: harness configure sdd.',
-          },
-          {
-            n: '02',
-            t: 'Escribí tu primera spec',
-            c: 'harness add spec mi-feature',
-            d: 'El QUÉ antes del cómo. Queda registrada y validada en sdd/specs/index.json.',
-          },
-          {
-            n: '03',
-            t: 'Arrancá el ciclo',
-            c: '/start-sdd-cycle.prompt',
-            d: 'Desde Claude Code o Copilot: el orquestador toma la spec y el ciclo corre solo.',
-          },
-        ].map((s, i) => (
+        {UI.start.steps.map((s, i) => (
           <motion.div
             key={s.n}
             initial={{ opacity: 0, y: 18 }}
