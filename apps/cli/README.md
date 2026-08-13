@@ -96,7 +96,7 @@ harness init [--name <name>] [--mode nx|standalone] [--standalone] [--config <pa
 | `--name`       | Project name, must be kebab-case            |
 | `--mode`       | `nx` (monorepo) or `standalone` (root app)  |
 | `--standalone` | Shortcut for `--mode standalone`            |
-| `--config`     | Path to a `harness.config.ts` file          |
+| `--config`     | Config file (`.json`, `.mjs`, `.js`) — fully non-interactive, agent/CI-friendly |
 | `-y, --yes`    | Skip the confirmation prompt                |
 
 **Interactive prompts (Nx monorepo):**
@@ -178,6 +178,38 @@ my-saas/
 ```
 
 ---
+
+### `harness idea`
+
+The single entry point of the hermes end-to-end flow: persist a product idea in natural
+language and scaffold everything an AI agent needs to take it to product.
+
+```bash
+harness idea "una app para gestionar turnos de peluquería" [--force]
+```
+
+What it writes (never overwrites without `--force`):
+
+- `harness.idea.md` — the idea verbatim + the protocol to follow (discovery → stack →
+  specs → SDD cycle loop, with the human checkpoints marked).
+- On an empty repo it also writes `harness.config.json` (stub for `init --config`) and
+  `harness.config.schema.json` (JSON Schema so the agent validates the config it fills).
+- Inside an existing SDD workspace it writes only the idea file, with the gap-analysis
+  protocol (`harness add app|service|spec`) instead of `init`.
+
+The intelligence lives in the kit's `sdd-hermes` skill — this command just materializes
+the deterministic entry point for it.
+
+### `harness config schema`
+
+Print (or write) the JSON Schema of the `init --config` contract, derived from the same
+zod schema the CLI validates with — agents and editors can validate a config without
+running the CLI.
+
+```bash
+harness config schema                                  # stdout
+harness config schema --out harness.config.schema.json # file
+```
 
 ### `harness add app`
 
@@ -501,14 +533,19 @@ Specs follow the v2.0 multi-developer convention: `sdd/specs/spec-[gh-user]-[NNN
 
 `react` and `springboot` apps and TS libs are generated from the kit's own blueprints (`sdd/templates/apps/react-app`, `sdd/templates/apps/java-api`, `sdd/templates/libs/ts-lib`) with token renaming — the same overlay the `scaffold-nx` skill documents. Spring Boot integrates with Nx through Maven via `nx:run-commands` (no Gradle required).
 
-## Configuration File (`harness.config.ts`)
+## Configuration File (`init --config`)
 
-For repeatable setups, define a config file:
+For repeatable setups — and for AI agents / CI, which cannot answer interactive
+prompts — define a config file. Formats: plain `.json`, or `.mjs`/`.js` with a default
+export via `defineConfig` (TypeScript configs must be compiled first). `harness idea`
+scaffolds a JSON stub plus its JSON Schema; `harness config schema` prints the schema.
 
-```typescript
+```javascript
+// harness.config.mjs
 import { defineConfig } from "@e-burgos/sdd-harness";
 
 export default defineConfig({
+  mode: "nx", // or "standalone" (exactly one app, code at repo root)
   project: {
     name: "my-saas",
     description: "Multi-tenant SaaS platform",
@@ -518,6 +555,10 @@ export default defineConfig({
     { name: "api", type: "nestjs", port: 3000, features: [] },
     { name: "webapp", type: "react", port: 4200, features: [] },
     { name: "worker", type: "python", features: [] },
+  ],
+  libs: [
+    { name: "shared-types", type: "shared-types" },
+    { name: "api-client", type: "api-client" },
   ],
   services: [
     { type: "postgres", port: 5432 },
@@ -550,22 +591,25 @@ export default defineConfig({
 });
 ```
 
-Then run:
+Then run (no prompts at all — validation errors report the exact config path):
 
 ```bash
-harness init --config harness.config.ts
+harness init --config harness.config.mjs   # or harness.config.json
 ```
 
 ### Config Schema
 
-The configuration is validated with Zod. Key constraints:
+The configuration is validated with Zod (JSON Schema export: `harness config schema`).
+Key constraints:
 
-- `project.name` — non-empty string
-- `project.packageScope` — must start with `@`
+- `mode` — `nx` (default) or `standalone` (requires exactly one app)
+- `project.name` — lowercase kebab-case
+- `project.packageScope` — npm scope like `@my-project`
 - `apps[].name` — lowercase kebab-case
 - `apps[].type` — one of: `nestjs`, `react`, `nextjs`, `python`, `fastify`
+- `libs[].type` — one of: `shared-types`, `shared-utils`, `ui-kit`, `api-client`, `config`
 - `services[].type` — one of: `postgres`, `redis`, `rabbitmq`, `minio`
-- `services[].port` — between 1000 and 65535
+- `services[].port` — optional, between 1000 and 65535 (catalog defaults apply)
 - `infra.provider` — one of: `digitalocean`, `aws`, `gcp`, `vercel`, `railway`
 
 ## Contributing / Development

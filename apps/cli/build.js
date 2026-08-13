@@ -19,7 +19,7 @@ async function build() {
     target: 'node18',
     format: 'esm',
     outdir: 'dist',
-    external: ['esbuild', 'fs-extra', 'picocolors', 'citty', '@clack/prompts', 'zod'],
+    external: ['esbuild', 'fs-extra', 'picocolors', 'citty', '@clack/prompts', 'zod', 'zod-to-json-schema'],
   });
 
   // Generate TypeScript declaration files

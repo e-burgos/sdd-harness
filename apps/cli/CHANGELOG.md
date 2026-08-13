@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — Hermes phase 2: single idea entry point + inspectable config contract
+
+- **`harness idea "<text>"`** — the deterministic entry point of the hermes end-to-end
+  flow. Persists `harness.idea.md` (idea verbatim + the protocol with human checkpoints)
+  and, on an empty repo, scaffolds `harness.config.json` + `harness.config.schema.json`
+  ready for `init --config`. Inside an existing SDD workspace it switches to the
+  gap-analysis protocol (`harness add app|service|spec`). Never overwrites without
+  `--force`.
+- **`harness config schema [--out <file>]`** — prints (or writes) the JSON Schema of the
+  `init --config` contract, derived from the same zod schema the CLI validates with
+  (via `zod-to-json-schema`), so agents and editors validate configs without running
+  the CLI.
+- `project.packageScope` validation is now a clean regex (`@scope`) instead of zod's
+  `.startsWith()`, whose generated JSON-Schema pattern (`^\@`) was rejected by ajv.
+
 ### Added — Hermes phase 1: portable memory, non-interactive init, end-to-end loop skill
 
 - **Portable memory system (`sdd/memory/` — MEMORIA GATE 🧠).** The kit now ships a

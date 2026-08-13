@@ -152,6 +152,25 @@ export const COMMANDS: Command[] = [
     ],
   },
   {
+    name: 'idea',
+    usage: 'harness idea "<idea en lenguaje natural>" [--force]',
+    summary: 'Entrada del punta-a-punta hermes: de una idea a producto.',
+    points: [
+      'Persiste harness.idea.md con la idea verbatim + el protocolo a seguir (descubrimiento → stack → specs → ciclos SDD, con checkpoints humanos).',
+      'En repo vacío deja también el stub harness.config.json y su JSON Schema, listos para init --config.',
+      'En un workspace SDD existente, el protocolo cambia a análisis de gaps (harness add app|service|spec).',
+      'La inteligencia vive en la skill sdd-hermes del kit — el comando materializa la entrada determinista.',
+    ],
+  },
+  {
+    name: 'config schema',
+    usage: 'harness config schema [--out <archivo>]',
+    summary: 'Imprime el JSON Schema del contrato de init --config.',
+    points: [
+      'Derivado del mismo schema zod con el que valida la CLI: agentes y editores validan configs sin ejecutarla.',
+    ],
+  },
+  {
     name: 'add app',
     usage: 'harness add app [tipo] --name <nombre>',
     summary: 'Agrega una app a un workspace existente.',
@@ -247,6 +266,11 @@ export const GATES: Gate[] = [
     name: 'CONTEXTO GATE',
     rule: 'Un ciclo no cierra con el contexto desactualizado.',
     how: 'Fragmentos aditivos por ciclo en context/**/updates/ — únicos por construcción, cero merge conflicts.',
+  },
+  {
+    name: 'MEMORIA GATE',
+    rule: 'Lo aprendido en un ciclo no se vuelve a pagar en el siguiente.',
+    how: 'Lecciones destiladas en memory/lessons.md (cap 120 líneas, leído al iniciar sesión) + journal episódico append-only que el orquestador destila con ≥5 entradas.',
   },
 ];
 
