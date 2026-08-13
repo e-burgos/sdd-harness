@@ -5,6 +5,28 @@ All notable changes to `@e-burgos/sdd-harness` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.3] - 2026-08-13
+
+### Added — the examples repo is now cited where users actually arrive
+
+[e-burgos/sdd-harness-examples](https://github.com/e-burgos/sdd-harness-examples) (one real,
+regenerated-from-npm example per mode) was only linked from the GitHub README and the docs
+site — the surfaces where nobody lands first. Now it is referenced from:
+
+- **This README** — the page npmjs.com shows.
+- **The kit's `sdd/README.md`** — what the user reads inside their own generated repo.
+- **The CLI itself** — every `harness init` path closes with a "See more examples" note.
+- **The `sdd:docs` viewer** — an "Ejemplos completos" card in the Help view.
+
+### Fixed
+
+- **The docs site was horizontally clipped on phones.** The
+  `npx @e-burgos/sdd-harness@latest update sdd` copy button cannot wrap, and as a grid item its
+  automatic minimum size is the full one-line width of the command — so at 375–430px the layout
+  viewport was forced to 461px and the whole page panned sideways, cutting content off at the
+  left edge. `min-w-0` on the button and its grid column lets the existing `truncate` do its job.
+- The npm README still advertised "16+ skills"; the kit ships 18.
+
 ## [0.4.2] - 2026-08-13
 
 ### Changed — the `sdd:docs` viewer uses the width it has

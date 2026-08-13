@@ -14,13 +14,20 @@ In standalone (and existing non-monorepo) repos, the project registers itself in
 registries as a single logical app `apps/<name>` — the schemas keep their strict patterns,
 every gate works unchanged, and the convention is documented in the generated subproject context.
 
+> **See the output before running anything:**
+> [**e-burgos/sdd-harness-examples**](https://github.com/e-burgos/sdd-harness-examples) holds one
+> real, browsable example per mode — `flexi-market/` (Nx: React + Spring Boot), `pulse-api/`
+> (standalone Fastify) and `legacy-shop/` (an existing project that adopted SDD without changing
+> a line of its own code). A workflow regenerates them from the published package on every
+> release, so they always match the version you are about to install.
+
 ## Features
 
 - **Interactive scaffolding** — guided prompts to configure your entire workspace
 - **7 app types** — NestJS, React, Next.js, Fastify, Hono, Spring Boot 3, Python
 - **5 shared library types** — Types, Utils, UI Kit, API Client, Config
 - **4 Docker services** — PostgreSQL, Redis, RabbitMQ, MinIO (with healthchecks)
-- **Portable SDD system** — the full Spec-Driven Development kit (7 agents, 16+ skills, gate prompts, strict JSON Schemas, validator scripts, docs viewer and scaffolding blueprints) copied verbatim; `sdd/global.json` is the single source of truth for project identity
+- **Portable SDD system** — the full Spec-Driven Development kit (7 agents, 18 skills, gate prompts, strict JSON Schemas, validator scripts, docs viewer and scaffolding blueprints) copied verbatim; `sdd/global.json` is the single source of truth for project identity
 - **Dual harness via symlinks** — `pnpm setup:agents` exposes agents/skills/prompts to Claude Code and GitHub Copilot from a single source
 - **MCP server configuration** — Nx, GitHub, Playwright, Figma, Notion, Filesystem
 - **Config-as-code** — optional `harness.config.ts` with Zod validation

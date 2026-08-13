@@ -59,6 +59,15 @@ const DEFAULT_APP_NAMES: Record<string, string> = {
   hono: "api",
 };
 
+/** Closing pointer shown by every init path: real generated repos to compare against. */
+function outroReady(message: string): void {
+  p.note(
+    `Browsable examples of every mode, regenerated from npm on each release:\nhttps://github.com/e-burgos/sdd-harness-examples`,
+    'See more examples',
+  );
+  p.outro(pc.green(message));
+}
+
 export const initCommand = defineCommand({
   meta: {
     name: "init",
@@ -210,7 +219,7 @@ async function runConfigFlow(configPath: string): Promise<void> {
     process.exit(1);
   }
 
-  p.outro(pc.green("Done! Your workspace is ready."));
+  outroReady("Done! Your workspace is ready.");
 }
 
 // ─── Standalone flow ──────────────────────────────────────────────────────────
@@ -278,7 +287,7 @@ async function runStandaloneFlow(
     process.exit(1);
   }
 
-  p.outro(pc.green("Done! Your standalone repo is ready."));
+  outroReady("Done! Your standalone repo is ready.");
 }
 
 // ─── Nx monorepo flow ─────────────────────────────────────────────────────────
@@ -448,5 +457,5 @@ async function runNxFlow(
     process.exit(1);
   }
 
-  p.outro(pc.green("Done! Your workspace is ready."));
+  outroReady("Done! Your workspace is ready.");
 }

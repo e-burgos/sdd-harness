@@ -829,7 +829,9 @@ function KitSection() {
           {UI.kit.update.title}
         </h3>
         <div className="mt-6 grid gap-8 md:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
-          <div>
+          {/* min-w-0: como item del grid, sin esto su mínimo es el min-content del
+              comando en una línea y en mobile empuja el layout fuera del viewport */}
+          <div className="min-w-0">
             <CopyCommand command="npx @e-burgos/sdd-harness@latest update sdd" />
             <p className="mt-4 max-w-[48ch] text-[13.5px] leading-relaxed text-zinc-400">
               {UI.kit.update.p1}
