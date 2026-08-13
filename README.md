@@ -9,8 +9,19 @@ SDD (Spec-Driven Development) methodology.
 | --------------------------------- | ----------------------------------------------------------------- |
 | [`apps/cli/`](apps/cli/README.md) | The published npm package: CLI source, blueprints and the portable SDD kit (`apps/cli/templates/sdd/`) |
 | [`apps/documentation/`](apps/documentation/README.md) | Interactive docs site (React + Vite + Tailwind), independent package, deploys to Cloudflare Pages |
-| `examples/`                       | Real generated workspaces for the three modes (gitignored): `test-sdd-nx-workspace`, `test-sdd-standalone`, `test-sdd-harness` |
+| `examples/`                       | Local test bench: real generated workspaces for the three modes (gitignored, regenerate at will) |
 | `AGENTS.md` / `CLAUDE.md`         | Dual harness with the working rules for AI agents on this repo    |
+
+## See what it generates
+
+[**e-burgos/sdd-harness-examples**](https://github.com/e-burgos/sdd-harness-examples) holds the
+CLI's real output, browsable without installing anything: an Nx monorepo (React + Spring Boot)
+and a standalone Fastify app, each with the full SDD kit. A scheduled workflow regenerates them
+from the **published** package on every release, so they never drift from npm — which also makes
+that repo a smoke test of each release.
+
+The `examples/` directory here is a different thing: a scratch bench for local E2E runs, ignored
+by git on purpose.
 
 ## Quick start
 

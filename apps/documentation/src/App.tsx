@@ -219,6 +219,17 @@ export function App() {
                   <span className="mr-3 text-zinc-600">10</span>
                   {UI.nav.guiaMenu}
                 </motion.a>
+                <motion.a
+                  variants={rise}
+                  href="https://github.com/e-burgos/sdd-harness-examples"
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={() => setMenuOpen(false)}
+                  className="border-b hairline py-3.5 font-mono text-[13px] text-zinc-400"
+                >
+                  <span className="mr-3 text-zinc-600">11</span>
+                  examples
+                </motion.a>
                 <div className="py-3.5">
                   <LangSwitch compact />
                 </div>
@@ -881,6 +892,29 @@ function StartSection() {
           </motion.div>
         ))}
       </div>
+      <motion.div
+        initial={{ opacity: 0, y: 18 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: '-40px' }}
+        transition={{ type: 'spring', stiffness: 90, damping: 18 }}
+        className="mt-14 rounded-2xl border hairline p-6 md:mt-20 md:p-8"
+      >
+        <h3 className="text-lg font-medium tracking-tight text-zinc-100">
+          {UI.start.examples.title}
+        </h3>
+        <p className="mt-3 max-w-3xl text-[13px] leading-relaxed text-zinc-500">
+          {UI.start.examples.lead}
+        </p>
+        <a
+          href="https://github.com/e-burgos/sdd-harness-examples"
+          target="_blank"
+          rel="noreferrer"
+          className="mt-5 inline-flex items-center gap-2 rounded-lg border border-accent-500/40 bg-accent-dim px-4 py-2 font-mono text-[12.5px] text-accent-300 transition-colors hover:border-accent-500/70"
+        >
+          {UI.start.examples.cta}
+          <span aria-hidden="true">→</span>
+        </a>
+      </motion.div>
     </Section>
   );
 }
