@@ -15,10 +15,11 @@ SDD (Spec-Driven Development) methodology.
 ## See what it generates
 
 [**e-burgos/sdd-harness-examples**](https://github.com/e-burgos/sdd-harness-examples) holds the
-CLI's real output, browsable without installing anything: an Nx monorepo (React + Spring Boot)
-and a standalone Fastify app, each with the full SDD kit. A scheduled workflow regenerates them
-from the **published** package on every release, so they never drift from npm — which also makes
-that repo a smoke test of each release.
+CLI's real output, browsable without installing anything — one example per mode: an Nx monorepo
+(React + Spring Boot), a standalone Fastify app, and a project that already existed and adopted
+SDD without changing a line of its own code. A scheduled workflow regenerates them from the
+**published** package on every release, so they never drift from npm — which also makes that repo
+a smoke test of each release.
 
 The `examples/` directory here is a different thing: a scratch bench for local E2E runs, ignored
 by git on purpose.

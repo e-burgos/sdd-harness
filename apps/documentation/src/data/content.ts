@@ -640,7 +640,7 @@ export const UI = {
     ],
     examples: {
       title: '¿Preferís verlo antes?',
-      lead: 'La salida de la CLI vive en su propio repo — un monorepo Nx (React + Spring Boot) y una app standalone con Fastify, las dos con el kit SDD completo. Un workflow las regenera desde el paquete publicado en cada release, así nunca quedan atrás de npm.',
+      lead: 'La salida de la CLI vive en su propio repo, un ejemplo por modo: un monorepo Nx (React + Spring Boot), una app standalone con Fastify, y un proyecto que ya existía y adoptó SDD sin tocar una línea de su código. Un workflow los regenera desde el paquete publicado en cada release, así nunca quedan atrás de npm.',
       cta: 'Ver los examples',
     },
   },
