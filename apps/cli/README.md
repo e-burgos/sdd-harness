@@ -83,6 +83,26 @@ $ npx @e-burgos/sdd-harness init
 
 ## Commands
 
+> **Running the CLI from an agent or from CI.** Every prompt has a flag, so the whole CLI is
+> driveable without a TTY. This is not a convenience: an interactive prompt cannot be answered
+> through stdin — @clack appends piped text to the initial value and never submits, so a
+> command missing a flag **hangs** instead of failing. Pass the flags, and reach for
+> `harness <command> --help` to see the ones you are missing.
+>
+> | Command             | Unattended form                                                                 |
+> | ------------------- | -------------------------------------------------------------------------------- |
+> | `init`              | `--config <path>` (the whole wizard as a validated file)                          |
+> | `add app`           | `<type> --name <name>`                                                            |
+> | `add spec`          | `<slug> --author <user> --title <text> --app apps/<name>`                         |
+> | `add skill`         | `<name> --description <text>`                                                     |
+> | `add service`       | `<type>`                                                                          |
+> | `configure sdd`     | `--name <project> --description <text>` (plus `-y` only to reset an existing kit) |
+> | `configure docker`  | `--services postgres,redis`                                                       |
+> | `configure mcp`     | `--servers <a,b>`                                                                 |
+> | `configure memory`  | `--providers <a,b>`                                                               |
+> | `update sdd`        | `-y`                                                                              |
+> | `idea`              | `"<text>" [--force]`                                                              |
+
 ### `harness init`
 
 Initialize a new AI-agent-ready repo from scratch — Nx monorepo or standalone app.
@@ -159,9 +179,9 @@ my-saas/
 │   ├── prompts/
 │   │   └── ...
 │   ├── skills/
-│   │   ├── sdd-orchestrator/SKILL.md
-│   │   ├── generate-nestjs-module/SKILL.md
-│   │   └── generate-react-component/SKILL.md
+│   │   ├── sdd-orchestrator/skill.md
+│   │   ├── generate-nestjs-module/skill.md
+│   │   └── generate-react-component/skill.md
 │   ├── global.json
 │   ├── schema.json
 │   ├── api.json
@@ -267,22 +287,23 @@ harness add service rabbitmq
 Create a new custom agent skill in `sdd/skills/`.
 
 ```bash
-harness add skill [name]
+harness add skill [name] [--description <text>]
 ```
 
-| Argument | Description                                     |
-| -------- | ----------------------------------------------- |
-| `name`   | (positional, optional) Skill name in kebab-case |
+| Argument        | Description                                     |
+| --------------- | ----------------------------------------------- |
+| `name`          | (positional, optional) Skill name in kebab-case |
+| `--description` | Skill description — skips the prompt            |
 
-Generates a `SKILL.md` template:
+Generates a `skill.md` template:
 
 ```bash
 $ harness add skill data-import
 
-✓ Skill created at sdd/skills/data-import/SKILL.md
+✓ Skill created at sdd/skills/data-import/skill.md
 ```
 
-Generated file (`sdd/skills/data-import/SKILL.md`):
+Generated file (`sdd/skills/data-import/skill.md`):
 
 ```markdown
 # data-import
@@ -313,13 +334,20 @@ Imports CSV/JSON data into the database
 Create a new SDD specification with the v2.0 multi-developer structure.
 
 ```bash
-harness add spec [slug] [--author <gh-user>]
+harness add spec [slug] [--author <gh-user>] [--title <text>] [--app <apps/name>]
 ```
 
 Creates `sdd/specs/spec-[author]-[NNN]-[slug]/` (spec file + `cycles/` + `fixes/`), computes the per-author `NNN` counter, registers the entry in `sdd/specs/index.json` and runs `sdd:validate`.
 
+| Argument   | Description                                                                  |
+| ---------- | ---------------------------------------------------------------------------- |
+| `slug`     | (positional, optional) Spec slug in kebab-case                               |
+| `--author` | GitHub username — the per-author counter keys off this                       |
+| `--title`  | Spec title — skips the prompt, defaults to the slug                          |
+| `--app`    | Main subproject affected, `(apps\|libs\|tools)/<name>` — SPEC GATE needs it   |
+
 ```bash
-$ harness add spec user-onboarding --author jdoe
+$ harness add spec user-onboarding --author jdoe --title "User onboarding" --app apps/core-api
 # → sdd/specs/spec-jdoe-001-user-onboarding/spec-jdoe-001-user-onboarding.spec.md
 ```
 
@@ -361,10 +389,10 @@ next update is surgical.
 Regenerate `docker-compose.yml` with a new selection of services. Replaces the entire file.
 
 ```bash
-harness configure docker
+harness configure docker [--services postgres,redis,rabbitmq,minio]
 ```
 
-Presents a multi-select with all 4 services, pre-selecting any already configured. Useful to remove services or start fresh.
+Presents a multi-select with all 4 services, pre-selecting any already configured. Useful to remove services or start fresh. With `--services` it runs unattended; unknown values fail with the valid list.
 
 ---
 
@@ -373,13 +401,19 @@ Presents a multi-select with all 4 services, pre-selecting any already configure
 Configure or reset the SDD (Spec-Driven Development) agent infrastructure.
 
 ```bash
-harness configure sdd
+harness configure sdd [--name <project>] [--description <text>] [-y]
 ```
+
+| Argument        | Description                                                                       |
+| --------------- | --------------------------------------------------------------------------------- |
+| `--name`        | Project name — skips the prompt (defaults to `package.json` name or the directory) |
+| `--description` | Project description — skips the prompt                                             |
+| `-y`, `--yes`   | Skip the reset confirmation. **Destructive** when `sdd/` already exists            |
 
 - **Shape detection**: Nx monorepo (`nx.json`/`apps/`) → registers every app in `apps/`; otherwise the repo registers as a single logical app (standalone convention). App types are inferred from stack markers (`pom.xml`, `nest-cli.json`, `vite.config.ts`, ...)
 - **Automatic `package.json` merge**: injects the `sdd:*` + `setup:agents` scripts and `ajv`/`ajv-formats` devDependencies without touching your existing scripts — and creates a minimal `package.json` if the repo has none (pure Java/Python repos)
 - **Absorbs your existing `AGENTS.md`/`CLAUDE.md`**: their content is preserved under an "Instrucciones previas del proyecto" section inside `sdd/dual-harness/` before the root files become symlinks — nothing is lost
-- If `sdd/global.json` already exists, asks for confirmation before resetting the whole `sdd/` directory
+- If `sdd/global.json` already exists, asks for confirmation before resetting the whole `sdd/` directory (or warns and proceeds with `-y`)
 - After install: run `pnpm install` (so `sdd:validate` finds ajv) and fill the `[...]` markers in `sdd/context/`
 
 ---
@@ -389,10 +423,10 @@ harness configure sdd
 Configure MCP (Model Context Protocol) servers for AI agent integration.
 
 ```bash
-harness configure mcp
+harness configure mcp [--servers <a,b,c>]
 ```
 
-Presents a multi-select from the MCP catalog, pre-selecting any already in `.mcp.json`. Generates a `.mcp.json` file at workspace root.
+Presents a multi-select from the MCP catalog, pre-selecting any already in `.mcp.json`. Generates a `.mcp.json` file at workspace root. `--servers` takes catalog keys and runs unattended.
 
 **Available MCP servers:**
 
@@ -414,11 +448,12 @@ Opt-in memory providers (MCP) **on top of** the kit's portable base layer. The b
 files and needs no runtime; these providers add optional semantic retrieval.
 
 ```bash
-harness configure memory
+harness configure memory [--providers <a,b,c>]
 ```
 
 Merges into `.mcp.json` without touching other configured MCP servers (deselecting a
-provider removes only that provider). No API keys, no paid services:
+provider removes only that provider). `--providers` takes catalog keys and runs
+unattended. No API keys, no paid services:
 
 | Provider          | What it adds                              | Runtime            |
 | ----------------- | ----------------------------------------- | ------------------ |
@@ -628,7 +663,7 @@ Key constraints:
 - `project.name` — lowercase kebab-case
 - `project.packageScope` — npm scope like `@my-project`
 - `apps[].name` — lowercase kebab-case
-- `apps[].type` — one of: `nestjs`, `react`, `nextjs`, `python`, `fastify`
+- `apps[].type` — one of: `nestjs`, `react`, `nextjs`, `python`, `fastify`, `springboot`, `hono` (the same seven the wizard offers)
 - `libs[].type` — one of: `shared-types`, `shared-utils`, `ui-kit`, `api-client`, `config`
 - `services[].type` — one of: `postgres`, `redis`, `rabbitmq`, `minio`
 - `services[].port` — optional, between 1000 and 65535 (catalog defaults apply)

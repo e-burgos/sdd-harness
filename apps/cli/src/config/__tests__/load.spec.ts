@@ -69,6 +69,44 @@ describe('config/load', () => {
     await expect(loadHarnessConfig(path)).rejects.toThrow(/apps\.0\.type/);
   });
 
+  // La vía no interactiva tiene que cubrir los mismos tipos que el wizard:
+  // springboot y hono salen de blueprints y antes sólo eran alcanzables a mano.
+  it('acepta los siete tipos de app que ofrece el wizard', async () => {
+    const path = await writeConfig({
+      project: VALID_CONFIG.project,
+      apps: [
+        { name: 'core-api', type: 'nestjs' },
+        { name: 'web', type: 'react' },
+        { name: 'agent', type: 'python' },
+        { name: 'site', type: 'nextjs' },
+        { name: 'edge', type: 'fastify' },
+        { name: 'orders-api', type: 'springboot' },
+        { name: 'gateway', type: 'hono' },
+      ],
+    });
+    const config = await loadHarnessConfig(path);
+    expect(config.apps.map((a) => a.type)).toEqual([
+      'nestjs',
+      'react',
+      'python',
+      'nextjs',
+      'fastify',
+      'springboot',
+      'hono',
+    ]);
+  });
+
+  it('acepta springboot como única app en standalone', async () => {
+    const config = await loadHarnessConfig(
+      await writeConfig({
+        mode: 'standalone',
+        project: VALID_CONFIG.project,
+        apps: [{ name: 'orders-api', type: 'springboot' }],
+      }),
+    );
+    expect(toStandaloneOptions(config).appType).toBe('springboot');
+  });
+
   it('rechaza nombres que no sean kebab-case', async () => {
     const path = await writeConfig({
       project: { ...VALID_CONFIG.project, name: 'IdeaApp' },

@@ -38,6 +38,8 @@ describe('config json-schema', () => {
       'nestjs',
       'fastify',
       'nextjs',
+      'springboot',
+      'hono',
       'postgres',
       'rabbitmq',
       'shared-types',

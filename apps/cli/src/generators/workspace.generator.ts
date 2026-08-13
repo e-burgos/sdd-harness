@@ -2,6 +2,7 @@ import { resolve } from "node:path";
 import fs from "fs-extra";
 import { copyTemplate, getTemplatesDir } from "../utils/fs.js";
 import { exec } from "../utils/exec.js";
+import { initGitRepo } from "../utils/git.js";
 import { logger } from "../utils/logger.js";
 import { generateDockerCompose } from "./docker.generator.js";
 import { generateSDD } from "./sdd.generator.js";
@@ -105,11 +106,9 @@ export async function generateWorkspace(opts: WorkspaceOptions): Promise<void> {
   }
 
   logger.step("Initializing git repository...");
-  exec("git init", { cwd: root, silent: true });
-  exec("git add -A", { cwd: root, silent: true });
-  exec(
-    'git commit -m "chore: initial workspace setup via @e-burgos/sdd-harness"',
-    { cwd: root, silent: true },
+  initGitRepo(
+    root,
+    "chore: initial workspace setup via @e-burgos/sdd-harness",
   );
 
   logger.success(`Workspace "${opts.projectName}" created successfully.`);

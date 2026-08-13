@@ -242,7 +242,7 @@ export const COMMANDS: Command[] = [
   },
   {
     name: 'add spec',
-    usage: 'harness add spec [slug] --author <gh-user>',
+    usage: 'harness add spec [slug] --author <gh-user> --title <t> --app apps/<n>',
     summary: 'Creates a spec with the multi-developer v2.0 convention.',
     points: [
       'spec-[author]-[NNN]-[slug]/ structure with cycles/ and fixes/.',
@@ -252,7 +252,7 @@ export const COMMANDS: Command[] = [
   },
   {
     name: 'add skill',
-    usage: 'harness add skill [name]',
+    usage: 'harness add skill [name] --description <text>',
     summary: 'Creates a new skill under sdd/skills/.',
     points: [
       'Lowercase skill.md file — Linux is case-sensitive.',
@@ -267,11 +267,12 @@ export const COMMANDS: Command[] = [
   },
   {
     name: 'configure sdd',
-    usage: 'harness configure sdd',
+    usage: 'harness configure sdd --name <n> --description <d>',
     summary: 'Installs (or resets) the SDD system on an existing project.',
     points: [
       'Shape detection: Nx monorepo or standalone repo.',
       'Automatic package.json merge + absorption of the previous harness.',
+      'No prompts with --name and --description: an agent can run it.',
     ],
   },
   {

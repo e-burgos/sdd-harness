@@ -22,22 +22,45 @@ export const configureSddCommand = defineCommand({
     description:
       'Install the portable SDD system + dual harness on an existing project',
   },
-  async run() {
+  args: {
+    name: {
+      type: 'string',
+      description: 'Project name (skips the prompt)',
+    },
+    description: {
+      type: 'string',
+      description: 'Project description (skips the prompt)',
+    },
+    yes: {
+      type: 'boolean',
+      alias: 'y',
+      description:
+        'Skip confirmations — required to RESET an existing sdd/ without a TTY',
+      default: false,
+    },
+  },
+  async run({ args }) {
     p.intro(pc.bgCyan(pc.black(' harness configure sdd ')));
 
     const cwd = process.cwd();
 
     const globalPath = resolve(cwd, 'sdd/global.json');
     if (existsSync(globalPath)) {
-      const confirm = await p.confirm({
-        message:
-          'SDD is already installed. This will RESET the whole sdd/ directory (specs, cycles and fixes included). Continue?',
-        initialValue: false,
-      });
+      if (args.yes) {
+        logger.warn(
+          'SDD is already installed — resetting sdd/ (specs, cycles and fixes included) because --yes was passed.',
+        );
+      } else {
+        const confirm = await p.confirm({
+          message:
+            'SDD is already installed. This will RESET the whole sdd/ directory (specs, cycles and fixes included). Continue?',
+          initialValue: false,
+        });
 
-      if (!confirm || p.isCancel(confirm)) {
-        p.cancel('Operation cancelled.');
-        process.exit(0);
+        if (!confirm || p.isCancel(confirm)) {
+          p.cancel('Operation cancelled.');
+          process.exit(0);
+        }
       }
     }
 
@@ -49,22 +72,31 @@ export const configureSddCommand = defineCommand({
     const defaultName =
       pkg?.name?.replace(/^@[^/]+\//, '') || basename(cwd);
 
-    const projectName = await p.text({
-      message: 'Project name (stored only in sdd/global.json):',
-      initialValue: defaultName,
-      validate: (value) => (value ? undefined : 'Project name is required'),
-    });
+    const projectName =
+      args.name ??
+      (await p.text({
+        message: 'Project name (stored only in sdd/global.json):',
+        initialValue: defaultName,
+        validate: (value) => (value ? undefined : 'Project name is required'),
+      }));
 
     if (p.isCancel(projectName)) {
       p.cancel('Operation cancelled.');
       process.exit(0);
     }
 
-    const description = await p.text({
-      message: 'Project description (stored only in sdd/global.json):',
-      placeholder: 'What it does, main stack, methodology (SDD)',
-      initialValue: pkg?.description || '',
-    });
+    if (!(projectName as string).trim()) {
+      logger.error('Project name cannot be empty.');
+      process.exit(1);
+    }
+
+    const description =
+      args.description ??
+      (await p.text({
+        message: 'Project description (stored only in sdd/global.json):',
+        placeholder: 'What it does, main stack, methodology (SDD)',
+        initialValue: pkg?.description || '',
+      }));
 
     if (p.isCancel(description)) {
       p.cancel('Operation cancelled.');

@@ -84,7 +84,7 @@ se genera nada.
     "description": "Qué es y para quién",
     "packageScope": "@mi-proyecto"
   },
-  "apps": [{ "name": "core-api", "type": "nestjs" }], // nestjs|react|python|nextjs|fastify
+  "apps": [{ "name": "core-api", "type": "nestjs" }], // nestjs|react|python|nextjs|fastify|springboot|hono
   "libs": [{ "name": "shared-types", "type": "shared-types" }], // shared-types|shared-utils|ui-kit|api-client|config
   "services": [{ "type": "postgres" }] // postgres|redis|rabbitmq|minio (port/version opcionales)
 }
@@ -94,8 +94,20 @@ se genera nada.
 npx @e-burgos/sdd-harness init --config ./harness.config.json
 ```
 
-**Workspace SDD existente** → cubrir solo los gaps: `harness add app <name> <type>`,
-`harness add service`, `harness configure docker`.
+**Repo existente sin SDD** → instalarlo sin tocar el código, sin prompts:
+
+```bash
+npx @e-burgos/sdd-harness configure sdd --name mi-proyecto --description "Qué es y para quién"
+```
+
+(agregar `-y` sólo si ya hay un `sdd/` y querés **resetearlo** — borra specs, ciclos y fixes).
+
+**Workspace SDD existente** → cubrir solo los gaps: `harness add app <type> --name <name>`,
+`harness add service <type>`, `harness configure docker --services postgres,redis`.
+
+> Todo comando de la CLI tiene flags para cada prompt: sin ellos el comando abre un
+> prompt interactivo que **no se puede responder por stdin** (se cuelga). Pasá siempre
+> los flags, y `harness <comando> --help` lista los que faltan.
 
 **Verificación de fase (gate):** `pnpm sdd:validate` verde + build del workspace
 verde. Rojo → arreglar antes de seguir; nunca sembrar specs sobre base rota.
@@ -104,8 +116,9 @@ verde. Rojo → arreglar antes de seguir; nunca sembrar specs sobre base rota.
 
 Por cada módulo core, en orden de dependencia:
 
-1. `harness add spec <slug-del-modulo> --author <gh-user>` — crea la estructura y
-   registra en `sdd/specs/index.json`.
+1. `harness add spec <slug-del-modulo> --author <gh-user> --title "<título>" --app apps/<subproyecto>`
+   — crea la estructura y registra en `sdd/specs/index.json`. Sin `--title`/`--app`
+   el comando queda esperando input.
 2. Redactar el `.spec.md` desde el descubrimiento: objetivo, alcance del primer
    ciclo, criterios de aceptación de alto nivel, supuestos asumidos en FASE 1.
 3. Registrar el módulo en `pending_modules` de `sdd/global.json` (module + spec +

@@ -27,6 +27,15 @@ export const addSpecCommand = defineCommand({
       type: 'string',
       description: 'Author (GitHub username)',
     },
+    title: {
+      type: 'string',
+      description: 'Specification title (skips the prompt, defaults to the slug)',
+    },
+    app: {
+      type: 'string',
+      description:
+        'Main subproject affected, e.g. apps/my-api (skips the prompt)',
+    },
   },
   async run({ args }) {
     p.intro(pc.bgCyan(pc.black(' harness add spec ')));
@@ -76,10 +85,12 @@ export const addSpecCommand = defineCommand({
       process.exit(0);
     }
 
-    const title = await p.text({
-      message: 'Specification title:',
-      placeholder: `e.g., Core Features (defaults to "${slug}")`,
-    });
+    const title =
+      args.title ??
+      (await p.text({
+        message: 'Specification title:',
+        placeholder: `e.g., Core Features (defaults to "${slug}")`,
+      }));
 
     if (p.isCancel(title)) {
       p.cancel('Operation cancelled.');
@@ -87,16 +98,25 @@ export const addSpecCommand = defineCommand({
     }
     const specTitle = (title as string) || (slug as string);
 
-    const app = await p.text({
-      message: 'Main app/lib affected (e.g., apps/my-api):',
-      placeholder: 'apps/my-api',
-      validate: (value) => {
-        if (!value) return 'Required — SPEC GATE needs a target subproject';
-        if (!/^(apps|libs|tools)\/[a-z][a-z0-9-]*$/.test(value))
-          return 'Must match (apps|libs|tools)/[name]';
-        return undefined;
-      },
-    });
+    if (args.app && !/^(apps|libs|tools)\/[a-z][a-z0-9-]*$/.test(args.app)) {
+      logger.error(
+        `--app must match (apps|libs|tools)/[name] — got "${args.app}".`,
+      );
+      process.exit(1);
+    }
+
+    const app =
+      args.app ??
+      (await p.text({
+        message: 'Main app/lib affected (e.g., apps/my-api):',
+        placeholder: 'apps/my-api',
+        validate: (value) => {
+          if (!value) return 'Required — SPEC GATE needs a target subproject';
+          if (!/^(apps|libs|tools)\/[a-z][a-z0-9-]*$/.test(value))
+            return 'Must match (apps|libs|tools)/[name]';
+          return undefined;
+        },
+      }));
 
     if (p.isCancel(app)) {
       p.cancel('Operation cancelled.');

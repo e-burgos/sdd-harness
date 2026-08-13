@@ -5,6 +5,41 @@ All notable changes to `@e-burgos/sdd-harness` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1] - 2026-08-13
+
+### Added — every prompt has a flag, so agents and CI can drive the whole CLI
+
+An interactive prompt cannot be answered through stdin: @clack appends piped text to the
+initial value and never submits, so any command missing a flag **hangs** rather than failing.
+That made several commands unreachable for an AI agent or a CI job.
+
+- **`configure sdd` is now scriptable**: `--name`, `--description` and `-y`. Installing SDD
+  onto an existing repo was previously impossible without a TTY — it always asked for the
+  project name and description with no way to skip.
+- **`add spec`**: `--title` and `--app`, the two prompts that had no flag. `--app` is
+  validated against `(apps|libs|tools)/<name>` before anything is written.
+- **`add skill`**: `--description`.
+- **`configure docker`**: `--services postgres,redis`. **`configure mcp`**: `--servers`.
+  **`configure memory`**: `--providers`. All three take a comma-separated list validated
+  against the catalog, and fail with the valid values instead of prompting.
+- **`init --config` covers all seven app types**: `springboot` and `hono` were offered by the
+  wizard and by `add app`, but the config schema stopped at `fastify`, so the path documented
+  as "fully non-interactive init for AI agents and CI" could not generate the two
+  blueprint-backed types. The JSON Schema export follows automatically — it derives from the
+  same Zod schema.
+
+### Fixed
+
+- **`init` no longer dies when git has no identity.** It ends with `git init` + an initial
+  commit; on a runner with no `user.email` that aborts with `fatal: empty ident name` and took
+  the whole generation down with it, discarding a workspace that was already complete. The
+  commit is now best-effort: it warns and leaves the workspace in place.
+- **`harness add` announced a `libs` subcommand that does not exist** — libraries are declared
+  in `libs[]` of `init --config`.
+- **The CLI README documented skills as `SKILL.md`** in six places while the generator writes
+  `skill.md`. On a case-sensitive checkout the uppercase name leaves the skill unreadable,
+  which is the exact failure the lowercase rule exists to prevent.
+
 ## [0.4.0] - 2026-08-13
 
 ### Changed — English CLI output + bilingual docs site

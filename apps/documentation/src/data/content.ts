@@ -297,7 +297,7 @@ export const COMMANDS: Command[] = [
   },
   {
     name: 'add spec',
-    usage: 'harness add spec [slug] --author <gh-user>',
+    usage: 'harness add spec [slug] --author <gh-user> --title <t> --app apps/<n>',
     summary: 'Crea una spec con la convención multi-developer v2.0.',
     points: [
       'Estructura spec-[autor]-[NNN]-[slug]/ con cycles/ y fixes/.',
@@ -307,7 +307,7 @@ export const COMMANDS: Command[] = [
   },
   {
     name: 'add skill',
-    usage: 'harness add skill [nombre]',
+    usage: 'harness add skill [nombre] --description <texto>',
     summary: 'Crea una skill nueva en sdd/skills/.',
     points: [
       'Archivo skill.md en minúscula — Linux es case-sensitive.',
@@ -322,11 +322,12 @@ export const COMMANDS: Command[] = [
   },
   {
     name: 'configure sdd',
-    usage: 'harness configure sdd',
+    usage: 'harness configure sdd --name <n> --description <d>',
     summary: 'Instala (o resetea) el sistema SDD en un proyecto existente.',
     points: [
       'Detección de forma: monorepo Nx o repo standalone.',
       'Merge automático de package.json + absorción del arnés previo.',
+      'Sin prompts con --name y --description: un agente puede correrlo.',
     ],
   },
   {
