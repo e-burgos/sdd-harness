@@ -29,8 +29,23 @@ const AppConfigSchema = z.object({
 const ServiceConfigSchema = z.object({
   type: ServiceTypeSchema,
   version: z.string().optional(),
-  port: z.number().min(1000).max(65535),
+  port: z.number().min(1000).max(65535).optional(),
   extensions: z.array(z.string()).optional(),
+});
+
+const LibTypeSchema = z.enum([
+  'shared-types',
+  'shared-utils',
+  'ui-kit',
+  'api-client',
+  'config',
+]);
+
+const LibConfigSchema = z.object({
+  name: z
+    .string()
+    .regex(/^[a-z][a-z0-9-]*$/, 'Lib name must be lowercase kebab-case'),
+  type: LibTypeSchema,
 });
 
 const CycleConfigSchema = z.object({
@@ -64,15 +79,19 @@ const NxConfigSchema = z.object({
 });
 
 export const HarnessConfigSchema = z.object({
+  mode: z.enum(['nx', 'standalone']).default('nx'),
   project: z.object({
-    name: z.string().min(1),
+    name: z
+      .string()
+      .regex(/^[a-z][a-z0-9-]*$/, 'Project name must be lowercase kebab-case'),
     description: z.string().min(1),
     packageScope: z.string().startsWith('@'),
   }),
   apps: z.array(AppConfigSchema).min(1),
+  libs: z.array(LibConfigSchema).default([]),
   services: z.array(ServiceConfigSchema).default([]),
   sdd: SDDConfigSchema.optional(),
-  nx: NxConfigSchema,
+  nx: NxConfigSchema.optional(),
   infra: z
     .object({
       provider: InfraProviderSchema.optional(),
@@ -80,6 +99,8 @@ export const HarnessConfigSchema = z.object({
     .optional(),
 });
 
-export function defineConfig(config: HarnessConfig): HarnessConfig {
-  return HarnessConfigSchema.parse(config);
+export type HarnessConfigInput = z.input<typeof HarnessConfigSchema>;
+
+export function defineConfig(config: HarnessConfigInput): HarnessConfig {
+  return HarnessConfigSchema.parse(config) as HarnessConfig;
 }
