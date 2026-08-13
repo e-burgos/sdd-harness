@@ -575,7 +575,7 @@ export const UI = {
     ],
     examples: {
       title: 'Rather read it first?',
-      lead: 'The CLI output lives in its own repo — an Nx monorepo (React + Spring Boot) and a standalone Fastify app, both with the full SDD kit. A workflow regenerates them from the published package on every release, so they never lag behind npm.',
+      lead: 'The CLI output lives in its own repo, one example per mode: an Nx monorepo (React + Spring Boot), a standalone Fastify app, and a project that already existed and adopted SDD without touching a line of its own code. A workflow regenerates them from the published package on every release, so they never lag behind npm.',
       cta: 'Browse the examples',
     },
   },
