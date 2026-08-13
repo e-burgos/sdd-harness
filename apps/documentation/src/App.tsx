@@ -793,7 +793,7 @@ function KitSection() {
             className="group mt-5 inline-flex items-center gap-2 text-[13.5px] text-zinc-300 transition-colors hover:text-accent-300"
           >
             Conocé <code className="text-accent-300">sdd:docs</code> a fondo —
-            capturas reales y las 15 vistas
+            capturas reales y las 16 vistas
             <ArrowRightIcon
               size={14}
               className="transition-transform group-hover:translate-x-0.5"
@@ -801,6 +801,61 @@ function KitSection() {
           </a>
         </div>
       </div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 18 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: '-40px' }}
+        transition={{ type: 'spring', stiffness: 90, damping: 18 }}
+        className="mt-14 rounded-2xl border hairline bg-ink-900/50 p-6 md:p-8"
+      >
+        <p className="mb-2 font-mono text-[11px] uppercase tracking-[0.22em] text-accent-400">
+          Actualizar el kit — sin miedo
+        </p>
+        <h3 className="max-w-[40ch] text-xl font-medium tracking-tight text-zinc-100">
+          Un comando trae todo lo nuevo. Lo tuyo no se toca.
+        </h3>
+        <div className="mt-6 grid gap-8 md:grid-cols-[minmax(0,5fr)_minmax(0,6fr)]">
+          <div>
+            <CopyCommand command="npx @e-burgos/sdd-harness@latest update sdd" />
+            <p className="mt-4 max-w-[48ch] text-[13.5px] leading-relaxed text-zinc-400">
+              El update se gobierna por los hashes de{' '}
+              <code className="text-zinc-300">sdd/kit.json</code>: sabe
+              exactamente qué archivo es del kit, cuál es tuyo y cuál
+              modificaste. Al cierre regenera el catálogo, refresca los
+              symlinks y corre <code className="text-zinc-300">sdd:validate</code>.
+            </p>
+          </div>
+          <div className="divide-y divide-zinc-800/60 border-y hairline font-mono text-[12px]">
+            {[
+              {
+                k: 'Tus datos',
+                v: 'specs, ciclos, fixes, contextos, memoria — jamás se tocan',
+              },
+              {
+                k: 'Kit sin modificar',
+                v: 'se reemplaza por la versión nueva, silenciosamente',
+              },
+              {
+                k: 'Archivos nuevos',
+                v: 'se agregan solos (memoria, pricing, skills nuevas…)',
+              },
+              {
+                k: 'Lo que editaste',
+                v: 'queda intacto; la versión nueva aterriza al lado como *.new para fundir a mano',
+              },
+            ].map((row) => (
+              <div
+                key={row.k}
+                className="grid grid-cols-[130px_1fr] gap-4 py-3 sm:grid-cols-[170px_1fr]"
+              >
+                <span className="text-accent-300">{row.k}</span>
+                <span className="leading-relaxed text-zinc-400">{row.v}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </motion.div>
     </Section>
   );
 }
