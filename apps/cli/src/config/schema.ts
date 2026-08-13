@@ -1,12 +1,16 @@
 import { z } from 'zod';
 import type { HarnessConfig } from '../types/config.types.js';
 
+// Debe cubrir los mismos tipos que el wizard (APP_TYPE_OPTIONS en commands/init.ts)
+// y que `add app`: si no, la vía no interactiva genera menos que la interactiva.
 const AppTypeSchema = z.enum([
   'nestjs',
   'react',
   'python',
   'nextjs',
   'fastify',
+  'springboot',
+  'hono',
 ]);
 const ServiceTypeSchema = z.enum(['postgres', 'redis', 'rabbitmq', 'minio']);
 const InfraProviderSchema = z.enum([

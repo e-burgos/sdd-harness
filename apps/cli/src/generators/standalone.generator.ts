@@ -3,6 +3,7 @@ import fs from "fs-extra";
 import { getTemplatesDir } from "../utils/fs.js";
 import { copyBlueprint, toFlatCase, toPascalCase } from "../utils/blueprint.js";
 import { exec } from "../utils/exec.js";
+import { initGitRepo } from "../utils/git.js";
 import { logger } from "../utils/logger.js";
 import { generateDockerCompose } from "./docker.generator.js";
 import { generateSDD, ensureHarnessPackageJson } from "./sdd.generator.js";
@@ -82,11 +83,9 @@ export async function generateStandalone(
   }
 
   logger.step("Initializing git repository...");
-  exec("git init", { cwd: root, silent: true });
-  exec("git add -A", { cwd: root, silent: true });
-  exec(
-    'git commit -m "chore: initial standalone setup via @e-burgos/sdd-harness"',
-    { cwd: root, silent: true },
+  initGitRepo(
+    root,
+    "chore: initial standalone setup via @e-burgos/sdd-harness",
   );
 
   logger.success(`Standalone repo "${opts.projectName}" created successfully.`);

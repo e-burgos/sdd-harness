@@ -4,6 +4,7 @@ import pc from 'picocolors';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { logger } from '../../utils/logger.js';
+import { parseListFlag } from '../../utils/flags.js';
 
 interface McpServerConfig {
   command: string;
@@ -48,7 +49,14 @@ export const configureMemoryCommand = defineCommand({
     description:
       'Opt-in memory providers (MCP) on top of the portable sdd/memory/ base layer',
   },
-  async run() {
+  args: {
+    providers: {
+      type: 'string',
+      description:
+        'Comma-separated memory providers from the catalog — skips the prompt',
+    },
+  },
+  async run({ args }) {
     p.intro(pc.bgCyan(pc.black(' harness configure memory ')));
 
     p.note(
@@ -74,18 +82,20 @@ export const configureMemoryCommand = defineCommand({
     }
     const existingServers = existing.mcpServers ?? {};
 
-    const providers = await p.multiselect({
-      message: 'Memory providers to configure:',
-      options: Object.entries(MEMORY_CATALOG).map(([key, val]) => ({
-        value: key,
-        label: val.label,
-        hint: val.hint,
-      })),
-      initialValues: Object.keys(existingServers).filter(
-        (s) => s in MEMORY_CATALOG,
-      ),
-      required: false,
-    });
+    const providers = args.providers
+      ? parseListFlag(args.providers, Object.keys(MEMORY_CATALOG), '--providers')
+      : await p.multiselect({
+          message: 'Memory providers to configure:',
+          options: Object.entries(MEMORY_CATALOG).map(([key, val]) => ({
+            value: key,
+            label: val.label,
+            hint: val.hint,
+          })),
+          initialValues: Object.keys(existingServers).filter(
+            (s) => s in MEMORY_CATALOG,
+          ),
+          required: false,
+        });
 
     if (p.isCancel(providers)) {
       p.cancel('Operation cancelled.');

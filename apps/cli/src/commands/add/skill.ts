@@ -17,6 +17,10 @@ export const addSkillCommand = defineCommand({
       description: 'Skill name',
       required: false,
     },
+    description: {
+      type: 'string',
+      description: 'Skill description (skips the prompt)',
+    },
   },
   async run({ args }) {
     p.intro(pc.bgCyan(pc.black(' harness add skill ')));
@@ -49,18 +53,25 @@ export const addSkillCommand = defineCommand({
       process.exit(1);
     }
 
-    const description = await p.text({
-      message: 'Skill description:',
-      placeholder: 'What does this skill do?',
-      validate: (value) => {
-        if (!value) return 'Description is required';
-        return undefined;
-      },
-    });
+    const description =
+      args.description ??
+      (await p.text({
+        message: 'Skill description:',
+        placeholder: 'What does this skill do?',
+        validate: (value) => {
+          if (!value) return 'Description is required';
+          return undefined;
+        },
+      }));
 
     if (p.isCancel(description)) {
       p.cancel('Operation cancelled.');
       process.exit(0);
+    }
+
+    if (!(description as string).trim()) {
+      logger.error('Skill description cannot be empty.');
+      process.exit(1);
     }
 
     logger.step(`Creating skill: ${skillName}`);

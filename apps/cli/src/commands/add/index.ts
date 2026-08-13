@@ -7,7 +7,8 @@ import { addSpecCommand } from './spec.js';
 export const addCommand = defineCommand({
   meta: {
     name: 'add',
-    description: 'Add apps, skills, services, specs, or libs to the workspace',
+    // Libs no tiene subcomando: se declaran en `libs[]` de `init --config`.
+    description: 'Add apps, skills, services or specs to the workspace',
   },
   subCommands: {
     app: addAppCommand,

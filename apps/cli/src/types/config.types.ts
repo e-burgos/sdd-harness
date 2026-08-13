@@ -1,4 +1,11 @@
-export type AppType = 'nestjs' | 'react' | 'python' | 'nextjs' | 'fastify';
+export type AppType =
+  | 'nestjs'
+  | 'react'
+  | 'python'
+  | 'nextjs'
+  | 'fastify'
+  | 'springboot'
+  | 'hono';
 export type ServiceType = 'postgres' | 'redis' | 'rabbitmq' | 'minio';
 export type InfraProvider = 'digitalocean' | 'aws' | 'gcp' | 'vercel' | 'railway';
 

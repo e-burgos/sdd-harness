@@ -4,6 +4,7 @@ import pc from 'picocolors';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { logger } from '../../utils/logger.js';
+import { parseListFlag } from '../../utils/flags.js';
 
 interface McpServerConfig {
   command: string;
@@ -73,7 +74,14 @@ export const configureMcpCommand = defineCommand({
     name: 'mcp',
     description: 'Configure MCP servers for agent integration',
   },
-  async run() {
+  args: {
+    servers: {
+      type: 'string',
+      description:
+        'Comma-separated MCP servers from the catalog — skips the prompt',
+    },
+  },
+  async run({ args }) {
     p.intro(pc.bgCyan(pc.black(' harness configure mcp ')));
 
     const cwd = process.cwd();
@@ -92,16 +100,18 @@ export const configureMcpCommand = defineCommand({
       }
     }
 
-    const servers = await p.multiselect({
-      message: 'Select MCP servers to configure:',
-      options: Object.entries(MCP_CATALOG).map(([key, val]) => ({
-        value: key,
-        label: val.label,
-        hint: val.hint,
-      })),
-      initialValues: existingServers.filter((s) => s in MCP_CATALOG),
-      required: true,
-    });
+    const servers = args.servers
+      ? parseListFlag(args.servers, Object.keys(MCP_CATALOG), '--servers')
+      : await p.multiselect({
+          message: 'Select MCP servers to configure:',
+          options: Object.entries(MCP_CATALOG).map(([key, val]) => ({
+            value: key,
+            label: val.label,
+            hint: val.hint,
+          })),
+          initialValues: existingServers.filter((s) => s in MCP_CATALOG),
+          required: true,
+        });
 
     if (p.isCancel(servers)) {
       p.cancel('Operation cancelled.');
