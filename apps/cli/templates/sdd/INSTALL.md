@@ -1,3 +1,28 @@
+# Instalación y actualización del framework SDD
+
+## Actualizar un kit ya instalado (lo más común)
+
+Si este repo ya tiene `sdd/` y salió una versión nueva del kit, **no hace falta nada
+de lo que sigue** — un solo comando actualiza preservando todo lo tuyo:
+
+```bash
+npx @e-burgos/sdd-harness@latest update sdd
+```
+
+Qué hace, gobernado por los hashes de `sdd/kit.json`:
+
+| Tipo de archivo | Qué pasa en el update |
+| --- | --- |
+| **Tus datos** — `global.json`, specs, ciclos, fixes, contextos, `memory/journal/` | **Jamás se tocan** |
+| Archivos del kit **sin modificar** localmente (skills, agentes, prompts, schemas, scripts, visor) | Se reemplazan por la versión nueva |
+| Archivos del kit **nuevos** en esta versión | Se agregan solos |
+| Archivos del kit que **vos editaste** (típico: `dual-harness/AGENTS.md`/`CLAUDE.md`) | Tu versión queda intacta; la nueva aterriza al lado como `*.new` para que fundas a mano lo que te interese |
+
+Al cierre regenera el catálogo, refresca los symlinks y corre `sdd:validate`. Si el
+update lista conflictos `*.new`, fundilos (o pedíselo a tu agente) y borrá los `.new`.
+
+---
+
 # Instalación del framework SDD en un repo nuevo
 
 Esta carpeta es una copia **limpia y portable** del sistema SDD: sin specs, fixes,
@@ -63,9 +88,11 @@ contra sus schemas.
 | Carpeta / archivo  | Contenido                                                                                       |
 | ------------------ | ----------------------------------------------------------------------------------------------- |
 | `agents/`          | Los 7 agentes del ciclo SDD                                                                     |
-| `skills/`          | 16 skills (ciclo SDD + generadores de código + scaffold-nx + setup-graphify)                    |
+| `skills/`          | 18 skills (ciclo SDD + sdd-hermes + generadores de código + scaffold-nx + setup-graphify)       |
 | `templates/`       | Scaffolding reproducible: nx-workspace, java-api, react-app, ts-lib — ver `templates/README.md` |
-| `prompts/`         | Prompts de gates (SPEC GATE, FIX GATE, inicio y cierre de ciclo)                                |
+| `prompts/`         | Prompts de gates (SPEC GATE, FIX GATE, inicio/cierre de ciclo, hermes-resume)                   |
+| `memory/`          | Memoria del proyecto: `lessons.md` destilado + `journal/` episódico (MEMORIA GATE)              |
+| `pricing.json`     | Tarifas editables del dashboard de Costos del visor                                             |
 | `schemas/`         | JSON Schemas estrictos de todos los registros                                                   |
 | `scripts/`         | validate, rebuild-tasks-index, rebuild-catalog, setup-agents                                    |
 | `docs/`            | Visor portable de documentación (JS vanilla, cero deps)                                         |
