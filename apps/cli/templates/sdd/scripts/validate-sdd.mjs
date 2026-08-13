@@ -339,6 +339,11 @@ if (existsSync(MEMORY_LESSONS)) {
   }
 }
 
+// ---- 11. Pricing (Costs dashboard input) — ships with the kit since v0.4; absence is not an error ----
+if (existsSync(join(SDD, 'pricing.json'))) {
+  validate('pricing.json', 'pricing.schema.json');
+}
+
 // ---- Content catalog: schema + freshness vs filesystem (viewer depends on it) ----
 const catalogJson = validate('catalog.json', 'catalog.schema.json');
 if (catalogJson) {

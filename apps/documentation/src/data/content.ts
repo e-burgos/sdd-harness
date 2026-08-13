@@ -230,6 +230,16 @@ export const COMMANDS: Command[] = [
     points: ['Multi-select con lo ya configurado preseleccionado.'],
   },
   {
+    name: 'configure memory',
+    usage: 'harness configure memory',
+    summary: 'Proveedores de memoria MCP opt-in sobre la base portable del kit.',
+    points: [
+      'La base (sdd/memory: lessons.md + journal) es archivos versionados, cero dependencias — esto agrega recuperación semántica opcional.',
+      'basic-memory (Markdown local-first) o knowledge-graph oficial persistido en sdd/memory/ (viaja con git).',
+      'Merge no destructivo de .mcp.json: no toca otros servidores configurados.',
+    ],
+  },
+  {
     name: 'info',
     usage: 'harness info',
     summary: 'Radiografía del workspace: apps, servicios, estado SDD.',
@@ -351,7 +361,7 @@ export const VIEWER_SHOTS: ViewerShot[] = [
 ];
 
 export const VIEWER_SECTIONS = [
-  { section: 'Visión general', views: ['Dashboard', 'Planificación'] },
+  { section: 'Visión general', views: ['Dashboard', 'Planificación', 'Costos'] },
   { section: 'SDD', views: ['Specs', 'Ciclos', 'Tareas', 'Fixes', 'Contexto'] },
   { section: 'Herramientas SDD', views: ['Agentes', 'Skills', 'Prompts'] },
   { section: 'Arquitectura', views: ['Schema', 'API', 'Componentes', 'Schemas JSON'] },
@@ -364,8 +374,12 @@ export const VIEWER_PRINCIPLES = [
     body: 'JS vanilla + un server con solo módulos node:*. No hay npm install del visor, no hay paso de compilación, no hay framework que se desactualice. Abrís el puerto y está.',
   },
   {
-    title: 'Lee los registros en vivo',
-    body: 'No genera HTML estático: consume global.json, specs/index.json, tasks.json y catalog.json directamente del filesystem. Cerrás un ciclo, tocás Actualizar, y el dashboard lo refleja.',
+    title: 'Lee los registros en vivo — y se actualiza solo',
+    body: 'No genera HTML estático: consume global.json, specs/index.json, tasks.json y catalog.json directamente del filesystem. En local, un fingerprint de los registros se pollea cada 4s: cerrás un ciclo y el dashboard lo refleja sin recargar.',
+  },
+  {
+    title: 'Dashboard de Costos',
+    body: 'Tokens y tiempos por task, ciclo y spec (telemetría de cycle.json/tasks.json) contra la estimación tradicional de las tasks: costo agéntico aproximado por tier de modelo, ahorro proyectado, y tarifas editables en sdd/pricing.json.',
   },
   {
     title: 'Viaja con el kit',

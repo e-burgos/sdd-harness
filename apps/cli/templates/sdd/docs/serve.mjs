@@ -1,5 +1,6 @@
 import { createServer } from 'node:http';
-import { readFile, realpath, stat } from 'node:fs/promises';
+import { readFile, readdir, realpath, stat } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath, URL } from 'node:url';
 
@@ -153,6 +154,51 @@ async function handleDirectory(
   await serveFile(req, res, indexReal, '.html');
 }
 
+const STATE_SKIP_DIRS = new Set(['docs', 'templates', 'node_modules', '.git']);
+
+async function collectRegistryStamps(dir, relBase, stamps) {
+  let entries;
+  try {
+    entries = await readdir(dir, { withFileTypes: true });
+  } catch {
+    return;
+  }
+  for (const entry of entries) {
+    if (entry.name.startsWith('.')) continue;
+    const rel = relBase ? `${relBase}/${entry.name}` : entry.name;
+    if (entry.isDirectory()) {
+      if (relBase === '' && STATE_SKIP_DIRS.has(entry.name)) continue;
+      await collectRegistryStamps(path.join(dir, entry.name), rel, stamps);
+    } else if (entry.isFile()) {
+      try {
+        const info = await stat(path.join(dir, entry.name));
+        stamps.push(`${rel}:${info.mtimeMs}:${info.size}`);
+      } catch {}
+    }
+  }
+}
+
+async function serveStateFingerprint(req, res, root) {
+  const stamps = [];
+  await collectRegistryStamps(path.join(root, 'sdd'), '', stamps);
+  stamps.sort();
+  const fingerprint = createHash('sha1')
+    .update(stamps.join('\n'))
+    .digest('hex');
+  const body = JSON.stringify({ fingerprint, files: stamps.length });
+  return respond(
+    req,
+    res,
+    200,
+    {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Cache-Control': 'no-store',
+      'Content-Length': Buffer.byteLength(body),
+    },
+    body,
+  );
+}
+
 async function handleRequest(req, res, root) {
   if (req.method !== 'GET' && req.method !== 'HEAD') {
     return send405(req, res);
@@ -186,6 +232,10 @@ async function handleRequest(req, res, root) {
   }
   if (segments[0] !== 'sdd') {
     return send403(req, res);
+  }
+
+  if (decodedPath === '/sdd/docs/__state') {
+    return serveStateFingerprint(req, res, root);
   }
 
   const target = path.resolve(root, '.' + decodedPath);

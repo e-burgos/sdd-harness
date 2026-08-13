@@ -42,6 +42,7 @@ const HYBRID_FILES = new Set([
   'dual-harness/AGENTS.md',
   'dual-harness/CLAUDE.md',
   'memory/lessons.md',
+  'pricing.json',
 ]);
 
 export type KitManifest = {

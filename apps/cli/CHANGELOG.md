@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — Hermes phases 3–5: usage telemetry, loop automation, opt-in memory, Costs dashboard
+
+- **Usage telemetry (F3).** Optional, strictly-typed `usage` fields in the kit schemas:
+  per-task (`cycle-tasks.schema.json` → `tokens_in`/`tokens_out`/`duration_minutes`/
+  `model_tier`) and per-cycle aggregate (`cycle.schema.json` → `metrics.usage` with
+  `by_tier`). Backwards compatible — existing registries validate unchanged. The
+  sdd-reviewer records it at cycle close (new checklist item); the dual-harness ⚙️
+  section documents the rule. New `sdd/pricing.json` (hybrid — local edits win on
+  update) with editable traditional hourly rate and $/MTok per model tier, validated
+  by the new `pricing.schema.json`.
+- **Loop automation (F3).** New `sdd/prompts/hermes-resume.prompt.md`: standalone
+  resume prompt that re-enters the hermes loop from the registries alone (position
+  diagnosis, cut conditions, budget-first). The sdd-hermes skill documents optional
+  Claude Code automation: `/loop`, Routines, and a `SessionStart` hook snippet that
+  injects `memory/lessons.md`.
+- **`harness configure memory` (F4).** Opt-in MCP memory providers on top of the
+  portable `sdd/memory/` base: `basic-memory` (local-first Markdown) and the official
+  `@modelcontextprotocol/server-memory` knowledge graph persisted inside the repo at
+  `sdd/memory/knowledge-graph.json`. Non-destructive `.mcp.json` merge; no API keys.
+- **Costs dashboard in the SDD viewer (F5).** New `Costos` view: KPI tiles (estimated
+  hours, traditional cost, tokens, approximate agentic cost, projected savings),
+  per-spec traditional-vs-agentic comparison bars, stacked in/out tokens per cycle,
+  a precise per-cycle table, and a methodology card with the editable rates. Computed
+  live from the registries (no generated intermediate) with a CVD-validated palette,
+  hover tooltips and direct labels. Untier-ed tokens are priced at the `sonnet` rate
+  and flagged.
+- **Live auto-refresh (F5).** `serve.mjs` gains a `/sdd/docs/__state` endpoint (sha1
+  fingerprint over registry mtimes, `docs/`/`templates/` excluded); the viewer polls
+  it every 4s on localhost and re-renders the active view when the SDD state changes —
+  task done, cycle closed or spec completed shows up without reloading. Static/prod
+  hosting keeps the previous manual-refresh behavior; polling pauses while a modal is
+  open or the tab is hidden, and stops after repeated failures.
+
 ### Added — Hermes phase 2: single idea entry point + inspectable config contract
 
 - **`harness idea "<text>"`** — the deterministic entry point of the hermes end-to-end

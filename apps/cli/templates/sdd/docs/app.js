@@ -1196,6 +1196,7 @@ const ICONS = {
   empty: `<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="24" cy="24" r="18" stroke-dasharray="4 3" /><line x1="16" y1="24" x2="32" y2="24" /></svg>`,
   close: `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><line x1="2" y1="2" x2="14" y2="14" /><line x1="14" y1="2" x2="2" y2="14" /></svg>`,
   refresh: `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.5 8a5.5 5.5 0 1 1-1.9-4.16" /><polyline points="13.5 1.5 13.5 4.5 10.5 4.5" /></svg>`,
+  costs: `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 2v12h12" /><path d="M5 10.5v-3" /><path d="M8.5 10.5v-6" /><path d="M12 10.5v-4.5" /></svg>`,
 };
 
 function icon(name) {
@@ -5732,6 +5733,493 @@ function attachHelpTabHandlers(container, docs) {
   }
 }
 
+const COSTS_FALLBACK_PRICING = Object.freeze({
+  currency: 'USD',
+  traditional_hourly_rate: 50,
+  model_prices_per_mtok: {
+    haiku: { input: 1, output: 5 },
+    sonnet: { input: 3, output: 15 },
+    opus: { input: 5, output: 25 },
+    fable: { input: 10, output: 50 },
+  },
+});
+
+const COSTS_ASSUMED_TIER = 'sonnet';
+const COSTS_UNTIERED = '_untiered';
+
+const COSTS_SERIES = Object.freeze({
+  traditional: '#8b5cf6',
+  agentic: '#059669',
+  tokensIn: '#0284c7',
+  tokensOut: '#d97706',
+});
+
+async function loadPricing() {
+  try {
+    const pricing = await fetchJson('pricing.json');
+    return { ...COSTS_FALLBACK_PRICING, ...pricing, missing: false };
+  } catch {
+    return { ...COSTS_FALLBACK_PRICING, missing: true };
+  }
+}
+
+function emptyCostUsage() {
+  return {
+    tokensIn: 0,
+    tokensOut: 0,
+    durationMinutes: 0,
+    byTier: {},
+    hasData: false,
+  };
+}
+
+function addTierTokens(usage, tier, tokensIn, tokensOut) {
+  const key = tier ?? COSTS_UNTIERED;
+  usage.byTier[key] ??= { tokensIn: 0, tokensOut: 0 };
+  usage.byTier[key].tokensIn += tokensIn;
+  usage.byTier[key].tokensOut += tokensOut;
+  usage.tokensIn += tokensIn;
+  usage.tokensOut += tokensOut;
+  usage.hasData = true;
+}
+
+function usageFromCycleMetrics(metricsUsage) {
+  const usage = emptyCostUsage();
+  if (!metricsUsage) return usage;
+  usage.durationMinutes = metricsUsage.duration_minutes ?? 0;
+  const byTier = metricsUsage.by_tier ?? null;
+  if (byTier && Object.keys(byTier).length > 0) {
+    for (const [tier, tokens] of Object.entries(byTier)) {
+      addTierTokens(usage, tier, tokens.tokens_in ?? 0, tokens.tokens_out ?? 0);
+    }
+  } else {
+    addTierTokens(
+      usage,
+      null,
+      metricsUsage.tokens_in ?? 0,
+      metricsUsage.tokens_out ?? 0,
+    );
+  }
+  return usage;
+}
+
+function usageFromTasks(tasks) {
+  const usage = emptyCostUsage();
+  for (const task of tasks) {
+    if (!task.usage) continue;
+    usage.durationMinutes += task.usage.duration_minutes ?? 0;
+    addTierTokens(
+      usage,
+      task.usage.model_tier ?? null,
+      task.usage.tokens_in ?? 0,
+      task.usage.tokens_out ?? 0,
+    );
+  }
+  return usage;
+}
+
+function agenticCostUsd(usage, pricing) {
+  let cost = 0;
+  let assumed = false;
+  for (const [tier, tokens] of Object.entries(usage.byTier)) {
+    let prices = pricing.model_prices_per_mtok[tier];
+    if (!prices) {
+      prices =
+        pricing.model_prices_per_mtok[COSTS_ASSUMED_TIER] ??
+        COSTS_FALLBACK_PRICING.model_prices_per_mtok[COSTS_ASSUMED_TIER];
+      assumed = true;
+    }
+    cost +=
+      (tokens.tokensIn / 1_000_000) * prices.input +
+      (tokens.tokensOut / 1_000_000) * prices.output;
+  }
+  return { cost, assumed };
+}
+
+async function loadCostsData() {
+  const [pricing, cycleIndex] = await Promise.all([
+    loadPricing(),
+    loadCycleIndex(),
+  ]);
+
+  const results = await Promise.allSettled(
+    cycleIndex.map(async ({ specId, cycleId }) => {
+      const cycle = await loadCycleJson(specId, cycleId);
+      let tasks = [];
+      try {
+        const tasksJson = await fetchJson(
+          `specs/${specId}/cycles/${cycleId}/tasks.json`,
+        );
+        tasks = tasksJson.tasks ?? [];
+      } catch {}
+      return { specId, cycleId, cycle, tasks };
+    }),
+  );
+
+  const rows = [];
+  for (const result of results) {
+    if (result.status !== 'fulfilled') continue;
+    const { specId, cycleId, cycle, tasks } = result.value;
+    const usage = cycle.metrics?.usage
+      ? usageFromCycleMetrics(cycle.metrics.usage)
+      : usageFromTasks(tasks);
+    const estimationHours = tasks.reduce(
+      (sum, task) => sum + (task.estimation_hours ?? 0),
+      0,
+    );
+    const agentic = agenticCostUsd(usage, pricing);
+    rows.push({
+      specId,
+      cycleId,
+      module: cycle.module ?? specId,
+      status: cycle.status ?? 'in-progress',
+      tasksTotal: tasks.length,
+      estimationHours,
+      traditionalCost: estimationHours * pricing.traditional_hourly_rate,
+      usage,
+      agenticCost: agentic.cost,
+      tierAssumed: agentic.assumed,
+    });
+  }
+
+  rows.sort((a, b) =>
+    a.specId === b.specId
+      ? a.cycleId.localeCompare(b.cycleId)
+      : a.specId.localeCompare(b.specId),
+  );
+  return { pricing, rows };
+}
+
+function costsMoneyFormatter(currency) {
+  return new Intl.NumberFormat('es-AR', {
+    style: 'currency',
+    currency,
+    maximumFractionDigits: 2,
+  });
+}
+
+const costsTokensFormat = new Intl.NumberFormat('es-AR', {
+  notation: 'compact',
+  maximumFractionDigits: 1,
+});
+const costsExactFormat = new Intl.NumberFormat('es-AR');
+
+function costsLegend(entries) {
+  const chips = entries
+    .map(
+      ({ label, color }) => `
+        <span style="display:inline-flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:var(--text-11);color:var(--text-dim)">
+          <span style="width:10px;height:10px;border-radius:3px;background:${color}" aria-hidden="true"></span>${escapeHtml(label)}
+        </span>`,
+    )
+    .join('');
+  return `<div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px">${chips}</div>`;
+}
+
+function costBarTrack({ segments, max, tip }) {
+  const parts = segments
+    .filter((segment) => segment.value > 0)
+    .map((segment) => {
+      const pct = max > 0 ? (segment.value / max) * 100 : 0;
+      return `<span style="display:block;width:${pct.toFixed(2)}%;min-width:2px;height:14px;background:${segment.color};border-radius:0 4px 4px 0"></span>`;
+    })
+    .join('');
+  return `
+    <span data-cost-tip="${escapeHtml(tip)}" style="display:flex;align-items:center;gap:2px;flex:1;min-width:0;padding:3px 0">
+      ${parts || '<span style="display:block;width:2px;height:14px;background:var(--border)"></span>'}
+    </span>`;
+}
+
+function costBarRow({ label, href, valueLabel, segments, max, tip }) {
+  const labelHtml = href
+    ? `<a href="${escapeHtml(href)}" style="color:var(--text-muted);text-decoration:none">${escapeHtml(label)}</a>`
+    : escapeHtml(label);
+  return `
+    <div style="display:flex;align-items:center;gap:12px;min-height:22px">
+      <span style="flex:0 0 148px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--font-mono);font-size:var(--text-11);color:var(--text-muted)" title="${escapeHtml(label)}">${labelHtml}</span>
+      ${costBarTrack({ segments, max, tip })}
+      <span style="flex:0 0 auto;font-family:var(--font-mono);font-size:var(--text-11);color:var(--text-bright)">${escapeHtml(valueLabel)}</span>
+    </div>`;
+}
+
+function shortSpecLabel(specId) {
+  return specId.replace(/^spec-/, '');
+}
+
+function costsComparisonCard(rows, pricing, money) {
+  const bySpec = new Map();
+  for (const row of rows) {
+    const entry = bySpec.get(row.specId) ?? {
+      traditional: 0,
+      agentic: 0,
+      hasUsage: false,
+    };
+    entry.traditional += row.traditionalCost;
+    entry.agentic += row.agenticCost;
+    entry.hasUsage ||= row.usage.hasData;
+    bySpec.set(row.specId, entry);
+  }
+  const max = Math.max(
+    1e-9,
+    ...[...bySpec.values()].flatMap((entry) => [
+      entry.traditional,
+      entry.agentic,
+    ]),
+  );
+  const blocks = [...bySpec.entries()]
+    .map(([specId, entry]) => {
+      const agenticLabel = entry.hasUsage ? money.format(entry.agentic) : '—';
+      return `
+        <div style="display:grid;gap:2px;margin-bottom:14px">
+          <a href="#/cycles" style="font-family:var(--font-mono);font-size:var(--text-12);color:var(--text-strong);text-decoration:none;margin-bottom:2px">${escapeHtml(specId)}</a>
+          ${costBarRow({
+            label: 'Tradicional',
+            valueLabel: money.format(entry.traditional),
+            segments: [
+              { value: entry.traditional, color: COSTS_SERIES.traditional },
+            ],
+            max,
+            tip: `${specId} — estimación tradicional: ${money.format(entry.traditional)} (horas de tasks × tarifa ${money.format(pricing.traditional_hourly_rate)}/h)`,
+          })}
+          ${costBarRow({
+            label: 'Agéntico',
+            valueLabel: agenticLabel,
+            segments: [{ value: entry.agentic, color: COSTS_SERIES.agentic }],
+            max,
+            tip: entry.hasUsage
+              ? `${specId} — costo agéntico aproximado: ${money.format(entry.agentic)} (tokens × tarifa por tier)`
+              : `${specId} — sin telemetría de tokens todavía`,
+          })}
+        </div>`;
+    })
+    .join('');
+  return `
+    <section class="card" style="margin-bottom:16px">
+      <div class="card-header"><span class="card-title">Costo por spec — tradicional vs agéntico</span></div>
+      <p class="card-subtitle">Estimación tradicional (horas × tarifa) contra el costo aproximado de tokens del modo agéntico.</p>
+      ${costsLegend([
+        { label: 'Tradicional', color: COSTS_SERIES.traditional },
+        { label: 'Agéntico', color: COSTS_SERIES.agentic },
+      ])}
+      ${blocks}
+    </section>`;
+}
+
+function costsTokensCard(rows) {
+  const withTokens = rows.filter((row) => row.usage.hasData);
+  if (withTokens.length === 0) {
+    return `
+      <section class="card" style="margin-bottom:16px">
+        <div class="card-header"><span class="card-title">Tokens por ciclo</span></div>
+        <p class="card-hint">Sin telemetría todavía. Se registra al cerrar cada ciclo: <code>cycle.json → metrics.usage</code> (lo hace el sdd-reviewer) o por task en <code>tasks.json → usage</code>.</p>
+      </section>`;
+  }
+  const max = Math.max(
+    1e-9,
+    ...withTokens.map((row) => row.usage.tokensIn + row.usage.tokensOut),
+  );
+  const bars = withTokens
+    .map((row) =>
+      costBarRow({
+        label: `${shortSpecLabel(row.specId)} · ${row.cycleId}`,
+        href: '#/cycles',
+        valueLabel: costsTokensFormat.format(
+          row.usage.tokensIn + row.usage.tokensOut,
+        ),
+        segments: [
+          { value: row.usage.tokensIn, color: COSTS_SERIES.tokensIn },
+          { value: row.usage.tokensOut, color: COSTS_SERIES.tokensOut },
+        ],
+        max,
+        tip: `${row.specId} ${row.cycleId} — entrada: ${costsExactFormat.format(row.usage.tokensIn)} tokens · salida: ${costsExactFormat.format(row.usage.tokensOut)} tokens`,
+      }),
+    )
+    .join('');
+  return `
+    <section class="card" style="margin-bottom:16px">
+      <div class="card-header"><span class="card-title">Tokens por ciclo</span></div>
+      ${costsLegend([
+        { label: 'Entrada', color: COSTS_SERIES.tokensIn },
+        { label: 'Salida', color: COSTS_SERIES.tokensOut },
+      ])}
+      <div style="display:grid;gap:4px">${bars}</div>
+    </section>`;
+}
+
+function costsTableCard(rows, money) {
+  const body = rows
+    .map((row) => {
+      const tokens = row.usage.hasData
+        ? `${costsExactFormat.format(row.usage.tokensIn)} / ${costsExactFormat.format(row.usage.tokensOut)}`
+        : '—';
+      const agentic = row.usage.hasData
+        ? money.format(row.agenticCost) + (row.tierAssumed ? ' *' : '')
+        : '—';
+      const saving = row.usage.hasData
+        ? money.format(row.traditionalCost - row.agenticCost)
+        : '—';
+      return `
+        <tr>
+          <td><a href="#/cycles" style="color:var(--text-bright)">${escapeHtml(row.specId)} · ${escapeHtml(row.cycleId)}</a></td>
+          <td>${escapeHtml(row.module)}</td>
+          <td style="text-align:right">${costsExactFormat.format(row.estimationHours)} h</td>
+          <td style="text-align:right">${money.format(row.traditionalCost)}</td>
+          <td style="text-align:right">${escapeHtml(tokens)}</td>
+          <td style="text-align:right">${escapeHtml(agentic)}</td>
+          <td style="text-align:right">${escapeHtml(saving)}</td>
+        </tr>`;
+    })
+    .join('');
+  return `
+    <section class="card" style="margin-bottom:16px">
+      <div class="card-header"><span class="card-title">Detalle por ciclo</span></div>
+      <div class="table-wrapper"><table>
+        <thead><tr><th>Ciclo</th><th>Módulo</th><th style="text-align:right">Horas est.</th><th style="text-align:right">Costo trad.</th><th style="text-align:right">Tokens in/out</th><th style="text-align:right">Costo agéntico</th><th style="text-align:right">Ahorro</th></tr></thead>
+        <tbody>${body}</tbody>
+      </table></div>
+    </section>`;
+}
+
+function costsMethodologyCard(pricing, anyAssumed, money) {
+  const tierRows = Object.entries(pricing.model_prices_per_mtok)
+    .map(
+      ([tier, prices]) =>
+        `<tr><td>${escapeHtml(tier)}</td><td style="text-align:right">${money.format(prices.input)}</td><td style="text-align:right">${money.format(prices.output)}</td></tr>`,
+    )
+    .join('');
+  return `
+    <section class="card">
+      <div class="card-header"><span class="card-title">Metodología y tarifas</span></div>
+      <p class="card-hint">
+        <strong>Tradicional</strong> = Σ estimation_hours de las tasks × ${money.format(pricing.traditional_hourly_rate)}/h.
+        <strong>Agéntico</strong> = tokens registrados × tarifa del tier (USD por millón de tokens).
+        La telemetría la escribe el sdd-reviewer al cerrar cada ciclo (<code>metrics.usage</code>) o los implementadores por task; es aproximada por diseño.
+        ${anyAssumed ? `* Tokens sin tier declarado se tarifan como <code>${COSTS_ASSUMED_TIER}</code>.` : ''}
+        ${pricing.missing ? 'No hay <code>sdd/pricing.json</code> — usando tarifas por defecto del kit.' : 'Tarifas editables en <code>sdd/pricing.json</code>.'}
+      </p>
+      <div class="table-wrapper"><table>
+        <thead><tr><th>Tier</th><th style="text-align:right">Input /MTok</th><th style="text-align:right">Output /MTok</th></tr></thead>
+        <tbody>${tierRows}</tbody>
+      </table></div>
+    </section>`;
+}
+
+function attachCostsTooltip(container) {
+  const tooltip = document.createElement('div');
+  tooltip.setAttribute('role', 'status');
+  tooltip.style.cssText =
+    'position:fixed;z-index:80;max-width:320px;padding:8px 10px;border-radius:var(--radius-md);border:1px solid var(--border-soft);background:var(--surface-2);color:var(--text-bright);font-family:var(--font-mono);font-size:var(--text-11);line-height:1.5;pointer-events:none;display:none';
+  container.appendChild(tooltip);
+
+  const move = (event) => {
+    const x = Math.min(event.clientX + 14, window.innerWidth - 330);
+    const y = Math.min(event.clientY + 14, window.innerHeight - 80);
+    tooltip.style.left = `${x}px`;
+    tooltip.style.top = `${y}px`;
+  };
+  container.addEventListener('mouseover', (event) => {
+    const target = event.target.closest('[data-cost-tip]');
+    if (!target) return;
+    tooltip.textContent = target.dataset.costTip;
+    tooltip.style.display = 'block';
+    move(event);
+  });
+  container.addEventListener('mousemove', (event) => {
+    if (tooltip.style.display === 'block') move(event);
+  });
+  container.addEventListener('mouseout', (event) => {
+    if (event.target.closest('[data-cost-tip]')) {
+      tooltip.style.display = 'none';
+    }
+  });
+}
+
+async function renderCosts(container) {
+  const { pricing, rows } = await loadCostsData();
+  const money = costsMoneyFormatter(pricing.currency ?? 'USD');
+
+  if (rows.length === 0) {
+    container.innerHTML = `
+      ${pageHeader({
+        title: 'Costos',
+        subtitle:
+          'Tokens, tiempos y comparativa de costos del modo agéntico contra la estimación tradicional.',
+      })}
+      ${emptyState(
+        'Sin ciclos todavía',
+        'Cuando el loop SDD complete ciclos con tasks estimadas y telemetría de tokens, el tablero aparece acá.',
+      )}`;
+    return;
+  }
+
+  const totals = rows.reduce(
+    (acc, row) => {
+      acc.hours += row.estimationHours;
+      acc.traditional += row.traditionalCost;
+      acc.tokens += row.usage.tokensIn + row.usage.tokensOut;
+      acc.agentic += row.agenticCost;
+      acc.hasUsage ||= row.usage.hasData;
+      acc.anyAssumed ||= row.tierAssumed;
+      return acc;
+    },
+    {
+      hours: 0,
+      traditional: 0,
+      tokens: 0,
+      agentic: 0,
+      hasUsage: false,
+      anyAssumed: false,
+    },
+  );
+  const saving = totals.traditional - totals.agentic;
+  const savingPct =
+    totals.traditional > 0 ? Math.round((saving / totals.traditional) * 100) : 0;
+
+  const kpis = [
+    dashboardStatCell({
+      value: `${costsExactFormat.format(totals.hours)} h`,
+      label: 'Horas estimadas',
+      href: '#/tasks',
+    }),
+    dashboardStatCell({
+      value: money.format(totals.traditional),
+      label: 'Costo tradicional',
+      href: '#/tasks',
+    }),
+    dashboardStatCell({
+      value: totals.hasUsage ? costsTokensFormat.format(totals.tokens) : '—',
+      label: 'Tokens consumidos',
+      href: '#/cycles',
+    }),
+    dashboardStatCell({
+      value: totals.hasUsage ? money.format(totals.agentic) : '—',
+      label: 'Costo agéntico aprox.',
+      href: '#/cycles',
+    }),
+    dashboardStatCell({
+      value: totals.hasUsage ? `${money.format(saving)} (${savingPct}%)` : '—',
+      label: 'Ahorro proyectado',
+      href: '#/cycles',
+      accent: totals.hasUsage && saving > 0,
+    }),
+  ].join('');
+
+  container.innerHTML = `
+    ${pageHeader({
+      title: 'Costos',
+      meta: `${rows.length} ciclos`,
+      subtitle:
+        'Tokens, tiempos y comparativa de costos del modo agéntico contra la estimación tradicional de las tasks.',
+    })}
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:20px">${kpis}</div>
+    ${costsComparisonCard(rows, pricing, money)}
+    ${costsTokensCard(rows)}
+    ${costsTableCard(rows, money)}
+    ${costsMethodologyCard(pricing, totals.anyAssumed, money)}
+  `;
+  attachCostsTooltip(container);
+}
+
 async function renderNotFound(container, params) {
   container.innerHTML = emptyState(
     'Vista no encontrada',
@@ -5752,6 +6240,13 @@ const VIEWS = {
     section: 'Visión general',
     icon: 'planning',
     render: renderPlanning,
+  },
+  costs: {
+    label: 'Costos',
+    section: 'Visión general',
+    icon: 'costs',
+    render: renderCosts,
+    loading: dashboardLoadingSkeleton,
   },
   specs: { label: 'Specs', section: 'SDD', icon: 'file', render: renderSpecs },
   cycles: {
@@ -6013,8 +6508,49 @@ function scrollToMarkdownAnchor(event) {
   target?.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
+const LIVE_SYNC_INTERVAL_MS = 4000;
+const LIVE_SYNC_MAX_FAILURES = 3;
+
+function startLiveSync() {
+  if (!isLiveHost()) return;
+  const stateUrl = new URL('__state', window.location.href).href;
+  let fingerprint = null;
+  let failures = 0;
+  let timer = null;
+
+  const tick = async () => {
+    if (document.visibilityState !== 'visible') return;
+    if (activeModal) return;
+    try {
+      const response = await fetch(stateUrl, { cache: 'no-store' });
+      if (!response.ok) throw new Error(String(response.status));
+      const state = await response.json();
+      failures = 0;
+      if (fingerprint === null) {
+        fingerprint = state.fingerprint;
+        return;
+      }
+      if (state.fingerprint !== fingerprint) {
+        fingerprint = state.fingerprint;
+        invalidateCache();
+        onRoute();
+      }
+    } catch {
+      failures++;
+      if (failures >= LIVE_SYNC_MAX_FAILURES && timer) {
+        clearInterval(timer);
+        timer = null;
+      }
+    }
+  };
+
+  timer = setInterval(tick, LIVE_SYNC_INTERVAL_MS);
+  tick();
+}
+
 function bootstrap() {
   buildNav();
+  startLiveSync();
   document.addEventListener('click', scrollToMarkdownAnchor);
   document.getElementById('menu-button').addEventListener('click', openSidebar);
   document

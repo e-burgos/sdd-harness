@@ -407,6 +407,26 @@ Presents a multi-select from the MCP catalog, pre-selecting any already in `.mcp
 
 ---
 
+### `harness configure memory`
+
+Opt-in memory providers (MCP) **on top of** the kit's portable base layer. The base —
+`sdd/memory/lessons.md` + `sdd/memory/journal/` (MEMORIA GATE) — is plain versioned
+files and needs no runtime; these providers add optional semantic retrieval.
+
+```bash
+harness configure memory
+```
+
+Merges into `.mcp.json` without touching other configured MCP servers (deselecting a
+provider removes only that provider). No API keys, no paid services:
+
+| Provider          | What it adds                              | Runtime            |
+| ----------------- | ----------------------------------------- | ------------------ |
+| `basic-memory`    | Markdown notes + wikilinks, local-first   | `uvx basic-memory` |
+| `knowledge-graph` | Entity/relation graph persisted **inside the repo** at `sdd/memory/knowledge-graph.json` | `npx @modelcontextprotocol/server-memory` |
+
+---
+
 ### `harness info`
 
 Display workspace information at a glance.
@@ -507,7 +527,9 @@ The kit is portable by design: **`sdd/global.json` is the single source of truth
 | `sdd/prompts/`            | Gate prompts (SPEC GATE, FIX GATE, start/review cycle)                   |
 | `sdd/templates/`          | Scaffolding blueprints: nx-workspace, java-api, react-app, ts-lib        |
 | `sdd/scripts/`            | `validate-sdd.mjs`, `rebuild-tasks-index.mjs`, `rebuild-catalog.mjs`, `setup-agents` |
-| `sdd/docs/`               | Zero-dependency docs viewer (`pnpm sdd:docs`)                            |
+| `sdd/docs/`               | Zero-dependency docs viewer (`pnpm sdd:docs`) — includes the **Costos** dashboard (agentic vs traditional cost) and live auto-refresh on registry changes |
+| `sdd/memory/`             | Portable self-learning layer: `lessons.md` (distilled, read every session) + `journal/` (episodic, MEMORIA GATE) |
+| `sdd/pricing.json`        | Editable rates feeding the Costos dashboard (hourly rate + $/MTok per model tier) |
 | `sdd/dual-harness/`       | Source of truth for root `AGENTS.md` / `CLAUDE.md`                       |
 | `AGENTS.md` / `CLAUDE.md` | **Symlinks** to `sdd/dual-harness/` (created by `pnpm setup:agents`)     |
 | `.claude/` / `.github/`   | Symlinks exposing agents, skills and prompts to Claude Code & Copilot    |

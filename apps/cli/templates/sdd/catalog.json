@@ -103,6 +103,9 @@
       "file": "check-spec-before-implement.prompt.md"
     },
     {
+      "file": "hermes-resume.prompt.md"
+    },
+    {
       "file": "hotfix-bypass-gate.prompt.md"
     },
     {
@@ -133,6 +136,9 @@
     },
     {
       "file": "global.schema.json"
+    },
+    {
+      "file": "pricing.schema.json"
     },
     {
       "file": "specs-index.schema.json"

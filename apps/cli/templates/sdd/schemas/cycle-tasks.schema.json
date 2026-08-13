@@ -80,7 +80,19 @@
           "items": { "type": "string", "pattern": "^TASK(-[A-Z]+)?(-\\d+)+$" }
         },
         "status": { "enum": ["pending", "in-progress", "done", "skipped"] },
-        "files": { "type": "array", "items": { "type": "string" } }
+        "files": { "type": "array", "items": { "type": "string" } },
+        "usage": {
+          "type": "object",
+          "required": ["tokens_in", "tokens_out"],
+          "additionalProperties": false,
+          "description": "Optional telemetry: approximate tokens/time spent implementing this task, recorded by the implementor (or the reviewer at close). Feeds the viewer's Costs dashboard.",
+          "properties": {
+            "tokens_in": { "type": "integer", "minimum": 0 },
+            "tokens_out": { "type": "integer", "minimum": 0 },
+            "duration_minutes": { "type": "number", "minimum": 0 },
+            "model_tier": { "enum": ["haiku", "sonnet", "opus", "fable"] }
+          }
+        }
       }
     }
   }
