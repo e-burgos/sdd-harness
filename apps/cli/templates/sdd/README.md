@@ -12,14 +12,15 @@
 2. [Estructura del sistema SDD](#estructura-del-sistema-sdd)
 3. [SPEC GATE — La regla de oro](#spec-gate--la-regla-de-oro)
 4. [CONTEXTO GATE — Cierre obligatorio](#contexto-gate--cierre-obligatorio)
-5. [FIX GATE — Bypass controlado](#fix-gate--bypass-controlado)
-6. [Cómo generar una especificación](#cómo-generar-una-especificación)
-7. [Ciclos SDD — Flujo completo](#ciclos-sdd--flujo-completo)
-8. [Agentes SDD](#agentes-sdd)
-9. [Skills SDD](#skills-sdd)
-10. [Artefactos del sistema](#artefactos-del-sistema)
-11. [Reglas estrictas](#reglas-estrictas)
-12. [Referencia rápida](#referencia-rápida)
+5. [MEMORIA GATE — Autoaprendizaje entre sesiones](#memoria-gate--autoaprendizaje-entre-sesiones)
+6. [FIX GATE — Bypass controlado](#fix-gate--bypass-controlado)
+7. [Cómo generar una especificación](#cómo-generar-una-especificación)
+8. [Ciclos SDD — Flujo completo](#ciclos-sdd--flujo-completo)
+9. [Agentes SDD](#agentes-sdd)
+10. [Skills SDD](#skills-sdd)
+11. [Artefactos del sistema](#artefactos-del-sistema)
+12. [Reglas estrictas](#reglas-estrictas)
+13. [Referencia rápida](#referencia-rápida)
 
 ---
 
@@ -90,6 +91,13 @@ sdd/
 │   │           └── YYYY-MM-DD-[spec-id]-cycle-XX.md
 │   ├── libs/                          ← Ídem por lib
 │   └── tools/                         ← Herramientas del repo que no son app ni lib
+│
+├── memory/                            ← Memoria del proyecto (ver MEMORIA GATE)
+│   ├── lessons.md                     ← Lecciones DESTILADAS — se lee al iniciar toda sesión (cap 120 líneas)
+│   └── journal/                       ← Entradas episódicas por ciclo/fix — solo grep dirigido
+│       └── YYYY-MM-DD-[spec-id]-cycle-XX.md
+│
+├── pricing.json                       ← Tarifas del dashboard de Costos (hora tradicional + $/MTok por tier)
 │
 ├── agents/                            ← Definiciones de agentes SDD (centralizadas)
 │   ├── sdd-orchestrator.agent.md
@@ -358,6 +366,32 @@ El contexto vigente = base + fragmentos. Se considera **desactualizado** (= cicl
 → eliminarla. El contexto nunca tiene información obsoleta.
 
 Ver reglas completas: `sdd/agents/sdd-reviewer.agent.md` → "Actualización de contexto".
+
+---
+
+## MEMORIA GATE — Autoaprendizaje entre sesiones
+
+El contexto registra **qué es** el sistema; la memoria registra **qué aprendimos**
+trabajándolo. Sin ella cada sesión repite los mismos errores y re-paga en tokens el
+mismo descubrimiento. Dos capas con costo de lectura asimétrico por diseño:
+
+| Capa | Cuándo se lee | Cuándo se escribe |
+| --- | --- | --- |
+| `sdd/memory/lessons.md` | **Completo, al iniciar toda sesión** (cap 120 líneas) | Solo en la destilación (actor único: el orquestador) |
+| `sdd/memory/journal/` | Nunca entero — grep dirigido | Al cerrar ciclo/fix, **solo si hubo lección real** |
+
+- **Filtro anti-ruido:** antes de escribir, preguntarse *"¿esto cambiaría el
+  comportamiento de un agente futuro?"*. Si no, no se escribe.
+- **Destilación:** con ≥5 entradas en `journal/`, el orquestador funde cada una en una
+  línea de `lessons.md` (Proceso / Técnica / Costo) y borra lo destilado.
+  `pnpm sdd:validate` avisa cuando está pendiente.
+- Naming del journal idéntico a los fragmentos de contexto → único por construcción,
+  sin merge conflicts. Regla completa: sección 🧠 del dual-harness.
+
+Relacionado: al cerrar cada ciclo el reviewer registra la **telemetría de uso**
+(`cycle.json → metrics.usage`: tokens por tier, minutos) que alimenta la vista
+**Costos** del visor (`pnpm sdd:docs`) — comparativa agéntico vs estimación
+tradicional, con tarifas editables en `sdd/pricing.json`.
 
 ---
 

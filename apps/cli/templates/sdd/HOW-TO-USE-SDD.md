@@ -16,6 +16,7 @@
 7. [Convenciones de naming](#7-convenciones-de-naming)
 8. [Reglas absolutas (nunca violar)](#8-reglas-absolutas-nunca-violar)
 9. [Cheat sheet de prompts](#9-cheat-sheet-de-prompts)
+10. [Hermes, memoria y costos — el punta a punta](#10-hermes-memoria-y-costos--el-punta-a-punta)
 
 ---
 
@@ -582,6 +583,82 @@ ls sdd/context/*/*/updates/*.md 2>/dev/null | wc -l
 # Fix urgente
 "[BUGFIX] <descripción del problema>"
 ```
+
+---
+
+## 10. Hermes, memoria y costos — el punta a punta
+
+### 10.1 De una idea a producto (skill `sdd-hermes`)
+
+El ciclo SDD arranca en una spec — Hermes arranca **antes**: en la idea. Todo el
+protocolo vive en `sdd/skills/sdd-hermes/skill.md`; la entrada es un comando:
+
+```bash
+# Repo vacío — registrar la idea y dejar todo listo para el agente:
+npx @e-burgos/sdd-harness idea "una app de turnos para peluquerías con recordatorios"
+# → harness.idea.md          (la idea + el protocolo a seguir, con checkpoints humanos)
+# → harness.config.json      (stub del stack, lo completa el agente)
+# → harness.config.schema.json (para validar el config sin correr la CLI)
+
+# El agente decide el stack (checkpoint humano), y genera el workspace sin un solo prompt:
+npx @e-burgos/sdd-harness init --config ./harness.config.json
+
+# Workspace existente — la misma entrada, protocolo de gaps:
+harness idea "sumar reportes de ventas"   # → harness.idea.md con análisis vs el stack instalado
+```
+
+Dentro del workspace, el agente sigue las fases 4–5 de la skill: una spec por
+módulo (`harness add spec`, checkpoint humano) y el loop de ciclos de siempre —
+Hermes **no bypassea ningún gate**, solo encadena fases.
+
+**Retomar en cualquier sesión** (el estado vive en los registros, no en la sesión):
+pegarle al agente `sdd/prompts/hermes-resume.prompt.md` — diagnostica la posición
+(ciclo abierto → continuar; pendientes → orquestador; backlog vacío → reportar) y sigue.
+
+### 10.2 Memoria (regla 🧠 del dual-harness)
+
+Dos capas de archivos versionados, sin dependencias:
+
+- `sdd/memory/lessons.md` — lecciones destiladas, cap 120 líneas. **Se lee completo
+  al iniciar toda sesión.**
+- `sdd/memory/journal/` — entradas episódicas al cerrar ciclo/fix, **solo si hubo
+  lección real** (filtro anti-ruido). Nunca se lee entero.
+
+```markdown
+<!-- sdd/memory/journal/2026-08-13-spec-jdoe-001-cycle-01.md -->
+# spec-jdoe-001 cycle-01 — 2026-08-13
+
+## Qué pasó → el mock de la API de pagos no simula timeouts; 2 tasks bloqueadas
+## Lección → probar contra el sandbox real de pagos desde el primer ciclo
+## Costo evitable → ~40 min y dos re-implementaciones
+```
+
+Con ≥5 entradas, el orquestador las **destila** en `lessons.md` (una línea por
+lección) y borra lo destilado — `pnpm sdd:validate` avisa cuando está pendiente.
+
+### 10.3 Telemetría y dashboard de Costos
+
+Al cerrar cada ciclo, el reviewer registra el consumo aproximado (aproximación
+honesta vale; número inventado no):
+
+```jsonc
+// cycle.json → metrics
+"usage": {
+  "tokens_in": 980000, "tokens_out": 151000, "duration_minutes": 65,
+  "by_tier": { "sonnet": { "tokens_in": 830000, "tokens_out": 130000 },
+               "opus":   { "tokens_in": 150000, "tokens_out": 21000 } }
+}
+```
+
+Con eso, `pnpm sdd:docs` → vista **Costos**: comparativa del costo agéntico
+(tokens × tarifa por tier) contra la estimación tradicional (`estimation_hours`
+de las tasks × tarifa hora), ahorro proyectado, tokens por ciclo y tabla exacta.
+Las tarifas se editan en `sdd/pricing.json`.
+
+El visor además es **reactivo en local**: pollea un fingerprint por área de los
+registros cada 4 s — cerrás un ciclo y la vista activa se actualiza sola, sin
+recargar y sin perder lo que tenías expandido. En hosting estático queda el
+refresh manual.
 
 ---
 

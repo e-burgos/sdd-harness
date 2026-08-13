@@ -156,6 +156,34 @@ async function handleDirectory(
 
 const STATE_SKIP_DIRS = new Set(['docs', 'templates', 'node_modules', '.git']);
 
+const STATE_AREA_FILES = {
+  'global.json': 'global',
+  'tasks.json': 'tasks',
+  'fixes.json': 'fixes',
+  'api.json': 'arch',
+  'schema.json': 'arch',
+  'components.json': 'arch',
+  'pricing.json': 'pricing',
+  'catalog.json': 'catalog',
+};
+
+const STATE_AREA_DIRS = {
+  specs: 'specs',
+  fixes: 'fixes',
+  context: 'context',
+  memory: 'memory',
+  agents: 'agents',
+  skills: 'skills',
+  prompts: 'prompts',
+  schemas: 'schemas',
+};
+
+function stateAreaOf(rel) {
+  if (rel in STATE_AREA_FILES) return STATE_AREA_FILES[rel];
+  const topDir = rel.split('/', 1)[0];
+  return STATE_AREA_DIRS[topDir] ?? 'meta';
+}
+
 async function collectRegistryStamps(dir, relBase, stamps) {
   let entries;
   try {
@@ -178,14 +206,32 @@ async function collectRegistryStamps(dir, relBase, stamps) {
   }
 }
 
+function sha1(text) {
+  return createHash('sha1').update(text).digest('hex');
+}
+
 async function serveStateFingerprint(req, res, root) {
   const stamps = [];
   await collectRegistryStamps(path.join(root, 'sdd'), '', stamps);
   stamps.sort();
-  const fingerprint = createHash('sha1')
-    .update(stamps.join('\n'))
-    .digest('hex');
-  const body = JSON.stringify({ fingerprint, files: stamps.length });
+
+  const areaStamps = {};
+  for (const stampLine of stamps) {
+    const area = stateAreaOf(stampLine.slice(0, stampLine.indexOf(':')));
+    (areaStamps[area] ??= []).push(stampLine);
+  }
+  const areas = Object.fromEntries(
+    Object.entries(areaStamps).map(([area, lines]) => [
+      area,
+      sha1(lines.join('\n')),
+    ]),
+  );
+
+  const body = JSON.stringify({
+    fingerprint: sha1(stamps.join('\n')),
+    areas,
+    files: stamps.length,
+  });
   return respond(
     req,
     res,

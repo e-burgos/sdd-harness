@@ -6234,12 +6234,14 @@ const VIEWS = {
     icon: 'dashboard',
     render: renderDashboard,
     loading: dashboardLoadingSkeleton,
+    deps: ['global', 'specs', 'tasks', 'fixes', 'context', 'arch'],
   },
   planning: {
     label: 'Planificación',
     section: 'Visión general',
     icon: 'planning',
     render: renderPlanning,
+    deps: ['global', 'specs', 'tasks'],
   },
   costs: {
     label: 'Costos',
@@ -6247,69 +6249,89 @@ const VIEWS = {
     icon: 'costs',
     render: renderCosts,
     loading: dashboardLoadingSkeleton,
+    deps: ['specs', 'tasks', 'pricing'],
   },
-  specs: { label: 'Specs', section: 'SDD', icon: 'file', render: renderSpecs },
+  specs: {
+    label: 'Specs', section: 'SDD', icon: 'file', render: renderSpecs,
+    deps: ['specs', 'global', 'tasks'],
+  },
   cycles: {
     label: 'Ciclos',
     section: 'SDD',
     icon: 'cycle',
     render: renderCycles,
+    deps: ['specs', 'tasks', 'global'],
   },
-  tasks: { label: 'Tareas', section: 'SDD', icon: 'task', render: renderTasks },
-  fixes: { label: 'Fixes', section: 'SDD', icon: 'fix', render: renderFixes },
+  tasks: {
+    label: 'Tareas', section: 'SDD', icon: 'task', render: renderTasks,
+    deps: ['specs', 'tasks'],
+  },
+  fixes: {
+    label: 'Fixes', section: 'SDD', icon: 'fix', render: renderFixes,
+    deps: ['fixes', 'specs'],
+  },
   context: {
     label: 'Contexto',
     section: 'SDD',
     icon: 'context',
     render: renderContext,
+    deps: ['context', 'global'],
   },
   agents: {
     label: 'Agentes',
     section: 'Herramientas SDD',
     icon: 'agent',
     render: renderAgents,
+    deps: ['agents', 'catalog'],
   },
   skills: {
     label: 'Skills',
     section: 'Herramientas SDD',
     icon: 'skill',
     render: renderSkills,
+    deps: ['skills', 'catalog'],
   },
   prompts: {
     label: 'Prompts',
     section: 'Herramientas SDD',
     icon: 'prompt',
     render: renderPrompts,
+    deps: ['prompts', 'catalog'],
   },
   schema: {
     label: 'Schema',
     section: 'Arquitectura',
     icon: 'database',
     render: renderSchema,
+    deps: ['arch', 'global'],
   },
   api: {
     label: 'API',
     section: 'Arquitectura',
     icon: 'api',
     render: renderApi,
+    deps: ['arch', 'global'],
   },
   components: {
     label: 'Componentes',
     section: 'Arquitectura',
     icon: 'components',
     render: renderComponents,
+    deps: ['arch', 'global'],
   },
   schemas: {
     label: 'Schemas JSON',
     section: 'Arquitectura',
     icon: 'schemaFix',
     render: renderSchemas,
+    deps: ['schemas', 'catalog'],
   },
   help: {
     label: 'Documentación SDD',
     section: 'Ayuda',
     icon: 'help',
     render: renderHelp,
+    deps: ['meta'],
   },
 };
 
@@ -6511,10 +6533,89 @@ function scrollToMarkdownAnchor(event) {
 const LIVE_SYNC_INTERVAL_MS = 4000;
 const LIVE_SYNC_MAX_FAILURES = 3;
 
+function captureViewUiState() {
+  const view = document.getElementById('view');
+  if (!view) return null;
+  const expanded = [];
+  for (const toggle of view.querySelectorAll('[data-toggle][aria-expanded]')) {
+    expanded.push([
+      toggle.dataset.toggle,
+      toggle.getAttribute('aria-expanded') === 'true',
+    ]);
+  }
+  const tabs = [];
+  for (const tab of view.querySelectorAll(
+    '[data-help-tab][aria-selected="true"]',
+  )) {
+    tabs.push(tab.dataset.helpTab);
+  }
+  const inputs = [];
+  view.querySelectorAll('input').forEach((el, index) => {
+    if (el.value) inputs.push([index, el.value]);
+  });
+  return {
+    expanded,
+    tabs,
+    inputs,
+    scrollTop: document.scrollingElement?.scrollTop ?? 0,
+  };
+}
+
+function restoreViewUiState(state) {
+  if (!state) return;
+  const view = document.getElementById('view');
+  if (!view) return;
+  for (const [key, wasExpanded] of state.expanded) {
+    const toggle = view.querySelector(`[data-toggle="${CSS.escape(key)}"]`);
+    if (!toggle) continue;
+    const isExpanded = toggle.getAttribute('aria-expanded') === 'true';
+    if (isExpanded !== wasExpanded) toggle.click();
+  }
+  for (const tabId of state.tabs) {
+    const tab = view.querySelector(`[data-help-tab="${CSS.escape(tabId)}"]`);
+    if (tab && tab.getAttribute('aria-selected') !== 'true') tab.click();
+  }
+  const inputEls = view.querySelectorAll('input');
+  for (const [index, value] of state.inputs) {
+    const el = inputEls[index];
+    if (el && el.value !== value) {
+      el.value = value;
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+  }
+  if (document.scrollingElement) {
+    document.scrollingElement.scrollTop = state.scrollTop;
+  }
+}
+
+function viewDependsOn(viewKey, changedAreas) {
+  const deps = VIEWS[viewKey]?.deps;
+  if (!deps) return true;
+  return deps.some((area) => changedAreas.has(area));
+}
+
+async function liveRefreshActiveView() {
+  const { view, params } = parseHash(window.location.hash);
+  const uiState = captureViewUiState();
+  await mountView(view, params);
+  restoreViewUiState(uiState);
+}
+
+function diffStateAreas(previous, next) {
+  const changed = new Set();
+  for (const [area, hash] of Object.entries(next)) {
+    if (previous[area] !== hash) changed.add(area);
+  }
+  for (const area of Object.keys(previous)) {
+    if (!(area in next)) changed.add(area);
+  }
+  return changed;
+}
+
 function startLiveSync() {
   if (!isLiveHost()) return;
   const stateUrl = new URL('__state', window.location.href).href;
-  let fingerprint = null;
+  let knownAreas = null;
   let failures = 0;
   let timer = null;
 
@@ -6526,14 +6627,20 @@ function startLiveSync() {
       if (!response.ok) throw new Error(String(response.status));
       const state = await response.json();
       failures = 0;
-      if (fingerprint === null) {
-        fingerprint = state.fingerprint;
+      const nextAreas = state.areas ?? { all: state.fingerprint };
+      if (knownAreas === null) {
+        knownAreas = nextAreas;
         return;
       }
-      if (state.fingerprint !== fingerprint) {
-        fingerprint = state.fingerprint;
-        invalidateCache();
-        onRoute();
+      const changed = diffStateAreas(knownAreas, nextAreas);
+      if (changed.size === 0) return;
+      knownAreas = nextAreas;
+      invalidateCache();
+      const { view } = parseHash(window.location.hash);
+      if (changed.has('all') || viewDependsOn(view, changed)) {
+        await liveRefreshActiveView();
+      } else if (changed.has('global') || changed.has('meta')) {
+        paintShellChrome();
       }
     } catch {
       failures++;

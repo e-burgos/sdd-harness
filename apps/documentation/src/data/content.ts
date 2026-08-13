@@ -36,6 +36,7 @@ export type Mode = {
   claim: string;
   detail: string;
   tree: TreeNode[];
+  example: { title: string; lines: string[] };
 };
 
 const SDD_TREE: TreeNode = {
@@ -84,6 +85,16 @@ export const MODES: Mode[] = [
         ],
       },
     ],
+    example: {
+      title: 'Un día de trabajo en este modo',
+      lines: [
+        '$ harness add app nestjs --name payments-api',
+        '$ harness add spec payments --author jdoe',
+        '# desde tu agente (Claude Code / Copilot):',
+        '/start-sdd-cycle.prompt payments',
+        '→ orquestador → funcional → planner+arquitecto → implementadores → reviewer',
+      ],
+    },
   },
   {
     id: 'standalone',
@@ -104,6 +115,15 @@ export const MODES: Mode[] = [
         ],
       },
     ],
+    example: {
+      title: 'Un día de trabajo en este modo',
+      lines: [
+        '$ npx @e-burgos/sdd-harness init --standalone',
+        '? tipo de app → fastify (el código vive en la raíz)',
+        '$ harness add spec catalogo --author jdoe',
+        '# mismo ciclo SDD, misma trazabilidad — sin capas de más',
+      ],
+    },
   },
   {
     id: 'harness',
@@ -128,6 +148,97 @@ export const MODES: Mode[] = [
           },
         ],
       },
+    ],
+    example: {
+      title: 'Un día de trabajo en este modo',
+      lines: [
+        '$ cd mi-repo-legacy',
+        '$ npx @e-burgos/sdd-harness configure sdd',
+        '→ AGENTS.md previo absorbido — ninguna regla se pierde',
+        '$ harness idea "migrar el módulo de reportes a async"',
+        '# el agente analiza gaps contra tu stack real y arma el plan',
+      ],
+    },
+  },
+];
+
+export type HermesPhase = {
+  id: string;
+  label: string;
+  title: string;
+  body: string;
+  code: string[];
+};
+
+export const HERMES_PHASES: HermesPhase[] = [
+  {
+    id: 'idea',
+    label: '01 · Idea',
+    title: 'Registrás la idea — en lenguaje natural',
+    body: 'Un comando deja la idea versionada junto al protocolo que el agente va a seguir, con los checkpoints humanos marcados. En un repo vacío también deja el stub del stack y su JSON Schema.',
+    code: [
+      '$ npx @e-burgos/sdd-harness idea "una app de turnos',
+      '    para peluquerías con recordatorios"',
+      '',
+      '✓ harness.idea.md             # la idea + el protocolo',
+      '✓ harness.config.json         # stub del stack',
+      '✓ harness.config.schema.json  # validable sin la CLI',
+    ],
+  },
+  {
+    id: 'stack',
+    label: '02 · Stack',
+    title: 'El agente propone el stack — vos aprobás',
+    body: 'La matriz de decisión de la skill sdd-hermes mapea necesidades → piezas (apps, libs, servicios Docker). Checkpoint humano obligatorio: nada se genera sin tu OK.',
+    code: [
+      '// harness.config.json — completado por el agente',
+      '{',
+      '  "mode": "nx",',
+      '  "apps": [{ "name": "api", "type": "nestjs" },',
+      '           { "name": "webapp", "type": "react" }],',
+      '  "services": [{ "type": "postgres" }]',
+      '}',
+    ],
+  },
+  {
+    id: 'workspace',
+    label: '03 · Workspace',
+    title: 'Se genera solo — cero prompts',
+    body: 'La vía no interactiva de init: config validada con zod, errores con path exacto, y el workspace completo con el sistema SDD instalado, validado y commiteado.',
+    code: [
+      '$ npx @e-burgos/sdd-harness init --config ./harness.config.json',
+      '',
+      '→ Generando workspace nx...',
+      '→ Instalando sistema SDD (7 agentes, 18 skills)...',
+      '✓ sdd:validate OK — registros verdes',
+    ],
+  },
+  {
+    id: 'specs',
+    label: '04 · Specs',
+    title: 'Una spec por módulo — el contrato',
+    body: 'El agente redacta una spec por módulo core desde el descubrimiento. La spec es el contrato: la aprobás (o editás) antes de que el loop implemente. SPEC GATE: sin spec no hay código.',
+    code: [
+      '$ harness add spec auth --author eburgos',
+      '$ harness add spec turnos --author eburgos',
+      '',
+      'sdd/specs/spec-eburgos-001-auth/',
+      'sdd/specs/spec-eburgos-002-turnos/',
+    ],
+  },
+  {
+    id: 'loop',
+    label: '05 · Loop',
+    title: 'El loop de ciclos corre — y es retomable',
+    body: 'Módulo por módulo, los 7 agentes hacen su fase con todos los gates activos. El estado vive en los registros, no en la sesión: cualquier sesión futura retoma exactamente donde quedó.',
+    code: [
+      'mientras queden módulos pendientes:',
+      '  orquestador  → brief + cycle.json (SPEC GATE)',
+      '  5 agentes    → diseño, tasks, código, review',
+      '  cierre       → contexto + memoria + telemetría',
+      '',
+      '# ¿se cortó la sesión? en la próxima:',
+      '$ sdd/prompts/hermes-resume.prompt.md',
     ],
   },
 ];
@@ -329,6 +440,12 @@ export type ViewerShot = {
 
 export const VIEWER_SHOTS: ViewerShot[] = [
   {
+    id: 'costs',
+    tab: 'Costos ★',
+    caption:
+      'La vista estrella: costo agéntico aproximado (tokens × tarifa por tier) contra la estimación tradicional de las tasks, ahorro proyectado, tokens por ciclo y tabla exacta. Se actualiza sola mientras el loop trabaja.',
+  },
+  {
     id: 'dashboard',
     tab: 'Dashboard',
     caption:
@@ -375,7 +492,7 @@ export const VIEWER_PRINCIPLES = [
   },
   {
     title: 'Lee los registros en vivo — y se actualiza solo',
-    body: 'No genera HTML estático: consume global.json, specs/index.json, tasks.json y catalog.json directamente del filesystem. En local, un fingerprint de los registros se pollea cada 4s: cerrás un ciclo y el dashboard lo refleja sin recargar.',
+    body: 'No genera HTML estático: consume global.json, specs/index.json, tasks.json y catalog.json directamente del filesystem. En local pollea un fingerprint POR ÁREA cada 4s: solo re-renderiza tu vista si cambió algo de lo que depende, y preserva secciones expandidas, búsquedas y scroll.',
   },
   {
     title: 'Dashboard de Costos',

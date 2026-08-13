@@ -12,6 +12,7 @@ import {
 import { Terminal } from './components/Terminal';
 import { FileTree } from './components/FileTree';
 import { CopyCommand } from './components/CopyCommand';
+import { LiveCostsDemo } from './components/LiveCostsDemo';
 import { Section, cascade, rise } from './components/Section';
 import { SddDocsPage } from './pages/SddDocsPage';
 import { GuiaSddPage } from './pages/GuiaSddPage';
@@ -20,6 +21,7 @@ import {
   APP_CATALOG,
   COMMANDS,
   GATES,
+  HERMES_PHASES,
   LIB_CATALOG,
   MODES,
   PORTABILITY_POINTS,
@@ -29,6 +31,8 @@ import {
 
 const NAV = [
   { id: 'modos', label: 'Los 3 modos' },
+  { id: 'hermes', label: 'Idea → producto' },
+  { id: 'en-vivo', label: 'Costos en vivo' },
   { id: 'comandos', label: 'Comandos' },
   { id: 'metodologia', label: 'Metodología SDD' },
   { id: 'catalogo', label: 'Catálogo' },
@@ -192,7 +196,7 @@ export function App() {
                     onDocsPage ? 'text-accent-300' : 'text-zinc-400'
                   }`}
                 >
-                  <span className="mr-3 text-zinc-600">07</span>
+                  <span className="mr-3 text-zinc-600">09</span>
                   sdd:docs — el visor
                 </motion.a>
                 <motion.a
@@ -203,7 +207,7 @@ export function App() {
                     onGuiaPage ? 'text-accent-300' : 'text-zinc-400'
                   }`}
                 >
-                  <span className="mr-3 text-zinc-600">08</span>
+                  <span className="mr-3 text-zinc-600">10</span>
                   guía sdd — el manual completo
                 </motion.a>
               </motion.div>
@@ -221,6 +225,8 @@ export function App() {
           <>
             <Hero />
             <ModesSection />
+            <HermesSection />
+            <LiveSection />
             <CommandsSection />
             <MethodologySection />
             <CatalogSection />
@@ -292,9 +298,11 @@ function Hero() {
           className="mt-12 flex flex-wrap gap-x-8 gap-y-3 font-mono text-[11.5px] text-zinc-500"
         >
           <span>7 agentes SDD</span>
-          <span>16+ skills</span>
-          <span>3 gates</span>
+          <span>18 skills</span>
+          <span>4 gates</span>
           <span>schemas estrictos</span>
+          <span>costos en vivo</span>
+          <span>memoria portable</span>
           <span>Nx · standalone · existente</span>
         </motion.div>
       </motion.div>
@@ -353,11 +361,197 @@ function ModesSection() {
               {mode.detail}
             </p>
           </div>
-          <div className="rounded-2xl border hairline bg-ink-900/60 p-6 md:p-8">
-            <FileTree nodes={mode.tree} />
+          <div className="space-y-5">
+            <div className="rounded-2xl border hairline bg-ink-900/60 p-6 md:p-8">
+              <FileTree nodes={mode.tree} />
+            </div>
+            <div className="rounded-2xl border hairline bg-ink-900/40 p-5">
+              <p className="mb-3 font-mono text-[10px] uppercase tracking-[0.2em] text-zinc-500">
+                {mode.example.title}
+              </p>
+              <div className="space-y-1.5 font-mono text-[12px] leading-relaxed">
+                {mode.example.lines.map((line) => (
+                  <div
+                    key={line}
+                    className={
+                      line.startsWith('$') || line.startsWith('/')
+                        ? 'text-zinc-200'
+                        : line.startsWith('#')
+                          ? 'text-zinc-600'
+                          : 'text-zinc-500'
+                    }
+                  >
+                    {line.startsWith('$') ? (
+                      <>
+                        <span className="mr-2 text-accent-400">$</span>
+                        {line.slice(2)}
+                      </>
+                    ) : (
+                      line
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </motion.div>
       </AnimatePresence>
+    </Section>
+  );
+}
+
+function CodeLines({ lines }: { lines: string[] }) {
+  return (
+    <div className="space-y-1.5 font-mono text-[12.5px] leading-relaxed">
+      {lines.map((line, i) => (
+        <div
+          key={`${i}-${line}`}
+          className={
+            line.startsWith('$')
+              ? 'text-zinc-200'
+              : line.startsWith('✓')
+                ? 'text-accent-300'
+                : line.startsWith('//') || line.startsWith('#')
+                  ? 'text-zinc-600'
+                  : line.startsWith('→')
+                    ? 'text-zinc-500'
+                    : 'text-zinc-400'
+          }
+        >
+          {line.startsWith('$') ? (
+            <>
+              <span className="mr-2 text-accent-400">$</span>
+              {line.slice(2)}
+            </>
+          ) : (
+            line || ' '
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function HermesSection() {
+  const [phase, setPhase] = useState(HERMES_PHASES[0]);
+
+  return (
+    <Section
+      id="hermes"
+      kicker="02 — hermes, el punta a punta"
+      title="De una idea en una frase a un producto con specs"
+      lead="Le pasás una idea en lenguaje natural y el sistema configura el stack, siembra el backlog y conduce el loop de ciclos — con checkpoints humanos donde importa y sin bypassear un solo gate."
+    >
+      <div className="mb-8 flex flex-wrap gap-2">
+        {HERMES_PHASES.map((p) => (
+          <button
+            key={p.id}
+            onClick={() => setPhase(p)}
+            className={`rounded-full border px-4 py-2 font-mono text-[12px] transition-all active:scale-[0.97] ${
+              phase.id === p.id
+                ? 'border-accent-500/50 bg-accent-dim text-accent-300'
+                : 'hairline text-zinc-400 hover:text-zinc-200'
+            }`}
+          >
+            {p.label}
+          </button>
+        ))}
+      </div>
+
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={phase.id}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ type: 'spring', stiffness: 120, damping: 22 }}
+          className="grid gap-10 md:grid-cols-[5fr_7fr]"
+        >
+          <div>
+            <h3 className="max-w-[28ch] text-xl font-medium tracking-tight text-zinc-100">
+              {phase.title}
+            </h3>
+            <p className="mt-4 max-w-[48ch] text-[14px] leading-relaxed text-zinc-400">
+              {phase.body}
+            </p>
+            {phase.id === 'loop' && (
+              <p className="mt-4 max-w-[48ch] text-[12.5px] leading-relaxed text-zinc-500">
+                Y cada ciclo deja lecciones en{' '}
+                <code className="text-zinc-300">sdd/memory/</code>: el sistema
+                aprende del proyecto y no vuelve a pagar dos veces el mismo
+                descubrimiento.
+              </p>
+            )}
+          </div>
+          <div className="rounded-2xl border hairline bg-ink-900/60 p-6 md:p-7">
+            <CodeLines lines={phase.code} />
+          </div>
+        </motion.div>
+      </AnimatePresence>
+    </Section>
+  );
+}
+
+function LiveSection() {
+  return (
+    <Section
+      id="en-vivo"
+      kicker="03 — la feature estrella"
+      title="Un tablero que trabaja mientras los agentes trabajan"
+      lead="Cada ciclo registra tokens y tiempos. El visor los convierte en una comparativa de costos contra la estimación tradicional — y en local se actualiza solo, mientras el loop corre. Dale play:"
+    >
+      <LiveCostsDemo />
+
+      <div className="mt-10 grid gap-8 md:grid-cols-3">
+        {[
+          {
+            t: 'Telemetría honesta',
+            d: 'Al cerrar cada ciclo se registran tokens por tier de modelo y minutos en cycle.json → metrics.usage. El costo agéntico sale de tarifas editables en sdd/pricing.json; la estimación tradicional, de las horas que ya estiman tus tasks.',
+          },
+          {
+            t: 'Reactividad quirúrgica',
+            d: 'El visor pollea un fingerprint POR ÁREA de los registros cada 4 segundos. Solo re-renderiza tu vista si cambió un área de la que depende: cerrar un ciclo actualiza Costos y Ciclos, pero no te toca la vista de Agentes.',
+          },
+          {
+            t: 'Tu UI queda intacta',
+            d: 'Secciones expandidas, búsquedas escritas y posición de scroll se preservan en cada actualización. Y si tenés un documento abierto o la pestaña oculta, el refresh espera. En hosting estático, el botón Actualizar de siempre.',
+          },
+        ].map((f, i) => (
+          <motion.div
+            key={f.t}
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: '-40px' }}
+            transition={{
+              type: 'spring',
+              stiffness: 90,
+              damping: 18,
+              delay: i * 0.08,
+            }}
+          >
+            <h3 className="text-[15px] font-medium tracking-tight text-zinc-100">
+              {f.t}
+            </h3>
+            <p className="mt-2 text-[13px] leading-relaxed text-zinc-500">
+              {f.d}
+            </p>
+          </motion.div>
+        ))}
+      </div>
+
+      <div className="mt-10 flex flex-wrap items-center gap-5">
+        <CopyCommand command="pnpm sdd:docs" />
+        <a
+          href="#/sdd-docs"
+          className="group inline-flex items-center gap-2 text-[13.5px] text-zinc-300 transition-colors hover:text-accent-300"
+        >
+          Ver el visor completo, con capturas reales
+          <ArrowRightIcon
+            size={14}
+            className="transition-transform group-hover:translate-x-0.5"
+          />
+        </a>
+      </div>
     </Section>
   );
 }
@@ -366,7 +560,7 @@ function CommandsSection() {
   return (
     <Section
       id="comandos"
-      kicker="02 — referencia"
+      kicker="04 — referencia"
       title="Comandos"
       lead="Todo interactivo con prompts guiados; todo automatizable con flags y -y."
     >
@@ -411,7 +605,7 @@ function MethodologySection() {
   return (
     <Section
       id="metodologia"
-      kicker="03 — la metodología"
+      kicker="05 — la metodología"
       title="Siete agentes, tres gates, cero improvisación"
       lead="Cada feature atraviesa un ciclo de diseño antes de tocar código. Los agentes escriben artefactos verificables; los gates los exigen."
     >
@@ -485,7 +679,7 @@ function CatalogSection() {
   return (
     <Section
       id="catalogo"
-      kicker="04 — catálogo"
+      kicker="06 — catálogo"
       title="Lo que puede generar"
     >
       <div className="grid gap-12 lg:grid-cols-[7fr_5fr]">
@@ -555,7 +749,7 @@ function KitSection() {
   return (
     <Section
       id="kit"
-      kicker="05 — el corazón"
+      kicker="07 — el corazón"
       title="El kit SDD portable"
       lead="Todo lo que la CLI instala vive en una sola carpeta sdd/ copiada verbatim — diseñada para moverse entre repos sin editar un solo archivo."
     >
@@ -615,7 +809,7 @@ function StartSection() {
   return (
     <Section
       id="empezar"
-      kicker="06 — empezar"
+      kicker="08 — empezar"
       title="Tres comandos y estás adentro"
     >
       <div className="grid gap-8 md:grid-cols-3">
