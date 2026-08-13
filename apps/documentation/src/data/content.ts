@@ -142,10 +142,11 @@ export type Command = {
 export const COMMANDS: Command[] = [
   {
     name: 'init',
-    usage: 'harness init [--name] [--mode nx|standalone] [--standalone] [-y]',
+    usage: 'harness init [--name] [--mode nx|standalone] [--standalone] [--config <file>] [-y]',
     summary: 'Genera un repo desde cero: monorepo Nx o app standalone.',
     points: [
       'Prompts guiados: nombre, descripción, modo, apps, libs, servicios Docker.',
+      '--config <archivo .json|.mjs|.js>: vía 100% no interactiva para agentes AI y CI — config validada con zod (mode, project, apps, libs, services) y cero prompts.',
       'SDD siempre incluido — no es opcional.',
       'Cierra con sdd:validate, git init y commit inicial.',
     ],

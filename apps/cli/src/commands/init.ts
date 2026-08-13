@@ -3,6 +3,11 @@ import * as p from "@clack/prompts";
 import pc from "picocolors";
 import { logger } from "../utils/logger.js";
 import { generateWorkspace, generateStandalone } from "../generators/index.js";
+import {
+  loadHarnessConfig,
+  toStandaloneOptions,
+  toWorkspaceOptions,
+} from "../config/load.js";
 
 const APP_TYPE_OPTIONS = [
   {
@@ -76,7 +81,8 @@ export const initCommand = defineCommand({
     },
     config: {
       type: "string",
-      description: "Path to harness.config.ts",
+      description:
+        "Path to a harness config file (.json | .mjs | .js) — fully non-interactive init for AI agents and CI",
     },
     yes: {
       type: "boolean",
@@ -87,6 +93,11 @@ export const initCommand = defineCommand({
   },
   async run({ args }) {
     p.intro(pc.bgCyan(pc.black(" harness init ")));
+
+    if (args.config) {
+      await runConfigFlow(args.config);
+      return;
+    }
 
     // Step 1: Project name
     const projectName =
@@ -158,6 +169,49 @@ export const initCommand = defineCommand({
     }
   },
 });
+
+// ─── Config-driven flow (non-interactive, for AI agents and CI) ───────────────
+
+async function runConfigFlow(configPath: string): Promise<void> {
+  let config;
+  try {
+    config = await loadHarnessConfig(configPath);
+  } catch (err) {
+    logger.error((err as Error).message);
+    process.exit(1);
+  }
+
+  p.note(
+    [
+      `${pc.bold("Project:")} ${config.project.name}`,
+      `${pc.bold("Mode:")} ${config.mode}`,
+      `${pc.bold("Apps:")} ${config.apps.map((a) => `${a.name} (${a.type})`).join(", ")}`,
+      `${pc.bold("Libs:")} ${config.libs.map((l) => l.name).join(", ") || "none"}`,
+      `${pc.bold("Services:")} ${config.services.map((s) => s.type).join(", ") || "none"}`,
+      `${pc.bold("SDD:")} enabled (always)`,
+    ].join("\n"),
+    `Configuration from ${configPath}`,
+  );
+
+  logger.title(
+    config.mode === "standalone"
+      ? "Generating standalone repo..."
+      : "Generating workspace...",
+  );
+
+  try {
+    if (config.mode === "standalone") {
+      await generateStandalone(toStandaloneOptions(config));
+    } else {
+      await generateWorkspace(toWorkspaceOptions(config));
+    }
+  } catch (err) {
+    logger.error((err as Error).message);
+    process.exit(1);
+  }
+
+  p.outro(pc.green("Done! Your workspace is ready."));
+}
 
 // ─── Standalone flow ──────────────────────────────────────────────────────────
 

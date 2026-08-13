@@ -12,8 +12,20 @@ export interface AppConfig {
 export interface ServiceConfig {
   type: ServiceType;
   version?: string;
-  port: number;
+  port?: number;
   extensions?: string[];
+}
+
+export type LibType =
+  | 'shared-types'
+  | 'shared-utils'
+  | 'ui-kit'
+  | 'api-client'
+  | 'config';
+
+export interface LibConfig {
+  name: string;
+  type: LibType;
 }
 
 export interface CycleConfig {
@@ -43,15 +55,17 @@ export interface NxConfig {
 }
 
 export interface HarnessConfig {
+  mode: 'nx' | 'standalone';
   project: {
     name: string;
     description: string;
     packageScope: string;
   };
   apps: AppConfig[];
+  libs: LibConfig[];
   services: ServiceConfig[];
   sdd?: SDDConfig;
-  nx: NxConfig;
+  nx?: NxConfig;
   infra?: {
     provider?: InfraProvider;
   };
