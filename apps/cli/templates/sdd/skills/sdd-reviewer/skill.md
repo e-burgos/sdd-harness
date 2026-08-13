@@ -15,6 +15,7 @@ description: SDD Reviewer Agent Skill. Validates the quality of all cycle output
 - [ ] `sdd/specs/{spec-id}/cycles/cycle-[XX]/tasks.json` with cycle tasks marked `done` + index regenerated (`pnpm sdd:rebuild-tasks-index`) + `pnpm sdd:validate` green
 - [ ] Code has NO narrative comments, commented-out code, task/spec/cycle references or `// TODO` (dual-harness rule ✍️; that context belongs in `planner.md`/`architect.md`, not in code; allowed only: issue-linked workaround, business rule referencing its spec, framework annotations / linter-required Javadoc) → otherwise request changes
 - [ ] Additive context fragment written at `sdd/context/[apps|libs|tools]/[name]/updates/YYYY-MM-DD-[spec-id]-cycle-[XX].md` — base `constitution.md`/`context_prompt.md` NOT edited during the cycle (dual-harness rule 🧩)
+- [ ] MEMORIA GATE (dual-harness rule 🧠): if the cycle produced a real lesson (failed assumption, costly discovery, avoidable token spend), a journal entry exists at `sdd/memory/journal/YYYY-MM-DD-[spec-id]-cycle-[XX].md`; `sdd/memory/lessons.md` NOT edited during the cycle. No lesson → no entry (noise filter)
 
 ## Files modified on approval
 
@@ -28,6 +29,7 @@ description: SDD Reviewer Agent Skill. Validates the quality of all cycle output
 - `sdd/fixes.json` — review fixes with `status: "implemented"` in this cycle → mark `"validated"` or `"absorbed"`
 - `sdd/context/[apps|libs|tools]/[name]/updates/YYYY-MM-DD-[spec-id]-cycle-[XX].md` — CONTEXTO GATE: append-only delta fragment (state / structure / dependencies / next); the subproject's base files are only touched by the single-actor consolidation (orchestrator at next cycle start on that subproject, or reviewer at ≥5 accumulated fragments — dedicated commit, delete merged fragments)
 - `sdd/context/constitution.md` + `context_prompt.md` (global) — direct edit of the affected subproject's row ONLY (append new row for new app/lib; never reformat the tables)
+- `sdd/memory/journal/YYYY-MM-DD-[spec-id]-cycle-[XX].md` — only when the cycle left a real lesson (what happened / lesson / avoidable cost); distillation into `lessons.md` is the orchestrator's single-actor job at next cycle start
 
 ## App-key mapping (reference)
 

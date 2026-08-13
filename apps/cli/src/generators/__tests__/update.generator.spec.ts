@@ -82,6 +82,28 @@ describe('update.generator', () => {
     );
   });
 
+  it('memoria: journal es data intocable, lessons.md es híbrido preservado con edición local', async () => {
+    const manifest = await fs.readJSON(resolve(ws, 'sdd/kit.json'));
+    expect(manifest.files['memory/lessons.md']).toMatch(/^[a-f0-9]{64}$/);
+    expect(manifest.files['memory/journal/.gitkeep']).toBeUndefined();
+
+    const journalEntry = resolve(
+      ws,
+      'sdd/memory/journal/2026-08-13-spec-eb-001-cycle-01.md',
+    );
+    await fs.writeFile(journalEntry, '# spec-eb-001 cycle-01 — 2026-08-13\n');
+
+    const lessonsPath = resolve(ws, 'sdd/memory/lessons.md');
+    await fs.appendFile(lessonsPath, '\n- No usar X con Y (spec-eb-001)\n');
+    const customizedLessons = await fs.readFile(lessonsPath, 'utf-8');
+
+    const report = await updateSDD(ws);
+
+    expect(await fs.pathExists(journalEntry)).toBe(true);
+    expect(report.keptCustom).toContain('memory/lessons.md');
+    expect(await fs.readFile(lessonsPath, 'utf-8')).toBe(customizedLessons);
+  });
+
   it('actualiza archivos no tocados cuando el kit cambió, y marca conflicto cuando cambiaron ambos', async () => {
     const manifestPath = resolve(ws, 'sdd/kit.json');
     const manifest = await fs.readJSON(manifestPath);

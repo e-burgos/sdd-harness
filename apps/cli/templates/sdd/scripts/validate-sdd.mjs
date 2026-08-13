@@ -302,6 +302,43 @@ for (const [file, c] of cycles) {
   }
 }
 
+// ---- 10. MEMORIA GATE: journal entry naming + distillation threshold + lessons cap ----
+// memory/ ships with the kit since v0.4; older installs may lack it — absence is not an error.
+const MEMORY_JOURNAL_DIR = join(SDD, 'memory', 'journal');
+const MEMORY_LESSONS = join(SDD, 'memory', 'lessons.md');
+const DISTILLATION_THRESHOLD = 5;
+const LESSONS_LINE_CAP = 120;
+
+if (existsSync(MEMORY_JOURNAL_DIR)) {
+  const entries = readdirSync(MEMORY_JOURNAL_DIR).filter(
+    (f) => f !== '.gitkeep',
+  );
+  for (const entry of entries) {
+    if (!CYCLE_FRAGMENT_RE.test(entry) && !FIX_FRAGMENT_RE.test(entry)) {
+      fail(
+        'memory/journal',
+        `malformed journal entry name: ${entry} (expected YYYY-MM-DD-spec-[gh-user]-[NNN][-slug]-cycle-[XX].md or YYYY-MM-DD-fix-[gh-user]-[seq].md)`,
+      );
+    }
+  }
+  if (entries.length >= DISTILLATION_THRESHOLD) {
+    warn(
+      'memory/journal',
+      `${entries.length} journal entries accumulated (>= ${DISTILLATION_THRESHOLD}) — due for distillation into memory/lessons.md (orchestrator, single actor)`,
+    );
+  }
+}
+
+if (existsSync(MEMORY_LESSONS)) {
+  const lessonsLines = readFileSync(MEMORY_LESSONS, 'utf8').split('\n').length;
+  if (lessonsLines > LESSONS_LINE_CAP) {
+    warn(
+      'memory/lessons.md',
+      `${lessonsLines} lines exceed the ${LESSONS_LINE_CAP}-line cap — prune obsolete lessons (this file is read whole at every session start)`,
+    );
+  }
+}
+
 // ---- Content catalog: schema + freshness vs filesystem (viewer depends on it) ----
 const catalogJson = validate('catalog.json', 'catalog.schema.json');
 if (catalogJson) {
