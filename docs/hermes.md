@@ -3,8 +3,8 @@
 > Documento de arquitectura y roadmap del salto "next level" del sistema: que el usuario
 > pase **una idea en lenguaje natural** y el sistema configure el stack, siembre el backlog
 > SDD y conduzca ciclos punta a punta — aprendiendo entre sesiones y gastando el mínimo de
-> tokens sin sacrificar calidad. Estado: **Fases 1 y 2 implementadas** (este documento las describe);
-> Fases 3–5 son roadmap — F5 (dashboard de costos en el visor SDD) es la fase final.
+> tokens sin sacrificar calidad. Estado: **las 5 fases implementadas** —
+> este documento describe la arquitectura completa y las decisiones tomadas.
 
 ## La tesis
 
@@ -101,9 +101,10 @@ gobernable, y el sistema ya hace o queda en roadmap:
 - ✅ **Entrada de contexto acotada por diseño**: briefs mínimos por agente, contexto
   aditivo, `lessons.md` con cap, journal grep-only, graphify opcional.
 - ✅ **Cortes limpios por presupuesto** en el loop (los registros SDD son el checkpoint).
-- 🗺️ Roadmap: telemetría de uso por ciclo (tokens en `cycle.json.metrics`), pacing
-  contra rate limits con reintentos programados, y guía de monitoreo (`/usage`, ccusage,
-  OTEL) en el kit.
+- ✅ **Telemetría de uso** por task y ciclo (`usage` en los schemas) con costo visible en
+  el dashboard del visor — lo que se mide se puede gobernar.
+- 🗺️ Queda para el futuro: pacing contra rate limits con reintentos programados y guía
+  de monitoreo (`/usage`, ccusage, OTEL) integrada al kit.
 
 ## Roadmap
 
@@ -113,37 +114,38 @@ gobernable, y el sistema ya hace o queda en roadmap:
 | **F1** | `init --config` no interactivo + skill `sdd-hermes` | ✅ esta rama |
 | **F2** | `harness idea "<texto>"`: comando que persiste la idea, imprime el protocolo hermes y deja el config-stub listo — entrada única del punta-a-punta | ✅ esta rama |
 | **F2** | Export del JSON Schema del config (`harness config schema`) para que agentes validen sin correr la CLI | ✅ esta rama |
-| **F3** | Telemetría de tokens por ciclo en `cycle.json.metrics` + reporte de costo por spec | pendiente |
-| **F3** | Automatización del loop en Claude Code (plugin con hooks `SessionStart` para lessons.md, `/loop` o Routines para reanudar el backlog) | pendiente |
-| **F4** | Integraciones de memoria opt-in (`harness configure memory`) para quien quiera claude-mem/mem0 encima de la base portable | pendiente |
-| **F5** | Dashboard de costos y telemetría en el visor SDD (`sdd/docs/`) — ver sección "Fase final" | pendiente — última fase |
+| **F3** | Telemetría de tokens por task y por ciclo (`usage` en los schemas) + `sdd/pricing.json` | ✅ esta rama |
+| **F3** | Automatización del loop (`prompts/hermes-resume.prompt.md` + `/loop`/Routines/hook `SessionStart` documentados en la skill) | ✅ esta rama |
+| **F4** | Integraciones de memoria opt-in (`harness configure memory`: basic-memory, knowledge-graph oficial en `sdd/memory/`) | ✅ esta rama |
+| **F5** | Dashboard de costos y telemetría en el visor SDD (`sdd/docs/`) — ver sección "Fase final" | ✅ esta rama |
 
-## Fase final (F5) — Dashboard de costos en el visor SDD
+## Fase final (F5) — Dashboard de costos en el visor SDD ✅ implementado
 
-El visor estático de `sdd/docs/` pasa de catálogo de documentos a **tablero del proyecto**:
-tokens y tiempos consumidos por task, ciclo y spec, con comparativa de costo aproximado
-del modo agéntico versus la estimación tradicional que los registros ya traen
-(`estimation_hours` / `story_points` en `tasks.json`).
+El visor de `sdd/docs/` pasó de catálogo de documentos a **tablero del proyecto**: la
+vista **Costos** muestra tokens y tiempos por task/ciclo/spec con la comparativa de costo
+aproximado del modo agéntico versus la estimación tradicional que los registros ya traen
+(`estimation_hours` en `tasks.json`).
 
-**Captura (depende de F3):** los agentes registran al cerrar cada task/ciclo
-`tokens_in` / `tokens_out` / `duration_minutes` / `model_tier` en `cycle.json.metrics`
-(extensión del schema estricto). Un script `rebuild-metrics.mjs` — mismo patrón que
-`rebuild-catalog.mjs` — agrega todo en un `sdd/metrics.json` **generado** (registrado como
-tal en `kit-manifest.ts`), que es lo único que el visor consume.
+**Captura (F3):** los agentes registran `usage` (`tokens_in`/`tokens_out`/
+`duration_minutes`/`model_tier`) por task y agregado por ciclo en `cycle.json.metrics.usage`
+(campos opcionales de los schemas estrictos — los registros viejos validan igual).
 
-**Dashboard:** una vista nueva del visor con gráficos SVG propios (sin dependencias — el
-visor sigue siendo estático y self-contained): burn-up del backlog por spec, tokens por
-task/ciclo apilados por tier de modelo, y la comparativa central — costo estimado
-tradicional (`estimation_hours` × tarifa configurable) versus costo agéntico aproximado
-(tokens × precio por tier, tabla de precios editable en el propio `metrics.json`), con el
-ahorro proyectado del proyecto. Info precisa: cada número clickeable lleva al registro SDD
-que lo respalda.
+**Dashboard:** KPIs (horas estimadas, costo tradicional, tokens, costo agéntico, ahorro
+proyectado), barras comparativas por spec, tokens entrada/salida apilados por ciclo, tabla
+de detalle con los números exactos y tarjeta de metodología con las tarifas. Se calcula
+**en vivo desde los registros** (sin intermedio generado — se descartó el `metrics.json`
+del diseño original: un archivo generado agrega staleness justo donde se pide
+reactividad). Tarifas editables en `sdd/pricing.json` (híbrido: el update respeta
+ediciones locales); tokens sin tier declarado se tarifan como `sonnet` y se marcan. La
+paleta de series se validó con chequeos de daltonismo/contraste sobre la superficie dark
+del visor; tooltips de hover y labels directos incluidos.
 
-**Reactividad en JS vanilla:** un store mínimo pub/sub + polling con `ETag`/
-`If-None-Match` sobre `metrics.json` y `catalog.json` (es hosting estático: no hay
-websockets). Cada avance del SDD — task done, ciclo cerrado, spec completada — se
-manifiesta en el tablero sin recargar: el fetch periódico detecta el hash nuevo,
-actualiza el store y re-renderizan solo los componentes suscriptos.
+**Reactividad en JS vanilla:** `serve.mjs` expone `/sdd/docs/__state` — un fingerprint
+sha1 de los mtimes de todos los registros (`docs/` y `templates/` excluidos). El visor lo
+pollea cada 4 segundos en localhost y, ante un cambio, invalida el cache y re-renderiza la
+vista activa: task done, ciclo cerrado o spec completada se manifiestan sin recargar. En
+hosting estático (sin `serve.mjs`) queda el refresh manual de siempre; el polling se pausa
+con la pestaña oculta o un modal abierto y se apaga tras fallas repetidas.
 
 ## Decisiones registradas
 

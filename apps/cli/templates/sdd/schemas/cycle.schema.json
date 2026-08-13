@@ -92,7 +92,34 @@
               "type": "array",
               "items": { "type": "string" }
             },
-            "files_deleted": { "type": "array", "items": { "type": "string" } }
+            "files_deleted": { "type": "array", "items": { "type": "string" } },
+            "usage": {
+              "type": "object",
+              "required": ["tokens_in", "tokens_out"],
+              "additionalProperties": false,
+              "description": "Optional aggregated telemetry: approximate tokens/time for the whole cycle, recorded by the reviewer at close. Feeds the viewer's Costs dashboard.",
+              "properties": {
+                "tokens_in": { "type": "integer", "minimum": 0 },
+                "tokens_out": { "type": "integer", "minimum": 0 },
+                "duration_minutes": { "type": "number", "minimum": 0 },
+                "by_tier": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "propertyNames": { "enum": ["haiku", "sonnet", "opus", "fable"] },
+                  "patternProperties": {
+                    "^(haiku|sonnet|opus|fable)$": {
+                      "type": "object",
+                      "required": ["tokens_in", "tokens_out"],
+                      "additionalProperties": false,
+                      "properties": {
+                        "tokens_in": { "type": "integer", "minimum": 0 },
+                        "tokens_out": { "type": "integer", "minimum": 0 }
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       ]

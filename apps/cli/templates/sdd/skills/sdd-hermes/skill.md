@@ -147,6 +147,40 @@ lo garantiza); jamás releer specs completas si el brief alcanza; `lessons.md` a
 inicio de cada sesión; graphify si existe; los implementores como subagentes
 `sonnet`/`medium` con contexto acotado a su task.
 
+## Automatización del loop (opcional — Claude Code)
+
+El loop es retomable por diseño: todo el estado vive en los registros SDD, así que
+cualquier sesión nueva puede continuarlo con `sdd/prompts/hermes-resume.prompt.md`
+(prompt standalone: carga lessons + global.json, diagnostica la posición y sigue).
+Sobre esa base, en Claude Code se puede automatizar:
+
+- **Loop recurrente:** `/loop 15m` con el contenido de `hermes-resume.prompt.md` —
+  cada iteración retoma desde los registros; las condiciones de corte del prompt
+  evitan que insista contra un error repetido.
+- **Reanudación programada (Routines/cron):** una Routine que dispare el mismo prompt
+  en una sesión nueva (los registros son el checkpoint, no hace falta la sesión viva).
+- **Memoria al inicio de sesión (hook opcional):** en `.claude/settings.json` del
+  repo, un hook `SessionStart` que imprima la memoria destilada — se inyecta como
+  contexto sin gastar un turno:
+
+  ```json
+  {
+    "hooks": {
+      "SessionStart": [
+        {
+          "hooks": [
+            { "type": "command", "command": "cat sdd/memory/lessons.md 2>/dev/null || true" }
+          ]
+        }
+      ]
+    }
+  }
+  ```
+
+El kit no instala nada de esto solo: son decisiones del dev (consumen cupo del plan).
+En agentes sin automatización (Copilot, Cursor), el equivalente manual es pegar
+`hermes-resume.prompt.md` al abrir sesión.
+
 ## Archivos que modifica
 
 Hermes en sí solo escribe `harness.config.json` (FASE 3) y los `.spec.md` +

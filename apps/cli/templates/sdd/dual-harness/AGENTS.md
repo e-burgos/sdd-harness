@@ -132,6 +132,11 @@ primero y escalá si el resultado no alcanza.
   contexto releyendo lo ya establecido ni narrando opciones que no vas a seguir.
 - **Si el repo tiene grafo de graphify** (regla anterior, opcional), consultalo antes de
   pagar lecturas a ciegas: es parte de la misma optimización de tokens.
+- **Telemetría de uso (dashboard de Costos):** al cerrar cada ciclo, registrar el consumo
+  aproximado en `cycle.json` → `metrics.usage` (`tokens_in`/`tokens_out`, y por task si se
+  conoce). Alimenta la vista **Costos** del visor SDD, que compara el costo agéntico contra
+  la estimación tradicional de las tasks — las tarifas se editan en `sdd/pricing.json`.
+  Una aproximación honesta vale; un número inventado no: ante la duda, omitir el campo.
 
 ## ✍️ Código sin comentarios (OBLIGATORIO — el código se explica solo)
 
