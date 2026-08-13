@@ -1609,14 +1609,20 @@ function countAssembledCycles(tasksData) {
   );
 }
 
-function dashboardStatCell({ value, label, href, accent = false }) {
+function dashboardStatCell({ value, label, href, accent = false, sub = '' }) {
   const valueColor = accent
     ? 'rgb(var(--rgb-emerald-400))'
     : 'var(--text-strong)';
+  // El dato secundario va en su propia línea: metido dentro del valor obligaba
+  // a partir el número en dos renglones en las tarjetas angostas.
+  const subHtml = sub
+    ? `<div class="tile-sub${accent ? ' tile-sub--accent' : ''}">${escapeHtml(String(sub))}</div>`
+    : '';
   return `
     <a class="tile" href="${escapeHtml(href)}" style="display:block;text-decoration:none">
-      <div style="font-family:var(--font-mono);font-size:var(--text-24);font-weight:var(--weight-semibold);color:${valueColor}">${escapeHtml(String(value))}</div>
+      <div style="font-family:var(--font-mono);font-size:var(--text-24);font-weight:var(--weight-semibold);white-space:nowrap;color:${valueColor}">${escapeHtml(String(value))}</div>
       <div style="margin-top:4px;font-family:var(--font-mono);font-size:var(--text-10);text-transform:uppercase;letter-spacing:var(--tracking-widest);color:var(--text-faint)">${escapeHtml(label)}</div>
+      ${subHtml}
     </a>
   `;
 }
@@ -1811,8 +1817,10 @@ function renderDashboardMonorepoPanel(globalData) {
     ['Ciclos completados', String(dashboardCyclesCompletedTotal(globalData))],
     ['Versión', globalData.version ?? '—'],
   ];
+  // Miraba pending + in_progress: un proyecto con TODO terminado (pending 0,
+  // in_progress 0, completed N) caía acá y decía que el ciclo no había empezado.
   const hasNotStarted =
-    (globalData.pending_modules ?? []).length === 0 &&
+    (globalData.completed_modules ?? []).length === 0 &&
     (globalData.in_progress_modules ?? []).length === 0;
   const note = hasNotStarted
     ? `<div style="margin-top:16px;padding:16px;border-radius:var(--radius-lg);border:1px solid var(--border);background:rgb(var(--rgb-zinc-900) / 0.4)"><p style="font-size:var(--text-11);color:var(--text-faint);line-height:var(--leading-relaxed)">El ciclo SDD aún no ha iniciado. Todos los módulos están en estado <span style="font-family:var(--font-mono);color:var(--text-muted)">pending</span>.</p></div>`
@@ -5936,7 +5944,7 @@ function costBarRow({ label, href, valueLabel, segments, max, tip }) {
     : escapeHtml(label);
   return `
     <div style="display:flex;align-items:center;gap:12px;min-height:22px">
-      <span style="flex:0 0 148px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--font-mono);font-size:var(--text-11);color:var(--text-muted)" title="${escapeHtml(label)}">${labelHtml}</span>
+      <span style="flex:0 0 clamp(148px, 20%, 240px);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:var(--font-mono);font-size:var(--text-11);color:var(--text-muted)" title="${escapeHtml(label)}">${labelHtml}</span>
       ${costBarTrack({ segments, max, tip })}
       <span style="flex:0 0 auto;font-family:var(--font-mono);font-size:var(--text-11);color:var(--text-bright)">${escapeHtml(valueLabel)}</span>
     </div>`;
@@ -6073,7 +6081,7 @@ function costsTableCard(rows, money) {
   return `
     <section class="card" style="margin-bottom:16px">
       <div class="card-header"><span class="card-title">Detalle por ciclo</span></div>
-      <div class="table-wrapper"><table>
+      <div class="table-wrapper"><table class="data-table">
         <thead><tr><th>Ciclo</th><th>Módulo</th><th style="text-align:right">Horas est.</th><th style="text-align:right">Costo trad.</th><th style="text-align:right">Tokens in/out</th><th style="text-align:right">Costo agéntico</th><th style="text-align:right">Ahorro</th></tr></thead>
         <tbody>${body}</tbody>
       </table></div>
@@ -6097,7 +6105,7 @@ function costsMethodologyCard(pricing, anyAssumed, money) {
         ${anyAssumed ? `* Tokens sin tier declarado se tarifan como <code>${COSTS_ASSUMED_TIER}</code>.` : ''}
         ${pricing.missing ? 'No hay <code>sdd/pricing.json</code> — usando tarifas por defecto del kit.' : 'Tarifas editables en <code>sdd/pricing.json</code>.'}
       </p>
-      <div class="table-wrapper"><table>
+      <div class="table-wrapper"><table class="data-table">
         <thead><tr><th>Tier</th><th style="text-align:right">Input /MTok</th><th style="text-align:right">Output /MTok</th></tr></thead>
         <tbody>${tierRows}</tbody>
       </table></div>
@@ -6197,10 +6205,11 @@ async function renderCosts(container) {
       href: '#/cycles',
     }),
     dashboardStatCell({
-      value: totals.hasUsage ? `${money.format(saving)} (${savingPct}%)` : '—',
+      value: totals.hasUsage ? money.format(saving) : '—',
       label: 'Ahorro proyectado',
       href: '#/cycles',
       accent: totals.hasUsage && saving > 0,
+      sub: totals.hasUsage ? `${savingPct}% menos` : '',
     }),
   ].join('');
 
@@ -6211,7 +6220,7 @@ async function renderCosts(container) {
       subtitle:
         'Tokens, tiempos y comparativa de costos del modo agéntico contra la estimación tradicional de las tasks.',
     })}
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:20px">${kpis}</div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin-bottom:20px">${kpis}</div>
     ${costsComparisonCard(rows, pricing, money)}
     ${costsTokensCard(rows)}
     ${costsTableCard(rows, money)}
