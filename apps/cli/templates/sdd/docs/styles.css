@@ -195,7 +195,10 @@
   --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.45);
 
   --sidebar-width: 240px;
-  --content-max: 1024px;
+  /* El visor es tablas y tarjetas, no prosa: a 1024 el contenido quedaba
+     condensado en el centro con márgenes muertos en pantallas normales.
+     Los bloques de texto largo tienen su propio tope en ch. */
+  --content-max: 1360px;
   --topbar-height: 56px;
   --blur-backdrop: 8px;
   --section-gap: 32px;
@@ -930,6 +933,25 @@ button {
 
 .tile:hover {
   border-color: var(--border-soft);
+}
+
+/* Dato secundario de una tile (porcentaje, delta): va aparte del valor para
+   que el número principal no se parta en dos líneas cuando la tarjeta es angosta. */
+.tile-sub {
+  margin-top: 6px;
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-mono);
+  font-size: var(--text-10);
+  letter-spacing: var(--tracking-wide);
+  color: var(--text-faint);
+  background: rgb(var(--rgb-zinc-800) / 0.5);
+}
+
+.tile-sub--accent {
+  color: rgb(var(--rgb-emerald-400));
+  background: rgb(var(--rgb-emerald-400) / 0.12);
 }
 
 .row {

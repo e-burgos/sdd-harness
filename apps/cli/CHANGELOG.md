@@ -5,6 +5,30 @@ All notable changes to `@e-burgos/sdd-harness` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.2] - 2026-08-13
+
+### Changed — the `sdd:docs` viewer uses the width it has
+
+- **`--content-max` 1024px → 1360px.** The viewer is tables and cards, not prose: on a normal
+  screen the content sat squeezed in the middle with dead margins on both sides. Long-form text
+  is unaffected — markdown documents render inside a modal already capped at 896px.
+- **Costs cards.** The saving cell packed the amount and the percentage into one string
+  (`US$ 994,80 (99%)`), which wrapped onto two lines in a narrow card. The percentage is now its
+  own badge under the value, the amount never wraps, and the KPI grid asks for 180px per card
+  instead of 150px.
+- **The bar chart label no longer truncates.** `eburgos-001-auth · cycle-01` did not fit the
+  fixed 148px column; it is now `clamp(148px, 20%, 240px)`, so it grows on wide screens without
+  squeezing the bar on narrow ones.
+
+### Fixed
+
+- **The two Costs tables were rendered without the `data-table` class**, so they got none of the
+  table styling: no cell padding, no header treatment, columns running into each other.
+- **The dashboard told a finished project that it had not started.** The "El ciclo SDD aún no ha
+  iniciado" note keyed off `pending_modules` and `in_progress_modules` being empty, ignoring
+  `completed_modules` — so a project with every module completed hit that branch and was told all
+  its modules were `pending`.
+
 ## [0.4.1] - 2026-08-13
 
 ### Added — every prompt has a flag, so agents and CI can drive the whole CLI
