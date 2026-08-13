@@ -68,6 +68,11 @@ npx vitest run       # suite completa (incluye integración real)
   `test-sdd-harness`. Así se encontraron los 6 bugs de v0.3.0 que los unit tests no veían.
 - Versionado: SemVer + `CHANGELOG.md` (Keep a Changelog) + `src/version.ts` sincronizado con
   `package.json`. Commits convencionales (`feat:`, `fix:`, `chore:` con scope).
+- **Cada release se publica sola en [`e-burgos/sdd-harness-examples`](https://github.com/e-burgos/sdd-harness-examples)**:
+  ese repo regenera sus examples desde el paquete **ya publicado** en npm y commitea el
+  resultado. Es la vidriera del producto y además un smoke test del release — si una versión
+  no puede generar un workspace, ese repo se pone en rojo. No se editan a mano: el arreglo va
+  siempre acá, en la CLI o en el kit.
 
 ## Mapa del código
 

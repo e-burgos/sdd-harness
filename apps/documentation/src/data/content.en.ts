@@ -572,6 +572,11 @@ export const UI = {
       { n: '02', t: 'Write your first spec — or throw an idea', c: 'harness add spec my-feature', d: 'The WHAT before the how. Or harness idea "..." and the agent drafts the whole plan (hermes flow).' },
       { n: '03', t: 'Start the cycle', c: '/start-sdd-cycle.prompt', d: 'From Claude Code or Copilot: the orchestrator takes the spec and the cycle runs on its own.' },
     ],
+    examples: {
+      title: 'Rather read it first?',
+      lead: 'The CLI output lives in its own repo — an Nx monorepo (React + Spring Boot) and a standalone Fastify app, both with the full SDD kit. A workflow regenerates them from the published package on every release, so they never lag behind npm.',
+      cta: 'Browse the examples',
+    },
   },
   footer: { by: 'Built by ' },
   viewer: {

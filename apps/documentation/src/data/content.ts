@@ -637,6 +637,11 @@ export const UI = {
       { n: '02', t: 'Escribí tu primera spec — o tirá una idea', c: 'harness add spec mi-feature', d: 'El QUÉ antes del cómo. O harness idea "..." para que el agente arme todo el plan (flujo hermes).' },
       { n: '03', t: 'Arrancá el ciclo', c: '/start-sdd-cycle.prompt', d: 'Desde Claude Code o Copilot: el orquestador toma la spec y el ciclo corre solo.' },
     ],
+    examples: {
+      title: '¿Preferís verlo antes?',
+      lead: 'La salida de la CLI vive en su propio repo — un monorepo Nx (React + Spring Boot) y una app standalone con Fastify, las dos con el kit SDD completo. Un workflow las regenera desde el paquete publicado en cada release, así nunca quedan atrás de npm.',
+      cta: 'Ver los examples',
+    },
   },
   footer: { by: 'Desarrollado por ' },
   viewer: {
