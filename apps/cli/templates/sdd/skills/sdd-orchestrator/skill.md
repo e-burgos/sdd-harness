@@ -42,7 +42,8 @@ Continuar con el flujo SDD normal (SPEC GATE → ciclos → agentes).
 2. Verifica dependencias
 3. **Revisa `sdd/context/[apps|libs|tools]/[nombre]/updates/` del subproyecto involucrado**
    y, si hay fragmentos pendientes, los consolida (ver "Consolidación de contexto" abajo)
-   antes de generar el brief
+   antes de generar el brief. **Revisa también `sdd/memory/journal/`**: con ≥5 entradas,
+   destila (ver "Destilación de memoria" abajo)
 4. Lee solo la sección relevante de la especificación bajo `sdd/specs/`
 5. Prepara el brief con el contexto mínimo por agente
 6. Mueve el módulo a `in_progress_modules` en `sdd/global.json`
@@ -66,6 +67,21 @@ responsable de fundir sus fragmentos aditivos pendientes:
 > Si no hay fragmentos pendientes, no hay nada que hacer — los archivos base no se
 > tocan sin fragmentos que fundir.
 
+## Destilación de memoria (MEMORIA GATE del dual-harness)
+
+Mismo patrón y mismo actor único que la consolidación de contexto, aplicado a
+`sdd/memory/`:
+
+1. Listar `sdd/memory/journal/*.md`. Con menos de 5 entradas, no hacer nada.
+2. Fundir cada entrada en **una línea** de la categoría correcta de
+   `sdd/memory/lessons.md` (Proceso / Técnica / Costo) y actualizar su encabezado
+   `> Última destilación:`. Lección específica de un subproyecto → va a su
+   `constitution.md` (consolidación de contexto), no a `lessons.md`.
+3. Respetar el cap de 120 líneas de `lessons.md`: si se supera, podar primero
+   lecciones obsoletas o ya absorbidas por una skill/constitution.
+4. Borrar las entradas destiladas y commitear como cambio dedicado:
+   `chore(sdd): distill memory journal into lessons`.
+
 ## Archivos que modifica
 
 - `sdd/global.json` — mueve el módulo a `in_progress_modules`
@@ -75,6 +91,8 @@ responsable de fundir sus fragmentos aditivos pendientes:
 - `sdd/context/[apps|libs|tools]/[nombre]/constitution.md` y `context_prompt.md` —
   **solo** durante la consolidación de fragmentos, nunca durante un ciclo en curso
 - `sdd/context/[apps|libs|tools]/[nombre]/updates/*.md` — borrados tras consolidar
+- `sdd/memory/lessons.md` — **solo** durante la destilación de memoria (≥5 entradas en journal)
+- `sdd/memory/journal/*.md` — borrados tras destilar
 
 > ⛔ Después de CUALQUIER escritura: `pnpm sdd:validate` debe quedar en verde.
 

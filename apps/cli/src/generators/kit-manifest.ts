@@ -17,6 +17,7 @@ const DATA_PREFIXES = [
   'context/apps/',
   'context/libs/',
   'context/tools/',
+  'memory/journal/',
 ];
 
 const DATA_FILES = new Set([
@@ -40,6 +41,7 @@ const HYBRID_FILES = new Set([
   'context/context_prompt.md',
   'dual-harness/AGENTS.md',
   'dual-harness/CLAUDE.md',
+  'memory/lessons.md',
 ]);
 
 export type KitManifest = {

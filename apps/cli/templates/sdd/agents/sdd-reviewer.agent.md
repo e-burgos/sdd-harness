@@ -62,6 +62,11 @@ Sos el último paso antes de que el ciclo se marque como completado.
   7. Actualizar `sdd/specs/index.json`: si era el último ciclo de la spec → `status: "completed"` + `completed_at`
   8. Revisar `sdd/fixes.json`: fixes del ciclo con `status: "implemented"` → marcarlos `"validated"` o `"absorbed"`
   9. **ESCRIBIR el fragmento aditivo de contexto del subproyecto afectado** (ver sección “Actualización de contexto”)
+  10. **MEMORIA GATE (regla 🧠 del dual-harness):** si el ciclo dejó una lección real (supuesto
+      que falló, descubrimiento costoso, gasto de tokens evitable), escribir la entrada episódica
+      `sdd/memory/journal/YYYY-MM-DD-[spec-id]-cycle-[XX].md` (qué pasó / lección / costo evitable).
+      Sin lección real no se escribe nada — el filtro anti-ruido es parte del gate. `lessons.md`
+      NUNCA se edita al cierre: lo destila el orquestador al iniciar el próximo ciclo
 
 ---
 

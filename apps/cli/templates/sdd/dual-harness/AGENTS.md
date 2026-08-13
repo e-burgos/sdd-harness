@@ -226,6 +226,64 @@ recibe request de cambios; el sdd-reviewer lo chequea al cerrar el ciclo.
 > El CONTEXTO GATE se cumple con el fragmento escrito en `updates/` — no exige editar
 > los archivos base durante el ciclo (ver nota en la sección del gate).
 
+## 🧠 MEMORIA GATE — autoaprendizaje entre sesiones (lessons + journal)
+
+> [!IMPORTANT]
+> El contexto de subproyectos (sección 🧩) registra **qué es** el sistema; la memoria
+> registra **qué aprendimos** trabajándolo. Sin ella cada sesión repite los mismos errores
+> y re-paga en tokens el mismo descubrimiento. `sdd/memory/` es la memoria versionada del
+> repo: viaja con git, sirve a cualquier agente y a cualquier máquina o CI.
+
+**Estructura (dos capas, costo de lectura asimétrico por diseño):**
+
+- `sdd/memory/lessons.md` — lecciones **destiladas**, cap duro 120 líneas. **Leerlo al
+  inicio de toda sesión**, junto con `context_prompt.md`. Es la única pieza de memoria
+  que se carga siempre.
+- `sdd/memory/journal/` — entradas episódicas append-only, el detalle crudo. **Jamás se
+  lee entero**: solo grep dirigido cuando una lección destilada remite a su detalle.
+
+**1. Escribir** — al cerrar un ciclo o fix, **solo si hubo lección real**, crear:
+
+```
+sdd/memory/journal/YYYY-MM-DD-[spec-id]-cycle-[XX].md
+# fixes: sdd/memory/journal/YYYY-MM-DD-fix-[gh-user]-[seq].md
+#        (fixes de spec: YYYY-MM-DD-fix-[gh-user]-[spec-NNN]-[seq].md)
+```
+
+Mismo naming que los fragmentos de contexto → único por construcción, dos devs jamás
+chocan. Template mínimo (secciones vacías se omiten; crear `journal/` si no existe):
+
+```markdown
+# [spec-id] cycle-[XX] — [YYYY-MM-DD]
+
+## Qué pasó → el hecho concreto (error, descubrimiento, supuesto que falló)
+
+## Lección → 1 línea accionable, candidata a lessons.md
+
+## Costo evitable → qué tokens/tiempo se habrían ahorrado sabiéndolo antes
+```
+
+**Filtro anti-ruido (obligatorio):** antes de escribir, preguntarse *"¿esto cambiaría el
+comportamiento de un agente futuro?"*. Si la respuesta es no —lo obvio, lo ya documentado
+en constitutions/skills/dual-harness, el detalle de implementación del ciclo— **no se
+escribe**. Una memoria con ruido cuesta tokens y esconde las lecciones reales.
+
+**2. Leer** — al iniciar sesión: `lessons.md` completo. `journal/` solo bajo demanda.
+
+**3. Destilar** — operación de **un solo actor**, nunca en paralelo con un ciclo: cuando
+`journal/` acumula ≥5 entradas (`pnpm sdd:validate` lo avisa), el orquestador al iniciar
+el próximo ciclo funde cada entrada en una línea de la categoría correcta de `lessons.md`
+(Proceso / Técnica / Costo), actualiza su encabezado `> Última destilación:`, **borra las
+entradas destiladas** y lo commitea como cambio dedicado
+(`chore(sdd): distill memory journal into lessons`). Reglas de la destilación:
+
+- Lección específica de un subproyecto → va a su `constitution.md` vía consolidación 🧩,
+  no a `lessons.md` (que es transversal).
+- Cap 120 líneas: si se supera, podar primero lecciones obsoletas o ya absorbidas por
+  una skill/constitution — la memoria buena es chica.
+- Durante ciclos/fixes `lessons.md` **no se edita** — igual que los archivos base de
+  contexto, solo lo toca la destilación.
+
 ---
 
 ## ⛔ SPEC GATE — REGLA GLOBAL INVIOLABLE

@@ -114,6 +114,16 @@ tiene fragmentos pendientes para el subproyecto sobre el que arranca el ciclo:
 subproyecto ya tiene un ciclo `in-progress`, dejar los fragmentos sin consolidar hasta que cierre
 (el reviewer consolidará al cierre si se acumulan ≥5 fragmentos).
 
+### Destilación de memoria (regla 🧠 del dual-harness — mismo actor único)
+
+En el mismo momento (antes del `cycle_brief`), si `sdd/memory/journal/` acumula ≥5 entradas:
+fundir cada una en una línea de la categoría correcta de `sdd/memory/lessons.md`
+(Proceso / Técnica / Costo, cap 120 líneas — podar obsoletas primero), actualizar su
+encabezado `> Última destilación:`, borrar las entradas destiladas y commitear como
+`chore(sdd): distill memory journal into lessons`. Lección específica de un subproyecto →
+va a su `constitution.md` vía consolidación, no a `lessons.md`. Detalle operativo:
+`sdd/skills/sdd-orchestrator/skill.md` → "Destilación de memoria".
+
 ## ⛔ FIX GATE — IMPERATIVO, SIEMPRE ANTES DE CUALQUIER IMPLEMENTACIÓN
 
 > **REGLA INVIOLABLE:** Cualquier solicitud que implique modificar código existente, añadir UI, corregir comportamiento, o mejorar algo ya hecho — **independientemente de si lleva prefijo o no** — DEBE pasar por el FIX GATE ANTES de implementarse. La ausencia del prefijo NO exime del FIX GATE.
