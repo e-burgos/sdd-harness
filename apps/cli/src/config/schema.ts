@@ -85,7 +85,9 @@ export const HarnessConfigSchema = z.object({
       .string()
       .regex(/^[a-z][a-z0-9-]*$/, 'Project name must be lowercase kebab-case'),
     description: z.string().min(1),
-    packageScope: z.string().startsWith('@'),
+    packageScope: z
+      .string()
+      .regex(/^@[a-z0-9-]+$/, 'Must be an npm scope like @my-project'),
   }),
   apps: z.array(AppConfigSchema).min(1),
   libs: z.array(LibConfigSchema).default([]),
