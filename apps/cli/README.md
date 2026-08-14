@@ -253,6 +253,12 @@ harness add app [type] [--name <name>]
 
 If arguments are omitted, interactive prompts will guide you.
 
+Besides generating the app and registering it in the SDD registries, the command updates the
+root `package.json` exactly as if the app had been declared in `init --config`: the four nx
+convenience scripts (`<name>`, `build:<name>`, `test:<name>`, `lint:<name>`) plus the app type's
+runtime dependencies (additive — existing versions are never overwritten). Run your package
+manager install afterwards.
+
 ```bash
 # Interactive
 harness add app

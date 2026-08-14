@@ -1,11 +1,47 @@
 import { defineCommand } from 'citty';
 import * as p from '@clack/prompts';
 import pc from 'picocolors';
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { logger } from '../../utils/logger.js';
 import { generateApp } from '../../generators/app.generator.js';
 import { registerSubprojectInSDD } from '../../generators/sdd.generator.js';
+import {
+  addAppScriptsToRootPkg,
+  addAppTypeDepsToRootPkg,
+  sortKeys,
+} from '../../generators/root-package.js';
+
+/**
+ * Alta en el package.json raíz: los mismos scripts nx y dependencias por tipo
+ * que la app hubiera recibido declarada en `init --config`. Sin esto, una app
+ * agregada después quedaba sin scripts y sin sus deps de runtime en la raíz.
+ * El template del kit (sdd/templates/nx-workspace) provee las versiones de la
+ * familia react si el workspace la había podado.
+ */
+function registerAppInRootPackageJson(
+  cwd: string,
+  appName: string,
+  appType: string,
+): void {
+  const pkgPath = resolve(cwd, 'package.json');
+  const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
+  pkg.scripts ??= {};
+  pkg.dependencies ??= {};
+  pkg.devDependencies ??= {};
+
+  addAppScriptsToRootPkg(pkg, appName);
+
+  const referencePath = resolve(cwd, 'sdd/templates/nx-workspace/package.json');
+  const referencePkg = existsSync(referencePath)
+    ? JSON.parse(readFileSync(referencePath, 'utf-8'))
+    : undefined;
+  addAppTypeDepsToRootPkg(pkg, appType, referencePkg);
+
+  pkg.dependencies = sortKeys(pkg.dependencies);
+  pkg.devDependencies = sortKeys(pkg.devDependencies);
+  writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n', 'utf-8');
+}
 
 export const addAppCommand = defineCommand({
   meta: {
@@ -102,6 +138,11 @@ export const addAppCommand = defineCommand({
       );
       logger.success(
         `Registered in sdd/global.json and sdd/context/apps/${appName}/`,
+      );
+
+      registerAppInRootPackageJson(cwd, appName as string, appType as string);
+      logger.success(
+        `Root package.json updated: nx scripts + ${appType} dependencies — run your package manager install`,
       );
     } catch (err) {
       logger.error((err as Error).message);
