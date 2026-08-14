@@ -379,8 +379,6 @@ if (catalogJson) {
 // fixes/ and subproject contexts under context/[apps|libs|tools]/ legitimately name things.
 const KIT_FILES = [
   'README.md',
-  'INSTALL.md',
-  'HOW-TO-USE-SDD.md',
   'context/constitution.md',
   'context/context_prompt.md',
   'dual-harness/AGENTS.md',
@@ -388,6 +386,7 @@ const KIT_FILES = [
 ];
 const KIT_DIRS = [
   'agents',
+  'documentation',
   'prompts',
   'skills',
   'schemas',

@@ -109,9 +109,9 @@ describe('update.generator', () => {
     const manifest = await fs.readJSON(manifestPath);
 
     // Simular kit viejo: el archivo instalado y su baseline difieren del kit nuevo
-    const updatablePath = resolve(ws, 'sdd/HOW-TO-USE-SDD.md');
+    const updatablePath = resolve(ws, 'sdd/documentation/es/HOW-TO-USE-SDD.md');
     await fs.writeFile(updatablePath, 'contenido de la version vieja\n');
-    manifest.files['HOW-TO-USE-SDD.md'] = sha256('contenido de la version vieja\n');
+    manifest.files['documentation/es/HOW-TO-USE-SDD.md'] = sha256('contenido de la version vieja\n');
 
     // Conflicto: el usuario editó Y el kit nuevo también difiere del baseline
     const conflictPath = resolve(ws, 'sdd/README.md');
@@ -122,7 +122,7 @@ describe('update.generator', () => {
 
     const report = await updateSDD(ws);
 
-    expect(report.updated).toContain('HOW-TO-USE-SDD.md');
+    expect(report.updated).toContain('documentation/es/HOW-TO-USE-SDD.md');
     expect(await fs.readFile(updatablePath, 'utf-8')).not.toContain('version vieja');
 
     expect(report.conflicts).toContain('README.md');

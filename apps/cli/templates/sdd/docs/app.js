@@ -158,8 +158,16 @@ const CATALOG = Object.freeze({
   contextSeeds: [],
   helpDocs: [
     {
+      id: 'install',
+      path: 'documentation/es/INSTALL.md',
+      label: 'Instalar y actualizar',
+      badge: 'Setup',
+      description:
+        'Cómo instalar el framework en un repo y actualizar un kit ya instalado con update sdd.',
+    },
+    {
       id: 'how-to',
-      path: 'HOW-TO-USE-SDD.md',
+      path: 'documentation/es/HOW-TO-USE-SDD.md',
       label: 'Cómo usar SDD',
       badge: 'Guía',
       description:
@@ -167,7 +175,7 @@ const CATALOG = Object.freeze({
     },
     {
       id: 'readme',
-      path: 'README.md',
+      path: 'documentation/es/README.md',
       label: 'README SDD',
       badge: 'Referencia',
       description:
