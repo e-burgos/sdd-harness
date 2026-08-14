@@ -4,6 +4,12 @@ import { copyTemplate, getTemplatesDir } from "../utils/fs.js";
 import { exec } from "../utils/exec.js";
 import { initGitRepo } from "../utils/git.js";
 import { logger } from "../utils/logger.js";
+import { NX_VERSION } from "./versions.js";
+import {
+  addAppScriptsToRootPkg,
+  addAppTypeDepsToRootPkg,
+  sortKeys,
+} from "./root-package.js";
 import { generateDockerCompose } from "./docker.generator.js";
 import { generateSDD } from "./sdd.generator.js";
 import { generateApp } from "./app.generator.js";
@@ -20,7 +26,7 @@ export interface WorkspaceOptions {
   backendStack?: string;
 }
 
-const NX_VERSION = "23.1.1";
+
 
 /**
  * Genera un workspace Nx completo desde cero.
@@ -131,10 +137,7 @@ async function writeRootPackageJson(
   if (opts.description) pkg.description = opts.description;
 
   for (const app of opts.apps) {
-    pkg.scripts[app.name] = `nx serve ${app.name}`;
-    pkg.scripts[`build:${app.name}`] = `nx build ${app.name}`;
-    pkg.scripts[`test:${app.name}`] = `nx test ${app.name}`;
-    pkg.scripts[`lint:${app.name}`] = `nx lint ${app.name}`;
+    addAppScriptsToRootPkg(pkg, app.name);
   }
 
   // La CLI escribe su propio eslint.config.mjs (el kit no trae uno: asume
@@ -167,47 +170,8 @@ async function writeRootPackageJson(
     }
   }
 
-  if (has("nestjs")) {
-    Object.assign(pkg.dependencies, {
-      "@nestjs/common": "^11.0.0",
-      "@nestjs/core": "^11.0.0",
-      "@nestjs/platform-express": "^11.0.0",
-      "reflect-metadata": "^0.2.0",
-      rxjs: "^7.8.0",
-    });
-    Object.assign(pkg.devDependencies, {
-      "@nx/nest": NX_VERSION,
-      "@nx/node": NX_VERSION,
-      "@nx/webpack": NX_VERSION,
-      "@nx/jest": NX_VERSION,
-      "@nestjs/testing": "^11.0.0",
-      "@types/express": "^5.0.0",
-      jest: "^29.0.0",
-      "ts-jest": "^29.0.0",
-      "@types/jest": "^29.0.0",
-    });
-  }
-  if (has("nextjs")) {
-    pkg.dependencies["next"] = "^15.0.0";
-    pkg.devDependencies["@nx/next"] = NX_VERSION;
-  }
-  if (has("fastify")) {
-    pkg.dependencies["fastify"] = "^5.0.0";
-    Object.assign(pkg.devDependencies, {
-      "@nx/node": NX_VERSION,
-      "@nx/esbuild": NX_VERSION,
-    });
-  }
-  if (has("hono")) {
-    Object.assign(pkg.dependencies, {
-      hono: "^4.7.0",
-      "@hono/node-server": "^1.14.0",
-    });
-    Object.assign(pkg.devDependencies, {
-      "@nx/node": NX_VERSION,
-      vite: pkg.devDependencies["vite"] ?? "^8.0.0",
-      vitest: pkg.devDependencies["vitest"] ?? "^4.1.10",
-    });
+  for (const type of new Set(opts.apps.map((a) => a.type))) {
+    addAppTypeDepsToRootPkg(pkg, type);
   }
 
   pkg.dependencies = sortKeys(pkg.dependencies);
@@ -287,8 +251,4 @@ function getNxPlugins(apps: Array<{ name: string; type: string }>): string[] {
   return Array.from(plugins);
 }
 
-function sortKeys(obj: Record<string, string>): Record<string, string> {
-  return Object.fromEntries(
-    Object.entries(obj).sort(([a], [b]) => a.localeCompare(b)),
-  );
-}
+

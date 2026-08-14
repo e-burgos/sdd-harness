@@ -5,6 +5,28 @@ All notable changes to `@e-burgos/sdd-harness` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.4] - 2026-08-13
+
+### Fixed — `add app` now updates the root package.json like `init --config` does
+
+An app added after the workspace existed was silently second-class: `harness add app` generated
+the app and registered it in the SDD registries, but never touched the root `package.json`. The
+app got none of the four nx convenience scripts, and — worse — none of its runtime dependencies:
+`add app hono` produced an app that could not even start, because `hono` and
+`@hono/node-server` were nowhere in the workspace. Found by diffing the two paths for the same
+Spring Boot app in the examples repo.
+
+Both paths now share one source (`generators/root-package.ts`) for what each app type
+contributes to the root `package.json`:
+
+- The four scripts (`<name>`, `build:<name>`, `test:<name>`, `lint:<name>`).
+- The type's runtime and dev dependencies, **additive only** — a version already present is
+  never overwritten.
+- Adding a `react`/`nextjs` app to a workspace that was generated without the react family
+  restores it, taking versions from the kit's own `sdd/templates/nx-workspace/package.json`.
+- `springboot` and `python` contribute scripts only, as in `init` — they integrate via
+  Maven/pyproject and ask nothing of the root `package.json`.
+
 ## [0.4.3] - 2026-08-13
 
 ### Added — the examples repo is now cited where users actually arrive
