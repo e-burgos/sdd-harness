@@ -49,16 +49,21 @@ const SDD_TREE: TreeNode = {
   accent: true,
   note: 'sistema SDD completo',
   children: [
-    { name: 'global.json', note: 'única fuente del nombre' },
+    { name: 'global.json', note: 'única fuente del nombre y estado de módulos' },
     { name: 'agents/', note: '7 agentes del ciclo' },
     { name: 'skills/', note: '18 skills' },
     { name: 'prompts/', note: 'gates como slash commands' },
-    { name: 'schemas/', note: 'JSON Schema estricto' },
+    { name: 'schemas/', note: 'JSON Schema estricto — additionalProperties: false' },
     { name: 'scripts/', note: 'validate · rebuild · setup' },
     { name: 'docs/', note: 'visor sin dependencias' },
+    { name: 'memory/', note: 'lessons + journal — MEMORIA GATE' },
     { name: 'templates/', note: 'blueprints de scaffolding' },
     { name: 'dual-harness/', note: 'AGENTS.md + CLAUDE.md' },
-    { name: 'specs/ · context/ · fixes/' },
+    { name: 'specs/ · context/ · fixes/', note: 'specs, contexto por subproyecto, fixes' },
+    { name: 'api.json · components.json · schema.json', note: 'registros de arquitectura: endpoints, componentes, tablas' },
+    { name: 'tasks.json · fixes.json · catalog.json', note: 'índices agregados — los lee el visor' },
+    { name: 'kit.json · pricing.json', note: 'hashes para update sdd · tarifas de Costos' },
+    { name: 'README.md · HOW-TO-USE-SDD.md · INSTALL.md', note: 'la metodología, dentro del repo' },
   ],
 };
 
@@ -69,7 +74,7 @@ export const MODES: Mode[] = [
     command: 'harness init',
     claim: 'Workspace completo para equipos: múltiples apps, libs compartidas.',
     detail:
-      'Config raíz derivada del kit portable (Nx 23 + pnpm 10, globs apps/* libs/* tools/*). Las apps react y springboot salen de los blueprints del kit; symlinks del arnés dual y commit inicial incluidos.',
+      'Config raíz derivada del kit portable (Nx 23 + pnpm 10, globs apps/* libs/* tools/*). Las apps react y springboot salen de los blueprints del kit; symlinks del arnés dual y commit inicial incluidos. Este árbol es el ejemplo real flexi-market/ del repo de examples.',
     tree: [
       {
         name: 'flexi-market/',
@@ -81,12 +86,15 @@ export const MODES: Mode[] = [
               { name: 'orders-api/', note: 'springboot · Maven hexagonal' },
             ],
           },
-          { name: 'libs/ · tools/' },
+          { name: 'libs/', note: 'shared-types · blueprint ts-lib' },
+          { name: 'tools/' },
           SDD_TREE,
+          { name: '.claude/ · .github/', note: 'arnés symlinkeado — Claude Code y Copilot' },
           { name: 'AGENTS.md → sdd/dual-harness/', note: 'symlink' },
           { name: 'CLAUDE.md → sdd/dual-harness/', note: 'symlink' },
           { name: '.nxignore', note: 'blueprints fuera del graph' },
           { name: 'nx.json · pnpm-workspace.yaml · tsconfig.base.json' },
+          { name: 'eslint.config.mjs · docker-compose.yml · .env.example' },
         ],
       },
     ],
@@ -107,15 +115,16 @@ export const MODES: Mode[] = [
     command: 'harness init --standalone',
     claim: 'UNA app con el código en la raíz del repo. Sin Nx, sin capas de más.',
     detail:
-      'El repo se registra en los registros SDD como app lógica única apps/<nombre> — los schemas quedan intactos y todos los gates funcionan igual. Siete tipos: react, springboot, nestjs, nextjs, fastify, hono, python.',
+      'El repo se registra en los registros SDD como app lógica única apps/<nombre> — los schemas quedan intactos y todos los gates funcionan igual. Siete tipos: react, springboot, nestjs, nextjs, fastify, hono, python. Este árbol es el ejemplo real pulse-api/ del repo de examples.',
     tree: [
       {
-        name: 'orders-api/',
+        name: 'pulse-api/',
         children: [
-          { name: 'src/main/java/…', note: 'el código vive en la raíz' },
-          { name: 'pom.xml · checkstyle.xml', note: 'Maven + lint real' },
+          { name: 'src/', note: 'el código vive en la raíz — fastify + tsx' },
+          { name: 'package.json', note: 'scripts sdd:* + dev/build/test' },
+          { name: 'tsconfig.json · docker-compose.yml · .env.example' },
           SDD_TREE,
-          { name: 'package.json', note: 'scripts sdd:* + mvn' },
+          { name: '.claude/ · .github/', note: 'arnés symlinkeado — Claude Code y Copilot' },
           { name: 'AGENTS.md → sdd/dual-harness/', note: 'symlink' },
         ],
       },
@@ -136,21 +145,22 @@ export const MODES: Mode[] = [
     command: 'harness configure sdd',
     claim: 'Solo la metodología, sobre un proyecto que ya existe. Sin tocar tu código.',
     detail:
-      'Detecta la forma del repo (Nx vs standalone), mergea los scripts sdd:* en tu package.json sin pisar nada, y absorbe tus AGENTS.md/CLAUDE.md previos dentro de sdd/dual-harness/ antes de crear los symlinks: ninguna instrucción se pierde.',
+      'Detecta la forma del repo (Nx vs standalone), mergea los scripts sdd:* en tu package.json sin pisar nada, y absorbe tus AGENTS.md/CLAUDE.md previos dentro de sdd/dual-harness/ antes de crear los symlinks: ninguna instrucción se pierde. Este árbol es el ejemplo real legacy-shop/ del repo de examples, generado desde su semilla versionada.',
     tree: [
       {
-        name: 'legacy-billing-service/',
+        name: 'legacy-shop/',
         children: [
-          { name: 'src/index.js', note: 'tu código, intacto' },
+          { name: 'src/', note: 'tu código, intacto — byte a byte' },
           {
             name: 'package.json',
-            note: 'scripts propios + sdd:* mergeados',
+            note: 'scripts propios + sdd:* mergeados, versión conservada',
           },
           SDD_TREE,
           {
             name: 'sdd/dual-harness/AGENTS.md',
             note: 'incluye tus reglas previas, absorbidas',
           },
+          { name: '.claude/ · .github/', note: 'arnés symlinkeado — Claude Code y Copilot' },
         ],
       },
     ],
@@ -582,7 +592,7 @@ export const UI = {
         { actor: 'sdd-architect', feed: 'TASK-003 done · revisión y hardening · 171k tokens (opus)' },
         { actor: 'sdd-reviewer', feed: 'cierra cycle-01 ✓ · CONTEXTO + MEMORIA GATE · lección → journal' },
       ],
-      footnote: 'tradicional = 20 h estimadas × US$ 50/h · agéntico = tokens × tarifa por tier (sdd/pricing.json)',
+      footnote: 'tradicional = 20 h estimadas × US$ 50/h · agéntico = tokens × tarifa por tier (sdd/pricing.json). La actividad del loop vive en el visor: vista Ciclos → abrí un ciclo → «Actividad del ciclo», reconstruida desde cycle.json + tasks.json.',
       donePre: 'Ciclo cerrado: el dashboard lo reflejó ',
       doneEm: 'solo',
       doneMid: ' — sin recargar, sin tocar nada, y sin perder lo que tenías expandido. Ahorro proyectado del ciclo: ',

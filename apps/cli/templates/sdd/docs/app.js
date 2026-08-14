@@ -3227,7 +3227,85 @@ function cycleModalResumenChip(text) {
   return `<span class="chip chip--sm" style="font-family: var(--font-mono)">${escapeHtml(text)}</span>`;
 }
 
-function cycleModalResumenView(specId, cycleId, cycle, files, onTabIndex) {
+const ACTIVITY_TONES = Object.freeze({
+  emerald: 'rgb(var(--rgb-emerald-400))',
+  amber: 'rgb(var(--rgb-amber-400))',
+  muted: 'var(--text-muted)',
+  faint: 'var(--text-faint)',
+});
+
+/**
+ * Actividad del ciclo reconstruida SOLO desde los registros (cycle.json +
+ * tasks.json): qué agente abrió, qué documentos existen, cada task con sus
+ * tokens/tier si el implementador los registró, y el cierre del reviewer.
+ * Es la versión real del feed que el sitio muestra como demo — acá no se
+ * inventa nada: si un dato no está en los registros, la línea no aparece.
+ */
+function cycleActivityFeed(cycle, tasks, cycleId) {
+  if (!cycle) return '';
+  const rows = [];
+  const push = (actor, text, tone) => rows.push({ actor, text, tone });
+
+  push(
+    'sdd-orchestrator',
+    `abre ${cycleId} (${cycle.module ?? '—'}) · brief + cycle.json`,
+    'emerald',
+  );
+  const docs = cycle.documents ?? {};
+  if (docs.functional)
+    push('sdd-functional', 'functional.md — requisitos y user stories', 'muted');
+  if (docs.planner)
+    push('sdd-planner', 'planner.md — tasks y estimaciones', 'muted');
+  if (docs.architect)
+    push('sdd-architect', 'architect.md — diseño validado', 'muted');
+
+  for (const task of tasks?.tasks ?? []) {
+    const u = task.usage;
+    const tokens = u
+      ? ` · ${costsTokensFormat.format((u.tokens_in ?? 0) + (u.tokens_out ?? 0))} tokens${u.model_tier ? ` (${u.model_tier})` : ''}`
+      : '';
+    const tone =
+      task.status === 'done'
+        ? 'emerald'
+        : task.status === 'in-progress'
+          ? 'amber'
+          : 'faint';
+    push(task.id, `${task.status} · ${task.title}${tokens}`, tone);
+  }
+
+  if (cycle.status === 'completed') {
+    const rep = cycle.reviewer_report;
+    const verdict =
+      rep && typeof rep === 'object'
+        ? rep.approved
+          ? 'aprobado'
+          : 'con observaciones'
+        : 'sin reviewer_report';
+    push(
+      'sdd-reviewer',
+      `cierra ${cycleId} ✓ · ${verdict} · CONTEXTO + MEMORIA GATE`,
+      'emerald',
+    );
+  }
+
+  const lines = rows
+    .map(
+      (row) => `
+        <div style="display:flex; gap:10px; align-items:baseline; min-width:0">
+          <span style="flex:0 0 auto; font-family: var(--font-mono); font-size: var(--text-11); color:${ACTIVITY_TONES[row.tone]}">${escapeHtml(row.actor)}</span>
+          <span style="min-width:0; font-family: var(--font-mono); font-size: var(--text-11); color: var(--text-muted); overflow-wrap:break-word">${escapeHtml(row.text)}</span>
+        </div>`,
+    )
+    .join('');
+  return `
+    <div>
+      <p style="${CYCLE_EYEBROW_STYLE}">Actividad del ciclo — derivada de los registros</p>
+      <div style="display:flex; flex-direction:column; gap:8px; padding:12px 14px; border:1px solid var(--border); border-radius: var(--radius-lg)">${lines}</div>
+    </div>
+  `;
+}
+
+function cycleModalResumenView(specId, cycleId, cycle, files, onTabIndex, tasks) {
   const docsBlock = files.length
     ? `
       <div>
@@ -3306,6 +3384,7 @@ function cycleModalResumenView(specId, cycleId, cycle, files, onTabIndex) {
         ${specChip}
       </div>
       ${dateFields.length ? `<div style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:16px">${dateFields.join('')}</div>` : ''}
+      ${cycleActivityFeed(cycle, tasks, cycleId)}
       ${docsBlock}
       ${artifactsBlock}
     </div>
@@ -3333,9 +3412,10 @@ async function openCycleDetailModal(item) {
   openModal({ title, size: 'xl', bodyHtml: skeletonLines() });
   const openId = modalToken;
 
-  const files = await resolveCycleFiles(specId, cycleId, cycle ?? {}).catch(
-    () => [],
-  );
+  const [files, cycleTasks] = await Promise.all([
+    resolveCycleFiles(specId, cycleId, cycle ?? {}).catch(() => []),
+    fetchJson(`specs/${specId}/cycles/${cycleId}/tasks.json`).catch(() => null),
+  ]);
   if (!activeModal || activeModal.token !== openId) return;
 
   const tabs = [
@@ -3354,7 +3434,7 @@ async function openCycleDetailModal(item) {
     openId,
     `
       ${cycleModalTabBar(tabs, activeIndex)}
-      <div data-cycle-tab-panel>${cycleModalResumenView(specId, cycleId, cycle, files, (index) => index + 1)}</div>
+      <div data-cycle-tab-panel>${cycleModalResumenView(specId, cycleId, cycle, files, (index) => index + 1, cycleTasks)}</div>
     `,
   );
 
@@ -3390,6 +3470,7 @@ async function openCycleDetailModal(item) {
         cycle,
         files,
         (fileIndex) => fileIndex + 1,
+        cycleTasks,
       );
       return;
     }
