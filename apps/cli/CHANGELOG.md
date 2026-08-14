@@ -5,6 +5,31 @@ All notable changes to `@e-burgos/sdd-harness` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-08-14
+
+### Added — the loop activity feed, for real
+
+The docs site demoed an "actividad del loop" feed that did not exist in the product. Now it
+does: the `sdd:docs` viewer's cycle detail (Ciclos → open a cycle → **Actividad del ciclo**)
+reconstructs the feed **exclusively from the registries** — nothing is invented, a line only
+appears if its data exists:
+
+- `sdd-orchestrator` opens the cycle (cycle.json).
+- One line per design document present in `cycle.documents` (functional / planner / architect).
+- One line per task from the cycle's `tasks.json`, with its status and — when the implementor
+  recorded `usage` — its tokens and model tier (`352 k tokens (sonnet)`).
+- `sdd-reviewer` closes it, with the `reviewer_report` verdict, on completed cycles.
+
+The site demo now points at the real feature instead of floating free.
+
+### Changed — the site's file trees now match the real output, file by file
+
+The `sdd/` tree shown in "Los tres modos" omitted a third of what the CLI actually installs —
+including `memory/` (the MEMORIA GATE base), `kit.json`, `pricing.json`, the six architecture
+and index registries, and the three methodology documents. The three mode trees are now
+complete and mirror the real examples repo directories (`flexi-market/`, `pulse-api/`,
+`legacy-shop/`), each with a pointer to its example, in both languages.
+
 ## [0.4.4] - 2026-08-13
 
 ### Fixed — `add app` now updates the root package.json like `init --config` does
