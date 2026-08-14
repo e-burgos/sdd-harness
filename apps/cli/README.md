@@ -556,7 +556,7 @@ All services include `restart: unless-stopped` and named volumes where applicabl
 
 ## SDD (Spec-Driven Development)
 
-SDD is a methodology where every feature goes through a structured cycle of specialized AI agents before code is written. Harness installs the **portable SDD kit** verbatim from `templates/sdd/` — the same folder documented by its own `sdd/README.md`, `sdd/INSTALL.md` and `sdd/HOW-TO-USE-SDD.md` once installed.
+SDD is a methodology where every feature goes through a structured cycle of specialized AI agents before code is written. Harness installs the **portable SDD kit** verbatim from `templates/sdd/` — the same folder documented by its own `sdd/documentation/` (INSTALL, HOW-TO and full reference, in Spanish and English — `sdd/README.md` is the bilingual index) once installed.
 
 The kit is portable by design: **`sdd/global.json` is the single source of truth for the project name and description**. No other kit file hardcodes them, and `pnpm sdd:validate` fails if they leak. That is what allows the CLI to copy the kit without rendering templates.
 

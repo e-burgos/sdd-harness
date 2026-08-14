@@ -23,7 +23,8 @@ const SDD_TREE: TreeNode = {
     { name: 'api.json · components.json · schema.json', note: 'architecture registries: endpoints, components, tables' },
     { name: 'tasks.json · fixes.json · catalog.json', note: 'aggregated indexes — the viewer reads these' },
     { name: 'kit.json · pricing.json', note: 'hashes for update sdd · Costs rates' },
-    { name: 'README.md · HOW-TO-USE-SDD.md · INSTALL.md', note: 'the methodology, inside the repo' },
+    { name: 'documentation/', note: 'INSTALL · HOW-TO · README — in es/ and en/' },
+    { name: 'README.md', note: 'bilingual documentation index' },
   ],
 };
 
@@ -626,13 +627,14 @@ export const UI = {
     kicker: 'sdd guide — the documentation that travels with the kit',
     h1a: 'The full system manual,',
     h1b: ' before installing it.',
-    body: 'These two documents live inside sdd/ in every generated repo — here you can read them in full: the system reference (gates, agents, registries, rules) and the step-by-step guide for a dev day-to-day.',
+    body: 'These documents live inside sdd/documentation/ in every generated repo, in Spanish and English — here you can read them in full: how to install and update the framework, the step-by-step guide for a dev day-to-day, and the system reference (gates, agents, registries, rules).',
     tabs: [
-      { id: 'readme', tab: 'README — the system' },
+      { id: 'install', tab: 'INSTALL — install & update' },
       { id: 'how-to', tab: 'HOW-TO — step by step' },
+      { id: 'readme', tab: 'README — the system' },
     ],
     installedNote: ' — installs verbatim in every repo',
     tocHeading: 'In this document',
-    langNote: 'These manuals ship inside the kit and are maintained in Spanish (the kit’s working language). An English kit edition is on the roadmap.' as string | null,
+    langNote: null as string | null,
   },
 } as const;

@@ -5,6 +5,24 @@ All notable changes to `@e-burgos/sdd-harness` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2026-08-14
+
+### Changed — the kit's documentation is now bilingual and lives in one place
+
+The three methodology documents sat loose at the root of `sdd/` and existed only in Spanish —
+and the site's English guide page was serving the Spanish text.
+
+- **New layout**: `sdd/documentation/{es,en}/{INSTALL,HOW-TO-USE-SDD,README}.md`. The root
+  `sdd/README.md` is now a short bilingual index pointing at both editions.
+- **Full English editions** of the three documents (the English README summarizes the
+  historical changelog with a pointer to the Spanish original, which remains the record).
+- **The viewer's Help view** now offers the three documents — INSTALL first, since how to
+  install and update the framework is the most important one — from the new paths.
+- **The site's `guía sdd` page** follows the language switch (English pages get English
+  manuals), adds the INSTALL tab, and drops the "manuals are Spanish-only" apology.
+- `harness update sdd` migrates old installs cleanly: the root `HOW-TO-USE-SDD.md` and
+  `INSTALL.md` are removed as stale kit files (if unmodified) and the new tree is added.
+
 ## [0.5.0] - 2026-08-14
 
 ### Added — the loop activity feed, for real

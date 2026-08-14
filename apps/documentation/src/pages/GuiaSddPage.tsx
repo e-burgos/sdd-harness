@@ -3,32 +3,56 @@ import { AnimatePresence, motion } from 'framer-motion';
 import {
   ArrowLeftIcon,
   BookOpenTextIcon,
+  DownloadSimpleIcon,
   InfoIcon,
   ListChecksIcon,
 } from '@phosphor-icons/react';
 import { Markdown, extractH2 } from '../components/Markdown';
 import { cascade, rise } from '../components/Section';
-import { useContent } from '../i18n';
-import readmeSource from '../content/sdd-readme.md?raw';
-import howToSource from '../content/sdd-how-to.md?raw';
+import { useContent, useLang } from '../i18n';
+import readmeEs from '../content/sdd-readme.es.md?raw';
+import howToEs from '../content/sdd-how-to.es.md?raw';
+import installEs from '../content/sdd-install.es.md?raw';
+import readmeEn from '../content/sdd-readme.en.md?raw';
+import howToEn from '../content/sdd-how-to.en.md?raw';
+import installEn from '../content/sdd-install.en.md?raw';
 
-// The manuals themselves ship inside the kit and are maintained in Spanish
-// (the kit's working language) — only the page chrome is translated.
+// The kit ships its documentation in both languages under sdd/documentation/;
+// the page follows the site's language switch.
 const DOC_FILES = [
-  { id: 'readme', file: 'sdd/README.md', source: readmeSource, icon: BookOpenTextIcon },
-  { id: 'how-to', file: 'sdd/HOW-TO-USE-SDD.md', source: howToSource, icon: ListChecksIcon },
+  {
+    id: 'install',
+    file: 'sdd/documentation/<lang>/INSTALL.md',
+    source: { es: installEs, en: installEn },
+    icon: DownloadSimpleIcon,
+  },
+  {
+    id: 'how-to',
+    file: 'sdd/documentation/<lang>/HOW-TO-USE-SDD.md',
+    source: { es: howToEs, en: howToEn },
+    icon: ListChecksIcon,
+  },
+  {
+    id: 'readme',
+    file: 'sdd/documentation/<lang>/README.md',
+    source: { es: readmeEs, en: readmeEn },
+    icon: BookOpenTextIcon,
+  },
 ];
 
 export function GuiaSddPage() {
   const { UI } = useContent();
+  const { lang } = useLang();
   const g = UI.guia;
   const docs = useMemo(
     () =>
       DOC_FILES.map((d) => ({
         ...d,
+        source: d.source[lang],
+        file: d.file.replace('<lang>', lang),
         tab: g.tabs.find((t) => t.id === d.id)?.tab ?? d.id,
       })),
-    [g],
+    [g, lang],
   );
   const [docId, setDocId] = useState(DOC_FILES[0].id);
   const doc = docs.find((d) => d.id === docId) ?? docs[0];

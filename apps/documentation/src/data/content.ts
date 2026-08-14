@@ -63,7 +63,8 @@ const SDD_TREE: TreeNode = {
     { name: 'api.json · components.json · schema.json', note: 'registros de arquitectura: endpoints, componentes, tablas' },
     { name: 'tasks.json · fixes.json · catalog.json', note: 'índices agregados — los lee el visor' },
     { name: 'kit.json · pricing.json', note: 'hashes para update sdd · tarifas de Costos' },
-    { name: 'README.md · HOW-TO-USE-SDD.md · INSTALL.md', note: 'la metodología, dentro del repo' },
+    { name: 'documentation/', note: 'INSTALL · HOW-TO · README — en es/ y en/' },
+    { name: 'README.md', note: 'índice bilingüe de la documentación' },
   ],
 };
 
@@ -691,10 +692,11 @@ export const UI = {
     kicker: 'guía sdd — la documentación que viaja con el kit',
     h1a: 'El manual completo del sistema,',
     h1b: ' antes de instalarlo.',
-    body: 'Estos dos documentos viven dentro de sdd/ en cada repo generado — acá los podés leer completos: la referencia del sistema (gates, agentes, registros, reglas) y la guía paso a paso para el día a día de un dev.',
+    body: 'Estos documentos viven dentro de sdd/documentation/ en cada repo generado, en español e inglés — acá los podés leer completos: cómo instalar y actualizar el framework, la guía paso a paso para el día a día de un dev, y la referencia del sistema (gates, agentes, registros, reglas).',
     tabs: [
-      { id: 'readme', tab: 'README — el sistema' },
+      { id: 'install', tab: 'INSTALL — instalar y actualizar' },
       { id: 'how-to', tab: 'HOW-TO — paso a paso' },
+      { id: 'readme', tab: 'README — el sistema' },
     ],
     installedNote: ' — se instala tal cual en cada repo',
     tocHeading: 'En este documento',
