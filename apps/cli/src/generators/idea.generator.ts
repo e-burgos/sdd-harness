@@ -90,7 +90,7 @@ function renderIdeaFile(idea: string, mode: IdeaReport['mode']): string {
       ? `## Protocolo (repo vacío → producto)
 
 > Entregale este archivo a tu agente AI. El protocolo completo es la skill
-> **sdd-hermes** (\`sdd/skills/sdd-hermes/skill.md\` una vez instalado el kit).
+> **sdd-hermes** (\`sdd/skills/sdd-hermes/SKILL.md\` una vez instalado el kit).
 
 1. **Descubrimiento** — extraer de la idea: dominio y usuarios, 3–7 módulos core con
    nombre propio, y necesidades técnicas (persistencia, tiempo real, colas, archivos,
@@ -108,7 +108,7 @@ function renderIdeaFile(idea: string, mode: IdeaReport['mode']): string {
 
 > Entregale este archivo a tu agente AI en este repo.
 
-1. Invocar la skill **sdd-hermes** (\`sdd/skills/sdd-hermes/skill.md\`) desde su FASE 1:
+1. Invocar la skill **sdd-hermes** (\`sdd/skills/sdd-hermes/SKILL.md\`) desde su FASE 1:
    descubrimiento sobre esta idea + análisis de gaps contra el stack ya instalado
    (\`sdd/global.json\`).
 2. Piezas faltantes → \`harness add app|service\` (checkpoint humano si cambia el stack).

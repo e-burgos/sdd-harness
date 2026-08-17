@@ -591,7 +591,7 @@ ls sdd/context/*/*/updates/*.md 2>/dev/null | wc -l
 ### 10.1 De una idea a producto (skill `sdd-hermes`)
 
 El ciclo SDD arranca en una spec — Hermes arranca **antes**: en la idea. Todo el
-protocolo vive en `sdd/skills/sdd-hermes/skill.md`; la entrada es un comando:
+protocolo vive en `sdd/skills/sdd-hermes/SKILL.md`; la entrada es un comando:
 
 ```bash
 # Repo vacío — registrar la idea y dejar todo listo para el agente:

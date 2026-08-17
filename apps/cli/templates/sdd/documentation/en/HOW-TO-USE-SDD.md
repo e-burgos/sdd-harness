@@ -598,7 +598,7 @@ ls sdd/context/*/*/updates/*.md 2>/dev/null | wc -l
 ### 10.1 From an idea to product (`sdd-hermes` skill)
 
 The SDD cycle starts at a spec — Hermes starts **earlier**: at the idea. The whole protocol
-lives in `sdd/skills/sdd-hermes/skill.md`; the entry point is one command:
+lives in `sdd/skills/sdd-hermes/SKILL.md`; the entry point is one command:
 
 ```bash
 # Empty repo — register the idea and leave everything ready for the agent:

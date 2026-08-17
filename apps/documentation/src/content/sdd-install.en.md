@@ -39,7 +39,7 @@ contexts from any project. Every registry is empty and validates against its sch
    ```
 
    If the target repo starts from scratch (no Nx workspace), create the workspace first
-   following `sdd/skills/scaffold-nx/skill.md` and the reference files in
+   following `sdd/skills/scaffold-nx/SKILL.md` and the reference files in
    `sdd/templates/nx-workspace/` (`create-nx-workspace` + aligned root config).
 
 2. **Register the scripts in the target repo's root `package.json`:**

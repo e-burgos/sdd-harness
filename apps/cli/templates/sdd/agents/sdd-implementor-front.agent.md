@@ -11,9 +11,9 @@ description: Agente Implementador Frontend SDD. Implementa vistas y componentes 
 
 | Skill                      | Path                                        | Propósito                                                                                                |
 | -------------------------- | ------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `sdd-implementor-front`    | `sdd/skills/sdd-implementor-front/skill.md` | Guía completa del rol: protocolo task-by-task, verificaciones, actualización de components.json          |
-| `generate-*` (según stack) | `sdd/skills/generate-*/skill.md`            | Elegir la skill del stack frontend del subproyecto (`constitution.md`): `generate-react-component`, etc. |
-| `sdd-data-schemas`         | `sdd/skills/sdd-data-schemas/skill.md`      | Schema de components.json y del tasks.json per-cycle para actualizar al finalizar cada task              |
+| `sdd-implementor-front`    | `sdd/skills/sdd-implementor-front/SKILL.md` | Guía completa del rol: protocolo task-by-task, verificaciones, actualización de components.json          |
+| `generate-*` (según stack) | `sdd/skills/generate-*/SKILL.md`            | Elegir la skill del stack frontend del subproyecto (`constitution.md`): `generate-react-component`, etc. |
+| `sdd-data-schemas`         | `sdd/skills/sdd-data-schemas/SKILL.md`      | Schema de components.json y del tasks.json per-cycle para actualizar al finalizar cada task              |
 
 ---
 

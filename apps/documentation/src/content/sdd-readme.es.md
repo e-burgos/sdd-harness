@@ -145,7 +145,7 @@ sdd/
 │   ├── serve.mjs                      ← Server con solo `node:*`, restringido a /sdd/**
 │   └── fonts/                         ← woff2 vendorizadas (sin CDN, funciona offline)
 │
-└── skills/                            ← Skills (micro-agentes especializados) — archivo `skill.md`
+└── skills/                            ← Skills (micro-agentes especializados) — archivo `SKILL.md`
     ├── sdd-orchestrator/
     ├── sdd-functional/
     ├── sdd-planner/
@@ -232,11 +232,13 @@ CLAUDE.md  (raíz)        → symlink a sdd/dual-harness/CLAUDE.md
 | Copilot code review (server-side) | `.github/copilot-instructions.md` (archivo real)                                                                                        | ✅             |
 | Windows sin Developer Mode        | git checkout deja los symlinks como archivos de texto → correr `pnpm setup:agents` (crea junctions)                                     | ⚠️ obligatorio |
 
-> ⛔ El archivo de cada skill se llama **`skill.md` en minúscula** — es lo que git versiona
-> (`git ls-files sdd/skills` es la autoridad). En Linux (CI, cloud agents) el case importa: si
-> alguien lo renombra a `SKILL.md` en su working tree, en macOS no se nota (`core.ignorecase=true`)
-> pero el checkout de Linux devuelve minúscula y cualquier código que resuelva `SKILL.md` da 404.
-> Ya pasó una vez: 4 skills quedaron inaccesibles en GitHub Pages por esto.
+> ⛔ El archivo de cada skill se llama **`SKILL.md` en MAYÚSCULA** — es el estándar Agent
+> Skills que Claude Code exige: en Linux (case-sensitive) `.claude/skills/*/skill.md` en
+> minúscula **no se descubre** y las skills quedan invisibles para el agente. Git versiona los
+> archivos en mayúscula (`git ls-files sdd/skills` es la autoridad) y TODO código que los
+> resuelva (visor, catálogo, scripts) usa `SKILL.md` — el case debe coincidir en ambos lados.
+> En macOS (`core.ignorecase=true`) cualquier case parece andar: no confiar en eso, verificar
+> siempre en Linux/CI.
 
 **Setup automático (una vez tras clonar):**
 
@@ -1047,6 +1049,17 @@ ls sdd/context/*/*/updates/*.md 2>/dev/null | wc -l
 
 ## Changelog
 
+### v5.2 (2026-08-17) — Skills en `SKILL.md` mayúscula (estándar Agent Skills)
+
+- 🔧 **Las 18 skills vuelven a `SKILL.md` en MAYÚSCULA.** La "corrección" de v5.0 que las pasó
+  a minúscula arregló los 404 del visor pero rompió lo más importante: Claude Code sólo
+  descubre `.claude/skills/*/SKILL.md` (estándar Agent Skills) y en Linux el case es exacto —
+  en instalaciones reales las skills quedaban invisibles para el agente. Ahora git versiona
+  `SKILL.md` y **todos** los resolvedores (catálogo, visor, scripts, docs) usan el mismo case,
+  que era el fix correcto desde el principio.
+- `harness update sdd` migra instalaciones existentes: los `skill.md` en minúscula sin
+  modificar se eliminan como archivos stale del kit y entran los `SKILL.md` nuevos.
+
 ### v5.1 (2026-08-06) — Bootstrap del workspace, pnpm-only y nombre de-hardcodeado
 
 - ✅ **Skill nueva `init-nx-workspace`**: lleva un repo de cero a la estructura canónica
@@ -1149,6 +1162,6 @@ ls sdd/context/*/*/updates/*.md 2>/dev/null | wc -l
 
 ---
 
-**Última actualización:** 2026-08-06
-**SDD Version:** 5.1
+**Última actualización:** 2026-08-17
+**SDD Version:** 5.2
 **Proyecto:** ver `sdd/global.json` → `project`

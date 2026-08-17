@@ -5,6 +5,29 @@ All notable changes to `@e-burgos/sdd-harness` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.1] - 2026-08-17
+
+### Fixed — skills are `SKILL.md` again, so Claude Code can actually find them
+
+The kit shipped its 18 skills as lowercase `skill.md`. That satisfied the viewer, but broke
+the one consumer that cannot be configured: Claude Code only discovers Agent Skills at
+`.claude/skills/*/SKILL.md`, and on case-sensitive filesystems (Linux, cloud agents, WSL)
+the lowercase file is simply not found — installed projects ended up with all skills
+invisible to the agent.
+
+- **All 18 kit skills renamed to `SKILL.md`** (uppercase — the Agent Skills standard), and
+  every resolver aligned to the same case: `catalog.json` + `rebuild-catalog.mjs`,
+  `catalog.schema.json` (`file` is now `const: "SKILL.md"`), the `sdd/docs` viewer, agents,
+  prompts, context templates and both documentation editions.
+- **`harness add skill` now writes `SKILL.md`** for user-created skills.
+- **`harness update sdd` migrates existing installs**: unmodified lowercase `skill.md` files
+  are removed as stale kit files and the uppercase editions take their place; `catalog.json`
+  is regenerated. User-created skills are untouched (rename them to `SKILL.md` by hand so
+  Claude Code picks them up too).
+- The kit README's warning block taught the lowercase convention as a hard rule; it now
+  explains the real constraint: git versions `SKILL.md` and every resolver must match that
+  case — macOS hiding case mismatches is the trap, not the uppercase name.
+
 ## [0.6.0] - 2026-08-14
 
 ### Changed — the kit's documentation is now bilingual and lives in one place

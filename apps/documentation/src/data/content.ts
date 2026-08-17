@@ -321,7 +321,7 @@ export const COMMANDS: Command[] = [
     usage: 'harness add skill [nombre] --description <texto>',
     summary: 'Crea una skill nueva en sdd/skills/.',
     points: [
-      'Archivo skill.md en minúscula — Linux es case-sensitive.',
+      'Archivo SKILL.md en mayúscula — estándar Agent Skills, requerido por Claude Code.',
       'Con frontmatter name/description listo para Claude Code y Copilot.',
     ],
   },

@@ -25,8 +25,8 @@ export function buildCatalog() {
       .filter((entry) => statSync(join(skillsDir, entry)).isDirectory())
       .sort()
       .flatMap((dir) =>
-        readdirSync(join(skillsDir, dir)).includes('skill.md')
-          ? [{ dir, file: 'skill.md' }]
+        readdirSync(join(skillsDir, dir)).includes('SKILL.md')
+          ? [{ dir, file: 'SKILL.md' }]
           : [],
       ),
     prompts: readdirSync(join(SDD_ROOT, 'prompts'))

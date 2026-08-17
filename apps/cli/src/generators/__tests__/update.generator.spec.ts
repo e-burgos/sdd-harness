@@ -64,7 +64,7 @@ describe('update.generator', () => {
 
     await fs.ensureDir(resolve(ws, 'sdd/skills/mi-skill-propia'));
     await fs.writeFile(
-      resolve(ws, 'sdd/skills/mi-skill-propia/skill.md'),
+      resolve(ws, 'sdd/skills/mi-skill-propia/SKILL.md'),
       '---\nname: mi-skill-propia\n---\n',
     );
 
@@ -75,7 +75,7 @@ describe('update.generator', () => {
     expect(report.keptCustom).toContain('agents/sdd-planner.agent.md');
     expect(await fs.readFile(agentPath, 'utf-8')).toBe(customized);
     expect(
-      await fs.pathExists(resolve(ws, 'sdd/skills/mi-skill-propia/skill.md')),
+      await fs.pathExists(resolve(ws, 'sdd/skills/mi-skill-propia/SKILL.md')),
     ).toBe(true);
     expect(await fs.readFile(resolve(ws, 'sdd/global.json'), 'utf-8')).toBe(
       globalBefore,

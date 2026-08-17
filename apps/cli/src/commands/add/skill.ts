@@ -102,10 +102,10 @@ ${description}
 
     try {
       await fs.ensureDir(skillDir);
-      // Lowercase on purpose: Linux checkouts are case-sensitive and the SDD
-      // kit resolves skill.md (see sdd/README.md, "el case importa").
-      await fs.writeFile(resolve(skillDir, 'skill.md'), skillContent, 'utf-8');
-      logger.success(`Skill created at sdd/skills/${skillName}/skill.md`);
+      // Uppercase SKILL.md: the Agent Skills standard Claude Code requires —
+      // lowercase skill.md is not discovered on case-sensitive filesystems.
+      await fs.writeFile(resolve(skillDir, 'SKILL.md'), skillContent, 'utf-8');
+      logger.success(`Skill created at sdd/skills/${skillName}/SKILL.md`);
       logger.info('Run `pnpm sdd:rebuild-catalog` so the docs viewer picks it up.');
     } catch (err) {
       logger.error((err as Error).message);
