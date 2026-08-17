@@ -11,9 +11,9 @@ description: Agente Reviewer SDD. Valida la calidad de todo el output del ciclo 
 
 | Skill                | Path                                     | Propósito                                                                                          |
 | -------------------- | ---------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| `sdd-reviewer`       | `sdd/skills/sdd-reviewer/skill.md`       | Guía completa del rol: criterios de aprobación, checklist de cierre, formato del reviewer_report   |
-| `sdd-data-schemas`   | `sdd/skills/sdd-data-schemas/skill.md`   | Schema de todos los JSONs de estado — fuente de máquina en `sdd/schemas/*.schema.json`             |
-| `sdd-file-structure` | `sdd/skills/sdd-file-structure/skill.md` | Estructura esperada del ciclo y convenciones de artifacts/ para validar que el ciclo está completo |
+| `sdd-reviewer`       | `sdd/skills/sdd-reviewer/SKILL.md`       | Guía completa del rol: criterios de aprobación, checklist de cierre, formato del reviewer_report   |
+| `sdd-data-schemas`   | `sdd/skills/sdd-data-schemas/SKILL.md`   | Schema de todos los JSONs de estado — fuente de máquina en `sdd/schemas/*.schema.json`             |
+| `sdd-file-structure` | `sdd/skills/sdd-file-structure/SKILL.md` | Estructura esperada del ciclo y convenciones de artifacts/ para validar que el ciclo está completo |
 
 ---
 

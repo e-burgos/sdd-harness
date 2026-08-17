@@ -11,9 +11,9 @@ description: Agente Implementador Backend SDD. Implementa módulos backend task 
 
 | Skill                      | Path                                       | Propósito                                                                                                                |
 | -------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
-| `sdd-implementor-back`     | `sdd/skills/sdd-implementor-back/skill.md` | Guía completa del rol: protocolo task-by-task, verificaciones, actualización de JSONs                                    |
-| `generate-*` (según stack) | `sdd/skills/generate-*/skill.md`           | Elegir la skill del stack del subproyecto (`constitution.md`): `generate-springboot-api`, `generate-nestjs-module`, etc. |
-| `sdd-data-schemas`         | `sdd/skills/sdd-data-schemas/skill.md`     | Schema de api.json y del tasks.json per-cycle para actualizar al finalizar cada task                                     |
+| `sdd-implementor-back`     | `sdd/skills/sdd-implementor-back/SKILL.md` | Guía completa del rol: protocolo task-by-task, verificaciones, actualización de JSONs                                    |
+| `generate-*` (según stack) | `sdd/skills/generate-*/SKILL.md`           | Elegir la skill del stack del subproyecto (`constitution.md`): `generate-springboot-api`, `generate-nestjs-module`, etc. |
+| `sdd-data-schemas`         | `sdd/skills/sdd-data-schemas/SKILL.md`     | Schema de api.json y del tasks.json per-cycle para actualizar al finalizar cada task                                     |
 
 ---
 

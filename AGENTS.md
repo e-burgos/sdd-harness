@@ -37,8 +37,10 @@ Package manager: **pnpm**.
    targets de test usar `nx:run-commands` → `vitest run --passWithNoTests`. Spring Boot integra
    por **Maven** vía `nx:run-commands` (nada de Gradle). El kit usa el wiring legacy `paths` en
    `tsconfig.base.json` — no mezclar con TS solution setup.
-6. **Skills en `skill.md` minúscula.** Linux es case-sensitive; `SKILL.md` ya dejó skills
-   inaccesibles una vez.
+6. **Skills en `SKILL.md` MAYÚSCULA** (estándar Agent Skills). Claude Code sólo descubre
+   `.claude/skills/*/SKILL.md`; en Linux el case es exacto y `skill.md` en minúscula deja las
+   skills invisibles para el agente (pasó en instalaciones reales). Todo código que resuelva
+   el archivo (catálogo, visor, scripts) debe usar `SKILL.md` — git es la autoridad del case.
 7. **Convención standalone**: el repo generado se registra como app lógica única `apps/<nombre>`
    en los registros SDD (los schemas exigen ese patrón; el validador no chequea que exista en
    disco). No "arreglar" esto cambiando schemas.

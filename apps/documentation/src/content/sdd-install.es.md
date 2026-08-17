@@ -39,7 +39,7 @@ contra sus schemas.
    ```
 
    Si el repo destino arranca de cero (sin workspace Nx), crear primero el workspace
-   siguiendo `sdd/skills/scaffold-nx/skill.md` y los archivos de referencia de
+   siguiendo `sdd/skills/scaffold-nx/SKILL.md` y los archivos de referencia de
    `sdd/templates/nx-workspace/` (`create-nx-workspace` + config raíz alineada).
 
 2. **Registrar los scripts en el `package.json` raíz del repo destino:**

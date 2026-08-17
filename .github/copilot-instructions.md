@@ -9,6 +9,6 @@ Reglas completas en [`AGENTS.md`](../AGENTS.md) (fuente única). Resumen mínimo
   debe matchear la forma exacta.
 - Targets de test Nx: `nx:run-commands` + vitest (`@nx/vite:test` no existe en Nx 23).
   Spring Boot integra por Maven vía `nx:run-commands`, sin Gradle.
-- Skills siempre como `skill.md` en minúscula (Linux es case-sensitive).
+- Skills siempre como `SKILL.md` en minúscula (Linux es case-sensitive).
 - Cambios en generadores exigen suite verde (`npx vitest run`, incluye integración real) y
   prueba de generación en `examples/`.

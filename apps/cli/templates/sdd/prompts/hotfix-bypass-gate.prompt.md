@@ -127,7 +127,7 @@ El ID sigue la convención: `FIX-[gh-user]-[spec-NNN]-[seq]` para fixes vinculad
 
 - **Fix vinculado a una spec:** crear `sdd/specs/{spec-id}/fixes/fix-[gh-user]-[spec-NNN]-[seq].md`
 - **Fix repo-level (sin spec):** crear `sdd/fixes/fix-[gh-user]-[seq].md`
-- Usar el template de la sección 9 de `sdd/skills/sdd-file-structure/skill.md`.
+- Usar el template de la sección 9 de `sdd/skills/sdd-file-structure/SKILL.md`.
 - El nombre del archivo usa kebab-case del ID: `FIX-jdoe-001` → `fix-jdoe-001.md`
 
 ### PASO 7 — Autorizar al implementador

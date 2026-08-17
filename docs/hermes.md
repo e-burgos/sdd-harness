@@ -70,7 +70,7 @@ interfaz que un agente usa para materializar la decisión de stack.
 
 ## Pilar 3 — El conductor: skill `sdd-hermes` ✅ implementado
 
-`sdd/skills/sdd-hermes/skill.md` define el loop punta a punta:
+`sdd/skills/sdd-hermes/SKILL.md` define el loop punta a punta:
 
 ```
 idea → FASE 1 descubrimiento (1 ronda de preguntas máx)

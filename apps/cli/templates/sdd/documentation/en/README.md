@@ -145,7 +145,7 @@ sdd/
 │   ├── serve.mjs                      ← Server using only `node:*`, restricted to /sdd/**
 │   └── fonts/                         ← Vendored woff2 (no CDN, works offline)
 │
-└── skills/                            ← Skills (specialized micro-agents) — `skill.md` file
+└── skills/                            ← Skills (specialized micro-agents) — `SKILL.md` file
     ├── sdd-orchestrator/
     ├── sdd-functional/
     ├── sdd-planner/
@@ -232,12 +232,13 @@ CLAUDE.md  (root)        → symlink to sdd/dual-harness/CLAUDE.md
 | Copilot code review (server-side) | `.github/copilot-instructions.md` (real file)                                                                                            | ✅             |
 | Windows without Developer Mode    | git checkout leaves the symlinks as text files → run `pnpm setup:agents` (creates junctions)                                             | ⚠️ mandatory   |
 
-> ⛔ Each skill's file is named **`skill.md` in lowercase** — that is what git versions
-> (`git ls-files sdd/skills` is the authority). On Linux (CI, cloud agents) case matters: if
-> someone renames it to `SKILL.md` in their working tree, macOS does not notice
-> (`core.ignorecase=true`) but the Linux checkout returns lowercase and any code resolving
-> `SKILL.md` gets a 404. It already happened once: 4 skills became unreachable on GitHub Pages
-> because of this.
+> ⛔ Each skill's file is named **`SKILL.md` in UPPERCASE** — the Agent Skills standard that
+> Claude Code requires: on Linux (case-sensitive) a lowercase `.claude/skills/*/skill.md` is
+> **not discovered** and the skills are invisible to the agent. Git versions the files in
+> uppercase (`git ls-files sdd/skills` is the authority) and ALL code resolving them (viewer,
+> catalog, scripts) uses `SKILL.md` — the case must match on both sides. On macOS
+> (`core.ignorecase=true`) any case appears to work: do not trust that, always verify on
+> Linux/CI.
 
 **Automatic setup (once after cloning):**
 
@@ -1051,13 +1052,14 @@ ls sdd/context/*/*/updates/*.md 2>/dev/null | wc -l
 
 > The version history below is kept in Spanish in
 > [documentation/es/README.md](../es/README.md#changelog) — it is the historical record of how
-> this system evolved (workspace bootstrap and single-sourced naming in v5.1, additive context
+> this system evolved (skills back to uppercase `SKILL.md` — the Agent Skills standard Claude
+> Code requires — in v5.2, workspace bootstrap and single-sourced naming in v5.1, additive context
 > and the portable viewer in v5.0, per-cycle tasks and strict JSON Schemas in v4.0, the
 > dual harness in v3.x, the multi-developer architecture in v2.0). New entries are written
 > there first.
 
 ---
 
-**Last update:** 2026-08-14
-**SDD Version:** 5.1
+**Last update:** 2026-08-17
+**SDD Version:** 5.2
 **Project:** see `sdd/global.json` → `project`

@@ -11,8 +11,8 @@ description: Agente Funcional SDD. Convierte objetivos de negocio en historias d
 
 | Skill                | Path                                     | Propósito                                                                                    |
 | -------------------- | ---------------------------------------- | -------------------------------------------------------------------------------------------- |
-| `sdd-functional`     | `sdd/skills/sdd-functional/skill.md`     | Guía completa del rol: formato de historias, criterios de aceptación, reglas de priorización |
-| `sdd-file-structure` | `sdd/skills/sdd-file-structure/skill.md` | Template y path de salida del functional.md                                                  |
+| `sdd-functional`     | `sdd/skills/sdd-functional/SKILL.md`     | Guía completa del rol: formato de historias, criterios de aceptación, reglas de priorización |
+| `sdd-file-structure` | `sdd/skills/sdd-file-structure/SKILL.md` | Template y path de salida del functional.md                                                  |
 
 ---
 

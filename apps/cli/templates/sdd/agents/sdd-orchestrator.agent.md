@@ -48,9 +48,9 @@ Continuar con el flujo normal (Inputs requeridos → SPEC GATE → ciclo SDD).
 
 | Skill                | Path                                     | Propósito                                                                                       |
 | -------------------- | ---------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| `sdd-orchestrator`   | `sdd/skills/sdd-orchestrator/skill.md`   | Reglas y protocolo completo del rol Orquestador                                                 |
-| `sdd-file-structure` | `sdd/skills/sdd-file-structure/skill.md` | Convenciones de naming, árbol de directorios, templates de ciclo                                |
-| `sdd-data-schemas`   | `sdd/skills/sdd-data-schemas/skill.md`   | Schemas campo-a-campo de api.json, schema.json, tasks.json, fixes.json, global.json, cycle.json |
+| `sdd-orchestrator`   | `sdd/skills/sdd-orchestrator/SKILL.md`   | Reglas y protocolo completo del rol Orquestador                                                 |
+| `sdd-file-structure` | `sdd/skills/sdd-file-structure/SKILL.md` | Convenciones de naming, árbol de directorios, templates de ciclo                                |
+| `sdd-data-schemas`   | `sdd/skills/sdd-data-schemas/SKILL.md`   | Schemas campo-a-campo de api.json, schema.json, tasks.json, fixes.json, global.json, cycle.json |
 
 ---
 
@@ -58,8 +58,8 @@ Continuar con el flujo normal (Inputs requeridos → SPEC GATE → ciclo SDD).
 
 Antes de hacer cualquier cosa, leer en este orden (del más general al más específico):
 
-0. `sdd/skills/sdd-file-structure/skill.md` — **⛔ OBLIGATORIO: convenciones de naming, templates y checklist de ciclo**
-   0b. `sdd/skills/sdd-data-schemas/skill.md` — **⛔ OBLIGATORIO: schemas campo-a-campo de cada registro JSON (api.json, schema.json, components.json, tasks.json, fixes.json, global.json, cycle.json)**
+0. `sdd/skills/sdd-file-structure/SKILL.md` — **⛔ OBLIGATORIO: convenciones de naming, templates y checklist de ciclo**
+   0b. `sdd/skills/sdd-data-schemas/SKILL.md` — **⛔ OBLIGATORIO: schemas campo-a-campo de cada registro JSON (api.json, schema.json, components.json, tasks.json, fixes.json, global.json, cycle.json)**
 1. `sdd/context/context_prompt.md` — entry point global (gobernanza, links a subproyectos)
 2. `sdd/global.json` — estado actual del proyecto
 3. La especificación bajo `sdd/specs/` correspondiente al módulo
@@ -122,7 +122,7 @@ fundir cada una en una línea de la categoría correcta de `sdd/memory/lessons.m
 encabezado `> Última destilación:`, borrar las entradas destiladas y commitear como
 `chore(sdd): distill memory journal into lessons`. Lección específica de un subproyecto →
 va a su `constitution.md` vía consolidación, no a `lessons.md`. Detalle operativo:
-`sdd/skills/sdd-orchestrator/skill.md` → "Destilación de memoria".
+`sdd/skills/sdd-orchestrator/SKILL.md` → "Destilación de memoria".
 
 ## ⛔ FIX GATE — IMPERATIVO, SIEMPRE ANTES DE CUALQUIER IMPLEMENTACIÓN
 

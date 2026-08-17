@@ -186,9 +186,9 @@ my-saas/
 │   ├── prompts/
 │   │   └── ...
 │   ├── skills/
-│   │   ├── sdd-orchestrator/skill.md
-│   │   ├── generate-nestjs-module/skill.md
-│   │   └── generate-react-component/skill.md
+│   │   ├── sdd-orchestrator/SKILL.md
+│   │   ├── generate-nestjs-module/SKILL.md
+│   │   └── generate-react-component/SKILL.md
 │   ├── global.json
 │   ├── schema.json
 │   ├── api.json
@@ -308,15 +308,15 @@ harness add skill [name] [--description <text>]
 | `name`          | (positional, optional) Skill name in kebab-case |
 | `--description` | Skill description — skips the prompt            |
 
-Generates a `skill.md` template:
+Generates a `SKILL.md` template:
 
 ```bash
 $ harness add skill data-import
 
-✓ Skill created at sdd/skills/data-import/skill.md
+✓ Skill created at sdd/skills/data-import/SKILL.md
 ```
 
-Generated file (`sdd/skills/data-import/skill.md`):
+Generated file (`sdd/skills/data-import/SKILL.md`):
 
 ```markdown
 # data-import
@@ -338,7 +338,7 @@ Imports CSV/JSON data into the database
 <!-- Describir qué genera este skill -->
 ```
 
-> Skills are written as `skill.md` (lowercase) — Linux checkouts are case-sensitive and the SDD kit resolves the lowercase name. Run `pnpm sdd:rebuild-catalog` afterwards so the docs viewer picks it up.
+> Skills are written as `SKILL.md` (uppercase) — the Agent Skills standard Claude Code requires; a lowercase `skill.md` is not discovered on case-sensitive filesystems. Run `pnpm sdd:rebuild-catalog` afterwards so the docs viewer picks it up.
 
 ---
 
