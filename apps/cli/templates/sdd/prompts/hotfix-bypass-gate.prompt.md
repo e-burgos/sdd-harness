@@ -146,6 +146,7 @@ Recordá actualizar:
   - affected_files en sdd/fixes.json (FIX-XXX)
   - status → "implemented" al terminar
   - test_reference si escribiste un test
+  - usage (tokens_in/tokens_out + model_tier "proveedor/modelo") con el consumo del fix
 ───────────────────────────────────────────
 ```
 
@@ -159,6 +160,12 @@ Después de implementar, el desarrollador actualiza en `sdd/fixes.json`:
 - `resolved_at`: fecha de implementación
 - `status`: `"implemented"`
 - `test_reference`: referencia al test (si aplica)
+- `usage`: consumo aproximado del fix — `tokens_in`/`tokens_out`, `duration_minutes` y
+  `model_tier` con clave `proveedor/modelo` (`claude/sonnet`, `gemini/flash`,
+  `copilot/gpt-5-mini`). Alimenta la vista Costos del visor. Fuente del número:
+  `/stats` en Gemini CLI, reporte de sesión en Claude Code, aproximación declarada en
+  Antigravity/Copilot. Una aproximación honesta vale; un número inventado no — ante la
+  duda, omitir el campo.
 
 ### CONTEXTO GATE del fix (mecanismo aditivo — obligatorio antes de dar el fix por cerrado)
 

@@ -1,6 +1,7 @@
 ---
 name: sdd-reviewer
 description: Agente Reviewer SDD. Valida la calidad de todo el output del ciclo antes de cerrarlo. Invocar al finalizar todas las tasks de implementación del ciclo.
+model: opus
 ---
 
 # Agente Reviewer SDD

@@ -1,6 +1,7 @@
 ---
 name: sdd-functional
 description: Agente Funcional SDD. Convierte objetivos de negocio en historias de usuario y requisitos funcionales concretos. Invocar después del Orquestador.
+model: sonnet
 ---
 
 # Agente Funcional SDD

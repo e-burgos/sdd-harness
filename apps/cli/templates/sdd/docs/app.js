@@ -1,5 +1,522 @@
 const SDD_BASE = new URL('../', import.meta.url);
 
+const LANG_STORAGE_KEY = 'sdd-docs-lang';
+const SUPPORTED_LANGS = ['es', 'en'];
+
+function detectInitialLang() {
+  try {
+    const stored = localStorage.getItem(LANG_STORAGE_KEY);
+    if (SUPPORTED_LANGS.includes(stored)) return stored;
+  } catch {}
+  const browserLang = (navigator.language ?? 'es').toLowerCase();
+  return browserLang.startsWith('es') ? 'es' : 'en';
+}
+
+let currentLang = detectInitialLang();
+
+/* Flat es→en dictionary: keys ARE the Spanish UI strings (gettext style). A key
+ * missing here falls back to Spanish — visible, never breaking. User data (specs,
+ * cycles, fixes, memory) is rendered as written and never translated. */
+const EN_STRINGS = {
+  // Shell / nav / errors
+  'Cambiar idioma a {lang}': 'Switch language to {lang}',
+  'Cargando SDD Docs…': 'Loading SDD Docs…',
+  'Cerrar menú': 'Close menu',
+  'Abrir menú': 'Open menu',
+  'Navegación principal': 'Main navigation',
+  'Ocurrió un error inesperado.': 'An unexpected error occurred.',
+  'No se pudo cargar la vista': 'Could not load the view',
+  'Error de red al pedir {path}': 'Network error fetching {path}',
+  'No encontrado: {path}': 'Not found: {path}',
+  'Error HTTP {status} al pedir {path}': 'HTTP error {status} fetching {path}',
+  'JSON inválido en {path}': 'Invalid JSON in {path}',
+  'No se pudo cargar sdd/catalog.json — mostrando catálogo estático embebido.':
+    'Could not load sdd/catalog.json — showing embedded static catalog.',
+  'Vista no encontrada': 'View not found',
+  'El hash no coincide con ninguna vista disponible.':
+    'The hash does not match any available view.',
+  'No encontrada': 'Not found',
+  'Limpiar búsqueda': 'Clear search',
+  'Ver detalle de {label}': 'View details of {label}',
+  'Ver contexto de {name}': 'View context of {name}',
+  'Ver {label} de {name}': 'View {label} of {name}',
+  'No disponible': 'Not available',
+  'no disponible': 'not available',
+
+  // Dashboard
+  'Sin datos del proyecto': 'No project data',
+  'No se pudo cargar global.json': 'Could not load global.json',
+  Actualizar: 'Refresh',
+  'Última sincronización: {syncLabel}': 'Last synced: {syncLabel}',
+  Specs: 'Specs',
+  Ciclos: 'Cycles',
+  'En progreso': 'In progress',
+  Ciclos: 'Cycles',
+  Fixes: 'Fixes',
+  'No se pudo determinar la lista de apps del monorepo.':
+    'Could not determine the monorepo app list.',
+  'Sin apps registradas': 'No apps registered',
+  'global.json.monorepo.apps está vacío.': 'global.json.monorepo.apps is empty.',
+  '{count} proyectos': '{count} projects',
+  'Sin libs registradas': 'No libs registered',
+  'No hay subproyectos de categoría libs con contexto disponible.':
+    'There are no libs subprojects with context available.',
+  '{count} librerías': '{count} libraries',
+  'Sin datos del monorepo': 'No monorepo data',
+  'Ciclos completados': 'Cycles completed',
+  Versión: 'Version',
+  'El ciclo SDD aún no ha iniciado. Todos los módulos están en estado <span style="font-family:var(--font-mono);color:var(--text-muted)">pending</span>.':
+    'The SDD cycle has not started yet. All modules are in <span style="font-family:var(--font-mono);color:var(--text-muted)">pending</span> state.',
+
+  // Planning
+  Planificación: 'Planning',
+  'Horas, story points y progreso derivados de tasks.json, specs/index.json y fixes.json.':
+    'Hours, story points and progress derived from tasks.json, specs/index.json and fixes.json.',
+  'Horas estimadas': 'Estimated hours',
+  Referencias: 'Legend',
+  'Sin datos de planificación': 'No planning data',
+  'No se pudo cargar tasks.json ni fixes.json.':
+    'Could not load tasks.json or fixes.json.',
+  'Horas totales': 'Total hours',
+  '{done} completadas · fixes incl.': '{done} completed · fixes incl.',
+  '{count} completados': '{count} completed',
+  'no disponible': 'not available',
+  'Tareas + Fixes': 'Tasks + Fixes',
+  '{pct}% completado': '{pct}% completed',
+  'Fixes registrados': 'Fixes registered',
+  '{hours} estimadas': '{hours} estimated',
+  'Progreso global': 'Overall progress',
+  '{done} de {total} items (tareas + fixes)': '{done} of {total} items (tasks + fixes)',
+  'Sin tareas en este ciclo': 'No tasks in this cycle',
+  '{done}/{total} tareas': '{done}/{total} tasks',
+  'Story points: {done} / {total}': 'Story points: {done} / {total}',
+  Horas: 'Hours',
+  Progreso: 'Progress',
+  'Sin datos de tareas': 'No task data',
+  'No se pudo cargar tasks.json.': 'Could not load tasks.json.',
+  'Sin specs registradas en tasks.json': 'No specs registered in tasks.json',
+  'El desglose aparece cuando un ciclo SDD genera su tasks.json.':
+    'The breakdown appears once an SDD cycle generates its tasks.json.',
+  'Sin datos de fixes': 'No fix data',
+  'No se pudo cargar fixes.json.': 'Could not load fixes.json.',
+  'Sin fixes registrados': 'No fixes registered',
+  'Los fixes aparecen al usar los prefijos [HOTFIX], [BUGFIX], [FIX] o [IMPROVEMENT] para bypasear el SPEC GATE.':
+    'Fixes appear when using the [HOTFIX], [BUGFIX], [FIX] or [IMPROVEMENT] prefixes to bypass the SPEC GATE.',
+  'Fixes &amp; Mejoras': 'Fixes &amp; Improvements',
+  '{count} fix{suffix}': '{count} fix{suffix}',
+  '{done}/{total} completados': '{done}/{total} completed',
+
+  // Specs
+  '{count} registrada{suffix}': '{count} registered',
+  'Especificaciones técnicas registradas en sdd/specs/index.json, convención spec-[gh-user]-[NNN]-[slug].':
+    'Technical specs registered in sdd/specs/index.json, convention spec-[gh-user]-[NNN]-[slug].',
+  Título: 'Title',
+  Estado: 'Status',
+  'Convención de archivos': 'File convention',
+  'Cada spec tiene un ID único por autor registrado en <code>sdd/specs/index.json</code>. NNN es el contador personal del dev.':
+    'Each spec has a unique per-author ID registered in <code>sdd/specs/index.json</code>. NNN is the developer’s personal counter.',
+  Autor: 'Author',
+  Módulo: 'Module',
+  Creada: 'Created',
+  Completada: 'Completed',
+  'Depende de': 'Depends on',
+  Archivo: 'File',
+  'Ciclos ({count})': 'Cycles ({count})',
+  'No hay archivo de spec definido.': 'No spec file defined.',
+  Detalles: 'Details',
+  Especificación: 'Specification',
+  'Sin specs registradas': 'No specs registered',
+  'Las especificaciones técnicas aparecen aquí una vez registradas en sdd/specs/index.json. El ciclo SDD aún no ha iniciado.':
+    'Technical specs appear here once registered in sdd/specs/index.json. The SDD cycle has not started yet.',
+
+  // Cycles
+  '{total} ciclo{totalSuffix} en {groups} spec{groupsSuffix}':
+    '{total} cycle{totalSuffix} across {groups} spec{groupsSuffix}',
+  'Historial de ciclos SDD — cada ciclo representa una unidad de trabajo completa, de brief.yaml a cycle.json completed.':
+    'History of SDD cycles — each cycle is a complete unit of work, from brief.yaml to cycle.json completed.',
+  'Buscar por spec, ciclo, título o estado…': 'Search by spec, cycle, title or status…',
+  'Sin ciclos iniciados': 'No cycles started',
+  'Los ciclos SDD aparecerán aquí una vez que el Orquestador cree el primer sdd/specs/{spec-id}/cycles/cycle-01/brief.yaml.':
+    'SDD cycles will appear here once the Orchestrator creates the first sdd/specs/{spec-id}/cycles/cycle-01/brief.yaml.',
+  'Sin resultados': 'No results',
+  'No se encontraron ciclos que coincidan con "{query}".':
+    'No cycles found matching "{query}".',
+  'No se pudo cargar cycle.json para este ciclo.': 'Could not load cycle.json for this cycle.',
+  'Ciclo {number} — {module}': 'Cycle {number} — {module}',
+  'Inicio: {started} · Fin: {completed}': 'Start: {started} · End: {completed}',
+  'Objetivos ({count})': 'Objectives ({count})',
+  '{done}/{total} tareas · {points} SP · {files} archivo{suffix}':
+    '{done}/{total} tasks · {points} SP · {files} file{suffix}',
+  Agentes: 'Agents',
+  'Agentes del ciclo': 'Cycle agents',
+  Ciclo: 'Cycle',
+  'Reporte del reviewer': 'Reviewer report',
+  'Artefactos ({count})': 'Artifacts ({count})',
+  hecho: 'done',
+  'en progreso': 'in progress',
+  omitido: 'skipped',
+  pendiente: 'pending',
+  '{count} archivo{suffix}': '{count} file{suffix}',
+  'abre {cycleId} ({module}) · brief + cycle.json': 'opens {cycleId} ({module}) · brief + cycle.json',
+  'functional.md — requisitos y user stories': 'functional.md — requirements and user stories',
+  'planner.md — tasks y estimaciones': 'planner.md — tasks and estimates',
+  'architect.md — diseño validado': 'architect.md — validated design',
+  aprobado: 'approved',
+  'con observaciones': 'with observations',
+  'sin reviewer_report': 'no reviewer_report',
+  'cierra {cycleId} ✓ · {verdict} · CONTEXTO + MEMORIA GATE':
+    'closes {cycleId} ✓ · {verdict} · CONTEXT + MEMORY GATE',
+  'Actividad del ciclo — derivada de los registros': 'Cycle activity — derived from the records',
+  'Documentos ({count})': 'Documents ({count})',
+  'Ciclo #{number}': 'Cycle #{number}',
+  Resumen: 'Summary',
+
+  // Tasks
+  Tareas: 'Tasks',
+  '{count} tarea{suffix} en {groups} spec{groupsSuffix}':
+    '{count} task{suffix} across {groups} spec{groupsSuffix}',
+  'Tareas técnicas agrupadas por spec y ciclo SDD · {done} de {total} completadas · {hours} estimadas · {points} SP':
+    'Technical tasks grouped by spec and SDD cycle · {done} of {total} completed · {hours} estimated · {points} SP',
+  Tipo: 'Type',
+  Estimación: 'Estimate',
+  Historias: 'Stories',
+  Archivos: 'Files',
+  '{shown} / {total} tarea{suffix}': '{shown} / {total} task{suffix}',
+  '{done}/{total} tareas': '{done}/{total} tasks',
+  'Sin tareas registradas': 'No tasks registered',
+  'Las tareas técnicas son generadas por el agente Planner y aparecen aquí una vez que el primer ciclo SDD ha iniciado.':
+    'Technical tasks are generated by the Planner agent and appear here once the first SDD cycle has started.',
+  'Buscar por ID, título, tipo, estado, ciclo o spec…':
+    'Search by ID, title, type, status, cycle or spec…',
+  'No se encontraron tareas que coincidan con "{query}".':
+    'No tasks found matching "{query}".',
+  'SPEC GATE': 'SPEC GATE',
+  'Una tarea no puede implementarse sin TODOS los documentos del ciclo generados: brief.yaml, functional.md, planner.md, architect.md, cycle.json y tasks.json.':
+    'A task cannot be implemented unless ALL cycle documents have been generated: brief.yaml, functional.md, planner.md, architect.md, cycle.json and tasks.json.',
+
+  // Fixes
+  'Fixes globales (sin spec asociada)': 'Global fixes (no associated spec)',
+  '{count} registrado{suffix}': '{count} registered',
+  'Registro de fixes fuera del flujo SDD normal (FIX GATE).':
+    'Log of fixes outside the normal SDD flow (FIX GATE).',
+  'Los fixes aparecen aquí cuando se usan los prefijos [HOTFIX], [BUGFIX], [FIX] o [IMPROVEMENT] para bypasear el SPEC GATE.':
+    'Fixes appear here when using the [HOTFIX], [BUGFIX], [FIX] or [IMPROVEMENT] prefixes to bypass the SPEC GATE.',
+  'Buscar por ID, título, tipo, estado, autor o spec…':
+    'Search by ID, title, type, status, author or spec…',
+  'No se encontraron fixes que coincidan con "{query}".':
+    'No fixes found matching "{query}".',
+  'Prefijos FIX GATE': 'FIX GATE prefixes',
+  'Producción bloqueada, regresión crítica, dato corrupto':
+    'Production blocked, critical regression, corrupted data',
+  'Error confirmado en desarrollo o testing': 'Confirmed error in development or testing',
+  'Alias genérico — el orquestador pedirá clasificar':
+    'Generic alias — the orchestrator will ask to classify it',
+  'Mejora menor out-of-spec': 'Minor out-of-spec improvement',
+  'ciclo: {cycle}': 'cycle: {cycle}',
+  'Nivel repositorio': 'Repository level',
+  '{shown} / {total} fix{suffix}': '{shown} / {total} fix{suffix}',
+  'sin fix_document': 'no fix_document',
+  'Archivos afectados ({count})': 'Affected files ({count})',
+  'Módulos: {modules}': 'Modules: {modules}',
+  'Creado: {created} · Resuelto: {resolved} · Validado: {validated}':
+    'Created: {created} · Resolved: {resolved} · Validated: {validated}',
+  'Ciclo: {cycle}': 'Cycle: {cycle}',
+  'Spec: {spec}': 'Spec: {spec}',
+  'Estimación: {hours}': 'Estimate: {hours}',
+
+  // Context
+  'Buscar por nombre, categoría o archivo…': 'Search by name, category or file…',
+  'Sin contexto registrado': 'No context registered',
+  'No se encontraron archivos en sdd/context/.': 'No files found in sdd/context/.',
+  'No se encontraron entradas que coincidan con "{query}".':
+    'No entries found matching "{query}".',
+  'Contexto SDD': 'SDD Context',
+  '{count} subproyectos': '{count} subprojects',
+  'Constitution y context prompt de cada subproyecto del monorepo: la fuente de verdad de convenciones, stack y estado por app, lib y tool.':
+    'Constitution and context prompt for each monorepo subproject: the source of truth for conventions, stack and status per app, lib and tool.',
+  '{count} entrada{suffix}': '{count} entry{suffix}',
+  'Ver {label} de {name}': 'View {label} of {name}',
+  Contexto: 'Context',
+
+  // Agents
+  'Agentes SDD': 'SDD Agents',
+  '{count} agentes activos': '{count} active agents',
+  'Pipeline de {count} agentes que coordina el ciclo SDD de principio a fin. Cada agente tiene un rol específico e invoca al siguiente.':
+    'A pipeline of {count} agents that coordinates the SDD cycle from start to finish. Each agent has a specific role and invokes the next.',
+  'Cómo invocar un agente': 'How to invoke an agent',
+  'Los agentes se invocan desde Claude Code usando el flag <code>--agent</code> o prefijando el mensaje con el rol del agente. El Orquestador es siempre el punto de entrada al ciclo SDD.':
+    'Agents are invoked from Claude Code using the <code>--agent</code> flag or by prefixing the message with the agent’s role. The Orchestrator is always the entry point to the SDD cycle.',
+  Orquestador: 'Orchestrator',
+  Funcional: 'Functional',
+  Arquitecto: 'Architect',
+  'Impl. Backend': 'Backend Impl.',
+  'Impl. Frontend': 'Frontend Impl.',
+
+  // Skills
+  '{count} skills activos': '{count} active skills',
+  'Habilidades especializadas disponibles en el entorno Claude Code. Cada skill encapsula un conjunto de instrucciones y parámetros para tareas específicas.':
+    'Specialized abilities available in the Claude Code environment. Each skill encapsulates a set of instructions and parameters for specific tasks.',
+
+  // Prompts
+  '{count} prompts activos': '{count} active prompts',
+  'Prompts estructurados que guían los momentos críticos del flujo SDD: apertura, verificación, bypass y cierre de ciclos.':
+    'Structured prompts that guide the critical moments of the SDD flow: opening, verification, bypass and closing of cycles.',
+  'Trigger: {trigger}': 'Trigger: {trigger}',
+  'Flujo de prompts': 'Prompt flow',
+  'Inicio de ciclo': 'Cycle start',
+  'Verificación SPEC GATE': 'SPEC GATE verification',
+  'Revisión de ciclo': 'Cycle review',
+  'Guía al Orquestador para iniciar un nuevo ciclo SDD. Verifica precondiciones, crea brief.yaml y ciclo.json.':
+    'Guides the Orchestrator to start a new SDD cycle. Checks preconditions, creates brief.yaml and cycle.json.',
+  'Checklist obligatorio que verifica que todos los documentos del ciclo existen antes de implementar.':
+    'Mandatory checklist that verifies all cycle documents exist before implementing.',
+  'Proceso ligero para fixes urgentes. Registra en fixes.json y autoriza implementación sin ciclo completo.':
+    'Lightweight process for urgent fixes. Registers in fixes.json and authorizes implementation without a full cycle.',
+  'Guía al Reviewer para cerrar un ciclo SDD. Evalúa entregables, valida specs, ejecuta el CONTEXTO GATE aditivo (escribe el fragmento en updates/ del subproyecto) y marca cycle.json como completed.':
+    'Guides the Reviewer to close an SDD cycle. Evaluates deliverables, validates specs, runs the additive CONTEXT GATE (writes the fragment under the subproject’s updates/) and marks cycle.json as completed.',
+  'Al iniciar un nuevo ciclo SDD': 'When starting a new SDD cycle',
+  'Antes de cualquier implementación': 'Before any implementation',
+  'Con prefijos [HOTFIX], [BUGFIX], [FIX], [IMPROVEMENT]': 'With prefixes [HOTFIX], [BUGFIX], [FIX], [IMPROVEMENT]',
+  'Al cerrar un ciclo SDD': 'When closing an SDD cycle',
+
+  // Schema / API / Components / Schemas
+  '{count} tabla{suffix}': '{count} table{suffix}',
+  'Tablas y entidades de base de datos definidas en el proyecto.':
+    'Database tables and entities defined in the project.',
+  'Schema vacío': 'Empty schema',
+  'Las tablas de base de datos serán definidas por el agente Arquitecto y aparecerán aquí una vez que el primer ciclo SDD lo defina.':
+    'Database tables will be defined by the Architect agent and will appear here once the first SDD cycle defines them.',
+  '{count} col{suffix}': '{count} col{suffix}',
+  'Sin columnas definidas': 'No columns defined',
+  Historial: 'History',
+  'ciclo {cycle} · {date} — {change}': 'cycle {cycle} · {date} — {change}',
+  'ciclo {created}{updatedSuffix} · {app}': 'cycle {created}{updatedSuffix} · {app}',
+  '{count} endpoint{suffix}': '{count} endpoint{suffix}',
+  'Endpoints definidos en el contrato del sistema.': 'Endpoints defined in the system contract.',
+  'Sin endpoints registrados': 'No endpoints registered',
+  'Los endpoints del API serán definidos por el agente Arquitecto en sdd/api.json a medida que avanzan los ciclos SDD.':
+    'API endpoints will be defined by the Architect agent in sdd/api.json as SDD cycles progress.',
+  'Path params:': 'Path params:',
+  'Headers requeridos:': 'Required headers:',
+  'Request body': 'Request body',
+  Responses: 'Responses',
+  'ciclo {cycle} · {app}': 'cycle {cycle} · {app}',
+  'Sin componentes registrados': 'No components registered',
+  'Los componentes React son registrados en sdd/components.json por el agente sdd-implementor-front al finalizar cada implementación frontend.':
+    'React components are registered in sdd/components.json by the sdd-implementor-front agent when each frontend implementation is finished.',
+  Componentes: 'Components',
+  'Registro de componentes React del monorepo. Actualizado por el Implementador Frontend al finalizar cada implementación.':
+    'Log of the monorepo’s React components. Updated by the Frontend Implementer when each implementation is finished.',
+  'ID: {id} · Módulo: {module} · Spec: {spec}': 'ID: {id} · Module: {module} · Spec: {spec}',
+  'Consume:': 'Consumes:',
+  'Sin propiedades': 'No properties',
+  Campo: 'Field',
+  Detalle: 'Detail',
+  'Valida: {target}': 'Validates: {target}',
+  'Escriben: {writers}': 'Written by: {writers}',
+  '* = campo requerido · "$schema" en {target} · pnpm sdd:validate lo exige en verde':
+    '* = required field · "$schema" points to {target} · pnpm sdd:validate enforces it green',
+  '{available} de {total} disponibles': '{available} of {total} available',
+  'Tipado estricto de los registros SDD. Cada *.json de sdd/ declara su $schema y valida contra estos archivos.':
+    'Strict typing of the SDD records. Every *.json in sdd/ declares its $schema and validates against these files.',
+  'Si la documentación en prosa y el schema difieren, gana el schema. <code>pnpm sdd:validate</code> lo exige en verde (local, Reviewer y CI).':
+    'If the prose documentation and the schema disagree, the schema wins. <code>pnpm sdd:validate</code> enforces it green (local, Reviewer and CI).',
+  '{properties} propiedades · {required} requeridas{strictSuffix}':
+    '{properties} properties · {required} required{strictSuffix}',
+  estricto: 'strict',
+
+  // Help
+  'No se pudo cargar el documento': 'Could not load the document',
+  Ayuda: 'Help',
+  'Documentación del sistema SDD: guía de uso y referencia completa.':
+    'SDD system documentation: usage guide and full reference.',
+  'Documentación SDD': 'SDD Documentation',
+  'Ejemplos completos': 'Full examples',
+  'Repos SDD reales generados por la CLI, uno por modo (monorepo Nx, standalone y proyecto existente), regenerados desde npm en cada release: <a href="https://github.com/e-burgos/sdd-harness-examples" target="_blank" rel="noreferrer" style="color:var(--text-bright)">github.com/e-burgos/sdd-harness-examples</a>':
+    'Real SDD repos generated by the CLI, one per mode (Nx monorepo, standalone and existing project), regenerated from npm on every release: <a href="https://github.com/e-burgos/sdd-harness-examples" target="_blank" rel="noreferrer" style="color:var(--text-bright)">github.com/e-burgos/sdd-harness-examples</a>',
+  'Instalar y actualizar': 'Install and update',
+  'Cómo usar SDD': 'How to use SDD',
+  Guía: 'Guide',
+  Referencia: 'Reference',
+  'Cómo instalar el framework en un repo y actualizar un kit ya instalado con update sdd.':
+    'How to install the framework in a repo and update an already-installed kit with update sdd.',
+  'Guía paso a paso para usar el sistema SDD: setup, flujo de trabajo, FIX GATE y cheat sheet.':
+    'Step-by-step guide to using the SDD system: setup, workflow, FIX GATE and cheat sheet.',
+  'Referencia completa del sistema SDD: estructura, gates, agentes, skills y artefactos.':
+    'Full reference of the SDD system: structure, gates, agents, skills and artifacts.',
+
+  // Costs
+  Costos: 'Costs',
+  '{cycles} ciclos': '{cycles} cycles',
+  '{cycles} ciclos · {fixes} fixes': '{cycles} cycles · {fixes} fixes',
+  'Tokens, tiempos y comparativa de costos del modo agéntico contra la estimación tradicional de las tasks.':
+    'Tokens, timings and a cost comparison of agentic mode against the traditional estimate of the tasks.',
+  'Tokens, tiempos y comparativa de costos del modo agéntico contra la estimación tradicional.':
+    'Tokens, timings and a cost comparison of agentic mode against the traditional estimate.',
+  'Sin ciclos todavía': 'No cycles yet',
+  'Cuando el loop SDD complete ciclos con tasks estimadas y telemetría de tokens, el tablero aparece acá.':
+    'Once the SDD loop completes cycles with estimated tasks and token telemetry, the dashboard shows up here.',
+  'Costo tradicional': 'Traditional cost',
+  'Tokens consumidos': 'Tokens consumed',
+  'Costo agéntico aprox.': 'Approx. agentic cost',
+  'Ahorro proyectado': 'Projected savings',
+  '{pct}% menos': '{pct}% less',
+  Tradicional: 'Traditional',
+  Agéntico: 'Agentic',
+  '{specId} — estimación tradicional: {cost} (horas de tasks × tarifa {rate}/h)':
+    '{specId} — traditional estimate: {cost} (task hours × {rate}/h rate)',
+  '{specId} — costo agéntico aproximado: {cost} (tokens × tarifa por tier)':
+    '{specId} — approximate agentic cost: {cost} (tokens × tier rate)',
+  '{specId} — sin telemetría de tokens todavía': '{specId} — no token telemetry yet',
+  'Costo por spec — tradicional vs agéntico': 'Cost per spec — traditional vs agentic',
+  'Estimación tradicional (horas × tarifa) contra el costo aproximado de tokens del modo agéntico.':
+    'Traditional estimate (hours × rate) against the approximate token cost of agentic mode.',
+  Entrada: 'Input',
+  Salida: 'Output',
+  'Tokens por ciclo': 'Tokens per cycle',
+  'Sin telemetría todavía. Se registra al cerrar cada ciclo: <code>cycle.json → metrics.usage</code> (lo hace el sdd-reviewer) o por task en <code>tasks.json → usage</code>.':
+    'No telemetry yet. It gets recorded when each cycle closes: <code>cycle.json → metrics.usage</code> (done by sdd-reviewer) or per task in <code>tasks.json → usage</code>.',
+  '{specId} {cycleId} — entrada: {tokensIn} tokens · salida: {tokensOut} tokens':
+    '{specId} {cycleId} — input: {tokensIn} tokens · output: {tokensOut} tokens',
+  'Detalle por ciclo': 'Detail per cycle',
+  'Horas est.': 'Est. hours',
+  'Costo trad.': 'Trad. cost',
+  'Tokens in/out': 'Tokens in/out',
+  'Costo agéntico': 'Agentic cost',
+  Ahorro: 'Savings',
+  'Consumo por proveedor': 'Usage by provider',
+  'Sin telemetría con proveedor declarado todavía. Las claves de {field} llevan la forma {example}.':
+    'No telemetry with a declared provider yet. {field} keys use the form {example}.',
+  'Sin proveedor declarado': 'No provider declared',
+  'Tokens y costo agéntico agregados por proveedor (ciclos + fixes), según las claves proveedor/modelo de la telemetría.':
+    'Tokens and agentic cost aggregated by provider (cycles + fixes), based on the provider/model keys in the telemetry.',
+  Proveedor: 'Provider',
+  'Modelos usados': 'Models used',
+  'Tokens in': 'Tokens in',
+  'Tokens out': 'Tokens out',
+  'Costo aprox.': 'Approx. cost',
+  'Costos de fixes': 'Fix costs',
+  '{count} fixes registrados, {withUsage} con telemetría. El usage se registra al cerrar cada fix (FIX GATE).':
+    '{count} fixes registered, {withUsage} with telemetry. Usage is recorded when each fix closes (FIX GATE).',
+  'Metodología y tarifas': 'Methodology and rates',
+  'Σ estimation_hours de las tasks × {rate}/h.': 'Σ estimation_hours of the tasks × {rate}/h.',
+  'tokens registrados × tarifa del tier (USD por millón de tokens).':
+    'tokens recorded × tier rate (USD per million tokens).',
+  'La telemetría la escribe el sdd-reviewer al cerrar cada ciclo (<code>metrics.usage</code>) o los implementadores por task; es aproximada por diseño.':
+    'The telemetry is written by sdd-reviewer when each cycle closes (<code>metrics.usage</code>) or by the implementers per task; it is approximate by design.',
+  '* Tokens sin tier declarado se tarifan como <code>{tier}</code>.':
+    '* Tokens with no declared tier are priced as <code>{tier}</code>.',
+  'No hay <code>sdd/pricing.json</code> — usando tarifas por defecto del kit.':
+    'There is no <code>sdd/pricing.json</code> — using the kit’s default rates.',
+  'Tarifas editables en <code>sdd/pricing.json</code>.': 'Rates editable in <code>sdd/pricing.json</code>.',
+
+  // Views / nav sections
+  'Visión general': 'Overview',
+  'Herramientas SDD': 'SDD Tools',
+  Arquitectura: 'Architecture',
+
+  // STATUS_META (registry status badges)
+  Completado: 'Completed',
+  Hecho: 'Done',
+  Implementado: 'Implemented',
+  Resuelto: 'Resolved',
+  Validado: 'Validated',
+  Migrado: 'Migrated',
+  Aprobado: 'Approved',
+  Abierto: 'Open',
+  Actualizado: 'Updated',
+  Pendiente: 'Pending',
+  Planificado: 'Planned',
+  Borrador: 'Draft',
+  Definido: 'Defined',
+  Archivado: 'Archived',
+  Omitido: 'Skipped',
+  Obsoleto: 'Deprecated',
+  Cancelado: 'Cancelled',
+  Absorbido: 'Absorbed',
+  Disponible: 'Available',
+
+  // Cycle field labels reused elsewhere
+  Inicio: 'Start',
+  Fin: 'End',
+  '{count} ciclo{suffix}': '{count} cycle{suffix}',
+  '{count} tarea{suffix}': '{count} task{suffix}',
+  '{shown} / {total} ciclo{suffix}': '{shown} / {total} cycle{suffix}',
+
+  // taskTypeLabel
+  Infraestructura: 'Infrastructure',
+
+  // Schema/API field-table columns not already covered
+  Notas: 'Notes',
+  Nombre: 'Name',
+  Columnas: 'Columns',
+  Código: 'Code',
+  Descripción: 'Description',
+  Columna: 'Column',
+};
+
+function t(text, params) {
+  let resolved = currentLang === 'es' ? text : (EN_STRINGS[text] ?? text);
+  if (params) {
+    resolved = resolved.replace(/\{(\w+)\}/g, (match, key) =>
+      key in params ? String(params[key]) : match,
+    );
+  }
+  return resolved;
+}
+
+function localeTag() {
+  return currentLang === 'es' ? 'es-AR' : 'en-US';
+}
+
+function localizedDocPath(path) {
+  return path.replace('documentation/es/', `documentation/${currentLang}/`);
+}
+
+function persistLang(lang) {
+  try {
+    localStorage.setItem(LANG_STORAGE_KEY, lang);
+  } catch {}
+}
+
+function setLang(lang) {
+  if (!SUPPORTED_LANGS.includes(lang) || lang === currentLang) return;
+  currentLang = lang;
+  persistLang(lang);
+  document.documentElement.lang = lang;
+  paintLangToggle();
+  paintStaticChrome();
+  buildNav();
+  paintShellChrome();
+  onRoute();
+}
+
+function paintStaticChrome() {
+  document
+    .getElementById('sidebar-close')
+    ?.setAttribute('aria-label', t('Cerrar menú'));
+  document
+    .getElementById('menu-button')
+    ?.setAttribute('aria-label', t('Abrir menú'));
+  document
+    .getElementById('nav-sections')
+    ?.setAttribute('aria-label', t('Navegación principal'));
+  const initialState = document.querySelector('.initial-state');
+  if (initialState) initialState.textContent = t('Cargando SDD Docs…');
+}
+
+function paintLangToggle() {
+  const next = currentLang === 'es' ? 'en' : 'es';
+  const label = t('Cambiar idioma a {lang}', {
+    lang: next === 'es' ? 'español' : 'English',
+  });
+  for (const button of document.querySelectorAll('.lang-toggle')) {
+    button.textContent = next.toUpperCase();
+    button.setAttribute('aria-label', label);
+    button.title = label;
+  }
+}
+
 function sddUrl(path) {
   return new URL(path, SDD_BASE).href;
 }
@@ -279,7 +796,7 @@ function enrichSchemaManifest(manifestSchemas) {
 }
 
 function manifestFallbackHint() {
-  return `<p class="card-hint" style="margin:-8px 0 16px">No se pudo cargar sdd/catalog.json — mostrando catálogo estático embebido.</p>`;
+  return `<p class="card-hint" style="margin:-8px 0 16px">${t('No se pudo cargar sdd/catalog.json — mostrando catálogo estático embebido.')}</p>`;
 }
 
 const CYCLE_ROOT_DOCS = [
@@ -360,14 +877,25 @@ async function fetchJson(path) {
     try {
       response = await fetch(url);
     } catch (err) {
-      throw new SddError(`Error de red al pedir ${path}`, 'network', path);
+      throw new SddError(
+        t('Error de red al pedir {path}', { path }),
+        'network',
+        path,
+      );
     }
     if (response.status === 404) {
-      throw new SddError(`No encontrado: ${path}`, 'not-found', path);
+      throw new SddError(
+        t('No encontrado: {path}', { path }),
+        'not-found',
+        path,
+      );
     }
     if (!response.ok) {
       throw new SddError(
-        `Error HTTP ${response.status} al pedir ${path}`,
+        t('Error HTTP {status} al pedir {path}', {
+          status: response.status,
+          path,
+        }),
         'http',
         path,
       );
@@ -378,7 +906,11 @@ async function fetchJson(path) {
       lastLoadedAt = new Date();
       return data;
     } catch (err) {
-      throw new SddError(`JSON inválido en ${path}`, 'invalid-json', path);
+      throw new SddError(
+        t('JSON inválido en {path}', { path }),
+        'invalid-json',
+        path,
+      );
     }
   })();
   cache.set(url, promise);
@@ -393,14 +925,25 @@ async function fetchText(path) {
     try {
       response = await fetch(url);
     } catch (err) {
-      throw new SddError(`Error de red al pedir ${path}`, 'network', path);
+      throw new SddError(
+        t('Error de red al pedir {path}', { path }),
+        'network',
+        path,
+      );
     }
     if (response.status === 404) {
-      throw new SddError(`No encontrado: ${path}`, 'not-found', path);
+      throw new SddError(
+        t('No encontrado: {path}', { path }),
+        'not-found',
+        path,
+      );
     }
     if (!response.ok) {
       throw new SddError(
-        `Error HTTP ${response.status} al pedir ${path}`,
+        t('Error HTTP {status} al pedir {path}', {
+          status: response.status,
+          path,
+        }),
         'http',
         path,
       );
@@ -1295,11 +1838,11 @@ function emptyState(title, hint) {
 
 function errorState(error) {
   const message =
-    error instanceof SddError ? error.message : 'Ocurrió un error inesperado.';
+    error instanceof SddError ? error.message : t('Ocurrió un error inesperado.');
   return `
     <div class="error-state">
       <span class="error-state-icon">${icon('empty')}</span>
-      <p class="error-state-title">No se pudo cargar la vista</p>
+      <p class="error-state-title">${t('No se pudo cargar la vista')}</p>
       <p class="error-state-message">${escapeHtml(message)}</p>
     </div>
   `;
@@ -1324,9 +1867,9 @@ function badge(text, variant) {
   const meta = STATUS_META[String(text).toLowerCase()];
   if (!meta) {
     const className = variant ? `badge ${variant}` : 'badge';
-    return `<span class="${className}">${escapeHtml(text)}</span>`;
+    return `<span class="${className}">${escapeHtml(t(text))}</span>`;
   }
-  return `<span class="badge badge--${meta.tone}"><span class="badge-dot"></span>${escapeHtml(meta.label)}</span>`;
+  return `<span class="badge badge--${meta.tone}"><span class="badge-dot"></span>${escapeHtml(t(meta.label))}</span>`;
 }
 
 function card({ title, subtitle, value, hint } = {}) {
@@ -1344,7 +1887,7 @@ function card({ title, subtitle, value, hint } = {}) {
 
 function dataTable(columns, rows) {
   const head = columns
-    .map((column) => `<th>${escapeHtml(column.label)}</th>`)
+    .map((column) => `<th>${escapeHtml(t(column.label))}</th>`)
     .join('');
   const body = rows
     .map(
@@ -1590,7 +2133,7 @@ function renderDashboardHeader(globalData, totalCycles) {
         ? 'completed'
         : 'pending';
   const syncLabel = lastLoadedAt
-    ? new Intl.DateTimeFormat('es-AR', {
+    ? new Intl.DateTimeFormat(localeTag(), {
         dateStyle: 'short',
         timeStyle: 'medium',
       }).format(lastLoadedAt)
@@ -1602,10 +2145,10 @@ function renderDashboardHeader(globalData, totalCycles) {
           <h1 class="page-title page-title--lg">${escapeHtml(globalData.project ?? '—')}</h1>
           ${badge(overallStatus)}
         </div>
-        <button type="button" data-dashboard-refresh style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:var(--radius-md);border:1px solid var(--border);background:transparent;color:var(--text-faint);font-size:var(--text-12);cursor:pointer">${icon('refresh')}Actualizar</button>
+        <button type="button" data-dashboard-refresh style="display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:var(--radius-md);border:1px solid var(--border);background:transparent;color:var(--text-faint);font-size:var(--text-12);cursor:pointer">${icon('refresh')}${t('Actualizar')}</button>
       </div>
       <p class="page-subtitle">${escapeHtml(globalData.description ?? '')}</p>
-      ${syncLabel ? `<p style="margin-top:12px;font-family:var(--font-mono);font-size:var(--text-10);color:var(--text-subtle)">Última sincronización: ${escapeHtml(syncLabel)}</p>` : ''}
+      ${syncLabel ? `<p style="margin-top:12px;font-family:var(--font-mono);font-size:var(--text-10);color:var(--text-subtle)">${escapeHtml(t('Última sincronización: {syncLabel}', { syncLabel }))}</p>` : ''}
     </header>
   `;
 }
@@ -1645,12 +2188,12 @@ function renderDashboardKpis(specsData, totalCycles, globalData, fixesData) {
     dashboardStatCell({ value: totalSpecs, label: 'Specs', href: '#/specs' }),
     dashboardStatCell({
       value: cyclesValue,
-      label: 'Ciclos',
+      label: t('Ciclos'),
       href: '#/cycles',
     }),
     dashboardStatCell({
       value: inProgressCount,
-      label: 'En progreso',
+      label: t('En progreso'),
       href: '#/specs',
       accent: typeof inProgressCount === 'number' && inProgressCount > 0,
     }),
@@ -1682,7 +2225,7 @@ function dashboardAppStatus(globalData, appKey) {
 
 function dashboardStatusChip(status) {
   const meta = STATUS_META[status] ?? STATUS_META.pending;
-  return `<span class="badge badge--${meta.tone}">${escapeHtml(meta.label)}</span>`;
+  return `<span class="badge badge--${meta.tone}">${escapeHtml(t(meta.label))}</span>`;
 }
 
 function dashboardInferTech(description) {
@@ -1730,7 +2273,7 @@ function dashboardAppRow(name, description, status, index, contextEntries) {
     ref.name,
   );
   const rowAttrs = entry
-    ? ` tabindex="0" role="button" data-dashboard-context="${escapeHtml(dashboardContextKey(ref.category, ref.name))}" style="cursor:pointer" aria-label="Ver contexto de ${escapeHtml(name)}"`
+    ? ` tabindex="0" role="button" data-dashboard-context="${escapeHtml(dashboardContextKey(ref.category, ref.name))}" style="cursor:pointer" aria-label="${escapeHtml(t('Ver contexto de {name}', { name }))}"`
     : '';
   return `
     <div class="row"${rowAttrs}>
@@ -1749,7 +2292,7 @@ function dashboardAppRow(name, description, status, index, contextEntries) {
 
 function dashboardLibRow(entry, index) {
   return `
-    <div class="row" tabindex="0" role="button" data-dashboard-context="${escapeHtml(dashboardContextKey(entry.category, entry.name))}" style="cursor:pointer" aria-label="Ver contexto de ${escapeHtml(entry.name)}">
+    <div class="row" tabindex="0" role="button" data-dashboard-context="${escapeHtml(dashboardContextKey(entry.category, entry.name))}" style="cursor:pointer" aria-label="${escapeHtml(t('Ver contexto de {name}', { name: entry.name }))}">
       <span class="row-lead" style="font-family:var(--font-mono);font-size:var(--text-12);color:var(--text-subtle)">${String(index + 1).padStart(2, '0')}</span>
       <div class="row-main">
         <p style="font-family:var(--font-mono);font-size:var(--text-14);color:var(--text-bright)">${escapeHtml(entry.name)}</p>
@@ -1761,14 +2304,14 @@ function dashboardLibRow(entry, index) {
 
 function renderDashboardAppsSection(globalData, contextEntries) {
   if (!globalData) {
-    return `<div>${dashboardSectionHeading('Apps', '—')}${emptyState('No se pudo cargar global.json', 'No se pudo determinar la lista de apps del monorepo.')}</div>`;
+    return `<div>${dashboardSectionHeading('Apps', '—')}${emptyState(t('No se pudo cargar global.json'), t('No se pudo determinar la lista de apps del monorepo.'))}</div>`;
   }
   const apps = Object.entries(globalData?.monorepo?.apps ?? {});
   const body =
     apps.length === 0
       ? emptyState(
-          'Sin apps registradas',
-          'global.json.monorepo.apps está vacío.',
+          t('Sin apps registradas'),
+          t('global.json.monorepo.apps está vacío.'),
         )
       : apps
           .map(([name, description], index) =>
@@ -1781,7 +2324,7 @@ function renderDashboardAppsSection(globalData, contextEntries) {
             ),
           )
           .join('');
-  return `<div>${dashboardSectionHeading('Apps', `${apps.length} proyectos`)}${body}</div>`;
+  return `<div>${dashboardSectionHeading('Apps', t('{count} proyectos', { count: apps.length }))}${body}</div>`;
 }
 
 function renderDashboardLibsSection(contextEntries, contextError) {
@@ -1790,11 +2333,11 @@ function renderDashboardLibsSection(contextEntries, contextError) {
     ? errorState(contextError)
     : libs.length === 0
       ? emptyState(
-          'Sin libs registradas',
-          'No hay subproyectos de categoría libs con contexto disponible.',
+          t('Sin libs registradas'),
+          t('No hay subproyectos de categoría libs con contexto disponible.'),
         )
       : libs.map((entry, index) => dashboardLibRow(entry, index)).join('');
-  return `<div>${dashboardSectionHeading('Libs', contextError ? '—' : `${libs.length} librerías`)}${body}</div>`;
+  return `<div>${dashboardSectionHeading('Libs', contextError ? '—' : t('{count} librerías', { count: libs.length }))}${body}</div>`;
 }
 
 function dashboardCyclesCompletedTotal(globalData) {
@@ -1816,14 +2359,14 @@ function dashboardMonorepoField(label, value) {
 function renderDashboardMonorepoPanel(globalData) {
   if (!globalData)
     return emptyState(
-      'Sin datos del monorepo',
-      'No se pudo cargar global.json',
+      t('Sin datos del monorepo'),
+      t('No se pudo cargar global.json'),
     );
   const fields = [
     ['Tool', globalData.monorepo?.tool ?? '—'],
     ['Package manager', globalData.monorepo?.package_manager ?? '—'],
-    ['Ciclos completados', String(dashboardCyclesCompletedTotal(globalData))],
-    ['Versión', globalData.version ?? '—'],
+    [t('Ciclos completados'), String(dashboardCyclesCompletedTotal(globalData))],
+    [t('Versión'), globalData.version ?? '—'],
   ];
   // Miraba pending + in_progress: un proyecto con TODO terminado (pending 0,
   // in_progress 0, completed N) caía acá y decía que el ciclo no había empezado.
@@ -1831,7 +2374,7 @@ function renderDashboardMonorepoPanel(globalData) {
     (globalData.completed_modules ?? []).length === 0 &&
     (globalData.in_progress_modules ?? []).length === 0;
   const note = hasNotStarted
-    ? `<div style="margin-top:16px;padding:16px;border-radius:var(--radius-lg);border:1px solid var(--border);background:rgb(var(--rgb-zinc-900) / 0.4)"><p style="font-size:var(--text-11);color:var(--text-faint);line-height:var(--leading-relaxed)">El ciclo SDD aún no ha iniciado. Todos los módulos están en estado <span style="font-family:var(--font-mono);color:var(--text-muted)">pending</span>.</p></div>`
+    ? `<div style="margin-top:16px;padding:16px;border-radius:var(--radius-lg);border:1px solid var(--border);background:rgb(var(--rgb-zinc-900) / 0.4)"><p style="font-size:var(--text-11);color:var(--text-faint);line-height:var(--leading-relaxed)">${t('El ciclo SDD aún no ha iniciado. Todos los módulos están en estado <span style="font-family:var(--font-mono);color:var(--text-muted)">pending</span>.')}</p></div>`
     : '';
   return `
     <div>
@@ -1914,9 +2457,10 @@ async function renderPlanning(container, params) {
 
 function planningHeader() {
   return pageHeader({
-    title: 'Planificación',
-    subtitle:
+    title: t('Planificación'),
+    subtitle: t(
       'Horas, story points y progreso derivados de tasks.json, specs/index.json y fixes.json.',
+    ),
   });
 }
 
@@ -1932,7 +2476,7 @@ function planningHoursSummaryRow(doneHours, totalHours, extraHtml) {
   return `
     <div style="display:flex;align-items:center;gap:24px;flex-wrap:wrap;padding:10px 16px;background:rgb(var(--rgb-zinc-900) / 0.15);">
       <div style="display:flex;align-items:center;gap:8px;">
-        <span class="card-hint" style="margin:0;text-transform:uppercase;letter-spacing:0.05em;">Horas estimadas</span>
+        <span class="card-hint" style="margin:0;text-transform:uppercase;letter-spacing:0.05em;">${t('Horas estimadas')}</span>
         ${planningHoursBar(doneHours, totalHours)}
       </div>
       ${extraHtml ?? ''}
@@ -1964,7 +2508,7 @@ function planningLegend() {
   ];
   return `
     <div style="border-radius:var(--radius-lg);border:1px solid rgb(var(--rgb-zinc-800) / 0.4);background:rgb(var(--rgb-zinc-900) / 0.1);padding:16px 20px;">
-      <p class="card-hint" style="margin:0 0 12px;text-transform:uppercase;letter-spacing:0.05em;">Referencias</p>
+      <p class="card-hint" style="margin:0 0 12px;text-transform:uppercase;letter-spacing:0.05em;">${t('Referencias')}</p>
       <div style="display:flex;flex-wrap:wrap;gap:8px 24px;">
         ${items
           .map(
@@ -2083,8 +2627,8 @@ function planningFixStatusDot(fix) {
 function planningKpisSection(taskStats, fixStats) {
   if (!taskStats && !fixStats) {
     return emptyState(
-      'Sin datos de planificación',
-      'No se pudo cargar tasks.json ni fixes.json.',
+      t('Sin datos de planificación'),
+      t('No se pudo cargar tasks.json ni fixes.json.'),
     );
   }
   const totalHours = (taskStats?.hours ?? 0) + (fixStats?.hours ?? 0);
@@ -2096,26 +2640,30 @@ function planningKpisSection(taskStats, fixStats) {
 
   const cards = [
     card({
-      title: 'Horas totales',
+      title: t('Horas totales'),
       value: formatHours(totalHours),
-      hint: `${formatHours(doneHours)} completadas · fixes incl.`,
+      hint: t('{done} completadas · fixes incl.', {
+        done: formatHours(doneHours),
+      }),
     }),
     card({
       title: 'Story Points',
       value: taskStats ? taskStats.points : '—',
-      hint: taskStats ? `${taskStats.donePoints} completados` : 'no disponible',
+      hint: taskStats
+        ? t('{count} completados', { count: taskStats.donePoints })
+        : t('no disponible'),
     }),
     card({
-      title: 'Tareas + Fixes',
+      title: t('Tareas + Fixes'),
       value: `${doneItems} / ${totalItems}`,
-      hint: `${velocityPct}% completado`,
+      hint: t('{pct}% completado', { pct: velocityPct }),
     }),
     card({
-      title: 'Fixes registrados',
+      title: t('Fixes registrados'),
       value: fixStats ? fixStats.total : '—',
       hint: fixStats
-        ? `${formatHours(fixStats.hours)} estimadas`
-        : 'no disponible',
+        ? t('{hours} estimadas', { hours: formatHours(fixStats.hours) })
+        : t('no disponible'),
     }),
   ];
   return `<div class="card-grid">${cards.join('')}</div>`;
@@ -2130,10 +2678,10 @@ function planningProgressSection(taskStats, fixStats) {
   return `
     <div class="card">
       <div class="card-header">
-        <span class="card-title">Progreso global</span>
+        <span class="card-title">${t('Progreso global')}</span>
         ${badge(`${pct}%`)}
       </div>
-      <p class="card-hint">${escapeHtml(`${doneItems} de ${totalItems} items (tareas + fixes)`)}</p>
+      <p class="card-hint">${escapeHtml(t('{done} de {total} items (tareas + fixes)', { done: doneItems, total: totalItems }))}</p>
       ${planningProgressBar(fraction)}
     </div>
   `;
@@ -2170,7 +2718,7 @@ function planningCycleCard(specId, cycleId, tasks, defaultOpen) {
   const fraction = planningDoneFraction(tasks);
   const body =
     tasks.length === 0
-      ? emptyState('Sin tareas en este ciclo')
+      ? emptyState(t('Sin tareas en este ciclo'))
       : dataTable(PLANNING_TASK_COLUMNS, tasks);
   const contentId = planningDomId('planning-cycle', specId, cycleId);
   return `
@@ -2178,7 +2726,7 @@ function planningCycleCard(specId, cycleId, tasks, defaultOpen) {
       <button type="button" data-toggle="${contentId}" aria-expanded="${defaultOpen}" aria-controls="${contentId}" style="all:unset;box-sizing:border-box;cursor:pointer;text-align:left;display:flex;align-items:center;gap:12px;width:100%;padding:10px 14px;background:rgb(var(--rgb-zinc-900) / 0.3);">
         ${planningChevron(defaultOpen)}
         <span style="flex:1;min-width:0;font-family:var(--font-mono);font-size:var(--text-12);color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(cycleId)}</span>
-        <span class="card-hint" style="margin:0;white-space:nowrap;">${stats.done}/${stats.total} tareas</span>
+        <span class="card-hint" style="margin:0;white-space:nowrap;">${escapeHtml(t('{done}/{total} tareas', { done: stats.done, total: stats.total }))}</span>
         ${stats.points > 0 ? `<span style="font-family:var(--font-mono);font-size:var(--text-10);color:rgb(var(--rgb-violet-400) / 0.7);white-space:nowrap;">${stats.points} SP</span>` : ''}
         <span class="card-hint" style="margin:0;white-space:nowrap;">${escapeHtml(formatHours(stats.hours))}</span>
         <span style="width:80px;flex-shrink:0;">${planningProgressBar(fraction)}</span>
@@ -2188,7 +2736,7 @@ function planningCycleCard(specId, cycleId, tasks, defaultOpen) {
           stats.doneHours,
           stats.hours,
           stats.points > 0
-            ? `<div class="card-hint" style="margin:0;">Story points: ${stats.donePoints} / ${stats.points}</div>`
+            ? `<div class="card-hint" style="margin:0;">${escapeHtml(t('Story points: {done} / {total}', { done: stats.donePoints, total: stats.points }))}</div>`
             : '',
         )}
         ${body}
@@ -2213,7 +2761,7 @@ function planningSpecCard(group) {
         </div>
         <div style="flex-shrink:0;display:flex;gap:16px;align-items:flex-start;">
           <div style="text-align:right;">
-            <p class="card-hint" style="margin:0;text-transform:uppercase;">Horas</p>
+            <p class="card-hint" style="margin:0;text-transform:uppercase;">${t('Horas')}</p>
             <p style="margin:0;font-family:var(--font-mono);font-size:var(--text-14);color:var(--text-dim);">${escapeHtml(formatHours(stats.doneHours))} <span style="color:var(--text-ghost);">/ ${escapeHtml(formatHours(stats.hours))}</span></p>
           </div>
           ${
@@ -2225,7 +2773,7 @@ function planningSpecCard(group) {
               : ''
           }
           <div style="text-align:right;">
-            <p class="card-hint" style="margin:0;text-transform:uppercase;">Progreso</p>
+            <p class="card-hint" style="margin:0;text-transform:uppercase;">${t('Progreso')}</p>
             <p style="margin:0;font-family:var(--font-mono);font-size:var(--text-14);color:${fraction >= 1 ? 'var(--ok)' : 'var(--warn)'};">${Math.round(fraction * 100)}%</p>
           </div>
         </div>
@@ -2241,12 +2789,15 @@ function planningSpecCard(group) {
 
 function planningSpecSection(specGroups) {
   if (!specGroups) {
-    return emptyState('Sin datos de tareas', 'No se pudo cargar tasks.json.');
+    return emptyState(
+      t('Sin datos de tareas'),
+      t('No se pudo cargar tasks.json.'),
+    );
   }
   if (specGroups.length === 0) {
     return emptyState(
-      'Sin specs registradas en tasks.json',
-      'El desglose aparece cuando un ciclo SDD genera su tasks.json.',
+      t('Sin specs registradas en tasks.json'),
+      t('El desglose aparece cuando un ciclo SDD genera su tasks.json.'),
     );
   }
   return `<div style="display:flex;flex-direction:column;gap:12px;">${specGroups.map((group) => planningSpecCard(group)).join('')}</div>`;
@@ -2274,12 +2825,14 @@ function planningFixCard(fix) {
 
 function planningFixesSection(fixList) {
   if (!fixList) {
-    return emptyState('Sin datos de fixes', 'No se pudo cargar fixes.json.');
+    return emptyState(t('Sin datos de fixes'), t('No se pudo cargar fixes.json.'));
   }
   if (fixList.length === 0) {
     return emptyState(
-      'Sin fixes registrados',
-      'Los fixes aparecen al usar los prefijos [HOTFIX], [BUGFIX], [FIX] o [IMPROVEMENT] para bypasear el SPEC GATE.',
+      t('Sin fixes registrados'),
+      t(
+        'Los fixes aparecen al usar los prefijos [HOTFIX], [BUGFIX], [FIX] o [IMPROVEMENT] para bypasear el SPEC GATE.',
+      ),
     );
   }
   const stats = planningFixStats(fixList);
@@ -2291,15 +2844,20 @@ function planningFixesSection(fixList) {
         ${planningChevron(false)}
         <div style="flex:1;min-width:0;">
           <div style="display:flex;align-items:center;gap:8px;">
-            <span style="font-family:var(--font-mono);font-size:var(--text-12);color:var(--text-dim);">Fixes &amp; Mejoras</span>
-            ${badge(`${fixList.length} fix${fixList.length === 1 ? '' : 'es'}`)}
+            <span style="font-family:var(--font-mono);font-size:var(--text-12);color:var(--text-dim);">${t('Fixes &amp; Mejoras')}</span>
+            ${badge(
+              t('{count} fix{suffix}', {
+                count: fixList.length,
+                suffix: fixList.length === 1 ? '' : 'es',
+              }),
+            )}
           </div>
           <div style="margin-top:10px;">${planningProgressBar(fraction)}</div>
         </div>
         <div style="flex-shrink:0;text-align:right;">
-          <p class="card-hint" style="margin:0;text-transform:uppercase;">Progreso</p>
+          <p class="card-hint" style="margin:0;text-transform:uppercase;">${t('Progreso')}</p>
           <p style="margin:0;font-family:var(--font-mono);font-size:var(--text-14);color:${fraction >= 1 ? 'var(--ok)' : 'var(--warn)'};">${Math.round(fraction * 100)}%</p>
-          <p class="card-hint" style="margin:2px 0 0;">${stats.done}/${stats.total} completados</p>
+          <p class="card-hint" style="margin:2px 0 0;">${escapeHtml(t('{done}/{total} completados', { done: stats.done, total: stats.total }))}</p>
         </div>
       </button>
       <div id="${contentId}" hidden>
@@ -2329,9 +2887,13 @@ function cyclesBySpec(cycleIndex) {
 function specsHeader(total) {
   return pageHeader({
     title: 'Specs',
-    meta: `${total} registrada${total === 1 ? '' : 's'}`,
-    subtitle:
+    meta: t('{count} registrada{suffix}', {
+      count: total,
+      suffix: total === 1 ? '' : 's',
+    }),
+    subtitle: t(
       'Especificaciones técnicas registradas en sdd/specs/index.json, convención spec-[gh-user]-[NNN]-[slug].',
+    ),
   });
 }
 
@@ -2339,8 +2901,8 @@ function specsListHeaderRow() {
   return `
     <div style="display:flex;align-items:center;gap:16px;padding:8px 4px;border-bottom:1px solid var(--border);">
       <span class="card-hint" style="margin:0;width:34px;flex-shrink:0;text-transform:uppercase;letter-spacing:0.05em;">ID</span>
-      <span class="card-hint" style="margin:0;flex:1;text-transform:uppercase;letter-spacing:0.05em;">Título</span>
-      <span class="card-hint" style="margin:0;flex-shrink:0;text-transform:uppercase;letter-spacing:0.05em;">Estado</span>
+      <span class="card-hint" style="margin:0;flex:1;text-transform:uppercase;letter-spacing:0.05em;">${t('Título')}</span>
+      <span class="card-hint" style="margin:0;flex-shrink:0;text-transform:uppercase;letter-spacing:0.05em;">${t('Estado')}</span>
     </div>
   `;
 }
@@ -2350,7 +2912,7 @@ function renderSpecRow(spec, index) {
   const stagger = `stagger-${Math.min(index + 1, 8)}`;
   const subMeta = [spec.module, spec.file].filter(Boolean).join(' · ');
   return `
-    <div class="row animate-fade-in-up ${stagger}" tabindex="0" role="button" data-row="${index}" aria-label="Ver detalle de ${escapeHtml(spec.title ?? spec.id)}">
+    <div class="row animate-fade-in-up ${stagger}" tabindex="0" role="button" data-row="${index}" aria-label="${escapeHtml(t('Ver detalle de {label}', { label: spec.title ?? spec.id }))}">
       <span class="row-lead" style="width:34px;font-family:var(--font-mono);font-size:var(--text-12);color:rgb(var(--rgb-emerald-500) / 0.6);">${number}</span>
       <span class="row-main">
         <span style="font-size:var(--text-14);color:var(--text-bright);font-weight:var(--weight-medium);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(spec.title ?? spec.id)}</span>
@@ -2367,11 +2929,11 @@ function renderSpecRow(spec, index) {
 function specsFileConventionPanel() {
   return `
     <div style="border-radius:var(--radius-lg);border:1px solid rgb(var(--rgb-zinc-800) / 0.6);background:rgb(var(--rgb-zinc-900) / 0.2);padding:16px 20px;">
-      <p class="card-hint" style="margin:0 0 8px;text-transform:uppercase;letter-spacing:0.05em;">Convención de archivos</p>
+      <p class="card-hint" style="margin:0 0 8px;text-transform:uppercase;letter-spacing:0.05em;">${t('Convención de archivos')}</p>
       <p style="margin:0;font-family:var(--font-mono);font-size:var(--text-12);">
         <span style="color:rgb(var(--rgb-emerald-400) / 0.7);">sdd/specs/</span><span style="color:var(--text-muted);">spec-[gh-user]-[NNN]-[slug]/</span>
       </p>
-      <p class="card-hint" style="margin-top:6px;">Cada spec tiene un ID único por autor registrado en <code>sdd/specs/index.json</code>. NNN es el contador personal del dev.</p>
+      <p class="card-hint" style="margin-top:6px;">${t('Cada spec tiene un ID único por autor registrado en <code>sdd/specs/index.json</code>. NNN es el contador personal del dev.')}</p>
     </div>
   `;
 }
@@ -2410,16 +2972,16 @@ function specDetailsTab(spec, cycleNames) {
     <div style="display:flex;flex-direction:column;gap:14px;">
       ${badge(spec.status ?? '—', specStatusClass(spec.status))}
       ${specField('ID', `<code>${escapeHtml(spec.id)}</code>`)}
-      ${spec.author ? specField('Autor', escapeHtml(spec.author)) : ''}
+      ${spec.author ? specField(t('Autor'), escapeHtml(spec.author)) : ''}
       ${spec.slug ? specField('Slug', escapeHtml(spec.slug)) : ''}
-      ${specField('Módulo', escapeHtml(spec.module ?? '—'))}
+      ${specField(t('Módulo'), escapeHtml(spec.module ?? '—'))}
       ${specField('App', escapeHtml(spec.app ?? '—'))}
-      ${specField('Creada', escapeHtml(spec.created_at ?? '—'))}
-      ${specField('Completada', escapeHtml(spec.completed_at ?? '—'))}
+      ${specField(t('Creada'), escapeHtml(spec.created_at ?? '—'))}
+      ${specField(t('Completada'), escapeHtml(spec.completed_at ?? '—'))}
       ${
         (spec.depends_on ?? []).length > 0
           ? specField(
-              'Depende de',
+              t('Depende de'),
               spec.depends_on
                 .map((dep) => `<code>${escapeHtml(dep)}</code>`)
                 .join(' '),
@@ -2429,7 +2991,7 @@ function specDetailsTab(spec, cycleNames) {
       ${
         spec.file
           ? specField(
-              'Archivo',
+              t('Archivo'),
               `<span style="color:rgb(var(--rgb-emerald-400) / 0.7);word-break:break-all;">${escapeHtml(spec.file)}</span>`,
             )
           : ''
@@ -2438,7 +3000,7 @@ function specDetailsTab(spec, cycleNames) {
         cycleNames.length > 0
           ? `
         <div>
-          <p class="card-hint" style="margin:0 0 8px;text-transform:uppercase;letter-spacing:0.05em;">Ciclos (${cycleNames.length})</p>
+          <p class="card-hint" style="margin:0 0 8px;text-transform:uppercase;letter-spacing:0.05em;">${escapeHtml(t('Ciclos ({count})', { count: cycleNames.length }))}</p>
           <div style="display:flex;flex-wrap:wrap;gap:8px;">
             ${cycleNames
               .map(
@@ -2465,7 +3027,7 @@ function specSkeletonLines() {
 }
 
 function specTabButton(tab, active) {
-  return `<button type="button" data-spec-tab="${tab.id}" style="all:unset;cursor:pointer;padding:8px 14px;font-family:var(--font-mono);font-size:var(--text-12);border-bottom:2px solid ${active ? 'var(--accent)' : 'transparent'};color:${active ? 'rgb(var(--rgb-emerald-400))' : 'var(--text-faint)'};margin-bottom:-1px;">${escapeHtml(tab.label)}</button>`;
+  return `<button type="button" data-spec-tab="${tab.id}" style="all:unset;cursor:pointer;padding:8px 14px;font-family:var(--font-mono);font-size:var(--text-12);border-bottom:2px solid ${active ? 'var(--accent)' : 'transparent'};color:${active ? 'rgb(var(--rgb-emerald-400))' : 'var(--text-faint)'};margin-bottom:-1px;">${escapeHtml(t(tab.label))}</button>`;
 }
 
 function bindSpecModalTabs(spec) {
@@ -2490,7 +3052,7 @@ function bindSpecModalTabs(spec) {
     if (tabId !== 'spec' || specMdLoaded) return;
     specMdLoaded = true;
     if (!spec.file) {
-      specPanel.innerHTML = `<p class="card-hint" style="margin:0;">No hay archivo de spec definido.</p>`;
+      specPanel.innerHTML = `<p class="card-hint" style="margin:0;">${t('No hay archivo de spec definido.')}</p>`;
       return;
     }
     specPanel.innerHTML = specSkeletonLines();
@@ -2544,8 +3106,10 @@ async function renderSpecs(container, params) {
     container.innerHTML = `
       ${specsHeader(0)}
       ${emptyState(
-        'Sin specs registradas',
-        'Las especificaciones técnicas aparecen aquí una vez registradas en sdd/specs/index.json. El ciclo SDD aún no ha iniciado.',
+        t('Sin specs registradas'),
+        t(
+          'Las especificaciones técnicas aparecen aquí una vez registradas en sdd/specs/index.json. El ciclo SDD aún no ha iniciado.',
+        ),
       )}
     `;
     return;
@@ -2565,10 +3129,16 @@ async function renderSpecs(container, params) {
 
 function cyclesHeader(total, groupCount) {
   return pageHeader({
-    title: 'Ciclos',
-    meta: `${total} ciclo${total === 1 ? '' : 's'} en ${groupCount} spec${groupCount === 1 ? '' : 's'}`,
-    subtitle:
+    title: t('Ciclos'),
+    meta: t('{total} ciclo{totalSuffix} en {groups} spec{groupsSuffix}', {
+      total,
+      totalSuffix: total === 1 ? '' : 's',
+      groups: groupCount,
+      groupsSuffix: groupCount === 1 ? '' : 's',
+    }),
+    subtitle: t(
       'Historial de ciclos SDD — cada ciclo representa una unidad de trabajo completa, de brief.yaml a cycle.json completed.',
+    ),
   });
 }
 
@@ -2580,7 +3150,7 @@ function listSearchBox(placeholder, value) {
       </span>
       <input type="text" data-list-search value="${escapeHtml(value)}" placeholder="${escapeHtml(placeholder)}"
         style="width:100%; box-sizing:border-box; background: rgb(var(--rgb-zinc-900) / 0.6); border:1px solid var(--border); border-radius: var(--radius-lg); padding:8px 32px; font-family: var(--font-mono); font-size: var(--text-14); color: var(--text-muted);" />
-      <button type="button" data-list-search-clear ${value ? '' : 'hidden'} aria-label="Limpiar búsqueda"
+      <button type="button" data-list-search-clear ${value ? '' : 'hidden'} aria-label="${escapeHtml(t('Limpiar búsqueda'))}"
         style="position:absolute; top:0; bottom:0; right:12px; background:none; border:none; padding:0; color: var(--text-subtle); cursor:pointer;">
         <span style="display:flex; align-items:center; justify-content:center; width:100%; height:100%">
           <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 2l12 12M14 2L2 14" stroke-linecap="round" /></svg>
@@ -2658,7 +3228,7 @@ function renderCycleObjectives(objectives) {
   const items = objectives
     .map((objective) => `<li>${escapeHtml(objective)}</li>`)
     .join('');
-  return `<p class="card-hint">Objetivos (${objectives.length})</p><ul>${items}</ul>`;
+  return `<p class="card-hint">${escapeHtml(t('Objetivos ({count})', { count: objectives.length }))}</p><ul>${items}</ul>`;
 }
 
 function renderCycleMetrics(metrics) {
@@ -2667,7 +3237,7 @@ function renderCycleMetrics(metrics) {
     metrics.files_created.length +
     metrics.files_modified.length +
     metrics.files_deleted.length;
-  return `<p class="card-hint">${escapeHtml(`${metrics.tasks_completed}/${metrics.tasks_total} tareas · ${metrics.story_points} SP · ${filesTotal} archivo${filesTotal === 1 ? '' : 's'}`)}</p>`;
+  return `<p class="card-hint">${escapeHtml(t('{done}/{total} tareas · {points} SP · {files} archivo{suffix}', { done: metrics.tasks_completed, total: metrics.tasks_total, points: metrics.story_points, files: filesTotal, suffix: filesTotal === 1 ? '' : 's' }))}</p>`;
 }
 
 function renderCycleCard({ specId, cycleId, cycle }, index, animate) {
@@ -2676,25 +3246,25 @@ function renderCycleCard({ specId, cycleId, cycle }, index, animate) {
     : '';
   if (!cycle) {
     return `
-      <div class="tile${staggerClass}" tabindex="0" role="button" style="cursor:pointer" data-spec-id="${escapeHtml(specId)}" data-cycle-id="${escapeHtml(cycleId)}" aria-label="Ver detalle de ${escapeHtml(cycleId)}">
+      <div class="tile${staggerClass}" tabindex="0" role="button" style="cursor:pointer" data-spec-id="${escapeHtml(specId)}" data-cycle-id="${escapeHtml(cycleId)}" aria-label="${escapeHtml(t('Ver detalle de {label}', { label: cycleId }))}">
         <div class="card-header">
           <span class="card-title">${escapeHtml(cycleId)}</span>
           ${badge('no disponible', 'status--skipped')}
         </div>
-        <p class="card-hint">No se pudo cargar cycle.json para este ciclo.</p>
+        <p class="card-hint">${t('No se pudo cargar cycle.json para este ciclo.')}</p>
       </div>
     `;
   }
   const number = cycleDisplayNumber(cycleId, cycle);
   return `
-    <div class="tile${staggerClass}" tabindex="0" role="button" style="cursor:pointer" data-spec-id="${escapeHtml(specId)}" data-cycle-id="${escapeHtml(cycleId)}" aria-label="Ver detalle de ${escapeHtml(`Ciclo ${number} — ${cycle.module ?? '—'}`)}">
+    <div class="tile${staggerClass}" tabindex="0" role="button" style="cursor:pointer" data-spec-id="${escapeHtml(specId)}" data-cycle-id="${escapeHtml(cycleId)}" aria-label="${escapeHtml(t('Ver detalle de {label}', { label: t('Ciclo {number} — {module}', { number, module: cycle.module ?? '—' }) }))}">
       <div class="card-header">
-        <span class="card-title">${escapeHtml(`Ciclo ${number} — ${cycle.module ?? '—'}`)}</span>
+        <span class="card-title">${escapeHtml(t('Ciclo {number} — {module}', { number, module: cycle.module ?? '—' }))}</span>
         ${badge(cycle.status ?? '—', cycleStatusClass(cycle.status))}
       </div>
       <p class="card-subtitle">${escapeHtml(cycle.phase ?? '—')}</p>
       ${renderCycleApps(cycle.apps)}
-      <p class="card-hint">${escapeHtml(`Inicio: ${cycle.started_at ?? '—'} · Fin: ${cycle.completed_at ?? '—'}`)}</p>
+      <p class="card-hint">${escapeHtml(t('Inicio: {started} · Fin: {completed}', { started: cycle.started_at ?? '—', completed: cycle.completed_at ?? '—' }))}</p>
       ${renderCycleObjectives(cycle.objectives)}
       ${renderCycleMetrics(cycle.metrics)}
     </div>
@@ -2725,8 +3295,15 @@ function renderCycleSpecSection(group, displayCycles, collapsed, animate) {
   const contentId = planningDomId('cycles-spec', group.specId);
   const meta =
     displayCycles.length === group.cycles.length
-      ? `${group.cycles.length} ciclo${group.cycles.length === 1 ? '' : 's'}`
-      : `${displayCycles.length} / ${group.cycles.length} ciclo${group.cycles.length === 1 ? '' : 's'}`;
+      ? t('{count} ciclo{suffix}', {
+          count: group.cycles.length,
+          suffix: group.cycles.length === 1 ? '' : 's',
+        })
+      : t('{shown} / {total} ciclo{suffix}', {
+          shown: displayCycles.length,
+          total: group.cycles.length,
+          suffix: group.cycles.length === 1 ? '' : 's',
+        });
   return `
     <div>
       ${groupHeaderButton(
@@ -2762,7 +3339,12 @@ async function renderCycles(container, params) {
   if (cycleIndex.length === 0) {
     container.innerHTML = `
       ${cyclesHeader(0, 0)}
-      ${emptyState('Sin ciclos iniciados', 'Los ciclos SDD aparecerán aquí una vez que el Orquestador cree el primer sdd/specs/{spec-id}/cycles/cycle-01/brief.yaml.')}
+      ${emptyState(
+        t('Sin ciclos iniciados'),
+        t(
+          'Los ciclos SDD aparecerán aquí una vez que el Orquestador cree el primer sdd/specs/{spec-id}/cycles/cycle-01/brief.yaml.',
+        ),
+      )}
       ${cycleRolesPanel()}
     `;
     return;
@@ -2821,8 +3403,10 @@ async function renderCycles(container, params) {
     listRoot.innerHTML =
       entries.length === 0
         ? emptyState(
-            'Sin resultados',
-            `No se encontraron ciclos que coincidan con "${state.query}".`,
+            t('Sin resultados'),
+            t('No se encontraron ciclos que coincidan con "{query}".', {
+              query: state.query,
+            }),
           )
         : entries
             .map(({ group, displayCycles }) =>
@@ -2844,7 +3428,7 @@ async function renderCycles(container, params) {
 
   container.innerHTML = `
     ${cyclesHeader(items.length, groups.length)}
-    ${listSearchBox('Buscar por spec, ciclo, título o estado…', '')}
+    ${listSearchBox(t('Buscar por spec, ciclo, título o estado…'), '')}
     <div data-list-root>${initialEntries
       .map(({ group, displayCycles }) =>
         renderCycleSpecSection(
@@ -2936,7 +3520,7 @@ function cycleRoleRow([num, role, artifact]) {
 function cycleRolesPanel() {
   return `
     <div style="${CYCLE_PANEL_STYLE}">
-      <p style="${CYCLE_EYEBROW_STYLE}">Agentes del ciclo</p>
+      <p style="${CYCLE_EYEBROW_STYLE}">${t('Agentes del ciclo')}</p>
       <div style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 32px">
         ${CYCLE_ROLES.map(cycleRoleRow).join('')}
       </div>
@@ -2972,7 +3556,7 @@ function cycleJsonView(data) {
   if (data.cycle !== undefined)
     fields.push(
       cycleJsonFieldRow(
-        'Ciclo',
+        t('Ciclo'),
         cycleJsonMono(`#${data.cycle}`, 'var(--text-bright)'),
       ),
     );
@@ -2981,11 +3565,11 @@ function cycleJsonView(data) {
       cycleJsonFieldRow('ID', cycleJsonMono(data.id, 'var(--text-bright)')),
     );
   if (data.module)
-    fields.push(cycleJsonFieldRow('Módulo', cycleJsonMono(data.module)));
+    fields.push(cycleJsonFieldRow(t('Módulo'), cycleJsonMono(data.module)));
   else if (data.title)
     fields.push(
       cycleJsonFieldRow(
-        'Título',
+        t('Título'),
         `<span style="font-size: var(--text-12); color: var(--text-bright)">${escapeHtml(data.title)}</span>`,
       ),
     );
@@ -2995,7 +3579,7 @@ function cycleJsonView(data) {
     );
   fields.push(
     cycleJsonFieldRow(
-      'Estado',
+      t('Estado'),
       badge(data.status ?? '—', cycleStatusClass(data.status)),
     ),
   );
@@ -3004,17 +3588,17 @@ function cycleJsonView(data) {
       cycleJsonFieldRow('Spec', cycleJsonMono(data.spec, 'var(--text-faint)')),
     );
   if (data.started_at)
-    fields.push(cycleJsonFieldRow('Inicio', cycleJsonMono(data.started_at)));
+    fields.push(cycleJsonFieldRow(t('Inicio'), cycleJsonMono(data.started_at)));
   if (data.completed_at)
     fields.push(
-      cycleJsonFieldRow('Completado', cycleJsonMono(data.completed_at)),
+      cycleJsonFieldRow(t('Completado'), cycleJsonMono(data.completed_at)),
     );
 
   const reviewerReport =
     data.reviewer_report !== undefined && data.reviewer_report !== null
       ? `
         <div>
-          <p style="${CYCLE_EYEBROW_STYLE}">Reporte del reviewer</p>
+          <p style="${CYCLE_EYEBROW_STYLE}">${t('Reporte del reviewer')}</p>
           <div style="${CYCLE_PANEL_STYLE}">
             <p style="margin:0; font-size: var(--text-12); color: var(--text-muted); line-height: var(--leading-relaxed); white-space: pre-wrap">${escapeHtml(
               typeof data.reviewer_report === 'string'
@@ -3030,7 +3614,7 @@ function cycleJsonView(data) {
     Array.isArray(data.artifacts) && data.artifacts.length > 0
       ? `
         <div>
-          <p style="${CYCLE_EYEBROW_STYLE}">${escapeHtml(`Artefactos (${data.artifacts.length})`)}</p>
+          <p style="${CYCLE_EYEBROW_STYLE}">${escapeHtml(t('Artefactos ({count})', { count: data.artifacts.length }))}</p>
           <div style="display:flex; flex-direction:column; gap:6px">
             ${data.artifacts
               .map(
@@ -3095,7 +3679,10 @@ function toggleCycleTaskFiles(toggle) {
 
 function cycleTaskFilesToggle(files) {
   if (files.length === 0) return '';
-  const label = `${files.length} archivo${files.length === 1 ? '' : 's'}`;
+  const label = t('{count} archivo{suffix}', {
+    count: files.length,
+    suffix: files.length === 1 ? '' : 's',
+  });
   return `
     <div style="margin-top:8px; padding-left:16px" data-files-label="${escapeHtml(label)}">
       <button type="button" data-files-toggle aria-expanded="false" style="background:none; border:none; padding:0; cursor:pointer; font-family: var(--font-mono); font-size: var(--text-10); color: var(--text-subtle)">${escapeHtml(`▸ ${label}`)}</button>
@@ -3127,7 +3714,7 @@ function cycleTaskRow(task) {
             <span style="font-size: var(--text-12); color: var(--text-bright)">${escapeHtml(task.title)}</span>
           </div>
           <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-top:6px">
-            <span style="font-family: var(--font-mono); font-size: var(--text-10); color: ${meta.text}">${escapeHtml(meta.label)}</span>
+            <span style="font-family: var(--font-mono); font-size: var(--text-10); color: ${meta.text}">${escapeHtml(t(meta.label))}</span>
             ${userStories.map((hu) => `<span class="chip chip--sm">${escapeHtml(hu)}</span>`).join('')}
             ${
               dependsOn.length
@@ -3256,21 +3843,28 @@ function cycleActivityFeed(cycle, tasks, cycleId) {
 
   push(
     'sdd-orchestrator',
-    `abre ${cycleId} (${cycle.module ?? '—'}) · brief + cycle.json`,
+    t('abre {cycleId} ({module}) · brief + cycle.json', {
+      cycleId,
+      module: cycle.module ?? '—',
+    }),
     'emerald',
   );
   const docs = cycle.documents ?? {};
   if (docs.functional)
-    push('sdd-functional', 'functional.md — requisitos y user stories', 'muted');
+    push(
+      'sdd-functional',
+      t('functional.md — requisitos y user stories'),
+      'muted',
+    );
   if (docs.planner)
-    push('sdd-planner', 'planner.md — tasks y estimaciones', 'muted');
+    push('sdd-planner', t('planner.md — tasks y estimaciones'), 'muted');
   if (docs.architect)
-    push('sdd-architect', 'architect.md — diseño validado', 'muted');
+    push('sdd-architect', t('architect.md — diseño validado'), 'muted');
 
   for (const task of tasks?.tasks ?? []) {
     const u = task.usage;
     const tokens = u
-      ? ` · ${costsTokensFormat.format((u.tokens_in ?? 0) + (u.tokens_out ?? 0))} tokens${u.model_tier ? ` (${u.model_tier})` : ''}`
+      ? ` · ${costsTokensFormat().format((u.tokens_in ?? 0) + (u.tokens_out ?? 0))} tokens${u.model_tier ? ` (${u.model_tier})` : ''}`
       : '';
     const tone =
       task.status === 'done'
@@ -3286,12 +3880,15 @@ function cycleActivityFeed(cycle, tasks, cycleId) {
     const verdict =
       rep && typeof rep === 'object'
         ? rep.approved
-          ? 'aprobado'
-          : 'con observaciones'
-        : 'sin reviewer_report';
+          ? t('aprobado')
+          : t('con observaciones')
+        : t('sin reviewer_report');
     push(
       'sdd-reviewer',
-      `cierra ${cycleId} ✓ · ${verdict} · CONTEXTO + MEMORIA GATE`,
+      t('cierra {cycleId} ✓ · {verdict} · CONTEXTO + MEMORIA GATE', {
+        cycleId,
+        verdict,
+      }),
       'emerald',
     );
   }
@@ -3307,7 +3904,7 @@ function cycleActivityFeed(cycle, tasks, cycleId) {
     .join('');
   return `
     <div>
-      <p style="${CYCLE_EYEBROW_STYLE}">Actividad del ciclo — derivada de los registros</p>
+      <p style="${CYCLE_EYEBROW_STYLE}">${t('Actividad del ciclo — derivada de los registros')}</p>
       <div style="display:flex; flex-direction:column; gap:8px; padding:12px 14px; border:1px solid var(--border); border-radius: var(--radius-lg)">${lines}</div>
     </div>
   `;
@@ -3317,7 +3914,7 @@ function cycleModalResumenView(specId, cycleId, cycle, files, onTabIndex, tasks)
   const docsBlock = files.length
     ? `
       <div>
-        <p style="${CYCLE_EYEBROW_STYLE}">${escapeHtml(`Documentos (${files.length})`)}</p>
+        <p style="${CYCLE_EYEBROW_STYLE}">${escapeHtml(t('Documentos ({count})', { count: files.length }))}</p>
         <div style="display:flex; flex-wrap:wrap; gap:8px">
           ${files
             .map(
@@ -3334,7 +3931,7 @@ function cycleModalResumenView(specId, cycleId, cycle, files, onTabIndex, tasks)
     return `
       <div style="display:flex; flex-direction:column; gap:16px">
         <p style="${CYCLE_HINT_STYLE}">${escapeHtml(`${specId} · ${cycleId}`)}</p>
-        <p style="${CYCLE_HINT_STYLE}">No se pudo cargar cycle.json para este ciclo.</p>
+        <p style="${CYCLE_HINT_STYLE}">${t('No se pudo cargar cycle.json para este ciclo.')}</p>
         ${docsBlock}
       </div>
     `;
@@ -3349,7 +3946,7 @@ function cycleModalResumenView(specId, cycleId, cycle, files, onTabIndex, tasks)
   if (cycle.started_at) {
     dateFields.push(`
       <div>
-        <p style="${CYCLE_EYEBROW_STYLE}">Inicio</p>
+        <p style="${CYCLE_EYEBROW_STYLE}">${t('Inicio')}</p>
         <p style="margin:0; font-family: var(--font-mono); font-size: var(--text-12); color: var(--text-muted)">${escapeHtml(cycle.started_at)}</p>
       </div>
     `);
@@ -3357,7 +3954,7 @@ function cycleModalResumenView(specId, cycleId, cycle, files, onTabIndex, tasks)
   if (cycle.completed_at) {
     dateFields.push(`
       <div>
-        <p style="${CYCLE_EYEBROW_STYLE}">Fin</p>
+        <p style="${CYCLE_EYEBROW_STYLE}">${t('Fin')}</p>
         <p style="margin:0; font-family: var(--font-mono); font-size: var(--text-12); color: var(--text-muted)">${escapeHtml(cycle.completed_at)}</p>
       </div>
     `);
@@ -3367,7 +3964,7 @@ function cycleModalResumenView(specId, cycleId, cycle, files, onTabIndex, tasks)
     Array.isArray(cycle.artifacts) && cycle.artifacts.length > 0
       ? `
         <div>
-          <p style="${CYCLE_EYEBROW_STYLE}">${escapeHtml(`Artefactos (${cycle.artifacts.length})`)}</p>
+          <p style="${CYCLE_EYEBROW_STYLE}">${escapeHtml(t('Artefactos ({count})', { count: cycle.artifacts.length }))}</p>
           <div style="display:flex; flex-direction:column; gap:4px">
             ${cycle.artifacts
               .map(
@@ -3388,7 +3985,7 @@ function cycleModalResumenView(specId, cycleId, cycle, files, onTabIndex, tasks)
     <div style="display:flex; flex-direction:column; gap:20px">
       <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap">
         ${badge(cycle.status ?? '—', cycleStatusClass(cycle.status))}
-        <span style="font-family: var(--font-mono); font-size: var(--text-10); color: var(--text-faint)">${escapeHtml(`Ciclo #${number}`)}</span>
+        <span style="font-family: var(--font-mono); font-size: var(--text-10); color: var(--text-faint)">${escapeHtml(t('Ciclo #{number}', { number }))}</span>
         ${specChip}
       </div>
       ${dateFields.length ? `<div style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:16px">${dateFields.join('')}</div>` : ''}
@@ -3415,7 +4012,9 @@ function cycleModalTabBar(tabs, activeIndex) {
 async function openCycleDetailModal(item) {
   const { specId, cycleId, cycle } = item;
   const number = cycleDisplayNumber(cycleId, cycle);
-  const title = cycle ? `Ciclo ${number} — ${cycle.module ?? '—'}` : cycleId;
+  const title = cycle
+    ? t('Ciclo {number} — {module}', { number, module: cycle.module ?? '—' })
+    : cycleId;
 
   openModal({ title, size: 'xl', bodyHtml: skeletonLines() });
   const openId = modalToken;
@@ -3427,7 +4026,7 @@ async function openCycleDetailModal(item) {
   if (!activeModal || activeModal.token !== openId) return;
 
   const tabs = [
-    { id: '__resumen__', label: 'Resumen' },
+    { id: '__resumen__', label: t('Resumen') },
     ...files.map((file) => ({
       id: file.path,
       label: cycleDocLabel(file),
@@ -3492,7 +4091,8 @@ async function openCycleDetailModal(item) {
     panelEl.innerHTML = skeletonLines();
     const section = await loadCycleDocSection(tab.file, cycle);
     if (token !== cycleModalToken || activeIndex !== index) return;
-    const html = section.html ?? emptyState('No disponible', section.file.path);
+    const html =
+      section.html ?? emptyState(t('No disponible'), section.file.path);
     cache.set(tab.id, html);
     panelEl.innerHTML = html;
   };
@@ -3578,7 +4178,7 @@ function taskTypeBadge(type) {
 
 function taskTable(columns, tasks) {
   const head = columns
-    .map((column) => `<th>${escapeHtml(column.label)}</th>`)
+    .map((column) => `<th>${escapeHtml(t(column.label))}</th>`)
     .join('');
   const body = tasks
     .map(
@@ -3628,9 +4228,22 @@ const TASK_TABLE_COLUMNS = [
 
 function tasksHeader(totals, groupCount) {
   return pageHeader({
-    title: 'Tareas',
-    meta: `${totals.count} tarea${totals.count === 1 ? '' : 's'} en ${groupCount} spec${groupCount === 1 ? '' : 's'}`,
-    subtitle: `Tareas técnicas agrupadas por spec y ciclo SDD · ${totals.done} de ${totals.count} completadas · ${formatHours(totals.hours)} estimadas · ${totals.storyPoints} SP`,
+    title: t('Tareas'),
+    meta: t('{count} tarea{suffix} en {groups} spec{groupsSuffix}', {
+      count: totals.count,
+      suffix: totals.count === 1 ? '' : 's',
+      groups: groupCount,
+      groupsSuffix: groupCount === 1 ? '' : 's',
+    }),
+    subtitle: t(
+      'Tareas técnicas agrupadas por spec y ciclo SDD · {done} de {total} completadas · {hours} estimadas · {points} SP',
+      {
+        done: totals.done,
+        total: totals.count,
+        hours: formatHours(totals.hours),
+        points: totals.storyPoints,
+      },
+    ),
   });
 }
 
@@ -3647,10 +4260,11 @@ function openTaskDetailModal(task, specId, cycleId) {
   const rows = [
     taskDetailFieldRow('ID', `<code>${escapeHtml(task.id)}</code>`),
     taskDetailFieldRow('Spec', `<code>${escapeHtml(specId)}</code>`),
-    taskDetailFieldRow('Ciclo', `<code>${escapeHtml(cycleId)}</code>`),
+    taskDetailFieldRow(t('Ciclo'), `<code>${escapeHtml(cycleId)}</code>`),
   ];
   const typeLabel = taskTypeLabel(task.type);
-  if (typeLabel) rows.push(taskDetailFieldRow('Tipo', escapeHtml(typeLabel)));
+  if (typeLabel)
+    rows.push(taskDetailFieldRow(t('Tipo'), escapeHtml(t(typeLabel))));
   const body = `
     <p style="display:flex; gap:8px; flex-wrap:wrap; margin:0 0 16px;">${taskTypeBadge(task.type)}${badge(task.status ?? 'pending', taskStatusClass(task.status))}</p>
     <div>${rows.join('')}</div>
@@ -3673,18 +4287,25 @@ function renderTaskCycleBlock(specId, cycle, collapsed, animate) {
   const displayTasks = cycle.displayTasks;
   const body =
     displayTasks.length === 0
-      ? emptyState('Sin tareas en este ciclo')
+      ? emptyState(t('Sin tareas en este ciclo'))
       : taskTable(TASK_TABLE_COLUMNS, displayTasks);
   const contentId = planningDomId('tasks-cycle', specId, cycle.cycleId);
   const meta =
     displayTasks.length === cycle.tasks.length
-      ? `${cycle.tasks.length} tarea${cycle.tasks.length === 1 ? '' : 's'}`
-      : `${displayTasks.length} / ${cycle.tasks.length} tarea${cycle.tasks.length === 1 ? '' : 's'}`;
+      ? t('{count} tarea{suffix}', {
+          count: cycle.tasks.length,
+          suffix: cycle.tasks.length === 1 ? '' : 's',
+        })
+      : t('{shown} / {total} tarea{suffix}', {
+          shown: displayTasks.length,
+          total: cycle.tasks.length,
+          suffix: cycle.tasks.length === 1 ? '' : 's',
+        });
   return `
     <div class="${animate ? 'animate-fade-in-up' : ''}">
       ${groupHeaderButton(
         {
-          eyebrow: 'Ciclo',
+          eyebrow: t('Ciclo'),
           title: cycle.cycleId,
           subtitle: cycle.module ?? null,
           meta,
@@ -3716,7 +4337,10 @@ function renderTaskSpecSection(
           eyebrow: 'Spec',
           title: group.title,
           subtitle: group.specId,
-          meta: `${group.totals.done}/${group.totals.count} tareas`,
+          meta: t('{done}/{total} tareas', {
+            done: group.totals.done,
+            total: group.totals.count,
+          }),
           statusChip: specStatusChip(group.status),
         },
         contentId,
@@ -3750,7 +4374,9 @@ function tasksSpecGatePanel() {
     <div style="${CYCLE_PANEL_STYLE}">
       <p style="${CYCLE_EYEBROW_STYLE}">SPEC GATE</p>
       <p style="font-size:var(--text-11); color:var(--text-dim); line-height:1.6; margin:0;">${escapeHtml(
-        'Una tarea no puede implementarse sin TODOS los documentos del ciclo generados: brief.yaml, functional.md, planner.md, architect.md, cycle.json y tasks.json.',
+        t(
+          'Una tarea no puede implementarse sin TODOS los documentos del ciclo generados: brief.yaml, functional.md, planner.md, architect.md, cycle.json y tasks.json.',
+        ),
       )}</p>
     </div>
   `;
@@ -3772,8 +4398,10 @@ async function renderTasks(container, params) {
     container.innerHTML = `
       ${tasksHeader(totals, 0)}
       ${emptyState(
-        'Sin tareas registradas',
-        'Las tareas técnicas son generadas por el agente Planner y aparecen aquí una vez que el primer ciclo SDD ha iniciado.',
+        t('Sin tareas registradas'),
+        t(
+          'Las tareas técnicas son generadas por el agente Planner y aparecen aquí una vez que el primer ciclo SDD ha iniciado.',
+        ),
       )}
       ${tasksSpecGatePanel()}
     `;
@@ -3823,8 +4451,10 @@ async function renderTasks(container, params) {
     listRoot.innerHTML =
       entries.length === 0
         ? emptyState(
-            'Sin resultados',
-            `No se encontraron tareas que coincidan con "${state.query}".`,
+            t('Sin resultados'),
+            t('No se encontraron tareas que coincidan con "{query}".', {
+              query: state.query,
+            }),
           )
         : entries
             .map(({ group, displayCycles }) =>
@@ -3850,7 +4480,7 @@ async function renderTasks(container, params) {
 
   container.innerHTML = `
     ${tasksHeader(totals, specGroups.length)}
-    ${listSearchBox('Buscar por ID, título, tipo, estado, ciclo o spec…', '')}
+    ${listSearchBox(t('Buscar por ID, título, tipo, estado, ciclo o spec…'), '')}
     <div data-list-root>${initialEntries
       .map(({ group, displayCycles }) =>
         renderTaskSpecSection(
@@ -3936,7 +4566,7 @@ function collectFixGroups(fixesRegistry, specsIndex) {
       isRepo,
       specId: isRepo ? null : key,
       title: isRepo
-        ? 'Fixes globales (sin spec asociada)'
+        ? t('Fixes globales (sin spec asociada)')
         : (findSpecTitle(specsIndex, key) ?? key),
       status: isRepo ? null : findSpecStatus(specsIndex, key),
       fixes: groups.get(key),
@@ -3947,8 +4577,11 @@ function collectFixGroups(fixesRegistry, specsIndex) {
 function fixesHeader(total) {
   return pageHeader({
     title: 'Fixes',
-    meta: `${total} registrado${total === 1 ? '' : 's'}`,
-    subtitle: 'Registro de fixes fuera del flujo SDD normal (FIX GATE).',
+    meta: t('{count} registrado{suffix}', {
+      count: total,
+      suffix: total === 1 ? '' : 's',
+    }),
+    subtitle: t('Registro de fixes fuera del flujo SDD normal (FIX GATE).'),
   });
 }
 
@@ -3968,8 +4601,10 @@ async function renderFixes(container, params) {
     container.innerHTML = `
       ${fixesHeader(0)}
       ${emptyState(
-        'Sin fixes registrados',
-        'Los fixes aparecen aquí cuando se usan los prefijos [HOTFIX], [BUGFIX], [FIX] o [IMPROVEMENT] para bypasear el SPEC GATE.',
+        t('Sin fixes registrados'),
+        t(
+          'Los fixes aparecen aquí cuando se usan los prefijos [HOTFIX], [BUGFIX], [FIX] o [IMPROVEMENT] para bypasear el SPEC GATE.',
+        ),
       )}
       ${fixGatePrefixesPanel()}
     `;
@@ -3997,8 +4632,10 @@ async function renderFixes(container, params) {
     listRoot.innerHTML =
       entries.length === 0
         ? emptyState(
-            'Sin resultados',
-            `No se encontraron fixes que coincidan con "${state.query}".`,
+            t('Sin resultados'),
+            t('No se encontraron fixes que coincidan con "{query}".', {
+              query: state.query,
+            }),
           )
         : entries
             .map(({ group, displayFixes }) =>
@@ -4019,7 +4656,7 @@ async function renderFixes(container, params) {
 
   container.innerHTML = `
     ${fixesHeader(total)}
-    ${listSearchBox('Buscar por ID, título, tipo, estado, autor o spec…', '')}
+    ${listSearchBox(t('Buscar por ID, título, tipo, estado, autor o spec…'), '')}
     <div data-list-root>${initialEntries
       .map(({ group, displayFixes }) =>
         renderFixGroupSection(
@@ -4111,7 +4748,7 @@ function fixGatePrefixRow({ prefix, desc, tone }) {
   return `
     <div style="display:flex; align-items:flex-start; gap:12px;">
       <span style="width:112px; flex-shrink:0; font-family:var(--font-mono); font-size:var(--text-11); font-weight:var(--weight-semibold); color:rgb(var(--rgb-${tone}-400));">${escapeHtml(prefix)}</span>
-      <span style="font-size:var(--text-11); color:var(--text-faint);">${escapeHtml(desc)}</span>
+      <span style="font-size:var(--text-11); color:var(--text-faint);">${escapeHtml(t(desc))}</span>
     </div>
   `;
 }
@@ -4119,7 +4756,7 @@ function fixGatePrefixRow({ prefix, desc, tone }) {
 function fixGatePrefixesPanel() {
   return `
     <div style="${CYCLE_PANEL_STYLE}">
-      <p style="${CYCLE_EYEBROW_STYLE}">Prefijos FIX GATE</p>
+      <p style="${CYCLE_EYEBROW_STYLE}">${t('Prefijos FIX GATE')}</p>
       <div style="display:flex; flex-direction:column; gap:8px;">
         ${FIX_GATE_PREFIXES.map(fixGatePrefixRow).join('')}
       </div>
@@ -4145,13 +4782,13 @@ function renderFixCard(fix, index, animate) {
   return `
     <button type="button" class="row${staggerClass}" data-fix-row data-fix-id="${escapeHtml(fix.id)}"
       style="align-items:flex-start; width:100%; text-align:left; background:none; border:none; cursor:pointer; color:inherit; font:inherit; border-bottom:1px solid var(--border);"
-      aria-label="Ver detalle de ${escapeHtml(fix.title ?? fix.id)}">
+      aria-label="${escapeHtml(t('Ver detalle de {label}', { label: fix.title ?? fix.id }))}">
       <span style="display:flex; align-items:flex-start; gap:16px; min-width:0;">
         <span style="width:64px; flex-shrink:0; font-family:var(--font-mono); font-size:var(--text-10); color:rgb(var(--rgb-emerald-500) / 0.6); padding-top:2px;">${escapeHtml(fix.id)}</span>
         <span style="min-width:0;">
           <span style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
             ${fixTypeBadge(fix.type)}
-            ${fix.cycle ? `<span class="card-hint" style="margin:0;">ciclo: ${escapeHtml(fix.cycle)}</span>` : ''}
+            ${fix.cycle ? `<span class="card-hint" style="margin:0;">${escapeHtml(t('ciclo: {cycle}', { cycle: fix.cycle }))}</span>` : ''}
           </span>
           <span style="display:block; font-size:var(--text-14); color:var(--text-muted); overflow-wrap:break-word;">${escapeHtml(fix.title ?? '—')}</span>
           <span style="display:block; font-family:var(--font-mono); font-size:var(--text-10); color:var(--text-subtle); margin-top:4px;">${escapeHtml(fix.created_at ?? '—')}</span>
@@ -4166,13 +4803,20 @@ function renderFixGroupSection(group, displayFixes, collapsed, animate) {
   const contentId = planningDomId('fixes-group', group.key);
   const meta =
     displayFixes.length === group.fixes.length
-      ? `${group.fixes.length} fix${group.fixes.length === 1 ? '' : 'es'}`
-      : `${displayFixes.length} / ${group.fixes.length} fix${group.fixes.length === 1 ? '' : 'es'}`;
+      ? t('{count} fix{suffix}', {
+          count: group.fixes.length,
+          suffix: group.fixes.length === 1 ? '' : 'es',
+        })
+      : t('{shown} / {total} fix{suffix}', {
+          shown: displayFixes.length,
+          total: group.fixes.length,
+          suffix: group.fixes.length === 1 ? '' : 'es',
+        });
   return `
     <div>
       ${groupHeaderButton(
         {
-          eyebrow: group.isRepo ? 'Nivel repositorio' : 'Spec',
+          eyebrow: group.isRepo ? t('Nivel repositorio') : 'Spec',
           title: group.title,
           subtitle: group.isRepo ? null : group.specId,
           meta,
@@ -4205,7 +4849,7 @@ function openFixDetailModal(fix, specTitle) {
       const html = path ? await loadMarkdown(path).catch(() => null) : null;
       const markdownSection =
         html === null
-          ? emptyState('No disponible', path || 'sin fix_document')
+          ? emptyState(t('No disponible'), path || t('sin fix_document'))
           : `<div class="markdown">${html}</div>`;
       return fixDetailBody(fix, specTitle, markdownSection);
     },
@@ -4218,22 +4862,28 @@ function fixAffectedFilesSection(fix) {
   const items = files
     .map((file) => `<li><code>${escapeHtml(file)}</code></li>`)
     .join('');
-  return `<p class="card-hint">Archivos afectados (${files.length})</p><ul>${items}</ul>`;
+  return `<p class="card-hint">${escapeHtml(t('Archivos afectados ({count})', { count: files.length }))}</p><ul>${items}</ul>`;
 }
 
 function fixRelatedModulesSection(fix) {
   const modules = fix.related_modules ?? [];
   if (modules.length === 0) return '';
-  return `<p class="card-hint">Módulos: ${modules.map((module) => escapeHtml(module)).join(' · ')}</p>`;
+  return `<p class="card-hint">${escapeHtml(t('Módulos: {modules}', { modules: modules.join(' · ') }))}</p>`;
 }
 
 function fixDetailBody(fix, specTitle, markdownSection) {
   return `
     <p style="display:flex; gap:8px; flex-wrap:wrap; margin:0 0 12px;">${fixTypeBadge(fix.type)}${badge(fix.status ?? '—', fixStatusClass(fix.status))}${fix.severity ? badge(fix.severity) : ''}</p>
-    <p class="card-hint">${escapeHtml(`Creado: ${fix.created_at ?? '—'} · Resuelto: ${fix.resolved_at ?? '—'} · Validado: ${fix.validated_at ?? '—'}`)}</p>
-    ${fix.cycle ? `<p class="card-hint">${escapeHtml(`Ciclo: ${fix.cycle}`)}</p>` : ''}
-    ${specTitle ? `<p class="card-hint">${escapeHtml(`Spec: ${specTitle}`)}</p>` : ''}
-    <p class="card-hint">${escapeHtml(`Estimación: ${formatHours(fix.estimation_hours)}`)}</p>
+    <p class="card-hint">${escapeHtml(
+      t('Creado: {created} · Resuelto: {resolved} · Validado: {validated}', {
+        created: fix.created_at ?? '—',
+        resolved: fix.resolved_at ?? '—',
+        validated: fix.validated_at ?? '—',
+      }),
+    )}</p>
+    ${fix.cycle ? `<p class="card-hint">${escapeHtml(t('Ciclo: {cycle}', { cycle: fix.cycle }))}</p>` : ''}
+    ${specTitle ? `<p class="card-hint">${escapeHtml(t('Spec: {spec}', { spec: specTitle }))}</p>` : ''}
+    <p class="card-hint">${escapeHtml(t('Estimación: {hours}', { hours: formatHours(fix.estimation_hours) }))}</p>
     ${fix.description ? `<p class="card-subtitle" style="margin-top:12px;">${escapeHtml(fix.description)}</p>` : ''}
     ${fix.justification && fix.justification !== fix.description ? `<p class="card-hint">${escapeHtml(fix.justification)}</p>` : ''}
     ${fixRelatedModulesSection(fix)}
@@ -4453,8 +5103,8 @@ function contextSearchBar() {
       <span aria-hidden="true" style="position:absolute; left:12px; top:50%; transform:translateY(-50%); display:flex; color:var(--text-subtle); pointer-events:none">
         <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="7" cy="7" r="5"></circle><line x1="11" y1="11" x2="14.5" y2="14.5"></line></svg>
       </span>
-      <input type="text" data-context-search placeholder="Buscar por nombre, categoría o archivo…" style="width:100%; box-sizing:border-box; background: rgb(var(--rgb-zinc-900) / 0.6); border:1px solid var(--border); border-radius: var(--radius-lg); padding: 8px 32px; font-size: var(--text-14); font-family: var(--font-mono); color: var(--text-bright)">
-      <button type="button" data-context-clear hidden aria-label="Limpiar búsqueda" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); width:12px; height:12px; background:none; border:none; cursor:pointer; color:var(--text-subtle); padding:0"><span style="display:flex; align-items:center; justify-content:center; width:100%; height:100%">${icon('close')}</span></button>
+      <input type="text" data-context-search placeholder="${escapeHtml(t('Buscar por nombre, categoría o archivo…'))}" style="width:100%; box-sizing:border-box; background: rgb(var(--rgb-zinc-900) / 0.6); border:1px solid var(--border); border-radius: var(--radius-lg); padding: 8px 32px; font-size: var(--text-14); font-family: var(--font-mono); color: var(--text-bright)">
+      <button type="button" data-context-clear hidden aria-label="${escapeHtml(t('Limpiar búsqueda'))}" style="position:absolute; right:10px; top:50%; transform:translateY(-50%); width:12px; height:12px; background:none; border:none; cursor:pointer; color:var(--text-subtle); padding:0"><span style="display:flex; align-items:center; justify-content:center; width:100%; height:100%">${icon('close')}</span></button>
     </div>
   `;
 }
@@ -4474,15 +5124,15 @@ function contextMatchesQuery(entry, query) {
 function renderContextList(entries, query) {
   if (entries.length === 0) {
     return emptyState(
-      'Sin contexto registrado',
-      'No se encontraron archivos en sdd/context/.',
+      t('Sin contexto registrado'),
+      t('No se encontraron archivos en sdd/context/.'),
     );
   }
   const filtered = entries.filter((entry) => contextMatchesQuery(entry, query));
   if (filtered.length === 0) {
     return emptyState(
-      'Sin resultados',
-      `No se encontraron entradas que coincidan con "${query}".`,
+      t('Sin resultados'),
+      t('No se encontraron entradas que coincidan con "{query}".', { query }),
     );
   }
   const groups = groupBy(filtered, (entry) => entry.category);
@@ -4505,10 +5155,11 @@ async function renderContext(container, params) {
 
   container.innerHTML = `
     ${pageHeader({
-      title: 'Contexto SDD',
-      meta: `${totalSubprojects} subproyectos`,
-      subtitle:
+      title: t('Contexto SDD'),
+      meta: t('{count} subproyectos', { count: totalSubprojects }),
+      subtitle: t(
         'Constitution y context prompt de cada subproyecto del monorepo: la fuente de verdad de convenciones, stack y estado por app, lib y tool.',
+      ),
     })}
     ${entries.length > 0 ? contextSearchBar() : ''}
     <div data-context-list-root>${renderContextList(entries, '')}</div>
@@ -4525,7 +5176,7 @@ function renderContextCategorySection(category, entries, query) {
       <button type="button" data-context-toggle-category="${escapeHtml(category)}" aria-expanded="${!collapsed}" aria-controls="${contentId}" style="all:unset; box-sizing:border-box; cursor:pointer; display:flex; align-items:center; gap:10px; width:100%; padding:8px 4px; border-bottom:1px solid var(--border)">
         ${contextChevron(!collapsed)}
         <span style="font-family:var(--font-mono); font-size:var(--text-11); font-weight:var(--weight-semibold); text-transform:uppercase; letter-spacing:0.05em; color:var(--text-dim)">${escapeHtml(CONTEXT_CATEGORY_LABELS[category] ?? category)}</span>
-        <span class="card-hint" style="margin-left:auto">${entries.length} entrada${entries.length === 1 ? '' : 's'}</span>
+        <span class="card-hint" style="margin-left:auto">${escapeHtml(t('{count} entrada{suffix}', { count: entries.length, suffix: entries.length === 1 ? '' : 's' }))}</span>
       </button>
       <div id="${contentId}" ${collapsed ? 'hidden' : ''} style="padding-left:12px; border-left:1px solid rgb(var(--rgb-zinc-800) / 0.6); margin-top:8px">
         <div style="display:flex; flex-direction:column; gap:4px">
@@ -4560,11 +5211,11 @@ function renderContextEntrySection(entry, query) {
 function renderContextDocCard(entry, doc) {
   const label = CONTEXT_DOC_LABELS[doc.file] ?? doc.file;
   const attrs = doc.available
-    ? ` tabindex="0" role="button" style="cursor:pointer; border-radius:var(--radius-lg); padding:10px 12px" data-context-key="${escapeHtml(doc.key)}" aria-label="Ver ${escapeHtml(label)} de ${escapeHtml(entry.name)}"`
+    ? ` tabindex="0" role="button" style="cursor:pointer; border-radius:var(--radius-lg); padding:10px 12px" data-context-key="${escapeHtml(doc.key)}" aria-label="${escapeHtml(t('Ver {label} de {name}', { label, name: entry.name }))}"`
     : ` style="border-radius:var(--radius-lg); padding:10px 12px; opacity:0.5"`;
   const trailing = doc.available
     ? `<span class="row-chevron">›</span>`
-    : `<span class="empty-state-hint" style="margin:0">No disponible</span>`;
+    : `<span class="empty-state-hint" style="margin:0">${t('No disponible')}</span>`;
   return `
     <div class="tile"${attrs}>
       <div style="display:flex; align-items:center; justify-content:space-between; gap:12px">
@@ -4661,7 +5312,7 @@ function openContextDocModal(entry, doc) {
     load: () =>
       loadMarkdown(item.path).then(
         (html) => `<div class="markdown">${html}</div>`,
-        () => emptyState('No disponible', `sdd/${item.path}`),
+        () => emptyState(t('No disponible'), `sdd/${item.path}`),
       ),
   }));
   openModal({
@@ -4694,9 +5345,12 @@ async function renderAgents(container, params) {
 
   container.innerHTML = `
     ${pageHeader({
-      title: 'Agentes SDD',
-      meta: `${agents.length} agentes activos`,
-      subtitle: `Pipeline de ${agents.length} agentes que coordina el ciclo SDD de principio a fin. Cada agente tiene un rol específico e invoca al siguiente.`,
+      title: t('Agentes SDD'),
+      meta: t('{count} agentes activos', { count: agents.length }),
+      subtitle: t(
+        'Pipeline de {count} agentes que coordina el ciclo SDD de principio a fin. Cada agente tiene un rol específico e invoca al siguiente.',
+        { count: agents.length },
+      ),
     })}
     ${manifestFailed ? manifestFallbackHint() : ''}
     <div style="display:flex; flex-direction:column; gap:12px; margin-bottom:16px">
@@ -4741,8 +5395,8 @@ function agentAccentSquare(num) {
 function agentsInvokePanel() {
   return `
     <div style="border-radius: var(--radius-lg); border: 1px solid rgb(var(--rgb-zinc-800) / 0.6); background: rgb(var(--rgb-zinc-900) / 0.2); padding: 16px 20px">
-      <p style="margin:0 0 8px; font-family: var(--font-mono); font-size: var(--text-10); text-transform:uppercase; letter-spacing:0.05em; color: var(--text-faint)">Cómo invocar un agente</p>
-      <p class="card-hint" style="margin:0">Los agentes se invocan desde Claude Code usando el flag <code>--agent</code> o prefijando el mensaje con el rol del agente. El Orquestador es siempre el punto de entrada al ciclo SDD.</p>
+      <p style="margin:0 0 8px; font-family: var(--font-mono); font-size: var(--text-10); text-transform:uppercase; letter-spacing:0.05em; color: var(--text-faint)">${t('Cómo invocar un agente')}</p>
+      <p class="card-hint" style="margin:0">${t('Los agentes se invocan desde Claude Code usando el flag <code>--agent</code> o prefijando el mensaje con el rol del agente. El Orquestador es siempre el punto de entrada al ciclo SDD.')}</p>
     </div>
   `;
 }
@@ -4752,9 +5406,9 @@ function renderAgentCard(agent, index) {
     ? agent.description
       ? `<p class="card-hint">${escapeHtml(agent.description)}</p>`
       : ''
-    : `<p class="empty-state-hint">No disponible</p>`;
+    : `<p class="empty-state-hint">${t('No disponible')}</p>`;
   const attrs = agent.available
-    ? ` tabindex="0" role="button" style="cursor:pointer" data-agent-index="${index}" aria-label="Ver detalle de ${escapeHtml(agent.label)}"`
+    ? ` tabindex="0" role="button" style="cursor:pointer" data-agent-index="${index}" aria-label="${escapeHtml(t('Ver detalle de {label}', { label: agent.label }))}"`
     : '';
   const staggerClass = ` animate-fade-in-up stagger-${Math.min(index + 1, 8)}`;
   return `
@@ -4763,7 +5417,7 @@ function renderAgentCard(agent, index) {
         ${agentAccentSquare(agent.num)}
         <div style="flex:1; min-width:0">
           <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap">
-            <span class="card-title" style="margin:0">${escapeHtml(agent.label)}</span>
+            <span class="card-title" style="margin:0">${escapeHtml(t(agent.label))}</span>
             <span class="card-hint" style="margin:0">${escapeHtml(agent.file)}</span>
           </div>
           ${description}
@@ -4791,13 +5445,13 @@ function attachAgentCardHandlers(container, agents) {
 function openAgentModal(agent) {
   const path = `agents/${agent.file}`;
   openAsyncModal({
-    title: agent.label,
+    title: t(agent.label),
     subtitle: `sdd/${path}`,
     size: 'xl',
     load: () =>
       loadMarkdown(path).then(
         (html) => `<div class="markdown">${html}</div>`,
-        () => emptyState('No disponible', `sdd/${path}`),
+        () => emptyState(t('No disponible'), `sdd/${path}`),
       ),
   });
 }
@@ -4825,9 +5479,10 @@ async function renderSkills(container, params) {
   container.innerHTML = `
     ${pageHeader({
       title: 'Skills',
-      meta: `${skills.length} skills activos`,
-      subtitle:
+      meta: t('{count} skills activos', { count: skills.length }),
+      subtitle: t(
         'Habilidades especializadas disponibles en el entorno Claude Code. Cada skill encapsula un conjunto de instrucciones y parámetros para tareas específicas.',
+      ),
     })}
     ${manifestFailed ? manifestFallbackHint() : ''}
     ${[...groups.entries()].map(([category, items]) => renderSkillCategory(category, items)).join('')}
@@ -4890,9 +5545,9 @@ function renderSkillCard(skill, category) {
     ? skill.description
       ? `<p class="card-hint" style="margin:2px 0 0">${escapeHtml(skill.description)}</p>`
       : ''
-    : `<p class="empty-state-hint" style="margin:2px 0 0">No disponible</p>`;
+    : `<p class="empty-state-hint" style="margin:2px 0 0">${t('No disponible')}</p>`;
   const attrs = skill.available
-    ? ` tabindex="0" role="button" style="cursor:pointer" data-skill-dir="${escapeHtml(skill.dir)}" aria-label="Ver detalle de ${escapeHtml(title)}"`
+    ? ` tabindex="0" role="button" style="cursor:pointer" data-skill-dir="${escapeHtml(skill.dir)}" aria-label="${escapeHtml(t('Ver detalle de {label}', { label: title }))}"`
     : '';
   return `
     <div class="tile" style="padding:14px 16px"${attrs}>
@@ -4932,7 +5587,7 @@ function openSkillModal(skill) {
     load: () =>
       loadMarkdown(path).then(
         (html) => `<div class="markdown">${html}</div>`,
-        () => emptyState('No disponible', `sdd/${path}`),
+        () => emptyState(t('No disponible'), `sdd/${path}`),
       ),
   });
 }
@@ -4954,7 +5609,7 @@ function promptsFlowPanel() {
   }).join('');
   return `
     <div style="border-radius: var(--radius-lg); border: 1px solid rgb(var(--rgb-zinc-800) / 0.6); background: rgb(var(--rgb-zinc-900) / 0.2); padding: 16px 20px">
-      <p style="margin:0 0 8px; font-family: var(--font-mono); font-size: var(--text-10); text-transform:uppercase; letter-spacing:0.05em; color: var(--text-faint)">Flujo de prompts</p>
+      <p style="margin:0 0 8px; font-family: var(--font-mono); font-size: var(--text-10); text-transform:uppercase; letter-spacing:0.05em; color: var(--text-faint)">${t('Flujo de prompts')}</p>
       <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap">${chain}</div>
     </div>
   `;
@@ -4990,9 +5645,10 @@ async function renderPrompts(container, params) {
   container.innerHTML = `
     ${pageHeader({
       title: 'Prompts',
-      meta: `${prompts.length} prompts activos`,
-      subtitle:
+      meta: t('{count} prompts activos', { count: prompts.length }),
+      subtitle: t(
         'Prompts estructurados que guían los momentos críticos del flujo SDD: apertura, verificación, bypass y cierre de ciclos.',
+      ),
     })}
     ${manifestFailed ? manifestFallbackHint() : ''}
     ${body}
@@ -5005,12 +5661,12 @@ async function renderPrompts(container, params) {
 function promptCardMarkup(prompt, index) {
   const labelChip = prompt.error
     ? ''
-    : `<span style="display:inline-flex; padding:2px 8px; border-radius: var(--radius-sm); font-family: var(--font-mono); font-size: var(--text-10); color: rgb(var(--rgb-emerald-400)); background: rgb(var(--rgb-emerald-500) / 0.05); border: 1px solid rgb(var(--rgb-emerald-500) / 0.2)">${escapeHtml(prompt.label)}</span>`;
+    : `<span style="display:inline-flex; padding:2px 8px; border-radius: var(--radius-sm); font-family: var(--font-mono); font-size: var(--text-10); color: rgb(var(--rgb-emerald-400)); background: rgb(var(--rgb-emerald-500) / 0.05); border: 1px solid rgb(var(--rgb-emerald-500) / 0.2)">${escapeHtml(t(prompt.label))}</span>`;
   const body = prompt.error
-    ? `<p class="empty-state-hint" style="margin:6px 0 0">No disponible</p>`
+    ? `<p class="empty-state-hint" style="margin:6px 0 0">${t('No disponible')}</p>`
     : `
-      <p class="card-subtitle" style="margin-top:6px">${escapeHtml(prompt.description)}</p>
-      <p class="card-hint">${escapeHtml(`Trigger: ${prompt.trigger}`)}</p>
+      <p class="card-subtitle" style="margin-top:6px">${escapeHtml(t(prompt.description))}</p>
+      <p class="card-hint">${escapeHtml(t('Trigger: {trigger}', { trigger: t(prompt.trigger) }))}</p>
     `;
   const staggerClass = ` animate-fade-in-up stagger-${Math.min(index + 1, 8)}`;
   return `
@@ -5035,7 +5691,7 @@ function promptDetailBody(prompt) {
 }
 
 function openPromptDetail(prompt) {
-  openModal(prompt.label, promptDetailBody(prompt), { size: 'xl' });
+  openModal(t(prompt.label), promptDetailBody(prompt), { size: 'xl' });
 }
 
 function attachPromptCardListeners(container, prompts) {
@@ -5068,7 +5724,7 @@ function statusTag(status) {
     sky: 'rgb(var(--rgb-sky-400))',
   };
   const color = toneColor[meta.tone] ?? 'var(--text-dim)';
-  return `<span class="status-tag" style="color:${color}">${escapeHtml(meta.label)}</span>`;
+  return `<span class="status-tag" style="color:${color}">${escapeHtml(t(meta.label))}</span>`;
 }
 
 function methodBadge(method) {
@@ -5124,15 +5780,20 @@ async function renderSchema(container, params) {
   const tables = collectSchemaTables(registry);
   const header = pageHeader({
     title: 'Schema',
-    meta: `${tables.length} tabla${tables.length === 1 ? '' : 's'}`,
-    subtitle: 'Tablas y entidades de base de datos definidas en el proyecto.',
+    meta: t('{count} tabla{suffix}', {
+      count: tables.length,
+      suffix: tables.length === 1 ? '' : 's',
+    }),
+    subtitle: t('Tablas y entidades de base de datos definidas en el proyecto.'),
   });
   if (tables.length === 0) {
     container.innerHTML = `
       ${header}
       ${emptyState(
-        'Schema vacío',
-        'Las tablas de base de datos serán definidas por el agente Arquitecto y aparecerán aquí una vez que el primer ciclo SDD lo defina.',
+        t('Schema vacío'),
+        t(
+          'Las tablas de base de datos serán definidas por el agente Arquitecto y aparecerán aquí una vez que el primer ciclo SDD lo defina.',
+        ),
       )}
     `;
     return;
@@ -5169,14 +5830,14 @@ function renderSchemaTableRow(table) {
   const detail = hasSchemaDetail(table);
   return `
     <div class="row-item">
-      <div class="row" data-schema-row="${escapeHtml(key)}" ${detail ? inlineRowOpenAttrs(`Ver detalle de ${table.name}`) : ''}>
+      <div class="row" data-schema-row="${escapeHtml(key)}" ${detail ? inlineRowOpenAttrs(t('Ver detalle de {label}', { label: table.name })) : ''}>
         <div class="row-main">
           <span style="font-family:var(--font-mono);font-size:var(--text-14);color:var(--text-bright)">${escapeHtml(table.name)}</span>
           <span class="card-hint">${escapeHtml(table.module ?? '—')}</span>
         </div>
         <div class="row-trail">
           ${statusTag(table.status ?? 'defined')}
-          <span class="card-hint" style="font-family:var(--font-mono)">${columnCount} col${columnCount === 1 ? '' : 's'}</span>
+          <span class="card-hint" style="font-family:var(--font-mono)">${escapeHtml(t('{count} col{suffix}', { count: columnCount, suffix: columnCount === 1 ? '' : 's' }))}</span>
           ${table.migration_file ? `<span class="card-hint" style="font-family:var(--font-mono)">${escapeHtml(table.migration_file)}</span>` : ''}
           ${detail ? inlineExpandToggle({ open: false }) : ''}
         </div>
@@ -5208,7 +5869,7 @@ function schemaTableDetailBody(table) {
         ],
         columns,
       )
-    : emptyState('Sin columnas definidas');
+    : emptyState(t('Sin columnas definidas'));
   const indexes = table.indexes ?? [];
   const indexesSection = indexes.length
     ? dataTable(
@@ -5225,10 +5886,16 @@ function schemaTableDetailBody(table) {
     : '';
   const changelog = table.changelog ?? [];
   const changelogSection = changelog.length
-    ? `<p class="card-hint">Historial</p><ul>${changelog
+    ? `<p class="card-hint">${t('Historial')}</p><ul>${changelog
         .map(
           (entry) =>
-            `<li>${escapeHtml(`ciclo ${entry.cycle ?? '—'} · ${entry.date ?? '—'} — ${entry.change ?? ''}`)}</li>`,
+            `<li>${escapeHtml(
+              t('ciclo {cycle} · {date} — {change}', {
+                cycle: entry.cycle ?? '—',
+                date: entry.date ?? '—',
+                change: entry.change ?? '',
+              }),
+            )}</li>`,
         )
         .join('')}</ul>`
     : '';
@@ -5238,7 +5905,15 @@ function schemaTableDetailBody(table) {
       ${columnsSection}
       ${indexesSection}
       ${changelogSection}
-      <p class="card-hint" style="color:var(--text-ghost)">ciclo ${escapeHtml(String(table.created_in_cycle ?? '—'))}${table.updated_in_cycle ? ` → ${escapeHtml(String(table.updated_in_cycle))}` : ''} · ${escapeHtml(table._app)}</p>
+      <p class="card-hint" style="color:var(--text-ghost)">${escapeHtml(
+        t('ciclo {created}{updatedSuffix} · {app}', {
+          created: String(table.created_in_cycle ?? '—'),
+          updatedSuffix: table.updated_in_cycle
+            ? ` → ${String(table.updated_in_cycle)}`
+            : '',
+          app: table._app,
+        }),
+      )}</p>
     </div>
   `;
 }
@@ -5254,15 +5929,20 @@ async function renderApi(container, params) {
   const endpoints = collectApiEndpoints(registry);
   const header = pageHeader({
     title: 'API',
-    meta: `${endpoints.length} endpoint${endpoints.length === 1 ? '' : 's'}`,
-    subtitle: 'Endpoints definidos en el contrato del sistema.',
+    meta: t('{count} endpoint{suffix}', {
+      count: endpoints.length,
+      suffix: endpoints.length === 1 ? '' : 's',
+    }),
+    subtitle: t('Endpoints definidos en el contrato del sistema.'),
   });
   if (endpoints.length === 0) {
     container.innerHTML = `
       ${header}
       ${emptyState(
-        'Sin endpoints registrados',
-        'Los endpoints del API serán definidos por el agente Arquitecto en sdd/api.json a medida que avanzan los ciclos SDD.',
+        t('Sin endpoints registrados'),
+        t(
+          'Los endpoints del API serán definidos por el agente Arquitecto en sdd/api.json a medida que avanzan los ciclos SDD.',
+        ),
       )}
     `;
     return;
@@ -5301,7 +5981,7 @@ function renderApiEndpointRow(endpoint) {
   const detail = hasApiDetail(endpoint);
   return `
     <div class="row-item">
-      <div class="row" data-api-row="${escapeHtml(endpoint._key)}" ${detail ? inlineRowOpenAttrs(`Ver detalle de ${endpoint.path ?? ''}`) : ''}>
+      <div class="row" data-api-row="${escapeHtml(endpoint._key)}" ${detail ? inlineRowOpenAttrs(t('Ver detalle de {label}', { label: endpoint.path ?? '' })) : ''}>
         <span class="row-lead">${methodBadge(endpoint.method)}</span>
         <div class="row-main row-main--inline">
           <span class="api-path">${escapeHtml(endpoint.path ?? '')}</span>
@@ -5342,22 +6022,33 @@ function apiEndpointDetailBody(endpoint) {
       )
     : '';
   const changelogSection = changelog.length
-    ? `<p class="card-hint">Historial</p><ul>${changelog
+    ? `<p class="card-hint">${t('Historial')}</p><ul>${changelog
         .map(
           (entry) =>
-            `<li>${escapeHtml(`ciclo ${entry.cycle ?? '—'} · ${entry.date ?? '—'} — ${entry.change ?? ''}`)}</li>`,
+            `<li>${escapeHtml(
+              t('ciclo {cycle} · {date} — {change}', {
+                cycle: entry.cycle ?? '—',
+                date: entry.date ?? '—',
+                change: entry.change ?? '',
+              }),
+            )}</li>`,
         )
         .join('')}</ul>`
     : '';
   return `
     <div style="padding:var(--space-4) 4px;display:flex;flex-direction:column;gap:var(--space-3);">
       ${endpoint.description ? `<p class="card-subtitle">${escapeHtml(endpoint.description)}</p>` : ''}
-      ${pathParams.length ? `<p class="card-hint">Path params: ${pathParams.map((param) => `<code>${escapeHtml(param)}</code>`).join(' ')}</p>` : ''}
-      ${headers.length ? `<p class="card-hint">Headers requeridos: ${headers.map((header) => `<code>${escapeHtml(header)}</code>`).join(' ')}</p>` : ''}
-      ${requestBodyKeys.length ? `<p class="card-hint">Request body</p><pre><code>${escapeHtml(JSON.stringify(endpoint.request_body, null, 2))}</code></pre>` : ''}
-      ${responsesSection ? `<p class="card-hint">Responses</p>${responsesSection}` : ''}
+      ${pathParams.length ? `<p class="card-hint">${escapeHtml(t('Path params:'))} ${pathParams.map((param) => `<code>${escapeHtml(param)}</code>`).join(' ')}</p>` : ''}
+      ${headers.length ? `<p class="card-hint">${escapeHtml(t('Headers requeridos:'))} ${headers.map((header) => `<code>${escapeHtml(header)}</code>`).join(' ')}</p>` : ''}
+      ${requestBodyKeys.length ? `<p class="card-hint">${t('Request body')}</p><pre><code>${escapeHtml(JSON.stringify(endpoint.request_body, null, 2))}</code></pre>` : ''}
+      ${responsesSection ? `<p class="card-hint">${t('Responses')}</p>${responsesSection}` : ''}
       ${changelogSection}
-      <p class="card-hint" style="color:var(--text-ghost)">ciclo ${escapeHtml(String(endpoint.created_in_cycle ?? '—'))} · ${escapeHtml(endpoint._app)}</p>
+      <p class="card-hint" style="color:var(--text-ghost)">${escapeHtml(
+        t('ciclo {cycle} · {app}', {
+          cycle: String(endpoint.created_in_cycle ?? '—'),
+          app: endpoint._app,
+        }),
+      )}</p>
     </div>
   `;
 }
@@ -5377,8 +6068,10 @@ async function renderComponents(container, params) {
     container.innerHTML = `
       ${header}
       ${emptyState(
-        'Sin componentes registrados',
-        'Los componentes React son registrados en sdd/components.json por el agente sdd-implementor-front al finalizar cada implementación frontend.',
+        t('Sin componentes registrados'),
+        t(
+          'Los componentes React son registrados en sdd/components.json por el agente sdd-implementor-front al finalizar cada implementación frontend.',
+        ),
       )}
     `;
     return;
@@ -5404,10 +6097,14 @@ function collectComponentEntries(registry) {
 
 function componentsHeader(total) {
   return pageHeader({
-    title: 'Componentes',
-    meta: `${total} registrado${total === 1 ? '' : 's'}`,
-    subtitle:
+    title: t('Componentes'),
+    meta: t('{count} registrado{suffix}', {
+      count: total,
+      suffix: total === 1 ? '' : 's',
+    }),
+    subtitle: t(
       'Registro de componentes React del monorepo. Actualizado por el Implementador Frontend al finalizar cada implementación.',
+    ),
   });
 }
 
@@ -5442,7 +6139,7 @@ function renderComponentRow(component) {
   const detail = hasComponentDetail(component);
   return `
     <div class="row-item">
-      <div class="row" data-component-row="${escapeHtml(key)}" ${detail ? inlineRowOpenAttrs(`Ver detalle de ${component.name ?? component.id ?? ''}`) : ''}>
+      <div class="row" data-component-row="${escapeHtml(key)}" ${detail ? inlineRowOpenAttrs(t('Ver detalle de {label}', { label: component.name ?? component.id ?? '' })) : ''}>
         <div class="row-main">
           <span style="font-family:var(--font-mono);font-size:var(--text-14);color:var(--text-bright)">${escapeHtml(component.name ?? '—')}</span>
           <span class="card-hint">${escapeHtml(component.path ?? '—')}</span>
@@ -5462,18 +6159,30 @@ function renderComponentRow(component) {
 function componentDetailBody(component) {
   const changelog = component.changelog ?? [];
   const changelogSection = changelog.length
-    ? `<p class="card-hint">Historial</p><ul>${changelog
+    ? `<p class="card-hint">${t('Historial')}</p><ul>${changelog
         .map(
           (entry) =>
-            `<li>${escapeHtml(`ciclo ${entry.cycle ?? '—'} · ${entry.date ?? '—'} — ${entry.change ?? ''}`)}</li>`,
+            `<li>${escapeHtml(
+              t('ciclo {cycle} · {date} — {change}', {
+                cycle: entry.cycle ?? '—',
+                date: entry.date ?? '—',
+                change: entry.change ?? '',
+              }),
+            )}</li>`,
         )
         .join('')}</ul>`
     : '';
   return `
     <div style="padding:var(--space-4) 4px;display:flex;flex-direction:column;gap:var(--space-3);">
       ${component.description ? `<p class="card-subtitle">${escapeHtml(component.description)}</p>` : ''}
-      <p class="card-hint">${escapeHtml(`ID: ${component.id ?? '—'} · Módulo: ${component.module ?? '—'} · Spec: ${stripSddPrefix(component.spec ?? '—')}`)}</p>
-      <p class="card-hint">Consume: ${formatComponentConsumes(component.consumes)}</p>
+      <p class="card-hint">${escapeHtml(
+        t('ID: {id} · Módulo: {module} · Spec: {spec}', {
+          id: component.id ?? '—',
+          module: component.module ?? '—',
+          spec: stripSddPrefix(component.spec ?? '—'),
+        }),
+      )}</p>
+      <p class="card-hint">${escapeHtml(t('Consume:'))} ${formatComponentConsumes(component.consumes)}</p>
       ${changelogSection}
       <p class="card-hint" style="color:var(--text-ghost)">${escapeHtml(component._app)}</p>
     </div>
@@ -5571,7 +6280,7 @@ function fieldTable({ title, entity }) {
       : '';
   const body = rows.length
     ? rows.map(fieldTableRowHtml).join('')
-    : `<tr><td class="fieldtable-detail" colspan="3">${escapeHtml('Sin propiedades')}</td></tr>`;
+    : `<tr><td class="fieldtable-detail" colspan="3">${escapeHtml(t('Sin propiedades'))}</td></tr>`;
   return `
     <div class="fieldtable-block">
       <div class="fieldtable-title-row">
@@ -5582,9 +6291,9 @@ function fieldTable({ title, entity }) {
         <table class="data-table fieldtable">
           <thead>
             <tr class="fieldtable-head">
-              <th>Campo</th>
-              <th>Tipo</th>
-              <th>Detalle</th>
+              <th>${t('Campo')}</th>
+              <th>${t('Tipo')}</th>
+              <th>${t('Detalle')}</th>
             </tr>
           </thead>
           <tbody>${body}</tbody>
@@ -5606,14 +6315,18 @@ function schemaDefinitionTables(schema) {
 function schemaModalChips(entry) {
   return `
     <div class="chip-row">
-      ${badge(`Valida: ${entry.target}`, 'badge--target')}
-      ${badge(`Escriben: ${entry.writers}`, 'badge--writers')}
+      ${badge(t('Valida: {target}', { target: entry.target }), 'badge--target')}
+      ${badge(t('Escriben: {writers}', { writers: entry.writers }), 'badge--writers')}
     </div>
   `;
 }
 
 function schemaModalFooter(entry) {
-  return `<p class="card-hint">${escapeHtml(`* = campo requerido · "$schema" en ${entry.target} · pnpm sdd:validate lo exige en verde`)}</p>`;
+  return `<p class="card-hint">${escapeHtml(
+    t('* = campo requerido · "$schema" en {target} · pnpm sdd:validate lo exige en verde', {
+      target: entry.target,
+    }),
+  )}</p>`;
 }
 
 async function renderSchemas(container, params) {
@@ -5639,16 +6352,20 @@ async function renderSchemas(container, params) {
   container.innerHTML = `
     ${pageHeader({
       title: 'Schemas JSON',
-      meta: `${available} de ${schemas.length} disponibles`,
-      subtitle:
+      meta: t('{available} de {total} disponibles', {
+        available,
+        total: schemas.length,
+      }),
+      subtitle: t(
         'Tipado estricto de los registros SDD. Cada *.json de sdd/ declara su $schema y valida contra estos archivos.',
+      ),
     })}
     ${manifestFailed ? manifestFallbackHint() : ''}
     <div class="card-grid">${schemas.map((entry) => renderSchemaCard(entry)).join('')}</div>
     <div class="card">
       <p class="card-title">Source of truth</p>
       <p class="card-subtitle">sdd/schemas/</p>
-      <p class="card-hint">Si la documentación en prosa y el schema difieren, gana el schema. <code>pnpm sdd:validate</code> lo exige en verde (local, Reviewer y CI).</p>
+      <p class="card-hint">${t('Si la documentación en prosa y el schema difieren, gana el schema. <code>pnpm sdd:validate</code> lo exige en verde (local, Reviewer y CI).')}</p>
     </div>
   `;
 
@@ -5698,22 +6415,28 @@ function renderSchemaCard(entry) {
           ${statusBadge}
         </div>
         <p class="card-subtitle">sdd/schemas/${escapeHtml(entry.file)}</p>
-        <p class="empty-state-hint">No disponible</p>
+        <p class="empty-state-hint">${t('No disponible')}</p>
       </div>
     `;
   }
   const { title, propertyCount, requiredCount, strict } = entry.stats;
-  const strictSuffix = strict ? ' · estricto' : '';
+  const strictSuffix = strict ? ` · ${t('estricto')}` : '';
   return `
-    <div class="card" tabindex="0" role="button" style="cursor:pointer" data-schema-file="${escapeHtml(entry.file)}" aria-label="Ver detalle de ${escapeHtml(entry.name)}">
+    <div class="card" tabindex="0" role="button" style="cursor:pointer" data-schema-file="${escapeHtml(entry.file)}" aria-label="${escapeHtml(t('Ver detalle de {label}', { label: entry.name }))}">
       <div class="card-header">
         <span class="card-title">${escapeHtml(entry.name)}</span>
         ${statusBadge}
       </div>
       <p class="card-subtitle">${escapeHtml(entry.target)}</p>
       ${title ? `<p class="card-hint">${escapeHtml(title)}</p>` : ''}
-      <p class="card-hint">${escapeHtml(`${propertyCount} propiedades · ${requiredCount} requeridas${strictSuffix}`)}</p>
-      <p class="card-hint">${escapeHtml(`Escriben: ${entry.writers}`)}</p>
+      <p class="card-hint">${escapeHtml(
+        t('{properties} propiedades · {required} requeridas{strictSuffix}', {
+          properties: propertyCount,
+          required: requiredCount,
+          strictSuffix,
+        }),
+      )}</p>
+      <p class="card-hint">${escapeHtml(t('Escriben: {writers}', { writers: entry.writers }))}</p>
     </div>
   `;
 }
@@ -5748,7 +6471,7 @@ function openSchemaModal(entry) {
 
 async function renderHelp(container, params) {
   const results = await Promise.allSettled(
-    CATALOG.helpDocs.map((doc) => loadMarkdown(doc.path)),
+    CATALOG.helpDocs.map((doc) => loadMarkdown(localizedDocPath(doc.path))),
   );
   const docs = CATALOG.helpDocs.map((doc, index) =>
     buildHelpDocEntry(doc, results[index]),
@@ -5779,19 +6502,20 @@ function renderHelpPill(doc, active) {
   const textColor = active ? color : 'var(--text-faint)';
   return `
     <button type="button" data-help-tab="${escapeHtml(doc.id)}" role="tab" aria-selected="${active}" style="display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:var(--radius-lg);border-style:solid;border-width:1px;font-size:var(--text-14);font-weight:var(--weight-medium);background:transparent;cursor:pointer;transition:border-color var(--transition-fast), color var(--transition-fast);border-color:${borderColor};color:${textColor}">
-      ${escapeHtml(doc.label)}
-      <span style="font-family:var(--font-mono);font-size:var(--text-10);padding:2px 6px;border-radius:var(--radius-sm);background:var(--surface-2);color:inherit">${escapeHtml(doc.badge)}</span>
+      ${escapeHtml(t(doc.label))}
+      <span style="font-family:var(--font-mono);font-size:var(--text-10);padding:2px 6px;border-radius:var(--radius-sm);background:var(--surface-2);color:inherit">${escapeHtml(t(doc.badge))}</span>
     </button>
   `;
 }
 
 function renderHelpDescription(doc) {
   const color = helpDocToneColor(doc.id);
-  return `<div style="border:1px solid ${color};border-radius:var(--radius-xl);padding:12px 16px;font-size:var(--text-14);color:var(--text-dim)">${escapeHtml(doc.description)}</div>`;
+  return `<div style="border:1px solid ${color};border-radius:var(--radius-xl);padding:12px 16px;font-size:var(--text-14);color:var(--text-dim)">${escapeHtml(t(doc.description))}</div>`;
 }
 
 function renderHelpContent(doc) {
-  if (doc.error) return emptyState('No se pudo cargar el documento', doc.path);
+  if (doc.error)
+    return emptyState(t('No se pudo cargar el documento'), doc.path);
   return `<div class="tile markdown">${doc.html}</div>`;
 }
 
@@ -5800,16 +6524,19 @@ function renderHelpShell(docs) {
     .map((doc, index) => renderHelpPill(doc, index === 0))
     .join('');
   return `
-    ${pageHeader({ title: 'Ayuda', subtitle: 'Documentación del sistema SDD: guía de uso y referencia completa.' })}
-    <div role="tablist" aria-label="Documentación SDD" style="display:flex;gap:var(--space-2);flex-wrap:wrap">${pills}</div>
+    ${pageHeader({
+      title: t('Ayuda'),
+      subtitle: t('Documentación del sistema SDD: guía de uso y referencia completa.'),
+    })}
+    <div role="tablist" aria-label="${escapeHtml(t('Documentación SDD'))}" style="display:flex;gap:var(--space-2);flex-wrap:wrap">${pills}</div>
     <div data-help-description>${renderHelpDescription(docs[0])}</div>
     <div data-help-content role="tabpanel">${renderHelpContent(docs[0])}</div>
     <section class="card" style="margin-top:16px">
-      <div class="card-header"><span class="card-title">Ejemplos completos</span></div>
+      <div class="card-header"><span class="card-title">${t('Ejemplos completos')}</span></div>
       <p class="card-hint" style="margin:0">
-        Repos SDD reales generados por la CLI, uno por modo (monorepo Nx, standalone y proyecto
-        existente), regenerados desde npm en cada release:
-        <a href="https://github.com/e-burgos/sdd-harness-examples" target="_blank" rel="noreferrer" style="color:var(--text-bright)">github.com/e-burgos/sdd-harness-examples</a>
+        ${t(
+          'Repos SDD reales generados por la CLI, uno por modo (monorepo Nx, standalone y proyecto existente), regenerados desde npm en cada release: <a href="https://github.com/e-burgos/sdd-harness-examples" target="_blank" rel="noreferrer" style="color:var(--text-bright)">github.com/e-burgos/sdd-harness-examples</a>',
+        )}
       </p>
     </section>
   `;
@@ -5842,15 +6569,47 @@ const COSTS_FALLBACK_PRICING = Object.freeze({
   currency: 'USD',
   traditional_hourly_rate: 50,
   model_prices_per_mtok: {
-    haiku: { input: 1, output: 5 },
-    sonnet: { input: 3, output: 15 },
-    opus: { input: 5, output: 25 },
-    fable: { input: 10, output: 50 },
+    'claude/haiku': { input: 1, output: 5 },
+    'claude/sonnet': { input: 3, output: 15 },
+    'claude/opus': { input: 5, output: 25 },
+    'claude/fable': { input: 10, output: 50 },
+    'gemini/flash-lite': { input: 0.25, output: 1.5 },
+    'gemini/flash': { input: 0.5, output: 3 },
+    'gemini/pro': { input: 2, output: 12 },
+    'copilot/gpt-5-mini': { input: 0.25, output: 2 },
+    'copilot/claude-sonnet': { input: 3, output: 15 },
+    'copilot/claude-opus': { input: 5, output: 25 },
+    'copilot/gemini-flash': { input: 1.5, output: 9 },
   },
 });
 
-const COSTS_ASSUMED_TIER = 'sonnet';
+const COSTS_ASSUMED_TIER = 'claude/sonnet';
 const COSTS_UNTIERED = '_untiered';
+const COSTS_LEGACY_TIERS = new Set(['haiku', 'sonnet', 'opus', 'fable']);
+const COSTS_PROVIDER_LABELS = {
+  claude: 'Claude',
+  gemini: 'Gemini',
+  copilot: 'GitHub Copilot',
+};
+
+function normalizeTierKey(tier) {
+  if (!tier) return null;
+  return COSTS_LEGACY_TIERS.has(tier) ? `claude/${tier}` : tier;
+}
+
+function providerOfTier(tier) {
+  if (!tier || tier === COSTS_UNTIERED) return null;
+  const slash = tier.indexOf('/');
+  return slash === -1 ? null : tier.slice(0, slash);
+}
+
+function normalizePricingKeys(prices) {
+  const normalized = {};
+  for (const [tier, price] of Object.entries(prices ?? {})) {
+    normalized[normalizeTierKey(tier)] = price;
+  }
+  return normalized;
+}
 
 const COSTS_SERIES = Object.freeze({
   traditional: '#8b5cf6',
@@ -5862,7 +6621,15 @@ const COSTS_SERIES = Object.freeze({
 async function loadPricing() {
   try {
     const pricing = await fetchJson('pricing.json');
-    return { ...COSTS_FALLBACK_PRICING, ...pricing, missing: false };
+    return {
+      ...COSTS_FALLBACK_PRICING,
+      ...pricing,
+      model_prices_per_mtok: normalizePricingKeys(
+        pricing.model_prices_per_mtok ??
+          COSTS_FALLBACK_PRICING.model_prices_per_mtok,
+      ),
+      missing: false,
+    };
   } catch {
     return { ...COSTS_FALLBACK_PRICING, missing: true };
   }
@@ -5879,7 +6646,7 @@ function emptyCostUsage() {
 }
 
 function addTierTokens(usage, tier, tokensIn, tokensOut) {
-  const key = tier ?? COSTS_UNTIERED;
+  const key = normalizeTierKey(tier) ?? COSTS_UNTIERED;
   usage.byTier[key] ??= { tokensIn: 0, tokensOut: 0 };
   usage.byTier[key].tokensIn += tokensIn;
   usage.byTier[key].tokensOut += tokensOut;
@@ -5923,6 +6690,19 @@ function usageFromTasks(tasks) {
   return usage;
 }
 
+function usageFromFixEntry(fix) {
+  const usage = emptyCostUsage();
+  if (!fix.usage) return usage;
+  usage.durationMinutes = fix.usage.duration_minutes ?? 0;
+  addTierTokens(
+    usage,
+    fix.usage.model_tier ?? null,
+    fix.usage.tokens_in ?? 0,
+    fix.usage.tokens_out ?? 0,
+  );
+  return usage;
+}
+
 function agenticCostUsd(usage, pricing) {
   let cost = 0;
   let assumed = false;
@@ -5942,9 +6722,10 @@ function agenticCostUsd(usage, pricing) {
 }
 
 async function loadCostsData() {
-  const [pricing, cycleIndex] = await Promise.all([
+  const [pricing, cycleIndex, fixesData] = await Promise.all([
     loadPricing(),
     loadCycleIndex(),
+    loadFixes().catch(() => null),
   ]);
 
   const results = await Promise.allSettled(
@@ -5992,22 +6773,72 @@ async function loadCostsData() {
       ? a.cycleId.localeCompare(b.cycleId)
       : a.specId.localeCompare(b.specId),
   );
-  return { pricing, rows };
+
+  const fixRows = (fixesData?.fixes ?? []).map((fix) => {
+    const usage = usageFromFixEntry(fix);
+    const agentic = agenticCostUsd(usage, pricing);
+    const estimationHours = fix.estimation_hours ?? 0;
+    return {
+      fixId: fix.id,
+      title: fix.title ?? fix.id,
+      type: fix.type ?? 'FIX',
+      status: fix.status ?? 'pending',
+      specId: fix.spec_id,
+      estimationHours,
+      traditionalCost: estimationHours * pricing.traditional_hourly_rate,
+      usage,
+      agenticCost: agentic.cost,
+      tierAssumed: agentic.assumed,
+    };
+  });
+
+  return { pricing, rows, fixRows };
+}
+
+function providerTotals(rows, fixRows, pricing) {
+  const totals = new Map();
+  const accumulate = (usage) => {
+    for (const [tier, tokens] of Object.entries(usage.byTier)) {
+      const provider = providerOfTier(tier) ?? COSTS_UNTIERED;
+      const entry = totals.get(provider) ?? {
+        tokensIn: 0,
+        tokensOut: 0,
+        cost: 0,
+        models: new Set(),
+      };
+      entry.tokensIn += tokens.tokensIn;
+      entry.tokensOut += tokens.tokensOut;
+      const partial = emptyCostUsage();
+      partial.byTier[tier] = tokens;
+      entry.cost += agenticCostUsd(partial, pricing).cost;
+      if (provider !== COSTS_UNTIERED) {
+        entry.models.add(tier.slice(provider.length + 1));
+      }
+      totals.set(provider, entry);
+    }
+  };
+  for (const row of rows) accumulate(row.usage);
+  for (const fix of fixRows) accumulate(fix.usage);
+  return totals;
 }
 
 function costsMoneyFormatter(currency) {
-  return new Intl.NumberFormat('es-AR', {
+  return new Intl.NumberFormat(localeTag(), {
     style: 'currency',
     currency,
     maximumFractionDigits: 2,
   });
 }
 
-const costsTokensFormat = new Intl.NumberFormat('es-AR', {
-  notation: 'compact',
-  maximumFractionDigits: 1,
-});
-const costsExactFormat = new Intl.NumberFormat('es-AR');
+function costsTokensFormat() {
+  return new Intl.NumberFormat(localeTag(), {
+    notation: 'compact',
+    maximumFractionDigits: 1,
+  });
+}
+function costsExactFormat() {
+  return new Intl.NumberFormat(localeTag());
+}
 
 function costsLegend(entries) {
   const chips = entries
@@ -6078,33 +6909,43 @@ function costsComparisonCard(rows, pricing, money) {
         <div style="display:grid;gap:2px;margin-bottom:14px">
           <a href="#/cycles" style="font-family:var(--font-mono);font-size:var(--text-12);color:var(--text-strong);text-decoration:none;margin-bottom:2px">${escapeHtml(specId)}</a>
           ${costBarRow({
-            label: 'Tradicional',
+            label: t('Tradicional'),
             valueLabel: money.format(entry.traditional),
             segments: [
               { value: entry.traditional, color: COSTS_SERIES.traditional },
             ],
             max,
-            tip: `${specId} — estimación tradicional: ${money.format(entry.traditional)} (horas de tasks × tarifa ${money.format(pricing.traditional_hourly_rate)}/h)`,
+            tip: t(
+              '{specId} — estimación tradicional: {cost} (horas de tasks × tarifa {rate}/h)',
+              {
+                specId,
+                cost: money.format(entry.traditional),
+                rate: money.format(pricing.traditional_hourly_rate),
+              },
+            ),
           })}
           ${costBarRow({
-            label: 'Agéntico',
+            label: t('Agéntico'),
             valueLabel: agenticLabel,
             segments: [{ value: entry.agentic, color: COSTS_SERIES.agentic }],
             max,
             tip: entry.hasUsage
-              ? `${specId} — costo agéntico aproximado: ${money.format(entry.agentic)} (tokens × tarifa por tier)`
-              : `${specId} — sin telemetría de tokens todavía`,
+              ? t(
+                  '{specId} — costo agéntico aproximado: {cost} (tokens × tarifa por tier)',
+                  { specId, cost: money.format(entry.agentic) },
+                )
+              : t('{specId} — sin telemetría de tokens todavía', { specId }),
           })}
         </div>`;
     })
     .join('');
   return `
     <section class="card" style="margin-bottom:16px">
-      <div class="card-header"><span class="card-title">Costo por spec — tradicional vs agéntico</span></div>
-      <p class="card-subtitle">Estimación tradicional (horas × tarifa) contra el costo aproximado de tokens del modo agéntico.</p>
+      <div class="card-header"><span class="card-title">${t('Costo por spec — tradicional vs agéntico')}</span></div>
+      <p class="card-subtitle">${t('Estimación tradicional (horas × tarifa) contra el costo aproximado de tokens del modo agéntico.')}</p>
       ${costsLegend([
-        { label: 'Tradicional', color: COSTS_SERIES.traditional },
-        { label: 'Agéntico', color: COSTS_SERIES.agentic },
+        { label: t('Tradicional'), color: COSTS_SERIES.traditional },
+        { label: t('Agéntico'), color: COSTS_SERIES.agentic },
       ])}
       ${blocks}
     </section>`;
@@ -6115,8 +6956,8 @@ function costsTokensCard(rows) {
   if (withTokens.length === 0) {
     return `
       <section class="card" style="margin-bottom:16px">
-        <div class="card-header"><span class="card-title">Tokens por ciclo</span></div>
-        <p class="card-hint">Sin telemetría todavía. Se registra al cerrar cada ciclo: <code>cycle.json → metrics.usage</code> (lo hace el sdd-reviewer) o por task en <code>tasks.json → usage</code>.</p>
+        <div class="card-header"><span class="card-title">${t('Tokens por ciclo')}</span></div>
+        <p class="card-hint">${t('Sin telemetría todavía. Se registra al cerrar cada ciclo: <code>cycle.json → metrics.usage</code> (lo hace el sdd-reviewer) o por task en <code>tasks.json → usage</code>.')}</p>
       </section>`;
   }
   const max = Math.max(
@@ -6128,7 +6969,7 @@ function costsTokensCard(rows) {
       costBarRow({
         label: `${shortSpecLabel(row.specId)} · ${row.cycleId}`,
         href: '#/cycles',
-        valueLabel: costsTokensFormat.format(
+        valueLabel: costsTokensFormat().format(
           row.usage.tokensIn + row.usage.tokensOut,
         ),
         segments: [
@@ -6136,16 +6977,24 @@ function costsTokensCard(rows) {
           { value: row.usage.tokensOut, color: COSTS_SERIES.tokensOut },
         ],
         max,
-        tip: `${row.specId} ${row.cycleId} — entrada: ${costsExactFormat.format(row.usage.tokensIn)} tokens · salida: ${costsExactFormat.format(row.usage.tokensOut)} tokens`,
+        tip: t(
+          '{specId} {cycleId} — entrada: {tokensIn} tokens · salida: {tokensOut} tokens',
+          {
+            specId: row.specId,
+            cycleId: row.cycleId,
+            tokensIn: costsExactFormat().format(row.usage.tokensIn),
+            tokensOut: costsExactFormat().format(row.usage.tokensOut),
+          },
+        ),
       }),
     )
     .join('');
   return `
     <section class="card" style="margin-bottom:16px">
-      <div class="card-header"><span class="card-title">Tokens por ciclo</span></div>
+      <div class="card-header"><span class="card-title">${t('Tokens por ciclo')}</span></div>
       ${costsLegend([
-        { label: 'Entrada', color: COSTS_SERIES.tokensIn },
-        { label: 'Salida', color: COSTS_SERIES.tokensOut },
+        { label: t('Entrada'), color: COSTS_SERIES.tokensIn },
+        { label: t('Salida'), color: COSTS_SERIES.tokensOut },
       ])}
       <div style="display:grid;gap:4px">${bars}</div>
     </section>`;
@@ -6155,7 +7004,7 @@ function costsTableCard(rows, money) {
   const body = rows
     .map((row) => {
       const tokens = row.usage.hasData
-        ? `${costsExactFormat.format(row.usage.tokensIn)} / ${costsExactFormat.format(row.usage.tokensOut)}`
+        ? `${costsExactFormat().format(row.usage.tokensIn)} / ${costsExactFormat().format(row.usage.tokensOut)}`
         : '—';
       const agentic = row.usage.hasData
         ? money.format(row.agenticCost) + (row.tierAssumed ? ' *' : '')
@@ -6167,7 +7016,7 @@ function costsTableCard(rows, money) {
         <tr>
           <td><a href="#/cycles" style="color:var(--text-bright)">${escapeHtml(row.specId)} · ${escapeHtml(row.cycleId)}</a></td>
           <td>${escapeHtml(row.module)}</td>
-          <td style="text-align:right">${costsExactFormat.format(row.estimationHours)} h</td>
+          <td style="text-align:right">${costsExactFormat().format(row.estimationHours)} h</td>
           <td style="text-align:right">${money.format(row.traditionalCost)}</td>
           <td style="text-align:right">${escapeHtml(tokens)}</td>
           <td style="text-align:right">${escapeHtml(agentic)}</td>
@@ -6177,9 +7026,82 @@ function costsTableCard(rows, money) {
     .join('');
   return `
     <section class="card" style="margin-bottom:16px">
-      <div class="card-header"><span class="card-title">Detalle por ciclo</span></div>
+      <div class="card-header"><span class="card-title">${t('Detalle por ciclo')}</span></div>
       <div class="table-wrapper"><table class="data-table">
-        <thead><tr><th>Ciclo</th><th>Módulo</th><th style="text-align:right">Horas est.</th><th style="text-align:right">Costo trad.</th><th style="text-align:right">Tokens in/out</th><th style="text-align:right">Costo agéntico</th><th style="text-align:right">Ahorro</th></tr></thead>
+        <thead><tr><th>${t('Ciclo')}</th><th>${t('Módulo')}</th><th style="text-align:right">${t('Horas est.')}</th><th style="text-align:right">${t('Costo trad.')}</th><th style="text-align:right">${t('Tokens in/out')}</th><th style="text-align:right">${t('Costo agéntico')}</th><th style="text-align:right">${t('Ahorro')}</th></tr></thead>
+        <tbody>${body}</tbody>
+      </table></div>
+    </section>`;
+}
+
+function costsProvidersCard(rows, fixRows, pricing, money) {
+  const totals = providerTotals(rows, fixRows, pricing);
+  if (totals.size === 0) {
+    return `
+      <section class="card" style="margin-bottom:16px">
+        <div class="card-header"><span class="card-title">${t('Consumo por proveedor')}</span></div>
+        <p class="card-hint">${t('Sin telemetría con proveedor declarado todavía. Las claves de {field} llevan la forma {example}.', { field: '<code>by_tier</code> / <code>model_tier</code>', example: '<code>proveedor/modelo</code> (<code>claude/opus</code>, <code>gemini/pro</code>, <code>copilot/gpt-5-mini</code>)' })}</p>
+      </section>`;
+  }
+  const body = [...totals.entries()]
+    .sort((a, b) => b[1].cost - a[1].cost)
+    .map(([provider, entry]) => {
+      const label =
+        provider === COSTS_UNTIERED
+          ? t('Sin proveedor declarado')
+          : (COSTS_PROVIDER_LABELS[provider] ?? provider);
+      const models =
+        entry.models.size > 0 ? [...entry.models].sort().join(', ') : '—';
+      return `
+        <tr>
+          <td>${escapeHtml(label)}</td>
+          <td>${escapeHtml(models)}</td>
+          <td style="text-align:right">${costsExactFormat().format(entry.tokensIn)}</td>
+          <td style="text-align:right">${costsExactFormat().format(entry.tokensOut)}</td>
+          <td style="text-align:right">${money.format(entry.cost)}</td>
+        </tr>`;
+    })
+    .join('');
+  return `
+    <section class="card" style="margin-bottom:16px">
+      <div class="card-header"><span class="card-title">${t('Consumo por proveedor')}</span></div>
+      <p class="card-subtitle">${t('Tokens y costo agéntico agregados por proveedor (ciclos + fixes), según las claves proveedor/modelo de la telemetría.')}</p>
+      <div class="table-wrapper"><table class="data-table">
+        <thead><tr><th>${t('Proveedor')}</th><th>${t('Modelos usados')}</th><th style="text-align:right">${t('Tokens in')}</th><th style="text-align:right">${t('Tokens out')}</th><th style="text-align:right">${t('Costo aprox.')}</th></tr></thead>
+        <tbody>${body}</tbody>
+      </table></div>
+    </section>`;
+}
+
+function costsFixesCard(fixRows, money) {
+  if (fixRows.length === 0) return '';
+  const withUsage = fixRows.filter((fix) => fix.usage.hasData).length;
+  const body = fixRows
+    .map((fix) => {
+      const tokens = fix.usage.hasData
+        ? `${costsExactFormat().format(fix.usage.tokensIn)} / ${costsExactFormat().format(fix.usage.tokensOut)}`
+        : '—';
+      const agentic = fix.usage.hasData
+        ? money.format(fix.agenticCost) + (fix.tierAssumed ? ' *' : '')
+        : '—';
+      return `
+        <tr>
+          <td><a href="#/fixes" style="color:var(--text-bright)">${escapeHtml(fix.fixId)}</a></td>
+          <td>${escapeHtml(fix.title)}</td>
+          <td>${escapeHtml(fix.type)}</td>
+          <td style="text-align:right">${costsExactFormat().format(fix.estimationHours)} h</td>
+          <td style="text-align:right">${money.format(fix.traditionalCost)}</td>
+          <td style="text-align:right">${escapeHtml(tokens)}</td>
+          <td style="text-align:right">${escapeHtml(agentic)}</td>
+        </tr>`;
+    })
+    .join('');
+  return `
+    <section class="card" style="margin-bottom:16px">
+      <div class="card-header"><span class="card-title">${t('Costos de fixes')}</span></div>
+      <p class="card-subtitle">${t('{count} fixes registrados, {withUsage} con telemetría. El usage se registra al cerrar cada fix (FIX GATE).', { count: fixRows.length, withUsage })}</p>
+      <div class="table-wrapper"><table class="data-table">
+        <thead><tr><th>Fix</th><th>${t('Título')}</th><th>${t('Tipo')}</th><th style="text-align:right">${t('Horas est.')}</th><th style="text-align:right">${t('Costo trad.')}</th><th style="text-align:right">${t('Tokens in/out')}</th><th style="text-align:right">${t('Costo agéntico')}</th></tr></thead>
         <tbody>${body}</tbody>
       </table></div>
     </section>`;
@@ -6194,13 +7116,13 @@ function costsMethodologyCard(pricing, anyAssumed, money) {
     .join('');
   return `
     <section class="card">
-      <div class="card-header"><span class="card-title">Metodología y tarifas</span></div>
+      <div class="card-header"><span class="card-title">${t('Metodología y tarifas')}</span></div>
       <p class="card-hint">
-        <strong>Tradicional</strong> = Σ estimation_hours de las tasks × ${money.format(pricing.traditional_hourly_rate)}/h.
-        <strong>Agéntico</strong> = tokens registrados × tarifa del tier (USD por millón de tokens).
-        La telemetría la escribe el sdd-reviewer al cerrar cada ciclo (<code>metrics.usage</code>) o los implementadores por task; es aproximada por diseño.
-        ${anyAssumed ? `* Tokens sin tier declarado se tarifan como <code>${COSTS_ASSUMED_TIER}</code>.` : ''}
-        ${pricing.missing ? 'No hay <code>sdd/pricing.json</code> — usando tarifas por defecto del kit.' : 'Tarifas editables en <code>sdd/pricing.json</code>.'}
+        <strong>${t('Tradicional')}</strong> = ${t('Σ estimation_hours de las tasks × {rate}/h.', { rate: money.format(pricing.traditional_hourly_rate) })}
+        <strong>${t('Agéntico')}</strong> = ${t('tokens registrados × tarifa del tier (USD por millón de tokens).')}
+        ${t('La telemetría la escribe el sdd-reviewer al cerrar cada ciclo (<code>metrics.usage</code>) o los implementadores por task; es aproximada por diseño.')}
+        ${anyAssumed ? t('* Tokens sin tier declarado se tarifan como <code>{tier}</code>.', { tier: COSTS_ASSUMED_TIER }) : ''}
+        ${pricing.missing ? t('No hay <code>sdd/pricing.json</code> — usando tarifas por defecto del kit.') : t('Tarifas editables en <code>sdd/pricing.json</code>.')}
       </p>
       <div class="table-wrapper"><table class="data-table">
         <thead><tr><th>Tier</th><th style="text-align:right">Input /MTok</th><th style="text-align:right">Output /MTok</th></tr></thead>
@@ -6240,24 +7162,27 @@ function attachCostsTooltip(container) {
 }
 
 async function renderCosts(container) {
-  const { pricing, rows } = await loadCostsData();
+  const { pricing, rows, fixRows } = await loadCostsData();
   const money = costsMoneyFormatter(pricing.currency ?? 'USD');
 
-  if (rows.length === 0) {
+  if (rows.length === 0 && fixRows.length === 0) {
     container.innerHTML = `
       ${pageHeader({
-        title: 'Costos',
-        subtitle:
+        title: t('Costos'),
+        subtitle: t(
           'Tokens, tiempos y comparativa de costos del modo agéntico contra la estimación tradicional.',
+        ),
       })}
       ${emptyState(
-        'Sin ciclos todavía',
-        'Cuando el loop SDD complete ciclos con tasks estimadas y telemetría de tokens, el tablero aparece acá.',
+        t('Sin ciclos todavía'),
+        t(
+          'Cuando el loop SDD complete ciclos con tasks estimadas y telemetría de tokens, el tablero aparece acá.',
+        ),
       )}`;
     return;
   }
 
-  const totals = rows.reduce(
+  const totals = [...rows, ...fixRows].reduce(
     (acc, row) => {
       acc.hours += row.estimationHours;
       acc.traditional += row.traditionalCost;
@@ -6282,45 +7207,54 @@ async function renderCosts(container) {
 
   const kpis = [
     dashboardStatCell({
-      value: `${costsExactFormat.format(totals.hours)} h`,
-      label: 'Horas estimadas',
+      value: `${costsExactFormat().format(totals.hours)} h`,
+      label: t('Horas estimadas'),
       href: '#/tasks',
     }),
     dashboardStatCell({
       value: money.format(totals.traditional),
-      label: 'Costo tradicional',
+      label: t('Costo tradicional'),
       href: '#/tasks',
     }),
     dashboardStatCell({
-      value: totals.hasUsage ? costsTokensFormat.format(totals.tokens) : '—',
-      label: 'Tokens consumidos',
+      value: totals.hasUsage ? costsTokensFormat().format(totals.tokens) : '—',
+      label: t('Tokens consumidos'),
       href: '#/cycles',
     }),
     dashboardStatCell({
       value: totals.hasUsage ? money.format(totals.agentic) : '—',
-      label: 'Costo agéntico aprox.',
+      label: t('Costo agéntico aprox.'),
       href: '#/cycles',
     }),
     dashboardStatCell({
       value: totals.hasUsage ? money.format(saving) : '—',
-      label: 'Ahorro proyectado',
+      label: t('Ahorro proyectado'),
       href: '#/cycles',
       accent: totals.hasUsage && saving > 0,
-      sub: totals.hasUsage ? `${savingPct}% menos` : '',
+      sub: totals.hasUsage ? t('{pct}% menos', { pct: savingPct }) : '',
     }),
   ].join('');
 
   container.innerHTML = `
     ${pageHeader({
-      title: 'Costos',
-      meta: `${rows.length} ciclos`,
-      subtitle:
+      title: t('Costos'),
+      meta:
+        fixRows.length > 0
+          ? t('{cycles} ciclos · {fixes} fixes', {
+              cycles: rows.length,
+              fixes: fixRows.length,
+            })
+          : t('{cycles} ciclos', { cycles: rows.length }),
+      subtitle: t(
         'Tokens, tiempos y comparativa de costos del modo agéntico contra la estimación tradicional de las tasks.',
+      ),
     })}
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin-bottom:20px">${kpis}</div>
     ${costsComparisonCard(rows, pricing, money)}
+    ${costsProvidersCard(rows, fixRows, pricing, money)}
     ${costsTokensCard(rows)}
     ${costsTableCard(rows, money)}
+    ${costsFixesCard(fixRows, money)}
     ${costsMethodologyCard(pricing, totals.anyAssumed, money)}
   `;
   attachCostsTooltip(container);
@@ -6328,8 +7262,8 @@ async function renderCosts(container) {
 
 async function renderNotFound(container, params) {
   container.innerHTML = emptyState(
-    'Vista no encontrada',
-    'El hash no coincide con ninguna vista disponible.',
+    t('Vista no encontrada'),
+    t('El hash no coincide con ninguna vista disponible.'),
   );
 }
 
@@ -6464,7 +7398,7 @@ function navItemHtml(key, meta) {
       <span class="nav-bar"></span>
       <a class="nav-link" href="#/${key}" data-view="${key}">
         <span class="nav-icon">${icon(meta.icon)}</span>
-        ${escapeHtml(meta.label)}
+        ${escapeHtml(t(meta.label))}
       </a>
     </li>
   `;
@@ -6481,7 +7415,7 @@ function navSectionHtml(section, entries) {
         data-nav-section="${escapeHtml(section)}"
         aria-expanded="${expanded}"
       >
-        <span class="nav-section-title">${escapeHtml(section)}</span>
+        <span class="nav-section-title">${escapeHtml(t(section))}</span>
         <svg class="nav-section-chevron" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <polyline points="4,2 8,6 4,10" />
         </svg>
@@ -6578,7 +7512,7 @@ async function paintShellChrome() {
   if (brandEl) brandEl.textContent = project;
   if (liveEl) {
     const updatedAt = lastLoadedAt
-      ? lastLoadedAt.toLocaleTimeString('es-AR', {
+      ? lastLoadedAt.toLocaleTimeString(localeTag(), {
           hour: '2-digit',
           minute: '2-digit',
           second: '2-digit',
@@ -6596,7 +7530,7 @@ async function paintShellChrome() {
 async function mountView(view, params) {
   const token = ++mountToken;
   const meta = VIEWS[view];
-  const label = view === 'notFound' ? 'No encontrada' : meta.label;
+  const label = view === 'notFound' ? t('No encontrada') : t(meta.label);
   setViewTitle(label);
   updateActiveNavLink(view);
   const viewport = document.getElementById('view');
@@ -6762,6 +7696,14 @@ function startLiveSync() {
 }
 
 function bootstrap() {
+  document.documentElement.lang = currentLang;
+  paintLangToggle();
+  paintStaticChrome();
+  for (const button of document.querySelectorAll('.lang-toggle')) {
+    button.addEventListener('click', () => {
+      setLang(currentLang === 'es' ? 'en' : 'es');
+    });
+  }
   buildNav();
   startLiveSync();
   document.addEventListener('click', scrollToMarkdownAnchor);

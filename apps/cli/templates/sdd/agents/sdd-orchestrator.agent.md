@@ -1,6 +1,7 @@
 ---
 name: sdd-orchestrator
 description: Orquestador del ciclo SDD. Coordina todos los agentes del proyecto de este repositorio. Invocar al iniciar cualquier ciclo de desarrollo.
+model: opus
 ---
 
 # Agente Orquestador SDD

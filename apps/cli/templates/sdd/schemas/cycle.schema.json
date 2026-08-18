@@ -105,9 +105,12 @@
                 "by_tier": {
                   "type": "object",
                   "additionalProperties": false,
-                  "propertyNames": { "enum": ["haiku", "sonnet", "opus", "fable"] },
+                  "description": "Keys are provider-namespaced models (claude/opus, gemini/pro, copilot/gpt-5-mini). Bare legacy keys (haiku|sonnet|opus|fable) are still accepted and read as claude/*.",
+                  "propertyNames": {
+                    "pattern": "^(haiku|sonnet|opus|fable|(claude|gemini|copilot)/[a-z0-9][a-z0-9.-]*)$"
+                  },
                   "patternProperties": {
-                    "^(haiku|sonnet|opus|fable)$": {
+                    "^(haiku|sonnet|opus|fable|(claude|gemini|copilot)/[a-z0-9][a-z0-9.-]*)$": {
                       "type": "object",
                       "required": ["tokens_in", "tokens_out"],
                       "additionalProperties": false,

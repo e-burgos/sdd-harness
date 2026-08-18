@@ -128,9 +128,11 @@ sdd/
 │   ├── apps/java-api/                 ← App Spring Boot bajo Nx (Nx no la genera)
 │   └── libs/ts-lib/                   ← Lib TypeScript compartida
 │
-├── dual-harness/                      ← Fuente de verdad de AGENTS.md y CLAUDE.md de la raíz
+├── dual-harness/                      ← Fuente de verdad de AGENTS.md, CLAUDE.md y GEMINI.md de la raíz
 │   ├── AGENTS.md                      ← Instrucciones para GitHub Copilot Agents
-│   └── CLAUDE.md                      ← Instrucciones para Claude Code
+│   ├── CLAUDE.md                      ← Instrucciones para Claude Code
+│   ├── GEMINI.md                      ← Instrucciones para Antigravity IDE y Gemini CLI
+│   └── rules/                         ← Rules condensadas y siempre activas para Antigravity (fuente: GEMINI.md, cap 12k chars c/u)
 │
 ├── prompts/                           ← Prompts de entrada para agentes
 │   ├── start-sdd-cycle.prompt.md
@@ -200,7 +202,7 @@ Todos los artefactos SDD están centralizados en `sdd/` y se hacen visibles a m�
 sdd/agents/        ← Fuente única de verdad
 sdd/skills/        ← Fuente única de verdad
 sdd/prompts/       ← Fuente única de verdad
-sdd/dual-harness/  ← Fuente única de verdad (AGENTS.md y CLAUDE.md de la raíz)
+sdd/dual-harness/  ← Fuente única de verdad (AGENTS.md, CLAUDE.md y GEMINI.md de la raíz)
 
 .claude/agents/          → symlink a sdd/agents/      (Claude Code — subagentes)
 .claude/skills/          → symlink a sdd/skills/      (Claude Code — Agent Skills, SKILL.md)
@@ -212,15 +214,27 @@ sdd/dual-harness/  ← Fuente única de verdad (AGENTS.md y CLAUDE.md de la raí
 .github/skills/generate-*/ → symlinks individuales a sdd/skills/generate-*/
 .github/prompts/*.prompt.md → symlinks individuales a sdd/prompts/*.prompt.md
 
+.agents/rules/sdd-*.md          → symlinks individuales a sdd/dual-harness/rules/       (Antigravity — rules siempre activas)
+.agents/skills/<skill>/         → symlinks individuales a sdd/skills/<skill>/           (Antigravity + Gemini CLI — estándar SKILL.md compartido)
+.agent/workflows/<prompt>.md    → symlinks individuales a sdd/prompts/<prompt>.prompt.md (Antigravity — expuestos como workflows /<prompt>)
+.gemini/commands/<prompt>.toml  → wrapper GENERADO alrededor de sdd/prompts/<prompt>.prompt.md (Gemini CLI — expuestos como comandos /<prompt>)
+.gemini/settings.json           → FUSIONADO, nunca sobreescrito (agrega GEMINI.md/AGENTS.md a context.fileName)
+
 AGENTS.md (raíz)         → symlink a sdd/dual-harness/AGENTS.md
 CLAUDE.md  (raíz)        → symlink a sdd/dual-harness/CLAUDE.md
+GEMINI.md  (raíz)        → symlink a sdd/dual-harness/GEMINI.md
 .github/copilot-instructions.md → ARCHIVO REAL (no symlink) — resumen mínimo + punteros
 ```
 
 > `.github/skills/` y `.github/prompts/` usan symlinks individuales para **no pisar** los archivos Nx y Copilot existentes.  
-> `AGENTS.md` y `CLAUDE.md` en la raíz son symlinks: editar **siempre** en `sdd/dual-harness/`.
+> `AGENTS.md`, `CLAUDE.md` y `GEMINI.md` en la raíz son symlinks: editar **siempre** en `sdd/dual-harness/`.
 > `.github/copilot-instructions.md` es un archivo real a propósito: los lectores server-side de
 > GitHub (Copilot code review) no siguen symlinks. Solo contiene punteros — el detalle vive en dual-harness.
+> `.gemini/commands/*.toml` son **generados**, no symlinks — TOML no tiene equivalente a un
+> include de Markdown, así que `setup:agents` regenera un wrapper liviano por cada
+> `sdd/prompts/*.prompt.md` en cada corrida; cualquier comando sin el marcador del generador
+> queda intacto. `.gemini/settings.json` se fusiona de la misma forma: solo se toca su lista
+> `context.fileName`, nunca el resto del archivo.
 
 **Compatibilidad verificada:**
 
@@ -230,6 +244,8 @@ CLAUDE.md  (raíz)        → symlink a sdd/dual-harness/CLAUDE.md
 | Copilot coding agent (cloud)      | `AGENTS.md` (+ `CLAUDE.md` fallback), `.github/agents/*.agent.md`, `.github/skills/*/SKILL.md` — clona en Linux, los symlinks resuelven | ✅             |
 | VS Code Copilot Chat              | `.github/prompts/*.prompt.md`, custom agents, Agent Skills                                                                              | ✅             |
 | Copilot code review (server-side) | `.github/copilot-instructions.md` (archivo real)                                                                                        | ✅             |
+| Antigravity IDE                   | `GEMINI.md`, `.agents/rules/*.md`, `.agents/skills/*/SKILL.md`, `.agent/workflows/*.md` (como workflows `/<prompt>`)                    | ✅             |
+| Gemini CLI                        | `GEMINI.md` (+ `AGENTS.md`, vía el `.gemini/settings.json` fusionado), `.agents/skills/*/SKILL.md`, `.gemini/commands/*.toml` (como comandos `/<prompt>`) | ✅ |
 | Windows sin Developer Mode        | git checkout deja los symlinks como archivos de texto → correr `pnpm setup:agents` (crea junctions)                                     | ⚠️ obligatorio |
 
 > ⛔ El archivo de cada skill se llama **`SKILL.md` en MAYÚSCULA** — es el estándar Agent
@@ -250,8 +266,8 @@ pnpm setup:agents   # macOS/Linux: bash sdd/scripts/setup-agents.sh
 Este enfoque garantiza:
 
 - ✅ Una única fuente de verdad — DRY principle
-- ✅ Sin duplicación entre `.claude/` y `.github/`
-- ✅ Ambas herramientas ven los mismos agentes, skills y prompts
+- ✅ Sin duplicación entre `.claude/`, `.github/` y `.agents/`/`.agent/`/`.gemini/`
+- ✅ Los tres proveedores ven los mismos agentes, skills y prompts
 - ✅ Portable: copiar `sdd/` a otro proyecto funciona sin cambios
 
 ---
@@ -400,9 +416,11 @@ mismo descubrimiento. Dos capas con costo de lectura asimétrico por diseño:
   sin merge conflicts. Regla completa: sección 🧠 del dual-harness.
 
 Relacionado: al cerrar cada ciclo el reviewer registra la **telemetría de uso**
-(`cycle.json → metrics.usage`: tokens por tier, minutos) que alimenta la vista
-**Costos** del visor (`pnpm sdd:docs`) — comparativa agéntico vs estimación
-tradicional, con tarifas editables en `sdd/pricing.json`.
+(`cycle.json → metrics.usage`: tokens por proveedor/tier vía `by_tier`, minutos) que
+alimenta la vista **Costos** del visor (`pnpm sdd:docs`) — comparativa agéntico vs
+estimación tradicional entre los tres proveedores, más una tabla de costo de fixes
+armada con el `usage` registrado en `sdd/fixes.json`, con tarifas editables en
+`sdd/pricing.json`.
 
 ---
 
@@ -845,7 +863,10 @@ Responde: **¿Qué cambios se hicieron fuera del flujo SDD normal?**
 Cada fix (schema: `sdd/schemas/fixes.schema.json`) tiene: `id` (`FIX-[gh-user]-[seq]`), `author`, `spec_id`,
 `fix_document`, `type` (`HOTFIX|BUGFIX|FIX|IMPROVEMENT`), `severity`, `title`, `description`, `justification`,
 `estimation_hours`, `related_modules`, `affected_files`, `test_reference`, `cycle`, fechas y
-`status` (`pending → in-progress → implemented → validated | absorbed`).
+`status` (`pending → in-progress → implemented → validated | absorbed`). También acepta un
+**`usage` opcional** (`tokens_in`/`tokens_out`/`duration_minutes`/`model_tier`, con namespace de
+proveedor, ej. `claude/opus`) que el dev registra al cerrarlo — el prompt del FIX GATE lo pide y
+alimenta la vista Costos del visor junto con `cycle.json → metrics.usage`.
 
 **Quién lo actualiza:** Orquestador (FIX GATE) → desarrollador (`implemented` al terminar) → Reviewer (`validated`/`absorbed` al cerrar el ciclo).
 
@@ -934,17 +955,25 @@ recibe request de cambios.
 
 ### 5. Selección de modelo y esfuerzo
 
-Antes de encarar cualquier tarea, elegir explícitamente el tier más barato que la cumpla con
-calidad — para el trabajo propio y para **cada** subagente que se dispare:
+Antes de encarar cualquier tarea, elegir explícitamente el **tier** más barato que la cumpla
+con calidad — para el trabajo propio y para **cada** subagente que se dispare. La regla aplica
+a los tres proveedores que soporta el arnés; cada uno elige el modelo a su manera, pero todos
+mapean a los mismos cuatro tiers abstractos:
 
-| Tipo de tarea                                                          | Modelo   | Esfuerzo       |
-| ---------------------------------------------------------------------- | -------- | -------------- |
-| Lectura de estado, formateo, edición mecánica, grep dirigido           | `haiku`  | `low`–`medium` |
-| Implementación estándar (una task acotada), tests                      | `sonnet` | `medium`       |
-| Arquitectura, decisiones cross-cutting, orquestación, review de cierre | `opus`   | `high`–`xhigh` |
+| Tier          | Tipo de tarea                                                        | Claude (`model`/`effort`) | Gemini (modelo/`thinking`)         | Copilot (picker/agents)              |
+| ------------- | ---------------------------------------------------------------------- | -------------------------- | ------------------------------------ | --------------------------------------- |
+| **económico** | Lectura de estado, formateo, edición mecánica, grep dirigido           | `haiku` / `low`–`medium`   | Flash-Lite o Flash / `minimal`–`low` | modelo económico (ej. `gpt-5-mini`)     |
+| **estándar**  | Implementación estándar (una task acotada), tests                      | `sonnet` / `medium`        | Flash / `medium`                     | modelo estándar (ej. `claude-sonnet`)   |
+| **alto**      | Arquitectura, decisiones cross-cutting, orquestación, review de cierre | `opus` / `high`–`xhigh`    | Pro / `low`–`high`                   | modelo alto (ej. `claude-opus`)         |
+| **máximo**    | Solo el paso más difícil (verify adversarial, judge)                   | `fable` / `xhigh`–`max`    | Pro / `high`                         | el tier más alto habilitado             |
 
-Agentes del ciclo: implementores → `sonnet`/`medium`; orquestador, arquitecto y reviewer →
-`opus`/`high`. Nunca disparar un fan-out entero en el tier más caro por defecto.
+Agentes del ciclo: implementores → **estándar**; orquestador, arquitecto y reviewer → **alto**.
+Nunca disparar un fan-out entero en el tier más caro por defecto. Los nombres concretos de
+modelo de Copilot/Gemini no son estables — se editan en el `model:` de cada agente
+(`sdd/agents/*.agent.md`) y en `sdd/pricing.json`. El enforcement difiere por proveedor (Claude
+Code fija `model`/`effort` programáticamente, Copilot pinnea `model:` en los agentes SDD,
+Antigravity le pide al usuario cambiar el dropdown, Gemini CLI elige el modelo por sesión) —
+detalle completo en `sdd/dual-harness/{CLAUDE,AGENTS,GEMINI}.md` → sección ⚙️.
 
 ### 6. graphify — opcional
 
@@ -986,7 +1015,7 @@ la skill `setup-graphify` guía la instalación con un backend gratuito.
 sdd/agents/
 sdd/skills/
 sdd/prompts/
-sdd/dual-harness/   ← AGENTS.md y CLAUDE.md de la raíz
+sdd/dual-harness/   ← AGENTS.md, CLAUDE.md y GEMINI.md de la raíz (+ rules/ para Antigravity)
 
 # Claude Code (.claude/):
 .claude/agents/    → ../sdd/agents/
@@ -999,9 +1028,17 @@ sdd/dual-harness/   ← AGENTS.md y CLAUDE.md de la raíz
 .github/skills/generate-*/   → symlinks individuales
 .github/prompts/*.prompt.md  → symlinks individuales (preserva prompts Copilot)
 
+# Antigravity / Gemini CLI:
+.agents/rules/sdd-*.md        → symlinks individuales a sdd/dual-harness/rules/
+.agents/skills/<skill>/       → symlinks individuales a sdd/skills/<skill>/
+.agent/workflows/<prompt>.md  → symlinks individuales a sdd/prompts/<prompt>.prompt.md
+.gemini/commands/<prompt>.toml → wrapper generado desde sdd/prompts/<prompt>.prompt.md
+.gemini/settings.json         → fusionado (context.fileName suma GEMINI.md/AGENTS.md)
+
 # Raíz del repo:
 AGENTS.md          → sdd/dual-harness/AGENTS.md
 CLAUDE.md          → sdd/dual-harness/CLAUDE.md
+GEMINI.md          → sdd/dual-harness/GEMINI.md
 
 # Setup automático (regenera todos los symlinks, idempotente):
 pnpm setup:agents     # bash sdd/scripts/setup-agents.sh (Unix)
@@ -1048,6 +1085,44 @@ ls sdd/context/*/*/updates/*.md 2>/dev/null | wc -l
 ---
 
 ## Changelog
+
+### v5.3 (2026-08-18) — Arnés multi-proveedor (Gemini/Antigravity), costos por proveedor, visor bilingüe
+
+El arnés era dual (Claude Code + GitHub Copilot) y su regla de modelo/esfuerzo, la telemetría
+de costos y el visor eran Claude-only. Esta versión hace de Gemini (Antigravity IDE + Gemini
+CLI) un proveedor de primera clase y generaliza todo el pipeline de costos.
+
+- ✅ **Superficies nuevas del arnés** (creadas por `pnpm setup:agents`): `GEMINI.md` en la raíz
+  (`sdd/dual-harness/GEMINI.md`, absorbido igual que AGENTS/CLAUDE en `configure sdd`); rules
+  condensadas y siempre activas para Antigravity en `.agents/rules/` (fuente:
+  `sdd/dual-harness/rules/`, cada una bajo el cap de 12k caracteres); skills SDD expuestas en
+  `.agents/skills/` (estándar SKILL.md compartido: Antigravity + Gemini CLI); prompts SDD como
+  workflows de Antigravity en `.agent/workflows/` y como comandos TOML generados para Gemini CLI
+  en `.gemini/commands/`; `.gemini/settings.json` fusionado para que Gemini CLI también lea
+  `AGENTS.md`. Incluye el espejo en PowerShell; los archivos del usuario nunca se pisan.
+- ✅ **Regla de modelo/esfuerzo por proveedor**: la sección ⚙️ de los tres archivos del arnés
+  ahora tiene una única tabla canónica de tiers (económico/estándar/alto/máximo) con las
+  equivalencias de Claude (`model`/`effort`), Gemini (modelo/`thinking`) y Copilot, más el
+  enforcement propio de cada proveedor — programático en Claude Code, `model:` pinneado en los 7
+  agentes SDD para Copilot (alias Claude; mapear una vez a los modelos del mismo tier de tu
+  org), chequeo-y-pedido explícito del dropdown en Antigravity, modelo por sesión + `/stats` en
+  Gemini CLI.
+- ✅ **Telemetría de costos con namespace de proveedor**: `metrics.usage.by_tier`,
+  `usage.model_tier` y las claves de `pricing.json` ahora usan la forma `proveedor/modelo`
+  (`claude/opus`, `gemini/pro`, `copilot/gpt-5-mini`); los tiers legacy sin namespace siguen
+  siendo válidos y se leen como `claude/*`. `pricing.json` trae tarifas por proveedor (tiers de
+  la API de Gemini, tarifas por token del billing por uso de Copilot vía AI Credits).
+- ✅ **Los fixes se suman al registro de costos**: `usage` opcional (tokens, duración,
+  model_tier) por fix en `sdd/fixes.json`, pedido al cerrar el fix por el prompt del FIX GATE y
+  por el checklist del sdd-reviewer.
+- ✅ **Visor bilingüe**: ES/EN con toggle de idioma persistido (localStorage +
+  `navigator.language` por defecto; la pestaña de docs sigue el idioma activo dentro de
+  `sdd/documentation/{es,en}/`); la vista Costos suma agregación por proveedor y una tabla de
+  costo de fixes, además de la comparativa existente.
+- ✅ **sdd-hermes desacoplado de tiers concretos**: los presupuestos por fase ahora usan los
+  tiers abstractos y referencian la tabla canónica; la sección de loop-automation cubre los
+  cuatro arneses (Claude Code, Copilot, Gemini CLI, Antigravity) y el cierre de ciclo exige
+  telemetría con namespace de proveedor.
 
 ### v5.2 (2026-08-17) — Skills en `SKILL.md` mayúscula (estándar Agent Skills)
 
@@ -1162,6 +1237,6 @@ ls sdd/context/*/*/updates/*.md 2>/dev/null | wc -l
 
 ---
 
-**Última actualización:** 2026-08-17
-**SDD Version:** 5.2
+**Última actualización:** 2026-08-18
+**SDD Version:** 5.3
 **Proyecto:** ver `sdd/global.json` → `project`

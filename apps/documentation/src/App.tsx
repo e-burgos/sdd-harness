@@ -252,6 +252,7 @@ export function App() {
             <LiveSection />
             <CommandsSection />
             <MethodologySection />
+            <MultiHarnessSection />
             <CatalogSection />
             <KitSection />
             <StartSection />
@@ -752,6 +753,77 @@ function CatalogSection() {
           </div>
         </div>
       </div>
+    </Section>
+  );
+}
+
+function MultiHarnessSection() {
+  const { UI, HARNESSES } = useContent();
+  return (
+    <Section
+      id="multi-harness"
+      kicker={UI.multiHarness.kicker}
+      title={UI.multiHarness.title}
+      lead={UI.multiHarness.lead}
+    >
+      <motion.div
+        variants={cascade}
+        initial="hidden"
+        whileInView="show"
+        viewport={{ once: true, margin: '-60px' }}
+        className="grid gap-5 md:grid-cols-2"
+      >
+        {HARNESSES.map((h) => (
+          <motion.div
+            key={h.name}
+            variants={rise}
+            className="rounded-2xl border hairline bg-ink-900/50 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]"
+          >
+            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <h3 className="text-[15.5px] font-medium tracking-tight text-zinc-100">
+                {h.name}
+              </h3>
+              <span className="font-mono text-[11px] text-accent-400">
+                {h.tagline}
+              </span>
+            </div>
+            <p className="mt-4 font-mono text-[11px] uppercase tracking-[0.2em] text-zinc-500">
+              {UI.multiHarness.readsLabel}
+            </p>
+            <ul className="mt-2 space-y-1.5">
+              {h.reads.map((r) => (
+                <li key={r} className="font-mono text-[12px] leading-relaxed text-zinc-400">
+                  <span className="mr-2 text-zinc-700">—</span>
+                  {r}
+                </li>
+              ))}
+            </ul>
+            <p className="mt-4 font-mono text-[11px] uppercase tracking-[0.2em] text-zinc-500">
+              {UI.multiHarness.modelsLabel}
+            </p>
+            <p className="mt-2 text-[13px] leading-relaxed text-zinc-400">
+              {h.models}
+            </p>
+          </motion.div>
+        ))}
+      </motion.div>
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: '-40px' }}
+        transition={{ type: 'spring', stiffness: 90, damping: 18 }}
+        className="mt-8 rounded-2xl border border-accent-500/25 bg-accent-500/[0.04] p-6"
+      >
+        <h3 className="text-[15px] font-medium tracking-tight text-accent-300">
+          {UI.multiHarness.dualNote.title}
+        </h3>
+        <p className="mt-2 max-w-[92ch] text-[13.5px] leading-relaxed text-zinc-400">
+          {UI.multiHarness.dualNote.body}
+        </p>
+      </motion.div>
+      <p className="mt-6 max-w-[92ch] text-[13px] leading-relaxed text-zinc-500">
+        {UI.multiHarness.telemetryNote}
+      </p>
     </Section>
   );
 }

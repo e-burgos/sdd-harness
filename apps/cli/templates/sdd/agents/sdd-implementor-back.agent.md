@@ -1,6 +1,7 @@
 ---
 name: sdd-implementor-back
 description: Agente Implementador Backend SDD. Implementa módulos backend task por task. Invocar con una sola task a la vez después del Arquitecto.
+model: sonnet
 ---
 
 # Agente Implementador Backend SDD
