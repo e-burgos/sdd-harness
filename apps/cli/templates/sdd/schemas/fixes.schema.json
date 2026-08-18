@@ -101,6 +101,22 @@
             { "type": "null" }
           ]
         },
+        "usage": {
+          "type": "object",
+          "required": ["tokens_in", "tokens_out"],
+          "additionalProperties": false,
+          "description": "Optional telemetry: approximate tokens/time spent on this fix, recorded by the developer at resolution (or the sdd-reviewer at validation). Feeds the viewer's Costs dashboard. An honest approximation is fine; a made-up number is not — omit when unknown.",
+          "properties": {
+            "tokens_in": { "type": "integer", "minimum": 0 },
+            "tokens_out": { "type": "integer", "minimum": 0 },
+            "duration_minutes": { "type": "number", "minimum": 0 },
+            "model_tier": {
+              "type": "string",
+              "pattern": "^(haiku|sonnet|opus|fable|(claude|gemini|copilot)/[a-z0-9][a-z0-9.-]*)$",
+              "description": "Provider-namespaced model (claude/sonnet, gemini/flash, copilot/gpt-5-mini). Bare legacy values are read as claude/*."
+            }
+          }
+        },
         "process_note": { "type": "string" }
       }
     }

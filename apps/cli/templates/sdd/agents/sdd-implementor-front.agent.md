@@ -1,6 +1,7 @@
 ---
 name: sdd-implementor-front
 description: Agente Implementador Frontend SDD. Implementa vistas y componentes frontend task por task. Invocar después de que el backend correspondiente esté listo.
+model: sonnet
 ---
 
 # Agente Implementador Frontend SDD

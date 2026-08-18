@@ -18,7 +18,7 @@ export interface SDDInstallConfig {
   layout?: 'nx' | 'standalone';
   /** Inyecta scripts sdd:* + setup:agents y ajv/ajv-formats en el package.json (lo crea si falta). */
   mergePackageJson?: boolean;
-  /** Absorbe AGENTS.md/CLAUDE.md preexistentes dentro de sdd/dual-harness antes de symlink-ear. */
+  /** Absorbe AGENTS.md/CLAUDE.md/GEMINI.md preexistentes dentro de sdd/dual-harness antes de symlink-ear. */
   absorbExistingHarness?: boolean;
 }
 
@@ -139,7 +139,7 @@ async function readExistingHarnessFiles(
   root: string,
 ): Promise<Map<string, string>> {
   const found = new Map<string, string>();
-  for (const file of ['AGENTS.md', 'CLAUDE.md']) {
+  for (const file of ['AGENTS.md', 'CLAUDE.md', 'GEMINI.md']) {
     const path = resolve(root, file);
     if (!(await fs.pathExists(path))) continue;
     const stat = await fs.lstat(path);
@@ -285,7 +285,7 @@ function runSetupAgents(root: string): void {
     }
   } catch {
     logger.warn(
-      'Could not run setup-agents automatically. Run `pnpm setup:agents` in the workspace to create the .claude/.github symlinks and root AGENTS.md/CLAUDE.md.',
+      'Could not run setup-agents automatically. Run `pnpm setup:agents` in the workspace to create the .claude/.github/.agents/.gemini surfaces and root AGENTS.md/CLAUDE.md/GEMINI.md.',
     );
   }
 }

@@ -1,6 +1,7 @@
 ---
 name: sdd-architect
 description: Agente Arquitecto SDD. Define schema de DB, contratos de API y decisiones técnicas del módulo. Invocar después del Funcional, en paralelo con el Planner.
+model: opus
 ---
 
 # Agente Arquitecto SDD

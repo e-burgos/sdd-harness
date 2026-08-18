@@ -59,8 +59,8 @@ npm/yarn — el workspace no está montado. Pedirle a un agente que use la skill
 **`init-nx-workspace`**: monta Nx 23 + pnpm, los globs `apps/* libs/* tools/*`, el `.nxignore`, el
 CI con pnpm y el arnés dual, y termina en un checklist verificable comando por comando.
 
-El arnés dual (`AGENTS.md`/`CLAUDE.md`) instruye a los agentes a chequear esto **al iniciar
-cualquier sesión**, así que normalmente lo detectan solos antes de la primera acción.
+El arnés dual (`AGENTS.md`/`CLAUDE.md`/`GEMINI.md`) instruye a los agentes a chequear esto **al
+iniciar cualquier sesión**, así que normalmente lo detectan solos antes de la primera acción.
 
 > Crear apps o libs **no** es parte de esta skill: eso es `scaffold-nx`, y siempre dentro de un
 > ciclo SDD.
@@ -69,22 +69,31 @@ cualquier sesión**, así que normalmente lo detectan solos antes de la primera 
 
 Este script genera (o regenera) todos los symlinks necesarios:
 
-| Symlink creado             | Apunta a                                       |
-| -------------------------- | ---------------------------------------------- |
-| `.claude/agents`           | `sdd/agents/`                                  |
-| `.claude/skills`           | `sdd/skills/`                                  |
-| `.claude/prompts`          | `sdd/prompts/`                                 |
-| `.claude/commands`         | `sdd/prompts/` (slash commands de Claude Code) |
-| `.github/agents`           | `sdd/agents/`                                  |
-| `.github/skills/<skill>`   | `sdd/skills/<skill>/` (uno por uno)            |
-| `.github/prompts/<prompt>` | `sdd/prompts/<prompt>` (uno por uno)           |
-| `AGENTS.md` (raíz)         | `sdd/dual-harness/AGENTS.md`                   |
-| `CLAUDE.md` (raíz)         | `sdd/dual-harness/CLAUDE.md`                   |
+| Symlink creado                    | Apunta a                                                                              |
+| ----------------------------------- | ---------------------------------------------------------------------------------------- |
+| `.claude/agents`                  | `sdd/agents/`                                                                         |
+| `.claude/skills`                  | `sdd/skills/`                                                                         |
+| `.claude/prompts`                 | `sdd/prompts/`                                                                        |
+| `.claude/commands`                | `sdd/prompts/` (slash commands de Claude Code)                                        |
+| `.github/agents`                  | `sdd/agents/`                                                                         |
+| `.github/skills/<skill>`          | `sdd/skills/<skill>/` (uno por uno)                                                   |
+| `.github/prompts/<prompt>`        | `sdd/prompts/<prompt>` (uno por uno)                                                  |
+| `.agents/rules/<rule>`            | `sdd/dual-harness/rules/<rule>` (uno por uno, Antigravity)                            |
+| `.agents/skills/<skill>`          | `sdd/skills/<skill>/` (uno por uno, Antigravity + Gemini CLI)                         |
+| `.agent/workflows/<prompt>.md`    | `sdd/prompts/<prompt>.prompt.md` (uno por uno, workflows `/<prompt>` de Antigravity)  |
+| `.gemini/commands/<prompt>.toml`  | wrapper generado desde `sdd/prompts/<prompt>.prompt.md` (comandos `/<prompt>` de Gemini CLI) |
+| `.gemini/settings.json`           | fusionado — agrega `GEMINI.md`/`AGENTS.md` a `context.fileName`                       |
+| `AGENTS.md` (raíz)                | `sdd/dual-harness/AGENTS.md`                                                          |
+| `CLAUDE.md` (raíz)                | `sdd/dual-harness/CLAUDE.md`                                                          |
+| `GEMINI.md` (raíz)                | `sdd/dual-harness/GEMINI.md`                                                          |
 
 > Es seguro re-ejecutar `pnpm setup:agents` en cualquier momento — regenera todo sin romper nada.
 > **En Windows es obligatorio** tras cada clone: git deja los symlinks como archivos de texto y el
-> script los reemplaza por junctions/hardlinks.
+> script los reemplaza por junctions/hardlinks (el espejo en PowerShell también cubre las
+> superficies de Gemini/Antigravity).
 > `.github/copilot-instructions.md` es un archivo real (no symlink) para los lectores server-side de GitHub.
+> `.gemini/commands/*.toml` se generan en cada corrida (TOML no tiene mecanismo de include), y
+> `.gemini/settings.json` se fusiona en vez de sobreescribirse — ambos dejan intactos los archivos del usuario.
 
 ### Visor SDD (opcional, recomendado)
 
@@ -514,9 +523,11 @@ Y si el punto 4 es NO, hay un error: los base solo los toca la consolidación (v
   SDD, no en comentarios. Nombres declarativos y funciones cortas en su lugar. Sin `// TODO` —
   eso es una task o un fix. Excepciones (1 línea, inglés): restricción que el código no puede
   expresar, o anotación exigida por framework/linter. El reviewer lo chequea al cerrar.
-- **Elegir modelo y esfuerzo antes de empezar**: el tier más barato que cumpla. Implementores
-  `sonnet`/`medium`; orquestador, arquitecto y reviewer `opus`/`high`. Nunca un fan-out entero
-  en el tier más caro.
+- **Elegir modelo y esfuerzo antes de empezar**: el más barato de los cuatro tiers abstractos
+  (económico/estándar/alto/máximo) que cumpla — la regla aplica a los tres proveedores (Claude,
+  Copilot, Gemini). Implementores → estándar (`sonnet`/`medium` en Claude); orquestador,
+  arquitecto y reviewer → alto (`opus`/`high` en Claude). Nunca un fan-out entero en el tier más
+  caro. Tabla canónica: `sdd/dual-harness/{CLAUDE,AGENTS,GEMINI}.md` → ⚙️.
 - **graphify es opcional** — si `graphify-out/graph.json` existe, consultalo antes de `grep`/`Read`
   a ciegas; si no, trabajá normal. Para habilitarlo: skill `setup-graphify`.
 - **Invariantes del workspace** (los garantiza la skill `init-nx-workspace`, y romperlos falla en
@@ -639,21 +650,28 @@ lección) y borra lo destilado — `pnpm sdd:validate` avisa cuando está pendie
 ### 10.3 Telemetría y dashboard de Costos
 
 Al cerrar cada ciclo, el reviewer registra el consumo aproximado (aproximación
-honesta vale; número inventado no):
+honesta vale; número inventado no). Las claves de `by_tier` llevan namespace de
+proveedor (`proveedor/modelo` — los tiers legacy sin namespace como `sonnet`/`opus`
+siguen siendo válidos y se leen como `claude/*`):
 
 ```jsonc
 // cycle.json → metrics
 "usage": {
   "tokens_in": 980000, "tokens_out": 151000, "duration_minutes": 65,
-  "by_tier": { "sonnet": { "tokens_in": 830000, "tokens_out": 130000 },
-               "opus":   { "tokens_in": 150000, "tokens_out": 21000 } }
+  "by_tier": { "claude/sonnet": { "tokens_in": 830000, "tokens_out": 130000 },
+               "claude/opus":   { "tokens_in": 150000, "tokens_out": 21000 } }
 }
 ```
 
+Un fix cerrado por el FIX GATE puede registrar la misma forma, singular, en
+`sdd/fixes.json` → `usage` (`tokens_in`/`tokens_out`/`duration_minutes`/`model_tier`).
+
 Con eso, `pnpm sdd:docs` → vista **Costos**: comparativa del costo agéntico
-(tokens × tarifa por tier) contra la estimación tradicional (`estimation_hours`
-de las tasks × tarifa hora), ahorro proyectado, tokens por ciclo y tabla exacta.
-Las tarifas se editan en `sdd/pricing.json`.
+(tokens × tarifa por proveedor/tier) contra la estimación tradicional (`estimation_hours`
+de las tasks × tarifa hora), ahorro proyectado, tokens por ciclo, agregación por
+proveedor, una tabla de costo de fixes y la tabla exacta. Las tarifas se editan en
+`sdd/pricing.json` — los nombres concretos de modelo de Copilot/Gemini ahí son
+editables, no una garantía de estabilidad.
 
 El visor además es **reactivo en local**: pollea un fingerprint por área de los
 registros cada 4 s — cerrás un ciclo y la vista activa se actualiza sola, sin

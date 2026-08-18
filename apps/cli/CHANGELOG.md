@@ -5,6 +5,46 @@ All notable changes to `@e-burgos/sdd-harness` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-08-18
+
+### Added — Gemini/Antigravity as third harness provider, provider-aware costs, bilingual viewer
+
+The harness was dual (Claude Code + GitHub Copilot) and its model/effort rule, cost
+telemetry and viewer were Claude-only. This release makes Gemini (Antigravity IDE +
+Gemini CLI) a first-class provider and generalizes the whole cost pipeline.
+
+- **New harness surfaces** (created by `pnpm setup:agents`): root `GEMINI.md`
+  (`sdd/dual-harness/GEMINI.md`, absorbed like AGENTS/CLAUDE on `configure sdd`);
+  condensed always-on Antigravity rules in `.agents/rules/` (sources in
+  `sdd/dual-harness/rules/`, each under the 12k-char cap); SDD skills exposed at
+  `.agents/skills/` (shared SKILL.md standard: Antigravity + Gemini CLI); SDD prompts as
+  Antigravity workflows in `.agent/workflows/` and as generated Gemini CLI TOML commands
+  in `.gemini/commands/`; `.gemini/settings.json` merged so Gemini CLI also reads
+  `AGENTS.md`. PowerShell mirror included; user files are never clobbered.
+- **Per-provider model/effort rule**: the ⚙️ section of the three harness files now
+  carries one canonical tier table (económico/estándar/alto/máximo) with Claude
+  (`model`/`effort`), Gemini (model/`thinking_level`) and Copilot equivalences, plus
+  per-provider enforcement — programmatic in Claude Code, `model:` frontmatter pinned in
+  the 7 SDD agents for Copilot (Claude aliases; map once to your org's same-tier
+  models), explicit dropdown-check-and-ask in Antigravity, per-session model + `/stats`
+  in Gemini CLI.
+- **Provider-namespaced cost telemetry**: `metrics.usage.by_tier`, `usage.model_tier`
+  and `pricing.json` keys now take the `provider/model` form (`claude/opus`,
+  `gemini/pro`, `copilot/gpt-5-mini`); bare legacy tiers remain valid and are read as
+  `claude/*`. `pricing.json` ships per-provider rates (Gemini API tiers, Copilot
+  usage-based token rates behind AI Credits).
+- **Fixes join the cost registry**: optional `usage` (tokens, duration, model_tier) per
+  fix in `sdd/fixes.json`, requested at fix close by the FIX GATE prompt and by the
+  sdd-reviewer checklist.
+- **Viewer**: bilingual ES/EN with a persisted language toggle (localStorage +
+  `navigator.language` default; the docs tab follows the active language into
+  `sdd/documentation/{es,en}/`); Costs view adds per-provider aggregation and a fixes
+  cost table on top of the existing comparison.
+- **sdd-hermes decoupled from concrete tiers**: phase budgets now use the abstract
+  tiers and reference the canonical table; the loop-automation section covers all four
+  harnesses (Claude Code, Copilot, Gemini CLI, Antigravity) and cycle close requires
+  provider-namespaced telemetry.
+
 ## [0.6.1] - 2026-08-17
 
 ### Fixed — skills are `SKILL.md` again, so Claude Code can actually find them

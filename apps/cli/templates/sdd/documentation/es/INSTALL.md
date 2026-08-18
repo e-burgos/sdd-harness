@@ -16,7 +16,7 @@ Qué hace, gobernado por los hashes de `sdd/kit.json`:
 | **Tus datos** — `global.json`, specs, ciclos, fixes, contextos, `memory/journal/` | **Jamás se tocan** |
 | Archivos del kit **sin modificar** localmente (skills, agentes, prompts, schemas, scripts, visor) | Se reemplazan por la versión nueva |
 | Archivos del kit **nuevos** en esta versión | Se agregan solos |
-| Archivos del kit que **vos editaste** (típico: `dual-harness/AGENTS.md`/`CLAUDE.md`) | Tu versión queda intacta; la nueva aterriza al lado como `*.new` para que fundas a mano lo que te interese |
+| Archivos del kit que **vos editaste** (típico: `dual-harness/AGENTS.md`/`CLAUDE.md`/`GEMINI.md`) | Tu versión queda intacta; la nueva aterriza al lado como `*.new` para que fundas a mano lo que te interese |
 
 Al cierre regenera el catálogo, refresca los symlinks y corre `sdd:validate`. Si el
 update lista conflictos `*.new`, fundilos (o pedíselo a tu agente) y borrá los `.new`.
@@ -56,8 +56,8 @@ contra sus schemas.
    }
    ```
 
-3. **Generar los symlinks del arnés** (`.claude/`, `.github/`, `CLAUDE.md`/`AGENTS.md`
-   raíz apuntando a `sdd/dual-harness/`):
+3. **Generar los symlinks del arnés** (`.claude/`, `.github/`, `.agents/`, `.agent/`,
+   `.gemini/`, `CLAUDE.md`/`AGENTS.md`/`GEMINI.md` raíz apuntando a `sdd/dual-harness/`):
 
    ```bash
    pnpm setup:agents
@@ -92,11 +92,11 @@ contra sus schemas.
 | `templates/`       | Scaffolding reproducible: nx-workspace, java-api, react-app, ts-lib — ver `templates/README.md` |
 | `prompts/`         | Prompts de gates (SPEC GATE, FIX GATE, inicio/cierre de ciclo, hermes-resume)                   |
 | `memory/`          | Memoria del proyecto: `lessons.md` destilado + `journal/` episódico (MEMORIA GATE)              |
-| `pricing.json`     | Tarifas editables del dashboard de Costos del visor                                             |
+| `pricing.json`     | Tarifas editables por proveedor del dashboard de Costos del visor (`claude/*`, `gemini/*`, `copilot/*`) |
 | `schemas/`         | JSON Schemas estrictos de todos los registros                                                   |
-| `scripts/`         | validate, rebuild-tasks-index, rebuild-catalog, setup-agents                                    |
-| `docs/`            | Visor portable de documentación (JS vanilla, cero deps)                                         |
-| `dual-harness/`    | CLAUDE.md / AGENTS.md para linkear en la raíz del repo                                          |
+| `scripts/`         | validate, rebuild-tasks-index, rebuild-catalog, setup-agents (bash + PowerShell)                |
+| `docs/`            | Visor portable y bilingüe de documentación (JS vanilla, cero deps)                               |
+| `dual-harness/`    | CLAUDE.md / AGENTS.md / GEMINI.md para linkear en la raíz del repo, más `rules/` para Antigravity |
 | `context/`         | Plantillas de constitución y context prompt (global + example)                                  |
 | `specs/`, `fixes/` | Vacíos, listos para las primeras specs y fixes                                                  |
 | `*.json`           | Registros de estado vacíos y válidos (`sdd:validate` OK)                                        |

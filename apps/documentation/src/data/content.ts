@@ -58,7 +58,7 @@ const SDD_TREE: TreeNode = {
     { name: 'docs/', note: 'visor sin dependencias' },
     { name: 'memory/', note: 'lessons + journal — MEMORIA GATE' },
     { name: 'templates/', note: 'blueprints de scaffolding' },
-    { name: 'dual-harness/', note: 'AGENTS.md + CLAUDE.md' },
+    { name: 'dual-harness/', note: 'AGENTS.md + CLAUDE.md + GEMINI.md + rules/' },
     { name: 'specs/ · context/ · fixes/', note: 'specs, contexto por subproyecto, fixes' },
     { name: 'api.json · components.json · schema.json', note: 'registros de arquitectura: endpoints, componentes, tablas' },
     { name: 'tasks.json · fixes.json · catalog.json', note: 'índices agregados — los lee el visor' },
@@ -75,7 +75,7 @@ export const MODES: Mode[] = [
     command: 'harness init',
     claim: 'Workspace completo para equipos: múltiples apps, libs compartidas.',
     detail:
-      'Config raíz derivada del kit portable (Nx 23 + pnpm 10, globs apps/* libs/* tools/*). Las apps react y springboot salen de los blueprints del kit; symlinks del arnés dual y commit inicial incluidos. Este árbol es el ejemplo real flexi-market/ del repo de examples.',
+      'Config raíz derivada del kit portable (Nx 23 + pnpm 10, globs apps/* libs/* tools/*). Las apps react y springboot salen de los blueprints del kit; symlinks del arnés multi-proveedor y commit inicial incluidos. Este árbol es el ejemplo real flexi-market/ del repo de examples.',
     tree: [
       {
         name: 'flexi-market/',
@@ -90,9 +90,13 @@ export const MODES: Mode[] = [
           { name: 'libs/', note: 'shared-types · blueprint ts-lib' },
           { name: 'tools/' },
           SDD_TREE,
-          { name: '.claude/ · .github/', note: 'arnés symlinkeado — Claude Code y Copilot' },
+          {
+            name: '.claude/ · .github/ · .agents/ · .agent/ · .gemini/',
+            note: 'arnés symlinkeado — Claude Code, Copilot y Gemini',
+          },
           { name: 'AGENTS.md → sdd/dual-harness/', note: 'symlink' },
           { name: 'CLAUDE.md → sdd/dual-harness/', note: 'symlink' },
+          { name: 'GEMINI.md → sdd/dual-harness/', note: 'symlink' },
           { name: '.nxignore', note: 'blueprints fuera del graph' },
           { name: 'nx.json · pnpm-workspace.yaml · tsconfig.base.json' },
           { name: 'eslint.config.mjs · docker-compose.yml · .env.example' },
@@ -104,7 +108,7 @@ export const MODES: Mode[] = [
       lines: [
         '$ harness add app nestjs --name payments-api',
         '$ harness add spec payments --author jdoe',
-        '# desde tu agente (Claude Code / Copilot):',
+        '# desde tu agente (Claude Code / Copilot / Gemini):',
         '/start-sdd-cycle.prompt payments',
         '→ orquestador → funcional → planner+arquitecto → implementadores → reviewer',
       ],
@@ -125,8 +129,12 @@ export const MODES: Mode[] = [
           { name: 'package.json', note: 'scripts sdd:* + dev/build/test' },
           { name: 'tsconfig.json · docker-compose.yml · .env.example' },
           SDD_TREE,
-          { name: '.claude/ · .github/', note: 'arnés symlinkeado — Claude Code y Copilot' },
+          {
+            name: '.claude/ · .github/ · .agents/ · .agent/ · .gemini/',
+            note: 'arnés symlinkeado — Claude Code, Copilot y Gemini',
+          },
           { name: 'AGENTS.md → sdd/dual-harness/', note: 'symlink' },
+          { name: 'GEMINI.md → sdd/dual-harness/', note: 'symlink' },
         ],
       },
     ],
@@ -146,7 +154,7 @@ export const MODES: Mode[] = [
     command: 'harness configure sdd',
     claim: 'Solo la metodología, sobre un proyecto que ya existe. Sin tocar tu código.',
     detail:
-      'Detecta la forma del repo (Nx vs standalone), mergea los scripts sdd:* en tu package.json sin pisar nada, y absorbe tus AGENTS.md/CLAUDE.md previos dentro de sdd/dual-harness/ antes de crear los symlinks: ninguna instrucción se pierde. Este árbol es el ejemplo real legacy-shop/ del repo de examples, generado desde su semilla versionada.',
+      'Detecta la forma del repo (Nx vs standalone), mergea los scripts sdd:* en tu package.json sin pisar nada, y absorbe tus AGENTS.md/CLAUDE.md/GEMINI.md previos dentro de sdd/dual-harness/ antes de crear los symlinks: ninguna instrucción se pierde. Este árbol es el ejemplo real legacy-shop/ del repo de examples, generado desde su semilla versionada.',
     tree: [
       {
         name: 'legacy-shop/',
@@ -161,7 +169,10 @@ export const MODES: Mode[] = [
             name: 'sdd/dual-harness/AGENTS.md',
             note: 'incluye tus reglas previas, absorbidas',
           },
-          { name: '.claude/ · .github/', note: 'arnés symlinkeado — Claude Code y Copilot' },
+          {
+            name: '.claude/ · .github/ · .agents/ · .agent/ · .gemini/',
+            note: 'arnés symlinkeado — Claude Code, Copilot y Gemini',
+          },
         ],
       },
     ],
@@ -322,7 +333,7 @@ export const COMMANDS: Command[] = [
     summary: 'Crea una skill nueva en sdd/skills/.',
     points: [
       'Archivo SKILL.md en mayúscula — estándar Agent Skills, requerido por Claude Code.',
-      'Con frontmatter name/description listo para Claude Code y Copilot.',
+      'Con frontmatter name/description listo para los tres consumidores: Claude Code, Copilot y Gemini CLI.',
     ],
   },
   {
@@ -429,9 +440,61 @@ export const SERVICE_CATALOG = ['postgres', 'redis', 'rabbitmq', 'minio'];
 export const SDD_SCRIPTS = [
   { cmd: 'pnpm sdd:validate', what: 'Valida TODOS los registros contra sus schemas + reglas cruzadas + regla de portabilidad' },
   { cmd: 'pnpm sdd:docs', what: 'Visor del sistema SDD — vanilla JS, cero dependencias, funciona offline' },
-  { cmd: 'pnpm setup:agents', what: 'Symlinks del arnés dual: .claude/, .github/, AGENTS.md, CLAUDE.md' },
+  { cmd: 'pnpm setup:agents', what: 'Symlinks del arnés multi-proveedor: .claude/, .github/, .agents/, .agent/, .gemini/, AGENTS.md, CLAUDE.md, GEMINI.md' },
   { cmd: 'pnpm sdd:rebuild-tasks-index', what: 'Regenera el índice de tasks desde los tasks.json per-cycle' },
   { cmd: 'pnpm sdd:rebuild-catalog', what: 'Regenera el manifest que consume el visor' },
+];
+
+export type Harness = {
+  name: string;
+  tagline: string;
+  reads: string[];
+  models: string;
+};
+
+export const HARNESSES: Harness[] = [
+  {
+    name: 'Claude Code',
+    tagline: 'enforcement programático',
+    reads: [
+      'CLAUDE.md → sdd/dual-harness/CLAUDE.md',
+      '.claude/agents · skills · prompts · commands (slash commands SDD)',
+    ],
+    models:
+      'Pasa model y effort explícitos en cada subagente y workflow, según la tabla canónica de tiers del arnés. El fan-out de lectores va en económico; la síntesis y el review en alto.',
+  },
+  {
+    name: 'GitHub Copilot',
+    tagline: 'pinning por frontmatter',
+    reads: [
+      'AGENTS.md → sdd/dual-harness/AGENTS.md',
+      '.github/agents · skills · prompts (custom agents + prompt files)',
+    ],
+    models:
+      'Los 7 agentes SDD llevan model: pinneado por rol en el frontmatter (alias Claude opus/sonnet); el equipo lo mapea una vez al modelo del mismo tier de su org. En Copilot CLI: --model y --reasoning-effort.',
+  },
+  {
+    name: 'Antigravity',
+    tagline: 'dropdown del usuario',
+    reads: [
+      'GEMINI.md → sdd/dual-harness/GEMINI.md',
+      '.agents/rules — los gates SDD como rules siempre activas',
+      '.agents/skills · .agent/workflows → /start-sdd-cycle, /hermes-resume…',
+    ],
+    models:
+      'El agente no puede cambiar de modelo por su cuenta: antes de ejecutar compara el modelo del dropdown con el tier requerido y, si no coinciden, pide el cambio de modelo o thinking level. Nunca ejecuta en silencio con el tier equivocado.',
+  },
+  {
+    name: 'Gemini CLI',
+    tagline: 'modelo por sesión + /stats',
+    reads: [
+      'GEMINI.md + AGENTS.md (.gemini/settings.json → context.fileName)',
+      '.agents/skills (estándar SKILL.md compartido con Antigravity)',
+      '.gemini/commands/*.toml — los prompts SDD como slash commands',
+    ],
+    models:
+      'Modelo por sesión o flag según el tier; el fan-out va en subagentes económicos y la síntesis en Pro. /stats da los tokens reales de la sesión — la fuente honesta de la telemetría.',
+  },
 ];
 
 export const PORTABILITY_POINTS = [
@@ -444,8 +507,8 @@ export const PORTABILITY_POINTS = [
     body: 'Cada JSON de sdd/ valida contra un schema con additionalProperties: false. Un commit que deja sdd:validate en rojo es un commit inválido.',
   },
   {
-    title: 'Un solo arnés, dos asistentes',
-    body: 'Claude Code y GitHub Copilot leen los mismos agentes, skills y prompts vía symlinks. Editás en sdd/, lo ven los dos.',
+    title: 'Un solo arnés, tres asistentes',
+    body: 'Claude Code, GitHub Copilot y Gemini (Antigravity + Gemini CLI) leen los mismos agentes, skills y prompts vía symlinks. Editás en sdd/, lo ven los tres.',
   },
 ];
 
@@ -460,7 +523,7 @@ export const VIEWER_SHOTS: ViewerShot[] = [
     id: 'costs',
     tab: 'Costos ★',
     caption:
-      'La vista estrella: costo agéntico aproximado (tokens × tarifa por tier) contra la estimación tradicional de las tasks, ahorro proyectado, tokens por ciclo y tabla exacta. Se actualiza sola mientras el loop trabaja.',
+      'La vista estrella: costo agéntico aproximado (tokens × tarifa por proveedor/modelo) contra la estimación tradicional de las tasks, ahorro proyectado, tokens por ciclo y tabla exacta — con agregación por proveedor. Se actualiza sola mientras el loop trabaja.',
   },
   {
     id: 'dashboard',
@@ -472,7 +535,7 @@ export const VIEWER_SHOTS: ViewerShot[] = [
     id: 'agents',
     tab: 'Agentes',
     caption:
-      'Los 7 agentes del ciclo con sus definiciones completas renderizadas — el mismo .agent.md que leen Claude Code y Copilot, navegable.',
+      'Los 7 agentes del ciclo con sus definiciones completas renderizadas — mismo .agent.md, con model: pineado, que leen Claude Code, Copilot y Gemini, navegable.',
   },
   {
     id: 'skills',
@@ -513,7 +576,7 @@ export const VIEWER_PRINCIPLES = [
   },
   {
     title: 'Dashboard de Costos',
-    body: 'Tokens y tiempos por task, ciclo y spec (telemetría de cycle.json/tasks.json) contra la estimación tradicional de las tasks: costo agéntico aproximado por tier de modelo, ahorro proyectado, y tarifas editables en sdd/pricing.json.',
+    body: 'Tokens y tiempos por task, ciclo y spec (telemetría de cycle.json/tasks.json) contra la estimación tradicional de las tasks: costo agéntico aproximado por proveedor/modelo, ahorro proyectado, y tarifas editables en sdd/pricing.json. Los fixes también registran uso opcional y suman a la agregación por proveedor.',
   },
   {
     title: 'Viaja con el kit',
@@ -533,6 +596,7 @@ export const UI = {
       { id: 'en-vivo', label: 'Costos en vivo' },
       { id: 'comandos', label: 'Comandos' },
       { id: 'metodologia', label: 'Metodología SDD' },
+      { id: 'multi-harness', label: 'Multi-harness' },
       { id: 'catalogo', label: 'Catálogo' },
       { id: 'kit', label: 'El kit portable' },
       { id: 'empezar', label: 'Empezar' },
@@ -547,7 +611,7 @@ export const UI = {
     kicker: 'Spec-Driven Development CLI',
     title1: 'Repos listos para agentes.',
     title2: ' Specs antes que código.',
-    body: ' genera repos con la metodología SDD integrada: 7 agentes especializados, gates que impiden codear sin diseño, registros validados por schema y un arnés dual que Claude Code y GitHub Copilot leen por igual.',
+    body: ' genera repos con la metodología SDD integrada: 7 agentes especializados, gates que impiden codear sin diseño, registros validados por schema y un arnés multi-proveedor que Claude Code, GitHub Copilot y Gemini leen por igual.',
     cta: 'Ver los 3 modos',
     chips: ['7 agentes SDD', '18 skills', '4 gates', 'schemas estrictos', 'costos en vivo', 'memoria portable', 'Nx · standalone · existente'],
   },
@@ -568,7 +632,7 @@ export const UI = {
     title: 'Un tablero que trabaja mientras los agentes trabajan',
     lead: 'Cada ciclo registra tokens y tiempos. El visor los convierte en una comparativa de costos contra la estimación tradicional — y en local se actualiza solo, mientras el loop corre. Dale play:',
     features: [
-      { t: 'Telemetría honesta', d: 'Al cerrar cada ciclo se registran tokens por tier de modelo y minutos en cycle.json → metrics.usage. El costo agéntico sale de tarifas editables en sdd/pricing.json; la estimación tradicional, de las horas que ya estiman tus tasks.' },
+      { t: 'Telemetría honesta', d: 'Al cerrar cada ciclo se registran tokens por proveedor/modelo y minutos en cycle.json → metrics.usage. El costo agéntico sale de tarifas editables en sdd/pricing.json; la estimación tradicional, de las horas que ya estiman tus tasks.' },
       { t: 'Reactividad quirúrgica', d: 'El visor pollea un fingerprint POR ÁREA de los registros cada 4 segundos. Solo re-renderiza tu vista si cambió un área de la que depende: cerrar un ciclo actualiza Costos y Ciclos, pero no te toca la vista de Agentes.' },
       { t: 'Tu UI queda intacta', d: 'Secciones expandidas, búsquedas escritas y posición de scroll se preservan en cada actualización. Y si tenés un documento abierto o la pestaña oculta, el refresh espera. En hosting estático, el botón Actualizar de siempre.' },
     ],
@@ -588,12 +652,12 @@ export const UI = {
       activity: 'actividad del loop',
       steps: [
         { actor: 'sdd-orchestrator', feed: 'SPEC GATE OK · abre cycle-01 (auth) · brief + cycle.json' },
-        { actor: 'sdd-implementor-back', feed: 'TASK-001 done · modelo de usuario · 352k tokens (sonnet)' },
-        { actor: 'sdd-implementor-back', feed: 'TASK-002 done · endpoints login/refresh · 608k tokens (sonnet)' },
-        { actor: 'sdd-architect', feed: 'TASK-003 done · revisión y hardening · 171k tokens (opus)' },
+        { actor: 'sdd-implementor-back', feed: 'TASK-001 done · modelo de usuario · 352k tokens (claude/sonnet)' },
+        { actor: 'sdd-implementor-back', feed: 'TASK-002 done · endpoints login/refresh · 608k tokens (claude/sonnet)' },
+        { actor: 'sdd-architect', feed: 'TASK-003 done · revisión y hardening · 171k tokens (claude/opus)' },
         { actor: 'sdd-reviewer', feed: 'cierra cycle-01 ✓ · CONTEXTO + MEMORIA GATE · lección → journal' },
       ],
-      footnote: 'tradicional = 20 h estimadas × US$ 50/h · agéntico = tokens × tarifa por tier (sdd/pricing.json). La actividad del loop vive en el visor: vista Ciclos → abrí un ciclo → «Actividad del ciclo», reconstruida desde cycle.json + tasks.json.',
+      footnote: 'tradicional = 20 h estimadas × US$ 50/h · agéntico = tokens × tarifa por proveedor/modelo (sdd/pricing.json). La actividad del loop vive en el visor: vista Ciclos → abrí un ciclo → «Actividad del ciclo», reconstruida desde cycle.json + tasks.json.',
       donePre: 'Ciclo cerrado: el dashboard lo reflejó ',
       doneEm: 'solo',
       doneMid: ' — sin recargar, sin tocar nada, y sin perder lo que tenías expandido. Ahorro proyectado del ciclo: ',
@@ -612,8 +676,21 @@ export const UI = {
     footnote1: 'specs por autor: spec-jdoe-001-user-onboarding / cycles/cycle-01/',
     footnote2: '6 artefactos por ciclo — brief · functional · planner · architect · tasks · cycle',
   },
+  multiHarness: {
+    kicker: '06 — el arnés',
+    title: 'De dual-harness a multi-harness',
+    lead: 'Un solo sistema de agentes, skills, prompts y reglas vive en sdd/ — y cuatro arneses lo leen por igual vía symlinks. Editás una vez; lo ven todos. Cada arnés tiene además su propio mecanismo para cumplir la regla ⚙️ de modelos.',
+    readsLabel: 'Qué lee',
+    modelsLabel: 'Regla de modelos (⚙️)',
+    dualNote: {
+      title: 'La salvedad del nombre: ya no es «dual»',
+      body: 'El arnés nació dual — Claude Code y GitHub Copilot — y así se llamó su carpeta. Desde v0.7.0 es multi-harness: se sumó Gemini con dos superficies (Antigravity IDE y Gemini CLI). El directorio sdd/dual-harness/ conserva el nombre por compatibilidad (los hashes de kit.json y update sdd dependen de esa ruta), pero adentro viven las tres ediciones del mismo contrato — AGENTS.md, CLAUDE.md y GEMINI.md — más las rules condensadas de Antigravity en rules/.',
+    },
+    telemetryNote:
+      'Los cuatro registran la misma telemetría: cycle.json → metrics.usage con claves proveedor/modelo (claude/opus, gemini/pro, copilot/gpt-5-mini), usage por task y por fix. La vista Costos del visor la agrega por proveedor.',
+  },
   catalog: {
-    kicker: '06 — catálogo',
+    kicker: '07 — catálogo',
     title: 'Lo que puede generar',
     apps: 'Apps — 7 tipos',
     libs: 'Libs compartidas',
@@ -621,7 +698,7 @@ export const UI = {
     dockerNote: 'docker-compose.yml con healthchecks, listo para levantar la infraestructura local del ciclo.',
   },
   kit: {
-    kicker: '07 — el corazón',
+    kicker: '08 — el corazón',
     title: 'El kit SDD portable',
     lead: 'Todo lo que la CLI instala vive en una sola carpeta sdd/ copiada verbatim — diseñada para moverse entre repos sin editar un solo archivo.',
     scripts: 'Scripts que viajan con el kit',
@@ -642,12 +719,12 @@ export const UI = {
     },
   },
   start: {
-    kicker: '08 — empezar',
+    kicker: '09 — empezar',
     title: 'Tres comandos y estás adentro',
     steps: [
       { n: '01', t: 'Generá o instalá', c: 'npx @e-burgos/sdd-harness init', d: 'Monorepo Nx o standalone. Para un repo existente: harness configure sdd.' },
       { n: '02', t: 'Escribí tu primera spec — o tirá una idea', c: 'harness add spec mi-feature', d: 'El QUÉ antes del cómo. O harness idea "..." para que el agente arme todo el plan (flujo hermes).' },
-      { n: '03', t: 'Arrancá el ciclo', c: '/start-sdd-cycle.prompt', d: 'Desde Claude Code o Copilot: el orquestador toma la spec y el ciclo corre solo.' },
+      { n: '03', t: 'Arrancá el ciclo', c: '/start-sdd-cycle.prompt', d: 'Desde Claude Code, Copilot o Gemini: el orquestador toma la spec y el ciclo corre solo.' },
     ],
     examples: {
       title: '¿Preferís verlo antes?',

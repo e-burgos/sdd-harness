@@ -3,7 +3,7 @@
 > **Nombre y descripción del proyecto:** `sdd/global.json` → `project` / `description`.
 > Es la única fuente de verdad — este documento nunca los hardcodea, así `sdd/` se copia
 > a otro repo sin editarlo. `pnpm sdd:validate` falla si el nombre se filtra acá.
-> Este documento es el punto de entrada para cualquier agente (Claude Code o GitHub Copilot).
+> Este documento es el punto de entrada para cualquier agente (Claude Code, GitHub Copilot, Antigravity o Gemini CLI).
 > Leerlo completo antes de hacer cualquier tarea en este repositorio.
 > **PLANTILLA:** completar las secciones marcadas con `[...]` al inicializar el proyecto.
 

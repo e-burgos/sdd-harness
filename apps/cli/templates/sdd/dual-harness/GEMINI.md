@@ -12,6 +12,31 @@ Por favor, lee este archivo antes de realizar cualquier cambio en el repositorio
 
 ---
 
+## 🛰️ Superficies del arnés en Antigravity y Gemini CLI
+
+`pnpm setup:agents` expone el sistema SDD completo a este arnés (mismas fuentes que
+`.claude/` y `.github/` — todo vive en `sdd/` y se symlinkea/genera):
+
+| Superficie                | Path                                   | Fuente                        |
+| ------------------------- | -------------------------------------- | ----------------------------- |
+| Contexto raíz             | `GEMINI.md` (este archivo)             | `sdd/dual-harness/GEMINI.md`  |
+| Rules (Antigravity)       | `.agents/rules/sdd-*.md`               | `sdd/dual-harness/rules/`     |
+| Skills (estándar SKILL.md)| `.agents/skills/<skill>/`              | `sdd/skills/`                 |
+| Workflows (Antigravity)   | `.agent/workflows/<prompt>.md` → `/<prompt>` | `sdd/prompts/`          |
+| Comandos (Gemini CLI)     | `.gemini/commands/<prompt>.toml` → `/<prompt>` | generados desde `sdd/prompts/` |
+| Roles de agentes SDD      | `sdd/agents/*.agent.md`                | leerlos al asumir un rol del ciclo |
+
+- Las **rules** son la versión condensada y siempre activa de los gates de este
+  archivo; ante cualquier duda, la fuente completa es este `GEMINI.md` y los docs de
+  `sdd/`.
+- Los **roles de agentes** (`sdd/agents/`) no tienen registro nativo en este arnés:
+  al asumir un rol del ciclo (orquestador, implementor, reviewer…), leé su
+  `*.agent.md` y su skill como parte del brief.
+- En **Gemini CLI**, `/stats` da el consumo real de la sesión — es la fuente del
+  registro de telemetría que exige la regla ⚙️.
+
+---
+
 ## 🚀 Estructura del workspace — skill `init-nx-workspace` (AL INICIAR SESIÓN)
 
 > [!IMPORTANT]

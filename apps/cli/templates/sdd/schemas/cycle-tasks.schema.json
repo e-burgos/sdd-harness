@@ -90,7 +90,11 @@
             "tokens_in": { "type": "integer", "minimum": 0 },
             "tokens_out": { "type": "integer", "minimum": 0 },
             "duration_minutes": { "type": "number", "minimum": 0 },
-            "model_tier": { "enum": ["haiku", "sonnet", "opus", "fable"] }
+            "model_tier": {
+              "type": "string",
+              "pattern": "^(haiku|sonnet|opus|fable|(claude|gemini|copilot)/[a-z0-9][a-z0-9.-]*)$",
+              "description": "Provider-namespaced model (claude/sonnet, gemini/flash, copilot/gpt-5-mini). Bare legacy values (haiku|sonnet|opus|fable) are still accepted and read as claude/*."
+            }
           }
         }
       }

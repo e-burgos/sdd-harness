@@ -41,6 +41,7 @@ const HYBRID_FILES = new Set([
   'context/context_prompt.md',
   'dual-harness/AGENTS.md',
   'dual-harness/CLAUDE.md',
+  'dual-harness/GEMINI.md',
   'memory/lessons.md',
   'pricing.json',
 ]);

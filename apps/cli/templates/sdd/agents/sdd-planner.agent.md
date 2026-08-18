@@ -1,6 +1,7 @@
 ---
 name: sdd-planner
 description: Agente Planner SDD. Convierte historias de usuario en tasks técnicas ordenadas y estimadas para el sprint. Invocar después del Funcional.
+model: sonnet
 ---
 
 # Agente Planner SDD
