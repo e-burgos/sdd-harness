@@ -87,8 +87,8 @@ contexts from any project. Every registry is empty and validates against its sch
 
 | Folder / file      | Contents                                                                                        |
 | ------------------ | ----------------------------------------------------------------------------------------------- |
-| `agents/`          | The 7 agents of the SDD cycle                                                                   |
-| `skills/`          | 18 skills (SDD cycle + sdd-hermes + code generators + scaffold-nx + setup-graphify)             |
+| `agents/`          | The 7 agents of the SDD cycle + `sdd-steward` (kit concierge)                                                                   |
+| `skills/`          | 19 skills (SDD cycle + sdd-hermes + sdd-steward + code generators + scaffold-nx + setup-graphify)             |
 | `templates/`       | Reproducible scaffolding: nx-workspace, java-api, react-app, ts-lib — see `templates/README.md` |
 | `prompts/`         | Gate prompts (SPEC GATE, FIX GATE, cycle open/close, hermes-resume)                             |
 | `memory/`          | Project memory: distilled `lessons.md` + episodic `journal/` (MEMORIA GATE)                     |

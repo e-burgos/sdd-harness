@@ -5,6 +5,34 @@ All notable changes to `@e-burgos/sdd-harness` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.0] - 2026-08-18
+
+### Added — sdd-steward: the kit's concierge and single entry point
+
+The kit had seven cycle agents and Hermes, but nobody owned operations on the
+kit itself — "what's the SDD status?", "update the library", "kick off this
+idea" landed on whatever generic agent was around, which had to rediscover the
+kit every time.
+
+- **New agent `sdd-steward`** (`sdd/agents/sdd-steward.agent.md`, `model:
+  sonnet`) + skill (`sdd/skills/sdd-steward/SKILL.md`) + prompt
+  (`/sdd-steward`, exposed automatically in all four harnesses: Claude Code
+  slash command, Copilot prompt, Antigravity workflow, Gemini CLI TOML
+  command — with no args it runs the status playbook).
+- **Router, not a second orchestrator**: a hard routing table classifies any
+  incoming request. The steward executes only operations with no other owner
+  (harness/SDD status report, `update sdd` with its post-update checklist,
+  cost/telemetry queries, harness health, methodology questions) and delegates
+  the rest untouched — ideas to `sdd-hermes`, cycles/specs to
+  `sdd-orchestrator`, urgent fixes to the FIX GATE. It never writes
+  implementation code and never bypasses a gate.
+- **Surgical reading map**: the skill encodes which registry answers which
+  question (kit.json, global.json, specs index, fixes, lessons, catalog,
+  pricing) so the steward "knows the whole kit" without ever loading it into
+  context — economy tier by default per the ⚙️ rule.
+- Kit counts: 8 agents, 19 skills, 6 prompts (catalog regenerated; docs and
+  site updated in both languages).
+
 ## [0.7.0] - 2026-08-18
 
 ### Added — Gemini/Antigravity as third harness provider, provider-aware costs, bilingual viewer

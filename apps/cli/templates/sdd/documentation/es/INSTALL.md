@@ -87,8 +87,8 @@ contra sus schemas.
 
 | Carpeta / archivo  | Contenido                                                                                       |
 | ------------------ | ----------------------------------------------------------------------------------------------- |
-| `agents/`          | Los 7 agentes del ciclo SDD                                                                     |
-| `skills/`          | 18 skills (ciclo SDD + sdd-hermes + generadores de código + scaffold-nx + setup-graphify)       |
+| `agents/`          | Los 7 agentes del ciclo SDD + `sdd-steward` (conserje del kit)                                                                     |
+| `skills/`          | 19 skills (ciclo SDD + sdd-hermes + sdd-steward + generadores de código + scaffold-nx + setup-graphify)       |
 | `templates/`       | Scaffolding reproducible: nx-workspace, java-api, react-app, ts-lib — ver `templates/README.md` |
 | `prompts/`         | Prompts de gates (SPEC GATE, FIX GATE, inicio/cierre de ciclo, hermes-resume)                   |
 | `memory/`          | Memoria del proyecto: `lessons.md` destilado + `journal/` episódico (MEMORIA GATE)              |

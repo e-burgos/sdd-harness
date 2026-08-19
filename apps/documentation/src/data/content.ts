@@ -50,8 +50,8 @@ const SDD_TREE: TreeNode = {
   note: 'sistema SDD completo',
   children: [
     { name: 'global.json', note: 'única fuente del nombre y estado de módulos' },
-    { name: 'agents/', note: '7 agentes del ciclo' },
-    { name: 'skills/', note: '18 skills' },
+    { name: 'agents/', note: '7 agentes del ciclo + sdd-steward' },
+    { name: 'skills/', note: '19 skills' },
     { name: 'prompts/', note: 'gates como slash commands' },
     { name: 'schemas/', note: 'JSON Schema estricto — additionalProperties: false' },
     { name: 'scripts/', note: 'validate · rebuild · setup' },
@@ -236,7 +236,7 @@ export const HERMES_PHASES: HermesPhase[] = [
       '$ npx @e-burgos/sdd-harness init --config ./harness.config.json',
       '',
       '→ Generando workspace nx...',
-      '→ Instalando sistema SDD (7 agentes, 18 skills)...',
+      '→ Instalando sistema SDD (8 agentes, 19 skills)...',
       '✓ sdd:validate OK — registros verdes',
     ],
   },
@@ -471,7 +471,7 @@ export const HARNESSES: Harness[] = [
       '.github/agents · skills · prompts (custom agents + prompt files)',
     ],
     models:
-      'Los 7 agentes SDD llevan model: pinneado por rol en el frontmatter (alias Claude opus/sonnet); el equipo lo mapea una vez al modelo del mismo tier de su org. En Copilot CLI: --model y --reasoning-effort.',
+      'Los 8 agentes SDD llevan model: pinneado por rol en el frontmatter (alias Claude opus/sonnet); el equipo lo mapea una vez al modelo del mismo tier de su org. En Copilot CLI: --model y --reasoning-effort.',
   },
   {
     name: 'Antigravity',
@@ -535,7 +535,7 @@ export const VIEWER_SHOTS: ViewerShot[] = [
     id: 'agents',
     tab: 'Agentes',
     caption:
-      'Los 7 agentes del ciclo con sus definiciones completas renderizadas — mismo .agent.md, con model: pineado, que leen Claude Code, Copilot y Gemini, navegable.',
+      'Los 8 agentes SDD (los 7 del ciclo + sdd-steward, el conserje del kit) con sus definiciones completas renderizadas — mismo .agent.md, con model: pineado, que leen Claude Code, Copilot y Gemini, navegable.',
   },
   {
     id: 'skills',
@@ -611,9 +611,9 @@ export const UI = {
     kicker: 'Spec-Driven Development CLI',
     title1: 'Repos listos para agentes.',
     title2: ' Specs antes que código.',
-    body: ' genera repos con la metodología SDD integrada: 7 agentes especializados, gates que impiden codear sin diseño, registros validados por schema y un arnés multi-proveedor que Claude Code, GitHub Copilot y Gemini leen por igual.',
+    body: ' genera repos con la metodología SDD integrada: 8 agentes especializados, gates que impiden codear sin diseño, registros validados por schema y un arnés multi-proveedor que Claude Code, GitHub Copilot y Gemini leen por igual.',
     cta: 'Ver los 3 modos',
-    chips: ['7 agentes SDD', '18 skills', '4 gates', 'schemas estrictos', 'costos en vivo', 'memoria portable', 'Nx · standalone · existente'],
+    chips: ['8 agentes SDD', '19 skills', '4 gates', 'schemas estrictos', 'costos en vivo', 'memoria portable', 'Nx · standalone · existente'],
   },
   modes: {
     kicker: '01 — los tres modos',
