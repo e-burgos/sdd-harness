@@ -590,16 +590,32 @@ export const VIEWER_PRINCIPLES = [
 
 export const UI = {
   nav: {
-    items: [
-      { id: 'modos', label: 'Los 3 modos' },
-      { id: 'hermes', label: 'Idea → producto' },
-      { id: 'en-vivo', label: 'Costos en vivo' },
-      { id: 'comandos', label: 'Comandos' },
-      { id: 'metodologia', label: 'Metodología SDD' },
-      { id: 'multi-harness', label: 'Multi-harness' },
-      { id: 'catalogo', label: 'Catálogo' },
-      { id: 'kit', label: 'El kit portable' },
-      { id: 'empezar', label: 'Empezar' },
+    groups: [
+      {
+        label: 'Producto',
+        items: [
+          { id: 'modos', label: 'Los 3 modos' },
+          { id: 'catalogo', label: 'Catálogo' },
+          { id: 'empezar', label: 'Empezar' },
+        ],
+      },
+      {
+        label: 'Agentes',
+        items: [
+          { id: 'hermes', label: 'Idea → producto' },
+          { id: 'steward', label: 'Día a día con el steward' },
+          { id: 'metodologia', label: 'Metodología SDD' },
+          { id: 'multi-harness', label: 'Multi-harness' },
+        ],
+      },
+      {
+        label: 'El kit',
+        items: [
+          { id: 'kit', label: 'El kit portable' },
+          { id: 'comandos', label: 'Comandos' },
+          { id: 'en-vivo', label: 'Costos en vivo' },
+        ],
+      },
     ],
     guiaLabel: 'guía sdd',
     sddDocsMenu: 'sdd:docs — el visor',
@@ -689,8 +705,27 @@ export const UI = {
     telemetryNote:
       'Los cuatro registran la misma telemetría: cycle.json → metrics.usage con claves proveedor/modelo (claude/opus, gemini/pro, copilot/gpt-5-mini), usage por task y por fix. La vista Costos del visor la agrega por proveedor.',
   },
+  steward: {
+    kicker: '07 — el día a día',
+    title: 'Un conserje para el kit: sdd-steward',
+    lead: 'Desde v0.8.0 el kit trae su propio agente de entrada. Cualquier pedido sobre el kit — estado, updates, ideas, costos, salud de los arneses — se le habla directamente: lo resuelve él o lo rutea al agente dueño, sin bypassear un solo gate.',
+    invokeNote: '/sdd-steward sin argumentos ejecuta el status completo. El mismo comando existe en los cuatro arneses — slash command en Claude Code, prompt en Copilot, workflow en Antigravity, comando TOML en Gemini CLI — y lo crea pnpm setup:agents.',
+    examplesTitle: 'El día a día, en una línea',
+    examples: [
+      { cmd: '/sdd-steward', what: 'Status completo: versión del kit vs npm, módulos, ciclos en vuelo, fixes abiertos, memoria, validate y salud de los symlinks' },
+      { cmd: '/sdd-steward actualizá la librería', what: 'Conduce update sdd con el checklist post-update: conflictos *.new, setup:agents, validate en verde' },
+      { cmd: '/sdd-steward arrancá esta idea: …', what: 'Intake mínimo y delegación a sdd-hermes — el loop idea → producto con sus checkpoints humanos' },
+      { cmd: '/sdd-steward ¿cuánto gastamos por proveedor?', what: 'Agrega la telemetría de ciclos, tasks y fixes con las tarifas por proveedor/modelo de pricing.json' },
+      { cmd: '/sdd-steward [BUGFIX] se rompió el login', what: 'Clasifica el prefijo y rutea al FIX GATE — la trazabilidad la pone el gate, no el steward' },
+      { cmd: '/sdd-steward ¿cómo funciona el CONTEXTO GATE?', what: 'Responde desde sdd/documentation/ con lectura quirúrgica — sin cargar el kit entero en contexto' },
+    ],
+    manualNote: {
+      title: 'Suma, no reemplaza',
+      body: 'El steward es una puerta de entrada, no un peaje: todo lo que hacías a mano sigue funcionando exactamente igual — update sdd directo, /start-sdd-cycle, hermes, el visor, cada prompt y cada script. Usalo cuando quieras hablarle al kit; ignoralo cuando prefieras el comando.',
+    },
+  },
   catalog: {
-    kicker: '07 — catálogo',
+    kicker: '08 — catálogo',
     title: 'Lo que puede generar',
     apps: 'Apps — 7 tipos',
     libs: 'Libs compartidas',
@@ -698,7 +733,7 @@ export const UI = {
     dockerNote: 'docker-compose.yml con healthchecks, listo para levantar la infraestructura local del ciclo.',
   },
   kit: {
-    kicker: '08 — el corazón',
+    kicker: '09 — el corazón',
     title: 'El kit SDD portable',
     lead: 'Todo lo que la CLI instala vive en una sola carpeta sdd/ copiada verbatim — diseñada para moverse entre repos sin editar un solo archivo.',
     scripts: 'Scripts que viajan con el kit',
@@ -719,7 +754,7 @@ export const UI = {
     },
   },
   start: {
-    kicker: '09 — empezar',
+    kicker: '10 — empezar',
     title: 'Tres comandos y estás adentro',
     steps: [
       { n: '01', t: 'Generá o instalá', c: 'npx @e-burgos/sdd-harness init', d: 'Monorepo Nx o standalone. Para un repo existente: harness configure sdd.' },
