@@ -185,11 +185,13 @@ for (const [file, c] of cycles) {
           file,
           `tasks_completed + tasks_skipped (${resolved}) exceeds tasks_total (${c.metrics.tasks_total})`,
         );
-      const usage = c.metrics.usage;
-      if (!usage) cyclesWithoutTelemetry.push(file);
-      else if (!usage.by_tier || Object.keys(usage.by_tier).length === 0)
-        cyclesWithoutProvider.push(file);
     }
+    // Outside the metrics guard on purpose: a cycle closed with metrics: null has no
+    // telemetry either, and that is exactly what this warning is for.
+    const usage = c.metrics?.usage;
+    if (!usage) cyclesWithoutTelemetry.push(file);
+    else if (!usage.by_tier || Object.keys(usage.by_tier).length === 0)
+      cyclesWithoutProvider.push(file);
   }
   for (const doc of Object.values(c.documents)) {
     if (!existsSync(join(REPO, doc)))

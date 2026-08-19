@@ -24,7 +24,7 @@ function compile(schemaFile: string) {
   return ajv.compile(fs.readJSONSync(resolve(SCHEMAS, schemaFile)));
 }
 
-function baseCycle(metrics: Record<string, unknown>) {
+function baseCycle(metrics: Record<string, unknown> | null) {
   return {
     cycle: 1,
     module: 'telemetry',
@@ -305,6 +305,19 @@ describe.skipIf(process.platform === 'win32')(
 
     it('un ciclo sin metrics.usage avisa pero NO falla (dato pre-v0.9.0)', async () => {
       await writeCycle(baseMetrics({ tasks_completed: 1, tasks_skipped: 1 }));
+      const { ok, output } = runValidate();
+      expect(ok).toBe(true);
+      expect(output).toContain('without metrics.usage');
+    });
+
+    it('un ciclo con metrics: null también avisa por telemetría faltante', async () => {
+      await fs.writeJSON(resolve(ws, CYCLE_DIR, 'cycle.json'), {
+        ...baseCycle(null),
+        documents: { tasks: `${CYCLE_DIR}/tasks.json` },
+      });
+      execFileSync('node', [resolve(ws, 'sdd/scripts/rebuild-tasks-index.mjs')], {
+        stdio: 'ignore',
+      });
       const { ok, output } = runValidate();
       expect(ok).toBe(true);
       expect(output).toContain('without metrics.usage');
