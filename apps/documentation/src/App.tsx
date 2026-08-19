@@ -79,7 +79,7 @@ function LangSwitch({ compact = false }: { compact?: boolean }) {
 export function App() {
   const { UI } = useContent();
   const route = useHashRoute();
-  const navIds = UI.nav.items.map((n) => n.id);
+  const navIds = UI.nav.groups.flatMap((g) => g.items.map((n) => n.id));
   const active = useScrollSpy(navIds);
   const [menuOpen, setMenuOpen] = useState(false);
   const onDocsPage = route === 'sdd-docs';
@@ -110,19 +110,44 @@ export function App() {
             </span>
           </a>
           <nav className="hidden items-center gap-4 xl:flex">
-            {UI.nav.items.map((n) => (
-              <a
-                key={n.id}
-                href={`#${n.id}`}
-                className={`whitespace-nowrap text-[12.5px] transition-colors ${
-                  !onSubPage && active === n.id
-                    ? 'text-accent-300'
-                    : 'text-zinc-500 hover:text-zinc-200'
-                }`}
-              >
-                {n.label}
-              </a>
-            ))}
+            {UI.nav.groups.map((g) => {
+              const groupActive =
+                !onSubPage && g.items.some((n) => n.id === active);
+              return (
+                <div key={g.label} className="group relative">
+                  <button
+                    type="button"
+                    className={`flex items-center gap-1 whitespace-nowrap py-2 text-[12.5px] transition-colors ${
+                      groupActive
+                        ? 'text-accent-300'
+                        : 'text-zinc-500 group-hover:text-zinc-200'
+                    }`}
+                  >
+                    {g.label}
+                    <span aria-hidden="true" className="text-[9px] text-zinc-600">
+                      ▾
+                    </span>
+                  </button>
+                  <div className="invisible absolute left-1/2 top-full z-40 -translate-x-1/2 pt-1 opacity-0 transition-all duration-150 group-focus-within:visible group-focus-within:opacity-100 group-hover:visible group-hover:opacity-100">
+                    <div className="min-w-[220px] rounded-xl border hairline bg-ink-950/95 p-1.5 shadow-[0_24px_48px_-24px_rgba(0,0,0,0.8)] backdrop-blur-xl">
+                      {g.items.map((n) => (
+                        <a
+                          key={n.id}
+                          href={`#${n.id}`}
+                          className={`block rounded-lg px-3 py-2 text-[12.5px] transition-colors ${
+                            !onSubPage && active === n.id
+                              ? 'bg-accent-dim text-accent-300'
+                              : 'text-zinc-400 hover:bg-ink-900 hover:text-zinc-100'
+                          }`}
+                        >
+                          {n.label}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
             <a
               href="#/sdd-docs"
               className={`rounded-full border px-3 py-1 font-mono text-[12px] transition-all ${
@@ -177,46 +202,47 @@ export function App() {
                 variants={cascade}
                 initial="hidden"
                 animate="show"
-                className="flex flex-col px-5 py-3"
+                className="flex max-h-[50dvh] flex-col overflow-y-auto overscroll-contain px-5 py-3"
               >
-                {UI.nav.items.map((n, i) => (
-                  <motion.a
-                    key={n.id}
-                    variants={rise}
-                    href={`#${n.id}`}
-                    onClick={() => setMenuOpen(false)}
-                    className={`border-b hairline py-3.5 font-mono text-[13px] ${
-                      !onSubPage && active === n.id
-                        ? 'text-accent-300'
-                        : 'text-zinc-400'
-                    }`}
-                  >
-                    <span className="mr-3 text-zinc-600">
-                      {String(i + 1).padStart(2, '0')}
-                    </span>
-                    {n.label}
-                  </motion.a>
+                {UI.nav.groups.map((g) => (
+                  <motion.div key={g.label} variants={rise}>
+                    <p className="pb-1 pt-4 font-mono text-[10px] uppercase tracking-[0.22em] text-zinc-600 first:pt-1">
+                      {g.label}
+                    </p>
+                    {g.items.map((n) => (
+                      <a
+                        key={n.id}
+                        href={`#${n.id}`}
+                        onClick={() => setMenuOpen(false)}
+                        className={`block border-b hairline py-3 font-mono text-[13px] ${
+                          !onSubPage && active === n.id
+                            ? 'text-accent-300'
+                            : 'text-zinc-400'
+                        }`}
+                      >
+                        {n.label}
+                      </a>
+                    ))}
+                  </motion.div>
                 ))}
                 <motion.a
                   variants={rise}
                   href="#/sdd-docs"
                   onClick={() => setMenuOpen(false)}
-                  className={`border-b hairline py-3.5 font-mono text-[13px] ${
+                  className={`border-b hairline py-3 font-mono text-[13px] ${
                     onDocsPage ? 'text-accent-300' : 'text-zinc-400'
                   }`}
                 >
-                  <span className="mr-3 text-zinc-600">09</span>
                   {UI.nav.sddDocsMenu}
                 </motion.a>
                 <motion.a
                   variants={rise}
                   href="#/guia-sdd"
                   onClick={() => setMenuOpen(false)}
-                  className={`border-b hairline py-3.5 font-mono text-[13px] ${
+                  className={`border-b hairline py-3 font-mono text-[13px] ${
                     onGuiaPage ? 'text-accent-300' : 'text-zinc-400'
                   }`}
                 >
-                  <span className="mr-3 text-zinc-600">10</span>
                   {UI.nav.guiaMenu}
                 </motion.a>
                 <motion.a
@@ -225,9 +251,8 @@ export function App() {
                   target="_blank"
                   rel="noreferrer"
                   onClick={() => setMenuOpen(false)}
-                  className="border-b hairline py-3.5 font-mono text-[13px] text-zinc-400"
+                  className="border-b hairline py-3 font-mono text-[13px] text-zinc-400"
                 >
-                  <span className="mr-3 text-zinc-600">11</span>
                   examples
                 </motion.a>
                 <div className="py-3.5">
@@ -253,6 +278,7 @@ export function App() {
             <CommandsSection />
             <MethodologySection />
             <MultiHarnessSection />
+            <StewardSection />
             <CatalogSection />
             <KitSection />
             <StartSection />
@@ -824,6 +850,53 @@ function MultiHarnessSection() {
       <p className="mt-6 max-w-[92ch] text-[13px] leading-relaxed text-zinc-500">
         {UI.multiHarness.telemetryNote}
       </p>
+    </Section>
+  );
+}
+
+function StewardSection() {
+  const { UI } = useContent();
+  return (
+    <Section
+      id="steward"
+      kicker={UI.steward.kicker}
+      title={UI.steward.title}
+      lead={UI.steward.lead}
+    >
+      <div className="rounded-2xl border border-accent-500/25 bg-accent-500/[0.03] p-6 md:p-8">
+        <p className="max-w-[92ch] text-[13.5px] leading-relaxed text-zinc-400">
+          {UI.steward.invokeNote}
+        </p>
+        <h3 className="mb-4 mt-8 font-mono text-[12px] uppercase tracking-[0.2em] text-zinc-500">
+          {UI.steward.examplesTitle}
+        </h3>
+        <motion.div
+          variants={cascade}
+          initial="hidden"
+          whileInView="show"
+          viewport={{ once: true, margin: '-60px' }}
+          className="divide-y divide-zinc-800/60 rounded-2xl border hairline bg-ink-900/60"
+        >
+          {UI.steward.examples.map((e) => (
+            <motion.div key={e.cmd} variants={rise} className="px-5 py-4">
+              <code className="font-mono text-[12.5px] text-accent-300">
+                {e.cmd}
+              </code>
+              <p className="mt-1 text-[12.5px] leading-relaxed text-zinc-500">
+                {e.what}
+              </p>
+            </motion.div>
+          ))}
+        </motion.div>
+        <div className="mt-8 rounded-2xl border hairline bg-ink-950/60 p-6">
+          <h3 className="text-[15px] font-medium tracking-tight text-zinc-100">
+            {UI.steward.manualNote.title}
+          </h3>
+          <p className="mt-2 max-w-[92ch] text-[13.5px] leading-relaxed text-zinc-400">
+            {UI.steward.manualNote.body}
+          </p>
+        </div>
+      </div>
     </Section>
   );
 }

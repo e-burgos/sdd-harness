@@ -518,16 +518,32 @@ export const VIEWER_PRINCIPLES = [
 
 export const UI = {
   nav: {
-    items: [
-      { id: 'modos', label: 'The 3 modes' },
-      { id: 'hermes', label: 'Idea → product' },
-      { id: 'en-vivo', label: 'Live costs' },
-      { id: 'comandos', label: 'Commands' },
-      { id: 'metodologia', label: 'SDD methodology' },
-      { id: 'multi-harness', label: 'Multi-harness' },
-      { id: 'catalogo', label: 'Catalog' },
-      { id: 'kit', label: 'The portable kit' },
-      { id: 'empezar', label: 'Get started' },
+    groups: [
+      {
+        label: 'Product',
+        items: [
+          { id: 'modos', label: 'The 3 modes' },
+          { id: 'catalogo', label: 'Catalog' },
+          { id: 'empezar', label: 'Get started' },
+        ],
+      },
+      {
+        label: 'Agents',
+        items: [
+          { id: 'hermes', label: 'Idea → product' },
+          { id: 'steward', label: 'Day-to-day with the steward' },
+          { id: 'metodologia', label: 'SDD methodology' },
+          { id: 'multi-harness', label: 'Multi-harness' },
+        ],
+      },
+      {
+        label: 'The kit',
+        items: [
+          { id: 'kit', label: 'The portable kit' },
+          { id: 'comandos', label: 'Commands' },
+          { id: 'en-vivo', label: 'Live costs' },
+        ],
+      },
     ],
     guiaLabel: 'sdd guide',
     sddDocsMenu: 'sdd:docs — the viewer',
@@ -617,8 +633,27 @@ export const UI = {
     telemetryNote:
       'All four record the same telemetry: cycle.json → metrics.usage with provider/model keys (claude/opus, gemini/pro, copilot/gpt-5-mini), plus per-task and per-fix usage. The viewer’s Costs view aggregates it per provider.',
   },
+  steward: {
+    kicker: '07 — the day-to-day',
+    title: 'A concierge for the kit: sdd-steward',
+    lead: 'Since v0.8.0 the kit ships its own entry agent. Any request about the kit — status, updates, ideas, costs, harness health — you say directly to it: it resolves it or routes it to the owning agent, without bypassing a single gate.',
+    invokeNote: '/sdd-steward with no arguments runs the full status. The same command exists in all four harnesses — slash command in Claude Code, prompt in Copilot, workflow in Antigravity, TOML command in Gemini CLI — created by pnpm setup:agents.',
+    examplesTitle: 'The day-to-day, one line each',
+    examples: [
+      { cmd: '/sdd-steward', what: 'Full status: kit version vs npm, modules, cycles in flight, open fixes, memory, validate and symlink health' },
+      { cmd: '/sdd-steward update the library', what: 'Drives update sdd with the post-update checklist: *.new conflicts, setup:agents, validate green' },
+      { cmd: '/sdd-steward kick off this idea: …', what: 'Minimal intake and delegation to sdd-hermes — the idea → product loop with its human checkpoints' },
+      { cmd: '/sdd-steward how much did we spend per provider?', what: 'Aggregates cycle, task and fix telemetry with the provider/model rates from pricing.json' },
+      { cmd: '/sdd-steward [BUGFIX] login is broken', what: 'Classifies the prefix and routes to the FIX GATE — traceability comes from the gate, not the steward' },
+      { cmd: '/sdd-steward how does the CONTEXTO GATE work?', what: 'Answers from sdd/documentation/ with surgical reading — never loading the whole kit into context' },
+    ],
+    manualNote: {
+      title: 'It adds, it does not replace',
+      body: 'The steward is a front door, not a tollbooth: everything you did by hand keeps working exactly the same — direct update sdd, /start-sdd-cycle, hermes, the viewer, every prompt and every script. Use it when you want to talk to the kit; skip it when you prefer the command.',
+    },
+  },
   catalog: {
-    kicker: '07 — catalog',
+    kicker: '08 — catalog',
     title: 'What it can generate',
     apps: 'Apps — 7 types',
     libs: 'Shared libs',
@@ -626,7 +661,7 @@ export const UI = {
     dockerNote: 'docker-compose.yml with healthchecks, ready to bring up the local infrastructure of the cycle.',
   },
   kit: {
-    kicker: '08 — the heart',
+    kicker: '09 — the heart',
     title: 'The portable SDD kit',
     lead: 'Everything the CLI installs lives in a single sdd/ folder copied verbatim — designed to move between repos without editing a single file.',
     scripts: 'Scripts that travel with the kit',
@@ -647,7 +682,7 @@ export const UI = {
     },
   },
   start: {
-    kicker: '09 — get started',
+    kicker: '10 — get started',
     title: 'Three commands and you are in',
     steps: [
       { n: '01', t: 'Generate or install', c: 'npx @e-burgos/sdd-harness init', d: 'Nx monorepo or standalone. For an existing repo: harness configure sdd.' },
