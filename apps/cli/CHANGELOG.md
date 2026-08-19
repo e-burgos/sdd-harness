@@ -5,6 +5,18 @@ All notable changes to `@e-burgos/sdd-harness` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.1] - 2026-08-19
+
+### Fixed
+
+- `validate-sdd` skipped the telemetry warning for a completed cycle whose
+  `metrics` is `null`: the check sat inside the `if (c.metrics)` guard, so the
+  cycles with the least information were the ones that went unreported. Found
+  against a production repo where the aggregated warning said 26 cycles when
+  the real count was 28. The check now runs outside the guard — a cycle closed
+  with `metrics: null` has no telemetry either, which is exactly what the
+  warning is for. Still a warning, never an error.
+
 ## [0.9.0] - 2026-08-19
 
 ### Fixed — telemetry was structurally optional, so Copilot (and every provider) silently skipped it
