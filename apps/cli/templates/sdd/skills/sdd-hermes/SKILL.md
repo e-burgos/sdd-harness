@@ -170,10 +170,12 @@ antes de cada fase (regla ⚙️).
 
 **Telemetría del loop (obligatoria al cerrar cada ciclo):** el reviewer registra
 `cycle.json → metrics.usage` con `by_tier` en claves `proveedor/modelo` (`claude/opus`,
-`gemini/pro`, `copilot/gpt-5-mini`) y todo fix generado dentro del loop registra su
-`usage` en `sdd/fixes.json`. Fuente del número: `/stats` en Gemini CLI, reporte de
-sesión en Claude Code, aproximación declarada en Antigravity/Copilot. Hermes no cierra
-un ciclo sin este registro (u omisión explícita si no hay número honesto).
+`gemini/pro`, `copilot/claude-sonnet`; Antigravity bajo `gemini/*`) y todo fix generado
+dentro del loop registra su `usage` en `sdd/fixes.json`. Fuente del número: `/stats` en
+Gemini CLI, reporte de sesión en Claude Code — ambos comandos del cliente que el agente no
+puede ejecutar — y estimación declarada en Antigravity/Copilot, que no tienen contador.
+**Hermes no cierra un ciclo sin este registro.** Sin contador se estima con `approx: true`
+y `source: "declared-estimate"`; no existe la opción de omitir.
 
 ## Automatización del loop (opcional — por proveedor)
 

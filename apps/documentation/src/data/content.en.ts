@@ -362,6 +362,11 @@ export const GATES: Gate[] = [
     rule: 'What one cycle learned is never paid for twice.',
     how: 'Distilled lessons in memory/lessons.md (120-line cap, read at session start) + an append-only episodic journal the orchestrator distills at ≥5 entries.',
   },
+  {
+    name: 'TELEMETRÍA GATE',
+    rule: 'A cycle does not close without declaring which provider and which model did the work.',
+    how: 'cycle.json → metrics.usage with by_tier keyed as provider/model. Harnesses with no per-session counter (Copilot, Antigravity) record a declared estimate with approx: true — the viewer shows it as estimated instead of hiding it. Omitting is not an option.',
+  },
 ];
 
 export const APP_CATALOG = [
@@ -427,7 +432,7 @@ export const HARNESSES: Harness[] = [
       '.gemini/commands/*.toml — the SDD prompts as slash commands',
     ],
     models:
-      'Per-session or per-flag model matching the tier; fan-outs run on economy subagents and synthesis on Pro. /stats reports the real session tokens — the honest source for telemetry.',
+      'Per-session or per-flag model matching the tier; fan-outs run on economy subagents and synthesis on Pro. /stats reports the real session tokens — the honest source for telemetry (it is a client-side command: the agent asks the dev for it).',
   },
 ];
 
@@ -451,7 +456,7 @@ export const VIEWER_SHOTS: ViewerShot[] = [
     id: 'costs',
     tab: 'Costos ★',
     caption:
-      'The star view: approximate agentic cost (tokens × per-provider/model rate) against the traditional task estimation, projected savings, tokens per cycle and an exact table — with per-provider aggregation. It updates itself while the loop works.',
+      'The star view: approximate agentic cost (tokens × per-provider/model rate) against the traditional task estimation, projected savings, tokens per cycle and an exact table — with per-provider aggregation and a Source column that tells measured numbers apart from declared estimates. It updates itself while the loop works.',
   },
   {
     id: 'dashboard',
@@ -504,7 +509,7 @@ export const VIEWER_PRINCIPLES = [
   },
   {
     title: 'The Costs dashboard',
-    body: 'Tokens and time per task, cycle and spec (cycle.json/tasks.json telemetry) against the traditional task estimation: approximate agentic cost per provider/model, projected savings, and editable rates in sdd/pricing.json. Fixes now also register optional usage and roll into the per-provider aggregation.',
+    body: 'Tokens and time per task, cycle and spec (cycle.json/tasks.json telemetry) against the traditional task estimation: approximate agentic cost per provider/model, projected savings, and editable rates in sdd/pricing.json. A Source column marks each provider as measured or estimated, so a declared approximation never passes for a measurement. Fixes register their usage too and roll into the per-provider aggregation.',
   },
   {
     title: 'Travels with the kit',
@@ -557,7 +562,7 @@ export const UI = {
     title2: ' Specs before code.',
     body: ' generates repos with the SDD methodology built in: 7 specialized agents, gates that make it impossible to code without design, schema-validated registries and a multi-provider harness that Claude Code, GitHub Copilot and Gemini read alike.',
     cta: 'See the 3 modes',
-    chips: ['8 SDD agents', '19 skills', '4 gates', 'strict schemas', 'live costs', 'portable memory', 'Nx · standalone · existing'],
+    chips: ['8 SDD agents', '19 skills', '5 gates', 'strict schemas', 'live costs', 'portable memory', 'Nx · standalone · existing'],
   },
   modes: {
     kicker: '01 — the three modes',
@@ -576,7 +581,7 @@ export const UI = {
     title: 'A dashboard that works while the agents work',
     lead: 'Every cycle records tokens and time. The viewer turns them into a cost comparison against the traditional estimation — and locally it updates itself while the loop runs. Hit play:',
     features: [
-      { t: 'Honest telemetry', d: 'At every cycle close, tokens per provider/model and minutes are recorded in cycle.json → metrics.usage. The agentic cost comes from editable rates in sdd/pricing.json; the traditional estimation, from the hours your tasks already estimate.' },
+      { t: 'Honest telemetry', d: 'At every cycle close, tokens per provider/model and minutes are recorded in cycle.json → metrics.usage — mandatory, and marked approx: true when the harness exposes no counter so estimates are declared rather than hidden. The agentic cost comes from editable rates in sdd/pricing.json; the traditional estimation, from the hours your tasks already estimate.' },
       { t: 'Surgical reactivity', d: 'The viewer polls a PER-AREA fingerprint of the registries every 4 seconds. It only re-renders your view if an area it depends on changed: closing a cycle refreshes Costs and Cycles, but never touches your Agents view.' },
       { t: 'Your UI stays intact', d: 'Expanded sections, typed searches and scroll position survive every refresh. And if you have a document open or the tab hidden, the refresh waits. On static hosting, the usual Refresh button.' },
     ],
@@ -598,10 +603,10 @@ export const UI = {
         { actor: 'sdd-orchestrator', feed: 'SPEC GATE OK · opens cycle-01 (auth) · brief + cycle.json' },
         { actor: 'sdd-implementor-back', feed: 'TASK-001 done · user model · 352k tokens (claude/sonnet)' },
         { actor: 'sdd-implementor-back', feed: 'TASK-002 done · login/refresh endpoints · 608k tokens (claude/sonnet)' },
-        { actor: 'sdd-architect', feed: 'TASK-003 done · review and hardening · 171k tokens (claude/opus)' },
-        { actor: 'sdd-reviewer', feed: 'closes cycle-01 ✓ · CONTEXT + MEMORY GATE · lesson → journal' },
+        { actor: 'sdd-architect', feed: 'TASK-003 done · review and hardening · ~171k estimated tokens (copilot/claude-sonnet · approx)' },
+        { actor: 'sdd-reviewer', feed: 'closes cycle-01 ✓ · CONTEXT + MEMORY + TELEMETRY GATE · lesson → journal' },
       ],
-      footnote: 'traditional = 20 estimated hours × US$ 50/h · agentic = tokens × per-provider/model rate (sdd/pricing.json). The loop activity lives in the viewer: Cycles view → open a cycle → \u201cCycle activity\u201d, reconstructed from cycle.json + tasks.json.',
+      footnote: 'traditional = 20 estimated hours × US$ 50/h · agentic = tokens × per-provider/model rate (sdd/pricing.json). TASK-003 ran on Copilot, which exposes no per-session counter: it goes in as a declared estimate (approx: true) and the viewer shows it as estimated — the cycle mixes a measured provider with an estimated one without losing honesty. The loop activity lives in the viewer: Cycles view → open a cycle → \u201cCycle activity\u201d, reconstructed from cycle.json + tasks.json.',
       donePre: 'Cycle closed: the dashboard reflected it ',
       doneEm: 'on its own',
       doneMid: " — no reload, no clicks, and without losing what you had expanded. The cycle's projected savings: ",
@@ -615,7 +620,7 @@ export const UI = {
   },
   methodology: {
     kicker: '05 — the methodology',
-    title: 'Seven agents, four gates, zero improvisation',
+    title: 'Seven agents, five gates, zero improvisation',
     lead: 'Every feature goes through a design cycle before touching code. The agents write verifiable artifacts; the gates demand them.',
     footnote1: 'specs per author: spec-jdoe-001-user-onboarding / cycles/cycle-01/',
     footnote2: '6 artifacts per cycle — brief · functional · planner · architect · tasks · cycle',
@@ -631,7 +636,7 @@ export const UI = {
       body: 'The harness was born dual — Claude Code and GitHub Copilot — and its folder was named after that. Since v0.7.0 it is a multi-harness: Gemini joined with two surfaces (Antigravity IDE and Gemini CLI). The sdd/dual-harness/ directory keeps its name for compatibility (kit.json hashes and update sdd depend on that path), but inside live the three editions of the same contract — AGENTS.md, CLAUDE.md and GEMINI.md — plus the condensed Antigravity rules in rules/.',
     },
     telemetryNote:
-      'All four record the same telemetry: cycle.json → metrics.usage with provider/model keys (claude/opus, gemini/pro, copilot/gpt-5-mini), plus per-task and per-fix usage. The viewer’s Costs view aggregates it per provider.',
+      'All four record the same telemetry, and it is mandatory: cycle.json → metrics.usage with provider/model keys (claude/opus, gemini/pro, copilot/claude-sonnet; Antigravity records under gemini/*), plus per-task and per-fix usage. Declaring provider and model is not optional. Harnesses with no per-session counter (Copilot, Antigravity) record a declared estimate with approx: true, and the Costs view shows it as estimated in the Source column — it is never omitted.',
   },
   steward: {
     kicker: '07 — the day-to-day',

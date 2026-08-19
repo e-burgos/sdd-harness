@@ -1090,8 +1090,9 @@ ls sdd/context/*/*/updates/*.md 2>/dev/null | wc -l
 
 > The version history below is kept in Spanish in
 > [documentation/es/README.md](../es/README.md#changelog) — it is the historical record of how
-> this system evolved (Gemini/Antigravity as a third harness provider with provider-namespaced
-> cost telemetry and a bilingual viewer in v5.3, skills back to uppercase `SKILL.md` — the Agent
+> this system evolved (mandatory telemetry with declared estimates — `approx`/`source` — and
+> `skipped` counted as resolved in v5.4, Gemini/Antigravity as a third harness provider with
+> provider-namespaced cost telemetry and a bilingual viewer in v5.3, skills back to uppercase `SKILL.md` — the Agent
 > Skills standard Claude Code requires — in v5.2, workspace bootstrap and single-sourced naming
 > in v5.1, additive context and the portable viewer in v5.0, per-cycle tasks and strict JSON
 > Schemas in v4.0, the dual harness in v3.x, the multi-developer architecture in v2.0). New

@@ -421,6 +421,11 @@ export const GATES: Gate[] = [
     rule: 'Lo aprendido en un ciclo no se vuelve a pagar en el siguiente.',
     how: 'Lecciones destiladas en memory/lessons.md (cap 120 líneas, leído al iniciar sesión) + journal episódico append-only que el orquestador destila con ≥5 entradas.',
   },
+  {
+    name: 'TELEMETRÍA GATE',
+    rule: 'Un ciclo no cierra sin declarar qué proveedor y qué modelo lo hicieron.',
+    how: 'cycle.json → metrics.usage con by_tier en claves proveedor/modelo. Los arneses sin contador por sesión (Copilot, Antigravity) registran una estimación declarada con approx: true — el visor la muestra como estimado en vez de esconderla. No existe la opción de omitir.',
+  },
 ];
 
 export const APP_CATALOG = [
@@ -493,7 +498,7 @@ export const HARNESSES: Harness[] = [
       '.gemini/commands/*.toml — los prompts SDD como slash commands',
     ],
     models:
-      'Modelo por sesión o flag según el tier; el fan-out va en subagentes económicos y la síntesis en Pro. /stats da los tokens reales de la sesión — la fuente honesta de la telemetría.',
+      'Modelo por sesión o flag según el tier; el fan-out va en subagentes económicos y la síntesis en Pro. /stats da los tokens reales de la sesión — la fuente honesta de la telemetría (es un comando del cliente: se lo pide el agente al dev).',
   },
 ];
 
@@ -523,7 +528,7 @@ export const VIEWER_SHOTS: ViewerShot[] = [
     id: 'costs',
     tab: 'Costos ★',
     caption:
-      'La vista estrella: costo agéntico aproximado (tokens × tarifa por proveedor/modelo) contra la estimación tradicional de las tasks, ahorro proyectado, tokens por ciclo y tabla exacta — con agregación por proveedor. Se actualiza sola mientras el loop trabaja.',
+      'La vista estrella: costo agéntico aproximado (tokens × tarifa por proveedor/modelo) contra la estimación tradicional de las tasks, ahorro proyectado, tokens por ciclo y tabla exacta — con agregación por proveedor y una columna Origen que distingue lo medido de la estimación declarada. Se actualiza sola mientras el loop trabaja.',
   },
   {
     id: 'dashboard',
@@ -576,7 +581,7 @@ export const VIEWER_PRINCIPLES = [
   },
   {
     title: 'Dashboard de Costos',
-    body: 'Tokens y tiempos por task, ciclo y spec (telemetría de cycle.json/tasks.json) contra la estimación tradicional de las tasks: costo agéntico aproximado por proveedor/modelo, ahorro proyectado, y tarifas editables en sdd/pricing.json. Los fixes también registran uso opcional y suman a la agregación por proveedor.',
+    body: 'Tokens y tiempos por task, ciclo y spec (telemetría de cycle.json/tasks.json) contra la estimación tradicional de las tasks: costo agéntico aproximado por proveedor/modelo, ahorro proyectado, y tarifas editables en sdd/pricing.json. La columna Origen marca cada proveedor como medido o estimado, así una aproximación declarada nunca pasa por medición. Los fixes también registran su uso y suman a la agregación por proveedor.',
   },
   {
     title: 'Viaja con el kit',
@@ -629,7 +634,7 @@ export const UI = {
     title2: ' Specs antes que código.',
     body: ' genera repos con la metodología SDD integrada: 8 agentes especializados, gates que impiden codear sin diseño, registros validados por schema y un arnés multi-proveedor que Claude Code, GitHub Copilot y Gemini leen por igual.',
     cta: 'Ver los 3 modos',
-    chips: ['8 agentes SDD', '19 skills', '4 gates', 'schemas estrictos', 'costos en vivo', 'memoria portable', 'Nx · standalone · existente'],
+    chips: ['8 agentes SDD', '19 skills', '5 gates', 'schemas estrictos', 'costos en vivo', 'memoria portable', 'Nx · standalone · existente'],
   },
   modes: {
     kicker: '01 — los tres modos',
@@ -648,7 +653,7 @@ export const UI = {
     title: 'Un tablero que trabaja mientras los agentes trabajan',
     lead: 'Cada ciclo registra tokens y tiempos. El visor los convierte en una comparativa de costos contra la estimación tradicional — y en local se actualiza solo, mientras el loop corre. Dale play:',
     features: [
-      { t: 'Telemetría honesta', d: 'Al cerrar cada ciclo se registran tokens por proveedor/modelo y minutos en cycle.json → metrics.usage. El costo agéntico sale de tarifas editables en sdd/pricing.json; la estimación tradicional, de las horas que ya estiman tus tasks.' },
+      { t: 'Telemetría honesta', d: 'Al cerrar cada ciclo se registran tokens por proveedor/modelo y minutos en cycle.json → metrics.usage — es obligatorio, y va marcado approx: true cuando el arnés no expone contador, así la estimación se declara en vez de esconderse. El costo agéntico sale de tarifas editables en sdd/pricing.json; la estimación tradicional, de las horas que ya estiman tus tasks.' },
       { t: 'Reactividad quirúrgica', d: 'El visor pollea un fingerprint POR ÁREA de los registros cada 4 segundos. Solo re-renderiza tu vista si cambió un área de la que depende: cerrar un ciclo actualiza Costos y Ciclos, pero no te toca la vista de Agentes.' },
       { t: 'Tu UI queda intacta', d: 'Secciones expandidas, búsquedas escritas y posición de scroll se preservan en cada actualización. Y si tenés un documento abierto o la pestaña oculta, el refresh espera. En hosting estático, el botón Actualizar de siempre.' },
     ],
@@ -670,10 +675,10 @@ export const UI = {
         { actor: 'sdd-orchestrator', feed: 'SPEC GATE OK · abre cycle-01 (auth) · brief + cycle.json' },
         { actor: 'sdd-implementor-back', feed: 'TASK-001 done · modelo de usuario · 352k tokens (claude/sonnet)' },
         { actor: 'sdd-implementor-back', feed: 'TASK-002 done · endpoints login/refresh · 608k tokens (claude/sonnet)' },
-        { actor: 'sdd-architect', feed: 'TASK-003 done · revisión y hardening · 171k tokens (claude/opus)' },
-        { actor: 'sdd-reviewer', feed: 'cierra cycle-01 ✓ · CONTEXTO + MEMORIA GATE · lección → journal' },
+        { actor: 'sdd-architect', feed: 'TASK-003 done · revisión y hardening · ~171k tokens estimados (copilot/claude-sonnet · approx)' },
+        { actor: 'sdd-reviewer', feed: 'cierra cycle-01 ✓ · CONTEXTO + MEMORIA + TELEMETRÍA GATE · lección → journal' },
       ],
-      footnote: 'tradicional = 20 h estimadas × US$ 50/h · agéntico = tokens × tarifa por proveedor/modelo (sdd/pricing.json). La actividad del loop vive en el visor: vista Ciclos → abrí un ciclo → «Actividad del ciclo», reconstruida desde cycle.json + tasks.json.',
+      footnote: 'tradicional = 20 h estimadas × US$ 50/h · agéntico = tokens × tarifa por proveedor/modelo (sdd/pricing.json). TASK-003 corrió en Copilot, que no expone contador por sesión: va como estimación declarada (approx: true) y el visor la muestra como estimado — el ciclo mezcla un proveedor medido con uno estimado sin perder honestidad. La actividad del loop vive en el visor: vista Ciclos → abrí un ciclo → «Actividad del ciclo», reconstruida desde cycle.json + tasks.json.',
       donePre: 'Ciclo cerrado: el dashboard lo reflejó ',
       doneEm: 'solo',
       doneMid: ' — sin recargar, sin tocar nada, y sin perder lo que tenías expandido. Ahorro proyectado del ciclo: ',
@@ -687,7 +692,7 @@ export const UI = {
   },
   methodology: {
     kicker: '05 — la metodología',
-    title: 'Siete agentes, cuatro gates, cero improvisación',
+    title: 'Siete agentes, cinco gates, cero improvisación',
     lead: 'Cada feature atraviesa un ciclo de diseño antes de tocar código. Los agentes escriben artefactos verificables; los gates los exigen.',
     footnote1: 'specs por autor: spec-jdoe-001-user-onboarding / cycles/cycle-01/',
     footnote2: '6 artefactos por ciclo — brief · functional · planner · architect · tasks · cycle',
@@ -703,7 +708,7 @@ export const UI = {
       body: 'El arnés nació dual — Claude Code y GitHub Copilot — y así se llamó su carpeta. Desde v0.7.0 es multi-harness: se sumó Gemini con dos superficies (Antigravity IDE y Gemini CLI). El directorio sdd/dual-harness/ conserva el nombre por compatibilidad (los hashes de kit.json y update sdd dependen de esa ruta), pero adentro viven las tres ediciones del mismo contrato — AGENTS.md, CLAUDE.md y GEMINI.md — más las rules condensadas de Antigravity en rules/.',
     },
     telemetryNote:
-      'Los cuatro registran la misma telemetría: cycle.json → metrics.usage con claves proveedor/modelo (claude/opus, gemini/pro, copilot/gpt-5-mini), usage por task y por fix. La vista Costos del visor la agrega por proveedor.',
+      'Los cuatro registran la misma telemetría y es obligatoria: cycle.json → metrics.usage con claves proveedor/modelo (claude/opus, gemini/pro, copilot/claude-sonnet; Antigravity va bajo gemini/*), usage por task y por fix. Declarar proveedor y modelo no es opcional. Los arneses sin contador por sesión (Copilot, Antigravity) registran una estimación declarada con approx: true, y la vista Costos la muestra como estimado en la columna Origen — nunca se omite.',
   },
   steward: {
     kicker: '07 — el día a día',

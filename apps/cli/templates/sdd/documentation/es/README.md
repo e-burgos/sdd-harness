@@ -1089,6 +1089,46 @@ ls sdd/context/*/*/updates/*.md 2>/dev/null | wc -l
 
 ## Changelog
 
+### v5.4 (2026-08-19) — Telemetría obligatoria con estimación declarada, `skipped` como resuelto
+
+Un ciclo real cerrado con GitHub Copilot no registró telemetría: `by_tier` volvió con
+claves `claude/*` únicamente. La causa no era de Copilot — **ningún arnés le da al reviewer
+un contador que pueda leer**: `/stats` (Gemini CLI) y el reporte de sesión (Claude Code) son
+comandos del cliente que un agente no puede ejecutar, y Copilot/Antigravity no exponen
+contador. Con un protocolo que decía *"ante la duda, omitir el campo"*, omitir era la salida
+racional para cualquier agente y en cualquier proveedor.
+
+- ✅ **Se eliminó la cláusula de escape.** "Ante la duda, omitir" pasó a ser "sin contador se
+  estima" en toda la cadena: regla `sdd-model-budget.md`, `AGENTS.md`/`CLAUDE.md`/`GEMINI.md`,
+  skill del reviewer, `sdd-hermes`, prompts `review-cycle` y `hotfix-bypass-gate`. Declarar
+  proveedor y modelo dejó de ser opcional: el modelo siempre se conoce.
+- ✅ **⛔ TELEMETRÍA GATE** en `sdd-reviewer.agent.md` (paso 11 del cierre), con tabla de
+  fuente por arnés y protocolo de estimación. Antes de esta versión el archivo del agente
+  reviewer no mencionaba telemetría (solo la skill, marcada "best-effort"); los implementadores
+  tampoco — ahora registran `usage` por task.
+- ✅ **`approx` y `source` en los tres bloques `usage`** (`metrics.usage` y cada entrada de
+  `by_tier`, por task y por fix). `source`: `session-report` · `stats-command` · `api-usage` ·
+  `declared-estimate`. Un ciclo que mezcla un proveedor medido con uno estimado queda honesto
+  porque el marcador vive también por entrada de `by_tier`.
+- ✅ **El visor muestra el estimado en vez de esconderlo**: "Consumo por proveedor" suma la
+  columna **Origen** con `medido` / `estimado` / `parcialmente estimado`, en ambos idiomas.
+- ✅ **`skipped` es una task resuelta, no pendiente.** Nuevo `metrics.tasks_skipped` (opcional);
+  el ciclo cierra cuando `tasks_completed + tasks_skipped == tasks_total`. Antes se le pedía al
+  reviewer marcar *todas* las tasks como `done`, así que una task legítimamente omitida lo
+  obligaba a mentir o a romper el gate.
+- ✅ **`pnpm sdd:validate` avisa, nunca falla**, cuando un ciclo cerrado no tiene `metrics.usage`
+  o lo tiene sin `by_tier`, y cuando hay `skipped` sin reflejar en `tasks_skipped`. Los avisos
+  se agregan en una sola línea.
+- ✅ **`pricing.json` se mergea, no se reemplaza**: el visor superpone tu `pricing.json`
+  personalizado sobre las tarifas del kit, así los modelos que agregue una versión nueva quedan
+  tarifados en vez de caer al tier asumido.
+- ✅ **Antigravity registra bajo `gemini/*`** (corre modelos Gemini), documentado en schemas,
+  regla y docs — para no fragmentar su costo del de Gemini.
+- ✅ **Retrocompatible**: todos los campos nuevos son opcionales y aditivos, nada pasó a
+  `required` y ningún check se volvió más estricto. Verificado contra una instalación en
+  producción (21 `cycle.json`, 19 `tasks.json`, 62 fixes): validan en verde y un `update sdd`
+  simulado sobre esos datos dio **0 errores nuevos y 1 warning agregado**.
+
 ### v5.3 (2026-08-18) — Arnés multi-proveedor (Gemini/Antigravity), costos por proveedor, visor bilingüe
 
 El arnés era dual (Claude Code + GitHub Copilot) y su regla de modelo/esfuerzo, la telemetría

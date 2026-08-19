@@ -175,8 +175,8 @@ const EN_STRINGS = {
   Tareas: 'Tasks',
   '{count} tarea{suffix} en {groups} spec{groupsSuffix}':
     '{count} task{suffix} across {groups} spec{groupsSuffix}',
-  'Tareas técnicas agrupadas por spec y ciclo SDD · {done} de {total} completadas · {hours} estimadas · {points} SP':
-    'Technical tasks grouped by spec and SDD cycle · {done} of {total} completed · {hours} estimated · {points} SP',
+  'Tareas técnicas agrupadas por spec y ciclo SDD · {done} de {total} resueltas · {hours} estimadas · {points} SP':
+    'Technical tasks grouped by spec and SDD cycle · {done} of {total} resolved · {hours} estimated · {points} SP',
   Tipo: 'Type',
   Estimación: 'Estimate',
   Historias: 'Stories',
@@ -392,6 +392,14 @@ const EN_STRINGS = {
     'Tokens and agentic cost aggregated by provider (cycles + fixes), based on the provider/model keys in the telemetry.',
   Proveedor: 'Provider',
   'Modelos usados': 'Models used',
+  Origen: 'Source',
+  medido: 'measured',
+  estimado: 'estimated',
+  'parcialmente estimado': 'partly estimated',
+  '<strong>Origen</strong>: medido = leído de un contador de la sesión; estimado = aproximación declarada por el agente (arneses sin contador, como Copilot o Antigravity).':
+    '<strong>Source</strong>: measured = read from a session counter; estimated = approximation declared by the agent (harnesses with no counter, such as Copilot or Antigravity).',
+  ' · {n} omitida{suffix}': ' · {n} skipped',
+  'skipped — resuelta / no aplica': 'skipped — resolved / not applicable',
   'Tokens in': 'Tokens in',
   'Tokens out': 'Tokens out',
   'Costo aprox.': 'Approx. cost',
@@ -402,8 +410,8 @@ const EN_STRINGS = {
   'Σ estimation_hours de las tasks × {rate}/h.': 'Σ estimation_hours of the tasks × {rate}/h.',
   'tokens registrados × tarifa del tier (USD por millón de tokens).':
     'tokens recorded × tier rate (USD per million tokens).',
-  'La telemetría la escribe el sdd-reviewer al cerrar cada ciclo (<code>metrics.usage</code>) o los implementadores por task; es aproximada por diseño.':
-    'The telemetry is written by sdd-reviewer when each cycle closes (<code>metrics.usage</code>) or by the implementers per task; it is approximate by design.',
+  'La telemetría la escribe el sdd-reviewer al cerrar cada ciclo (<code>metrics.usage</code>) o los implementadores por task; es obligatoria y, cuando el arnés no expone contador, se registra como estimación declarada (<code>approx: true</code>) — nunca se omite.':
+    'The telemetry is written by sdd-reviewer when each cycle closes (<code>metrics.usage</code>) or by the implementers per task; it is mandatory and, when the harness exposes no counter, it is recorded as a declared estimate (<code>approx: true</code>) — never omitted.',
   '* Tokens sin tier declarado se tarifan como <code>{tier}</code>.':
     '* Tokens with no declared tier are priced as <code>{tier}</code>.',
   'No hay <code>sdd/pricing.json</code> — usando tarifas por defecto del kit.':
@@ -2503,6 +2511,7 @@ function planningLegend() {
     { color: 'var(--ok)', label: 'done / completed' },
     { color: 'var(--warn)', label: 'in-progress' },
     { color: 'var(--text-faint)', label: 'pending' },
+    { color: 'rgb(var(--rgb-zinc-600))', label: 'skipped — resuelta / no aplica' },
     { color: 'rgb(var(--rgb-violet-400))', label: 'SP — story points' },
     { color: 'rgb(var(--rgb-rose-500))', label: 'HOTFIX' },
   ];
@@ -2540,9 +2549,13 @@ function planningCountDone(items) {
   return items.filter((item) => item.status === 'done').length;
 }
 
+function planningCountSkipped(items) {
+  return items.filter((item) => item.status === 'skipped').length;
+}
+
 function planningDoneFraction(items) {
   if (items.length === 0) return 0;
-  return planningCountDone(items) / items.length;
+  return (planningCountDone(items) + planningCountSkipped(items)) / items.length;
 }
 
 function planningFixIsCompleted(fix) {
@@ -2551,9 +2564,12 @@ function planningFixIsCompleted(fix) {
 
 function planningItemStats(items) {
   const doneItems = items.filter((item) => item.status === 'done');
+  const skipped = planningCountSkipped(items);
   return {
     total: items.length,
     done: doneItems.length,
+    skipped,
+    resolved: doneItems.length + skipped,
     hours: planningSumHours(items),
     doneHours: planningSumHours(doneItems),
     points: planningSumPoints(items),
@@ -2634,7 +2650,7 @@ function planningKpisSection(taskStats, fixStats) {
   const totalHours = (taskStats?.hours ?? 0) + (fixStats?.hours ?? 0);
   const doneHours = (taskStats?.doneHours ?? 0) + (fixStats?.doneHours ?? 0);
   const totalItems = (taskStats?.total ?? 0) + (fixStats?.total ?? 0);
-  const doneItems = (taskStats?.done ?? 0) + (fixStats?.done ?? 0);
+  const doneItems = (taskStats?.resolved ?? 0) + (fixStats?.done ?? 0);
   const velocityPct =
     totalItems > 0 ? Math.round((doneItems / totalItems) * 100) : 0;
 
@@ -2672,7 +2688,7 @@ function planningKpisSection(taskStats, fixStats) {
 function planningProgressSection(taskStats, fixStats) {
   const totalItems = (taskStats?.total ?? 0) + (fixStats?.total ?? 0);
   if (totalItems === 0) return '';
-  const doneItems = (taskStats?.done ?? 0) + (fixStats?.done ?? 0);
+  const doneItems = (taskStats?.resolved ?? 0) + (fixStats?.done ?? 0);
   const fraction = doneItems / totalItems;
   const pct = Math.round(fraction * 100);
   return `
@@ -2726,7 +2742,7 @@ function planningCycleCard(specId, cycleId, tasks, defaultOpen) {
       <button type="button" data-toggle="${contentId}" aria-expanded="${defaultOpen}" aria-controls="${contentId}" style="all:unset;box-sizing:border-box;cursor:pointer;text-align:left;display:flex;align-items:center;gap:12px;width:100%;padding:10px 14px;background:rgb(var(--rgb-zinc-900) / 0.3);">
         ${planningChevron(defaultOpen)}
         <span style="flex:1;min-width:0;font-family:var(--font-mono);font-size:var(--text-12);color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(cycleId)}</span>
-        <span class="card-hint" style="margin:0;white-space:nowrap;">${escapeHtml(t('{done}/{total} tareas', { done: stats.done, total: stats.total }))}</span>
+        <span class="card-hint" style="margin:0;white-space:nowrap;">${escapeHtml(t('{done}/{total} tareas', { done: stats.resolved, total: stats.total }))}${stats.skipped > 0 ? escapeHtml(t(' · {n} omitida{suffix}', { n: stats.skipped, suffix: stats.skipped === 1 ? '' : 's' })) : ''}</span>
         ${stats.points > 0 ? `<span style="font-family:var(--font-mono);font-size:var(--text-10);color:rgb(var(--rgb-violet-400) / 0.7);white-space:nowrap;">${stats.points} SP</span>` : ''}
         <span class="card-hint" style="margin:0;white-space:nowrap;">${escapeHtml(formatHours(stats.hours))}</span>
         <span style="width:80px;flex-shrink:0;">${planningProgressBar(fraction)}</span>
@@ -3237,7 +3253,13 @@ function renderCycleMetrics(metrics) {
     metrics.files_created.length +
     metrics.files_modified.length +
     metrics.files_deleted.length;
-  return `<p class="card-hint">${escapeHtml(t('{done}/{total} tareas · {points} SP · {files} archivo{suffix}', { done: metrics.tasks_completed, total: metrics.tasks_total, points: metrics.story_points, files: filesTotal, suffix: filesTotal === 1 ? '' : 's' }))}</p>`;
+  const skipped = metrics.tasks_skipped ?? 0;
+  const resolved = metrics.tasks_completed + skipped;
+  const skippedNote =
+    skipped > 0
+      ? t(' · {n} omitida{suffix}', { n: skipped, suffix: skipped === 1 ? '' : 's' })
+      : '';
+  return `<p class="card-hint">${escapeHtml(t('{done}/{total} tareas · {points} SP · {files} archivo{suffix}', { done: resolved, total: metrics.tasks_total, points: metrics.story_points, files: filesTotal, suffix: filesTotal === 1 ? '' : 's' }) + skippedNote)}</p>`;
 }
 
 function renderCycleCard({ specId, cycleId, cycle }, index, animate) {
@@ -3735,7 +3757,7 @@ function cycleTaskRow(task) {
 
 function cycleTasksSummary(data, totals) {
   const pct =
-    totals.count > 0 ? Math.round((totals.done / totals.count) * 100) : 0;
+    totals.count > 0 ? Math.round((totals.resolved / totals.count) * 100) : 0;
   const flowChip =
     data.flow === 'reduced'
       ? `<span class="chip chip--sm" style="font-family: var(--font-mono)">flow: reduced</span>`
@@ -3761,7 +3783,7 @@ function cycleTasksSummary(data, totals) {
           <div style="height:100%; border-radius:999px; background: var(--accent); width:${pct}%"></div>
         </div>
         <span style="font-family: var(--font-mono); font-size: var(--text-10); color: var(--text-faint); flex-shrink:0">${escapeHtml(
-          `${totals.done}/${totals.count} tasks · ${pct}%`,
+          `${totals.resolved}/${totals.count} tasks · ${pct}%`,
         )}</span>
       </div>
     </div>
@@ -4112,6 +4134,7 @@ async function openCycleDetailModal(item) {
 
 function sumTaskTotals(groups) {
   const tasks = groups.flatMap((group) => group.tasks ?? []);
+  const skipped = tasks.filter((task) => task.status === 'skipped').length;
   const hours = tasks.reduce(
     (sum, task) => sum + (Number(task.estimation_hours) || 0),
     0,
@@ -4121,7 +4144,14 @@ function sumTaskTotals(groups) {
     0,
   );
   const done = tasks.filter((task) => task.status === 'done').length;
-  return { count: tasks.length, hours, storyPoints, done };
+  return {
+    count: tasks.length,
+    hours,
+    storyPoints,
+    done,
+    skipped,
+    resolved: done + skipped,
+  };
 }
 
 function collectTaskSpecGroups(assembled, specsIndex) {
@@ -4235,15 +4265,22 @@ function tasksHeader(totals, groupCount) {
       groups: groupCount,
       groupsSuffix: groupCount === 1 ? '' : 's',
     }),
-    subtitle: t(
-      'Tareas técnicas agrupadas por spec y ciclo SDD · {done} de {total} completadas · {hours} estimadas · {points} SP',
-      {
-        done: totals.done,
-        total: totals.count,
-        hours: formatHours(totals.hours),
-        points: totals.storyPoints,
-      },
-    ),
+    subtitle:
+      t(
+        'Tareas técnicas agrupadas por spec y ciclo SDD · {done} de {total} resueltas · {hours} estimadas · {points} SP',
+        {
+          done: totals.resolved,
+          total: totals.count,
+          hours: formatHours(totals.hours),
+          points: totals.storyPoints,
+        },
+      ) +
+      (totals.skipped > 0
+        ? t(' · {n} omitida{suffix}', {
+            n: totals.skipped,
+            suffix: totals.skipped === 1 ? '' : 's',
+          })
+        : ''),
   });
 }
 
@@ -4338,7 +4375,7 @@ function renderTaskSpecSection(
           title: group.title,
           subtitle: group.specId,
           meta: t('{done}/{total} tareas', {
-            done: group.totals.done,
+            done: group.totals.resolved,
             total: group.totals.count,
           }),
           statusChip: specStatusChip(group.status),
@@ -6624,10 +6661,10 @@ async function loadPricing() {
     return {
       ...COSTS_FALLBACK_PRICING,
       ...pricing,
-      model_prices_per_mtok: normalizePricingKeys(
-        pricing.model_prices_per_mtok ??
-          COSTS_FALLBACK_PRICING.model_prices_per_mtok,
-      ),
+      model_prices_per_mtok: {
+        ...normalizePricingKeys(COSTS_FALLBACK_PRICING.model_prices_per_mtok),
+        ...normalizePricingKeys(pricing.model_prices_per_mtok ?? {}),
+      },
       missing: false,
     };
   } catch {
@@ -6642,27 +6679,37 @@ function emptyCostUsage() {
     durationMinutes: 0,
     byTier: {},
     hasData: false,
+    approx: false,
   };
 }
 
-function addTierTokens(usage, tier, tokensIn, tokensOut) {
+function addTierTokens(usage, tier, tokensIn, tokensOut, approx = false) {
   const key = normalizeTierKey(tier) ?? COSTS_UNTIERED;
-  usage.byTier[key] ??= { tokensIn: 0, tokensOut: 0 };
+  usage.byTier[key] ??= { tokensIn: 0, tokensOut: 0, approx: false };
   usage.byTier[key].tokensIn += tokensIn;
   usage.byTier[key].tokensOut += tokensOut;
+  usage.byTier[key].approx ||= approx;
   usage.tokensIn += tokensIn;
   usage.tokensOut += tokensOut;
   usage.hasData = true;
+  usage.approx ||= approx;
 }
 
 function usageFromCycleMetrics(metricsUsage) {
   const usage = emptyCostUsage();
   if (!metricsUsage) return usage;
   usage.durationMinutes = metricsUsage.duration_minutes ?? 0;
+  const parentApprox = metricsUsage.approx === true;
   const byTier = metricsUsage.by_tier ?? null;
   if (byTier && Object.keys(byTier).length > 0) {
     for (const [tier, tokens] of Object.entries(byTier)) {
-      addTierTokens(usage, tier, tokens.tokens_in ?? 0, tokens.tokens_out ?? 0);
+      addTierTokens(
+        usage,
+        tier,
+        tokens.tokens_in ?? 0,
+        tokens.tokens_out ?? 0,
+        tokens.approx ?? parentApprox,
+      );
     }
   } else {
     addTierTokens(
@@ -6670,6 +6717,7 @@ function usageFromCycleMetrics(metricsUsage) {
       null,
       metricsUsage.tokens_in ?? 0,
       metricsUsage.tokens_out ?? 0,
+      parentApprox,
     );
   }
   return usage;
@@ -6685,6 +6733,7 @@ function usageFromTasks(tasks) {
       task.usage.model_tier ?? null,
       task.usage.tokens_in ?? 0,
       task.usage.tokens_out ?? 0,
+      task.usage.approx === true,
     );
   }
   return usage;
@@ -6699,6 +6748,7 @@ function usageFromFixEntry(fix) {
     fix.usage.model_tier ?? null,
     fix.usage.tokens_in ?? 0,
     fix.usage.tokens_out ?? 0,
+    fix.usage.approx === true,
   );
   return usage;
 }
@@ -6805,9 +6855,13 @@ function providerTotals(rows, fixRows, pricing) {
         tokensOut: 0,
         cost: 0,
         models: new Set(),
+        approx: false,
+        measured: false,
       };
       entry.tokensIn += tokens.tokensIn;
       entry.tokensOut += tokens.tokensOut;
+      if (tokens.approx) entry.approx = true;
+      else entry.measured = true;
       const partial = emptyCostUsage();
       partial.byTier[tier] = tokens;
       entry.cost += agenticCostUsd(partial, pricing).cost;
@@ -7052,10 +7106,17 @@ function costsProvidersCard(rows, fixRows, pricing, money) {
           : (COSTS_PROVIDER_LABELS[provider] ?? provider);
       const models =
         entry.models.size > 0 ? [...entry.models].sort().join(', ') : '—';
+      const origin = entry.approx
+        ? badge(
+            entry.measured ? 'parcialmente estimado' : 'estimado',
+            'status--skipped',
+          )
+        : badge('medido', 'status--done');
       return `
         <tr>
           <td>${escapeHtml(label)}</td>
           <td>${escapeHtml(models)}</td>
+          <td>${origin}</td>
           <td style="text-align:right">${costsExactFormat().format(entry.tokensIn)}</td>
           <td style="text-align:right">${costsExactFormat().format(entry.tokensOut)}</td>
           <td style="text-align:right">${money.format(entry.cost)}</td>
@@ -7065,9 +7126,9 @@ function costsProvidersCard(rows, fixRows, pricing, money) {
   return `
     <section class="card" style="margin-bottom:16px">
       <div class="card-header"><span class="card-title">${t('Consumo por proveedor')}</span></div>
-      <p class="card-subtitle">${t('Tokens y costo agéntico agregados por proveedor (ciclos + fixes), según las claves proveedor/modelo de la telemetría.')}</p>
+      <p class="card-subtitle">${t('Tokens y costo agéntico agregados por proveedor (ciclos + fixes), según las claves proveedor/modelo de la telemetría.')} ${t('<strong>Origen</strong>: medido = leído de un contador de la sesión; estimado = aproximación declarada por el agente (arneses sin contador, como Copilot o Antigravity).')}</p>
       <div class="table-wrapper"><table class="data-table">
-        <thead><tr><th>${t('Proveedor')}</th><th>${t('Modelos usados')}</th><th style="text-align:right">${t('Tokens in')}</th><th style="text-align:right">${t('Tokens out')}</th><th style="text-align:right">${t('Costo aprox.')}</th></tr></thead>
+        <thead><tr><th>${t('Proveedor')}</th><th>${t('Modelos usados')}</th><th>${t('Origen')}</th><th style="text-align:right">${t('Tokens in')}</th><th style="text-align:right">${t('Tokens out')}</th><th style="text-align:right">${t('Costo aprox.')}</th></tr></thead>
         <tbody>${body}</tbody>
       </table></div>
     </section>`;
@@ -7120,7 +7181,7 @@ function costsMethodologyCard(pricing, anyAssumed, money) {
       <p class="card-hint">
         <strong>${t('Tradicional')}</strong> = ${t('Σ estimation_hours de las tasks × {rate}/h.', { rate: money.format(pricing.traditional_hourly_rate) })}
         <strong>${t('Agéntico')}</strong> = ${t('tokens registrados × tarifa del tier (USD por millón de tokens).')}
-        ${t('La telemetría la escribe el sdd-reviewer al cerrar cada ciclo (<code>metrics.usage</code>) o los implementadores por task; es aproximada por diseño.')}
+        ${t('La telemetría la escribe el sdd-reviewer al cerrar cada ciclo (<code>metrics.usage</code>) o los implementadores por task; es obligatoria y, cuando el arnés no expone contador, se registra como estimación declarada (<code>approx: true</code>) — nunca se omite.')}
         ${anyAssumed ? t('* Tokens sin tier declarado se tarifan como <code>{tier}</code>.', { tier: COSTS_ASSUMED_TIER }) : ''}
         ${pricing.missing ? t('No hay <code>sdd/pricing.json</code> — usando tarifas por defecto del kit.') : t('Tarifas editables en <code>sdd/pricing.json</code>.')}
       </p>

@@ -163,16 +163,33 @@ if (specsIndex && globalJson) {
 }
 
 // ---- 5. cycle.json rules ----
+const cyclesWithoutTelemetry = [];
+const cyclesWithoutProvider = [];
 for (const [file, c] of cycles) {
   if (!c) continue;
   if (c.status === 'completed') {
     if (!c.completed_at) fail(file, 'completed without completed_at');
     if (!c.reviewer_report) fail(file, 'completed without reviewer_report');
-    if (c.metrics && c.metrics.tasks_completed < c.metrics.tasks_total)
-      fail(
-        file,
-        `completed with ${c.metrics.tasks_completed}/${c.metrics.tasks_total} tasks`,
-      );
+    if (c.metrics) {
+      // A skipped task is resolved (not applicable), not pending. Records written
+      // before tasks_skipped existed have no skipped tasks, so ?? 0 leaves their
+      // arithmetic exactly as it was.
+      const resolved = c.metrics.tasks_completed + (c.metrics.tasks_skipped ?? 0);
+      if (resolved < c.metrics.tasks_total)
+        fail(
+          file,
+          `completed with ${resolved}/${c.metrics.tasks_total} tasks resolved (done + skipped)`,
+        );
+      if (resolved > c.metrics.tasks_total)
+        warn(
+          file,
+          `tasks_completed + tasks_skipped (${resolved}) exceeds tasks_total (${c.metrics.tasks_total})`,
+        );
+      const usage = c.metrics.usage;
+      if (!usage) cyclesWithoutTelemetry.push(file);
+      else if (!usage.by_tier || Object.keys(usage.by_tier).length === 0)
+        cyclesWithoutProvider.push(file);
+    }
   }
   for (const doc of Object.values(c.documents)) {
     if (!existsSync(join(REPO, doc)))
@@ -182,6 +199,38 @@ for (const [file, c] of cycles) {
     if (!existsSync(join(REPO, art)))
       fail(file, `artifact does not exist: ${art}`);
   }
+}
+
+// Telemetry is mandatory in the protocol but never a hard error here: cycles closed
+// before the field existed must keep validating green. Aggregated so an old repo gets
+// one line instead of a wall.
+const sample = (files) =>
+  files.slice(0, 3).join(', ') + (files.length > 3 ? `, +${files.length - 3} more` : '');
+if (cyclesWithoutTelemetry.length)
+  warn(
+    'cycle.json',
+    `${cyclesWithoutTelemetry.length} completed cycle(s) without metrics.usage — record tokens + by_tier at close; with no counter available declare an estimate with approx: true (${sample(cyclesWithoutTelemetry)})`,
+  );
+if (cyclesWithoutProvider.length)
+  warn(
+    'cycle.json',
+    `${cyclesWithoutProvider.length} completed cycle(s) with metrics.usage but no by_tier — declare the model as provider/model, e.g. copilot/claude-sonnet (${sample(cyclesWithoutProvider)})`,
+  );
+
+// A cycle that closed with skipped tasks must say so in metrics.tasks_skipped, or the
+// Costs/Tasks views read those tasks as pending.
+for (const [file, ct] of cycleTasks) {
+  if (!ct) continue;
+  const skipped = ct.tasks.filter((t) => t.status === 'skipped').length;
+  if (skipped === 0) continue;
+  const cycleFile = file.replace(/tasks\.json$/, 'cycle.json');
+  const cycle = cycles.get(cycleFile);
+  if (!cycle || cycle.status !== 'completed' || !cycle.metrics) continue;
+  if ((cycle.metrics.tasks_skipped ?? 0) !== skipped)
+    warn(
+      cycleFile,
+      `tasks.json has ${skipped} skipped task(s) but metrics.tasks_skipped is ${cycle.metrics.tasks_skipped ?? 0}`,
+    );
 }
 
 // ---- 6. fixes.json rules ----
