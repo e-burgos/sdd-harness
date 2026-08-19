@@ -5,6 +5,63 @@ All notable changes to `@e-burgos/sdd-harness` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0] - 2026-08-19
+
+### Fixed — telemetry was structurally optional, so Copilot (and every provider) silently skipped it
+
+A real cycle closed on GitHub Copilot recorded no telemetry at all: `by_tier`
+came back Claude-only. The report blamed Copilot, but the audit found the cause
+was provider-independent — **no harness gives the reviewer a counter it can
+read**. `/stats` (Gemini CLI) and the session usage report (Claude Code) are
+client-side commands an agent cannot execute; Copilot and Antigravity expose no
+counter at all. Combined with a protocol that said *"an honest approximation is
+fine; an invented number is not — when in doubt, omit the field"*, the rational
+move for every agent was to omit. Nothing enforced the opposite: the reviewer
+**agent file** carried no telemetry step (only the skill did, marked
+"best-effort"), `sdd-data-schemas` never documented the `usage` block, and
+`validate-sdd` never checked it.
+
+- **The escape hatch is gone.** "When in doubt, omit" is replaced everywhere by
+  "when there is no counter, declare an estimate": dual-harness rule
+  `sdd-model-budget.md`, `AGENTS.md`/`CLAUDE.md`/`GEMINI.md`, the reviewer skill,
+  `sdd-hermes`, `review-cycle` and `hotfix-bypass-gate` prompts. Declaring
+  provider/model is now non-negotiable — the model is always known.
+- **New ⛔ TELEMETRÍA GATE** in `sdd-reviewer.agent.md` (closing step 11), with a
+  per-harness source table and the estimation protocol. The reviewer agent had
+  zero telemetry instructions before this release; so did both implementors,
+  which now record per-task `usage`.
+- **`approx` + `source` in all three `usage` blocks** (`cycle.json →
+  metrics.usage` and each `by_tier` entry, per-task `usage`, per-fix `usage`).
+  `source` is an enum: `session-report` · `stats-command` · `api-usage` ·
+  `declared-estimate`. A cycle mixing a measured provider with an estimated one
+  stays honest because `approx`/`source` also live per `by_tier` entry.
+- **The viewer shows estimates instead of hiding them**: "Consumo por proveedor"
+  gains an **Origen** column rendering `medido` / `estimado` /
+  `parcialmente estimado` per provider (both languages).
+- **`skipped` is a resolved task, not a pending one.** New optional
+  `metrics.tasks_skipped`; a cycle closes when
+  `tasks_completed + tasks_skipped == tasks_total`. The reviewer used to be told
+  to mark *all* tasks `done`, which forced it to either lie or break the gate.
+  Tasks/Planning views count skipped as resolved and surface the count.
+- **`validate-sdd` warns, never fails**, on a completed cycle without
+  `metrics.usage` or without `by_tier`, and on `skipped` tasks not reflected in
+  `tasks_skipped`. Warnings are aggregated into one line so an existing repo does
+  not get a wall of them.
+- **`pricing.json` is merged, not replaced**: the viewer now layers a customized
+  `pricing.json` over the kit defaults, so models added by later kit versions get
+  priced instead of silently falling back to the assumed tier.
+- **Antigravity records under `gemini/*`** (it runs Gemini models) — documented
+  in the schemas, the rule and both languages of the kit docs, so its cost is not
+  fragmented away from Gemini's.
+
+### Backward compatibility
+
+Every new field is **optional and additive**; nothing moved to `required` and no
+existing check became stricter. Verified against a production install (21
+`cycle.json`, 19 `tasks.json`, 62 fixes): all validate green against the new
+schemas, and a simulated `update sdd` over that data produced **0 new errors and
+1 aggregated warning**.
+
 ## [0.8.0] - 2026-08-18
 
 ### Added — sdd-steward: the kit's concierge and single entry point

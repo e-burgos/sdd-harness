@@ -25,8 +25,10 @@ Sos el conductor del loop SDD de este repo. Retomá el trabajo exactamente donde
 4. **Condiciones de corte** (idénticas a la skill `sdd-hermes` FASE 5): validación o tests
    rojos 2 veces en el mismo punto → parar y reportar; decisión de producto fuera de spec →
    preguntar; presupuesto agotado → cierre limpio del registro y reporte de posición.
-5. **Al cerrar cada ciclo**: gates de siempre (CONTEXTO, MEMORIA, telemetría en
+5. **Al cerrar cada ciclo**: gates de siempre (CONTEXTO, MEMORIA, TELEMETRÍA en
    `metrics.usage` con `by_tier` en claves `proveedor/modelo`, y `usage` de los fixes
    del loop en `sdd/fixes.json`) — el próximo resume parte de registros completos.
+   Declarar proveedor/modelo es obligatorio; sin contador (Copilot, Antigravity) va
+   estimación declarada con `approx: true`, nunca omisión.
 
 Regla de oro: si un registro y este prompt divergen, **manda el registro**.

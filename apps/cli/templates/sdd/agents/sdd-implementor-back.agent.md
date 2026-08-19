@@ -79,6 +79,24 @@ Si alguna condición NO se cumple → DETENER y notificar al Orquestador.
   Agregar entrada a `"changelog"` solo si hubo cambios respecto al contrato original definido por el Arquitecto.
 - Marcar la task en `sdd/specs/{spec-id}/cycles/cycle-[XX]/tasks.json` como `"status": "done"`, completar `files[]`,
   y correr `pnpm sdd:rebuild-tasks-index && pnpm sdd:validate`
+- **Registrar la telemetría de la task** en la misma entrada de `tasks.json`:
+
+  ```json
+  "usage": {
+    "tokens_in": 42000,
+    "tokens_out": 8000,
+    "model_tier": "copilot/claude-sonnet",
+    "approx": true,
+    "source": "declared-estimate"
+  }
+  ```
+
+  `model_tier` es `proveedor/modelo` (`claude/sonnet`, `gemini/pro`, `copilot/gpt-5-mini`;
+  Antigravity registra bajo `gemini/*`) y **siempre se conoce**: es el modelo con el que
+  estuviste trabajando. Si el arnés no expone contador (Copilot, Antigravity), declarar una
+  estimación de orden de magnitud con `approx: true` — **no omitir el campo**. Con contador
+  (reporte de sesión en Claude Code, `/stats` en Gemini CLI) va `approx: false` y el `source`
+  correspondiente.
 - Si la implementación introdujo un **patrón nuevo** no documentado en el contexto del subproyecto
   (nueva capa de paquetes, nueva convención, nueva dependencia),
   **anotarlo en una sección `## Pendiente de documentar en contexto`** al final de `sdd/specs/{spec-id}/cycles/cycle-[XX]/planner.md`

@@ -160,12 +160,14 @@ Después de implementar, el desarrollador actualiza en `sdd/fixes.json`:
 - `resolved_at`: fecha de implementación
 - `status`: `"implemented"`
 - `test_reference`: referencia al test (si aplica)
-- `usage`: consumo aproximado del fix — `tokens_in`/`tokens_out`, `duration_minutes` y
-  `model_tier` con clave `proveedor/modelo` (`claude/sonnet`, `gemini/flash`,
-  `copilot/gpt-5-mini`). Alimenta la vista Costos del visor. Fuente del número:
-  `/stats` en Gemini CLI, reporte de sesión en Claude Code, aproximación declarada en
-  Antigravity/Copilot. Una aproximación honesta vale; un número inventado no — ante la
-  duda, omitir el campo.
+- `usage`: consumo del fix — `tokens_in`/`tokens_out`, `duration_minutes` y `model_tier`
+  con clave `proveedor/modelo` (`claude/sonnet`, `gemini/flash`, `copilot/claude-sonnet`;
+  Antigravity bajo `gemini/*`). Alimenta la vista Costos del visor. **Declarar el modelo es
+  obligatorio.** Fuente del número: `/stats` en Gemini CLI, reporte de sesión en Claude Code
+  — comandos del cliente que el agente no puede ejecutar — y estimación declarada en
+  Antigravity/Copilot, que no tienen contador. Sin contador se registra una estimación de
+  orden de magnitud con `approx: true` y `source: "declared-estimate"`: no se omite el campo.
+  Lo prohibido es inventar un número preciso y presentarlo como medido.
 
 ### CONTEXTO GATE del fix (mecanismo aditivo — obligatorio antes de dar el fix por cerrado)
 

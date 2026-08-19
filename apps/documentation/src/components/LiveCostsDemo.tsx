@@ -16,8 +16,8 @@ const STEP_DATA = [
   { tokens: 0, agentic: 0, tasksDone: 0 },
   { tokens: 352_000, agentic: 1.68, tasksDone: 1 },
   { tokens: 960_000, agentic: 4.44, tasksDone: 2 },
-  { tokens: 1_131_000, agentic: 5.72, tasksDone: 3 },
-  { tokens: 1_131_000, agentic: 5.72, tasksDone: 3 },
+  { tokens: 1_131_000, agentic: 5.21, tasksDone: 3 },
+  { tokens: 1_131_000, agentic: 5.21, tasksDone: 3 },
 ];
 
 const TRADITIONAL_COST = 1000;

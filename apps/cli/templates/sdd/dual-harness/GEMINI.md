@@ -33,7 +33,9 @@ Por favor, lee este archivo antes de realizar cualquier cambio en el repositorio
   al asumir un rol del ciclo (orquestador, implementor, reviewer…), leé su
   `*.agent.md` y su skill como parte del brief.
 - En **Gemini CLI**, `/stats` da el consumo real de la sesión — es la fuente del
-  registro de telemetría que exige la regla ⚙️.
+  registro de telemetría que exige la regla ⚙️. Es un comando del cliente: el agente no
+  puede ejecutarlo, se lo pide al dev al cerrar el ciclo. Si no está a mano, se registra
+  una estimación declarada (`approx: true`) — nunca se omite la telemetría.
 
 ---
 
@@ -174,17 +176,25 @@ agentes SDD referencian estos tiers abstractos, no modelos concretos):
 - **Si el repo tiene grafo de graphify** (regla anterior, opcional), consultalo antes de
   pagar lecturas a ciegas: es parte de la misma optimización de tokens.
 
-**Telemetría de uso (dashboard de Costos — los tres proveedores):** al cerrar cada
-ciclo, registrar el consumo aproximado en `cycle.json` → `metrics.usage`
-(`tokens_in`/`tokens_out`, y `by_tier` con claves `proveedor/modelo`: `claude/opus`,
-`gemini/pro`, `copilot/gpt-5-mini`); por task en `tasks.json` → `usage.model_tier`; y
-todo fix cerrado por FIX GATE registra su `usage` en `sdd/fixes.json`. El número
-honesto sale de: `/stats` en Gemini CLI; el reporte de uso de la sesión en Claude
-Code; en Antigravity y Copilot no hay contador por sesión — registrá una aproximación
-declarada (modelo usado + tokens estimados). Alimenta la vista **Costos** del visor
-SDD (comparativa contra la estimación tradicional de las tasks); las tarifas por
-proveedor se editan en `sdd/pricing.json`. Una aproximación honesta vale; un número
-inventado no: ante la duda, omitir el campo.
+**Telemetría de uso (dashboard de Costos — OBLIGATORIA en todos los arneses):** al cerrar
+cada ciclo, registrar el consumo en `cycle.json` → `metrics.usage` (`tokens_in`/`tokens_out`,
+y `by_tier` con claves `proveedor/modelo`: `claude/opus`, `gemini/pro`,
+`copilot/claude-sonnet`); por task en `tasks.json` → `usage.model_tier`; y todo fix cerrado
+por FIX GATE registra su `usage` en `sdd/fixes.json`. **Declarar proveedor y modelo no es
+opcional** — el modelo siempre se conoce, es el que estás usando.
+
+De dónde sale el número: `/stats` en Gemini CLI (`source: stats-command`); el reporte de uso
+de la sesión en Claude Code (`session-report`). Ambos son comandos del cliente: un agente no
+puede ejecutarlos, se los pide al dev. En **Copilot y Antigravity no existe contador por
+sesión**: ahí va una estimación de orden de magnitud con `approx: true` y
+`source: "declared-estimate"`. Antigravity registra bajo `gemini/*` — corre modelos Gemini.
+
+**Sin contador se estima; no se omite.** El visor muestra las estimaciones marcadas como
+**estimado** en la columna Origen: no las esconde ni las hace pasar por medidas. Lo prohibido
+es inventar un número preciso y presentarlo como medido (`approx: false` sin contador detrás).
+Un ciclo cerrado sin `usage` es un cierre incompleto y `pnpm sdd:validate` lo avisa. Alimenta
+la vista **Costos** del visor SDD (comparativa contra la estimación tradicional de las tasks);
+las tarifas por proveedor se editan en `sdd/pricing.json`.
 
 ## ✍️ Código sin comentarios (OBLIGATORIO — el código se explica solo)
 

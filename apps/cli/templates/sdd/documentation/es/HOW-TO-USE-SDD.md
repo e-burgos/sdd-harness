@@ -649,10 +649,11 @@ lección) y borra lo destilado — `pnpm sdd:validate` avisa cuando está pendie
 
 ### 10.3 Telemetría y dashboard de Costos
 
-Al cerrar cada ciclo, el reviewer registra el consumo aproximado (aproximación
-honesta vale; número inventado no). Las claves de `by_tier` llevan namespace de
-proveedor (`proveedor/modelo` — los tiers legacy sin namespace como `sonnet`/`opus`
-siguen siendo válidos y se leen como `claude/*`):
+Al cerrar cada ciclo, el reviewer registra el consumo. **Es obligatorio y declarar
+proveedor/modelo no es opcional**: el modelo siempre se conoce, es el que estuvo
+corriendo. Las claves de `by_tier` llevan namespace de proveedor (`proveedor/modelo` —
+los tiers legacy sin namespace como `sonnet`/`opus` siguen siendo válidos y se leen
+como `claude/*`; Antigravity registra bajo `gemini/*` porque corre modelos Gemini):
 
 ```jsonc
 // cycle.json → metrics
@@ -663,8 +664,30 @@ siguen siendo válidos y se leen como `claude/*`):
 }
 ```
 
-Un fix cerrado por el FIX GATE puede registrar la misma forma, singular, en
-`sdd/fixes.json` → `usage` (`tokens_in`/`tokens_out`/`duration_minutes`/`model_tier`).
+**Cuando no hay contador, se estima — no se omite.** `/stats` (Gemini CLI) y el reporte
+de uso de la sesión (Claude Code) son comandos del cliente: el agente no puede
+ejecutarlos, se los pide al dev. En **GitHub Copilot y Antigravity no existe contador
+por sesión**. En todos esos casos el registro va marcado como estimación declarada:
+
+```jsonc
+"usage": {
+  "tokens_in": 480000, "tokens_out": 62000,
+  "approx": true, "source": "declared-estimate",
+  "by_tier": { "copilot/claude-sonnet": {
+    "tokens_in": 480000, "tokens_out": 62000,
+    "approx": true, "source": "declared-estimate" } }
+}
+```
+
+El visor muestra esas filas como **estimado** en la columna *Origen* de «Consumo por
+proveedor»: la estimación se declara, no se esconde ni se hace pasar por medida. Lo
+único prohibido es inventar un número preciso y presentarlo como medido (`approx: false`
+sin contador detrás). `pnpm sdd:validate` avisa —warning, no error— cuando un ciclo
+cerrado no tiene `metrics.usage` o lo tiene sin `by_tier`.
+
+Un fix cerrado por el FIX GATE registra la misma forma, singular, en
+`sdd/fixes.json` → `usage` (`tokens_in`/`tokens_out`/`duration_minutes`/`model_tier`/
+`approx`/`source`), y cada task lleva la suya en `tasks.json`.
 
 Con eso, `pnpm sdd:docs` → vista **Costos**: comparativa del costo agéntico
 (tokens × tarifa por proveedor/tier) contra la estimación tradicional (`estimation_hours`

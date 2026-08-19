@@ -656,10 +656,11 @@ and deletes what it distilled — `pnpm sdd:validate` warns when that is pending
 
 ### 10.3 Telemetry and the Costs dashboard
 
-On closing each cycle, the reviewer records the approximate consumption (an honest
-approximation is fine; an invented number is not). `by_tier` keys are provider-namespaced
-(`provider/model` — bare legacy tiers like `sonnet`/`opus` are still accepted and read as
-`claude/*`):
+On closing each cycle, the reviewer records the consumption. **It is mandatory, and
+declaring provider/model is not optional**: the model is always known — it is the one that
+was running. `by_tier` keys are provider-namespaced (`provider/model` — bare legacy tiers
+like `sonnet`/`opus` are still accepted and read as `claude/*`; Antigravity records under
+`gemini/*` because it runs Gemini models):
 
 ```jsonc
 // cycle.json → metrics
@@ -670,8 +671,30 @@ approximation is fine; an invented number is not). `by_tier` keys are provider-n
 }
 ```
 
-A fix closed under the FIX GATE can record the same shape, singular, in `sdd/fixes.json` →
-`usage` (`tokens_in`/`tokens_out`/`duration_minutes`/`model_tier`).
+**When there is no counter, estimate — do not omit.** `/stats` (Gemini CLI) and the session
+usage report (Claude Code) are client-side commands: the agent cannot run them, it asks the
+dev. **GitHub Copilot and Antigravity expose no per-session counter at all.** In every one of
+those cases the record is marked as a declared estimate:
+
+```jsonc
+"usage": {
+  "tokens_in": 480000, "tokens_out": 62000,
+  "approx": true, "source": "declared-estimate",
+  "by_tier": { "copilot/claude-sonnet": {
+    "tokens_in": 480000, "tokens_out": 62000,
+    "approx": true, "source": "declared-estimate" } }
+}
+```
+
+The viewer shows those rows as **estimated** in the *Source* column of "Usage by provider":
+the estimate is declared, not hidden and not passed off as measured. The only forbidden thing
+is inventing a precise number and presenting it as measured (`approx: false` with no counter
+behind it). `pnpm sdd:validate` warns — a warning, not an error — when a closed cycle has no
+`metrics.usage`, or has it without `by_tier`.
+
+A fix closed under the FIX GATE records the same shape, singular, in `sdd/fixes.json` →
+`usage` (`tokens_in`/`tokens_out`/`duration_minutes`/`model_tier`/`approx`/`source`), and each
+task carries its own in `tasks.json`.
 
 With that, `pnpm sdd:docs` → **Costs** view: agentic cost (tokens × per-provider/tier rate)
 compared against the traditional estimation (`estimation_hours` of the tasks × hourly rate),
