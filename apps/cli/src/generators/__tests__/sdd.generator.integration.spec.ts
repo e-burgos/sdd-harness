@@ -81,6 +81,17 @@ describe.skipIf(process.platform === 'win32')(
           .lstatSync(resolve(ws, '.agent/workflows/start-sdd-cycle.md'))
           .isSymbolicLink(),
       ).toBe(true);
+      expect(
+        fs.existsSync(resolve(ws, '.agents/skills/sdd-steward/SKILL.md')),
+      ).toBe(true);
+      expect(
+        fs
+          .lstatSync(resolve(ws, '.agent/workflows/sdd-steward.md'))
+          .isSymbolicLink(),
+      ).toBe(true);
+      expect(fs.existsSync(resolve(ws, '.gemini/commands/sdd-steward.toml'))).toBe(
+        true,
+      );
       const toml = fs.readFileSync(
         resolve(ws, '.gemini/commands/start-sdd-cycle.toml'),
         'utf-8',

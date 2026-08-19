@@ -22,6 +22,9 @@
     },
     {
       "file": "sdd-reviewer.agent.md"
+    },
+    {
+      "file": "sdd-steward.agent.md"
     }
   ],
   "skills": [
@@ -94,6 +97,10 @@
       "file": "SKILL.md"
     },
     {
+      "dir": "sdd-steward",
+      "file": "SKILL.md"
+    },
+    {
       "dir": "setup-graphify",
       "file": "SKILL.md"
     }
@@ -110,6 +117,9 @@
     },
     {
       "file": "review-cycle.prompt.md"
+    },
+    {
+      "file": "sdd-steward.prompt.md"
     },
     {
       "file": "start-sdd-cycle.prompt.md"

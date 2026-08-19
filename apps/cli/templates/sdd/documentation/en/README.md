@@ -113,7 +113,8 @@ sdd/
 │   ├── sdd-architect.agent.md
 │   ├── sdd-implementor-back.agent.md
 │   ├── sdd-implementor-front.agent.md
-│   └── sdd-reviewer.agent.md
+│   ├── sdd-reviewer.agent.md
+│   └── sdd-steward.agent.md          ← Kit concierge: status, update sdd, entry routing
 │
 ├── scripts/                           ← Cross-platform automation
 │   ├── setup-agents.sh                ← Bash script (macOS / Linux)
@@ -148,6 +149,7 @@ sdd/
 │   └── fonts/                         ← Vendored woff2 (no CDN, works offline)
 │
 └── skills/                            ← Skills (specialized micro-agents) — `SKILL.md` file
+    ├── sdd-steward/                   ← Kit concierge — entry point (/sdd-steward)
     ├── sdd-orchestrator/
     ├── sdd-functional/
     ├── sdd-planner/
@@ -611,6 +613,7 @@ Each agent has a fixed role and a specific invocation point in the flow:
 | **Backend Implementor**    | `sdd-implementor-back.agent.md`  | Develop API/logic (stack per the subproject's constitution.md)       | code in `apps/`, cycle tasks, `api.json`                                                |
 | **Frontend Implementor**   | `sdd-implementor-front.agent.md` | Develop UI (stack per the subproject's constitution.md)              | code in `apps/`, cycle tasks, `components.json`                                         |
 | **Reviewer**               | `sdd-reviewer.agent.md`          | Final validation, cycle close                                        | `cycle.json`, `global.json`, `specs/index.json`, `fixes.json`, `context/**`             |
+| **Steward** (outside the cycle) | `sdd-steward.agent.md`      | Kit concierge: entry point, status, `update sdd`, routing            | none — operates only through the official tools (`update sdd`, `setup:agents`, `harness idea`) |
 
 > The invocation order is **mandatory**. No agent can be skipped.
 

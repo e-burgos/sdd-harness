@@ -113,7 +113,8 @@ sdd/
 │   ├── sdd-architect.agent.md
 │   ├── sdd-implementor-back.agent.md
 │   ├── sdd-implementor-front.agent.md
-│   └── sdd-reviewer.agent.md
+│   ├── sdd-reviewer.agent.md
+│   └── sdd-steward.agent.md          ← Conserje del kit: status, update sdd, ruteo de entrada
 │
 ├── scripts/                           ← Automatización cross-platform
 │   ├── setup-agents.sh                ← Script Bash (macOS / Linux)
@@ -148,6 +149,7 @@ sdd/
 │   └── fonts/                         ← woff2 vendorizadas (sin CDN, funciona offline)
 │
 └── skills/                            ← Skills (micro-agentes especializados) — archivo `SKILL.md`
+    ├── sdd-steward/                   ← Conserje del kit — puerta de entrada (/sdd-steward)
     ├── sdd-orchestrator/
     ├── sdd-functional/
     ├── sdd-planner/
@@ -612,6 +614,7 @@ Cada agente tiene un rol fijo e invocación específica en el flujo:
 | **Implementador Backend**  | `sdd-implementor-back.agent.md`  | Desarrollar API/lógica (stack según constitution.md del subproyecto) | código en `apps/`, tasks del ciclo, `api.json`                                         |
 | **Implementador Frontend** | `sdd-implementor-front.agent.md` | Desarrollar UI (stack según constitution.md del subproyecto)         | código en `apps/`, tasks del ciclo, `components.json`                                  |
 | **Reviewer**               | `sdd-reviewer.agent.md`          | Validación final, cierre del ciclo                                   | `cycle.json`, `global.json`, `specs/index.json`, `fixes.json`, `context/**`            |
+| **Steward** (fuera del ciclo) | `sdd-steward.agent.md`        | Conserje del kit: puerta de entrada, status, `update sdd`, ruteo     | ninguno — solo opera vía herramientas oficiales (`update sdd`, `setup:agents`, `harness idea`) |
 
 > El orden de invocación es **obligatorio**. No se puede saltar ningún agente.
 

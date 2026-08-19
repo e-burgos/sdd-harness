@@ -10,8 +10,8 @@ const SDD_TREE: TreeNode = {
   note: 'complete SDD system',
   children: [
     { name: 'global.json', note: 'single source of the name and module state' },
-    { name: 'agents/', note: '7 cycle agents' },
-    { name: 'skills/', note: '18 skills' },
+    { name: 'agents/', note: '7 cycle agents + sdd-steward' },
+    { name: 'skills/', note: '19 skills' },
     { name: 'prompts/', note: 'gates as slash commands' },
     { name: 'schemas/', note: 'strict JSON Schema — additionalProperties: false' },
     { name: 'scripts/', note: 'validate · rebuild · setup' },
@@ -188,7 +188,7 @@ export const HERMES_PHASES: HermesPhase[] = [
       '$ npx @e-burgos/sdd-harness init --config ./harness.config.json',
       '',
       '→ Generating nx workspace...',
-      '→ Installing SDD system (7 agents, 18 skills)...',
+      '→ Installing SDD system (8 agents, 19 skills)...',
       '✓ sdd:validate OK — registries green',
     ],
   },
@@ -541,7 +541,7 @@ export const UI = {
     title2: ' Specs before code.',
     body: ' generates repos with the SDD methodology built in: 7 specialized agents, gates that make it impossible to code without design, schema-validated registries and a multi-provider harness that Claude Code, GitHub Copilot and Gemini read alike.',
     cta: 'See the 3 modes',
-    chips: ['7 SDD agents', '18 skills', '4 gates', 'strict schemas', 'live costs', 'portable memory', 'Nx · standalone · existing'],
+    chips: ['8 SDD agents', '19 skills', '4 gates', 'strict schemas', 'live costs', 'portable memory', 'Nx · standalone · existing'],
   },
   modes: {
     kicker: '01 — the three modes',
