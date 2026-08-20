@@ -5,6 +5,28 @@ All notable changes to `@e-burgos/sdd-harness` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.4] - 2026-08-20
+
+### Fixed
+
+- **v0.9.3 stopped new manifests from being poisoned; it did not heal the ones
+  already poisoned.** Every install updated under v0.9.0–v0.9.2 carries a
+  `kit.json` whose baseline is the *installed* file, so a customized hybrid still
+  reads as "not modified by the user" and is still replaced — silently, with the
+  update reporting `sdd:validate OK`.
+
+  Measured on a second production repo before touching it: `update sdd` would
+  have cut `context/constitution.md` from 265 to 220 lines and
+  `context/context_prompt.md` from 251 to 227 — 69 lines of project context
+  destroyed with no conflict, no `.new` and no warning.
+
+  Hybrid files (`context/constitution.md`, `context/context_prompt.md`,
+  `dual-harness/*`, `memory/lessons.md`, `pricing.json`) are now **never replaced
+  silently**, regardless of what the baseline says. A hybrid that reaches the
+  comparison already differs from the kit, so it is either the user's or
+  partly theirs: it is preserved and the kit version lands as `*.new`. When it
+  matches the kit there is nothing to do, so no spurious conflicts appear.
+
 ## [0.9.3] - 2026-08-20
 
 ### Fixed

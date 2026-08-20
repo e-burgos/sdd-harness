@@ -176,6 +176,27 @@ describe('update.generator', () => {
     expect(await fs.readFile(dualPath, 'utf-8')).toBe(mine);
   });
 
+  it('un híbrido customizado sobrevive aunque el manifest venga envenenado (<= v0.9.2)', async () => {
+    // Los manifests escritos antes de v0.9.3 anotaron el hash del archivo INSTALADO.
+    // Un híbrido customizado queda con baseline == instalado y se leería como "sin
+    // modificar", así que el update lo pisaría en silencio: sin conflicto ni .new.
+    const constitution = resolve(ws, 'sdd/context/constitution.md');
+    const mine = '# Constitución del equipo\n\nContenido propio que no está en el kit.\n';
+    await fs.writeFile(constitution, mine);
+
+    const manifestPath = resolve(ws, 'sdd/kit.json');
+    const manifest = await fs.readJSON(manifestPath);
+    manifest.files['context/constitution.md'] = sha256(mine); // baseline envenenado
+    await fs.writeJSON(manifestPath, manifest, { spaces: 2 });
+
+    const report = await updateSDD(ws);
+
+    expect(report.updated).not.toContain('context/constitution.md');
+    expect(await fs.readFile(constitution, 'utf-8')).toBe(mine);
+    expect(report.conflicts).toContain('context/constitution.md');
+    expect(await fs.pathExists(`${constitution}.new`)).toBe(true);
+  });
+
   it('falla claro si no hay instalación SDD', async () => {
     const empty = mkdtempSync(resolve(tmpdir(), 'harness-noupdate-'));
     await expect(updateSDD(empty)).rejects.toThrow('No SDD installation');
