@@ -1,6 +1,6 @@
 ---
 name: sdd-reviewer
-description: SDD Reviewer Agent Skill. Validates the quality of all cycle output. Invoke after all implementation tasks for the cycle are complete.
+description: Skill del Agente Reviewer SDD. Valida la calidad de todo el output del ciclo y ejecuta los gates de cierre. Invocar cuando todas las tasks de implementación del ciclo estén completas.
 ---
 
 # Skill: sdd-reviewer
