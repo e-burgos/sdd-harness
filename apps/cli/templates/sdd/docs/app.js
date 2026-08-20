@@ -390,6 +390,73 @@ const EN_STRINGS = {
   'Sin proveedor declarado': 'No provider declared',
   'Tokens y costo agéntico agregados por proveedor (ciclos + fixes), según las claves proveedor/modelo de la telemetría.':
     'Tokens and agentic cost aggregated by provider (cycles + fixes), based on the provider/model keys in the telemetry.',
+  // Descripciones del kit (frontmatter de agentes y skills, catálogo de prompts).
+  'Agente Arquitecto SDD. Define schema de DB, contratos de API y decisiones técnicas del módulo. Invocar después del Funcional, en paralelo con el Planner.':
+    'SDD Architect agent. Defines the DB schema, the API contracts and the module\'s technical decisions. Invoke after the Functional agent, in parallel with the Planner.',
+  'Agente Funcional SDD. Convierte objetivos de negocio en historias de usuario y requisitos funcionales concretos. Invocar después del Orquestador.':
+    'SDD Functional agent. Turns business goals into user stories and concrete functional requirements. Invoke after the Orchestrator.',
+  'Agente Implementador Backend SDD. Implementa módulos backend task por task. Invocar con una sola task a la vez después del Arquitecto.':
+    'SDD Backend Implementor agent. Implements backend modules task by task. Invoke with a single task at a time, after the Architect.',
+  'Agente Implementador Frontend SDD. Implementa vistas y componentes frontend task por task. Invocar después de que el backend correspondiente esté listo.':
+    'SDD Frontend Implementor agent. Implements frontend views and components task by task. Invoke once the matching backend is ready.',
+  'Orquestador del ciclo SDD. Coordina todos los agentes del proyecto de este repositorio. Invocar al iniciar cualquier ciclo de desarrollo.':
+    'SDD cycle Orchestrator. Coordinates every project agent in this repository. Invoke when starting any development cycle.',
+  'Agente Planner SDD. Convierte historias de usuario en tasks técnicas ordenadas y estimadas para el sprint. Invocar después del Funcional.':
+    'SDD Planner agent. Turns user stories into ordered, estimated technical tasks for the sprint. Invoke after the Functional agent.',
+  'Agente Reviewer SDD. Valida la calidad de todo el output del ciclo antes de cerrarlo. Invocar al finalizar todas las tasks de implementación del ciclo.':
+    'SDD Reviewer agent. Validates the quality of the whole cycle output before closing it. Invoke once every implementation task in the cycle is finished.',
+  'Conserje y puerta de entrada del kit SDD. Invocar para cualquier pedido sobre el kit en sí — status del harness/SDD, actualizar la librería, arrancar una idea, costos, salud de los arneses, dudas de metodología. Rutea todo lo demás al agente dueño sin bypassear ningún gate.':
+    'Concierge and entry point of the SDD kit. Invoke for any request about the kit itself — harness/SDD status, updating the library, kicking off an idea, costs, harness health, methodology questions. Routes everything else to the owning agent without bypassing a single gate.',
+  'Genera contratos completos de endpoints REST para el proyecto.':
+    'Generates complete REST endpoint contracts for the project.',
+  'Genera la estructura base de un módulo NestJS para el proyecto.':
+    'Generates the base structure of a NestJS module for the project.',
+  'Genera bloques de schema Prisma completos y listos para pegar.':
+    'Generates complete, paste-ready Prisma schema blocks.',
+  'Genera la estructura base de un componente/página React para el proyecto.':
+    'Generates the base structure of a React component or page for the project.',
+  'Genera una API o microservicio Spring Boot completo dentro del monorepo Nx (Maven, hexagonal, seguridad JWT, Flyway/Liquibase, tests). Fuente de verdad para scaffolding de backends Java nuevos.':
+    'Generates a complete Spring Boot API or microservice inside the Nx monorepo (Maven, hexagonal, JWT security, Flyway/Liquibase, tests). Source of truth for scaffolding new Java backends.',
+  'Inicializa un repo desde cero hasta la estructura canónica de este monorepo — Nx 23 + pnpm, apps/libs/tools, sdd/ con su arnés dual y CI. USE WHEN - (1) el repo no tiene nx.json / pnpm-workspace.yaml todavía, (2) hay que portar sdd/ a un repo nuevo, (3) la estructura existe pero está desalineada (glob packages/*, lockfile de npm, customConditions que no matchea, sdd/templates apareciendo como proyectos Nx). Para crear apps/libs en un workspace YA inicializado usar scaffold-nx.':
+    'Initializes a repo from scratch up to this monorepo\'s canonical structure — Nx 23 + pnpm, apps/libs/tools, sdd/ with its dual harness and CI. USE WHEN - (1) the repo has no nx.json / pnpm-workspace.yaml yet, (2) sdd/ has to be ported to a new repo, (3) the structure exists but is misaligned (packages/* glob, npm lockfile, non-matching customConditions, sdd/templates showing up as Nx projects). To create apps/libs in an ALREADY initialized workspace use scaffold-nx.',
+  'Scaffolding del workspace Nx y de apps/libs nuevas. Vía preferida — generadores oficiales de Nx y su MCP server; los templates de sdd/templates/ aportan las convenciones SDD que los generadores no conocen.':
+    'Scaffolding for the Nx workspace and for new apps/libs. Preferred route — the official Nx generators and their MCP server; the templates in sdd/templates/ add the SDD conventions the generators do not know about.',
+  'Skill del Agente Arquitecto SDD. Define schema de DB, contratos de API y decisiones técnicas. Invocar después del Funcional, en paralelo con el Planner.':
+    'SDD Architect agent skill. Defines the DB schema, API contracts and technical decisions. Invoke after the Functional agent, in parallel with the Planner.',
+  'Referencia canónica de todos los schemas de datos del sistema SDD. Cubre campo por campo cada archivo JSON del registro SDD, valores de status, convenciones de IDs, reglas de actualización y anti-patrones frecuentes. LECTURA OBLIGATORIA para cualquier agente que cree o modifique documentos SDD (api.json, schema.json, components.json, tasks.json, fixes.json, global.json, specs/index.json, cycle.json).':
+    'Canonical reference for every data schema in the SDD system. Covers each SDD registry JSON field by field, status values, ID conventions, update rules and frequent anti-patterns. REQUIRED READING for any agent that creates or modifies SDD documents (api.json, schema.json, components.json, tasks.json, fixes.json, global.json, specs/index.json, cycle.json).',
+  'Referencia canónica de la estructura de archivos del sistema SDD de este monorepo. Contiene convenciones de naming, árboles de directorios y templates completos de cada documento de ciclo. LECTURA OBLIGATORIA para el agente sdd-orchestrator antes de crear, mover o referenciar cualquier archivo SDD.':
+    'Canonical reference for the file structure of this monorepo\'s SDD system. Contains naming conventions, directory trees and complete templates for every cycle document. REQUIRED READING for the sdd-orchestrator agent before creating, moving or referencing any SDD file.',
+  'Skill del Agente Funcional SDD. Convierte objetivos de negocio en historias de usuario y requisitos funcionales. Invocar después del Orquestador.':
+    'SDD Functional agent skill. Turns business goals into user stories and functional requirements. Invoke after the Orchestrator.',
+  'Loop agéntico punta a punta - de una idea en lenguaje natural a producto funcionando. Descubre requisitos, decide y configura el stack con la CLI harness, siembra specs y conduce ciclos SDD encadenados hasta agotar el backlog, con presupuesto de modelo/esfuerzo por fase y condiciones de corte explícitas. Invocar cuando el usuario trae una idea u objetivo, no una spec.':
+    'End-to-end agentic loop - from an idea in plain language to a working product. Discovers requirements, decides and configures the stack with the harness CLI, seeds specs and drives chained SDD cycles until the backlog runs out, with a model/effort budget per phase and explicit stop conditions. Invoke when the user brings an idea or a goal, not a spec.',
+  'Skill del Agente Implementador Backend SDD. Implementa una task backend a la vez siguiendo el contrato del Arquitecto y el stack del subproyecto. Invocar una task por vez.':
+    'SDD Backend Implementor agent skill. Implements one backend task at a time, following the Architect\'s contract and the subproject\'s stack. Invoke one task at a time.',
+  'Skill del Agente Implementador Frontend SDD. Implementa una task frontend a la vez siguiendo el contrato de API y el stack del subproyecto. Invocar solo después de que el backend esté listo.':
+    'SDD Frontend Implementor agent skill. Implements one frontend task at a time, following the API contract and the subproject\'s stack. Invoke only once the backend is ready.',
+  'Skill del Agente Orquestador SDD. Prepara el brief del ciclo con el contexto mínimo para cada agente. Invocar al iniciar cualquier ciclo nuevo.':
+    'SDD Orchestrator agent skill. Prepares the cycle brief with the minimum context each agent needs. Invoke when starting any new cycle.',
+  'Skill del Agente Planner SDD. Convierte historias de usuario en tasks técnicas ordenadas y estimadas. Invocar después del Funcional, en paralelo con el Arquitecto.':
+    'SDD Planner agent skill. Turns user stories into ordered, estimated technical tasks. Invoke after the Functional agent, in parallel with the Architect.',
+  'Skill del Agente Reviewer SDD. Valida la calidad de todo el output del ciclo y ejecuta los gates de cierre. Invocar cuando todas las tasks de implementación del ciclo estén completas.':
+    'SDD Reviewer agent skill. Validates the quality of the whole cycle output and runs the closing gates. Invoke once every implementation task in the cycle is complete.',
+  'Conserje del kit SDD - puerta de entrada para status del harness, actualización de la librería, arranque de ideas, costos y salud de los arneses. Clasifica cualquier pedido con la tabla de ruteo, ejecuta solo lo que no tiene otro dueño y delega el resto sin bypassear gates. Invocar ante cualquier pregunta u operación sobre el kit en sí.':
+    'SDD kit concierge - entry point for harness status, library updates, kicking off ideas, costs and harness health. Classifies any request with the routing table, runs only what has no other owner and delegates the rest without bypassing gates. Invoke for any question or operation about the kit itself.',
+  'Instala y configura graphify (grafo de conocimiento del repo) para un dev que lo quiera usar. Elige un backend gratuito, valida el modelo con una medición real y construye el primer grafo. Invocar solo si el dev pide habilitar graphify.':
+    'Installs and configures graphify (the repo\'s knowledge graph) for a dev who wants to use it. Picks a free backend, validates the model with a real measurement and builds the first graph. Invoke only if the dev asks to enable graphify.',
+  'Prompt standalone para retomar el loop agéntico en una sesión nueva: carga lecciones y global.json, diagnostica en qué punto quedó el ciclo y sigue desde ahí.':
+    'Standalone prompt to resume the agentic loop in a fresh session: loads lessons and global.json, diagnoses where the cycle was left and carries on from there.',
+  'Punto de entrada para cualquier pedido sobre el kit: estado del arnés, actualización de la librería, costos y salud. Resuelve lo que no tiene otro dueño y rutea el resto sin bypassear gates.':
+    'Entry point for any request about the kit: harness status, library updates, costs and health. Resolves what has no other owner and routes the rest without bypassing gates.',
+  'Retomar el loop':
+    'Resume the loop',
+  'Conserje del kit':
+    'Kit concierge',
+  'Al retomar un loop en una sesión nueva':
+    'When resuming a loop in a fresh session',
+  'Ante cualquier pregunta u operación sobre el kit':
+    'For any question or operation about the kit',
   Memoria: 'Memory',
   'Lo aprendido en un ciclo no se vuelve a pagar en el siguiente.':
     'What one cycle learned is never paid for twice.',
@@ -643,6 +710,20 @@ const CATALOG = Object.freeze({
       description:
         'Proceso ligero para fixes urgentes. Registra en fixes.json y autoriza implementación sin ciclo completo.',
       trigger: 'Con prefijos [HOTFIX], [BUGFIX], [FIX], [IMPROVEMENT]',
+    },
+    {
+      file: 'hermes-resume.prompt.md',
+      label: 'Retomar el loop',
+      description:
+        'Prompt standalone para retomar el loop agéntico en una sesión nueva: carga lecciones y global.json, diagnostica en qué punto quedó el ciclo y sigue desde ahí.',
+      trigger: 'Al retomar un loop en una sesión nueva',
+    },
+    {
+      file: 'sdd-steward.prompt.md',
+      label: 'Conserje del kit',
+      description:
+        'Punto de entrada para cualquier pedido sobre el kit: estado del arnés, actualización de la librería, costos y salud. Resuelve lo que no tiene otro dueño y rutea el resto sin bypassear gates.',
+      trigger: 'Ante cualquier pregunta u operación sobre el kit',
     },
     {
       file: 'review-cycle.prompt.md',
@@ -5435,12 +5516,34 @@ function buildAgentEntry(agent, result) {
   return { ...agent, available: true, description };
 }
 
+// El frontmatter admite `description: texto` y block scalars de YAML
+// (`description: >` / `|`, con o sin chomping). Sin plegar la continuación, la
+// descripción quedaba en el literal `>` y la tarjeta salía vacía.
+function parseFrontmatterDescription(block) {
+  const lines = block.split('\n');
+  const index = lines.findIndex((line) => /^description:/.test(line));
+  if (index === -1) return '';
+
+  // El block scalar se detecta primero: en la forma inline un lookahead negativo
+  // retrocedería sobre los espacios y terminaría devolviendo el propio `>`.
+  const marker = /^description:[ \t]*([>|][-+]?)[ \t]*$/.exec(lines[index]);
+  if (marker) {
+    const folded = [];
+    for (const line of lines.slice(index + 1)) {
+      if (line.trim() === '' || !/^\s/.test(line)) break;
+      folded.push(line.trim());
+    }
+    return folded.join(' ').trim();
+  }
+
+  const inline = /^description:[ \t]*(.*)$/.exec(lines[index])?.[1] ?? '';
+  return inline.trim().replace(/^["']|["']$/g, '');
+}
+
 function parseAgentFrontmatter(source) {
   const match = /^---\n([\s\S]*?)\n---/.exec(source);
   if (!match) return { description: '' };
-  const description =
-    /^description:\s*(.+)$/m.exec(match[1])?.[1]?.trim() ?? '';
-  return { description };
+  return { description: parseFrontmatterDescription(match[1]) };
 }
 
 const AGENT_ACCENT_TONE = {
@@ -5470,7 +5573,7 @@ function agentsInvokePanel() {
 function renderAgentCard(agent, index) {
   const description = agent.available
     ? agent.description
-      ? `<p class="card-hint">${escapeHtml(agent.description)}</p>`
+      ? `<p class="card-hint">${escapeHtml(t(agent.description))}</p>`
       : ''
     : `<p class="empty-state-hint">${t('No disponible')}</p>`;
   const attrs = agent.available
@@ -5567,9 +5670,7 @@ function buildSkillEntry(skill, result) {
 function parseSkillFrontmatter(source) {
   const match = /^---\n([\s\S]*?)\n---/.exec(source);
   if (!match) return { description: '' };
-  const description =
-    /^description:\s*(.+)$/m.exec(match[1])?.[1]?.trim() ?? '';
-  return { description };
+  return { description: parseFrontmatterDescription(match[1]) };
 }
 
 function formatSkillLabel(dir) {
@@ -5609,7 +5710,7 @@ function renderSkillCard(skill, category) {
   const title = formatSkillLabel(skill.dir);
   const hint = skill.available
     ? skill.description
-      ? `<p class="card-hint" style="margin:2px 0 0">${escapeHtml(skill.description)}</p>`
+      ? `<p class="card-hint" style="margin:2px 0 0">${escapeHtml(t(skill.description))}</p>`
       : ''
     : `<p class="empty-state-hint" style="margin:2px 0 0">${t('No disponible')}</p>`;
   const attrs = skill.available

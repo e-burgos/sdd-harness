@@ -5,6 +5,33 @@ All notable changes to `@e-burgos/sdd-harness` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.1] - 2026-08-20
+
+### Fixed — the SDD Tools pages showed untranslated or empty descriptions
+
+Four separate defects behind the same symptom:
+
+- **Agent and skill descriptions were never translated.** Their cards rendered
+  `escapeHtml(description)` with no `t()` around it, so the viewer showed the raw
+  frontmatter whatever the selected language was. Prompts already went through
+  `t()`; agents and skills now do too.
+- **`description: >` rendered as a literal `>`.** The frontmatter parser read
+  whatever followed `description:` on the same line, so the two skills using a
+  YAML folded block scalar (`sdd-data-schemas`, `sdd-file-structure`) came out
+  with `>` as their whole description. Block scalars (`>`, `|`, with or without
+  chomping) are folded now, and the skill view — which had its own copy of the
+  parser — shares the fixed one.
+- **Two prompts had no description at all.** `hermes-resume` and `sdd-steward`
+  were missing from the viewer's fallback catalog, so they fell through to
+  `description: ''`.
+- **The kit's own descriptions mixed languages.** `sdd-reviewer`'s skill
+  frontmatter was in English while the other 18 were in Spanish. Normalized to
+  Spanish, the kit's source language.
+
+All 27 kit descriptions (8 agents + 19 skills) plus the 6 prompt entries now
+have English translations in the viewer dictionary, verified by parsing every
+frontmatter and asserting a dictionary hit for each.
+
 ## [0.10.0] - 2026-08-20
 
 ### Added — Memoria view: the project's learnings, finally visible
