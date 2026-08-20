@@ -96,9 +96,17 @@ export async function computeManifest(kitDir: string): Promise<KitManifest> {
   };
 }
 
-export async function writeManifest(sddDir: string): Promise<void> {
-  const manifest = await computeManifest(sddDir);
-  await fs.writeJSON(resolve(sddDir, KIT_MANIFEST_FILE), manifest, {
+/**
+ * El manifest es el baseline de lo que SHIPPEÓ el kit, no una foto de lo instalado:
+ * un archivo preservado como conflicto difiere del kit a propósito, y anotar su hash
+ * local lo haría pasar por "sin modificar" en el update siguiente — pisándolo.
+ */
+export async function writeManifest(
+  sddDir: string,
+  manifest?: KitManifest,
+): Promise<void> {
+  const value = manifest ?? (await computeManifest(sddDir));
+  await fs.writeJSON(resolve(sddDir, KIT_MANIFEST_FILE), value, {
     spaces: 2,
   });
 }
