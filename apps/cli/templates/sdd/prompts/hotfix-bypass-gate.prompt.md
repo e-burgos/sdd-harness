@@ -163,7 +163,8 @@ Después de implementar, el desarrollador actualiza en `sdd/fixes.json`:
 - `usage`: consumo del fix — `tokens_in`/`tokens_out`, `duration_minutes` y `model_tier`
   con clave `proveedor/modelo` (`claude/sonnet`, `gemini/flash`, `copilot/claude-sonnet`;
   Antigravity bajo `gemini/*`). Alimenta la vista Costos del visor. **Declarar el modelo es
-  obligatorio.** Fuente del número: `/stats` en Gemini CLI, reporte de sesión en Claude Code
+  obligatorio, y se registra al resolver el fix** — el reviewer consolida el total del ciclo
+  sumando lo que fixes y tasks ya anotaron, no reconstruyéndolo al final. Fuente del número: `/stats` en Gemini CLI, reporte de sesión en Claude Code
   — comandos del cliente que el agente no puede ejecutar — y estimación declarada en
   Antigravity/Copilot, que no tienen contador. Sin contador se registra una estimación de
   orden de magnitud con `approx: true` y `source: "declared-estimate"`: no se omite el campo.

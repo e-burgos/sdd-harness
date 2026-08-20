@@ -690,9 +690,13 @@ proveedor»: la estimación se declara, no se esconde ni se hace pasar por medid
 sin contador detrás). `pnpm sdd:validate` avisa —warning, no error— cuando un ciclo
 cerrado no tiene `metrics.usage` o lo tiene sin `by_tier`.
 
-Un fix cerrado por el FIX GATE registra la misma forma, singular, en
-`sdd/fixes.json` → `usage` (`tokens_in`/`tokens_out`/`duration_minutes`/`model_tier`/
-`approx`/`source`), y cada task lleva la suya en `tasks.json`.
+**Quien ejecuta registra; el reviewer consolida.** El consumo se anota al cerrar cada unidad de
+trabajo: cada task lleva su `usage` en `tasks.json` (lo escribe el implementador) y cada fix
+cerrado por el FIX GATE lleva el suyo en `sdd/fixes.json` → `usage`, con la misma forma
+singular (`tokens_in`/`tokens_out`/`duration_minutes`/`model_tier`/`approx`/`source`). El total
+del ciclo se **suma** de eso, agrupado por `proveedor/modelo`; no se reconstruye de memoria al
+final. El reviewer solo estima lo que ninguna unidad cubrió —su propia revisión, coordinación,
+documentos— y una suma que mezcla medido con estimado queda `approx: true`.
 
 Con eso, `pnpm sdd:docs` → vista **Costos**: comparativa del costo agéntico
 (tokens × tarifa por proveedor/tier) contra la estimación tradicional (`estimation_hours`

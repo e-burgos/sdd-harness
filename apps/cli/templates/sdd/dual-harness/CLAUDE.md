@@ -158,7 +158,11 @@ opcional** — el modelo siempre se conoce, es el que estás usando.
 
 De dónde sale el número: `/stats` en Gemini CLI (`source: stats-command`); el reporte de uso
 de la sesión en Claude Code (`session-report`). Ambos son comandos del cliente: un agente no
-puede ejecutarlos, se los pide al dev. En **Copilot y Antigravity no existe contador por
+puede ejecutarlos, se los pide al dev.
+
+**Quien ejecuta registra; el reviewer consolida.** El consumo se anota al cerrar cada unidad de
+trabajo —task, fix— y el total del ciclo se **suma** de eso, no se reconstruye de memoria al
+final. El reviewer solo estima lo que ninguna unidad cubrió. En **Copilot y Antigravity no existe contador por
 sesión**: ahí va una estimación de orden de magnitud con `approx: true` y
 `source: "declared-estimate"`. Antigravity registra bajo `gemini/*` — corre modelos Gemini.
 
