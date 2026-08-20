@@ -654,6 +654,11 @@ Two layers of versioned files, zero dependencies:
 With ≥5 entries, the orchestrator **distills** them into `lessons.md` (one line per lesson)
 and deletes what it distilled — `pnpm sdd:validate` warns when that is pending.
 
+All of it is readable in `pnpm sdd:docs` → the **Memory** view: distilled lessons on top,
+the episodic journal below as a timeline, newest first, with the pending-distillation notice
+and the 120-line cap notice when they apply. It is the only view that shows *why* the project
+does things the way it does.
+
 ### 10.3 Telemetry and the Costs dashboard
 
 On closing each cycle, the reviewer records the consumption. **It is mandatory, and

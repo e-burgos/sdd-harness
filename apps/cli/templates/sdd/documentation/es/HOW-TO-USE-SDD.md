@@ -647,6 +647,11 @@ Dos capas de archivos versionados, sin dependencias:
 Con ≥5 entradas, el orquestador las **destila** en `lessons.md` (una línea por
 lección) y borra lo destilado — `pnpm sdd:validate` avisa cuando está pendiente.
 
+Todo eso se lee en `pnpm sdd:docs` → vista **Memoria**: las lecciones destiladas
+arriba y el journal episódico abajo en línea de tiempo, más reciente primero, con el
+aviso de destilación pendiente y el del cap de 120 líneas cuando corresponde. Es la
+única vista que muestra por qué el proyecto hace las cosas como las hace.
+
 ### 10.3 Telemetría y dashboard de Costos
 
 Al cerrar cada ciclo, el reviewer registra el consumo. **Es obligatorio y declarar

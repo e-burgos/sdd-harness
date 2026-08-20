@@ -5,6 +5,36 @@ All notable changes to `@e-burgos/sdd-harness` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.0] - 2026-08-20
+
+### Added — Memoria view: the project's learnings, finally visible
+
+The MEMORIA GATE has been writing `memory/lessons.md` and `memory/journal/*.md`
+since v0.4, and the viewer never showed either. The one artifact that explains
+*why* a project does things the way it does was write-only.
+
+- **New `Memoria` view** (SDD section) rendering distilled lessons on top and the
+  episodic journal below as a timeline, newest first, each entry collapsible with
+  its markdown rendered and a `ciclo`/`fix` badge parsed from the filename.
+- **Surfaces the gate's own thresholds**: a notice when the journal reaches the
+  distillation threshold (≥5 entries, matching what `sdd:validate` warns about),
+  and another when `lessons.md` passes its 120-line cap.
+- **`catalog.json` gains a `memory` section** listing `memory/journal/*.md`
+  newest first, so the view works on static hosting where directory listing is
+  unavailable. The section is optional in the schema, so catalogs generated
+  before this release keep validating; `pnpm sdd:rebuild-catalog` adds it and
+  `sdd:validate` now checks it for staleness like the others.
+- Reactive like every other view: `memory` was already a fingerprint area in
+  `serve.mjs`, so closing a cycle refreshes it without a reload.
+
+### Fixed
+
+- `rebuild-catalog.mjs` did nothing, silently, when invoked through a path that
+  differs from its realpath — its `isMain` guard compared `import.meta.url`
+  (already resolved) against `process.argv[1]` (not resolved). On macOS any run
+  under a temp dir (`/var` → `/private/var`) fell through as if imported, wrote
+  no catalog and exited 0. Both sides are realpath'd now.
+
 ## [0.9.4] - 2026-08-20
 
 ### Fixed

@@ -321,6 +321,41 @@ describe.skipIf(process.platform === 'win32')(
       }
     });
 
+    it('el journal entra al catálogo y validate sigue en verde', async () => {
+      await writeCycle(baseMetrics({ tasks_completed: 1, tasks_skipped: 1 }));
+      const journalDir = resolve(ws, 'sdd/memory/journal');
+      await fs.ensureDir(journalDir);
+      await fs.writeFile(
+        resolve(journalDir, `2026-08-19-${SPEC_ID}-cycle-01.md`),
+        '# lección\n\n## Qué pasó\nalgo\n',
+      );
+      execFileSync('node', [resolve(ws, 'sdd/scripts/rebuild-catalog.mjs')], {
+        stdio: 'ignore',
+      });
+
+      const catalog = await fs.readJSON(resolve(ws, 'sdd/catalog.json'));
+      expect(catalog.memory).toEqual([
+        { file: `2026-08-19-${SPEC_ID}-cycle-01.md` },
+      ]);
+      expect(runValidate().ok).toBe(true);
+
+      // Sin regenerar el catálogo, validate tiene que marcarlo desactualizado.
+      const extra = resolve(journalDir, `2026-08-20-${SPEC_ID}-cycle-01.md`);
+      try {
+        await fs.writeFile(extra, '# otra\n');
+        const stale = runValidate();
+        expect(stale.ok).toBe(false);
+        expect(stale.output).toContain('memory is stale');
+      } finally {
+        // El workspace se comparte entre tests: dejarlo como estaba.
+        await fs.remove(extra);
+        await fs.remove(journalDir);
+        execFileSync('node', [resolve(ws, 'sdd/scripts/rebuild-catalog.mjs')], {
+          stdio: 'ignore',
+        });
+      }
+    });
+
     it('un ciclo sin metrics.usage avisa pero NO falla (dato pre-v0.9.0)', async () => {
       await writeCycle(baseMetrics({ tasks_completed: 1, tasks_skipped: 1 }));
       const { ok, output } = runValidate();

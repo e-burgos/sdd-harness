@@ -564,7 +564,7 @@ export const VIEWER_SHOTS: ViewerShot[] = [
 
 export const VIEWER_SECTIONS = [
   { section: 'Visión general', views: ['Dashboard', 'Planificación', 'Costos'] },
-  { section: 'SDD', views: ['Specs', 'Ciclos', 'Tareas', 'Fixes', 'Contexto'] },
+  { section: 'SDD', views: ['Specs', 'Ciclos', 'Tareas', 'Fixes', 'Contexto', 'Memoria'] },
   { section: 'Herramientas SDD', views: ['Agentes', 'Skills', 'Prompts'] },
   { section: 'Arquitectura', views: ['Schema', 'API', 'Componentes', 'Schemas JSON'] },
   { section: 'Ayuda', views: ['Documentación SDD'] },
