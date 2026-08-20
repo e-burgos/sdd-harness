@@ -390,6 +390,34 @@ const EN_STRINGS = {
   'Sin proveedor declarado': 'No provider declared',
   'Tokens y costo agéntico agregados por proveedor (ciclos + fixes), según las claves proveedor/modelo de la telemetría.':
     'Tokens and agentic cost aggregated by provider (cycles + fixes), based on the provider/model keys in the telemetry.',
+  Memoria: 'Memory',
+  'Lo aprendido en un ciclo no se vuelve a pagar en el siguiente.':
+    'What one cycle learned is never paid for twice.',
+  'Lo aprendido en un ciclo no se vuelve a pagar en el siguiente. Lo escribe el MEMORIA GATE al cerrar; el orquestador lo destila al abrir el próximo.':
+    'What one cycle learned is never paid for twice. The MEMORIA GATE writes it at close; the orchestrator distills it when the next cycle opens.',
+  'Sin memoria registrada todavía': 'No memory recorded yet',
+  'El MEMORIA GATE escribe una entrada en memory/journal/ cuando un ciclo deja una lección real — un supuesto que falló, un descubrimiento costoso, un gasto de tokens evitable. Con ≥5 entradas el orquestador las destila en memory/lessons.md.':
+    'The MEMORIA GATE writes an entry in memory/journal/ when a cycle leaves a real lesson — a failed assumption, a costly discovery, an avoidable token spend. At ≥5 entries the orchestrator distills them into memory/lessons.md.',
+  'Lecciones destiladas': 'Distilled lessons',
+  'líneas en lessons.md · cap {cap}': 'lines in lessons.md · cap {cap}',
+  'Entradas del journal': 'Journal entries',
+  'umbral de destilación: {n}': 'distillation threshold: {n}',
+  'Última entrada': 'Latest entry',
+  '{n} entradas acumuladas (≥{cap}): el orquestador las destila en lessons.md al iniciar el próximo ciclo y borra lo destilado.':
+    '{n} entries accumulated (≥{cap}): the orchestrator distills them into lessons.md when the next cycle opens and deletes what it distilled.',
+  'lessons.md pasó las {cap} líneas: toca podar lo que ya no aplica.':
+    'lessons.md is over {cap} lines: time to prune what no longer applies.',
+  'Una línea por lección. Se lee al iniciar cada sesión — por eso tiene tope: lo que no se aplica más, se poda.':
+    'One line per lesson. It is read at the start of every session — hence the cap: what no longer applies gets pruned.',
+  'Todavía no hay lecciones destiladas': 'No distilled lessons yet',
+  'Se escriben cuando el journal acumula ≥{n} entradas.':
+    'They are written once the journal accumulates ≥{n} entries.',
+  'Journal episódico': 'Episodic journal',
+  'Qué pasó, qué lección dejó y qué costo era evitable — una entrada por ciclo o fix que enseñó algo. Más reciente primero.':
+    'What happened, what lesson it left and what cost was avoidable — one entry per cycle or fix that taught something. Newest first.',
+  'No se pudo cargar {file}': 'Could not load {file}',
+  '{lessons} líneas · {entries} entrada{suffix}': '{lessons} lines · {entries} journal entries',
+  ciclo: 'cycle',
   Proveedor: 'Provider',
   'Modelos usados': 'Models used',
   Origen: 'Source',
@@ -1755,6 +1783,7 @@ const ICONS = {
   empty: `<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="24" cy="24" r="18" stroke-dasharray="4 3" /><line x1="16" y1="24" x2="32" y2="24" /></svg>`,
   close: `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><line x1="2" y1="2" x2="14" y2="14" /><line x1="14" y1="2" x2="2" y2="14" /></svg>`,
   refresh: `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13.5 8a5.5 5.5 0 1 1-1.9-4.16" /><polyline points="13.5 1.5 13.5 4.5 10.5 4.5" /></svg>`,
+  memory: `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 3.5C8 2.4 7.1 1.5 6 1.5S4 2.4 4 3.5c-1.1 0-2 .9-2 2 0 .6.3 1.2.7 1.5-.4.4-.7.9-.7 1.5 0 1.1.9 2 2 2 0 1.1.9 2 2 2s2-.9 2-2" /><path d="M8 3.5C8 2.4 8.9 1.5 10 1.5s2 .9 2 2c1.1 0 2 .9 2 2 0 .6-.3 1.2-.7 1.5.4.4.7.9.7 1.5 0 1.1-.9 2-2 2 0 1.1-.9 2-2 2s-2-.9-2-2" /><line x1="8" y1="3.5" x2="8" y2="14" /></svg>`,
   costs: `<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 2v12h12" /><path d="M5 10.5v-3" /><path d="M8.5 10.5v-6" /><path d="M12 10.5v-4.5" /></svg>`,
 };
 
@@ -7328,6 +7357,131 @@ async function renderNotFound(container, params) {
   );
 }
 
+const MEMORY_DISTILLATION_THRESHOLD = 5;
+const MEMORY_LESSONS_LINE_CAP = 120;
+
+// El nombre del journal es YYYY-MM-DD-<origen>.md: la fecha va al frente por diseño,
+// así el orden alfabético descendente ya es cronológico inverso.
+function memoryEntryMeta(file) {
+  const match = /^(\d{4}-\d{2}-\d{2})-(.+)\.md$/.exec(file);
+  if (!match) return { date: null, label: file.replace(/\.md$/, ''), kind: 'otro' };
+  const origin = match[2];
+  return {
+    date: match[1],
+    label: origin,
+    kind: origin.startsWith('fix-') ? 'fix' : 'ciclo',
+  };
+}
+
+async function renderMemory(container) {
+  let manifest = null;
+  try {
+    manifest = await loadManifest();
+  } catch {}
+  const journalFiles = (manifest?.memory ?? []).map((entry) => entry.file);
+
+  const lessonsSource = await fetchText('memory/lessons.md').catch(() => null);
+  const lessonsHtml = lessonsSource
+    ? renderMarkdown(lessonsSource, { imageBase: sddUrl('memory/') })
+    : null;
+  const lessonsLines = lessonsSource
+    ? lessonsSource.split('\n').filter((line) => line.trim().length > 0).length
+    : 0;
+
+  if (!lessonsHtml && journalFiles.length === 0) {
+    container.innerHTML = `
+      ${pageHeader({ title: t('Memoria'), subtitle: t('Lo aprendido en un ciclo no se vuelve a pagar en el siguiente.') })}
+      ${emptyState(
+        t('Sin memoria registrada todavía'),
+        t('El MEMORIA GATE escribe una entrada en memory/journal/ cuando un ciclo deja una lección real — un supuesto que falló, un descubrimiento costoso, un gasto de tokens evitable. Con ≥5 entradas el orquestador las destila en memory/lessons.md.'),
+      )}
+    `;
+    return;
+  }
+
+  const entries = await Promise.all(
+    journalFiles.map(async (file) => {
+      const html = await loadMarkdown(`memory/journal/${file}`).catch(() => null);
+      return { file, html, ...memoryEntryMeta(file) };
+    }),
+  );
+
+  const newest = entries.find((entry) => entry.date)?.date ?? null;
+  const dueDistillation = entries.length >= MEMORY_DISTILLATION_THRESHOLD;
+  const overCap = lessonsLines > MEMORY_LESSONS_LINE_CAP;
+
+  const kpis = `
+    <div class="card-grid" style="margin-bottom:16px">
+      ${card({ title: t('Lecciones destiladas'), value: lessonsHtml ? String(lessonsLines) : '—', hint: t('líneas en lessons.md · cap {cap}', { cap: MEMORY_LESSONS_LINE_CAP }) })}
+      ${card({ title: t('Entradas del journal'), value: String(entries.length), hint: t('umbral de destilación: {n}', { n: MEMORY_DISTILLATION_THRESHOLD }) })}
+      ${card({ title: t('Última entrada'), value: newest ?? '—', hint: t('memory/journal/') })}
+    </div>`;
+
+  const notices = [
+    dueDistillation
+      ? `<p class="memory-notice">${escapeHtml(t('{n} entradas acumuladas (≥{cap}): el orquestador las destila en lessons.md al iniciar el próximo ciclo y borra lo destilado.', { n: entries.length, cap: MEMORY_DISTILLATION_THRESHOLD }))}</p>`
+      : '',
+    overCap
+      ? `<p class="memory-notice">${escapeHtml(t('lessons.md pasó las {cap} líneas: toca podar lo que ya no aplica.', { cap: MEMORY_LESSONS_LINE_CAP }))}</p>`
+      : '',
+  ].filter(Boolean).join('');
+
+  const lessonsCard = `
+    <section class="card" style="margin-bottom:16px">
+      <div class="card-header">
+        <span class="card-title">${t('Lecciones destiladas')}</span>
+        <span class="card-hint" style="margin:0;font-family:var(--font-mono)">memory/lessons.md</span>
+      </div>
+      <p class="card-subtitle">${t('Una línea por lección. Se lee al iniciar cada sesión — por eso tiene tope: lo que no se aplica más, se poda.')}</p>
+      ${notices}
+      ${lessonsHtml ? `<div class="markdown markdown--compact">${lessonsHtml}</div>` : emptyState(t('Todavía no hay lecciones destiladas'), t('Se escriben cuando el journal acumula ≥{n} entradas.', { n: MEMORY_DISTILLATION_THRESHOLD }))}
+    </section>`;
+
+  const journalCard = entries.length === 0
+    ? ''
+    : `
+    <section class="card">
+      <div class="card-header">
+        <span class="card-title">${t('Journal episódico')}</span>
+        <span class="card-hint" style="margin:0;font-family:var(--font-mono)">memory/journal/</span>
+      </div>
+      <p class="card-subtitle">${t('Qué pasó, qué lección dejó y qué costo era evitable — una entrada por ciclo o fix que enseñó algo. Más reciente primero.')}</p>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
+        ${entries.map((entry, index) => {
+          const contentId = `memory-entry-${index}`;
+          const open = index === 0;
+          return `
+            <div style="border-radius:var(--radius-lg);border:1px solid rgb(var(--rgb-zinc-800) / 0.4);overflow:hidden">
+              <button type="button" data-toggle="${contentId}" aria-expanded="${open}" aria-controls="${contentId}" style="all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:12px;width:100%;padding:10px 14px;background:rgb(var(--rgb-zinc-900) / 0.3)">
+                <span data-chevron style="display:inline-flex;transition:transform 0.2s;transform:rotate(${open ? 0 : -90}deg);color:var(--text-faint)">
+                  <svg viewBox="0 0 10 6" width="10" height="6" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 1l4 4 4-4"></path></svg>
+                </span>
+                <span style="font-family:var(--font-mono);font-size:var(--text-12);color:var(--text-dim);flex-shrink:0">${escapeHtml(entry.date ?? '—')}</span>
+                <span style="flex:1;min-width:0;font-size:var(--text-13);color:var(--text-bright);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(entry.label)}</span>
+                ${badge(entry.kind === 'fix' ? 'fix' : 'ciclo', entry.kind === 'fix' ? 'status--absorbed' : 'status--done')}
+              </button>
+              <div id="${contentId}" ${open ? '' : 'hidden'} style="padding:14px">
+                ${entry.html ? `<div class="markdown markdown--compact">${entry.html}</div>` : errorState(new Error(t('No se pudo cargar {file}', { file: entry.file })))}
+              </div>
+            </div>`;
+        }).join('')}
+      </div>
+    </section>`;
+
+  container.innerHTML = `
+    ${pageHeader({
+      title: t('Memoria'),
+      meta: t('{lessons} líneas · {entries} entrada{suffix}', { lessons: lessonsLines, entries: entries.length, suffix: entries.length === 1 ? '' : 's' }),
+      subtitle: t('Lo aprendido en un ciclo no se vuelve a pagar en el siguiente. Lo escribe el MEMORIA GATE al cerrar; el orquestador lo destila al abrir el próximo.'),
+    })}
+    ${kpis}
+    ${lessonsCard}
+    ${journalCard}
+  `;
+
+  bindPlanningInteractions(container);
+}
+
 const VIEWS = {
   dashboard: {
     label: 'Dashboard',
@@ -7426,6 +7580,13 @@ const VIEWS = {
     icon: 'schemaFix',
     render: renderSchemas,
     deps: ['schemas', 'catalog'],
+  },
+  memory: {
+    label: 'Memoria',
+    section: 'SDD',
+    icon: 'memory',
+    render: renderMemory,
+    deps: ['memory', 'catalog'],
   },
   help: {
     label: 'Documentación SDD',

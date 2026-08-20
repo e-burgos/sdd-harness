@@ -412,7 +412,7 @@ const catalogJson = validate('catalog.json', 'catalog.schema.json');
 if (catalogJson) {
   const { buildCatalog } = await import(join(__dirname, 'rebuild-catalog.mjs'));
   const expected = buildCatalog();
-  for (const section of ['agents', 'skills', 'prompts', 'schemas']) {
+  for (const section of ['agents', 'skills', 'prompts', 'schemas', 'memory']) {
     const have = JSON.stringify(catalogJson[section] ?? []);
     const want = JSON.stringify(expected[section]);
     if (have !== want) {
