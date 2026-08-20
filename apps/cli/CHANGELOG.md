@@ -5,6 +5,22 @@ All notable changes to `@e-burgos/sdd-harness` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.2] - 2026-08-20
+
+### Fixed
+
+- `update sdd` left a repo without `sdd/memory/journal/`, the directory the
+  MEMORIA GATE writes into. A fresh install copies the kit wholesale and gets
+  the `.gitkeep` that holds the directory in git; the update walks the manifest
+  instead, and `memory/journal/` is classified as **data** — correctly, nobody
+  wants an update touching journal entries — so its placeholder was filtered out
+  along with the entries. Updated repos ended up structurally different from
+  freshly installed ones.
+
+  The update now restores kit-shipped `.gitkeep` placeholders inside data
+  directories when the directory is missing, and only then: an existing journal
+  is never touched, and no entry is ever overwritten.
+
 ## [0.10.1] - 2026-08-20
 
 ### Fixed — the SDD Tools pages showed untranslated or empty descriptions

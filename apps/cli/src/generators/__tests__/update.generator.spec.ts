@@ -197,6 +197,28 @@ describe('update.generator', () => {
     expect(await fs.pathExists(`${constitution}.new`)).toBe(true);
   });
 
+  it('restaura los directorios de datos que scaffoldea el kit (memory/journal)', async () => {
+    // memory/journal/ es data en el manifiesto, así que el update lo excluye —
+    // pero entonces un repo actualizado quedaba sin el directorio que el MEMORIA
+    // GATE necesita, mientras que una instalación fresca sí lo tenía.
+    const journal = resolve(ws, 'sdd/memory/journal');
+    await fs.remove(journal);
+    expect(await fs.pathExists(journal)).toBe(false);
+
+    await updateSDD(ws);
+
+    expect(await fs.pathExists(resolve(journal, '.gitkeep'))).toBe(true);
+  });
+
+  it('nunca pisa una entrada existente del journal', async () => {
+    const entry = resolve(ws, 'sdd/memory/journal/2026-08-20-fix-eburgos-001.md');
+    await fs.outputFile(entry, '# lección propia\n');
+
+    await updateSDD(ws);
+
+    expect(await fs.readFile(entry, 'utf-8')).toBe('# lección propia\n');
+  });
+
   it('falla claro si no hay instalación SDD', async () => {
     const empty = mkdtempSync(resolve(tmpdir(), 'harness-noupdate-'));
     await expect(updateSDD(empty)).rejects.toThrow('No SDD installation');
