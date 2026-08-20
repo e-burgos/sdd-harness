@@ -137,10 +137,24 @@ escritos, iteraciones de review, tamaño de los documentos) y declaralo. Una est
 de 500K tokens vale; un `0` o un campo ausente no. Lo que está prohibido es **inventar un
 número preciso y presentarlo como medido** (`approx` en `false` sin contador detrás).
 
-### Además del ciclo
+### Quien ejecuta registra; vos consolidás
 
-- **Por task:** `tasks.json` → `usage` con `model_tier`, cuando el implementador lo reportó
-- **Por fix:** todo fix validado o absorbido en este ciclo lleva su `usage` en `sdd/fixes.json`
+La telemetría **no se reconstruye al final**: se registra al cerrar cada unidad de trabajo y
+vos la sumás. Cuando llegás al cierre, la mayor parte del número ya está escrita.
+
+| Unidad | Dónde                                  | Quién lo escribe        | Cuándo                  |
+| ------ | -------------------------------------- | ----------------------- | ----------------------- |
+| task   | `tasks.json` → `usage` (+`model_tier`) | el implementador        | al cerrar la task       |
+| fix    | `sdd/fixes.json` → `usage`             | quien resuelve el fix   | al resolverlo           |
+| ciclo  | `cycle.json` → `metrics.usage`         | **vos, consolidando**   | al cerrar el ciclo      |
+
+**Consolidar = sumar lo ya registrado**, agrupando por `proveedor/modelo` en `by_tier`. Si una
+entrada de `by_tier` mezcla algo medido con algo estimado, la suma queda `approx: true`: un
+total es tan honesto como su parte más floja.
+
+Tu trabajo de estimación se limita a **lo que ninguna task ni fix cubrió** — tu propia revisión,
+la coordinación, lo que se fue en documentos. Si llegás al cierre y no hay nada registrado, algo
+falló aguas arriba: anotalo en `reviewer_report.notes` además de estimar el total.
 
 ---
 

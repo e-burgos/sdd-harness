@@ -599,11 +599,16 @@ pending → in-progress → implemented (dev) → validated | absorbed (sdd-revi
 
 El bloque `usage` vive en tres lugares, con la misma forma:
 
-| Dónde                              | Campo                       | Quién lo escribe        |
-| ---------------------------------- | --------------------------- | ----------------------- |
-| `cycle.json`                       | `metrics.usage` (+`by_tier`) | sdd-reviewer al cerrar  |
-| `tasks.json` (por task)            | `usage` (+`model_tier`)     | sdd-implementor-\*      |
-| `sdd/fixes.json` (por fix)         | `usage` (+`model_tier`)     | quien resuelve el fix   |
+| Dónde                              | Campo                        | Quién lo escribe                  | Cuándo             |
+| ---------------------------------- | ---------------------------- | --------------------------------- | ------------------ |
+| `tasks.json` (por task)            | `usage` (+`model_tier`)      | sdd-implementor-\*                | al cerrar la task  |
+| `sdd/fixes.json` (por fix)         | `usage` (+`model_tier`)      | quien resuelve el fix             | al resolverlo      |
+| `cycle.json`                       | `metrics.usage` (+`by_tier`) | sdd-reviewer, **consolidando**    | al cerrar el ciclo |
+
+> **Quien ejecuta registra; el reviewer consolida.** El total del ciclo no se reconstruye al
+> final: se suma de lo que tasks y fixes ya escribieron, agrupado por `proveedor/modelo`. El
+> reviewer solo estima lo que ninguna unidad cubrió (su propia revisión, coordinación,
+> documentos). Una suma que mezcla medido con estimado queda `approx: true`.
 
 ### Campos
 

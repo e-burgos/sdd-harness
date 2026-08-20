@@ -47,6 +47,9 @@ estás usando. De dónde sale el número de tokens:
 
 > Antigravity registra bajo `gemini/*` — corre modelos Gemini.
 
+**Quien ejecuta registra; el reviewer consolida.** Se anota al cerrar cada task y cada fix; el
+total del ciclo se suma de eso, no se reconstruye al final.
+
 **Sin contador se estima; no se omite.** `/stats` y el reporte de sesión son comandos del
 cliente: un agente no puede ejecutarlos (pedíselos al dev). En Copilot y Antigravity no
 existen. En todos esos casos va una estimación de orden de magnitud con `approx: true` y

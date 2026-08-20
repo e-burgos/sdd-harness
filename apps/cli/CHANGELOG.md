@@ -5,6 +5,34 @@ All notable changes to `@e-burgos/sdd-harness` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.10.3] - 2026-08-20
+
+### Changed — telemetry is consolidated, not reconstructed
+
+The TELEMETRÍA GATE said *what* to record and *where*, but not *when*, so the
+reviewer was left rebuilding a whole cycle's consumption from memory at close —
+the moment with the least information about what each task actually cost.
+
+Credit where it is due: this model comes from `front-ypf-bo-mfe`, whose team had
+written it into their own copy of the reviewer skill before the kit had anything
+to say about telemetry. A v0.9.0 update destroyed that customization (the bug
+fixed in v0.9.3/v0.9.4); recovering it from git is what surfaced the idea.
+
+- **Whoever executes records; the reviewer consolidates.** `usage` is written
+  when each unit of work closes — the implementor on the task, whoever resolves
+  a fix on the fix — and the cycle total is **summed** from those, grouped by
+  `provider/model` into `by_tier`.
+- The reviewer's own estimating is now scoped to what no unit covered: the
+  review itself, coordination, the documents.
+- A `by_tier` entry summing a measured part with an estimated one comes out
+  `approx: true` — a total is only as honest as its weakest part.
+- Nothing recorded when the reviewer reaches the close means something failed
+  upstream: it goes in `reviewer_report.notes` on top of estimating the total.
+
+Documented across the reviewer agent and skill, both implementors, the FIX GATE
+prompt, `sdd-data-schemas`, the dual-harness rule and both languages of the kit
+docs. No schema change — the shape was already right, only the protocol moved.
+
 ## [0.10.2] - 2026-08-20
 
 ### Fixed

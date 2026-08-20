@@ -91,6 +91,10 @@ Si alguna condición NO se cumple → DETENER y notificar al Orquestador.
   }
   ```
 
+  Se registra **al cerrar esta task**, no al final del ciclo: el reviewer consolida sumando lo
+  que vos y los fixes ya escribieron. Si no lo anotás acá, alguien lo tiene que reconstruir de
+  memoria después.
+
   `model_tier` es `proveedor/modelo` (`claude/sonnet`, `gemini/pro`, `copilot/gpt-5-mini`;
   Antigravity registra bajo `gemini/*`) y **siempre se conoce**: es el modelo con el que
   estuviste trabajando. Si el arnés no expone contador (Copilot, Antigravity), declarar una

@@ -697,9 +697,13 @@ is inventing a precise number and presenting it as measured (`approx: false` wit
 behind it). `pnpm sdd:validate` warns — a warning, not an error — when a closed cycle has no
 `metrics.usage`, or has it without `by_tier`.
 
-A fix closed under the FIX GATE records the same shape, singular, in `sdd/fixes.json` →
-`usage` (`tokens_in`/`tokens_out`/`duration_minutes`/`model_tier`/`approx`/`source`), and each
-task carries its own in `tasks.json`.
+**Whoever executes records; the reviewer consolidates.** Usage is written when each unit of work
+closes: every task carries its `usage` in `tasks.json` (written by the implementor) and every fix
+closed under the FIX GATE carries its own in `sdd/fixes.json` → `usage`, same shape, singular
+(`tokens_in`/`tokens_out`/`duration_minutes`/`model_tier`/`approx`/`source`). The cycle total is
+**summed** from those, grouped by provider/model; it is never reconstructed from memory at the
+end. The reviewer only estimates what no unit covered — the review itself, coordination,
+documents — and a sum mixing measured with estimated comes out `approx: true`.
 
 With that, `pnpm sdd:docs` → **Costs** view: agentic cost (tokens × per-provider/tier rate)
 compared against the traditional estimation (`estimation_hours` of the tasks × hourly rate),
