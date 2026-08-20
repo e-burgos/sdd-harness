@@ -52,6 +52,17 @@ export type KitManifest = {
   files: Record<string, string>;
 };
 
+/**
+ * Placeholders (.gitkeep) que el kit shippea DENTRO de directorios de datos:
+ * son scaffolding, no datos. El manifiesto los excluye —con razón, nadie quiere
+ * que el update toque `specs/` ni `memory/journal/`— pero entonces un repo
+ * actualizado se quedaba sin el directorio que el gate necesita, mientras que
+ * una instalación fresca (copia completa) sí lo tenía.
+ */
+export function isDataPlaceholder(relPath: string): boolean {
+  return !isKitOwned(relPath) && relPath.endsWith('/.gitkeep');
+}
+
 export function isKitOwned(relPath: string): boolean {
   if (relPath === KIT_MANIFEST_FILE) return false;
   if (DATA_FILES.has(relPath)) return false;
@@ -71,7 +82,7 @@ export function hashFile(path: string): string {
   return createHash('sha256').update(fs.readFileSync(path)).digest('hex');
 }
 
-export async function listKitFiles(kitDir: string): Promise<string[]> {
+async function listAllFiles(kitDir: string): Promise<string[]> {
   const out: string[] = [];
   const walk = async (dir: string) => {
     for (const entry of await fs.readdir(dir, { withFileTypes: true })) {
@@ -81,7 +92,15 @@ export async function listKitFiles(kitDir: string): Promise<string[]> {
     }
   };
   await walk(kitDir);
-  return out.filter(isKitOwned).sort();
+  return out.sort();
+}
+
+export async function listKitFiles(kitDir: string): Promise<string[]> {
+  return (await listAllFiles(kitDir)).filter(isKitOwned);
+}
+
+export async function listDataPlaceholders(kitDir: string): Promise<string[]> {
+  return (await listAllFiles(kitDir)).filter(isDataPlaceholder);
 }
 
 export async function computeManifest(kitDir: string): Promise<KitManifest> {

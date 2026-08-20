@@ -8,6 +8,7 @@ import {
   hashFile,
   isGenerated,
   isHybrid,
+  listDataPlaceholders,
   listKitFiles,
   readManifest,
   writeManifest,
@@ -107,6 +108,16 @@ export async function updateSDD(root: string): Promise<UpdateReport> {
         report.keptCustom.push(rel);
       }
     }
+  }
+
+  // Los directorios de datos que el kit scaffoldea (memory/journal/) solo llegan
+  // por su .gitkeep; nunca se pisa nada, solo se crea lo que falta.
+  for (const rel of await listDataPlaceholders(kitDir)) {
+    const dest = resolve(sddDir, rel);
+    if (await fs.pathExists(dirname(dest))) continue;
+    await fs.ensureDir(dirname(dest));
+    await fs.copy(resolve(kitDir, rel), dest);
+    report.added.push(rel);
   }
 
   await fs.copy(resolve(kitDir, 'catalog.json'), resolve(sddDir, 'catalog.json'));
