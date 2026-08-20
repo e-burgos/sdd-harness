@@ -471,10 +471,19 @@ if (globalJson) {
     ...KIT_DIRS.flatMap((dir) => walkTextFiles(join(SDD, dir))),
   ].filter((path) => existsSync(path));
 
+  // Word-boundary match: a project named "shop" must not be reported because an app is
+  // called "shop-api", and a subproject legitimately named after the repo is not a leak.
+  const escapeRe = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const ownedRe = owned.map(([prop, value]) => [
+    prop,
+    value,
+    new RegExp(`(?<![A-Za-z0-9_-])${escapeRe(value)}(?![A-Za-z0-9_-])`),
+  ]);
+
   for (const path of kitFiles) {
     const content = readFileSync(path, 'utf8');
-    for (const [prop, value] of owned) {
-      if (content.includes(value)) {
+    for (const [prop, value, re] of ownedRe) {
+      if (re.test(content)) {
         fail(
           path.slice(SDD.length + 1),
           `hardcodes global.json "${prop}" ("${value}") — point to sdd/global.json instead so sdd/ stays portable`,

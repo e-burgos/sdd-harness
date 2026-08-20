@@ -303,6 +303,24 @@ describe.skipIf(process.platform === 'win32')(
       rmSync(ws, { recursive: true, force: true });
     });
 
+    // El proyecto se llama telemetry-proj: una app telemetry-proj-api comparte el prefijo
+    // y no debe disparar la regla de portabilidad (substring != nombre del proyecto).
+    it('una app cuyo nombre extiende al del proyecto no dispara la regla de portabilidad', async () => {
+      await writeCycle(baseMetrics({ tasks_completed: 1, tasks_skipped: 1 }));
+      const readme = resolve(ws, 'sdd/README.md');
+      const original = await fs.readFile(readme, 'utf-8');
+      await fs.writeFile(readme, `${original}\n\nVer \`apps/telemetry-proj-api\` para la API.\n`);
+      try {
+        expect(runValidate().ok).toBe(true);
+        await fs.writeFile(readme, `${original}\n\nEste repo es telemetry-proj.\n`);
+        const leak = runValidate();
+        expect(leak.ok).toBe(false);
+        expect(leak.output).toContain('hardcodes global.json');
+      } finally {
+        await fs.writeFile(readme, original);
+      }
+    });
+
     it('un ciclo sin metrics.usage avisa pero NO falla (dato pre-v0.9.0)', async () => {
       await writeCycle(baseMetrics({ tasks_completed: 1, tasks_skipped: 1 }));
       const { ok, output } = runValidate();

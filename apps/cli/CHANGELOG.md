@@ -5,6 +5,19 @@ All notable changes to `@e-burgos/sdd-harness` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.2] - 2026-08-20
+
+### Fixed
+
+- The portability rule matched the project name as a bare substring, so a
+  subproject whose name extends the repo's — `inv-trading-api` inside a project
+  named `inv-trading` — was reported as a hardcoded leak. Real installs hit
+  this on every context document that lists their own apps: 6 of 16 reported
+  leaks in a production repo were the app name, not the project name. The check
+  now requires a word boundary (`[A-Za-z0-9_-]` on neither side), so
+  `shop-api` no longer trips a project called `shop` while a genuine
+  `shop` reference still fails.
+
 ## [0.9.1] - 2026-08-19
 
 ### Fixed
