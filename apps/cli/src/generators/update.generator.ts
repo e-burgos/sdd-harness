@@ -106,7 +106,7 @@ export async function updateSDD(root: string): Promise<UpdateReport> {
   }
 
   await fs.copy(resolve(kitDir, 'catalog.json'), resolve(sddDir, 'catalog.json'));
-  await writeManifest(sddDir);
+  await writeManifest(sddDir, newManifest);
 
   const pkgJson = await fs.readJSON(resolve(root, 'package.json')).catch(() => null);
   const projectName = pkgJson?.name?.replace(/^@[^/]+\//, '') ?? 'project';

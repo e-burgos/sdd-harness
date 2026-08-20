@@ -154,6 +154,28 @@ describe('update.generator', () => {
     expect(await fs.pathExists(resolve(ws, 'sdd/kit.json'))).toBe(true);
   });
 
+  it('un conflicto preservado sobrevive al update siguiente (baseline = lo que shippeó el kit)', async () => {
+    // Regresión: el manifest guardaba una foto de lo instalado, así que el archivo
+    // preservado quedaba anotado con su propio hash y el update siguiente lo leía
+    // como "sin modificar" — pisando en silencio lo que el usuario decidió conservar.
+    await fs.remove(resolve(ws, 'sdd/kit.json'));
+    const dualPath = resolve(ws, 'sdd/dual-harness/AGENTS.md');
+    const mine = '# Arnés propio del equipo\n';
+    await fs.writeFile(dualPath, mine);
+
+    const first = await updateSDD(ws);
+    expect(first.legacyMode).toBe(true);
+    expect(first.conflicts).toContain('dual-harness/AGENTS.md');
+    expect(await fs.readFile(dualPath, 'utf-8')).toBe(mine);
+
+    await fs.remove(`${dualPath}.new`);
+    const second = await updateSDD(ws);
+
+    expect(second.legacyMode).toBe(false);
+    expect(second.updated).not.toContain('dual-harness/AGENTS.md');
+    expect(await fs.readFile(dualPath, 'utf-8')).toBe(mine);
+  });
+
   it('falla claro si no hay instalación SDD', async () => {
     const empty = mkdtempSync(resolve(tmpdir(), 'harness-noupdate-'));
     await expect(updateSDD(empty)).rejects.toThrow('No SDD installation');

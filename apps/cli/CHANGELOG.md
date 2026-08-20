@@ -5,6 +5,28 @@ All notable changes to `@e-burgos/sdd-harness` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.3] - 2026-08-20
+
+### Fixed
+
+- **`update sdd` destroyed, on the next run, the very files it had preserved.**
+  `sdd/kit.json` was written by hashing the *installed* directory, so a file kept
+  as a conflict — the user's `dual-harness/AGENTS.md`, their
+  `context/constitution.md` — was recorded with its own local hash. The next
+  update compared the file against that baseline, found them equal, concluded
+  "not modified by the user" and replaced it with the kit's template. No
+  conflict, no `.new`, no warning.
+
+  Hit on a real repo doing two consecutive updates after a legacy install: a
+  282-line project constitution came back as the empty kit template. The
+  manifest now records what the **kit shipped** (`newManifest`), which is what
+  the comparison always meant, so a preserved file keeps differing from its
+  baseline and stays preserved.
+
+  Anyone who ran two updates in a row since v0.6.1 should check
+  `git diff` on `context/constitution.md`, `context/context_prompt.md` and
+  `dual-harness/*` before updating again.
+
 ## [0.9.2] - 2026-08-20
 
 ### Fixed
