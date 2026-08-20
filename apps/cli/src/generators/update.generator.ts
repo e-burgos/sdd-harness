@@ -73,8 +73,12 @@ export async function updateSDD(root: string): Promise<UpdateReport> {
     if (currentHash === newHash) continue;
 
     const baseHash = oldManifest?.files[rel];
+    // Los híbridos nunca se reemplazan en silencio: si llegaron hasta acá es porque
+    // difieren del kit, así que o son del usuario o son suyos a medias. Confiar en el
+    // baseline no alcanza — los manifests escritos antes de v0.9.3 anotaron el hash del
+    // archivo instalado, así que un híbrido customizado se lee como "sin modificar".
     const userModified =
-      oldManifest === null ? isHybrid(rel) : currentHash !== baseHash;
+      isHybrid(rel) || (oldManifest !== null && currentHash !== baseHash);
 
     if (!userModified) {
       await fs.copy(src, dest);
