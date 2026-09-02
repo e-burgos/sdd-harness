@@ -1,13 +1,57 @@
 import { defineCommand } from "citty";
 import * as p from "@clack/prompts";
 import pc from "picocolors";
+import { basename, dirname, resolve } from "node:path";
+import fs from "fs-extra";
 import { logger } from "../utils/logger.js";
+import { warnIfNxRootMismatch } from "../utils/env.js";
 import { generateWorkspace, generateStandalone } from "../generators/index.js";
 import {
   loadHarnessConfig,
   toStandaloneOptions,
   toWorkspaceOptions,
 } from "../config/load.js";
+import { IDEA_FILENAME } from "../generators/idea.generator.js";
+import { CONFIG_SCHEMA_FILENAME } from "../config/json-schema.js";
+
+/** Flags de destino compartidos por las tres vías de init. */
+interface TargetFlags {
+  here: boolean;
+  dir?: string;
+  skipVerify: boolean;
+}
+
+/**
+ * Dónde generar. En el cwd cuando: `--here` / `--dir .`, el config indicado vive en el cwd, o
+ * `basename(cwd) == project.name` — el caso real es un directorio ya `git init`-eado con los
+ * archivos de `harness idea` adentro, donde anidar `<name>/<name>/` obligaba a aplanar a mano.
+ */
+export function resolveInitTarget(
+  cwd: string,
+  projectName: string,
+  flags: TargetFlags,
+  configPath?: string,
+): { targetDir: string; inPlace: boolean } {
+  if (flags.dir && flags.dir !== ".") {
+    const targetDir = resolve(cwd, flags.dir);
+    return { targetDir, inPlace: targetDir === cwd };
+  }
+  const configInCwd = configPath ? dirname(resolve(cwd, configPath)) === cwd : false;
+  const inPlace =
+    flags.here || flags.dir === "." || configInCwd || basename(cwd) === projectName;
+  return { targetDir: inPlace ? cwd : resolve(cwd, projectName), inPlace };
+}
+
+/** Archivos de `harness idea` junto al config: viajan al workspace si este se genera en otro directorio. */
+function harnessFilesNextTo(configPath: string | undefined, cwd: string): string[] {
+  const dir = configPath ? dirname(resolve(cwd, configPath)) : cwd;
+  const candidates = [
+    IDEA_FILENAME,
+    CONFIG_SCHEMA_FILENAME,
+    ...(configPath ? [resolve(cwd, configPath)] : []),
+  ].map((f) => resolve(dir, f));
+  return candidates.filter((f) => fs.existsSync(f));
+}
 
 const APP_TYPE_OPTIONS = [
   {
@@ -99,12 +143,35 @@ export const initCommand = defineCommand({
       description: "Skip confirmation prompts",
       default: false,
     },
+    here: {
+      type: "boolean",
+      description:
+        "Generate in the current directory instead of <name>/ (implied when the config lives here or the directory is already named <name>)",
+      default: false,
+    },
+    dir: {
+      type: "string",
+      description: "Target directory (\".\" = here). Default: ./<name>",
+    },
+    skipVerify: {
+      type: "boolean",
+      description:
+        "Skip the FASE 3 gate (sdd:validate + nx run-many -t lint test build) that init runs and fails on",
+      default: false,
+    },
   },
   async run({ args }) {
+    warnIfNxRootMismatch();
     p.intro(pc.bgCyan(pc.black(" harness init ")));
 
+    const target: TargetFlags = {
+      here: args.here,
+      dir: args.dir,
+      skipVerify: args.skipVerify,
+    };
+
     if (args.config) {
-      await runConfigFlow(args.config);
+      await runConfigFlow(args.config, target);
       return;
     }
 
@@ -168,12 +235,14 @@ export const initCommand = defineCommand({
         projectName as string,
         (description as string) || "",
         args.yes,
+        target,
       );
     } else {
       await runNxFlow(
         projectName as string,
         (description as string) || "",
         args.yes,
+        target,
       );
     }
   },
@@ -181,7 +250,10 @@ export const initCommand = defineCommand({
 
 // ─── Config-driven flow (non-interactive, for AI agents and CI) ───────────────
 
-async function runConfigFlow(configPath: string): Promise<void> {
+async function runConfigFlow(
+  configPath: string,
+  flags: TargetFlags,
+): Promise<void> {
   let config;
   try {
     config = await loadHarnessConfig(configPath);
@@ -190,14 +262,27 @@ async function runConfigFlow(configPath: string): Promise<void> {
     process.exit(1);
   }
 
+  const cwd = process.cwd();
+  const { targetDir, inPlace } = resolveInitTarget(
+    cwd,
+    config.project.name,
+    flags,
+    configPath,
+  );
+  const modules = config.sdd?.modules ?? [];
+
   p.note(
     [
       `${pc.bold("Project:")} ${config.project.name}`,
       `${pc.bold("Mode:")} ${config.mode}`,
-      `${pc.bold("Apps:")} ${config.apps.map((a) => `${a.name} (${a.type})`).join(", ")}`,
+      `${pc.bold("Target:")} ${inPlace ? `${targetDir} (current directory)` : targetDir}`,
+      `${pc.bold("Apps:")} ${config.apps.map((a) => `${a.name} (${a.type}${a.port ? `:${a.port}` : ""})`).join(", ")}`,
       `${pc.bold("Libs:")} ${config.libs.map((l) => l.name).join(", ") || "none"}`,
       `${pc.bold("Services:")} ${config.services.map((s) => s.type).join(", ") || "none"}`,
+      `${pc.bold("Modules:")} ${modules.length ? `${modules.length} spec(s) seeded as draft` : "none (use harness add spec)"}`,
+      `${pc.bold("npm scopes:")} ${config.npm?.scopes.map((s) => s.scope).join(", ") || "none"}`,
       `${pc.bold("SDD:")} enabled (always)`,
+      `${pc.bold("Gate:")} ${flags.skipVerify ? "skipped (--skip-verify)" : "sdd:validate + lint/test/build"}`,
     ].join("\n"),
     `Configuration from ${configPath}`,
   );
@@ -208,11 +293,22 @@ async function runConfigFlow(configPath: string): Promise<void> {
       : "Generating workspace...",
   );
 
+  const harnessFiles = harnessFilesNextTo(configPath, cwd);
   try {
     if (config.mode === "standalone") {
-      await generateStandalone(toStandaloneOptions(config));
+      await generateStandalone({
+        ...toStandaloneOptions(config),
+        targetDir,
+        harnessFiles,
+        skipVerify: flags.skipVerify,
+      });
     } else {
-      await generateWorkspace(toWorkspaceOptions(config));
+      await generateWorkspace({
+        ...toWorkspaceOptions(config),
+        targetDir,
+        harnessFiles,
+        skipVerify: flags.skipVerify,
+      });
     }
   } catch (err) {
     logger.error((err as Error).message);
@@ -228,6 +324,7 @@ async function runStandaloneFlow(
   projectName: string,
   description: string,
   skipConfirm: boolean,
+  flags: TargetFlags,
 ): Promise<void> {
   const appType = await p.select({
     message: "App type (code lives at the repo root):",
@@ -281,6 +378,9 @@ async function runStandaloneFlow(
       description,
       appType: appType as string,
       services: services as string[],
+      ...resolveInitTarget(process.cwd(), projectName, flags),
+      harnessFiles: harnessFilesNextTo(undefined, process.cwd()),
+      skipVerify: flags.skipVerify,
     });
   } catch (err) {
     logger.error((err as Error).message);
@@ -296,6 +396,7 @@ async function runNxFlow(
   projectName: string,
   description: string,
   skipConfirm: boolean,
+  flags: TargetFlags,
 ): Promise<void> {
   const packageScope = await p.text({
     message: "npm package scope:",
@@ -451,6 +552,9 @@ async function runNxFlow(
       apps,
       libs,
       services: services as string[],
+      ...resolveInitTarget(process.cwd(), projectName, flags),
+      harnessFiles: harnessFilesNextTo(undefined, process.cwd()),
+      skipVerify: flags.skipVerify,
     });
   } catch (err) {
     logger.error((err as Error).message);

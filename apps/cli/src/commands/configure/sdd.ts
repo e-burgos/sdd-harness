@@ -15,6 +15,8 @@ import type { WorkspaceOptions } from '../../generators/workspace.generator.js';
  *   (lo crea mínimo si el repo no es Node — Java/Python puros).
  * - Absorbe AGENTS.md/CLAUDE.md preexistentes dentro de sdd/dual-harness antes
  *   de reemplazarlos por symlinks — no se pierde ninguna instrucción previa.
+ * - Los agentes/skills/commands propios del repo (.claude/, .github/, .agents/) se
+ *   conservan: setup-agents enlaza el kit al lado y deja *.new en cada colisión.
  */
 export const configureSddCommand = defineCommand({
   meta: {
@@ -129,6 +131,7 @@ export const configureSddCommand = defineCommand({
         `${pc.bold('Apps registradas:')} ${apps.map((a) => `${a.name} (${a.type})`).join(', ') || 'none'}`,
         `${pc.bold('package.json:')} ${pkg ? 'merge de scripts sdd:* + ajv' : 'se crea uno mínimo para el arnés'}`,
         `${pc.bold('AGENTS.md/CLAUDE.md previos:')} se absorben en sdd/dual-harness`,
+        `${pc.bold('.claude/.github/.agents propios:')} se conservan; el kit se enlaza al lado y toda colisión queda como *.new`,
       ].join('\n'),
       'Install plan',
     );
@@ -160,7 +163,7 @@ export const configureSddCommand = defineCommand({
         'package.json updated: sdd:* scripts + ajv/ajv-formats devDependencies',
       );
       logger.success(
-        'Harness symlinks created (.claude/, .github/, AGENTS.md, CLAUDE.md)',
+        'Harness symlinks created (.claude/, .github/, .agents/, AGENTS.md, CLAUDE.md, GEMINI.md) — your own agents/skills/commands were kept; any name collision is next to yours as *.new',
       );
       logger.info(
         'Run your package manager install (pnpm install) so sdd:validate finds ajv.',

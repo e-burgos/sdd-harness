@@ -1,6 +1,6 @@
 # 🧠 Memoria del proyecto — lecciones destiladas
 
-> Versión 1.0 | Última destilación: (inicial — sin lecciones todavía)
+> Versión 1.0 | Última destilación: (seed del kit v0.11.0)
 > **Cap duro: 120 líneas.** Este archivo se lee COMPLETO al inicio de cada sesión de agente —
 > cada línea acá cuesta tokens en todas las sesiones futuras. Si al destilar se supera el cap,
 > primero podar lecciones obsoletas o absorbidas por constitutions/skills.
@@ -17,12 +17,21 @@ Reglas de este archivo (ver sección 🧠 MEMORIA GATE del dual-harness):
 
 ## Proceso (cómo trabajan los agentes en este repo)
 
-- [vacío — se completa con la destilación]
+- Citar la evidencia y las decisiones desde `harness.idea.md` en las specs en vez de
+  copiarlas a mano.
 
 ## Técnica (stack, herramientas, gotchas transversales)
 
-- [vacío — se completa con la destilación]
+- Verificar `NX_WORKSPACE_ROOT_PATH` antes de cualquier `nx …`: si apunta a otro repo,
+  Nx ejecuta los targets de ESE repo sin error visible (pasó en Claude Code con otro
+  directorio primario).
+- No dar por verde un `init` sin correr `nx run-many -t lint test build`: `sdd:validate`
+  no compila nada.
 
 ## Costo (qué gastó tokens/tiempo de más y cómo evitarlo)
 
-- [vacío — se completa con la destilación]
+- Registrar el consumo por unidad de trabajo al cerrarla (task, documento, fix): sin
+  registro por agente el total del ciclo se reconstruye de memoria al final y el
+  dashboard de Costos miente.
+- Capturar `subagent_tokens` de la notificación de cada subagente (Claude Code) en el
+  momento: es la única medición exacta gratuita y no se recupera después.

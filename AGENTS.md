@@ -36,7 +36,12 @@ Package manager: **pnpm**.
 5. **Ejecutores Nx**: `@nx/vite:test` NO existe en Nx 23 (ya rompió react-app y hono) — para
    targets de test usar `nx:run-commands` → `vitest run --passWithNoTests`. Spring Boot integra
    por **Maven** vía `nx:run-commands` (nada de Gradle). El kit usa el wiring legacy `paths` en
-   `tsconfig.base.json` — no mezclar con TS solution setup.
+   `tsconfig.base.json` — no mezclar con TS solution setup. **NestJS** buildea por inferencia
+   (`@nx/webpack/plugin` en `nx.json` + `apps/<name>/webpack.config.js` con `NxAppWebpackPlugin`;
+   el executor `@nx/webpack:webpack` está deprecado y sin `webpackConfig` no compila) y testea
+   con `@nx/jest:jest` sobre `jest.config.js` **CommonJS** (un `jest.config.ts` exige `ts-node`,
+   que el workspace no instala) + `jest.preset.js` raíz. Cualquier cambio a una plantilla de app
+   se cierra con una generación real y `nx run-many -t lint test build` en verde.
 6. **Skills en `SKILL.md` MAYÚSCULA** (estándar Agent Skills). Claude Code sólo descubre
    `.claude/skills/*/SKILL.md`; en Linux el case es exacto y `skill.md` en minúscula deja las
    skills invisibles para el agente (pasó en instalaciones reales). Todo código que resuelva
@@ -68,6 +73,17 @@ npx vitest run       # suite completa (incluye integración real)
 - **Antes de declarar terminado un cambio de generador: generación real.** Las pruebas E2E van
   en `examples/` (gitignoreado): `test-sdd-nx-workspace`, `test-sdd-standalone`,
   `test-sdd-harness`. Así se encontraron los 6 bugs de v0.3.0 que los unit tests no veían.
+  Hay además un E2E opt-in que reproduce el uso real (`idea` + `init --config` en un repo ya
+  `git init`-eado, generación en el cwd, gate lint/test/build): `npm run build &&
+  HARNESS_E2E=1 npx vitest run src/__e2e__` desde `apps/cli/` — tarda minutos y usa red, por
+  eso no corre en la suite normal.
+- **`init` ejecuta el gate de FASE 3** (`sdd:validate` + `nx run-many -t lint test build`) y
+  falla si algo está rojo. En tests unitarios `exec` está mockeado, así que el gate pasa solo;
+  la verdad la da la generación real.
+- **`NX_WORKSPACE_ROOT_PATH`**: si está definida y no es el cwd, cualquier `nx …` corre contra
+  OTRO workspace sin error visible (pasó en Claude Code con otro repo como directorio primario).
+  La CLI y los scripts `sdd:*` lo avisan en la primera línea; al probar generaciones en
+  `examples/`, correr con la variable vacía.
 - Versionado: SemVer + `CHANGELOG.md` (Keep a Changelog) + `src/version.ts` sincronizado con
   `package.json`. Commits convencionales (`feat:`, `fix:`, `chore:` con scope).
 - **Cada release se publica sola en [`e-burgos/sdd-harness-examples`](https://github.com/e-burgos/sdd-harness-examples)**:
@@ -84,7 +100,9 @@ npx vitest run       # suite completa (incluye integración real)
 | `apps/cli/src/generators/workspace.generator`  | Modo nx: config raíz desde `apps/cli/templates/sdd/templates/nx-workspace/` |
 | `apps/cli/src/generators/standalone.generator` | Modo standalone: 7 tipos de app en la raíz                          |
 | `apps/cli/src/generators/sdd.generator`        | Instalación del kit: copia verbatim + global.json + contexto + setup-agents; `layout` nx/standalone, merge de package.json, absorción de arnés previo |
-| `apps/cli/src/generators/app|lib.generator`    | Apps/libs nx (react/springboot/ts-lib vía blueprints)               |
+| `apps/cli/src/generators/app|lib.generator`    | Apps/libs nx (react/springboot/ts-lib vía blueprints; nestjs/fastify/hono/next/python programáticos, con `apps[].port`) |
+| `apps/cli/src/generators/spec.generator`       | `createSpec`/`seedModules`: spec `draft` + `specs/index.json` + `pending_modules` — única vía para `add spec` y `sdd.modules` |
+| `apps/cli/src/generators/idea.generator`       | `harness idea`: idea file (evidencia + decisiones + protocolo autosuficiente), stub de config y su JSON Schema |
 | `apps/cli/src/utils/blueprint.ts`              | Copia de blueprints con renombre de tokens                          |
 | `apps/cli/templates/sdd/`                      | **Kit SDD portable canónico** (se publica en npm)                   |
 | `apps/cli/templates/workspace/`                | `eslint.config.mjs` del modo nx (la CLI agrega `@nx/eslint-plugin` + `typescript-eslint` a las deps) |

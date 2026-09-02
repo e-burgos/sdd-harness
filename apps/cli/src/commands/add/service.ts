@@ -4,6 +4,7 @@ import pc from 'picocolors';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { logger } from '../../utils/logger.js';
+import { warnIfNxRootMismatch } from '../../utils/env.js';
 import { generateDockerCompose } from '../../generators/docker.generator.js';
 
 /**
@@ -40,6 +41,7 @@ export const addServiceCommand = defineCommand({
     },
   },
   async run({ args }) {
+    warnIfNxRootMismatch();
     p.intro(pc.bgCyan(pc.black(' harness add service ')));
 
     const cwd = process.cwd();

@@ -144,8 +144,9 @@ describe('standalone.generator', () => {
     ).toBe(true);
   });
 
-  it('falla si el directorio ya existe', async () => {
+  it('falla si el directorio ya existe con contenido ajeno', async () => {
     fs.ensureDirSync(resolve(parentDir, 'existing'));
+    fs.writeFileSync(resolve(parentDir, 'existing/index.ts'), 'export {};\n');
 
     await expect(
       generateStandalone({

@@ -4,6 +4,7 @@ import pc from 'picocolors';
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { logger } from '../../utils/logger.js';
+import { warnIfNxRootMismatch } from '../../utils/env.js';
 import { generateApp } from '../../generators/app.generator.js';
 import { registerSubprojectInSDD } from '../../generators/sdd.generator.js';
 import {
@@ -60,6 +61,7 @@ export const addAppCommand = defineCommand({
     },
   },
   async run({ args }) {
+    warnIfNxRootMismatch();
     p.intro(pc.bgCyan(pc.black(' harness add app ')));
 
     const cwd = process.cwd();

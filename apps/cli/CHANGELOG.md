@@ -5,6 +5,165 @@ All notable changes to `@e-burgos/sdd-harness` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.11.0] - 2026-09-02
+
+Everything in this release comes from one real end-to-end run of the CLI (v0.10.3) on
+2026-09-02: `harness idea` → `init --config` → `add spec` → skill `sdd-hermes` on a new Nx
+repo with a NestJS API and a React back-office. The workspace came out, but five
+reproducible bugs, a handful of flow frictions and a hole in the cost telemetry surfaced.
+
+### Fixed — five bugs from the real run
+
+- **`init --config` nested the workspace in `<name>/<name>/`** when run inside a directory
+  that was already `git init`-ed and held the `harness.*` files. It also re-ran `git init`
+  there and left the idea/config files outside. Now `init` generates **in the current
+  directory** when the config lives there, when `basename(cwd) == project.name`, or with the
+  new `--here` / `--dir .` flags; an existing git repo is never re-initialized (the initial
+  commit lands on the current branch); an existing `.gitignore` is merged, an existing
+  `README.md` is kept; and `harness.idea.md`, `harness.config.json` and
+  `harness.config.schema.json` travel into the workspace when it is generated elsewhere. A
+  non-empty destination is only accepted when it holds nothing but a git repo, README/LICENSE
+  and the harness files.
+- **The NestJS template neither built nor tested.** `@nx/webpack:webpack` ran without a
+  `webpackConfig` and died with `Can't resolve './src'`; the `test` target pointed at a
+  `jest.config.ts` that did not exist (and would have needed `ts-node`). The template now
+  builds by inference — `@nx/webpack/plugin` in `nx.json` (its `serve` renamed so it never
+  shadows the app's own) + `apps/<name>/webpack.config.js` with `NxAppWebpackPlugin` — which
+  is also the non-deprecated path (Nx removes the executor in v24). Tests run with
+  `@nx/jest:jest` over a CommonJS `jest.config.js`, a root `jest.preset.js` and a
+  `tsconfig.spec.json` with `jest`/`node` types and decorator metadata; a real
+  `app.controller.spec.ts` ships so `nx test` exercises Nest's testing module. `serve` runs
+  node over the bundle. `harness add app nestjs` on a workspace without Nest apps adds the
+  plugin and the preset itself. Verified with a real generation: `nx run-many -t lint test
+  build` green for nestjs + react + two libs.
+- **`apps[].port` was ignored.** The port now lands in the code as
+  `Number(process.env['<APP>_PORT'] ?? process.env['PORT'] ?? <port>)` (Vite `server.port`
+  for react), in `.env.example` (one `<APP>_PORT=` per app — a single `PORT` is ambiguous in
+  a monorepo) and in the generated root `README.md`. `.env.example` is now written even
+  without docker services.
+- **`add spec` never registered the module in `global.json`, and `sdd.modules` did nothing.**
+  `harness add spec` now writes the `ModuleEntry` into `pending_modules`
+  (`{module, spec, apps, cycles_completed: 0, description}`) besides the specs index, and
+  grew `--apps apps/a,libs/b`, `--depends-on <spec-id|slug>` (repeatable, resolved against
+  the index) and `--description`. `sdd.modules` in the config now **seeds** the backlog at
+  `init`: one `draft` spec `spec-<sdd.author>-NNN-<slug>` + `pending_modules` entry per
+  module (strings or `{ name, title?, description?, app?, apps?, depends_on? }`,
+  dependencies resolved by slug in order). New `sdd.author` field; without it the git
+  user name is used with a warning. One implementation (`spec.generator.ts`) serves both
+  paths.
+- **Specs were born `in-progress`.** New initial status `draft` in `specs/index.json`
+  (`draft | in-progress | completed | cancelled`): `add spec` writes it, the
+  sdd-orchestrator promotes it to `in-progress` when it opens `cycle-01`. The viewer shows
+  it as *Borrador / Draft*. Existing indexes are **not** rewritten (rule: `update sdd` never
+  touches data): the validator suggests the migration with a one-line warning listing
+  the `in-progress` specs that have no cycle.
+
+- **`configure sdd` (and `update sdd`, `pnpm setup:agents`) destroyed the repo's own
+  harness.** `setup-agents.sh` did `rm -rf` on any real `.claude/agents`, `.claude/skills`,
+  `.claude/commands`, `.github/agents` and on any `.github/skills/<name>` or
+  `.agents/skills/<name>` that collided with a kit skill, and the PowerShell variant
+  overwrote a real root `AGENTS.md`/`CLAUDE.md`/`GEMINI.md`. The scripts are now
+  non-destructive: a real directory is kept and the kit items are linked inside it; a
+  collision keeps yours and leaves the kit version next to it as `<name>.new` (a copy for
+  files, a pointer note for directories), listed in a summary at the end. A real root
+  instruction file is kept with its `.new` as well; `configure sdd` keeps absorbing it into
+  `sdd/dual-harness/` first, and a second `configure sdd` (reset) now carries over what an
+  earlier install had absorbed instead of dropping it.
+
+### Added — the idea → Hermes flow, from real use
+
+- `harness.idea.md` is now the FASE 1 logbook: `## Evidencia del descubrimiento`
+  (table *Fuente | Estado de acceso | Dato medido | Fecha*) and `## Decisiones del dev`
+  (dated), filled by the agent and **cited** by the specs (the spec template has an
+  *Evidencia y decisiones* section for it) instead of being copied by hand into each one.
+- The protocol inside the idea file is **self-contained for FASE 1–3** — need → piece
+  matrix, standalone vs nx rule, `init` in the cwd, the gate — because in an empty repo
+  the `sdd-hermes` skill does not exist yet.
+- `harness idea --author <gh-user>` lands in `sdd.author` of the config stub (the stub now
+  also carries `apps[0].port` and `sdd.modules: []`). `harness idea --show` prints the
+  registered idea, evidence and decisions.
+- **`init` runs the FASE 3 gate instead of trusting it**: `sdd:validate` +
+  `nx run-many -t lint test build` (nx) or the `lint`/`test`/`build` scripts (standalone),
+  printed as a checklist and executed. Red → `init` exits 1 and skips the initial commit.
+  `--skip-verify` opts out. Until now `init` reported success after running only the
+  registry validator.
+- **`NX_WORKSPACE_ROOT_PATH` guard.** If the variable is set and does not point at the cwd,
+  `init`, `add`, `update` and every `sdd:*` script warn on their first line. Real case: in
+  Claude Code with another repo as primary directory, `nx run-many -t build` inside the new
+  repo built the *other* repo and reported success. Also recorded in the kit's `lessons.md`
+  and the dual-harness.
+- `npm.scopes[]` in the config (`{ scope, registry }`) → `@scope:registry=` lines in the
+  generated `.npmrc`, with the note that credentials live in `~/.npmrc` locally and
+  `NODE_AUTH_TOKEN` in CI, never in the repo file.
+- `hermes-resume` now reads `harness.idea.md` and **declares the FASE (1–5)** from which
+  files exist before diagnosing the loop position.
+- Root `README.md` for nx workspaces (apps with type, port and serve command, SDD pointers).
+- Opt-in real E2E test (`HARNESS_E2E=1 npx vitest run src/__e2e__`): `idea` + `init --config`
+  in a git-initialized directory, generation in place, ports honored, gate green.
+
+### Changed — cost telemetry per agent (mandatory)
+
+The ⚙️ rule asked for `metrics.usage` per cycle, `usage.model_tier` per task and `usage`
+per fix, and v0.10.3 said "whoever executes records, the reviewer consolidates". In the real
+run the total was still estimated at close and the per-agent detail was lost. New rule,
+non-negotiable: **every agent that takes part in an SDD flow or a fix and consumes tokens
+records, when it closes its unit of work, provider/model, effort, tokens_in, tokens_out,
+source and approx.** Without it the unit is not closed and `sdd:validate` says so.
+
+- **Schemas.** `cycle.schema.json` → `metrics.usage.by_agent[]`
+  (`{ agent, label?, provider_model, effort, tokens_in, tokens_out, tokens_total?, approx,
+  source, recorded_at, duration_minutes?, tool_uses? }`, `agent` ∈ functional | planner |
+  architect | implementor-back | implementor-front | reviewer | orchestrator | steward |
+  hermes | custom) with `by_tier` **derived** from it. `cycle-tasks.schema.json` and
+  `fixes.schema.json` → `usage.provider_model` (`model_tier` stays as the legacy alias),
+  `effort`, `agent`, `recorded_at`, `tokens_total`; fixes also take `by_agent[]`. Nothing
+  moved to `required` in the schemas — old records keep validating; the protocol and the
+  validator enforce the new fields on new units.
+- **New `source`: `agent-usage-notification`.** In Claude Code, when a subagent launched
+  with the `Agent` tool finishes, the parent receives
+  `<usage><subagent_tokens>N</subagent_tokens><tool_uses>…</tool_uses><duration_ms>…</duration_ms></usage>`
+  — an exact per-subagent measurement that costs the dev nothing. It goes in as
+  `tokens_total: N` (default 85/15 split into in/out when the harness gives a single
+  number), `approx: false`. Only the main loop still needs the session report. The
+  equivalents are documented for Gemini CLI (`/stats` for the main loop, declared estimate
+  for its subagents), Copilot and Antigravity (declared estimate, `approx: true`).
+- **Agents, skills and prompts.** Every `sdd/agents/*.agent.md` and every `sdd-*` skill end
+  with a *Registro de consumo (obligatorio)* section (what file, which fields, declare
+  model/effort before, record tokens at close). The orchestrator creates `metrics` with
+  zeroed counters and `usage.by_agent: []` when it opens the cycle, captures each
+  usage notification, and does not mark a task `done` without its `usage`; the reviewer
+  does not close without a complete `by_agent` whose sums match `by_tier`;
+  `start-sdd-cycle`, `review-cycle`, `hotfix-bypass-gate` and `hermes-resume` carry the
+  step; the FIX GATE does not close a fix without `usage`.
+- **Validator.** Error when a cycle completed on/after 2026-09-02 (or a fix resolved from
+  that date) has no `usage` with provider/model + tokens; error on `approx: false` with
+  `source: declared-estimate` anywhere; warning when `by_agent` is missing, when
+  `sum(by_agent) != by_tier` or the top-level totals differ from the breakdown, and when a
+  done task of a gated cycle has no usage. Units closed before the cutoff keep the previous
+  behavior (aggregated warnings) — history is not rewritten.
+- **Costs view.** New *by agent* and *by provider/model* aggregations, an *Origen* column
+  (`exacto` / `estimado` / `mixto`), cost computed with the per-model rates of
+  `sdd/pricing.json`, fixes listed in the same table as cycles and included in the
+  traditional-vs-agentic comparison, `by_agent` shown in the cycle detail. Source priority:
+  `by_agent` → `by_tier` → task usage → top-level totals.
+- **Dual-harness.** The canonical ⚙️ table gains the row *registro de consumo por agente:
+  obligatorio — fuente y formato*, the telemetry section is rewritten around `by_agent`
+  and the per-harness source table, `rules/sdd-model-budget.md` (kit-owned, so it reaches
+  every install) carries the condensed version, and `lessons.md` ships seed lessons: without
+  a per-unit record the cycle total is rebuilt from memory and the dashboard lies; capture
+  `subagent_tokens` when the notification arrives; check `NX_WORKSPACE_ROOT_PATH` before any
+  `nx`; never call an `init` green without lint/test/build.
+
+### Notes for existing installs
+
+- `harness update sdd` applies the kit changes without touching specs, cycles, fixes,
+  contexts or memory; team-edited kit files and the dual-harness hybrids arrive as `*.new`.
+  Verified against a v0.10.3 workspace with a customized reviewer agent and a hand-written
+  spec: only `kit.json` changed in git besides the kit files, five `.new` files appeared.
+- The validator will print one warning per repo for `in-progress` specs without cycles
+  (set them to `draft`) and one for resolved fixes / completed cycles older than the cutoff
+  without usage. Nothing that validated before fails now.
+
 ## [0.10.3] - 2026-08-20
 
 ### Changed — telemetry is consolidated, not reconstructed

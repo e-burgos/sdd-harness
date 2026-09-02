@@ -4,6 +4,7 @@ import pc from 'picocolors';
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { logger } from '../../utils/logger.js';
+import { warnIfNxRootMismatch } from '../../utils/env.js';
 import { updateSDD } from '../../generators/update.generator.js';
 import { readManifest } from '../../generators/kit-manifest.js';
 import { version } from '../../version.js';
@@ -23,6 +24,7 @@ export const updateSddCommand = defineCommand({
     },
   },
   async run({ args }) {
+    warnIfNxRootMismatch();
     p.intro(pc.bgCyan(pc.black(' harness update sdd ')));
 
     const cwd = process.cwd();

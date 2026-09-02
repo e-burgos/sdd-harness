@@ -41,9 +41,19 @@ export interface CycleConfig {
   weeks: number;
 }
 
+export interface ModuleSeed {
+  name: string;
+  title?: string;
+  description?: string;
+  app?: string;
+  apps?: string[];
+  depends_on: string[];
+}
+
 export interface SDDConfig {
   enabled: boolean;
-  modules: string[];
+  author?: string;
+  modules: Array<string | ModuleSeed>;
   cycles?: CycleConfig[];
   skills?: {
     include: string[];
@@ -61,6 +71,15 @@ export interface NxConfig {
   defaultProject?: string;
 }
 
+export interface NpmScope {
+  scope: string;
+  registry: string;
+}
+
+export interface NpmConfig {
+  scopes: NpmScope[];
+}
+
 export interface HarnessConfig {
   mode: 'nx' | 'standalone';
   project: {
@@ -73,6 +92,7 @@ export interface HarnessConfig {
   services: ServiceConfig[];
   sdd?: SDDConfig;
   nx?: NxConfig;
+  npm?: NpmConfig;
   infra?: {
     provider?: InfraProvider;
   };

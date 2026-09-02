@@ -154,7 +154,7 @@ export const MODES: Mode[] = [
     command: 'harness configure sdd',
     claim: 'Solo la metodología, sobre un proyecto que ya existe. Sin tocar tu código.',
     detail:
-      'Detecta la forma del repo (Nx vs standalone), mergea los scripts sdd:* en tu package.json sin pisar nada, y absorbe tus AGENTS.md/CLAUDE.md/GEMINI.md previos dentro de sdd/dual-harness/ antes de crear los symlinks: ninguna instrucción se pierde. Este árbol es el ejemplo real legacy-shop/ del repo de examples, generado desde su semilla versionada.',
+      'Detecta la forma del repo (Nx vs standalone), mergea los scripts sdd:* en tu package.json sin pisar nada, y absorbe tus AGENTS.md/CLAUDE.md/GEMINI.md previos dentro de sdd/dual-harness/ antes de crear los symlinks, y conserva tus propios agentes, skills y commands en .claude/, .github/ y .agents/ (el kit se enlaza al lado; cada colisión queda como *.new): ninguna instrucción se pierde. Este árbol es el ejemplo real legacy-shop/ del repo de examples, generado desde su semilla versionada.',
     tree: [
       {
         name: 'legacy-shop/',
@@ -280,22 +280,27 @@ export type Command = {
 export const COMMANDS: Command[] = [
   {
     name: 'init',
-    usage: 'harness init [--name] [--mode nx|standalone] [--standalone] [--config <file>] [-y]',
+    usage: 'harness init [--name] [--mode nx|standalone] [--standalone] [--config <file>] [--here] [--dir <path>] [--skip-verify] [-y]',
     summary: 'Genera un repo desde cero: monorepo Nx o app standalone.',
     points: [
       'Prompts guiados: nombre, descripción, modo, apps, libs, servicios Docker.',
-      '--config <archivo .json|.mjs|.js>: vía 100% no interactiva para agentes AI y CI — config validada con zod (mode, project, apps, libs, services) y cero prompts.',
+      '--config <archivo .json|.mjs|.js>: vía 100% no interactiva para agentes AI y CI — config validada con zod (mode, project, apps, libs, services, sdd, npm) y cero prompts.',
+      '--here (o --dir .) genera en el directorio actual en vez de ./<name>; también se infiere si el --config vive en el cwd o si basename(cwd) == nombre del proyecto — ya no anida <name>/<name>/ cuando el dev ya hizo git init y harness idea en la carpeta.',
+      'Si el cwd ya es un repo git no corre git init: commitea en la rama actual y mergea un .gitignore previo en vez de pisarlo.',
+      'Cierra ejecutando el gate de FASE 3 (sdd:validate + nx run-many -t lint test build, o los scripts lint/test/build en standalone): si algo da rojo, init falla (exit 1) y no hace el commit inicial. --skip-verify lo omite.',
+      'Genera README.md raíz (apps con tipo, puerto y comando) si no existe, y .env.example siempre — con <APP>_PORT por app además de los servicios.',
       'SDD siempre incluido — no es opcional.',
-      'Cierra con sdd:validate, git init y commit inicial.',
     ],
   },
   {
     name: 'idea',
-    usage: 'harness idea "<idea en lenguaje natural>" [--force]',
+    usage: 'harness idea ["<idea en lenguaje natural>"] [--author <gh-user>] [--show] [--force]',
     summary: 'Entrada del punta-a-punta hermes: de una idea a producto.',
     points: [
-      'Persiste harness.idea.md con la idea verbatim + el protocolo a seguir (descubrimiento → stack → specs → ciclos SDD, con checkpoints humanos).',
-      'En repo vacío deja también el stub harness.config.json y su JSON Schema, listos para init --config.',
+      'Persiste harness.idea.md: la idea verbatim + un protocolo autosuficiente para FASE 1–3 (matriz necesidad→pieza, standalone vs nx, el comando init con la nota de generar en el cwd) — porque en un repo vacío la skill sdd-hermes todavía no existe. Ahora incluye también las secciones ## Evidencia del descubrimiento y ## Decisiones del dev, que el agente completa en FASE 1 y las specs citan.',
+      '--author <gh-user>: queda en sdd.author del stub de config y en la cabecera del idea file — firma las specs (add spec / sdd.modules).',
+      '--show: imprime la idea registrada, la tabla de evidencia y las decisiones — para retomar el trabajo con hermes-resume sin releer todo el archivo.',
+      'En repo vacío deja también el stub harness.config.json (con apps[0].port y sdd: { author?, modules: [] }) y su JSON Schema, listos para init --config.',
       'En un workspace SDD existente, el protocolo cambia a análisis de gaps (harness add app|service|spec).',
       'La inteligencia vive en la skill sdd-hermes del kit — el comando materializa la entrada determinista.',
     ],
@@ -306,6 +311,9 @@ export const COMMANDS: Command[] = [
     summary: 'Imprime el JSON Schema del contrato de init --config.',
     points: [
       'Derivado del mismo schema zod con el que valida la CLI: agentes y editores validan configs sin ejecutarla.',
+      'apps[].port ahora se respeta: baja al default del código del app (env var por app, ej. catalog-api → CATALOG_API_PORT), al .env.example y al README.',
+      'sdd.author (usuario de GitHub) y sdd.modules (slugs o objetos { name, title?, description?, app?, apps?, depends_on? }): cada módulo se siembra como spec draft + entrada en pending_modules al correr init.',
+      'npm.scopes: [{ scope, registry }] genera las líneas @org:registry=… del .npmrc — solo la URL; la credencial va en el ~/.npmrc local y NODE_AUTH_TOKEN en CI.',
     ],
   },
   {
@@ -319,12 +327,14 @@ export const COMMANDS: Command[] = [
   },
   {
     name: 'add spec',
-    usage: 'harness add spec [slug] --author <gh-user> --title <t> --app apps/<n>',
+    usage: 'harness add spec [slug] --author <gh-user> --title <t> --app apps/<n> [--apps <a,b>] [--depends-on <id|slug>] [--description <t>]',
     summary: 'Crea una spec con la convención multi-developer v2.0.',
     points: [
-      'Estructura spec-[autor]-[NNN]-[slug]/ con cycles/ y fixes/.',
-      'Contador NNN per-autor y registro en sdd/specs/index.json.',
-      'Valida los registros al terminar.',
+      'Estructura spec-[autor]-[NNN]-[slug]/ con cycles/ y fixes/. Contador NNN per-autor y registro en sdd/specs/index.json con status: draft (draft | in-progress | completed | cancelled) — el orquestador la pasa a in-progress al abrir cycle-01.',
+      '--apps apps/a,libs/b (repetible o por comas): todos los subproyectos que toca el módulo, además del --app principal.',
+      '--depends-on <spec-id|slug> (repetible/comas): se resuelve contra sdd/specs/index.json.',
+      'Registra el módulo en pending_modules de sdd/global.json automáticamente ({ module, spec, apps, cycles_completed: 0, description }) — antes había que escribirlo a mano.',
+      'Valida los registros al terminar (sdd:validate).',
     ],
   },
   {
@@ -424,7 +434,7 @@ export const GATES: Gate[] = [
   {
     name: 'TELEMETRÍA GATE',
     rule: 'Un ciclo no cierra sin declarar qué proveedor y qué modelo lo hicieron.',
-    how: 'cycle.json → metrics.usage con by_tier en claves proveedor/modelo. Los arneses sin contador por sesión (Copilot, Antigravity) registran una estimación declarada con approx: true — el visor la muestra como estimado en vez de esconderla. No existe la opción de omitir.',
+    how: 'cycle.json → metrics.usage.by_agent[] — cada agente registra provider_model, effort, tokens_in/out, approx y source al cerrar su propia unidad; by_tier se deriva de by_agent, nunca se reconstruye. Fuente exacta agent-usage-notification (Claude Code: <usage><subagent_tokens>N</subagent_tokens>… al terminar un subagente); sin contador por sesión (Copilot, Antigravity) va como estimación declarada con approx: true — el visor la muestra como estimado, nunca la esconde. Desde 2026-09-02 el validador FALLA (antes: warning) si un ciclo o fix cierra sin proveedor/modelo + tokens.',
   },
 ];
 
@@ -653,7 +663,7 @@ export const UI = {
     title: 'Un tablero que trabaja mientras los agentes trabajan',
     lead: 'Cada ciclo registra tokens y tiempos. El visor los convierte en una comparativa de costos contra la estimación tradicional — y en local se actualiza solo, mientras el loop corre. Dale play:',
     features: [
-      { t: 'Telemetría honesta', d: 'Al cerrar cada ciclo se registran tokens por proveedor/modelo y minutos en cycle.json → metrics.usage — es obligatorio, y va marcado approx: true cuando el arnés no expone contador, así la estimación se declara en vez de esconderse. El costo agéntico sale de tarifas editables en sdd/pricing.json; la estimación tradicional, de las horas que ya estiman tus tasks.' },
+      { t: 'Telemetría honesta', d: 'Al cerrar cada ciclo se registran tokens por proveedor/modelo y minutos en cycle.json → metrics.usage — es obligatorio, y va marcado approx: true cuando el arnés no expone contador, así la estimación se declara en vez de esconderse. Cada agente suma su propia unidad en by_agent al cerrarla; by_tier se deriva de ahí. La fuente agent-usage-notification (Claude Code) es exacta, no estimada. El costo agéntico sale de tarifas editables en sdd/pricing.json; la estimación tradicional, de las horas que ya estiman tus tasks.' },
       { t: 'Reactividad quirúrgica', d: 'El visor pollea un fingerprint POR ÁREA de los registros cada 4 segundos. Solo re-renderiza tu vista si cambió un área de la que depende: cerrar un ciclo actualiza Costos y Ciclos, pero no te toca la vista de Agentes.' },
       { t: 'Tu UI queda intacta', d: 'Secciones expandidas, búsquedas escritas y posición de scroll se preservan en cada actualización. Y si tenés un documento abierto o la pestaña oculta, el refresh espera. En hosting estático, el botón Actualizar de siempre.' },
     ],
@@ -708,7 +718,7 @@ export const UI = {
       body: 'El arnés nació dual — Claude Code y GitHub Copilot — y así se llamó su carpeta. Desde v0.7.0 es multi-harness: se sumó Gemini con dos superficies (Antigravity IDE y Gemini CLI). El directorio sdd/dual-harness/ conserva el nombre por compatibilidad (los hashes de kit.json y update sdd dependen de esa ruta), pero adentro viven las tres ediciones del mismo contrato — AGENTS.md, CLAUDE.md y GEMINI.md — más las rules condensadas de Antigravity en rules/.',
     },
     telemetryNote:
-      'Los cuatro registran la misma telemetría y es obligatoria: cycle.json → metrics.usage con claves proveedor/modelo (claude/opus, gemini/pro, copilot/claude-sonnet; Antigravity va bajo gemini/*), usage por task y por fix. Declarar proveedor y modelo no es opcional. Los arneses sin contador por sesión (Copilot, Antigravity) registran una estimación declarada con approx: true, y la vista Costos la muestra como estimado en la columna Origen — nunca se omite.',
+      'Los cuatro registran la misma telemetría y es obligatoria: cycle.json → metrics.usage.by_agent[] (uno por agente que cerró una unidad, con proveedor/modelo — claude/opus, gemini/pro, copilot/claude-sonnet; Antigravity va bajo gemini/*), de donde se deriva by_tier, más usage por task y por fix. Declarar proveedor y modelo no es opcional: desde 2026-09-02 el validador falla (antes: warning) si falta. Los arneses sin contador por sesión (Copilot, Antigravity) registran una estimación declarada con approx: true, y la vista Costos la muestra como estimado en la columna Origen — nunca se omite.',
   },
   steward: {
     kicker: '07 — el día a día',

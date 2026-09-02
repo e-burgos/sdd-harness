@@ -131,12 +131,55 @@ describe('config/load', () => {
       description: 'Generated from a natural-language idea.',
       packageScope: '@idea-app',
       apps: [
-        { name: 'core-api', type: 'nestjs' },
-        { name: 'web', type: 'react' },
+        { name: 'core-api', type: 'nestjs', port: undefined },
+        { name: 'web', type: 'react', port: undefined },
       ],
       libs: [{ name: 'shared-types', type: 'shared-types' }],
       services: ['postgres', 'redis'],
+      npmScopes: [],
+      sddAuthor: undefined,
+      modules: [],
     });
+  });
+
+  it('baja port, npm.scopes, sdd.author y sdd.modules normalizados a las opciones', async () => {
+    const config = await loadHarnessConfig(
+      await writeConfig({
+        ...VALID_CONFIG,
+        apps: [{ name: 'core-api', type: 'nestjs', port: 3100 }],
+        npm: { scopes: [{ scope: '@acme', registry: 'https://npm.pkg.github.com' }] },
+        sdd: {
+          author: 'jdoe',
+          modules: ['catalog', { name: 'search', depends_on: ['catalog'] }],
+        },
+      }),
+    );
+    const options = toWorkspaceOptions(config);
+    expect(options.apps).toEqual([{ name: 'core-api', type: 'nestjs', port: 3100 }]);
+    expect(options.npmScopes).toEqual([
+      { scope: '@acme', registry: 'https://npm.pkg.github.com' },
+    ]);
+    expect(options.sddAuthor).toBe('jdoe');
+    expect(options.modules).toEqual([
+      { name: 'catalog', depends_on: [] },
+      { name: 'search', depends_on: ['catalog'] },
+    ]);
+  });
+
+  it('rechaza scopes npm sin @ y módulos que no sean kebab-case', async () => {
+    await expect(
+      loadHarnessConfig(
+        await writeConfig({
+          ...VALID_CONFIG,
+          npm: { scopes: [{ scope: 'acme', registry: 'https://npm.pkg.github.com' }] },
+        }),
+      ),
+    ).rejects.toThrow(/npm\.scopes\.0\.scope/);
+    await expect(
+      loadHarnessConfig(
+        await writeConfig({ ...VALID_CONFIG, sdd: { modules: ['Catalog Core'] } }, 'm.json'),
+      ),
+    ).rejects.toThrow(/sdd\.modules\.0/);
   });
 
   it('standalone exige exactamente una app', async () => {
@@ -151,7 +194,11 @@ describe('config/load', () => {
       projectName: 'idea-app',
       description: 'Generated from a natural-language idea.',
       appType: 'fastify',
+      port: undefined,
       services: ['postgres', 'redis'],
+      npmScopes: [],
+      sddAuthor: undefined,
+      modules: [],
     });
 
     const multi = await loadHarnessConfig(

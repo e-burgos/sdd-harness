@@ -5,14 +5,35 @@ import { copyBlueprint, toFlatCase, toPascalCase } from "../utils/blueprint.js";
 import { exec } from "../utils/exec.js";
 import { initGitRepo } from "../utils/git.js";
 import { logger } from "../utils/logger.js";
-import { generateDockerCompose } from "./docker.generator.js";
+import { generateDockerCompose, writeEnvExample } from "./docker.generator.js";
 import { generateSDD, ensureHarnessPackageJson } from "./sdd.generator.js";
+import { seedModules } from "./spec.generator.js";
+import {
+  applyVitePort,
+  portEnvVar,
+  resolveAppPort,
+} from "./app.generator.js";
+import {
+  npmrcScopesBlock,
+  resolveTargetDir,
+  runVerificationGate,
+} from "./workspace.generator.js";
+import type { ModuleSeed, NpmScope } from "../types/config.types.js";
 
 export interface StandaloneOptions {
   projectName: string;
   description: string;
   appType: string;
+  /** Puerto declarado en harness.config.json (apps[0].port). */
+  port?: number;
   services: string[];
+  npmScopes?: NpmScope[];
+  sddAuthor?: string;
+  modules?: ModuleSeed[];
+  /** Ver WorkspaceOptions.targetDir — mismo criterio de generación en el cwd. */
+  targetDir?: string;
+  harnessFiles?: string[];
+  skipVerify?: boolean;
 }
 
 /**
@@ -30,31 +51,43 @@ export interface StandaloneOptions {
 export async function generateStandalone(
   opts: StandaloneOptions,
 ): Promise<void> {
-  const root = resolve(process.cwd(), opts.projectName);
-
-  if (await fs.pathExists(root)) {
-    throw new Error(`El directorio "${opts.projectName}" ya existe.`);
-  }
+  const root = await resolveTargetDir(opts);
   await fs.ensureDir(root);
+  const port = resolveAppPort({ name: opts.projectName, type: opts.appType, port: opts.port });
 
   // ─── FASE 1: App en la raíz ───────────────────────────────────────────────
 
-  logger.step(`Generating standalone app (${opts.appType}) at the repo root...`);
-  await scaffoldStandaloneApp(root, opts.projectName, opts.appType);
+  logger.step(`Generating standalone app (${opts.appType}, port ${port}) at the repo root...`);
+  await scaffoldStandaloneApp(root, opts.projectName, opts.appType, port);
   await writeGitignore(root, opts.appType);
+  if (opts.npmScopes?.length) {
+    await fs.writeFile(resolve(root, ".npmrc"), npmrcScopesBlock(opts.npmScopes), "utf-8");
+  }
+  for (const file of opts.harnessFiles ?? []) {
+    const dest = resolve(root, file.split("/").pop() as string);
+    if ((await fs.pathExists(file)) && resolve(file) !== dest && !(await fs.pathExists(dest))) {
+      await fs.copy(file, dest);
+    }
+  }
 
   // ─── FASE 2: Arnés SDD ────────────────────────────────────────────────────
 
   logger.step("Registering SDD harness scripts in package.json...");
   await ensureHarnessPackageJson(root, opts.projectName);
 
+  // --ignore-workspace: un repo standalone no trae pnpm-workspace.yaml, así que si se genera
+  // dentro de otro workspace pnpm (p. ej. examples/ de este mismo repo) pnpm instalaría en el
+  // padre y el gate fallaría con "vitest: command not found". Fuera de un workspace es inocuo.
   logger.step("Installing dependencies (pnpm install)...");
-  exec("pnpm install", { cwd: root });
+  exec("pnpm install --ignore-workspace", { cwd: root });
 
   if (opts.services.length > 0) {
     logger.step("Generating Docker Compose...");
     await generateDockerCompose(root, opts.services);
   }
+  await writeEnvExample(root, opts.services, [
+    { name: opts.projectName, type: opts.appType, port: opts.port },
+  ]);
 
   logger.step("Configuring SDD (Spec-Driven Development)...");
   await generateSDD(
@@ -63,30 +96,41 @@ export async function generateStandalone(
       projectName: opts.projectName,
       description: opts.description,
       packageScope: `@${opts.projectName}`,
-      apps: [{ name: opts.projectName, type: opts.appType }],
+      apps: [{ name: opts.projectName, type: opts.appType, port: opts.port }],
       libs: [],
       services: opts.services,
     },
     { layout: "standalone" },
   );
 
-  // ─── FASE 3: Finalización ─────────────────────────────────────────────────
-
-  logger.step("Validating SDD registries (sdd:validate)...");
-  try {
-    exec("node sdd/scripts/validate-sdd.mjs", { cwd: root, silent: true });
-    logger.success("sdd:validate OK");
-  } catch {
-    logger.warn(
-      "sdd:validate reportó problemas. Correr `pnpm sdd:validate` en el repo para ver el detalle.",
-    );
+  if (opts.modules?.length) {
+    logger.step(`Seeding ${opts.modules.length} module spec(s) from sdd.modules...`);
+    const seeded = await seedModules(root, opts.modules, {
+      author: opts.sddAuthor,
+      defaultApp: `apps/${opts.projectName}`,
+    });
+    for (const s of seeded) logger.success(`  ${s.specId} → draft, pending_modules`);
   }
 
-  logger.step("Initializing git repository...");
-  initGitRepo(
-    root,
-    "chore: initial standalone setup via @e-burgos/sdd-harness",
-  );
+  // ─── FASE 3: Finalización ─────────────────────────────────────────────────
+
+  // Sin Nx: el gate corre los scripts lint/test/build que la app declare en su package.json.
+  const pkg = await fs.readJSON(resolve(root, "package.json"));
+  const scripts = ["lint", "test", "build"].filter((s) => pkg.scripts?.[s]);
+  const gate = runVerificationGate(root, {
+    nx: false,
+    skip: opts.skipVerify ?? false,
+    scripts,
+  });
+
+  if (gate.ok) {
+    logger.step("Committing the generated repo...");
+    initGitRepo(root, "chore: initial standalone setup via @e-burgos/sdd-harness");
+  } else {
+    throw new Error(
+      `Standalone repo "${opts.projectName}" was generated but the verification gate is RED (${gate.failed.join(", ")}). Fix it and commit yourself.`,
+    );
+  }
 
   logger.success(`Standalone repo "${opts.projectName}" created successfully.`);
 }
@@ -95,25 +139,27 @@ async function scaffoldStandaloneApp(
   root: string,
   name: string,
   type: string,
+  port: number,
 ): Promise<void> {
   switch (type) {
     case "react":
       await scaffoldReact(root, name);
+      await applyVitePort(resolve(root, "vite.config.ts"), name, port);
       break;
     case "springboot":
       await scaffoldSpringBoot(root, name);
       break;
     case "nestjs":
-      await scaffoldNest(root, name);
+      await scaffoldNest(root, name, port);
       break;
     case "nextjs":
       await scaffoldNext(root, name);
       break;
     case "fastify":
-      await scaffoldFastify(root, name);
+      await scaffoldFastify(root, name, port);
       break;
     case "hono":
-      await scaffoldHono(root, name);
+      await scaffoldHono(root, name, port);
       break;
     case "python":
       await scaffoldPython(root, name);
@@ -249,7 +295,7 @@ async function scaffoldSpringBoot(root: string, name: string): Promise<void> {
 
 // ─── NestJS ──────────────────────────────────────────────────────────────────
 
-async function scaffoldNest(root: string, name: string): Promise<void> {
+async function scaffoldNest(root: string, name: string, port: number): Promise<void> {
   await fs.ensureDir(resolve(root, "src/app"));
 
   await fs.writeFile(
@@ -257,10 +303,13 @@ async function scaffoldNest(root: string, name: string): Promise<void> {
     `import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app/app.module';
 
+// Port: ${portEnvVar(name)} → PORT → ${port} (harness.config.json apps[].port).
+const port = Number(process.env['${portEnvVar(name)}'] ?? process.env['PORT'] ?? ${port});
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.setGlobalPrefix('api/v1');
-  await app.listen(process.env['PORT'] || 3000);
+  await app.listen(port);
 }
 bootstrap();
 `,
@@ -495,7 +544,7 @@ module.exports = nextConfig;
 
 // ─── Fastify ─────────────────────────────────────────────────────────────────
 
-async function scaffoldFastify(root: string, name: string): Promise<void> {
+async function scaffoldFastify(root: string, name: string, port: number): Promise<void> {
   await writeNodeApiScaffold(root, name, {
     dependencies: { fastify: "^5.0.0" },
     mainTs: `import Fastify from 'fastify';
@@ -508,7 +557,7 @@ app.get('/api/v1/health', async () => {
 
 const start = async () => {
   try {
-    await app.listen({ port: Number(process.env['PORT'] || 3000), host: '0.0.0.0' });
+    await app.listen({ port: Number(process.env['${portEnvVar(name)}'] ?? process.env['PORT'] ?? ${port}), host: '0.0.0.0' });
   } catch (err) {
     app.log.error(err);
     process.exit(1);
@@ -521,7 +570,7 @@ start();
 
 // ─── Hono ────────────────────────────────────────────────────────────────────
 
-async function scaffoldHono(root: string, name: string): Promise<void> {
+async function scaffoldHono(root: string, name: string, port: number): Promise<void> {
   await writeNodeApiScaffold(root, name, {
     dependencies: { hono: "^4.7.0", "@hono/node-server": "^1.14.0" },
     mainTs: `import { Hono } from 'hono';
@@ -534,7 +583,7 @@ app.get('/api/v1/health', (c) =>
 );
 
 serve(
-  { fetch: app.fetch, port: Number(process.env['PORT'] ?? 3000) },
+  { fetch: app.fetch, port: Number(process.env['${portEnvVar(name)}'] ?? process.env['PORT'] ?? ${port}) },
   (info) => {
     console.log(\`Listening on http://localhost:\${info.port}\`);
   },
