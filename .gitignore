@@ -8,6 +8,7 @@ dist
 # Banco de pruebas local de generación real. Los examples públicos viven en
 # e-burgos/sdd-harness-examples, regenerados desde npm en cada release.
 examples
+demo
 
 # Tokens (Cloudflare, Hostinger) para deploys manuales
 .env
