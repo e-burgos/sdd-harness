@@ -135,17 +135,44 @@ export async function ensureHarnessPackageJson(
   await fs.writeJSON(pkgPath, pkg, { spaces: 2 });
 }
 
+const ABSORBED_HEADING =
+  '## Instrucciones previas del proyecto (absorbidas al instalar SDD)';
+
+/**
+ * Qué instrucciones previas del repo hay que conservar dentro de sdd/dual-harness/:
+ * - un AGENTS.md/CLAUDE.md/GEMINI.md REAL en la raíz (repo sin SDD) → se lee y se quita,
+ *   setup-agents lo reemplaza por el symlink;
+ * - lo que una instalación anterior ya había absorbido en sdd/dual-harness/<file> (la raíz
+ *   es un symlink) → se rescata ANTES de que el reset borre sdd/. Hasta v0.11.0 un segundo
+ *   `configure sdd` perdía ese texto sin aviso.
+ */
 async function readExistingHarnessFiles(
   root: string,
 ): Promise<Map<string, string>> {
   const found = new Map<string, string>();
   for (const file of ['AGENTS.md', 'CLAUDE.md', 'GEMINI.md']) {
+    const parts: string[] = [];
+
+    const previous = resolve(root, 'sdd/dual-harness', file);
+    if (await fs.pathExists(previous)) {
+      const content = await fs.readFile(previous, 'utf-8');
+      const idx = content.indexOf(ABSORBED_HEADING);
+      if (idx !== -1) {
+        const absorbed = content.slice(idx + ABSORBED_HEADING.length).trim();
+        if (absorbed) parts.push(absorbed);
+      }
+    }
+
     const path = resolve(root, file);
-    if (!(await fs.pathExists(path))) continue;
-    const stat = await fs.lstat(path);
-    if (stat.isSymbolicLink()) continue;
-    found.set(file, await fs.readFile(path, 'utf-8'));
-    await fs.remove(path);
+    if (await fs.pathExists(path)) {
+      const stat = await fs.lstat(path);
+      if (!stat.isSymbolicLink()) {
+        parts.push((await fs.readFile(path, 'utf-8')).trim());
+        await fs.remove(path);
+      }
+    }
+
+    if (parts.length) found.set(file, parts.join('\n\n'));
   }
   return found;
 }
@@ -158,7 +185,7 @@ async function absorbIntoDualHarness(
   const target = resolve(root, 'sdd/dual-harness', file);
   await fs.appendFile(
     target,
-    `\n\n---\n\n## Instrucciones previas del proyecto (absorbidas al instalar SDD)\n\n${content.trim()}\n`,
+    `\n\n---\n\n${ABSORBED_HEADING}\n\n${content.trim()}\n`,
     'utf-8',
   );
   logger.info(

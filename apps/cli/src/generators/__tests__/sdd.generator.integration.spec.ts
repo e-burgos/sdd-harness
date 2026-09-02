@@ -264,3 +264,133 @@ describe.skipIf(process.platform === 'win32')(
     });
   },
 );
+
+// Bug del uso real (2026-09-02): `configure sdd` sobre un repo con su propio arnés (.claude/,
+// .github/, AGENTS.md…) lo destruía — setup-agents.sh hacía `rm -rf` de los directorios reales
+// y un segundo `configure sdd` perdía lo absorbido. Regla 9: configure sdd nunca destruye.
+describe.skipIf(process.platform === 'win32')(
+  'setup-agents nunca destruye el arnés propio del repo (integration)',
+  () => {
+    let ws: string;
+
+    const seedTeamHarness = async (root: string) => {
+      const files: Record<string, string> = {
+        'AGENTS.md': '# Team AGENTS\n\nRule: never touch prod.\n',
+        'CLAUDE.md': '# Team CLAUDE\n\nUse pnpm.\n',
+        '.claude/agents/team-agent.md': '---\nname: team-agent\n---\nTeam agent.\n',
+        '.claude/skills/team-skill/SKILL.md': '---\nname: team-skill\n---\nTeam skill.\n',
+        '.claude/commands/deploy.md': 'Deploy prompt.\n',
+        '.github/agents/team.agent.md': 'Copilot team agent.\n',
+        '.github/skills/sdd-reviewer/SKILL.md': 'Our OWN reviewer skill.\n',
+        '.github/skills/team-skill/SKILL.md': 'gh team skill\n',
+        '.github/prompts/review-cycle.prompt.md': 'Our own review prompt.\n',
+        '.agents/skills/sdd-orchestrator/SKILL.md': 'Our OWN orchestrator skill.\n',
+        '.agents/rules/team.md': 'team rule\n',
+      };
+      for (const [rel, content] of Object.entries(files)) {
+        await fs.outputFile(resolve(root, rel), content, 'utf-8');
+      }
+      await fs.writeJSON(resolve(root, 'package.json'), {
+        name: 'team-repo',
+        version: '1.0.0',
+        private: true,
+      });
+      return files;
+    };
+
+    const opts = {
+      projectName: 'team-repo',
+      description: 'Existing repo with its own agents, skills and instructions.',
+      packageScope: '@team-repo',
+      apps: [{ name: 'team-repo', type: 'react' }],
+      libs: [],
+      services: [],
+    };
+
+    beforeAll(() => {
+      ws = mkdtempSync(resolve(tmpdir(), 'harness-sdd-keep-'));
+    });
+
+    afterAll(() => {
+      rmSync(ws, { recursive: true, force: true });
+    });
+
+    it('configure sdd conserva agentes, skills y commands propios y deja *.new en las colisiones', async () => {
+      const root = resolve(ws, 'configure');
+      await fs.ensureDir(root);
+      const seeded = await seedTeamHarness(root);
+
+      await generateSDD(root, opts, {
+        layout: 'standalone',
+        mergePackageJson: true,
+        absorbExistingHarness: true,
+      });
+
+      // Nada propio se pierde
+      for (const rel of Object.keys(seeded).filter((f) => !/^(AGENTS|CLAUDE)\.md$/.test(f))) {
+        expect(fs.readFileSync(resolve(root, rel), 'utf-8'), rel).toBe(seeded[rel]);
+        expect(fs.lstatSync(resolve(root, rel)).isSymbolicLink(), rel).toBe(false);
+      }
+
+      // El kit queda enlazado DENTRO de los directorios reales
+      expect(fs.lstatSync(resolve(root, '.claude/agents')).isSymbolicLink()).toBe(false);
+      expect(fs.lstatSync(resolve(root, '.claude/agents/sdd-orchestrator.agent.md')).isSymbolicLink()).toBe(true);
+      expect(fs.readFileSync(resolve(root, '.claude/agents/sdd-orchestrator.agent.md'), 'utf-8')).toContain('sdd-orchestrator');
+      expect(fs.lstatSync(resolve(root, '.claude/skills/sdd-functional')).isSymbolicLink()).toBe(true);
+      expect(fs.existsSync(resolve(root, '.claude/skills/sdd-functional/SKILL.md'))).toBe(true);
+      expect(fs.lstatSync(resolve(root, '.claude/commands/start-sdd-cycle.prompt.md')).isSymbolicLink()).toBe(true);
+      expect(fs.lstatSync(resolve(root, '.github/agents/sdd-reviewer.agent.md')).isSymbolicLink()).toBe(true);
+      expect(fs.lstatSync(resolve(root, '.github/skills/sdd-functional')).isSymbolicLink()).toBe(true);
+
+      // Colisiones: lo tuyo se queda, el kit al lado como .new (nota para dirs, copia para archivos)
+      expect(fs.readFileSync(resolve(root, '.github/skills/sdd-reviewer/SKILL.md'), 'utf-8')).toBe('Our OWN reviewer skill.\n');
+      expect(fs.readFileSync(resolve(root, '.github/skills/sdd-reviewer.new'), 'utf-8')).toContain('sdd/skills/sdd-reviewer');
+      expect(fs.statSync(resolve(root, '.github/skills/sdd-reviewer.new')).isDirectory()).toBe(false);
+      expect(fs.readFileSync(resolve(root, '.agents/skills/sdd-orchestrator.new'), 'utf-8')).toContain('sdd/skills/sdd-orchestrator');
+      expect(fs.readFileSync(resolve(root, '.github/prompts/review-cycle.prompt.md'), 'utf-8')).toBe('Our own review prompt.\n');
+      expect(fs.readFileSync(resolve(root, '.github/prompts/review-cycle.prompt.md.new'), 'utf-8')).toContain('review');
+
+      // Raíz: absorbidos y symlinkeados (configure sdd los lee antes de enlazar)
+      expect(fs.lstatSync(resolve(root, 'AGENTS.md')).isSymbolicLink()).toBe(true);
+      const dual = fs.readFileSync(resolve(root, 'sdd/dual-harness/AGENTS.md'), 'utf-8');
+      expect(dual).toContain('Instrucciones previas del proyecto');
+      expect(dual).toContain('never touch prod');
+      expect(fs.readFileSync(resolve(root, 'sdd/dual-harness/CLAUDE.md'), 'utf-8')).toContain('Use pnpm');
+    });
+
+    it('un segundo configure sdd (reset) conserva lo absorbido sin duplicarlo', async () => {
+      const root = resolve(ws, 'configure');
+      await generateSDD(root, opts, {
+        layout: 'standalone',
+        mergePackageJson: true,
+        absorbExistingHarness: true,
+      });
+      const dual = fs.readFileSync(resolve(root, 'sdd/dual-harness/AGENTS.md'), 'utf-8');
+      expect(dual).toContain('never touch prod');
+      expect(dual.split('Instrucciones previas del proyecto').length - 1).toBe(1);
+      expect(dual.split('never touch prod').length - 1).toBe(1);
+      // y los archivos propios siguen ahí después del reset
+      expect(fs.readFileSync(resolve(root, '.claude/agents/team-agent.md'), 'utf-8')).toContain('Team agent');
+    });
+
+    it('setup-agents solo (update sdd / pnpm setup:agents) conserva un AGENTS.md real y deja AGENTS.md.new', async () => {
+      const root = resolve(ws, 'setup-only');
+      await fs.ensureDir(root);
+      await generateSDD(root, opts, { layout: 'standalone', mergePackageJson: true });
+      // El equipo reemplazó el symlink por un archivo real (o instaló el kit a mano)
+      await fs.remove(resolve(root, 'AGENTS.md'));
+      await fs.writeFile(resolve(root, 'AGENTS.md'), '# Hand-written\n', 'utf-8');
+
+      const output = execFileSync('bash', [resolve(root, 'sdd/scripts/setup-agents.sh')], {
+        encoding: 'utf-8',
+      });
+
+      expect(fs.lstatSync(resolve(root, 'AGENTS.md')).isSymbolicLink()).toBe(false);
+      expect(fs.readFileSync(resolve(root, 'AGENTS.md'), 'utf-8')).toBe('# Hand-written\n');
+      expect(fs.readFileSync(resolve(root, 'AGENTS.md.new'), 'utf-8')).toContain('SDD');
+      expect(output).toContain('conflict (kept yours): AGENTS.md');
+      expect(output).toContain('1 item(s) kept as yours');
+      expect(output).not.toContain('replaced');
+    });
+  },
+);

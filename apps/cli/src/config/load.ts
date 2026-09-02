@@ -2,7 +2,7 @@ import { extname, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import fs from 'fs-extra';
 import { HarnessConfigSchema } from './schema.js';
-import type { HarnessConfig } from '../types/config.types.js';
+import type { HarnessConfig, ModuleSeed } from '../types/config.types.js';
 import type { WorkspaceOptions } from '../generators/workspace.generator.js';
 import type { StandaloneOptions } from '../generators/standalone.generator.js';
 
@@ -46,14 +46,24 @@ export async function loadHarnessConfig(path: string): Promise<HarnessConfig> {
   return parsed.data;
 }
 
+/** Módulos del config normalizados a la forma extendida (string → { name }). */
+export function normalizeModuleSeeds(config: HarnessConfig): ModuleSeed[] {
+  return (config.sdd?.modules ?? []).map((m) =>
+    typeof m === 'string' ? { name: m, depends_on: [] } : m,
+  );
+}
+
 export function toWorkspaceOptions(config: HarnessConfig): WorkspaceOptions {
   return {
     projectName: config.project.name,
     description: config.project.description,
     packageScope: config.project.packageScope,
-    apps: config.apps.map(({ name, type }) => ({ name, type })),
+    apps: config.apps.map(({ name, type, port }) => ({ name, type, port })),
     libs: config.libs.map(({ name, type }) => ({ name, type })),
     services: config.services.map(({ type }) => type),
+    npmScopes: config.npm?.scopes ?? [],
+    sddAuthor: config.sdd?.author,
+    modules: normalizeModuleSeeds(config),
   };
 }
 
@@ -67,6 +77,10 @@ export function toStandaloneOptions(config: HarnessConfig): StandaloneOptions {
     projectName: config.project.name,
     description: config.project.description,
     appType: config.apps[0].type,
+    port: config.apps[0].port,
     services: config.services.map(({ type }) => type),
+    npmScopes: config.npm?.scopes ?? [],
+    sddAuthor: config.sdd?.author,
+    modules: normalizeModuleSeeds(config),
   };
 }

@@ -58,9 +58,35 @@ const CycleConfigSchema = z.object({
   weeks: z.number().positive(),
 });
 
+// Un módulo del backlog inicial: string (slug) o forma extendida. Cada uno se siembra
+// en `init` como spec `draft` (spec-<sdd.author>-NNN-<slug>) + entrada en pending_modules.
+const SubprojectRefSchema = z
+  .string()
+  .regex(/^(apps|libs|tools)\/[a-z][a-z0-9-]*$/, 'Must match (apps|libs|tools)/[name]');
+
+const ModuleSeedSchema = z.union([
+  z.string().regex(/^[a-z0-9-]+$/, 'Module slug must be lowercase kebab-case'),
+  z.object({
+    name: z.string().regex(/^[a-z0-9-]+$/, 'Module slug must be lowercase kebab-case'),
+    title: z.string().optional(),
+    description: z.string().optional(),
+    /** Subproyecto principal (apps/x). Default: la primera app del config. */
+    app: SubprojectRefSchema.optional(),
+    /** Todos los subproyectos afectados. Default: [app]. */
+    apps: z.array(SubprojectRefSchema).optional(),
+    /** Slugs de otros módulos del mismo config (se resuelven a spec ids en orden). */
+    depends_on: z.array(z.string()).default([]),
+  }),
+]);
+
 const SDDConfigSchema = z.object({
   enabled: z.boolean().default(true),
-  modules: z.array(z.string()),
+  /** GitHub user que firma las specs sembradas (spec-<author>-NNN-<slug>). Default: git config user.name. */
+  author: z
+    .string()
+    .regex(/^[a-z0-9-]+$/, 'Author must be a lowercase GitHub username')
+    .optional(),
+  modules: z.array(ModuleSeedSchema).default([]),
   cycles: z.array(CycleConfigSchema).optional(),
   skills: z
     .object({
@@ -82,6 +108,17 @@ const NxConfigSchema = z.object({
   defaultProject: z.string().optional(),
 });
 
+// Scopes npm privados → `.npmrc` del repo (`@org:registry=https://npm.pkg.github.com`).
+// Solo la URL: la credencial vive en ~/.npmrc local y NODE_AUTH_TOKEN en CI.
+const NpmScopeSchema = z.object({
+  scope: z.string().regex(/^@[a-z0-9-]+$/, 'Must be an npm scope like @my-org'),
+  registry: z.string().url('registry must be a URL'),
+});
+
+const NpmConfigSchema = z.object({
+  scopes: z.array(NpmScopeSchema).default([]),
+});
+
 export const HarnessConfigSchema = z.object({
   mode: z.enum(['nx', 'standalone']).default('nx'),
   project: z.object({
@@ -98,6 +135,7 @@ export const HarnessConfigSchema = z.object({
   services: z.array(ServiceConfigSchema).default([]),
   sdd: SDDConfigSchema.optional(),
   nx: NxConfigSchema.optional(),
+  npm: NpmConfigSchema.optional(),
   infra: z
     .object({
       provider: InfraProviderSchema.optional(),

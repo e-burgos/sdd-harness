@@ -74,6 +74,8 @@ export function addAppTypeDepsToRootPkg(
         "reflect-metadata": "^0.2.0",
         rxjs: "^7.8.0",
       });
+      // webpack-cli: el build inferido por @nx/webpack/plugin lo invoca directamente.
+      // jest-environment-node + ts-jest: el target test corre jest.config.js (CommonJS).
       Object.assign(pkg.devDependencies, {
         "@nx/nest": NX_VERSION,
         "@nx/node": NX_VERSION,
@@ -81,9 +83,11 @@ export function addAppTypeDepsToRootPkg(
         "@nx/jest": NX_VERSION,
         "@nestjs/testing": "^11.0.0",
         "@types/express": "^5.0.0",
-        jest: "^29.0.0",
-        "ts-jest": "^29.0.0",
-        "@types/jest": "^29.0.0",
+        jest: "^29.7.0",
+        "jest-environment-node": "^29.7.0",
+        "ts-jest": "^29.2.0",
+        "@types/jest": "^29.5.0",
+        "webpack-cli": "^5.1.4",
       });
       break;
     case "nextjs":

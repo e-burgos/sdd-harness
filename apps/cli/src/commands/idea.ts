@@ -6,6 +6,7 @@ import {
   CONFIG_STUB_FILENAME,
   generateIdeaFiles,
   IDEA_FILENAME,
+  readIdeaSummary,
 } from '../generators/idea.generator.js';
 
 export const ideaCommand = defineCommand({
@@ -20,6 +21,17 @@ export const ideaCommand = defineCommand({
       description: 'The idea, in natural language (quote it)',
       required: false,
     },
+    author: {
+      type: 'string',
+      description:
+        'Your GitHub user — lands in sdd.author of the config stub and signs the specs (add spec / sdd.modules)',
+    },
+    show: {
+      type: 'boolean',
+      description:
+        'Print the registered idea, discovery evidence and decisions (for hermes-resume) instead of writing',
+      default: false,
+    },
     force: {
       type: 'boolean',
       description: 'Overwrite existing idea/config files',
@@ -28,6 +40,11 @@ export const ideaCommand = defineCommand({
   },
   async run({ args }) {
     p.intro(pc.bgCyan(pc.black(' harness idea ')));
+
+    if (args.show) {
+      await showIdea();
+      return;
+    }
 
     const text =
       args.text ??
@@ -45,6 +62,7 @@ export const ideaCommand = defineCommand({
     try {
       const report = await generateIdeaFiles(process.cwd(), text as string, {
         force: args.force,
+        author: args.author,
       });
 
       for (const file of report.created) logger.success(`Created ${file}`);
@@ -55,15 +73,16 @@ export const ideaCommand = defineCommand({
       const nextSteps =
         report.mode === 'greenfield'
           ? [
-              `1. Hand ${IDEA_FILENAME} to your AI agent (protocol inside).`,
-              `2. Agent fills ${CONFIG_STUB_FILENAME} (stack decision, human checkpoint).`,
-              `3. npx @e-burgos/sdd-harness init --config ./${CONFIG_STUB_FILENAME}`,
-              '4. Inside the workspace: skill sdd-hermes drives specs + SDD cycles.',
+              `1. Hand ${IDEA_FILENAME} to your AI agent (self-contained protocol for FASE 1–3 inside).`,
+              `2. Agent records the discovery evidence + decisions in ${IDEA_FILENAME} and fills ${CONFIG_STUB_FILENAME} (human checkpoint on the stack).`,
+              `3. npx @e-burgos/sdd-harness init --config ./${CONFIG_STUB_FILENAME} -y   # generates HERE, keeps the harness.* files, runs the lint/test/build gate`,
+              '4. Inside the workspace: skill sdd-hermes (FASE 4) seeds/edits specs and drives the SDD cycles.',
+              `5. Resume later with \`harness idea --show\` + sdd/prompts/hermes-resume.prompt.md.`,
             ]
           : [
               `1. Hand ${IDEA_FILENAME} to your AI agent in this repo.`,
-              '2. Skill sdd-hermes: discovery + gap analysis vs installed stack.',
-              '3. harness add app|service|spec for the gaps, then the SDD cycle loop.',
+              '2. Skill sdd-hermes: discovery + gap analysis vs installed stack (evidence goes in the idea file).',
+              '3. harness add app|service for the gaps, harness add spec per module (born draft), then the SDD cycle loop.',
             ];
 
       p.note(nextSteps.join('\n'), 'Next steps');
@@ -78,3 +97,26 @@ export const ideaCommand = defineCommand({
     }
   },
 });
+
+async function showIdea(): Promise<void> {
+  try {
+    const summary = await readIdeaSummary(process.cwd());
+    p.note(summary.idea || pc.dim('(empty)'), `Idea — registered ${summary.registeredAt ?? '?'} · ${summary.status ?? ''}`);
+    p.note(
+      summary.evidence.length
+        ? summary.evidence.join('\n')
+        : pc.dim('No evidence rows yet (FASE 1 pending). Table: Fuente | Estado de acceso | Dato medido | Fecha'),
+      `Evidencia del descubrimiento (${summary.evidence.length})`,
+    );
+    p.note(
+      summary.decisions.length
+        ? summary.decisions.join('\n')
+        : pc.dim('No decisions recorded yet.'),
+      `Decisiones del dev (${summary.decisions.length})`,
+    );
+    p.outro(pc.green('Read from harness.idea.md — the registry is the source of truth.'));
+  } catch (err) {
+    logger.error((err as Error).message);
+    process.exit(1);
+  }
+}

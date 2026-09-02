@@ -3,19 +3,33 @@ import * as p from '@clack/prompts';
 import pc from 'picocolors';
 import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
-import fs from 'fs-extra';
 import { logger } from '../../utils/logger.js';
 import { exec } from '../../utils/exec.js';
+import { warnIfNxRootMismatch } from '../../utils/env.js';
+import { createSpec, detectGitHubUser } from '../../generators/spec.generator.js';
+
+const SUBPROJECT_RE = /^(apps|libs|tools)\/[a-z][a-z0-9-]*$/;
+
+/** citty entrega un flag repetido como array y uno solo como string; también se acepta "a,b". */
+function listFlag(value: unknown): string[] {
+  const raw = Array.isArray(value) ? value : value === undefined ? [] : [value];
+  return raw
+    .flatMap((v) => String(v).split(','))
+    .map((v) => v.trim())
+    .filter(Boolean);
+}
 
 /**
  * Crea una spec con la estructura jerárquica v2.0 del sistema SDD:
  * sdd/specs/spec-[author]-[NNN]-[slug]/ con su .spec.md, cycles/ y fixes/,
- * registrada en sdd/specs/index.json (contador NNN per-author).
+ * registrada en sdd/specs/index.json (status draft, contador NNN per-author) y
+ * como módulo pendiente en sdd/global.json — el orquestador la toma desde ahí.
  */
 export const addSpecCommand = defineCommand({
   meta: {
     name: 'spec',
-    description: 'Add a new SDD specification (spec-[author]-[NNN]-[slug])',
+    description:
+      'Add a new SDD specification (spec-[author]-[NNN]-[slug], born draft, registered in pending_modules)',
   },
   args: {
     name: {
@@ -36,8 +50,24 @@ export const addSpecCommand = defineCommand({
       description:
         'Main subproject affected, e.g. apps/my-api (skips the prompt)',
     },
+    apps: {
+      type: 'string',
+      description:
+        'Every subproject the module touches, comma-separated or repeated (apps/a,libs/b) — the main --app is always included',
+    },
+    dependsOn: {
+      type: 'string',
+      alias: 'depends-on',
+      description:
+        'Spec ids or slugs this spec depends on, comma-separated or repeated (resolved against sdd/specs/index.json)',
+    },
+    description: {
+      type: 'string',
+      description: 'One-liner for the pending_modules entry (defaults to the title)',
+    },
   },
   async run({ args }) {
+    warnIfNxRootMismatch();
     p.intro(pc.bgCyan(pc.black(' harness add spec ')));
 
     const cwd = process.cwd();
@@ -96,9 +126,8 @@ export const addSpecCommand = defineCommand({
       p.cancel('Operation cancelled.');
       process.exit(0);
     }
-    const specTitle = (title as string) || (slug as string);
 
-    if (args.app && !/^(apps|libs|tools)\/[a-z][a-z0-9-]*$/.test(args.app)) {
+    if (args.app && !SUBPROJECT_RE.test(args.app)) {
       logger.error(
         `--app must match (apps|libs|tools)/[name] — got "${args.app}".`,
       );
@@ -112,7 +141,7 @@ export const addSpecCommand = defineCommand({
         placeholder: 'apps/my-api',
         validate: (value) => {
           if (!value) return 'Required — SPEC GATE needs a target subproject';
-          if (!/^(apps|libs|tools)\/[a-z][a-z0-9-]*$/.test(value))
+          if (!SUBPROJECT_RE.test(value))
             return 'Must match (apps|libs|tools)/[name]';
           return undefined;
         },
@@ -123,53 +152,28 @@ export const addSpecCommand = defineCommand({
       process.exit(0);
     }
 
-    // Contador NNN per-author (v2.0): siguiente correlativo del autor
-    const index = await fs.readJSON(indexPath);
-    const authorSpecs = (index.specs as Array<{ author: string }>).filter(
-      (s) => s.author === author,
-    );
-    const nnn = String(authorSpecs.length + 1).padStart(3, '0');
-    const specId = `spec-${author}-${nnn}-${slug}`;
-    const specFolder = resolve(cwd, 'sdd/specs', specId);
-
-    if (existsSync(specFolder)) {
-      logger.error(`Spec folder already exists: sdd/specs/${specId}`);
-      process.exit(1);
-    }
-
-    logger.step(`Creating spec structure: sdd/specs/${specId}/`);
+    const apps = listFlag(args.apps);
+    const dependsOn = listFlag(args.dependsOn);
 
     try {
-      await fs.ensureDir(resolve(specFolder, 'cycles'));
-      await fs.ensureDir(resolve(specFolder, 'fixes'));
-      await fs.writeFile(resolve(specFolder, 'cycles/.gitkeep'), '', 'utf-8');
-      await fs.writeFile(resolve(specFolder, 'fixes/.gitkeep'), '', 'utf-8');
-
-      await fs.writeFile(
-        resolve(specFolder, `${specId}.spec.md`),
-        specTemplate(author, nnn, specTitle, app as string),
-        'utf-8',
-      );
-
-      const today = new Date().toISOString().slice(0, 10);
-      index.specs.push({
-        id: specId,
-        author,
-        slug,
-        folder: `sdd/specs/${specId}`,
-        file: `sdd/specs/${specId}/${specId}.spec.md`,
-        module: slug,
+      const result = await createSpec(cwd, {
+        slug: slug as string,
+        author: author as string,
+        title: (title as string) || undefined,
         app: app as string,
-        status: 'in-progress',
-        title: specTitle,
-        created_at: today,
-        completed_at: null,
-        depends_on: [],
+        apps,
+        dependsOn,
+        description: args.description,
       });
-      await fs.writeJSON(indexPath, index, { spaces: 2 });
 
-      logger.success(`Spec created at sdd/specs/${specId}/${specId}.spec.md`);
-      logger.success('Registered in sdd/specs/index.json');
+      logger.success(`Spec created at ${result.file}`);
+      logger.success('Registered in sdd/specs/index.json (status: draft)');
+      logger.success(
+        `Registered module "${result.module}" in sdd/global.json → pending_modules (${result.apps.join(', ')})`,
+      );
+      if (result.dependsOn.length) {
+        logger.info(`depends_on: ${result.dependsOn.join(', ')}`);
+      }
 
       try {
         exec('node sdd/scripts/validate-sdd.mjs', { cwd, silent: true });
@@ -177,64 +181,15 @@ export const addSpecCommand = defineCommand({
       } catch {
         logger.warn('Run `pnpm sdd:validate` to check the SDD registries.');
       }
+
+      p.outro(
+        pc.green(
+          `Spec "${result.specId}" ready (draft). Next: write the .spec.md, then sdd/prompts/start-sdd-cycle.prompt.md — the orchestrator moves it to in-progress.`,
+        ),
+      );
     } catch (err) {
       logger.error('Failed to create specification: ' + (err as Error).message);
       process.exit(1);
     }
-
-    p.outro(
-      pc.green(
-        `Spec "${specId}" ready. Next: sdd/prompts/start-sdd-cycle.prompt.md`,
-      ),
-    );
   },
 });
-
-function detectGitHubUser(): string {
-  try {
-    const user = exec('git config user.name', { silent: true }) ?? '';
-    return user
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z0-9-]+/g, '-')
-      .replace(/^-|-$/g, '');
-  } catch {
-    return '';
-  }
-}
-
-function specTemplate(
-  author: string,
-  nnn: string,
-  title: string,
-  app: string,
-): string {
-  return `# SPEC-${author}-${nnn}: ${title}
-
-## Resumen Ejecutivo
-
-[Qué se construye, por qué y para quién.]
-
-## Contexto de Negocio
-
-[Problema que resuelve, usuarios afectados, impacto esperado.]
-
-## Requisitos Funcionales (RF)
-
-- RF-1: [Descripción]
-- RF-2: [Descripción]
-
-## Requisitos No-Funcionales (RNF)
-
-- RNF-1: [Performance, seguridad, cobertura mínima, etc.]
-
-## Dependencias
-
-- Subproyecto principal: \`${app}\`
-- [Módulos previos completados y APIs externas requeridas.]
-
-## Criterios de Aceptación
-
-- CA-001: [Condición verificable para considerar implementada la spec.]
-`;
-}

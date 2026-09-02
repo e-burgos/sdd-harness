@@ -425,3 +425,342 @@ describe.skipIf(process.platform === 'win32')(
     });
   },
 );
+
+// v0.11.0 — TELEMETRÍA GATE por agente. Las unidades cerradas desde el cutoff (2026-09-02)
+// fallan sin proveedor/modelo + tokens; las anteriores siguen en warning (lo hecho, hecho está).
+describe.skipIf(process.platform === 'win32')(
+  'telemetría v0.11.0: registro por agente (by_agent) y gate por fecha',
+  () => {
+    let ws: string;
+    const SPEC = 'spec-eburgos-001-agents';
+    const CYCLE = `sdd/specs/${SPEC}/cycles/cycle-01`;
+
+    const runValidate = (): { ok: boolean; output: string } => {
+      const run = spawnSync('node', [resolve(ws, 'sdd/scripts/validate-sdd.mjs')], {
+        encoding: 'utf-8',
+      });
+      return { ok: run.status === 0, output: `${run.stdout ?? ''}${run.stderr ?? ''}` };
+    };
+
+    const agentEntry = (over: Record<string, unknown> = {}) => ({
+      agent: 'implementor-back',
+      provider_model: 'claude/sonnet',
+      effort: 'medium',
+      tokens_in: 85_000,
+      tokens_out: 15_000,
+      tokens_total: 100_000,
+      approx: false,
+      source: 'agent-usage-notification',
+      recorded_at: '2026-09-02',
+      ...over,
+    });
+
+    const writeCycle = async (
+      metrics: Record<string, unknown> | null,
+      completedAt = '2026-09-02',
+      // null = la task queda sin usage (un default sólo aplica con undefined)
+      taskUsage: Record<string, unknown> | null = {
+        provider_model: 'claude/sonnet',
+        effort: 'medium',
+        agent: 'implementor-back',
+        tokens_in: 85_000,
+        tokens_out: 15_000,
+        approx: false,
+        source: 'agent-usage-notification',
+        recorded_at: '2026-09-02',
+      },
+    ) => {
+      await fs.writeJSON(resolve(ws, CYCLE, 'tasks.json'), {
+        spec: SPEC,
+        cycle: 1,
+        module: 'agents',
+        apps: ['apps/demo-api'],
+        flow: 'full',
+        user_stories_generated: true,
+        prerequisites: { tasks_generated: true },
+        tasks: [
+          {
+            id: 'TASK-001',
+            title: 'hecha',
+            user_stories: ['HU-01'],
+            estimation_hours: 1,
+            story_points: 1,
+            depends_on: [],
+            status: 'done',
+            files: [],
+            ...(taskUsage ? { usage: taskUsage } : {}),
+          },
+        ],
+      });
+      await fs.writeJSON(resolve(ws, CYCLE, 'cycle.json'), {
+        ...baseCycle(metrics),
+        spec: SPEC,
+        module: 'agents',
+        completed_at: completedAt,
+        documents: { tasks: `${CYCLE}/tasks.json` },
+      });
+      execFileSync('node', [resolve(ws, 'sdd/scripts/rebuild-tasks-index.mjs')], {
+        stdio: 'ignore',
+      });
+    };
+
+    const metricsWith = (usage: Record<string, unknown> | undefined) =>
+      baseMetrics({ tasks_total: 1, tasks_completed: 1, ...(usage ? { usage } : {}) });
+
+    beforeAll(async () => {
+      ws = mkdtempSync(resolve(tmpdir(), 'harness-telemetry-agents-'));
+      await generateSDD(ws, {
+        projectName: 'agents-proj',
+        description: 'Workspace used to check the per-agent telemetry gate.',
+        packageScope: '@agents',
+        apps: [],
+        libs: [],
+        services: [],
+      });
+      await fs.ensureDir(resolve(ws, 'node_modules'));
+      for (const dep of [
+        'ajv',
+        'ajv-formats',
+        'fast-deep-equal',
+        'fast-uri',
+        'json-schema-traverse',
+        'require-from-string',
+      ]) {
+        const src = resolve(REPO_ROOT, 'node_modules', dep);
+        if (fs.existsSync(src)) {
+          await fs.ensureSymlink(src, resolve(ws, 'node_modules', dep));
+        }
+      }
+      await fs.ensureDir(resolve(ws, CYCLE));
+      await fs.ensureDir(resolve(ws, 'sdd/context/apps/demo-api/updates'));
+      await fs.writeFile(
+        resolve(ws, `sdd/context/apps/demo-api/updates/2026-09-02-${SPEC}-cycle-01.md`),
+        '# delta\n',
+      );
+      await fs.writeFile(resolve(ws, `sdd/specs/${SPEC}/${SPEC}.spec.md`), '# spec\n');
+      await fs.writeJSON(resolve(ws, 'sdd/specs/index.json'), {
+        specs: [
+          {
+            id: SPEC,
+            author: 'eburgos',
+            slug: 'agents',
+            folder: `sdd/specs/${SPEC}`,
+            file: `sdd/specs/${SPEC}/${SPEC}.spec.md`,
+            module: 'agents',
+            app: 'apps/demo-api',
+            status: 'in-progress',
+            title: 'Agents',
+            created_at: '2026-09-01',
+            completed_at: null,
+            depends_on: [],
+          },
+        ],
+      });
+    }, 30_000);
+
+    afterAll(() => {
+      rmSync(ws, { recursive: true, force: true });
+    });
+
+    it('un ciclo cerrado desde el cutoff sin metrics.usage FALLA con mensaje claro', async () => {
+      await writeCycle(metricsWith(undefined));
+      const { ok, output } = runValidate();
+      expect(ok).toBe(false);
+      expect(output).toContain('completed without metrics.usage');
+      expect(output).toContain('by_agent');
+    });
+
+    it('el mismo ciclo cerrado antes del cutoff solo avisa (retrocompatibilidad)', async () => {
+      await writeCycle(metricsWith(undefined), '2026-08-20');
+      const { ok, output } = runValidate();
+      expect(ok).toBe(true);
+      expect(output).toContain('without metrics.usage');
+    });
+
+    it('usage sin proveedor/modelo en un ciclo nuevo falla; by_agent completo pasa', async () => {
+      await writeCycle(metricsWith({ tokens_in: 1, tokens_out: 1, approx: false, source: 'session-report' }));
+      expect(runValidate().output).toContain('no provider/model');
+      expect(runValidate().ok).toBe(false);
+
+      await writeCycle(
+        metricsWith({
+          tokens_in: 170_000,
+          tokens_out: 30_000,
+          approx: false,
+          source: 'agent-usage-notification',
+          by_agent: [agentEntry(), agentEntry({ agent: 'reviewer', source: 'session-report' })],
+          by_tier: {
+            'claude/sonnet': { tokens_in: 170_000, tokens_out: 30_000, approx: false, source: 'agent-usage-notification' },
+          },
+        }),
+      );
+      const { ok, output } = runValidate();
+      expect(ok).toBe(true);
+      expect(output).not.toContain('by_agent');
+    });
+
+    it('sum(by_agent) != by_tier avisa; approx: false con declared-estimate es error', async () => {
+      await writeCycle(
+        metricsWith({
+          tokens_in: 100_000,
+          tokens_out: 15_000,
+          approx: false,
+          source: 'agent-usage-notification',
+          by_agent: [agentEntry()],
+          by_tier: { 'claude/sonnet': { tokens_in: 100_000, tokens_out: 15_000 } },
+        }),
+      );
+      const mismatch = runValidate();
+      expect(mismatch.ok).toBe(true);
+      expect(mismatch.output).toContain('sum(by_agent) != by_tier');
+
+      await writeCycle(
+        metricsWith({
+          tokens_in: 85_000,
+          tokens_out: 15_000,
+          approx: false,
+          source: 'declared-estimate',
+          by_agent: [agentEntry({ source: 'declared-estimate', approx: true })],
+          by_tier: { 'claude/sonnet': { tokens_in: 85_000, tokens_out: 15_000, approx: true, source: 'declared-estimate' } },
+        }),
+      );
+      const bad = runValidate();
+      expect(bad.ok).toBe(false);
+      expect(bad.output).toContain('approx: false with source: declared-estimate');
+    });
+
+    it('sin by_agent en un ciclo nuevo avisa, y una task done sin usage también', async () => {
+      await writeCycle(
+        metricsWith({
+          tokens_in: 85_000,
+          tokens_out: 15_000,
+          approx: true,
+          source: 'declared-estimate',
+          by_tier: { 'copilot/claude-sonnet': { tokens_in: 85_000, tokens_out: 15_000, approx: true, source: 'declared-estimate' } },
+        }),
+        '2026-09-02',
+        null,
+      );
+      const { ok, output } = runValidate();
+      expect(ok).toBe(true);
+      expect(output).toContain('without metrics.usage.by_agent');
+      expect(output).toContain('done task(s)');
+      expect(output).toContain('TASK-001');
+    });
+
+    it('fixes: resuelto desde el cutoff sin usage falla; con by_agent consistente pasa', async () => {
+      await writeCycle(
+        metricsWith({
+          tokens_in: 85_000,
+          tokens_out: 15_000,
+          approx: false,
+          source: 'agent-usage-notification',
+          by_agent: [agentEntry()],
+          by_tier: { 'claude/sonnet': { tokens_in: 85_000, tokens_out: 15_000 } },
+        }),
+      );
+      const fixesPath = resolve(ws, 'sdd/fixes.json');
+      const original = await fs.readJSON(fixesPath);
+      await fs.ensureDir(resolve(ws, 'sdd/fixes'));
+      await fs.writeFile(resolve(ws, 'sdd/fixes/fix-eburgos-001.md'), '# fix\n');
+      const fix = {
+        id: 'FIX-eburgos-001',
+        author: 'eburgos',
+        spec_id: null,
+        fix_document: 'sdd/fixes/fix-eburgos-001.md',
+        type: 'BUGFIX',
+        severity: 'low',
+        created_at: '2026-09-02',
+        resolved_at: '2026-09-02',
+        title: 'Typo',
+        estimation_hours: 0.5,
+        description: 'd',
+        justification: 'j',
+        related_modules: [],
+        affected_files: [],
+        test_reference: null,
+        status: 'implemented',
+        cycle: null,
+      };
+      try {
+        await fs.writeJSON(fixesPath, { ...original, fixes: [fix] });
+        const noUsage = runValidate();
+        expect(noUsage.ok).toBe(false);
+        expect(noUsage.output).toContain('FIX GATE');
+
+        await fs.writeJSON(fixesPath, {
+          ...original,
+          fixes: [
+            {
+              ...fix,
+              usage: {
+                provider_model: 'claude/haiku',
+                effort: 'low',
+                tokens_in: 2_000,
+                tokens_out: 500,
+                approx: false,
+                source: 'agent-usage-notification',
+                recorded_at: '2026-09-02',
+                by_agent: [
+                  agentEntry({ agent: 'steward', provider_model: 'claude/haiku', effort: 'low', tokens_in: 1_000, tokens_out: 250, tokens_total: 1_250 }),
+                  agentEntry({ agent: 'implementor-back', provider_model: 'claude/haiku', effort: 'low', tokens_in: 1_000, tokens_out: 250, tokens_total: 1_250 }),
+                ],
+              },
+            },
+          ],
+        });
+        const withUsage = runValidate();
+        expect(withUsage.ok).toBe(true);
+        expect(withUsage.output).not.toContain('FIX-eburgos-001');
+      } finally {
+        await fs.writeJSON(fixesPath, original);
+        await fs.remove(resolve(ws, 'sdd/fixes/fix-eburgos-001.md'));
+      }
+    });
+
+    it('specs: in-progress sin ciclos sugiere draft; draft con completed_at falla', async () => {
+      const indexPath = resolve(ws, 'sdd/specs/index.json');
+      const index = await fs.readJSON(indexPath);
+      const draftId = 'spec-eburgos-002-draft';
+      await fs.ensureDir(resolve(ws, `sdd/specs/${draftId}/cycles`));
+      await fs.writeFile(resolve(ws, `sdd/specs/${draftId}/${draftId}.spec.md`), '# d\n');
+      const draft = {
+        ...index.specs[0],
+        id: draftId,
+        slug: 'draft',
+        module: 'draft',
+        folder: `sdd/specs/${draftId}`,
+        file: `sdd/specs/${draftId}/${draftId}.spec.md`,
+        status: 'in-progress',
+        title: 'Draft',
+      };
+      try {
+        await fs.writeJSON(indexPath, { ...index, specs: [...index.specs, draft] });
+        const suggest = runValidate();
+        expect(suggest.output).toContain('in-progress without any cycle');
+        expect(suggest.output).toContain(draftId);
+
+        await fs.writeJSON(indexPath, {
+          ...index,
+          specs: [...index.specs, { ...draft, status: 'draft', completed_at: '2026-09-02' }],
+        });
+        const bad = runValidate();
+        expect(bad.ok).toBe(false);
+        expect(bad.output).toContain('draft with completed_at set');
+      } finally {
+        await fs.writeJSON(indexPath, index);
+        await fs.remove(resolve(ws, `sdd/specs/${draftId}`));
+      }
+    });
+
+    it('NX_WORKSPACE_ROOT_PATH apuntando a otro repo se avisa en la primera línea', async () => {
+      const run = spawnSync('node', [resolve(ws, 'sdd/scripts/validate-sdd.mjs')], {
+        encoding: 'utf-8',
+        env: { ...process.env, NX_WORKSPACE_ROOT_PATH: '/some/other/repo' },
+      });
+      const firstLine = `${run.stderr ?? ''}`.trim().split('\n')[0];
+      expect(firstLine).toContain('NX_WORKSPACE_ROOT_PATH=/some/other/repo');
+      expect(firstLine).toContain('THAT workspace');
+    });
+  },
+);

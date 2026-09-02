@@ -5,6 +5,7 @@ import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import fs from 'fs-extra';
 import { logger } from '../../utils/logger.js';
+import { warnIfNxRootMismatch } from '../../utils/env.js';
 
 export const addSkillCommand = defineCommand({
   meta: {
@@ -23,6 +24,7 @@ export const addSkillCommand = defineCommand({
     },
   },
   async run({ args }) {
+    warnIfNxRootMismatch();
     p.intro(pc.bgCyan(pc.black(' harness add skill ')));
 
     const cwd = process.cwd();
