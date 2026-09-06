@@ -13,7 +13,9 @@
     "sdd:docs": "node sdd/docs/serve.mjs",
     "sdd:validate": "node sdd/scripts/validate-sdd.mjs",
     "sdd:rebuild-tasks-index": "node sdd/scripts/rebuild-tasks-index.mjs",
-    "sdd:rebuild-catalog": "node sdd/scripts/rebuild-catalog.mjs"
+    "sdd:rebuild-catalog": "node sdd/scripts/rebuild-catalog.mjs",
+    "sdd:rtk": "node sdd/scripts/setup-rtk.mjs",
+    "postinstall": "node sdd/scripts/setup-rtk.mjs"
   },
   "dependencies": {
     "react": "^19.0.0",

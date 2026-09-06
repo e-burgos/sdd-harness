@@ -105,6 +105,7 @@ npx vitest run       # suite completa (incluye integración real)
 | `apps/cli/src/generators/idea.generator`       | `harness idea`: idea file (evidencia + decisiones + protocolo autosuficiente), stub de config y su JSON Schema |
 | `apps/cli/src/utils/blueprint.ts`              | Copia de blueprints con renombre de tokens                          |
 | `apps/cli/templates/sdd/`                      | **Kit SDD portable canónico** (se publica en npm)                   |
+| `apps/cli/templates/sdd/scripts/rtk-*.mjs`     | Integración de rtk en el kit: `setup-rtk.mjs` (instalador + merge de hooks), `rtk-hook.mjs` (puente que llaman los hooks) y `rtk-common.mjs` (versión fijada y resolución del binario) |
 | `apps/cli/templates/workspace/`                | `eslint.config.mjs` del modo nx (la CLI agrega `@nx/eslint-plugin` + `typescript-eslint` a las deps) |
 | `apps/documentation/`                          | Sitio de docs interactivo (React/Vite/Tailwind v4, independiente). Contenido bilingüe en `src/data/content.ts` + `content.en.ts` — si cambia la CLI, actualizar ambos. Deploy automático a Cloudflare Pages vía `.github/workflows/deploy-docs.yml` (el proyecto de Pages es direct upload: no buildea solo) |
 
@@ -149,6 +150,18 @@ graphify cluster-only . --no-viz  # o `graphify label .` → re-etiquetar comuni
 > (2) varios modelos "lite" devuelven un grafo vacío (0 edges) sin avisar. Si el modelo
 > gratuito falla o se agotó el cupo diario (resetea 00:00 UTC): **avisá al dev y dejá la
 > actualización para después** — no escales a un modelo pago sin autorización explícita.
+
+## 🪶 rtk — salida de comandos comprimida
+
+> Este repo **no tiene el kit SDD instalado**, así que acá rtk no viene puesto por nadie. El
+> dev que quiera el mismo ahorro trabajando en la CLI corre `rtk init -g` en su máquina: instala
+> el hook global de su arnés, fuera del repo, y **no hay nada que commitear**.
+
+Lo que sí vive acá es la **integración que el kit instala en los repos de los usuarios**:
+`apps/cli/templates/sdd/scripts/rtk-common.mjs`, `rtk-hook.mjs` y `setup-rtk.mjs` (más el
+interruptor `sdd/tools.json` y su schema), cableados desde `setup-agents.sh/.ps1`. Sus tests de
+integración están en `apps/cli/src/generators/__tests__/rtk.integration.spec.ts` — si tocás
+cualquiera de esos scripts, tienen que quedar en verde.
 
 ## ⚙️ Selección de modelo y esfuerzo (OBLIGATORIO — optimización de tokens/contexto)
 

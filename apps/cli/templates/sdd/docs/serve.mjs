@@ -1,8 +1,15 @@
 import { createServer } from 'node:http';
 import { readFile, readdir, realpath, stat } from 'node:fs/promises';
+import { existsSync } from 'node:fs';
+import { execFile } from 'node:child_process';
 import { createHash } from 'node:crypto';
+import { homedir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, URL } from 'node:url';
+import {
+  findRtkBinary,
+  rtkBinaryVersion,
+} from '../scripts/rtk-common.mjs';
 
 const DEFAULT_PORT = 4310;
 const HOST = '127.0.0.1';
@@ -256,6 +263,237 @@ async function serveStateFingerprint(req, res, root) {
   );
 }
 
+// ─── rtk savings (Costs → RTK tab) ───────────────────────────────────────────
+// rtk keeps its numbers in a per-user SQLite db, never in the repo, so the viewer asks the
+// binary on this machine: `rtk gain --project --all --format json` (summary + daily/weekly/
+// monthly, scoped to this repo). Per-command detail is not in that JSON: it is read straight
+// from history.db with node:sqlite when the runtime has it, else omitted. Never throws.
+
+const RTK_CACHE_MS = 10_000;
+const RTK_GAIN_TIMEOUT_MS = 8_000;
+const RTK_HISTORY_LIMIT = 5_000;
+let rtkCache = { at: 0, body: null };
+
+function runRtk(binary, args, cwd) {
+  return new Promise((done, fail) => {
+    execFile(
+      binary,
+      args,
+      {
+        cwd,
+        timeout: RTK_GAIN_TIMEOUT_MS,
+        maxBuffer: 8 * 1024 * 1024,
+        windowsHide: true,
+        env: { ...process.env, RTK_TELEMETRY_DISABLED: '1' },
+      },
+      (error, stdout) => (error ? fail(error) : done(stdout)),
+    );
+  });
+}
+
+function rtkHistoryDbCandidates() {
+  const home = homedir();
+  const candidates = [];
+  if (process.env.XDG_DATA_HOME) {
+    candidates.push(path.join(process.env.XDG_DATA_HOME, 'rtk', 'history.db'));
+  }
+  candidates.push(path.join(home, '.local', 'share', 'rtk', 'history.db'));
+  if (process.platform === 'darwin') {
+    candidates.push(
+      path.join(home, 'Library', 'Application Support', 'rtk', 'history.db'),
+    );
+  }
+  if (process.platform === 'win32') {
+    for (const base of [process.env.LOCALAPPDATA, process.env.APPDATA]) {
+      if (base) {
+        candidates.push(path.join(base, 'rtk', 'history.db'));
+        candidates.push(path.join(base, 'rtk', 'data', 'history.db'));
+      }
+    }
+  }
+  return candidates;
+}
+
+let sqliteModule = null;
+async function loadSqlite() {
+  if (sqliteModule !== null) return sqliteModule || null;
+  // node:sqlite is flagged experimental on 22.x and prints a warning on import; the viewer
+  // has no other use for it, so the warning is silenced here and nowhere else.
+  const original = process.emitWarning;
+  process.emitWarning = (warning, ...rest) => {
+    if (String(warning).includes('SQLite')) return;
+    return original.call(process, warning, ...rest);
+  };
+  try {
+    sqliteModule = await import('node:sqlite');
+  } catch {
+    sqliteModule = false;
+  } finally {
+    process.emitWarning = original;
+  }
+  return sqliteModule || null;
+}
+
+/** Raw rows for this repo (project_path == root or below), newest first. */
+async function readRtkHistory(root) {
+  const dbPath = rtkHistoryDbCandidates().find((candidate) => existsSync(candidate));
+  if (!dbPath) return { source: 'none', rows: [] };
+  const sqlite = await loadSqlite();
+  if (!sqlite) return { source: 'unsupported', rows: [] };
+  let db;
+  try {
+    db = new sqlite.DatabaseSync(dbPath, { readOnly: true });
+    const rows = db
+      .prepare(
+        `SELECT timestamp, original_cmd, rtk_cmd, input_tokens, output_tokens, saved_tokens,
+                savings_pct, exec_time_ms
+           FROM commands
+          WHERE project_path = ? OR project_path LIKE ?
+          ORDER BY timestamp DESC
+          LIMIT ?`,
+      )
+      .all(root, `${root}${path.sep}%`, RTK_HISTORY_LIMIT);
+    return { source: 'sqlite', rows };
+  } catch {
+    return { source: 'error', rows: [] };
+  } finally {
+    try {
+      db?.close();
+    } catch {}
+  }
+}
+
+/** "rtk git log --oneline -5" → "git log"; "rtk ls apps" → "ls". */
+function commandFamily(command) {
+  const words = String(command ?? '')
+    .replace(/^rtk\s+/, '')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  if (words.length === 0) return '(unknown)';
+  const head = words[0];
+  const second = words[1];
+  if (second && !second.startsWith('-') && /^[a-z]/i.test(second)) {
+    return `${head} ${second}`;
+  }
+  return head;
+}
+
+function aggregateByCommand(rows) {
+  const buckets = new Map();
+  for (const row of rows) {
+    const family = commandFamily(row.rtk_cmd || row.original_cmd);
+    const bucket = buckets.get(family) ?? {
+      command: family,
+      commands: 0,
+      input_tokens: 0,
+      output_tokens: 0,
+      saved_tokens: 0,
+      total_time_ms: 0,
+      last_at: null,
+    };
+    bucket.commands += 1;
+    bucket.input_tokens += Number(row.input_tokens ?? 0);
+    bucket.output_tokens += Number(row.output_tokens ?? 0);
+    bucket.saved_tokens += Number(row.saved_tokens ?? 0);
+    bucket.total_time_ms += Number(row.exec_time_ms ?? 0);
+    if (!bucket.last_at || String(row.timestamp) > bucket.last_at) {
+      bucket.last_at = String(row.timestamp);
+    }
+    buckets.set(family, bucket);
+  }
+  return [...buckets.values()]
+    .map((bucket) => ({
+      ...bucket,
+      savings_pct:
+        bucket.input_tokens > 0
+          ? (bucket.saved_tokens / bucket.input_tokens) * 100
+          : 0,
+    }))
+    .sort((a, b) => b.saved_tokens - a.saved_tokens);
+}
+
+async function collectRtkGain(root) {
+  let enabled = true;
+  try {
+    const tools = JSON.parse(
+      await readFile(path.join(root, 'sdd', 'tools.json'), 'utf8'),
+    );
+    enabled = tools?.rtk?.enabled !== false;
+  } catch {}
+  const binary = findRtkBinary();
+  const payload = {
+    enabled,
+    binary,
+    version: null,
+    scope: root,
+    generated_at: new Date().toISOString(),
+    summary: null,
+    daily: [],
+    weekly: [],
+    monthly: [],
+    by_command: [],
+    recent: [],
+    history_source: 'none',
+    error: null,
+  };
+  if (!binary) {
+    payload.error = 'binary-missing';
+    return payload;
+  }
+  payload.version = rtkBinaryVersion(binary);
+  try {
+    const stdout = await runRtk(
+      binary,
+      ['gain', '--project', '--all', '--format', 'json'],
+      root,
+    );
+    const data = JSON.parse(stdout);
+    payload.summary = data.summary ?? null;
+    payload.daily = Array.isArray(data.daily) ? data.daily : [];
+    payload.weekly = Array.isArray(data.weekly) ? data.weekly : [];
+    payload.monthly = Array.isArray(data.monthly) ? data.monthly : [];
+  } catch {
+    payload.error = 'gain-failed';
+  }
+  const history = await readRtkHistory(root);
+  payload.history_source = history.source;
+  payload.by_command = aggregateByCommand(history.rows);
+  payload.recent = history.rows.slice(0, 50).map((row) => ({
+    at: row.timestamp,
+    command: row.rtk_cmd || row.original_cmd,
+    input_tokens: Number(row.input_tokens ?? 0),
+    output_tokens: Number(row.output_tokens ?? 0),
+    saved_tokens: Number(row.saved_tokens ?? 0),
+    savings_pct: Number(row.savings_pct ?? 0),
+    exec_time_ms: Number(row.exec_time_ms ?? 0),
+  }));
+  return payload;
+}
+
+async function serveRtkGain(req, res, root) {
+  if (!rtkCache.body || Date.now() - rtkCache.at > RTK_CACHE_MS) {
+    let payload;
+    try {
+      payload = await collectRtkGain(root);
+    } catch {
+      payload = { enabled: true, binary: null, error: 'unexpected', summary: null };
+    }
+    rtkCache = { at: Date.now(), body: JSON.stringify(payload) };
+  }
+  return respond(
+    req,
+    res,
+    200,
+    {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Cache-Control': 'no-store',
+      'Content-Length': Buffer.byteLength(rtkCache.body),
+    },
+    rtkCache.body,
+  );
+}
+
 async function handleRequest(req, res, root) {
   if (req.method !== 'GET' && req.method !== 'HEAD') {
     return send405(req, res);
@@ -293,6 +531,9 @@ async function handleRequest(req, res, root) {
 
   if (decodedPath === '/sdd/docs/__state') {
     return serveStateFingerprint(req, res, root);
+  }
+  if (decodedPath === '/sdd/docs/__rtk') {
+    return serveRtkGain(req, res, root);
   }
 
   const target = path.resolve(root, '.' + decodedPath);

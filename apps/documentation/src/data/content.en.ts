@@ -23,6 +23,7 @@ const SDD_TREE: TreeNode = {
     { name: 'api.json · components.json · schema.json', note: 'architecture registries: endpoints, components, tables' },
     { name: 'tasks.json · fixes.json · catalog.json', note: 'aggregated indexes — the viewer reads these' },
     { name: 'kit.json · pricing.json', note: 'hashes for update sdd · Costs rates' },
+    { name: 'tools.json', note: 'rtk switch' },
     { name: 'documentation/', note: 'INSTALL · HOW-TO · README — in es/ and en/' },
     { name: 'README.md', note: 'bilingual documentation index' },
   ],
@@ -466,7 +467,7 @@ export const VIEWER_SHOTS: ViewerShot[] = [
     id: 'costs',
     tab: 'Costos ★',
     caption:
-      'The star view: approximate agentic cost (tokens × per-provider/model rate) against the traditional task estimation, projected savings, tokens per cycle and an exact table — with per-provider aggregation and a Source column that tells measured numbers apart from declared estimates. It updates itself while the loop works.',
+      'The star view, now in four tabs with charts: General (agentic vs traditional, cost per agent, tokens per provider and a Source column that tells measured numbers apart from declared estimates), Specs, Fixes and RTK (how much command output rtk saved). It updates itself while the loop works.',
   },
   {
     id: 'dashboard',
@@ -519,7 +520,7 @@ export const VIEWER_PRINCIPLES = [
   },
   {
     title: 'The Costs dashboard',
-    body: 'Tokens and time per task, cycle and spec (cycle.json/tasks.json telemetry) against the traditional task estimation: approximate agentic cost per provider/model, projected savings, and editable rates in sdd/pricing.json. A Source column marks each provider as measured or estimated, so a declared approximation never passes for a measurement. Fixes register their usage too and roll into the per-provider aggregation.',
+    body: 'Four tabs, all with charts (inline SVG, no libraries) and fixed-height scrollable tables: General (KPIs, traditional vs agentic per spec, cost per agent, tokens per provider, telemetry source and methodology), Specs (cost per spec, tokens per cycle, cycle detail), Fixes (cost per type, severity, status, tokens and detail) and RTK (compressed commands, tokens generated vs read, savings with their average % and an approximate USD equivalent). The agentic cost comes from editable rates in sdd/pricing.json and a Source column marks each provider as measured or estimated, so a declared approximation never passes for a measurement.',
   },
   {
     title: 'Travels with the kit',
@@ -592,6 +593,7 @@ export const UI = {
     lead: 'Every cycle records tokens and time. The viewer turns them into a cost comparison against the traditional estimation — and locally it updates itself while the loop runs. Hit play:',
     features: [
       { t: 'Honest telemetry', d: 'At every cycle close, tokens per provider/model and minutes are recorded in cycle.json → metrics.usage — mandatory, and marked approx: true when the harness exposes no counter so estimates are declared rather than hidden. Each agent sums its own unit into by_agent when it closes; by_tier is derived from that. The agent-usage-notification source (Claude Code) is exact, not estimated. The agentic cost comes from editable rates in sdd/pricing.json; the traditional estimation, from the hours your tasks already estimate.' },
+      { t: 'rtk on by default', d: 'Since kit v0.12.0 the output of shell commands (git, pnpm, vitest, tsc, eslint…) reaches the agent compressed — rtk reports 60–90% less text — without touching file reading and with zero developer action: install and update leave the hook in place. The switch lives in sdd/tools.json (pnpm sdd:rtk -- --disable), it is best effort — if the binary is missing the command still runs — and the savings show up in the RTK tab of Costs.' },
       { t: 'Surgical reactivity', d: 'The viewer polls a PER-AREA fingerprint of the registries every 4 seconds. It only re-renders your view if an area it depends on changed: closing a cycle refreshes Costs and Cycles, but never touches your Agents view.' },
       { t: 'Your UI stays intact', d: 'Expanded sections, typed searches and scroll position survive every refresh. And if you have a document open or the tab hidden, the refresh waits. On static hosting, the usual Refresh button.' },
     ],

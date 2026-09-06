@@ -38,6 +38,8 @@ description: Conserje del kit SDD - puerta de entrada para status del harness, a
 | ¿Qué fixes hay pendientes?            | `sdd/fixes.json` → `status` != validated/absorbed                |
 | ¿Qué aprendimos hasta acá?            | `sdd/memory/lessons.md` (¿journal ≥5? → avisar destilación)      |
 | ¿Cuánto se gastó y en qué proveedor?  | `cycle.json → metrics.usage` + `tasks.json → usage` + fixes `usage` + `sdd/pricing.json` |
+| ¿rtk está activo / instalado?         | `node sdd/scripts/setup-rtk.mjs --status` (JSON: switch + binario) |
+| ¿Cuánto ahorró rtk?                   | `rtk gain --project` — o el visor: Costos → pestaña **RTK**      |
 | ¿Qué contiene el kit (índice)?        | `sdd/catalog.json` — jamás listar directorios a mano             |
 | ¿Cómo funciona X de la metodología?   | `sdd/documentation/{es,en}/` (README = referencia, HOW-TO = guía)|
 | ¿Los registros están sanos?           | `pnpm sdd:validate`                                              |
@@ -55,6 +57,9 @@ Reporte compacto, en este orden, leyendo solo las fuentes del mapa:
 7. **Arneses**: existencia de los symlinks raíz (`AGENTS.md`, `CLAUDE.md`,
    `GEMINI.md`) y de `.claude/ .github/ .agents/ .agent/ .gemini/` — si falta
    alguno, ofrecer `pnpm setup:agents`.
+8. **rtk**: estado del interruptor (`sdd/tools.json`) y del binario vía
+   `node sdd/scripts/setup-rtk.mjs --status`; si falta el binario, ofrecer
+   `pnpm sdd:rtk`.
 
 Nada de análisis no pedido: el status es un tablero, no un ensayo.
 
@@ -97,6 +102,24 @@ memoria) — si algo de eso aparece modificado, detenerse y reportar.
    vista **Costos** (agregación por proveedor y fixes incluidos).
 4. Datos faltantes se reportan como faltantes — jamás inventar un número.
 
+## Playbook 5 — Herramientas del kit (rtk)
+
+rtk comprime la salida de los comandos de shell que leen los agentes y viene
+**activo por defecto**. El steward es la puerta de entrada para operarlo:
+
+1. **Estado**: `node sdd/scripts/setup-rtk.mjs --status` (o `pnpm sdd:rtk -- --status`)
+   → interruptor, binario encontrado, versión y hooks de cada arnés.
+2. **Apagar / prender — solo a pedido del dev**: `pnpm sdd:rtk -- --disable` /
+   `pnpm sdd:rtk -- --enable`. Editar `sdd/tools.json` (`rtk.enabled`) a mano es
+   equivalente: es un archivo del proyecto y `update sdd` no lo pisa.
+3. **Reinstalar / reparar el binario**: `pnpm sdd:rtk` (idempotente: mergea los
+   hooks e instala el binario fuera del repo).
+4. **Red bloqueada**: poner `rtk.auto_install: false` en `sdd/tools.json` y dejar
+   que el dev instale el binario a mano; el puente lo busca en el `PATH`.
+5. **Nunca apagarlo por iniciativa propia** — la decisión es del dev.
+6. **Los números viven en el visor**: `pnpm sdd:docs` → Costos → pestaña **RTK**
+   (son estimaciones y son de la máquina que corre el visor).
+
 ## Ruteo (pedidos que NO son del steward)
 
 | Pedido                                  | Destino                                        |
@@ -115,6 +138,9 @@ no re-narrar el kit: el agente destino tiene sus propias skills.
 Ninguno en operación normal. Las únicas escrituras permitidas son las que
 ejecutan sus playbooks a través de las herramientas oficiales (`update sdd`,
 `setup:agents`, `harness idea`) — nunca ediciones manuales de registros SDD.
+
+Única excepción: `sdd/tools.json` (interruptor de rtk), y solo a pedido explícito
+del dev — preferentemente vía `pnpm sdd:rtk -- --disable|--enable`.
 
 ## Registro de consumo (obligatorio)
 

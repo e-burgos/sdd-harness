@@ -5,6 +5,58 @@ All notable changes to `@e-burgos/sdd-harness` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.0] - 2026-09-06
+
+### Added — rtk on by default: compressed shell output for the agents
+
+- **rtk ([rtk-ai/rtk](https://github.com/rtk-ai/rtk)) ships enabled with the kit, zero developer
+  action.** rtk compresses the output of shell commands (git, pnpm, vitest, tsc, eslint, ls, grep,
+  docker…) before an agent reads it — 60–90 % less text on those outputs, file reads untouched.
+  The kit never runs `rtk init` (it would edit the symlinked `CLAUDE.md` and prompt for rtk's
+  telemetry); instead it ships its own bridge and installer:
+  - `sdd/scripts/rtk-hook.mjs <claude|gemini>` — the hook entry point. Reads `sdd/tools.json`,
+    finds the binary (`RTK_BIN` → PATH → per-user install dir) and delegates to `rtk hook`.
+    Any other case is a silent passthrough (no stdout, exit 0): it never blocks a command.
+  - `sdd/scripts/setup-rtk.mjs` — idempotent: merges the hooks into `.claude/settings.json`
+    (`PreToolUse` · `Bash`) and `.gemini/settings.json` (`BeforeTool` · `run_shell_command`)
+    without clobbering other hooks (an existing `rtk init` hook is respected), then installs the
+    pinned release (`0.48.0`) from GitHub Releases with the SHA-256 verified against the release's
+    `checksums.txt`, into `~/.local/bin` (Windows: `%LOCALAPPDATA%\rtk\bin`) — never inside the
+    repo. Skipped in `CI`, with `SDD_RTK_SKIP_INSTALL`, or when a same-or-newer `rtk` is on PATH.
+    Any failure prints one warning with the manual install command and exits 0. Flags:
+    `--status` (JSON), `--enable`, `--disable`, `--no-install`.
+  - `sdd/scripts/rtk-common.mjs` — shared lookup/version helpers (also used by the viewer).
+  - `setup-agents.sh/.ps1` call `setup-rtk.mjs` at the end, so `init`, `configure sdd`,
+    `update sdd` and `pnpm setup:agents` all leave rtk operational. The generated `package.json`
+    gets `sdd:rtk` and — only when the project has none — a `postinstall` running the same
+    script, so a fresh clone picks the binary up at `pnpm install`.
+- **`sdd/tools.json` + `schemas/tools.schema.json`** — the switch, owned by the project
+  (`update sdd` seeds it once and never overwrites it): `rtk.enabled`, `rtk.auto_install`
+  (blocked networks: install by hand, the bridge finds it on PATH), optional `rtk.version`.
+  `pnpm sdd:rtk -- --disable|--enable` flips it; the **sdd-steward** does it on request
+  (new Playbook 5) and reports rtk in its status. `sdd:validate` validates the file.
+- **Costs page in four tabs with charts** (`#/costs/general|specs|fixes|rtk`), inline SVG (no
+  libraries), colour-blind-validated palettes, tooltips on every mark, and every long list as a
+  fixed-height scrollable table: **General** (KPIs, traditional vs agentic per spec, cost per
+  agent, tokens per provider, telemetry origin), **Specs** (cycles only), **Fixes** (by type,
+  severity and status, tokens per fix), **RTK** (status, KPIs — compressed commands, tokens
+  generated / read / saved, approx. USD equivalent — last 30 days read vs saved, cumulative
+  savings, per month, savings per command family, recent commands). `serve.mjs` gains
+  `/sdd/docs/__rtk`: runs `rtk gain --project --all --format json` scoped to the repo and reads
+  per-command detail from rtk's local SQLite history with `node:sqlite` (Node ≥ 22.5; omitted
+  otherwise). rtk keeps its history per user, so the tab shows the machine running `sdd:docs`.
+- Dual-harness (`AGENTS.md`/`CLAUDE.md`/`GEMINI.md`) gets an rtk section for the agents: the
+  rewrite is transparent, never prefix `rtk` by hand, `rtk proxy <cmd>` for raw output, never
+  disable it on your own.
+
+### Tests
+
+- `rtk.integration.spec.ts`: hooks merge and idempotence, native-hook respect, invalid JSON,
+  bridge passthrough/delegation with a fake binary, `--disable/--enable/--status`, skip rules,
+  and a full install (download + checksum + extract) against a local HTTP release server,
+  including a checksum mismatch. Integration and update suites assert the hooks, `tools.json`
+  and the package.json scripts; vitest sets `SDD_RTK_SKIP_INSTALL` so no suite ever downloads.
+
 ## [0.11.0] - 2026-09-02
 
 Everything in this release comes from one real end-to-end run of the CLI (v0.10.3) on

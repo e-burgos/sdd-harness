@@ -106,6 +106,17 @@ describe.skipIf(process.platform === 'win32')(
       );
     });
 
+    it('rtk queda operativo por defecto: hooks en Claude Code y Gemini CLI + sdd/tools.json', async () => {
+      const claude = await fs.readJSON(resolve(ws, '.claude/settings.json'));
+      const bash = claude.hooks.PreToolUse.find((entry: { matcher: string }) => entry.matcher === 'Bash');
+      expect(bash.hooks[0].command).toContain('sdd/scripts/rtk-hook.mjs');
+      const gemini = await fs.readJSON(resolve(ws, '.gemini/settings.json'));
+      expect(gemini.hooks.BeforeTool[0].matcher).toBe('run_shell_command');
+      expect(gemini.hooks.BeforeTool[0].hooks[0].command).toContain('sdd/scripts/rtk-hook.mjs');
+      const tools = await fs.readJSON(resolve(ws, 'sdd/tools.json'));
+      expect(tools.rtk.enabled).toBe(true);
+    });
+
     it('las rules de Antigravity quedan bajo el cap de 12k caracteres', () => {
       const rulesDir = resolve(ws, 'sdd/dual-harness/rules');
       const rules = fs.readdirSync(rulesDir);

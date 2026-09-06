@@ -125,6 +125,11 @@ export async function ensureHarnessPackageJson(
       pkg.scripts[key] = pkg.scripts[key] ?? value;
     }
   }
+  // postinstall keeps rtk operational for whoever clones the repo (`pnpm install`
+  // runs it). A project that already owns a postinstall keeps it untouched.
+  if (kitPkg.scripts.postinstall && !pkg.scripts.postinstall) {
+    pkg.scripts.postinstall = kitPkg.scripts.postinstall;
+  }
 
   pkg.devDependencies = pkg.devDependencies ?? {};
   for (const dep of ['ajv', 'ajv-formats']) {

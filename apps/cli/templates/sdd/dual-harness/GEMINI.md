@@ -122,6 +122,46 @@ la re-extracción semántica con la skill `graphify` y `--update`, que sí consu
 > y dejá la actualización para después**. No escales a un modelo pago ni al fan-out de
 > subagentes sin autorización explícita.
 
+## 🪶 rtk — salida de comandos comprimida (ACTIVO POR DEFECTO)
+
+> [!NOTE]
+> [rtk](https://github.com/rtk-ai/rtk) (Apache-2.0, binario en Rust) comprime la salida de
+> los comandos de shell (`git`, `pnpm`, `vitest`, `tsc`, `eslint`, `ls`, `grep`, `docker`…)
+> **antes de que la leas**: reporta 60–90% menos texto. Viene **activo por defecto desde el
+> kit v0.12.0**, sin ninguna acción del dev. Solo afecta comandos de shell — tus
+> herramientas de lectura de archivos (Read/Grep/Glob) quedan intactas.
+
+El puente es un hook `BeforeTool` sobre `run_shell_command` (`.gemini/settings.json` →
+`node sdd/scripts/rtk-hook.mjs gemini`), versionado en el repo: todo el equipo lo tiene con un
+`git pull`. La reescritura es **transparente**: pedís `git status` y se ejecuta `rtk git status`.
+**Antigravity no tiene hook** (rtk todavía no lo integra): ahí trabajás normal, sin compresión.
+
+**Reglas para vos:**
+
+- **Nunca prefijes comandos con `rtk` a mano** — el puente ya lo hace.
+- Si la salida comprimida **te esconde algo que necesitás**, corré `rtk proxy <cmd>` para
+  ver la salida cruda de ese comando puntual.
+- **Nunca apagues rtk por tu cuenta**: el interruptor es del dev. Si sospechás que molesta,
+  decíselo y que decida él.
+- `rtk gain` / `rtk gain --project` imprime el ahorro acumulado; los números son
+  **estimaciones** (bytes ÷ 4), no facturación real.
+
+**Interruptor** — vive en `sdd/tools.json` (`rtk.enabled`, `rtk.auto_install`), es un archivo
+del proyecto y `harness update sdd` no lo pisa. Con `enabled: false` el puente deja pasar
+todos los comandos sin tocarlos; con `auto_install: false` nunca descarga el binario (redes
+corporativas: el dev lo instala a mano y el puente lo encuentra en el `PATH`).
+
+```bash
+pnpm sdd:rtk -- --status    # estado del interruptor y del binario (JSON)
+pnpm sdd:rtk -- --disable   # apagarlo (los hooks quedan instalados pero inertes)
+pnpm sdd:rtk -- --enable    # volver a prenderlo
+```
+
+**Best effort y por máquina.** El binario se instala fuera del repo (`~/.local/bin`) y su
+historial es local, así que el ahorro que veas es el de esta máquina. Si algo falla —binario
+ausente, hook roto— el comando pasa **sin comprimir** y nunca se bloquea: el kit funciona
+igual sin rtk.
+
 ## ⚙️ Selección de modelo y esfuerzo (OBLIGATORIO — optimización de tokens/contexto)
 
 > [!IMPORTANT]

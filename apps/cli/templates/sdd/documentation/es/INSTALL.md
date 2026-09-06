@@ -99,12 +99,30 @@ contra sus schemas.
 | `prompts/`         | Prompts de gates (SPEC GATE, FIX GATE, inicio/cierre de ciclo, hermes-resume)                   |
 | `memory/`          | Memoria del proyecto: `lessons.md` destilado + `journal/` episódico (MEMORIA GATE)              |
 | `pricing.json`     | Tarifas editables por proveedor del dashboard de Costos del visor (`claude/*`, `gemini/*`, `copilot/*`) |
+| `tools.json`       | Interruptor de rtk (`enabled`, `auto_install`) — dato del proyecto: `update sdd` no lo pisa    |
 | `schemas/`         | JSON Schemas estrictos de todos los registros                                                   |
-| `scripts/`         | validate, rebuild-tasks-index, rebuild-catalog, setup-agents (bash + PowerShell)                |
+| `scripts/`         | validate, rebuild-tasks-index, rebuild-catalog, setup-agents (bash + PowerShell) y los tres de rtk: `setup-rtk.mjs`, `rtk-hook.mjs`, `rtk-common.mjs` |
 | `docs/`            | Visor portable y bilingüe de documentación (JS vanilla, cero deps)                               |
 | `dual-harness/`    | CLAUDE.md / AGENTS.md / GEMINI.md para linkear en la raíz del repo, más `rules/` para Antigravity |
 | `context/`         | Plantillas de constitución y context prompt (global + example)                                  |
 | `specs/`, `fixes/` | Vacíos, listos para las primeras specs y fixes                                                  |
 | `*.json`           | Registros de estado vacíos y válidos (`sdd:validate` OK)                                        |
+
+### rtk (opcional apagarlo)
+
+La instalación y el `update sdd` dejan **rtk operativo solos**: `setup-agents` corre
+`sdd/scripts/setup-rtk.mjs` al final, que mergea los hooks (`.claude/settings.json` y
+`.gemini/settings.json`, sin pisar hooks propios) e instala el binario fuera del repo. El
+`package.json` generado suma `sdd:rtk` y, si el proyecto no tenía uno propio, un `postinstall`
+que lo repite: un clone nuevo queda listo con `pnpm install`. Si falla (red bloqueada, CI),
+imprime **un** aviso con el comando de instalación manual y sigue: el kit funciona sin rtk.
+
+```bash
+pnpm sdd:rtk -- --status    # interruptor, binario y hooks
+pnpm sdd:rtk -- --disable   # apagarlo (los hooks quedan inertes)
+pnpm sdd:rtk -- --enable    # volver a prenderlo
+```
+
+El interruptor vive en `sdd/tools.json`; con `auto_install: false` nunca se descarga el binario.
 
 Guía de uso completa: [HOW-TO-USE-SDD.md](HOW-TO-USE-SDD.md) · Referencia del sistema: [README.md](README.md)
