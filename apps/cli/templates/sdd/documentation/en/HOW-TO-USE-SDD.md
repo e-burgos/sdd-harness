@@ -117,6 +117,16 @@ refactor. It is **opt-in per dev** and nothing in the SDD flow depends on it. To
 an agent to use the `setup-graphify` skill: it walks you through installing it with a **free**
 backend (Gemini free tier or local Ollama).
 
+### rtk — compressed command output (on by default)
+
+`rtk` compresses the output of shell commands (`git`, `pnpm`, `vitest`, `tsc`, `eslint`…) before
+the agent reads it: 60–90% less text, with file reading untouched. It is **on from install**,
+through a versioned hook in `.claude/settings.json` and `.gemini/settings.json` — the team gets
+it with a `git pull`. The switch lives in `sdd/tools.json` and is operated with
+`pnpm sdd:rtk -- --status|--disable|--enable`. If the binary is missing, the command still runs,
+just uncompressed. Savings show up in `rtk gain --project` or in `pnpm sdd:docs` → Costs → **RTK**
+tab (per-machine, estimated numbers).
+
 ---
 
 ## 3. Normal flow — New functionality
@@ -537,6 +547,9 @@ And if point 4 is NO, something is wrong: only consolidation touches the bases (
   on the most expensive tier. Canonical table: `sdd/dual-harness/{CLAUDE,AGENTS,GEMINI}.md` → ⚙️.
 - **graphify is optional** — if `graphify-out/graph.json` exists, query it before blind
   `grep`/`Read`; otherwise work normally. To enable it: `setup-graphify` skill.
+- **rtk is on** and compresses command output: never prefix commands with `rtk` by hand, use
+  `rtk proxy <cmd>` when you need the raw output, and never turn it off on your own
+  (`pnpm sdd:rtk -- --disable` is the developer's call).
 - **Workspace invariants** (guaranteed by the `init-nx-workspace` skill; breaking them fails
   silently): pnpm is the only package manager; projects live in `apps/`, `libs/` and `tools/`
   — never in `packages/` —; `customConditions` in `tsconfig.base.json` is **identical** to the

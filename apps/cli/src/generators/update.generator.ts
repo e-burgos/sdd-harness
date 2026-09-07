@@ -120,6 +120,14 @@ export async function updateSDD(root: string): Promise<UpdateReport> {
     report.added.push(rel);
   }
 
+  // sdd/tools.json is data (the update never rewrites it) but new since v0.12: seed it
+  // once so rtk comes up enabled on kits installed before it existed.
+  const toolsDest = resolve(sddDir, 'tools.json');
+  if (!(await fs.pathExists(toolsDest))) {
+    await fs.copy(resolve(kitDir, 'tools.json'), toolsDest);
+    report.added.push('tools.json');
+  }
+
   await fs.copy(resolve(kitDir, 'catalog.json'), resolve(sddDir, 'catalog.json'));
   await writeManifest(sddDir, newManifest);
 

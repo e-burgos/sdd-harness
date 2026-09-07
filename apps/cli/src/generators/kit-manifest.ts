@@ -27,6 +27,7 @@ const DATA_FILES = new Set([
   'schema.json',
   'components.json',
   'fixes.json',
+  'tools.json',
 ]);
 
 const GENERATED_FILES = new Set(['catalog.json']);

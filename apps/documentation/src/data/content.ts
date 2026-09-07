@@ -63,6 +63,7 @@ const SDD_TREE: TreeNode = {
     { name: 'api.json · components.json · schema.json', note: 'registros de arquitectura: endpoints, componentes, tablas' },
     { name: 'tasks.json · fixes.json · catalog.json', note: 'índices agregados — los lee el visor' },
     { name: 'kit.json · pricing.json', note: 'hashes para update sdd · tarifas de Costos' },
+    { name: 'tools.json', note: 'interruptor de rtk' },
     { name: 'documentation/', note: 'INSTALL · HOW-TO · README — en es/ y en/' },
     { name: 'README.md', note: 'índice bilingüe de la documentación' },
   ],
@@ -538,7 +539,7 @@ export const VIEWER_SHOTS: ViewerShot[] = [
     id: 'costs',
     tab: 'Costos ★',
     caption:
-      'La vista estrella: costo agéntico aproximado (tokens × tarifa por proveedor/modelo) contra la estimación tradicional de las tasks, ahorro proyectado, tokens por ciclo y tabla exacta — con agregación por proveedor y una columna Origen que distingue lo medido de la estimación declarada. Se actualiza sola mientras el loop trabaja.',
+      'La vista estrella, ahora en cuatro pestañas con gráficos: General (agéntico vs tradicional, costo por agente, tokens por proveedor y columna Origen que distingue lo medido de la estimación declarada), Specs, Fixes y RTK (cuánto texto de comandos ahorró rtk). Se actualiza sola mientras el loop trabaja.',
   },
   {
     id: 'dashboard',
@@ -591,7 +592,7 @@ export const VIEWER_PRINCIPLES = [
   },
   {
     title: 'Dashboard de Costos',
-    body: 'Tokens y tiempos por task, ciclo y spec (telemetría de cycle.json/tasks.json) contra la estimación tradicional de las tasks: costo agéntico aproximado por proveedor/modelo, ahorro proyectado, y tarifas editables en sdd/pricing.json. La columna Origen marca cada proveedor como medido o estimado, así una aproximación declarada nunca pasa por medición. Los fixes también registran su uso y suman a la agregación por proveedor.',
+    body: 'Cuatro pestañas, todas con gráficos (SVG inline, sin librerías) y tablas scrolleables de alto fijo: General (KPIs, tradicional vs agéntico por spec, costo por agente, tokens por proveedor, origen de la telemetría y metodología), Specs (costo por spec, tokens por ciclo, detalle de ciclos), Fixes (costo por tipo, severidad, estado, tokens y detalle) y RTK (comandos comprimidos, tokens generados vs leídos, ahorro con su % promedio y equivalente aproximado en USD). El costo agéntico sale de tarifas editables en sdd/pricing.json y la columna Origen marca cada proveedor como medido o estimado, así una aproximación declarada nunca pasa por medición.',
   },
   {
     title: 'Viaja con el kit',
@@ -664,6 +665,7 @@ export const UI = {
     lead: 'Cada ciclo registra tokens y tiempos. El visor los convierte en una comparativa de costos contra la estimación tradicional — y en local se actualiza solo, mientras el loop corre. Dale play:',
     features: [
       { t: 'Telemetría honesta', d: 'Al cerrar cada ciclo se registran tokens por proveedor/modelo y minutos en cycle.json → metrics.usage — es obligatorio, y va marcado approx: true cuando el arnés no expone contador, así la estimación se declara en vez de esconderse. Cada agente suma su propia unidad en by_agent al cerrarla; by_tier se deriva de ahí. La fuente agent-usage-notification (Claude Code) es exacta, no estimada. El costo agéntico sale de tarifas editables en sdd/pricing.json; la estimación tradicional, de las horas que ya estiman tus tasks.' },
+      { t: 'rtk activo por defecto', d: 'Desde el kit v0.12.0 la salida de los comandos de shell (git, pnpm, vitest, tsc, eslint…) llega comprimida al agente — rtk reporta 60–90% menos texto — sin tocar la lectura de archivos y sin que el dev haga nada: la instalación y el update dejan el hook puesto. El interruptor vive en sdd/tools.json (pnpm sdd:rtk -- --disable), es best effort —si el binario falta, el comando corre igual— y el ahorro se ve en la pestaña RTK de Costos.' },
       { t: 'Reactividad quirúrgica', d: 'El visor pollea un fingerprint POR ÁREA de los registros cada 4 segundos. Solo re-renderiza tu vista si cambió un área de la que depende: cerrar un ciclo actualiza Costos y Ciclos, pero no te toca la vista de Agentes.' },
       { t: 'Tu UI queda intacta', d: 'Secciones expandidas, búsquedas escritas y posición de scroll se preservan en cada actualización. Y si tenés un documento abierto o la pestaña oculta, el refresh espera. En hosting estático, el botón Actualizar de siempre.' },
     ],

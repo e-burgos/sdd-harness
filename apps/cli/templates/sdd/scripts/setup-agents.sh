@@ -167,6 +167,14 @@ else
   echo "skipped (no node): .gemini/settings.json — add context.fileName [GEMINI.md, AGENTS.md] manually"
 fi
 
+# rtk: pre-command hooks for Claude Code / Gemini CLI + the binary itself (best effort;
+# sdd/tools.json is the switch, `pnpm sdd:rtk -- --disable` turns it off).
+if command -v node >/dev/null 2>&1; then
+  node "$ROOT/sdd/scripts/setup-rtk.mjs" || true
+else
+  echo "skipped (no node): rtk hooks — run pnpm sdd:rtk once node is available"
+fi
+
 echo ""
 if [ "${#CONFLICTS[@]}" -gt 0 ]; then
   echo "⚠ ${#CONFLICTS[@]} item(s) kept as yours — the kit version is next to each as *.new:"

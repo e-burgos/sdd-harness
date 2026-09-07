@@ -2067,3 +2067,142 @@ pre code {
   white-space: nowrap;
   flex-shrink: 0;
 }
+
+/* ─── Costs: tabs, grids, charts ───────────────────────────────────────── */
+.costs-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0 0 20px;
+}
+
+.costs-tabs .pill {
+  padding: 6px 12px;
+  text-decoration: none;
+  font-family: var(--font-mono);
+  font-size: var(--text-12);
+}
+
+.costs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.costs-grid-item {
+  min-width: 0;
+}
+
+.table-wrapper--scroll {
+  max-height: 340px;
+  overflow: auto;
+}
+
+.table-wrapper--scroll .data-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.viz-svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.viz-grid {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+.viz-axis {
+  stroke: var(--border-soft);
+  stroke-width: 1;
+}
+
+.viz-tick {
+  fill: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+
+.viz-tick--value {
+  fill: var(--text-muted);
+}
+
+.viz-col:hover path {
+  filter: brightness(1.15);
+}
+
+.viz-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin-bottom: 12px;
+  font-family: var(--font-mono);
+  font-size: var(--text-11);
+  color: var(--text-dim);
+}
+
+.viz-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.viz-legend-value {
+  color: var(--text-bright);
+}
+
+.viz-swatch {
+  flex-shrink: 0;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+.viz-share {
+  display: flex;
+  gap: 2px;
+  height: 18px;
+  margin-bottom: 12px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: var(--surface-2);
+}
+
+.viz-share-seg {
+  display: block;
+  height: 100%;
+  min-width: 2px;
+  transition: filter var(--transition-fast);
+}
+
+.viz-share-seg:hover {
+  filter: brightness(1.15);
+}
+
+.rtk-status {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 16px;
+  margin: 0;
+  font-size: var(--text-12);
+}
+
+.rtk-status dt {
+  align-self: center;
+  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: var(--text-11);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wider);
+}
+
+.rtk-status dd {
+  margin: 0;
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}

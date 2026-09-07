@@ -627,16 +627,18 @@ The kit is portable by design: **`sdd/global.json` is the single source of truth
 | `sdd/skills/`             | 16+ skills (cycle, scaffold-nx, init-nx-workspace, code generators)      |
 | `sdd/prompts/`            | Gate prompts (SPEC GATE, FIX GATE, start/review cycle)                   |
 | `sdd/templates/`          | Scaffolding blueprints: nx-workspace, java-api, react-app, ts-lib        |
-| `sdd/scripts/`            | `validate-sdd.mjs`, `rebuild-tasks-index.mjs`, `rebuild-catalog.mjs`, `setup-agents` |
-| `sdd/docs/`               | Zero-dependency docs viewer (`pnpm sdd:docs`) — includes the **Costos** dashboard (agentic vs traditional cost) and live auto-refresh on registry changes |
+| `sdd/scripts/`            | `validate-sdd.mjs`, `rebuild-tasks-index.mjs`, `rebuild-catalog.mjs`, `setup-agents`, `setup-rtk.mjs` + `rtk-hook.mjs` (rtk bridge/installer) |
+| `sdd/docs/`               | Zero-dependency docs viewer (`pnpm sdd:docs`) — includes the **Costos** dashboard in four tabs with charts (General · Specs · Fixes · RTK token savings) and live auto-refresh on registry changes |
 | `sdd/memory/`             | Portable self-learning layer: `lessons.md` (distilled, read every session) + `journal/` (episodic, MEMORIA GATE) |
 | `sdd/pricing.json`        | Editable rates feeding the Costos dashboard (hourly rate + $/MTok per model tier) |
+| `sdd/tools.json`          | Switch for the kit's helper tools — today [rtk](https://github.com/rtk-ai/rtk), which compresses shell output for the agents and ships **on by default** (`pnpm sdd:rtk -- --disable` turns it off; `update sdd` never overwrites this file) |
 | `sdd/dual-harness/`       | Source of truth for root `AGENTS.md` / `CLAUDE.md`                       |
 | `AGENTS.md` / `CLAUDE.md` | **Symlinks** to `sdd/dual-harness/` (created by `pnpm setup:agents`)     |
 | `.claude/` / `.github/`   | Symlinks exposing agents, skills and prompts to Claude Code & Copilot    |
+| `.claude/settings.json` / `.gemini/settings.json` | Pre-command hooks routing shell commands through the rtk bridge (merged, never clobbered) |
 | `.nxignore`               | Keeps `sdd/templates` blueprints out of the Nx project graph             |
 
-The root `package.json` ships the kit scripts: `setup:agents`, `sdd:docs`, `sdd:validate`, `sdd:rebuild-tasks-index`, `sdd:rebuild-catalog` (plus `ajv`/`ajv-formats` as devDependencies for the validator).
+The root `package.json` ships the kit scripts: `setup:agents`, `sdd:docs`, `sdd:validate`, `sdd:rebuild-tasks-index`, `sdd:rebuild-catalog`, `sdd:rtk` and — when the project has none of its own — a `postinstall` that keeps the rtk binary installed for whoever clones the repo (plus `ajv`/`ajv-formats` as devDependencies for the validator).
 
 ### The SDD Cycle
 

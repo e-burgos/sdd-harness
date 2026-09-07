@@ -99,12 +99,31 @@ contexts from any project. Every registry is empty and validates against its sch
 | `prompts/`         | Gate prompts (SPEC GATE, FIX GATE, cycle open/close, hermes-resume)                             |
 | `memory/`          | Project memory: distilled `lessons.md` + episodic `journal/` (MEMORIA GATE)                     |
 | `pricing.json`     | Editable per-provider rates for the viewer's Costs dashboard (`claude/*`, `gemini/*`, `copilot/*`) |
+| `tools.json`       | rtk switch (`enabled`, `auto_install`) — project data: `update sdd` never overwrites it         |
 | `schemas/`         | Strict JSON Schemas for every registry                                                          |
-| `scripts/`         | validate, rebuild-tasks-index, rebuild-catalog, setup-agents (bash + PowerShell)                |
+| `scripts/`         | validate, rebuild-tasks-index, rebuild-catalog, setup-agents (bash + PowerShell) and the three rtk ones: `setup-rtk.mjs`, `rtk-hook.mjs`, `rtk-common.mjs` |
 | `docs/`            | Portable, bilingual documentation viewer (vanilla JS, zero deps)                                |
 | `dual-harness/`    | CLAUDE.md / AGENTS.md / GEMINI.md to link at the repo root, plus `rules/` for Antigravity        |
 | `context/`         | Constitution and context prompt templates (global + example)                                    |
 | `specs/`, `fixes/` | Empty, ready for the first specs and fixes                                                      |
 | `*.json`           | Empty, valid state registries (`sdd:validate` OK)                                               |
+
+### rtk (optional to turn off)
+
+Install and `update sdd` leave **rtk operational on their own**: `setup-agents` runs
+`sdd/scripts/setup-rtk.mjs` at the end, which merges the hooks (`.claude/settings.json` and
+`.gemini/settings.json`, never clobbering your own hooks) and installs the binary outside the
+repo. The generated `package.json` adds `sdd:rtk` and, only if the project had none of its own,
+a `postinstall` that repeats it: a fresh clone is ready after `pnpm install`. On failure (blocked
+network, CI) it prints **one** warning with the manual install command and moves on — the kit
+works without rtk.
+
+```bash
+pnpm sdd:rtk -- --status    # switch, binary and hooks
+pnpm sdd:rtk -- --disable   # turn it off (hooks stay installed but inert)
+pnpm sdd:rtk -- --enable    # turn it back on
+```
+
+The switch lives in `sdd/tools.json`; with `auto_install: false` the binary is never downloaded.
 
 Full usage guide: [HOW-TO-USE-SDD.md](HOW-TO-USE-SDD.md) · System reference: [README.md](README.md)

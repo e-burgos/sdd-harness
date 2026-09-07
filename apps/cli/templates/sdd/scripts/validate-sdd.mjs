@@ -593,6 +593,11 @@ if (existsSync(join(SDD, 'pricing.json'))) {
   validate('pricing.json', 'pricing.schema.json');
 }
 
+// ---- 12. Tools (rtk switch) — ships with the kit since v0.12; absence is not an error ----
+if (existsSync(join(SDD, 'tools.json'))) {
+  validate('tools.json', 'tools.schema.json');
+}
+
 // ---- Content catalog: schema + freshness vs filesystem (viewer depends on it) ----
 const catalogJson = validate('catalog.json', 'catalog.schema.json');
 if (catalogJson) {

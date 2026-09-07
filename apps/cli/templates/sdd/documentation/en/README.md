@@ -55,6 +55,7 @@ sdd/
 ├── global.json                        ← Central project state (modules, stack)
 ├── tasks.json                         ← Tasks INDEX (generated — detail lives in each cycle)
 ├── schemas/                           ← Strict JSON Schemas for ALL registries (machine source)
+│   └── tools.schema.json              ← Shape of sdd/tools.json (rtk switch)
 ├── schema.json                        ← Database schema (updated by the Architect)
 ├── api.json                           ← Implemented API contracts
 ├── components.json                    ← Frontend components created
@@ -105,6 +106,7 @@ sdd/
 │       └── YYYY-MM-DD-[spec-id]-cycle-XX.md
 │
 ├── pricing.json                       ← Costs dashboard rates (traditional hourly + $/MTok per tier)
+├── tools.json                         ← rtk switch (user data — update sdd never touches it)
 │
 ├── agents/                            ← SDD agent definitions (centralized)
 │   ├── sdd-orchestrator.agent.md
@@ -121,7 +123,10 @@ sdd/
 │   ├── setup-agents.ps1               ← PowerShell script (Windows)
 │   ├── validate-sdd.mjs               ← Registry validator (pnpm sdd:validate)
 │   ├── rebuild-tasks-index.mjs        ← Regenerates the tasks index (pnpm sdd:rebuild-tasks-index)
-│   └── rebuild-catalog.mjs            ← Regenerates the viewer manifest (pnpm sdd:rebuild-catalog)
+│   ├── rebuild-catalog.mjs            ← Regenerates the viewer manifest (pnpm sdd:rebuild-catalog)
+│   ├── setup-rtk.mjs                  ← Installs/merges the rtk hooks (pnpm sdd:rtk)
+│   ├── rtk-hook.mjs                   ← Bridge the hooks call; on any failure the command passes through
+│   └── rtk-common.mjs                 ← rtk helpers (pinned version, binary resolution)
 │
 ├── templates/                         ← Scaffolding blueprints (NOT Nx projects)
 │   ├── nx-workspace/                  ← Root config: nx.json, package.json, npmrc, pnpm-workspace
@@ -984,6 +989,26 @@ travel with the repo and **nothing in the SDD flow depends on it**. If it exists
 before blind `grep`/`Read` saves tokens; if it does not, work normally. To enable it, the
 `setup-graphify` skill guides the installation with a free backend.
 
+### 7. rtk — on by default
+
+[rtk](https://github.com/rtk-ai/rtk) (Apache-2.0, a Rust binary) compresses the output of the
+shell commands the agents read (`git`, `pnpm`, `vitest`, `tsc`, `eslint`, `ls`, `grep`,
+`docker`…): it reports **60–90% less text**. It only affects shell commands — the agents' file
+reading is untouched. It ships **on by default since kit v0.12.0**, with zero developer action.
+
+- **Switch**: `sdd/tools.json` (`rtk.enabled`, `rtk.auto_install`, optional `rtk.version`). It is
+  a project file: `harness update sdd` **never overwrites it**.
+- **Scripts**: `pnpm sdd:rtk` installs/repairs (hooks + binary), `pnpm sdd:rtk -- --status`
+  reports the state, `-- --disable` / `-- --enable` turn it off and on.
+- **Hooks**: `.claude/settings.json` (`PreToolUse` on `Bash`) and `.gemini/settings.json`
+  (`BeforeTool` on `run_shell_command`) — versioned files, so the whole team gets them with a
+  `git pull`. Copilot and Antigravity have no hook yet and work exactly the same without it.
+- **Best effort**: if the binary is missing or the hook fails, the command runs uncompressed; it
+  never blocks. The binary is installed outside the repo (`~/.local/bin`) and its history is
+  **per machine**, so the savings shown are those of whoever runs the viewer.
+- **Numbers**: `rtk gain --project`, or `pnpm sdd:docs` → Costs → **RTK** tab. They are estimates
+  (bytes ÷ 4), not billing.
+
 ---
 
 ## Quick reference
@@ -1007,6 +1032,7 @@ before blind `grep`/`Read` saves tokens; if it does not, work normally. To enabl
 | `sdd/agents/`                   | **Centralized agent definitions (v2.0)**             |
 | `sdd/context/**/updates/`       | Additive context fragments (anti merge-conflict)     |
 | `sdd/docs/`                     | SDD viewer in vanilla JS (`pnpm sdd:docs`)           |
+| `sdd/tools.json`                | rtk switch (user data)                               |
 
 ### Visibility configuration (v3.0)
 
@@ -1068,6 +1094,9 @@ cat sdd/specs/<spec-id>/cycles/cycle-01/tasks.json | grep -B2 '"status": "pendin
 # Validate ALL the SDD registries against their schemas
 pnpm sdd:validate
 
+# rtk state (switch, binary and hooks)
+pnpm sdd:rtk -- --status
+
 # Regenerate the tasks index
 pnpm sdd:rebuild-tasks-index
 
@@ -1090,7 +1119,8 @@ ls sdd/context/*/*/updates/*.md 2>/dev/null | wc -l
 
 > The version history below is kept in Spanish in
 > [documentation/es/README.md](../es/README.md#changelog) — it is the historical record of how
-> this system evolved (mandatory telemetry with declared estimates — `approx`/`source` — and
+> this system evolved (rtk on by default plus the 4-tab Costs dashboard with charts in v5.5,
+> mandatory telemetry with declared estimates — `approx`/`source` — and
 > `skipped` counted as resolved in v5.4, Gemini/Antigravity as a third harness provider with
 > provider-namespaced cost telemetry and a bilingual viewer in v5.3, skills back to uppercase `SKILL.md` — the Agent
 > Skills standard Claude Code requires — in v5.2, workspace bootstrap and single-sourced naming
@@ -1101,5 +1131,5 @@ ls sdd/context/*/*/updates/*.md 2>/dev/null | wc -l
 ---
 
 **Last update:** 2026-08-18
-**SDD Version:** 5.3
+**SDD Version:** 5.5
 **Project:** see `sdd/global.json` → `project`

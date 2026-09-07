@@ -155,6 +155,9 @@
     },
     {
       "file": "tasks-index.schema.json"
+    },
+    {
+      "file": "tools.schema.json"
     }
   ],
   "memory": []

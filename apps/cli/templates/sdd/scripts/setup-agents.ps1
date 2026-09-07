@@ -191,6 +191,14 @@ $settings["context"]["fileName"] = $names
 $settings | ConvertTo-Json -Depth 10 | Set-Content -Path $settingsPath -Encoding UTF8
 Write-Host "merged           : .gemini/settings.json (context.fileName)"
 
+# rtk: pre-command hooks for Claude Code / Gemini CLI + the binary itself (best effort;
+# sdd/tools.json is the switch, `pnpm sdd:rtk -- --disable` turns it off).
+if (Get-Command node -ErrorAction SilentlyContinue) {
+    & node (Join-Path $root "sdd\scripts\setup-rtk.mjs")
+} else {
+    Write-Host "skipped (no node): rtk hooks - run pnpm sdd:rtk once node is available"
+}
+
 Write-Host ""
 if ($script:Conflicts.Count -gt 0) {
     Write-Host "! $($script:Conflicts.Count) item(s) kept as yours - the kit version is next to each as *.new:"

@@ -55,6 +55,7 @@ sdd/
 ├── global.json                        ← Estado central del proyecto (módulos, stack)
 ├── tasks.json                         ← ÍNDICE de tasks (generado — el detalle vive en cada ciclo)
 ├── schemas/                           ← JSON Schemas estrictos de TODOS los registros (fuente de máquina)
+│   └── tools.schema.json              ← Forma de sdd/tools.json (interruptor de rtk)
 ├── schema.json                        ← Esquema de base de datos (actualizado por Arquitecto)
 ├── api.json                           ← Contratos de API implementados
 ├── components.json                    ← Componentes frontend creados
@@ -105,6 +106,7 @@ sdd/
 │       └── YYYY-MM-DD-[spec-id]-cycle-XX.md
 │
 ├── pricing.json                       ← Tarifas del dashboard de Costos (hora tradicional + $/MTok por tier)
+├── tools.json                         ← Interruptor de rtk (dato del usuario — update sdd no lo toca)
 │
 ├── agents/                            ← Definiciones de agentes SDD (centralizadas)
 │   ├── sdd-orchestrator.agent.md
@@ -121,7 +123,10 @@ sdd/
 │   ├── setup-agents.ps1               ← Script PowerShell (Windows)
 │   ├── validate-sdd.mjs               ← Validador de registros (pnpm sdd:validate)
 │   ├── rebuild-tasks-index.mjs        ← Regenera el índice de tasks (pnpm sdd:rebuild-tasks-index)
-│   └── rebuild-catalog.mjs            ← Regenera el manifest del visor (pnpm sdd:rebuild-catalog)
+│   ├── rebuild-catalog.mjs            ← Regenera el manifest del visor (pnpm sdd:rebuild-catalog)
+│   ├── setup-rtk.mjs                  ← Instala/mergea los hooks de rtk (pnpm sdd:rtk)
+│   ├── rtk-hook.mjs                   ← Puente que llaman los hooks; si falla, pasa el comando sin tocar
+│   └── rtk-common.mjs                 ← Helpers de rtk (versión fijada, resolución del binario)
 │
 ├── templates/                         ← Blueprints de scaffolding (NO son proyectos Nx)
 │   ├── nx-workspace/                  ← Config raíz: nx.json, package.json, npmrc, pnpm-workspace
@@ -985,6 +990,27 @@ viaja con el repo y **nada del flujo SDD depende de él**. Si existe, consultarl
 `grep`/`Read` a ciegas ahorra tokens; si no existe, se trabaja con normalidad. Para habilitarlo,
 la skill `setup-graphify` guía la instalación con un backend gratuito.
 
+### 7. rtk — activo por defecto
+
+[rtk](https://github.com/rtk-ai/rtk) (Apache-2.0, binario en Rust) comprime la salida de los
+comandos de shell que leen los agentes (`git`, `pnpm`, `vitest`, `tsc`, `eslint`, `ls`, `grep`,
+`docker`…): reporta **60–90% menos texto**. Solo afecta comandos de shell — la lectura de
+archivos de los agentes queda intacta. Viene **activo por defecto desde el kit v0.12.0**, sin
+acción del dev.
+
+- **Interruptor**: `sdd/tools.json` (`rtk.enabled`, `rtk.auto_install`, `rtk.version` opcional).
+  Es un archivo del proyecto: `harness update sdd` **no lo pisa**.
+- **Scripts**: `pnpm sdd:rtk` instala/repara (hooks + binario), `pnpm sdd:rtk -- --status`
+  reporta estado, `-- --disable` / `-- --enable` apagan y prenden.
+- **Hooks**: `.claude/settings.json` (`PreToolUse` sobre `Bash`) y `.gemini/settings.json`
+  (`BeforeTool` sobre `run_shell_command`) — versionados, así que el equipo los recibe con un
+  `git pull`. Copilot y Antigravity todavía no tienen hook y funcionan igual sin él.
+- **Best effort**: si el binario falta o el hook falla, el comando pasa sin comprimir; nunca
+  bloquea. El binario se instala fuera del repo (`~/.local/bin`) y su historial es **por
+  máquina**, así que el ahorro es el de quien corre el visor.
+- **Números**: `rtk gain --project`, o `pnpm sdd:docs` → Costos → pestaña **RTK**. Son
+  estimaciones (bytes ÷ 4), no facturación.
+
 ---
 
 ## Referencia rápida
@@ -1008,6 +1034,7 @@ la skill `setup-graphify` guía la instalación con un backend gratuito.
 | `sdd/agents/`                   | **Definiciones centralizadas de agentes (v2.0)**      |
 | `sdd/context/**/updates/`       | Fragmentos aditivos de contexto (anti merge-conflict) |
 | `sdd/docs/`                     | Visor SDD en vanilla JS (`pnpm sdd:docs`)             |
+| `sdd/tools.json`                | Interruptor de rtk (dato del usuario)                 |
 
 ### Configuración de visibilidad (v3.0)
 
@@ -1069,6 +1096,9 @@ cat sdd/specs/<spec-id>/cycles/cycle-01/tasks.json | grep -B2 '"status": "pendin
 # Validar TODOS los registros SDD contra sus schemas
 pnpm sdd:validate
 
+# Estado de rtk (interruptor, binario y hooks)
+pnpm sdd:rtk -- --status
+
 # Regenerar el índice de tasks
 pnpm sdd:rebuild-tasks-index
 
@@ -1088,6 +1118,28 @@ ls sdd/context/*/*/updates/*.md 2>/dev/null | wc -l
 ---
 
 ## Changelog
+
+### v5.5 (2026-09-06) — rtk activo por defecto, Costos en 4 pestañas con gráficos
+
+- ✅ **rtk viene activo por defecto** (kit v0.12.0, cero acción del dev): comprime la salida de
+  los comandos de shell antes de que el agente la lea — 60–90% menos texto — sin tocar la
+  lectura de archivos. `harness init`, `configure sdd`, `update sdd` y `pnpm setup:agents` lo
+  dejan operativo; un clone nuevo lo consigue en el `postinstall`.
+- ✅ **Interruptor propio del proyecto**: `sdd/tools.json` (`rtk.enabled`, `rtk.auto_install`,
+  `rtk.version`), con schema estricto en `sdd/schemas/tools.schema.json` y protegido del
+  `update sdd`. Se opera con `pnpm sdd:rtk -- --status|--enable|--disable`.
+- ✅ **Integración best effort**: el puente `sdd/scripts/rtk-hook.mjs` (hook `PreToolUse` de
+  Claude Code y `BeforeTool` de Gemini CLI) nunca bloquea un comando — ante cualquier falla lo
+  deja pasar sin comprimir. El binario se instala fuera del repo y jamás se corre `rtk init`.
+- ✅ **Reglas para los agentes** en `AGENTS.md`/`CLAUDE.md`/`GEMINI.md`: la reescritura es
+  transparente (nunca prefijar con `rtk` a mano), `rtk proxy <cmd>` devuelve la salida cruda
+  cuando la compresión esconde algo, y apagar rtk es decisión del dev.
+- ✅ **Dashboard de Costos en 4 pestañas** con gráficos y tablas scrolleables: **General**,
+  **Specs**, **Fixes** y **RTK** (comandos comprimidos, tokens leídos vs ahorrados, evolución y
+  ahorro por familia de comando). Los números de RTK son estimaciones y salen del historial
+  local de la máquina que corre `pnpm sdd:docs`.
+- ✅ **Nueva entrada en el steward**: Playbook 5 (herramientas del kit) para estado, apagado a
+  pedido, reinstalación y redes bloqueadas (`auto_install: false`).
 
 ### v5.4 (2026-08-19) — Telemetría obligatoria con estimación declarada, `skipped` como resuelto
 
@@ -1281,5 +1333,5 @@ CLI) un proveedor de primera clase y generaliza todo el pipeline de costos.
 ---
 
 **Última actualización:** 2026-08-18
-**SDD Version:** 5.3
+**SDD Version:** 5.5
 **Proyecto:** ver `sdd/global.json` → `project`

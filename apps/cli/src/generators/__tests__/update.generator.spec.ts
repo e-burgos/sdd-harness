@@ -219,6 +219,36 @@ describe('update.generator', () => {
     expect(await fs.readFile(entry, 'utf-8')).toBe('# lección propia\n');
   });
 
+  it('siembra sdd/tools.json (interruptor de rtk) si falta y jamás lo pisa si existe', async () => {
+    await fs.remove(resolve(ws, 'sdd/tools.json'));
+    const seeded = await updateSDD(ws);
+    expect(seeded.added).toContain('tools.json');
+    expect((await fs.readJSON(resolve(ws, 'sdd/tools.json'))).rtk.enabled).toBe(true);
+
+    await fs.writeJSON(resolve(ws, 'sdd/tools.json'), {
+      $schema: './schemas/tools.schema.json',
+      rtk: { enabled: false },
+    });
+    const kept = await updateSDD(ws);
+    expect(kept.added).not.toContain('tools.json');
+    expect(kept.conflicts).not.toContain('tools.json');
+    expect((await fs.readJSON(resolve(ws, 'sdd/tools.json'))).rtk.enabled).toBe(false);
+    const manifest = await fs.readJSON(resolve(ws, 'sdd/kit.json'));
+    expect(manifest.files['tools.json']).toBeUndefined();
+  });
+
+  it('package.json recibe sdd:rtk y postinstall, y respeta un postinstall propio', async () => {
+    await updateSDD(ws);
+    const pkg = await fs.readJSON(resolve(ws, 'package.json'));
+    expect(pkg.scripts['sdd:rtk']).toBe('node sdd/scripts/setup-rtk.mjs');
+    expect(pkg.scripts.postinstall).toBe('node sdd/scripts/setup-rtk.mjs');
+
+    pkg.scripts.postinstall = 'echo mine';
+    await fs.writeJSON(resolve(ws, 'package.json'), pkg);
+    await updateSDD(ws);
+    expect((await fs.readJSON(resolve(ws, 'package.json'))).scripts.postinstall).toBe('echo mine');
+  });
+
   it('falla claro si no hay instalación SDD', async () => {
     const empty = mkdtempSync(resolve(tmpdir(), 'harness-noupdate-'));
     await expect(updateSDD(empty)).rejects.toThrow('No SDD installation');
