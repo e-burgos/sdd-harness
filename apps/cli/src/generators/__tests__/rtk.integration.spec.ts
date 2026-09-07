@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { dirname, resolve } from 'node:path';
 import { mkdtempSync, rmSync } from 'node:fs';
-import { spawn, execFileSync } from 'node:child_process';
+import { spawn, spawnSync, execFileSync } from 'node:child_process';
 import { createServer, type Server } from 'node:http';
 import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
@@ -175,6 +175,28 @@ describe.skipIf(process.platform === 'win32')('rtk kit scripts (integration)', (
     });
     expect(ci.stdout).toContain('CI environment');
     expect(fs.existsSync(resolve(ws, 'bin/rtk'))).toBe(false);
+  });
+
+  it('el postinstall del kit sobrevive a un repo sin sdd/ (init corre pnpm install antes de instalar el kit)', async () => {
+    const template = await fs.readJSON(resolve(KIT_DIR, 'templates/nx-workspace/package.json'));
+    const postinstall: string = template.scripts.postinstall;
+    expect(postinstall).toContain('setup-rtk.mjs');
+
+    const bare = mkdtempSync(resolve(tmpdir(), 'harness-postinstall-'));
+    try {
+      const withoutKit = spawnSync('sh', ['-c', postinstall], { cwd: bare, encoding: 'utf-8' });
+      expect(withoutKit.status).toBe(0);
+
+      const withKit = spawnSync('sh', ['-c', postinstall], {
+        cwd: ws,
+        encoding: 'utf-8',
+        env: { ...process.env, SDD_RTK_SKIP_INSTALL: '1' },
+      });
+      expect(withKit.status).toBe(0);
+      expect(withKit.stdout).toContain('.claude/settings.json');
+    } finally {
+      rmSync(bare, { recursive: true, force: true });
+    }
   });
 
   describe('instalación del binario contra un GitHub Releases local', () => {

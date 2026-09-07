@@ -241,7 +241,7 @@ describe('update.generator', () => {
     await updateSDD(ws);
     const pkg = await fs.readJSON(resolve(ws, 'package.json'));
     expect(pkg.scripts['sdd:rtk']).toBe('node sdd/scripts/setup-rtk.mjs');
-    expect(pkg.scripts.postinstall).toBe('node sdd/scripts/setup-rtk.mjs');
+    expect(pkg.scripts.postinstall).toContain('setup-rtk.mjs');
 
     pkg.scripts.postinstall = 'echo mine';
     await fs.writeJSON(resolve(ws, 'package.json'), pkg);
