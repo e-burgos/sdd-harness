@@ -74,6 +74,7 @@ sdd/
 │   │   │   │   ├── functional.md      ← Historias de usuario (Funcional)
 │   │   │   │   ├── planner.md         ← Tareas técnicas (Planner)
 │   │   │   │   ├── architect.md       ← Decisiones de diseño (Arquitecto)
+│   │   │   │   ├── plan.md            ← Solo en flow `lite`: reemplaza a los cuatro anteriores
 │   │   │   │   ├── tasks.json         ← Tasks CANÓNICAS del ciclo (Planner/Implementadores)
 │   │   │   │   ├── cycle.json         ← Estado del ciclo — REQUERIDO antes de implementar
 │   │   │   │   └── artifacts/         ← Docs de apoyo (opcional)
@@ -122,6 +123,7 @@ sdd/
 │   ├── setup-agents.sh                ← Script Bash (macOS / Linux)
 │   ├── setup-agents.ps1               ← Script PowerShell (Windows)
 │   ├── validate-sdd.mjs               ← Validador de registros (pnpm sdd:validate)
+│   ├── spec-gate.mjs                  ← Responde el SPEC GATE A y B (pnpm sdd:gate)
 │   ├── rebuild-tasks-index.mjs        ← Regenera el índice de tasks (pnpm sdd:rebuild-tasks-index)
 │   ├── rebuild-catalog.mjs            ← Regenera el manifest del visor (pnpm sdd:rebuild-catalog)
 │   ├── setup-rtk.mjs                  ← Instala/mergea los hooks de rtk (pnpm sdd:rtk)
@@ -134,11 +136,15 @@ sdd/
 │   ├── apps/java-api/                 ← App Spring Boot bajo Nx (Nx no la genera)
 │   └── libs/ts-lib/                   ← Lib TypeScript compartida
 │
-├── dual-harness/                      ← Fuente de verdad de AGENTS.md, CLAUDE.md y GEMINI.md de la raíz
+├── dual-harness/                      ← CAPA 1 — fuente de verdad de AGENTS.md, CLAUDE.md y GEMINI.md de la raíz
 │   ├── AGENTS.md                      ← Instrucciones para GitHub Copilot Agents
 │   ├── CLAUDE.md                      ← Instrucciones para Claude Code
 │   ├── GEMINI.md                      ← Instrucciones para Antigravity IDE y Gemini CLI
-│   └── rules/                         ← Rules condensadas y siempre activas para Antigravity (fuente: GEMINI.md, cap 12k chars c/u)
+│   ├── copilot-instructions.md        ← Semilla de .github/copilot-instructions.md (la copia setup:agents)
+│   └── rules/                         ← CAPA 2 — se lee cuando hace falta; también rules siempre activas de Antigravity
+│       ├── sdd-gates.md               ← FUENTE CANÓNICA de los gates (SPEC GATE A/B, flows, FIX GATE)
+│       ├── sdd-model-budget.md        ← FUENTE CANÓNICA del contrato de telemetría
+│       └── sdd-code-style.md          ← Código sin comentarios
 │
 ├── prompts/                           ← Prompts de entrada para agentes
 │   ├── start-sdd-cycle.prompt.md
@@ -180,16 +186,18 @@ sdd/
 
 ### Regla de documentos de ciclo (INVIOLABLE)
 
-> Los únicos archivos permitidos en la **raíz** de `cycle-[XX]/` son exactamente estos 6:
+> Los únicos archivos permitidos en la **raíz** de `cycle-[XX]/` son exactamente estos 7
+> (la whitelist que valida `pnpm sdd:validate`), y cuáles aplican depende del `flow`:
 
-| Archivo         | Generado por                                      |
-| --------------- | ------------------------------------------------- |
-| `brief.yaml`    | sdd-orchestrator                                  |
-| `functional.md` | sdd-functional                                    |
-| `planner.md`    | sdd-planner                                       |
-| `architect.md`  | sdd-architect                                     |
-| `tasks.json`    | sdd-planner (crea) / sdd-implementor-\* (status)  |
-| `cycle.json`    | sdd-orchestrator (inicio) / sdd-reviewer (cierre) |
+| Archivo         | Generado por                                      | Flow            |
+| --------------- | ------------------------------------------------- | --------------- |
+| `brief.yaml`    | sdd-orchestrator                                  | full · reduced  |
+| `functional.md` | sdd-functional                                    | full            |
+| `planner.md`    | sdd-planner                                       | full            |
+| `architect.md`  | sdd-architect                                     | full            |
+| `plan.md`       | el actor único del ciclo                          | lite            |
+| `tasks.json`    | sdd-planner (crea) / sdd-implementor-\* (status)  | todos           |
+| `cycle.json`    | sdd-orchestrator (inicio) / sdd-reviewer (cierre) | todos           |
 
 **Cualquier documento de apoyo adicional** (exploración de código, diagramas, ejemplos de API, tasks detalladas, etc.) debe ir en:
 
@@ -230,13 +238,15 @@ sdd/dual-harness/  ← Fuente única de verdad (AGENTS.md, CLAUDE.md y GEMINI.md
 AGENTS.md (raíz)         → symlink a sdd/dual-harness/AGENTS.md
 CLAUDE.md  (raíz)        → symlink a sdd/dual-harness/CLAUDE.md
 GEMINI.md  (raíz)        → symlink a sdd/dual-harness/GEMINI.md
-.github/copilot-instructions.md → ARCHIVO REAL (no symlink) — resumen mínimo + punteros
+.github/copilot-instructions.md → ARCHIVO REAL (no symlink) — lo siembra setup:agents desde sdd/dual-harness/copilot-instructions.md si no existe
 ```
 
 > `.github/skills/` y `.github/prompts/` usan symlinks individuales para **no pisar** los archivos Nx y Copilot existentes.  
 > `AGENTS.md`, `CLAUDE.md` y `GEMINI.md` en la raíz son symlinks: editar **siempre** en `sdd/dual-harness/`.
 > `.github/copilot-instructions.md` es un archivo real a propósito: los lectores server-side de
-> GitHub (Copilot code review) no siguen symlinks. Solo contiene punteros — el detalle vive en dual-harness.
+> GitHub (Copilot code review) no siguen symlinks. `pnpm setup:agents` lo **siembra** desde
+> `sdd/dual-harness/copilot-instructions.md` **solo si no existe**; si ya está, no se pisa nunca
+> (a partir de ahí es del proyecto). Solo contiene punteros — el detalle vive en dual-harness.
 > `.gemini/commands/*.toml` son **generados**, no symlinks — TOML no tiene equivalente a un
 > include de Markdown, así que `setup:agents` regenera un wrapper liviano por cada
 > `sdd/prompts/*.prompt.md` en cada corrida; cualquier comando sin el marcador del generador
@@ -281,26 +291,84 @@ Este enfoque garantiza:
 
 ## SPEC GATE — La regla de oro
 
-> ⛔ **ANTES de escribir UNA SOLA LÍNEA de código de implementación**, se deben cumplir TODOS los puntos:
+> ⛔ **Fuente canónica: `sdd/dual-harness/rules/sdd-gates.md`.** Acá va el resumen: si el gate
+> cambia, cambia en esa rule. La checklist no se contesta leyendo archivos a mano — la contesta
+> un script.
 
+**Invariantes — valen en TODO flow y TODO perfil:**
+
+1. La spec existe y está registrada en `sdd/specs/index.json`.
+2. El módulo está en `sdd/global.json` (`pending_modules` para abrir, `in_progress_modules` para implementar).
+3. Existe `cycle.json` con `status: "in-progress"` **antes de la primera línea de código**.
+4. Existe `tasks.json` con tasks, y ninguna task pasa a `done` sin su `usage`.
+
+El gate tiene **dos momentos** y los dos se corren como comando:
+
+```bash
+pnpm sdd:gate <spec-id|slug>            # GATE A — ¿se puede abrir un ciclo? (sdd-orchestrator)
+pnpm sdd:gate <spec-id|slug> cycle-XX   # GATE B — ¿se puede escribir código? (quien implementa)
+pnpm sdd:gate <spec-id|slug> --json     # misma respuesta, estructurada para agentes
 ```
-1. ¿Existe sdd/specs/spec-[gh-user]-[NNN]-[slug]/spec-[gh-user]-[NNN]-[slug].spec.md?           → SI / NO
-   (Ejemplo: sdd/specs/spec-jdoe-001-user-onboarding/spec-jdoe-001-user-onboarding.spec.md)
-2. ¿La spec está registrada en sdd/specs/index.json?                                             → SI / NO
-3. ¿El módulo está en in_progress_modules en global.json?                                        → SI / NO
-4. ¿Existe sdd/specs/spec-[gh-user]-[NNN]-[slug]/cycles/cycle-[XX]/brief.yaml?                 → SI / NO
-5. ¿Existe sdd/specs/spec-[gh-user]-[NNN]-[slug]/cycles/cycle-[XX]/functional.md?              → SI / NO
-6. ¿Existe sdd/specs/spec-[gh-user]-[NNN]-[slug]/cycles/cycle-[XX]/planner.md?                 → SI / NO
-7. ¿Existe sdd/specs/spec-[gh-user]-[NNN]-[slug]/cycles/cycle-[XX]/architect.md?               → SI / NO
-8. ¿Existe sdd/specs/spec-[gh-user]-[NNN]-[slug]/cycles/cycle-[XX]/cycle.json (status: in-progress)? → SI / NO
-9. ¿Existe sdd/specs/spec-[gh-user]-[NNN]-[slug]/cycles/cycle-[XX]/tasks.json con tasks?       → SI / NO
-10. ¿Existe sdd/context/[apps|libs|tools]/[nombre]/constitution.md?                                  → SI / NO
-```
 
-**Si alguna respuesta es NO → DETENER. Completar ese paso antes de continuar.**
+El script imprime una línea por condición (✔/✘) y cierra en `APROBADO` o `BLOQUEADO`
+(exit `0` si pasa, `1` si está bloqueado, `2` ante un error de uso). **No escribe nada:** solo
+responde. La salida se pega como reporte del gate.
 
-> ⚠️ El `cycle.json` debe crearse al **iniciar** el ciclo con `status: "in-progress"`.
-> Solo el Reviewer lo actualiza a `status: "completed"` al cerrar. Un ciclo sin `cycle.json` no puede iniciarse.
+**GATE A — apertura de ciclo**
+
+| #   | Condición                                                                  |
+| --- | -------------------------------------------------------------------------- |
+| A1  | Spec registrada en `specs/index.json` y su `.spec.md` existe               |
+| A2  | Módulo en `pending_modules` (o `in_progress_modules` si es ciclo posterior) |
+| A3  | Ningún otro ciclo de esa spec está `in-progress`                           |
+| A4  | Sus `depends_on` están `completed`                                          |
+| A5  | La spec no está `completed` ni `cancelled`                                  |
+
+`APROBADO` en A imprime además el próximo `cycle-XX`, el flow sugerido y el perfil activo. Recién
+ahí el orquestador crea `cycle.json` (`status: "in-progress"`, `flow`, `metrics` con
+`usage.by_agent: []`), mueve el módulo a `in_progress_modules` y, si es `cycle-01`, pasa la spec
+de `draft` a `in-progress`. Solo el reviewer lo pasa después a `status: "completed"`.
+
+**GATE B — implementación**
+
+| #   | Condición                                                                                          |
+| --- | -------------------------------------------------------------------------------------------------- |
+| B1  | `cycle.json` existe con `status: "in-progress"`                                                     |
+| B2  | Módulo en `in_progress_modules` de `global.json`                                                     |
+| B3  | `tasks.json` del ciclo con al menos una task                                                         |
+| B4  | Documentos del `flow`: full → brief/functional/planner/architect · reduced → brief · lite → plan.md |
+| B5  | `constitution.md` de cada subproyecto en `cycle.json → apps[]`                                       |
+
+**`BLOQUEADO` → cero líneas de código** hasta completar lo que el script señala.
+
+### Flow del ciclo — full · reduced · lite
+
+| `flow`    | Quién                                                           | Documentos en `cycle-XX/` (además de `cycle.json` + `tasks.json`) | Cuándo                                                        |
+| --------- | --------------------------------------------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------- |
+| `full`    | Un rol por documento + implementores + reviewer                 | `brief.yaml`, `functional.md`, `planner.md`, `architect.md`        | Equipos; specs que otros consumen; contratos nuevos           |
+| `reduced` | Los mismos roles, sin historias de usuario                      | `brief.yaml` (planner/architect opcionales)                        | Refactor estructural sin cambio funcional                     |
+| `lite`    | **Un solo actor** con tres sombreros: abre, implementa y cierra | `plan.md`                                                          | Dev solo o pedido `[LITE]`; nada que otro subproyecto consuma |
+
+El flow se decide **una vez, al abrir** y queda escrito en `cycle.json → flow` y
+`tasks.json → flow` (no se cambia después):
+
+- `sdd/global.json → profile` (opcional): `team` (default) abre `full`; `solo` abre `lite`.
+- Prefijo en el pedido: `[LITE]` fuerza `lite`, `[FULL]` fuerza `full`. **Gana el prefijo.**
+- **Excepciones** que vuelven a `full` aunque el perfil sea `solo`: la spec declara contratos que
+  otro subproyecto consume (tablas o endpoints nuevos), o tiene dependientes (`depends_on` desde
+  otras specs).
+- Un ciclo `lite` que igual creó tablas o endpoints deja un **warning** de `pnpm sdd:validate`:
+  el próximo ciclo de esa spec se abre `full`.
+- El perfil lo cambia el **sdd-steward** a pedido del dev (`/sdd-steward pasame a perfil solo`);
+  ningún agente lo cambia por su cuenta. Los ciclos ya abiertos conservan su `flow`.
+
+En `lite`, `plan.md` reemplaza a los cuatro documentos — template en
+`sdd/skills/sdd-file-structure/SKILL.md` §3.8: objetivo · historias · tasks en prosa · decisiones
+técnicas, esta última **obligatoria** si el ciclo toca `schema.json`, `api.json` o
+`components.json`. `tasks.json` puede llevar `user_stories: []`. La telemetría se conserva:
+`usage` en cada task más **una** entrada en `cycle.json → metrics.usage.by_agent[]` con
+`agent: "orchestrator"`, `label: "solo"` que cubre plan + revisión. El cierre conserva CONTEXTO
+GATE, MEMORIA GATE y `pnpm sdd:validate` en verde: nada del cierre se recorta.
 
 ### Nueva convención de naming (v2.0)
 
@@ -321,10 +389,13 @@ A partir de ahora, **cada developer trabaja en su propio namespace de specs**, e
 - ✅ Facilita búsqueda por autor
 
 ```bash
-# Verificar SPEC GATE:
+# Correr el SPEC GATE (A sin ciclo, B con ciclo):
+pnpm sdd:gate <spec-id|slug> [cycle-XX]
+
+# Guía del GATE B paso a paso:
 sdd/prompts/check-spec-before-implement.prompt.md
 
-# Iniciar un nuevo ciclo:
+# Iniciar un nuevo ciclo (pasos por flow):
 sdd/prompts/start-sdd-cycle.prompt.md
 ```
 
@@ -450,6 +521,16 @@ El orquestador ejecutará `sdd/prompts/hotfix-bypass-gate.prompt.md`, que:
 4. Autoriza al implementador a proceder
 
 > ⚠️ El FIX GATE **no elimina la trazabilidad** — la simplifica. Todo fix queda registrado y el Reviewer lo evalúa al cerrar el ciclo.
+
+**Con `profile: solo`** el FIX GATE se acorta (fuente: `sdd/dual-harness/rules/sdd-gates.md`
+§ FIX GATE):
+
+- Sin cuestionario: el actor completa `sdd/fixes.json` desde el pedido mismo y pregunta solo lo
+  que no puede deducir.
+- Documento del fix con template mínimo: problema · solución · archivos.
+- Elegibilidad reducida a "no crea contratos ni entidades nuevas".
+- Lo que **no** cambia: el registro en `fixes.json`, el `usage` del fix, el fragmento de contexto
+  y `pnpm sdd:validate` en verde.
 
 ---
 
@@ -1032,6 +1113,8 @@ acción del dev.
 | `sdd/components.json`           | Componentes frontend                                  |
 | `sdd/fixes.json`                | Registry de fixes (FIX GATE)                          |
 | `sdd/agents/`                   | **Definiciones centralizadas de agentes (v2.0)**      |
+| `sdd/dual-harness/rules/`       | Capa 2: gates (`sdd-gates.md`) y telemetría (`sdd-model-budget.md`) canónicos |
+| `sdd/scripts/spec-gate.mjs`     | SPEC GATE como comando (`pnpm sdd:gate`)              |
 | `sdd/context/**/updates/`       | Fragmentos aditivos de contexto (anti merge-conflict) |
 | `sdd/docs/`                     | Visor SDD en vanilla JS (`pnpm sdd:docs`)             |
 | `sdd/tools.json`                | Interruptor de rtk (dato del usuario)                 |
@@ -1069,6 +1152,7 @@ sdd/dual-harness/   ← AGENTS.md, CLAUDE.md y GEMINI.md de la raíz (+ rules/ p
 AGENTS.md          → sdd/dual-harness/AGENTS.md
 CLAUDE.md          → sdd/dual-harness/CLAUDE.md
 GEMINI.md          → sdd/dual-harness/GEMINI.md
+.github/copilot-instructions.md → archivo REAL, sembrado desde sdd/dual-harness/ si falta (nunca se pisa)
 
 # Setup automático (regenera todos los symlinks, idempotente):
 pnpm setup:agents     # bash sdd/scripts/setup-agents.sh (Unix)
@@ -1092,6 +1176,10 @@ cat sdd/global.json | grep -A 5 "in_progress_modules"
 
 # Tasks pendientes de un ciclo
 cat sdd/specs/<spec-id>/cycles/cycle-01/tasks.json | grep -B2 '"status": "pending"'
+
+# SPEC GATE A (¿se puede abrir un ciclo?) y GATE B (¿se puede escribir código?)
+pnpm sdd:gate <spec-id|slug>
+pnpm sdd:gate <spec-id|slug> cycle-01
 
 # Validar TODOS los registros SDD contra sus schemas
 pnpm sdd:validate

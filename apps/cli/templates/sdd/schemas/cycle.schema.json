@@ -52,8 +52,10 @@
     "flow": {
       "enum": [
         "full",
-        "reduced"
-      ]
+        "reduced",
+        "lite"
+      ],
+      "description": "full = complete cycle (brief.yaml + functional.md + planner.md + architect.md, one role each). reduced = structural refactor without user stories (may omit functional/planner/architect). lite = single-actor cycle: plan.md replaces the four documents (profile solo or [LITE] prefix). Absent = full."
     },
     "objectives": {
       "type": "array",
@@ -101,9 +103,13 @@
         "tasks": {
           "type": "string",
           "description": "Path to the per-cycle tasks.json"
+        },
+        "plan": {
+          "type": "string",
+          "description": "Path to plan.md (flow: lite only): objective, stories, tasks in prose and technical decisions in one document"
         }
       },
-      "description": "Paths of the cycle documents that exist. flow: reduced cycles may omit functional/planner/architect."
+      "description": "Paths of the cycle documents that exist. flow: reduced cycles may omit functional/planner/architect; flow: lite cycles list plan.md instead of them."
     },
     "artifacts": {
       "type": "array",

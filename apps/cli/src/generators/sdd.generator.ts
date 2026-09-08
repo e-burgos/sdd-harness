@@ -14,6 +14,15 @@ import type { WorkspaceOptions } from './workspace.generator.js';
  *   schemas exigen ese patrón y el validador nunca chequea que exista en
  *   disco), con su contexto en sdd/context/apps/<nombre>/.
  */
+/** Perfil de trabajo del repo (sdd/global.json.profile). Ausente = team. */
+export type SddProfile = 'team' | 'solo';
+
+export function parseProfile(raw: unknown): SddProfile | undefined {
+  if (raw === undefined || raw === null || raw === '') return undefined;
+  if (raw === 'team' || raw === 'solo') return raw;
+  throw new Error(`Invalid profile "${String(raw)}" — expected team | solo`);
+}
+
 export interface SDDInstallConfig {
   layout?: 'nx' | 'standalone';
   /** Inyecta scripts sdd:* + setup:agents y ajv/ajv-formats en el package.json (lo crea si falta). */
@@ -224,6 +233,7 @@ async function writeGlobalJson(
       project: opts.projectName,
       description: opts.description,
       version: '0.1.0',
+      ...(opts.sddProfile ? { profile: opts.sddProfile } : {}),
       completed_modules: [],
       in_progress_modules: [],
       pending_modules: [],

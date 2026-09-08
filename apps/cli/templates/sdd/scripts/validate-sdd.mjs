@@ -103,6 +103,8 @@ const cycleTasks = new Map(
 );
 
 // ---- 2. Per-cycle task rules ----
+// reduced (refactor without stories) and lite (single actor, plan.md) may leave user_stories empty.
+const LITE_FLOWS = new Set(['reduced', 'lite']);
 for (const [file, ct] of cycleTasks) {
   if (!ct) continue;
   const ids = new Set();
@@ -114,8 +116,8 @@ for (const [file, ct] of cycleTasks) {
     for (const dep of t.depends_on) {
       if (!ids.has(dep)) fail(file, `${t.id} depends_on unknown task ${dep}`);
     }
-    if (t.user_stories.length === 0 && ct.flow !== 'reduced') {
-      fail(file, `${t.id} has empty user_stories but flow is not "reduced"`);
+    if (t.user_stories.length === 0 && !LITE_FLOWS.has(ct.flow)) {
+      fail(file, `${t.id} has empty user_stories but flow is neither "reduced" nor "lite"`);
     }
   }
 }
@@ -343,6 +345,22 @@ for (const [file, c] of cycles) {
     if (!existsSync(join(REPO, doc)))
       fail(file, `documents entry does not exist: ${doc}`);
   }
+
+  // flow: lite (v0.13.0) — plan.md replaces brief/functional/planner/architect. The SPEC
+  // GATE is the same; only the shape differs, so drift is reported, never blocked.
+  const cycleDir = join(SDD, file.replace(/\/cycle\.json$/, ''));
+  if (c.status === 'in-progress' && !existsSync(join(cycleDir, 'tasks.json')))
+    warn(file, 'in-progress without tasks.json — GATE B (implementation) cannot pass until the planner (or the solo actor) writes it');
+  if (c.flow === 'lite') {
+    if (!existsSync(join(cycleDir, 'plan.md')))
+      warn(file, 'flow: lite without plan.md — the lite cycle document (objective, stories, tasks, decisions) is missing');
+    const grew = (c.tables_created?.length ?? 0) + (c.endpoints_implemented?.length ?? 0);
+    if (c.status === 'completed' && grew > 0)
+      warn(
+        file,
+        `flow: lite created ${c.tables_created.length} table(s) / ${c.endpoints_implemented.length} endpoint(s) — contracts other subprojects consume deserve a full cycle: open the next cycle of this spec as flow: full`,
+      );
+  }
   for (const art of c.artifacts) {
     if (!existsSync(join(REPO, art)))
       fail(file, `artifact does not exist: ${art}`);
@@ -440,12 +458,13 @@ if (fixesJson) {
     );
 }
 
-// ---- 7. Cycle root whitelist (6 allowed files) ----
+// ---- 7. Cycle root whitelist (6 files for full/reduced, plan.md for lite) ----
 const ALLOWED = new Set([
   'brief.yaml',
   'functional.md',
   'planner.md',
   'architect.md',
+  'plan.md',
   'cycle.json',
   'tasks.json',
   'artifacts',

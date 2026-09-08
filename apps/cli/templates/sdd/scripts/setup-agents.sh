@@ -106,6 +106,16 @@ for name in AGENTS.md CLAUDE.md GEMINI.md; do
   link_item "$ROOT/$name" "sdd/dual-harness/$name" "$ROOT/sdd/dual-harness/$name" "$name"
 done
 
+# .github/copilot-instructions.md: a REAL file on purpose (GitHub's server-side readers do
+# not follow symlinks). Seeded once from the kit; afterwards it belongs to the project.
+mkdir -p "$ROOT/.github"
+if [ -e "$ROOT/.github/copilot-instructions.md" ]; then
+  echo "kept             : .github/copilot-instructions.md (yours)"
+else
+  cp "$ROOT/sdd/dual-harness/copilot-instructions.md" "$ROOT/.github/copilot-instructions.md"
+  echo "created  file    : .github/copilot-instructions.md (seeded from sdd/dual-harness/)"
+fi
+
 # ─── 5. Antigravity / Gemini CLI ─────────────────────────────────────────────
 
 # .agents/rules: individual symlinks per SDD rule (preserves user rules)

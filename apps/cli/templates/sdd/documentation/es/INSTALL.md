@@ -50,6 +50,7 @@ contra sus schemas.
        "setup:agents": "node -e \"if(process.platform==='win32'){require('child_process').execSync('powershell -ExecutionPolicy Bypass -File sdd/scripts/setup-agents.ps1',{stdio:'inherit'})}else{require('child_process').execSync('bash sdd/scripts/setup-agents.sh',{stdio:'inherit'})}\"",
        "sdd:docs": "node sdd/docs/serve.mjs",
        "sdd:validate": "node sdd/scripts/validate-sdd.mjs",
+       "sdd:gate": "node sdd/scripts/spec-gate.mjs",
        "sdd:rebuild-tasks-index": "node sdd/scripts/rebuild-tasks-index.mjs",
        "sdd:rebuild-catalog": "node sdd/scripts/rebuild-catalog.mjs"
      }
@@ -68,6 +69,10 @@ contra sus schemas.
    ítems del kit se enlazan adentro; si un nombre colisiona (tu propia
    `.github/skills/sdd-reviewer/`, un `AGENTS.md` raíz escrito a mano), lo tuyo queda y la
    versión del kit aparece al lado como `<nombre>.new`, listada al final para que la fusiones.
+
+   También **siembra** `.github/copilot-instructions.md` desde
+   `sdd/dual-harness/copilot-instructions.md` **solo si no existe** (es un archivo real, no un
+   symlink: los lectores server-side de GitHub no los siguen). Si ya está, no se pisa nunca.
 
 4. **Completar las plantillas** — buscar los marcadores `[...]`:
    - `sdd/global.json` → `project`, `description`, `monorepo` (apps/libs reales).
@@ -89,6 +94,27 @@ contra sus schemas.
    (`.github/workflows/sdd-validate.yml`) para que todo PR que toque `sdd/**`
    corra `pnpm sdd:validate`.
 
+## Perfil de trabajo (`team` | `solo`)
+
+`sdd/global.json → profile` decide con qué **flow** se abren los ciclos nuevos: `team` (default,
+puede omitirse) abre ciclos `full`; `solo` abre ciclos `lite` (un solo actor, `plan.md` en vez de
+los cuatro documentos). Se puede fijar desde la CLI:
+
+```bash
+npx @e-burgos/sdd-harness init --profile solo          # al generar el repo
+npx @e-burgos/sdd-harness configure sdd --profile team # en un repo ya generado
+```
+
+Con `init --config`, la misma opción va en el archivo de configuración:
+
+```json
+{ "sdd": { "profile": "solo" } }
+```
+
+La clave solo se escribe en `sdd/global.json` cuando la pasás; sin ella, el repo queda en `team`.
+Después, el **sdd-steward** la cambia a pedido del dev. Detalle de los flows: `README.md` →
+SPEC GATE.
+
 ## Qué incluye
 
 | Carpeta / archivo  | Contenido                                                                                       |
@@ -101,9 +127,9 @@ contra sus schemas.
 | `pricing.json`     | Tarifas editables por proveedor del dashboard de Costos del visor (`claude/*`, `gemini/*`, `copilot/*`) |
 | `tools.json`       | Interruptor de rtk (`enabled`, `auto_install`) — dato del proyecto: `update sdd` no lo pisa    |
 | `schemas/`         | JSON Schemas estrictos de todos los registros                                                   |
-| `scripts/`         | validate, rebuild-tasks-index, rebuild-catalog, setup-agents (bash + PowerShell) y los tres de rtk: `setup-rtk.mjs`, `rtk-hook.mjs`, `rtk-common.mjs` |
+| `scripts/`         | validate, spec-gate (`sdd:gate`), rebuild-tasks-index, rebuild-catalog, setup-agents (bash + PowerShell) y los tres de rtk: `setup-rtk.mjs`, `rtk-hook.mjs`, `rtk-common.mjs` |
 | `docs/`            | Visor portable y bilingüe de documentación (JS vanilla, cero deps)                               |
-| `dual-harness/`    | CLAUDE.md / AGENTS.md / GEMINI.md para linkear en la raíz del repo, más `rules/` para Antigravity |
+| `dual-harness/`    | CLAUDE.md / AGENTS.md / GEMINI.md para linkear en la raíz del repo, `copilot-instructions.md` (semilla de `.github/`) y `rules/` (gates y telemetría canónicos) |
 | `context/`         | Plantillas de constitución y context prompt (global + example)                                  |
 | `specs/`, `fixes/` | Vacíos, listos para las primeras specs y fixes                                                  |
 | `*.json`           | Registros de estado vacíos y válidos (`sdd:validate` OK)                                        |

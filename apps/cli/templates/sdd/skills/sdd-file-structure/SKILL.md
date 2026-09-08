@@ -43,7 +43,9 @@ sdd/
 │               ├── functional.md  ← Generado por: sdd-functional    (antes de planner/architect)
 │               ├── planner.md     ← Generado por: sdd-planner       (en paralelo con architect)
 │               ├── architect.md   ← Generado por: sdd-architect     (en paralelo con planner)
-│               └── cycle.json     ← Creado por: sdd-orchestrator    (al INICIAR, status:"in-progress")
+│               ├── plan.md        ← Solo flow "lite": un solo actor, reemplaza brief/functional/planner/architect
+│               ├── tasks.json     ← Creado por: sdd-planner (o el actor lite) — tasks canónicas del ciclo
+│               └── cycle.json     ← Creado por: sdd-orchestrator    (al INICIAR, status:"in-progress", flow)
 │                                     Cerrado por: sdd-reviewer      (al CERRAR, status:"completed")
 │
 ├── context/
@@ -159,6 +161,7 @@ sdd/
 | planner    | `planner.md`                                                                | `cycles/cycle-01/planner.md`                                                |
 | architect  | `architect.md`                                                              | `sdd/specs/{spec-id}/cycles/cycle-01/architect.md`                          |
 | cycle JSON | `cycle.json`                                                                | `sdd/specs/{spec-id}/cycles/cycle-01/cycle.json`                            |
+| plan       | `plan.md` — **solo `flow: "lite"`**, reemplaza brief/functional/planner/architect | `cycles/cycle-01/plan.md`                                             |
 
 > ⛔ **PROHIBIDO** usar el formato plano antiguo:
 > ~~`cycle-1-brief.yaml`~~, ~~`cycle-1-functional.md`~~, ~~`cycle-1.json`~~
@@ -573,6 +576,36 @@ TASK-001 → TASK-002 → ... (las tasks frontend dependen de las backend cuyo e
 
 ---
 
+### 3.8 Template: `plan.md` (flow `lite` — un solo actor)
+
+Reemplaza a `brief.yaml`, `functional.md`, `planner.md` y `architect.md`. Cuatro secciones
+fijas; la cuarta es **obligatoria** si el ciclo toca `schema.json`, `api.json` o
+`components.json` (y esos registros se actualizan igual que en `full`, bajo su app-key).
+
+```markdown
+# [spec-id] — cycle-[XX] · plan (lite)
+
+> Módulo: [nombre] | Subproyectos: [apps/...] | Fecha: [YYYY-MM-DD]
+> Objetivo: [una oración: qué se logra al cerrar el ciclo]. Fuera de alcance: [lista corta].
+
+## Historias
+- US-[N]-001 — Como [rol] quiero [acción] para [beneficio]. CA: [criterio verificable].
+- US-[N]-002 — …
+
+## Tasks (detalle en tasks.json)
+- TASK-001 — [qué se implementa, dónde, qué prueba lo valida]
+- TASK-002 — …
+
+## Decisiones técnicas (obligatoria si toca schema/api/components)
+- [decisión → por qué → registro afectado (schema.json / api.json / components.json)]
+```
+
+Reglas: historias en 1–2 líneas cada una (sin narrativa), tasks en prosa espejo de
+`tasks.json` (`user_stories` puede ir `[]` si las historias no se numeran), nada de secciones
+extra — lo que no entra acá va a `artifacts/`.
+
+---
+
 ## 4. JSON de estado — propiedades en inglés (OBLIGATORIO)
 
 Todos los archivos `.json` bajo `sdd/` deben tener **todas sus propiedades en inglés**.
@@ -594,30 +627,26 @@ Todos los archivos `.json` bajo `sdd/` deben tener **todas sus propiedades en in
 
 ## 5. Checklist del Orquestador — al iniciar un ciclo
 
-Ejecutar en orden estricto. Reportar resultado al usuario antes de continuar.
+Ejecutar en orden estricto. Reportar resultado al usuario antes de continuar. Fuente
+canónica del gate: `sdd/dual-harness/rules/sdd-gates.md`.
 
 ```
+SPEC GATE A:
+[ ] 1. pnpm sdd:gate <spec-id> → APROBADO (pegar la salida: A1–A5)
 
-SPEC GATE:
-[ ] 1. ¿Existe sdd/specs/spec-[gh-user]-[NNN]-[slug]/spec-[gh-user]-[NNN]-[slug].spec.md? → SI / NO
-[ ] 2. ¿La spec está registrada en sdd/specs/index.json? → SI / NO
-[ ] 3. ¿El módulo está en global.json (pending_modules)? → SI / NO
-[ ] 4. ¿No hay otro módulo en in_progress_modules? → SI / NO
-[ ] 5. ¿Las dependencias del módulo están completed? → SI / NO
+APERTURA (flow según profile / prefijo [LITE]|[FULL]):
+[ ] 2. Crear cycle-[XX]/cycle.json ← status: "in-progress", flow, metrics con contadores en 0
+       y usage.by_agent: []
+[ ] 3. Actualizar sdd/global.json ← mover módulo a in_progress_modules
+[ ] 4. Si es cycle-01 y la spec está "draft" en sdd/specs/index.json → "in-progress"
+[ ] 5. full/reduced: crear brief.yaml (§3.1) · lite: escribir plan.md (§3.8)
+[ ] 6. tasks.json del ciclo (Planner en full; el mismo actor en lite) + pnpm sdd:rebuild-tasks-index
+[ ] 7. pnpm sdd:validate en verde
 
-CYCLE DOCS:
-[ ] 6. Crear sdd/specs/{spec-id}/cycles/cycle-[XX]/brief.yaml ← sdd-orchestrator
-[ ] 7. Crear sdd/specs/{spec-id}/cycles/cycle-[XX]/cycle.json ← status: "in-progress",
-       metrics con contadores en 0 y usage.by_agent: []
-[ ] 8. Actualizar sdd/global.json ← mover módulo a in_progress
-[ ] 9. Crear sdd/specs/{spec-id}/cycles/cycle-[XX]/tasks.json (Planner) y correr pnpm sdd:rebuild-tasks-index
-[ ] 10. Si es cycle-01 de la spec y su status en sdd/specs/index.json es "draft" → pasarlo a "in-progress"
-
-→ Solo si TODO ES SI y pasos 6-10 completados: invocar sdd-functional
-
+→ full: invocar sdd-functional. lite: pnpm sdd:gate <spec-id> cycle-[XX] (GATE B) e implementar.
 ```
 
-> ⛔ Si cualquier check falla → DETENER y comunicar qué falta. No continuar.
+> ⛔ Si el gate da BLOQUEADO → DETENER y comunicar qué falta. No continuar.
 
 ---
 
@@ -629,6 +658,7 @@ CYCLE DOCS:
 | `sdd/specs/{spec-id}/cycles/cycle-[XX]/functional.md`                                 | sdd-functional                            | —                                                           |
 | `sdd/specs/{spec-id}/cycles/cycle-[XX]/planner.md`                                    | sdd-planner                               | —                                                           |
 | `sdd/specs/{spec-id}/cycles/cycle-[XX]/architect.md`                                  | sdd-architect                             | —                                                           |
+| `sdd/specs/{spec-id}/cycles/cycle-[XX]/plan.md` (solo `flow: lite`)                   | el actor único del ciclo                  | —                                                           |
 | `sdd/specs/{spec-id}/cycles/cycle-[XX]/cycle.json`                                    | sdd-orchestrator                          | sdd-reviewer (al cerrar)                                    |
 | `sdd/fixes/fix-[gh-user]-[seq].md`                                                    | desarrollador (FIX GATE, repo-level)      | sdd-reviewer                                                |
 | `sdd/specs/{spec-id}/fixes/fix-[...].md`                                              | desarrollador (FIX GATE, spec-level)      | sdd-reviewer                                                |
@@ -701,6 +731,7 @@ Manifest **generado** que enumera agents, skills, prompts y schemas para el viso
 | ----------------------------------- | --------------------------------------------------- |
 | Estado del proyecto                 | `sdd/global.json`                                   |
 | Iniciar un ciclo                    | `sdd/prompts/start-sdd-cycle.prompt.md`             |
+| **Responder el SPEC GATE (A o B)**  | **`pnpm sdd:gate <spec-id> [cycle-XX]`** — fuente: `sdd/dual-harness/rules/sdd-gates.md` |
 | Verificar antes de implementar      | `sdd/prompts/check-spec-before-implement.prompt.md` |
 | **Registrar un fix / hotfix**       | **`sdd/prompts/hotfix-bypass-gate.prompt.md`**      |
 | **Ver todos los fixes activos**     | **`sdd/fixes.json`**                                |
@@ -718,6 +749,9 @@ Manifest **generado** que enumera agents, skills, prompts y schemas para el viso
 ---
 
 ## 9. Template: fix individual (FIX GATE)
+
+> Con `profile: solo` alcanza el **template mínimo**: título + `## Problema` (2 líneas) +
+> `## Solución aplicada` con `### Archivos modificados`. El resto de las secciones se omite.
 
 Cada fix es un archivo independiente. El nombre del archivo es el ID del fix en kebab-case:
 

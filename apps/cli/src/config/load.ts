@@ -63,6 +63,7 @@ export function toWorkspaceOptions(config: HarnessConfig): WorkspaceOptions {
     services: config.services.map(({ type }) => type),
     npmScopes: config.npm?.scopes ?? [],
     sddAuthor: config.sdd?.author,
+    sddProfile: config.sdd?.profile,
     modules: normalizeModuleSeeds(config),
   };
 }
@@ -81,6 +82,7 @@ export function toStandaloneOptions(config: HarnessConfig): StandaloneOptions {
     services: config.services.map(({ type }) => type),
     npmScopes: config.npm?.scopes ?? [],
     sddAuthor: config.sdd?.author,
+    sddProfile: config.sdd?.profile,
     modules: normalizeModuleSeeds(config),
   };
 }

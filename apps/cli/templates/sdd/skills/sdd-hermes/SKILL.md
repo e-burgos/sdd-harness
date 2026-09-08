@@ -179,8 +179,9 @@ aprueban en bloque acá y el loop no vuelve a preguntar.
 
 ```
 mientras global.json tenga pending_modules o in_progress_modules:
-  1. sdd-orchestrator  → SPEC GATE, consolidación de contexto, destilación de
-                         memoria si journal ≥5, brief, cycle.json in-progress
+  1. sdd-orchestrator  → pnpm sdd:gate <spec> (GATE A), consolidación de contexto,
+                         destilación de memoria si journal ≥5, decisión de flow
+                         (profile team → full · solo → lite), brief, cycle.json in-progress
   2. sdd-functional    → functional.md
   3. sdd-planner + sdd-architect → tasks.json, planner.md, architect.md,
                          api/schema/components
@@ -190,6 +191,10 @@ mientras global.json tenga pending_modules o in_progress_modules:
                          lección), cycle.json completed
   6. commit del ciclo → siguiente módulo
 ```
+
+Con `profile: solo` en `global.json` los pasos 2–5 los ejecuta **un solo actor** por ciclo
+(`flow: lite`: `plan.md` + `tasks.json`, implementación, cierre) — Hermes no lanza subagentes
+de documentos en ese caso; sí mantiene los gates de cierre.
 
 **Condiciones de corte (obligatorias — Hermes para y reporta, no insiste):**
 

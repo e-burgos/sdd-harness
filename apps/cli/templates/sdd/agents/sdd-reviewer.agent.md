@@ -25,10 +25,9 @@ Sos el último paso antes de que el ciclo se marque como completado.
 
 ## Input que recibís
 
-- `sdd/specs/{spec-id}/cycles/cycle-[XX]/functional.md` — historias y requisitos
-- `sdd/specs/{spec-id}/cycles/cycle-[XX]/planner.md` — sprint plan y tasks
-- `sdd/specs/{spec-id}/cycles/cycle-[XX]/architect.md` — decisiones técnicas y contratos
-- `sdd/specs/{spec-id}/cycles/cycle-[XX]/brief.yaml` — brief del ciclo
+- Documentos del ciclo según `cycle.json → flow`: en `full`, `brief.yaml` + `functional.md`
+  (historias) + `planner.md` (sprint plan) + `architect.md` (contratos); en `reduced`,
+  `brief.yaml`; en `lite`, `plan.md` (objetivo · historias · tasks · decisiones, un solo actor)
 - Código backend y frontend generado en este ciclo
 - Estado actual de `sdd/global.json` y del resto del arnés
 
@@ -47,6 +46,11 @@ Sos el último paso antes de que el ciclo se marque como completado.
 ## Reglas
 
 - Si hay issues críticos → requiere cambios, no cerrar el ciclo
+- **Ciclo `flow: lite`**: el mismo actor que implementó cierra con este mismo checklist (no
+  se recorta nada del cierre). En `metrics.usage.by_agent[]` va **una** entrada
+  `{ "agent": "orchestrator", "label": "solo", … }` que cubre plan + revisión, además de las
+  entradas de cada task. Si el ciclo creó tablas o endpoints nuevos, `pnpm sdd:validate` lo
+  avisa: anotar en `reviewer_report.notes` que el próximo ciclo de la spec se abre `full`
 - **Código sin comentarios** (regla ✍️ del dual-harness): si el código del ciclo tiene
   comentarios narrativos, código muerto comentado o `// TODO` fuera de las excepciones
   permitidas (workaround con issue, regla de negocio con referencia a spec, anotaciones

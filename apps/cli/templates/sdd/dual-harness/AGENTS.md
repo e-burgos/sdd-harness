@@ -47,91 +47,36 @@ Invariantes que la skill garantiza y que **ningún cambio puede romper**:
 
 > [!NOTE]
 > graphify indexa el repo como grafo de conocimiento en `graphify-out/` (código vía AST +
-> la capa semántica de `sdd/` y `docs/`). Es **opt-in por dev**: `graphify-out/` está
-> gitignoreado, no viaja con el repo y en un clon nuevo no existe. **Nada del flujo SDD
-> depende de él.**
+> capa semántica de docs). Es **opt-in por dev**: gitignoreado, no viaja con el repo y
+> **nada del workflow depende de él**.
 
-**Si `graphify-out/graph.json` existe**, consultalo antes de hacer `grep`/`Read` a ciegas
-o de lanzar un agente de exploración: una consulta devuelve una respuesta acotada citando
-`source_file`/`source_location`, en vez de leer archivos completos para reconstruir la
-misma información. Es la opción más barata en tokens.
+**Si `graphify-out/graph.json` existe**, consultalo antes de `grep`/`Read` a ciegas o de
+lanzar un agente de exploración — es la opción más barata en tokens: `graphify query
+"<pregunta>"` (`--budget N` acota), `graphify explain "<nodo>"` **antes de tocarlo**,
+`graphify path "<A>" "<B>"`, `graphify affected "<nodo>"`; `graphify-out/GRAPH_REPORT.md`
+tiene God Nodes y comunidades.
 
-| Comando                        | Para qué                                                          |
-| ------------------------------ | ----------------------------------------------------------------- |
-| `graphify query "<pregunta>"`  | Arquitectura, dependencias, flujos. `--budget N` acota la salida. |
-| `graphify explain "<nodo>"`    | Un archivo, clase, servicio o concepto **antes de tocarlo**.      |
-| `graphify path "<A>" "<B>"`    | Camino más corto entre dos partes lejanas del sistema.            |
-| `graphify affected "<nodo>"`   | Traversal inverso: qué se impacta si cambiás ese nodo.            |
-| `graphify-out/GRAPH_REPORT.md` | God Nodes, hyperedges y comunidades etiquetadas.                  |
-
-**Si no existe**, no lo menciones ni intentes construirlo por tu cuenta (consume cupo de
-API del dev): trabajá con `grep`/`Read`/agentes de exploración con normalidad. Si el dev
-quiere habilitarlo, la skill **`setup-graphify`** lo guía de punta a punta — instalación,
-backend gratuito (Gemini free tier u Ollama local), API key y primer build.
-
-**Mantenimiento — solo si lo tenés instalado.** El grafo se desactualiza y entonces
-**miente** (archivos movidos, símbolos nuevos, docs reescritas). Actualizalo al cerrar cada
-unidad de trabajo — task/ciclo SDD, fix, o antes de cerrar un PR — **no** después de cada
-edición individual.
-
-```bash
-set -a && source .env && set +a   # ⚠️ imprescindible: graphify NO lee el .env
-graphify check-update .           # ¿hay re-extracción semántica pendiente?
-graphify update .                 # solo código (AST): gratis, sin LLM
-graphify cluster-only . --no-viz  # o `graphify label .` → re-etiquetar comunidades
-```
-
-Si cambió **documentación o `sdd/`** (no código), el `update` de AST no alcanza: hace falta
-la re-extracción semántica con la skill `graphify` y `--update`, que sí consume LLM.
-
-> [!CAUTION]
-> Dos trampas que hacen fallar esto **en silencio**, sin ningún error: (1) `source .env` a
-> secas no exporta, así que la key no llega y graphify cae al fan-out de subagentes del
-> harness — se paga el modelo caro justo cuando creías usar el gratuito; (2) varios modelos
-> "lite" devuelven un grafo vacío (0 edges) sin avisar. El detalle, la tabla de modelos
-> medidos y el protocolo de validación están en la skill **`setup-graphify`**.
->
-> Si el modelo gratuito falla o se agotó el cupo diario (resetea 00:00 UTC): **avisá al dev
-> y dejá la actualización para después**. No escales a un modelo pago ni al fan-out de
-> subagentes sin autorización explícita.
+**Si no existe**, no lo menciones ni intentes construirlo por tu cuenta (consume cupo de API
+del dev). Instalación, backend gratuito, mantenimiento al cerrar cada unidad de trabajo y sus
+dos trampas silenciosas (`set -a && source .env && set +a`; modelos "lite" que devuelven un
+grafo con 0 edges): `sdd/skills/setup-graphify/SKILL.md`. Si el modelo gratuito falla o se
+agotó el cupo: avisá al dev y dejá la actualización para después — nunca escales a un modelo
+pago sin autorización explícita.
 
 ## 🪶 rtk — salida de comandos comprimida (ACTIVO POR DEFECTO)
 
-> [!NOTE]
-> [rtk](https://github.com/rtk-ai/rtk) (Apache-2.0, binario en Rust) comprime la salida de
-> los comandos de shell (`git`, `pnpm`, `vitest`, `tsc`, `eslint`, `ls`, `grep`, `docker`…)
-> **antes de que la leas**: reporta 60–90% menos texto. Viene **activo por defecto desde el
-> kit v0.12.0**, sin ninguna acción del dev. Solo afecta comandos de shell — tus
-> herramientas de lectura de archivos (Read/Grep/Glob) quedan intactas.
-
-La reescritura es **transparente**: pedís `git status` y se ejecuta `rtk git status`. No hay
-nada que configurar ni que recordar.
-
-**Reglas para vos:**
+[rtk](https://github.com/rtk-ai/rtk) comprime la salida de los comandos de shell (`git`,
+`pnpm`, `vitest`, `tsc`, `ls`, `grep`…) **antes de que la leas**: 60–90% menos texto; tus
+herramientas de lectura de archivos quedan intactas. Activo desde el kit v0.12.0 y
+transparente: pedís `git status` y se ejecuta `rtk git status`.
 
 - **Nunca prefijes comandos con `rtk` a mano** — el puente ya lo hace.
-- Si la salida comprimida **te esconde algo que necesitás**, corré `rtk proxy <cmd>` para
-  ver la salida cruda de ese comando puntual.
-- **Nunca apagues rtk por tu cuenta**: el interruptor es del dev. Si sospechás que molesta,
-  decíselo y que decida él.
-- `rtk gain` / `rtk gain --project` imprime el ahorro acumulado; los números son
-  **estimaciones** (bytes ÷ 4), no facturación real.
-
-**Interruptor** — vive en `sdd/tools.json` (`rtk.enabled`, `rtk.auto_install`), es un archivo
-del proyecto y `harness update sdd` no lo pisa. Con `enabled: false` el puente deja pasar
-todos los comandos sin tocarlos; con `auto_install: false` nunca descarga el binario (redes
-corporativas: el dev lo instala a mano y el puente lo encuentra en el `PATH`).
-
-```bash
-pnpm sdd:rtk -- --status    # estado del interruptor y del binario (JSON)
-pnpm sdd:rtk -- --disable   # apagarlo (los hooks quedan instalados pero inertes)
-pnpm sdd:rtk -- --enable    # volver a prenderlo
-```
-
-**Best effort y por máquina.** El binario se instala fuera del repo (`~/.local/bin`) y su
-historial es local, así que el ahorro que veas es el de esta máquina. Si algo falla —binario
-ausente, hook roto— el comando pasa **sin comprimir** y nunca se bloquea: el kit funciona
-igual sin rtk.
+- Si la salida comprimida te esconde algo que necesitás: `rtk proxy <cmd>` da la salida cruda.
+- **Nunca apagues rtk por tu cuenta**: el interruptor es del dev (`sdd/tools.json`;
+  `pnpm sdd:rtk -- --status | --enable | --disable`; el sdd-steward lo opera a pedido).
+- `rtk gain --project` imprime el ahorro acumulado (estimación, no facturación). Es best
+  effort y por máquina: sin binario o con hook roto el comando pasa **sin comprimir** y nunca
+  se bloquea.
 
 ## ⚙️ Selección de modelo y esfuerzo (OBLIGATORIO — optimización de tokens/contexto)
 
@@ -186,61 +131,17 @@ agentes SDD referencian estos tiers abstractos, no modelos concretos):
   contexto releyendo lo ya establecido ni narrando opciones que no vas a seguir.
 - **Si el repo tiene grafo de graphify** (regla anterior, opcional), consultalo antes de
   pagar lecturas a ciegas: es parte de la misma optimización de tokens.
-- **Registro de consumo por agente: obligatorio — fuente y formato.** Todo agente que
-  consuma tokens en un flujo SDD o un fix registra su consumo al **cerrar su unidad de
-  trabajo** (task, documento, ciclo, fix) — no es una estimación reconstruida al final,
-  es un registro por unidad. Ver la subsección **Telemetría de uso** debajo para el
-  contrato completo: quién escribe qué y cuándo, y la tabla de fuentes por arnés.
+- **Registro de consumo por agente: obligatorio.** Todo agente que consuma tokens en un
+  flujo SDD o un fix registra `provider_model`, `effort`, `tokens_in`/`tokens_out`, `source` y
+  `approx` al **cerrar su unidad de trabajo** (task → `tasks.json → usage`; documento y ciclo
+  → `cycle.json → metrics.usage.by_agent[]`; fix → `fixes.json → usage`). Sin ese registro
+  la unidad no está cerrada y `pnpm sdd:validate` lo marca.
 
-**Telemetría de uso (dashboard de Costos — OBLIGATORIA en todos los arneses):** contrato
-v0.11.0 — todo agente que participe de un flujo SDD o de un fix y consuma tokens registra,
-al **cerrar su unidad de trabajo**, `provider_model` (`claude/sonnet`, `gemini/pro`,
-`copilot/claude-sonnet`), `effort`/thinking, `tokens_in`, `tokens_out`, `source` y `approx`.
-Sin ese registro la unidad no está cerrada. Modelo y effort se declaran ANTES de ejecutar
-(regla ⚙️ de arriba); los tokens se registran AL CERRAR.
-
-**Quién escribe qué, y cuándo:**
-
-- **Task** → `tasks.json → tasks[].usage` (quien la ejecuta, al cerrarla):
-  `{provider_model, effort, tokens_in, tokens_out, approx, source, recorded_at, agent,
-  tokens_total?}`. `model_tier` es el alias legacy — se lee, no se escribe.
-- **Documentos** functional/planner/architect → una entrada en
-  `cycle.json → metrics.usage.by_agent[]` al terminar el documento. El orquestador crea
-  `metrics` con contadores en 0 y `usage: {tokens_in: 0, tokens_out: 0, by_agent: []}` al
-  abrir el ciclo.
-- **Ciclo** → el reviewer **consolida `by_agent`, no estima el total**: `by_agent[]` = una
-  entrada por unidad `{agent, label?, provider_model, effort, tokens_in, tokens_out,
-  tokens_total?, approx, source, recorded_at}`; `by_tier` se **deriva** de `by_agent`
-  agrupando por `provider_model` (no se llena a mano); el top-level es la suma. El
-  reviewer agrega su propia entrada (la revisión también consume tokens) y no cierra el
-  ciclo sin `by_agent` completo y la suma consistente.
-- **Fix** → `sdd/fixes.json → fixes[].usage`, mismos campos; si trabajaron varios
-  agentes, `by_agent[]` con una entrada por agente. El FIX GATE no cierra un fix sin
-  `usage`.
-- `agent` ∈ `functional | planner | architect | implementor-back | implementor-front |
-  reviewer | orchestrator | steward | hermes | custom`.
-
-**De dónde sale el número — tabla de fuentes por arnés:**
-
-| Arnés                                     | Fuente                                                                                                                                                             | `source`                   | `approx` |
-| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------- | -------- |
-| Claude Code — subagente vía tool `Agent`  | notificación al padre al terminar: `<usage><subagent_tokens>N</subagent_tokens><tool_uses>…</tool_uses><duration_ms>…</duration_ms></usage>` — exacta, sin pedirle nada al dev; `tokens_total: N`, split por defecto 85/15 en in/out | `agent-usage-notification` | `false`  |
-| Claude Code — main loop                   | reporte de uso de la sesión (comando del cliente: se lo pide al dev)                                                                                               | `session-report`            | `false`  |
-| Gemini CLI — main loop                    | `/stats` (comando del cliente)                                                                                                                                     | `stats-command`             | `false`  |
-| Gemini CLI — subagentes                   | sin reporte separado → estimación declarada                                                                                                                        | `declared-estimate`         | `true`   |
-| GitHub Copilot (CLI, coding agent, custom agents) | sin contador → estimación declarada                                                                                                                        | `declared-estimate`         | `true`   |
-| Antigravity                               | sin contador → estimación declarada (registra bajo `gemini/*`)                                                                                                     | `declared-estimate`         | `true`   |
-
-`approx: false` con `source: declared-estimate` es **ERROR** del validador — nunca inventar
-un número preciso y presentarlo como medido.
-
-**Reglas del validador (`pnpm sdd:validate`):** error si un ciclo `completed` (con
-`completed_at` ≥ 2026-09-02) o un fix resuelto (`resolved_at` ≥ 2026-09-02) no tiene
-`usage` con proveedor/modelo y tokens; warning si falta `by_agent` o
-`sum(by_agent) ≠ by_tier`; registros anteriores a esa fecha: warning, no error.
-
-Alimenta la vista **Costos** del visor SDD (comparativa contra la estimación tradicional de
-las tasks); las tarifas por proveedor se editan en `sdd/pricing.json`.
+**Contrato completo de telemetría (capa 2 — se lee al cerrar, no al abrir la sesión):**
+`sdd/dual-harness/rules/sdd-model-budget.md` — quién escribe qué y cuándo, la tabla de
+fuentes por arnés (`agent-usage-notification`, `session-report`, `stats-command`,
+`declared-estimate`) y las reglas del validador. Alimenta la vista **Costos** del visor
+(`pnpm sdd:docs`); tarifas en `sdd/pricing.json`.
 
 ## ✍️ Código sin comentarios (OBLIGATORIO — el código se explica solo)
 
@@ -280,216 +181,111 @@ recibe request de cambios; el sdd-reviewer lo chequea al cerrar el ciclo.
 ## 🧩 Contexto de subproyectos: actualizaciones ADITIVAS (anti merge-conflict)
 
 > [!IMPORTANT]
-> Cuando varios devs trabajan sus specs sobre el mismo subproyecto (ej.
-> `example-api`), todos actualizan `sdd/context/apps/example-api/*.md` al cerrar
-> su ciclo y eso genera merge conflicts garantizados. **Durante un ciclo/fix NUNCA se
-> editan directamente `constitution.md` ni `context_prompt.md` del subproyecto**: las
-> actualizaciones son aditivas, un fragmento append-only por ciclo/fix.
+> `sdd/context/[apps|libs|tools]/[nombre]/constitution.md` y `context_prompt.md` son la
+> fuente de verdad técnica de cada subproyecto y los archivos más disputados del repo. Por
+> eso **durante un ciclo o fix nunca se editan directamente**: se escribe un fragmento
+> aditivo (patrón changesets) y un solo actor los consolida después.
 
-**Mecanismo (patrón changesets):**
-
-1. **Escribir** — al cerrar un ciclo o fix, en lugar de editar los archivos base, crear:
-
-   ```
-   sdd/context/[apps|libs|tools]/[nombre]/updates/YYYY-MM-DD-[spec-id]-cycle-[XX].md
-   # [spec-id] admite la forma corta spec-[gh-user]-[NNN] (sin slug) — es la práctica vigente
-   # fixes: sdd/context/[apps|libs|tools]/[nombre]/updates/YYYY-MM-DD-fix-[gh-user]-[seq].md
-   #        (fixes de spec: YYYY-MM-DD-fix-[gh-user]-[spec-NNN]-[seq].md)
-   ```
-
-   El nombre incluye el spec-id (que lleva el gh-user del dev) → **es único por
-   construcción y dos devs jamás chocan**. Template mínimo del fragmento:
-
-   ```markdown
-   # [spec-id] cycle-[XX] — [YYYY-MM-DD]
-
-   ## Estado → qué quedó implementado / en qué estado queda el subproyecto
-
-   ## Estructura → paquetes/módulos/patrones nuevos o cambiados
-
-   ## Dependencias → librerías o servicios nuevos que consume/expone
-
-   ## Qué sigue → pendientes que el próximo ciclo debe saber
-   ```
-
-   Secciones vacías se omiten. El fragmento es **corto y solo el delta** — nunca copia
-   del contenido base.
-
-2. **Leer** — todo agente que necesite el contexto de un subproyecto lee
-   `constitution.md` + `context_prompt.md` **+ `updates/*.md` en orden de nombre**
-   (el prefijo de fecha los ordena cronológicamente). El contexto vigente = base + deltas.
-
-3. **Consolidar** — operación de **un solo actor**, nunca en paralelo con un ciclo:
-   el orquestador al iniciar un ciclo nuevo sobre ese subproyecto (o el reviewer si se
-   acumulan ≥5 fragmentos) funde los fragmentos en los archivos base, actualiza el
-   encabezado `> Última actualización:`, **borra los fragmentos consolidados** y lo
-   commitea como cambio dedicado (`chore(sdd): consolidate context updates for [nombre]`).
-   La línea `> Última actualización:` solo cambia en la consolidación — es el principal
-   imán de conflictos y nadie más la toca.
-
-4. **Contexto global** (`sdd/context/constitution.md` y `context_prompt.md`): son tablas
-   de referencia. Tocar **solo la fila del subproyecto propio** (o agregar una fila
-   nueva al final si se creó una app/lib); jamás reformatear ni reordenar la tabla
-   completa.
-
-> El CONTEXTO GATE se cumple con el fragmento escrito en `updates/` — no exige editar
-> los archivos base durante el ciclo (ver nota en la sección del gate).
+1. **Escribir** (quien cierra el ciclo o fix): `updates/YYYY-MM-DD-[spec-id]-cycle-[XX].md`
+   (fixes: `YYYY-MM-DD-fix-[gh-user]-[seq].md`) — solo el delta, cuatro secciones: Estado ·
+   Estructura · Dependencias · Qué sigue. Único por construcción: dos devs jamás chocan.
+   Template: `sdd/skills/sdd-file-structure/SKILL.md` §3.7.
+2. **Leer** (cualquier agente): contexto vigente = archivos base + `updates/*.md` en orden de
+   nombre. La línea `> Última actualización:` del base **no** es la verdad si hay fragmentos.
+3. **Consolidar** (un solo actor, nunca en paralelo con un ciclo abierto sobre ese subproyecto):
+   el orquestador al abrir el próximo ciclo, o el reviewer si se acumulan ≥5 fragmentos
+   (`pnpm sdd:validate` lo avisa), funde los fragmentos en los base (lo obsoleto se reemplaza,
+   nunca se acumula), actualiza `> Última actualización:`, **borra los fragmentos** y commitea
+   aparte (`chore(sdd): consolidate context updates for [nombre]`).
+4. **Contexto global** (`sdd/context/constitution.md` y `context_prompt.md`): tablas de
+   referencia — tocar **solo la fila del subproyecto propio**, jamás reformatear la tabla.
 
 ## 🧠 MEMORIA GATE — autoaprendizaje entre sesiones (lessons + journal)
 
 > [!IMPORTANT]
-> El contexto de subproyectos (sección 🧩) registra **qué es** el sistema; la memoria
-> registra **qué aprendimos** trabajándolo. Sin ella cada sesión repite los mismos errores
-> y re-paga en tokens el mismo descubrimiento. `sdd/memory/` es la memoria versionada del
-> repo: viaja con git, sirve a cualquier agente y a cualquier máquina o CI.
+> El contexto registra **qué es** el sistema; la memoria registra **qué aprendimos**
+> trabajándolo. `sdd/memory/` viaja con git y sirve a cualquier agente, máquina o CI.
 
-**Estructura (dos capas, costo de lectura asimétrico por diseño):**
-
-- `sdd/memory/lessons.md` — lecciones **destiladas**, cap duro 120 líneas. **Leerlo al
-  inicio de toda sesión**, junto con `context_prompt.md`. Es la única pieza de memoria
-  que se carga siempre.
-- `sdd/memory/journal/` — entradas episódicas append-only, el detalle crudo. **Jamás se
-  lee entero**: solo grep dirigido cuando una lección destilada remite a su detalle.
-
-**1. Escribir** — al cerrar un ciclo o fix, **solo si hubo lección real**, crear:
-
-```
-sdd/memory/journal/YYYY-MM-DD-[spec-id]-cycle-[XX].md
-# fixes: sdd/memory/journal/YYYY-MM-DD-fix-[gh-user]-[seq].md
-#        (fixes de spec: YYYY-MM-DD-fix-[gh-user]-[spec-NNN]-[seq].md)
-```
-
-Mismo naming que los fragmentos de contexto → único por construcción, dos devs jamás
-chocan. Template mínimo (secciones vacías se omiten; crear `journal/` si no existe):
-
-```markdown
-# [spec-id] cycle-[XX] — [YYYY-MM-DD]
-
-## Qué pasó → el hecho concreto (error, descubrimiento, supuesto que falló)
-
-## Lección → 1 línea accionable, candidata a lessons.md
-
-## Costo evitable → qué tokens/tiempo se habrían ahorrado sabiéndolo antes
-```
-
-**Filtro anti-ruido (obligatorio):** antes de escribir, preguntarse *"¿esto cambiaría el
-comportamiento de un agente futuro?"*. Si la respuesta es no —lo obvio, lo ya documentado
-en constitutions/skills/dual-harness, el detalle de implementación del ciclo— **no se
-escribe**. Una memoria con ruido cuesta tokens y esconde las lecciones reales.
-
-**2. Leer** — al iniciar sesión: `lessons.md` completo. `journal/` solo bajo demanda.
-
-**3. Destilar** — operación de **un solo actor**, nunca en paralelo con un ciclo: cuando
-`journal/` acumula ≥5 entradas (`pnpm sdd:validate` lo avisa), el orquestador al iniciar
-el próximo ciclo funde cada entrada en una línea de la categoría correcta de `lessons.md`
-(Proceso / Técnica / Costo), actualiza su encabezado `> Última destilación:`, **borra las
-entradas destiladas** y lo commitea como cambio dedicado
-(`chore(sdd): distill memory journal into lessons`). Reglas de la destilación:
-
-- Lección específica de un subproyecto → va a su `constitution.md` vía consolidación 🧩,
-  no a `lessons.md` (que es transversal).
-- Cap 120 líneas: si se supera, podar primero lecciones obsoletas o ya absorbidas por
-  una skill/constitution — la memoria buena es chica.
-- Durante ciclos/fixes `lessons.md` **no se edita** — igual que los archivos base de
-  contexto, solo lo toca la destilación.
+- **Leer** al iniciar toda sesión: `sdd/memory/lessons.md` completo (lecciones destiladas,
+  cap duro 120 líneas — la única memoria que se carga siempre). `sdd/memory/journal/` jamás se
+  lee entero: grep dirigido cuando una lección remite a su detalle.
+- **Escribir** al cerrar un ciclo o fix, **solo si hubo lección real**:
+  `sdd/memory/journal/YYYY-MM-DD-[spec-id]-cycle-[XX].md` (fixes:
+  `YYYY-MM-DD-fix-[gh-user]-[seq].md`) con tres secciones: Qué pasó · Lección (1 línea) ·
+  Costo evitable. **Filtro anti-ruido:** si no cambiaría el comportamiento de un agente
+  futuro (lo obvio, lo ya documentado, el detalle del ciclo), no se escribe.
+- **Destilar** (un solo actor, nunca en paralelo con un ciclo): con ≥5 entradas
+  (`sdd:validate` avisa) el orquestador, al abrir el próximo ciclo, funde cada una en una
+  línea de `lessons.md` (Proceso / Técnica / Costo), actualiza `> Última destilación:`, borra
+  las destiladas y commitea aparte (`chore(sdd): distill memory journal into lessons`).
+  Lección específica de un subproyecto → a su `constitution.md` vía consolidación 🧩. Durante
+  ciclos/fixes `lessons.md` **no se edita**.
 
 ---
 
 ## ⛔ SPEC GATE — REGLA GLOBAL INVIOLABLE
 
-**Antes de escribir UNA SOLA LÍNEA de código de implementación**, verificar:
+> [!IMPORTANT]
+> **Fuente canónica del gate: `sdd/dual-harness/rules/sdd-gates.md`.** Este archivo no
+> repite la checklist — la responde un comando. Sin spec no hay ciclo; sin ciclo no hay
+> implementación.
 
+**Invariantes (todo flow, todo perfil):** spec registrada en `specs/index.json` · módulo en
+`global.json` · `cycle.json` con `status: "in-progress"` **antes de la primera línea de
+código** · `tasks.json` con tasks, y ninguna task `done` sin `usage`.
+
+El gate tiene **dos momentos**, y los dos se contestan con un script (determinista, cero
+lecturas a mano):
+
+```bash
+pnpm sdd:gate <spec-id|slug>            # GATE A — ¿se puede abrir un ciclo? (orquestador)
+pnpm sdd:gate <spec-id|slug> cycle-XX   # GATE B — ¿se puede escribir código? (quien implementa)
 ```
-1. ¿Existe sdd/specs/spec-[gh-user]-[NNN]-[slug]/spec-[gh-user]-[NNN]-[slug].spec.md?      → SI / NO
-2. ¿La spec está registrada en sdd/specs/index.json?                                       → SI / NO
-3. ¿El módulo está en in_progress_modules en global.json?                                  → SI / NO
-4. ¿Existe sdd/specs/spec-[gh-user]-[NNN]-[slug]/cycles/cycle-[XX]/brief.yaml?            → SI / NO
-5. ¿Existe sdd/specs/spec-[gh-user]-[NNN]-[slug]/cycles/cycle-[XX]/functional.md?         → SI / NO
-6. ¿Existe sdd/specs/spec-[gh-user]-[NNN]-[slug]/cycles/cycle-[XX]/planner.md?            → SI / NO
-7. ¿Existe sdd/specs/spec-[gh-user]-[NNN]-[slug]/cycles/cycle-[XX]/architect.md?          → SI / NO
-8. ¿Existe sdd/specs/spec-[gh-user]-[NNN]-[slug]/cycles/cycle-[XX]/cycle.json?            → SI / NO
-9. ¿Existe sdd/specs/spec-[gh-user]-[NNN]-[slug]/cycles/cycle-[XX]/tasks.json con tasks?  → SI / NO
-10. ¿Existe sdd/context/[apps|libs|tools]/[nombre]/constitution.md?                              → SI / NO
-```
 
-> [!NOTE]
-> `harness add spec` crea la spec con `status: "draft"` y registra el módulo en
-> `pending_modules` de `global.json` — no en `in_progress_modules`. El orquestador la pasa
-> a `in-progress` (y el módulo de `pending_modules` a `in_progress_modules`) recién al
-> abrir `cycle-01`. La pregunta 3 de este gate se responde sobre `in_progress_modules`; una
-> spec `draft` sin ciclo abierto no la satisface.
+`BLOQUEADO` → detener y completar lo que el script señala. `APROBADO` en A → el orquestador
+decide el **flow** del ciclo y lo escribe en `cycle.json`/`tasks.json`; en B → implementar.
 
-**Convención de naming (INVIOLABLE):**
+**Flow del ciclo (la forma del gate, no su fondo):** `full` (brief + functional + planner +
+architect, un rol por documento) · `reduced` (refactor sin historias) · `lite` (**un solo
+actor**, `plan.md` reemplaza a los cuatro documentos). Lo fija `sdd/global.json → profile`
+(`team` → full, `solo` → lite) o el prefijo `[LITE]`/`[FULL]` del pedido; contratos que otro
+subproyecto consume vuelven a `full`. Detalle, excepciones y reglas de `lite`: rule
+`sdd-gates.md` § Flow. El perfil lo cambia el **sdd-steward** a pedido del dev.
 
-- Spec: `spec-[gh-user]-[NNN]-[slug]` donde `[NNN]` es el contador personal del dev (no global)
-- Ciclos: `cycle-01`, `cycle-02`... reseteados por spec (no globales)
-- Tasks: `TASK-[NNN]` (ej: `TASK-001`) — el scope es el `tasks.json` del ciclo, sin prefijo de spec/ciclo
-- Fixes: `sdd/specs/{spec-id}/fixes/fix-[gh-user]-[spec-NNN]-[seq].md`; `sdd/fixes/` para fixes repo-level
-- Índice global: `sdd/specs/index.json` (append-only, sin last_id)
-- Índice de fixes: `sdd/fixes.json` (con spec_id para trazabilidad)
-
-**Documentos permitidos en la raíz del ciclo (INVIOLABLE):**
-
-Solo estos 6 archivos pueden existir directamente en `cycle-[XX]/`:
-`brief.yaml`, `functional.md`, `planner.md`, `architect.md`, `cycle.json`, `tasks.json`
-
-> Cualquier documento de apoyo adicional (diagramas, ejemplos de API, exploración) debe ir en `cycle-[XX]/artifacts/` y referenciarse en `cycle.json["artifacts"]`.
-
-**Si alguna respuesta es NO → DETENER. Completar ese paso antes de continuar.**
+**Raíz del ciclo (whitelist):** `brief.yaml`, `functional.md`, `planner.md`, `architect.md`,
+`plan.md`, `cycle.json`, `tasks.json` y `artifacts/`. Naming (`spec-[gh-user]-[NNN]-[slug]`,
+`cycle-XX` por spec, `TASK-NNN` por ciclo, fixes): `sdd/skills/sdd-file-structure/SKILL.md` §2.
 
 ## ⛔ TIPADO ESTRICTO DE REGISTROS SDD (INVIOLABLE)
 
-Todos los `*.json` de `sdd/` tienen JSON Schema estricto en `sdd/schemas/` y declaran `$schema`.
-**Antes de escribir en cualquier registro SDD, leer su schema. Después de escribir, correr:**
-
-```bash
-pnpm sdd:validate            # valida TODOS los registros + reglas cruzadas
-pnpm sdd:rebuild-tasks-index # regenera sdd/tasks.json desde los tasks.json per-cycle
-```
+Todo `*.json` de `sdd/` tiene JSON Schema estricto en `sdd/schemas/` y declara `$schema`.
+**Antes de escribir un registro, leer su schema** (`sdd/skills/sdd-data-schemas/SKILL.md`
+tiene el campo a campo). **Después de escribir:** `pnpm sdd:validate` (todos los registros +
+reglas cruzadas) y `pnpm sdd:rebuild-tasks-index` (regenera el índice `sdd/tasks.json`; las
+tasks canónicas viven en el `tasks.json` de cada ciclo — nunca editar el índice a mano). Un
+commit con `pnpm sdd:validate` en rojo es inválido: el mismo check corre en CI
+(`.github/workflows/sdd-validate.yml`) y es paso obligatorio del sdd-reviewer.
 
 > [!NOTE]
-> Si `NX_WORKSPACE_ROOT_PATH` está definida en el entorno y no apunta al cwd, cualquier
-> `nx …` (`pnpm sdd:validate`, `nx run-many -t lint test build`, etc.) corre contra OTRO
-> repo, sin ningún error visible — desactivá la variable o verificá
-> `echo $NX_WORKSPACE_ROOT_PATH` antes de correr `nx` o los scripts `sdd:*`.
-
-- `sdd/tasks.json` es **solo un índice** generado — las tasks canónicas viven en
-  `sdd/specs/{spec-id}/cycles/cycle-[XX]/tasks.json`. **Nunca editar detalle de tasks en el índice.**
-- Un commit que deje `pnpm sdd:validate` en rojo es un commit inválido — el mismo check corre en CI
-  (`.github/workflows/sdd-validate.yml`, gate de todo PR que toque `sdd/**`) y es paso obligatorio del sdd-reviewer.
-- Schemas: `tasks-index`, `cycle-tasks`, `cycle`, `global`, `specs-index`, `api`, `db-schema`, `components`, `fixes` (todos en `sdd/schemas/*.schema.json`).
+> Si `NX_WORKSPACE_ROOT_PATH` está definida y no apunta al cwd, cualquier `nx …`
+> (`pnpm sdd:validate`, `nx run-many -t lint test build`, etc.) corre contra OTRO repo sin
+> ningún error visible — desactivá la variable o verificá `echo $NX_WORKSPACE_ROOT_PATH`
+> antes de correr `nx` o los scripts `sdd:*`.
 
 ## ⛔ CONTEXTO GATE — REGLA GLOBAL DE CIERRE (INVIOLABLE)
 
-**Al finalizar la revisión de CUALQUIER ciclo**, el sdd-reviewer DEBE actualizar:
+**Al cerrar CUALQUIER ciclo** (o fix que cambió estructura/patrones/dependencias), quien
+cierra deja el contexto actualizado ANTES de escribir `status: "completed"`:
 
-```
-1. sdd/context/[apps|libs|tools]/[nombre]/constitution.md     → estructura, patrones, dependencias del ciclo
-2. sdd/context/[apps|libs|tools]/[nombre]/context_prompt.md   → estado, ciclos completados, qué sigue
-3. sdd/context/constitution.md                          → tabla-snapshot del subproyecto (sección 3)
-4. sdd/context/context_prompt.md                        → nueva fila si se creó app/lib/tool
-```
+1. Fragmento aditivo del subproyecto en `updates/` (sección 🧩 — los archivos base **no** se
+   editan durante el ciclo).
+2. `sdd/context/constitution.md` → solo la fila del subproyecto en la tabla-snapshot.
+3. `sdd/context/context_prompt.md` → fila nueva solo si se creó una app/lib/tool.
 
-**El `cycle.json` NO puede tener `status: "completed"` si estos archivos están desactualizados.**
-
-> [!IMPORTANT]
-> **Los pasos 1–2 se cumplen escribiendo el fragmento aditivo en
-> `sdd/context/[apps|libs|tools]/[nombre]/updates/`** (ver sección 🧩 Contexto de
-> subproyectos) — los archivos base del subproyecto NO se editan durante el ciclo; solo
-> los toca la consolidación de un solo actor. Los pasos 3–4 (tablas globales) siguen
-> siendo edición directa, pero únicamente de la fila propia.
-
-- Encabezado obligatorio en constitution.md y context_prompt.md de subproyecto:
-  `> Última actualización: cycle-[N] | Fecha: [YYYY-MM-DD]`
-- El global NUNCA duplica el detalle del subproyecto: solo mantiene tablas de referencia
-- Ver reglas completas: `sdd/agents/sdd-reviewer.agent.md` → sección "Actualización de contexto"
-
-> ⚠️ El `cycle.json` debe crearse al **iniciar** el ciclo con `status: "in-progress"`.
-> Solo el Reviewer lo actualiza a `status: "completed"` al cerrar. Un ciclo sin `cycle.json` no puede iniciarse.
-
-- Prompt de verificación: `sdd/prompts/check-spec-before-implement.prompt.md`
-- Prompt de inicio de ciclo: `sdd/prompts/start-sdd-cycle.prompt.md`
-- Estado actual del proyecto: `sdd/global.json`
+`cycle.json` **no puede quedar `completed`** con el contexto desactualizado; `pnpm sdd:validate`
+exige el fragmento del ciclo. El `cycle.json` se crea al **iniciar** (`status: "in-progress"`,
+orquestador) y solo el reviewer lo pasa a `"completed"`. Reglas completas:
+`sdd/dual-harness/rules/sdd-gates.md` y `sdd/agents/sdd-reviewer.agent.md`.
 
 ---
 
@@ -512,6 +308,10 @@ Cuando el problema **no puede esperar un ciclo SDD completo**, usar uno de estos
 4. Autoriza al implementador a proceder
 
 > ⚠️ El FIX GATE **no elimina la trazabilidad** — la simplifica. Todo fix queda registrado y el sdd-reviewer lo evalúa al cerrar el ciclo.
+
+> Con `profile: solo` (rule `sdd-gates.md` § FIX GATE) no hay cuestionario: el actor completa
+> `fixes.json` desde el pedido, el documento del fix usa el template mínimo y la elegibilidad
+> se reduce a "no crea contratos ni entidades nuevas". Registro, `usage` y validación siguen.
 
 - Registry de fixes: `sdd/fixes.json`
 - Prompt FIX GATE: `sdd/prompts/hotfix-bypass-gate.prompt.md`

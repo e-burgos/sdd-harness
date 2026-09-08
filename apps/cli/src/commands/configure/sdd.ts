@@ -6,6 +6,7 @@ import { resolve, basename } from 'node:path';
 import { logger } from '../../utils/logger.js';
 import { generateSDD } from '../../generators/sdd.generator.js';
 import type { WorkspaceOptions } from '../../generators/workspace.generator.js';
+import { parseProfile } from '../../generators/sdd.generator.js';
 
 /**
  * Modo "sdd-harness": instala (o reinstala) el sistema SDD portable en un
@@ -39,6 +40,11 @@ export const configureSddCommand = defineCommand({
       description:
         'Skip confirmations — required to RESET an existing sdd/ without a TTY',
       default: false,
+    },
+    profile: {
+      type: 'string',
+      description:
+        'Working profile written to sdd/global.json: team (full cycles, default) | solo (lite cycles, single actor)',
     },
   },
   async run({ args }) {
@@ -138,6 +144,8 @@ export const configureSddCommand = defineCommand({
 
     logger.step('Installing portable SDD system...');
 
+    const profile = parseProfile(args.profile);
+
     const opts: WorkspaceOptions = {
       projectName: projectName as string,
       description: (description as string) || '',
@@ -147,6 +155,7 @@ export const configureSddCommand = defineCommand({
       apps,
       libs: [],
       services: [],
+      sddProfile: profile,
     };
 
     try {

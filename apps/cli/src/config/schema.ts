@@ -87,6 +87,8 @@ const SDDConfigSchema = z.object({
     .regex(/^[a-z0-9-]+$/, 'Author must be a lowercase GitHub username')
     .optional(),
   modules: z.array(ModuleSeedSchema).default([]),
+  /** Perfil de trabajo → sdd/global.json.profile: team (ciclos full, default) | solo (ciclos lite, un solo actor). */
+  profile: z.enum(['team', 'solo']).optional(),
   cycles: z.array(CycleConfigSchema).optional(),
   skills: z
     .object({

@@ -1,48 +1,36 @@
 # Prompt: Iniciar Ciclo SDD
 
-> Para uso en cualquier monorepo que implemente SDD
+> Para uso en cualquier repo que implemente SDD. Fuente canónica de los gates:
+> `sdd/dual-harness/rules/sdd-gates.md`.
 
-## ⛔ SPEC GATE — Verificación obligatoria ANTES de iniciar
+## ⛔ SPEC GATE A — apertura de ciclo (antes de invocar cualquier agente)
 
-Antes de invocar cualquier agente, responder estas preguntas:
-
-```
-1. ¿Existe sdd/specs/spec-[gh-user]-[NNN]-[slug]/spec-[gh-user]-[NNN]-[slug].spec.md?  SI / NO
-2. ¿El módulo está en pending_modules (global.json)?                                   SI / NO
-3. ¿No hay otro módulo en in_progress_modules?                                        SI / NO
-4. ¿Las dependencias están en completed_modules?                                      SI / NO
+```bash
+pnpm sdd:gate <spec-id|slug>
 ```
 
-**→ Si alguna respuesta es NO: completar ese paso antes de continuar.**
-**→ Solo si TODAS son SI: proceder con el ciclo.**
+El script contesta A1–A5 (spec registrada · módulo en `pending_modules`/`in_progress_modules`
+· ningún otro ciclo `in-progress` de esa spec · `depends_on` completadas · spec no cerrada) y
+sugiere el próximo ciclo y el flow.
+
+**→ `BLOQUEADO`: completar lo que señala antes de continuar (no se abre nada).**
+**→ `APROBADO`: decidir el flow y proceder con el ciclo.**
+
+## Flow del ciclo (se decide UNA vez, al abrir)
+
+| Flow      | Cuándo                                                                            | Documentos en `cycle-[XX]/` (además de `cycle.json` + `tasks.json`) |
+| --------- | --------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| `full`    | `profile: team` (default) · prefijo `[FULL]` · contratos que otro subproyecto consume | `brief.yaml`, `functional.md`, `planner.md`, `architect.md`         |
+| `reduced` | Refactor estructural sin historias                                               | `brief.yaml`                                                         |
+| `lite`    | `profile: solo` · prefijo `[LITE]` — **un solo actor**                            | `plan.md`                                                            |
+
+El flow queda escrito en `cycle.json → flow` y `tasks.json → flow`. Cualquier documento de
+apoyo (diagramas, exploración) va en `cycle-[XX]/artifacts/` referenciado en
+`cycle.json["artifacts"]` — la raíz del ciclo admite solo los archivos de la tabla.
 
 ---
 
-## Regla de documentos de ciclo (INVIOLABLE)
-
-Los únicos documentos permitidos en la raíz de `cycle-[XX]/` son:
-
-| Archivo         | Generado por                                      |
-| --------------- | ------------------------------------------------- |
-| `brief.yaml`    | sdd-orchestrator                                  |
-| `functional.md` | sdd-functional                                    |
-| `planner.md`    | sdd-planner                                       |
-| `architect.md`  | sdd-architect                                     |
-| `cycle.json`    | sdd-orchestrator (inicio) / sdd-reviewer (cierre) |
-
-**Cualquier documento de apoyo adicional** (diagramas, ejemplos de API, exploración, tasks detalladas, etc.) debe ubicarse en:
-
-```
-sdd/specs/{spec-id}/cycles/cycle-[XX]/artifacts/<nombre-del-doc>.md
-```
-
-Y debe indexarse en `cycle.json` bajo la clave `"artifacts": [...]`.
-
----
-
-## Cómo usarlo
-
-Copiar y completar este prompt para iniciar un ciclo:
+## Cómo usarlo — flow `full`
 
 ```
 Iniciá el Ciclo [N] del proyecto [nombre-del-proyecto] siguiendo el flujo SDD.
@@ -51,64 +39,70 @@ Módulo a desarrollar: [nombre del módulo]
 Spec en: sdd/specs/spec-[gh-user]-[NNN]-[slug]/spec-[gh-user]-[NNN]-[slug].spec.md
 
 Antes de empezar:
-1. Ejecutar el SPEC GATE (verificaciones de arriba)
-2. Leer sdd/global.json para verificar el estado actual
-3. Confirmar que el módulo tiene spec y está en pending_modules
-4. Consolidación de contexto (sdd-orchestrator, antes de generar el brief): si
-   sdd/context/[apps|libs|tools]/[nombre]/updates/ tiene fragmentos acumulados para el
-   subproyecto de este ciclo, fusionarlos en constitution.md + context_prompt.md base,
-   actualizar el encabezado `> Última actualización:`, borrar los fragmentos consolidados
-   y commitear aparte (`chore(sdd): consolidate context updates for [nombre]`)
+1. pnpm sdd:gate <spec-id> → tiene que dar APROBADO (pegar la salida como reporte del gate)
+2. Consolidación de contexto (sdd-orchestrator, antes del brief): si
+   sdd/context/[apps|libs|tools]/[nombre]/updates/ tiene fragmentos para el subproyecto de
+   este ciclo, fundirlos en constitution.md + context_prompt.md base, actualizar
+   `> Última actualización:`, borrar los fragmentos y commitear aparte
+   (`chore(sdd): consolidate context updates for [nombre]`)
+3. Destilación de memoria: si sdd/memory/journal/ tiene ≥5 entradas, destilar en lessons.md
+   (commit aparte: `chore(sdd): distill memory journal into lessons`)
 
-Pasos a seguir en orden (solo si el SPEC GATE pasa):
-1. sdd-orchestrator → preparar cycle_brief + crear sdd/specs/{spec-id}/cycles/cycle-[XX]/brief.yaml
-2. sdd-functional   → generar historias de usuario → crear sdd/specs/{spec-id}/cycles/cycle-[XX]/functional.md
-        ⛔ TELEMETRÍA: al cerrar el documento, agregar la propia entrada en
-        cycle.json → metrics.usage.by_agent[] (agent: "functional", provider_model, effort,
+Pasos en orden (solo con el GATE A en APROBADO):
+1. sdd-orchestrator → brief.yaml + cycle.json con status "in-progress", flow "full" y
+        metrics { contadores en 0, usage: { tokens_in: 0, tokens_out: 0, by_agent: [] } };
+        mover el módulo a in_progress_modules; si es cycle-01, pasar la spec de "draft" a
+        "in-progress" en sdd/specs/index.json. Recién ahí leer el template del artefacto que
+        toca escribir (sdd-file-structure §3) — no antes.
+2. sdd-functional   → functional.md
+        ⛔ TELEMETRÍA: al cerrar el documento, entrada propia en cycle.json →
+        metrics.usage.by_agent[] (agent: "functional", provider_model, effort,
         tokens_in/tokens_out, approx, source, recorded_at)
-3. sdd-planner      → crear sdd/specs/{spec-id}/cycles/cycle-[XX]/tasks.json + regenerar índice (PARALELO con 4)
-        ⛔ TELEMETRÍA: entrada propia en metrics.usage.by_agent[] (agent: "planner") al cerrar
-4. sdd-architect    → definir schema y contratos, actualizar sdd/schema.json y sdd/api.json (PARALELO con 3)
-        ⛔ TELEMETRÍA: entrada propia en metrics.usage.by_agent[] (agent: "architect") al cerrar
-⚠️  5. sdd-orchestrator → crear sdd/specs/{spec-id}/cycles/cycle-[XX]/cycle.json con status "in-progress"
-        OBLIGATORIO antes de cualquier implementación. Estructura mínima:
-        { "cycle": N, "module": "...", "status": "in-progress", "objectives": [...],
-          "metrics": { "tasks_total": 0, "tasks_completed": 0, "story_points": 0,
-            "files_created": [], "files_modified": [], "files_deleted": [],
-            "usage": { "tokens_in": 0, "tokens_out": 0, "by_agent": [] } } }
-        Además, en este mismo paso: pasar la spec de "draft" a "in-progress" en
-        sdd/specs/index.json (lifecycle del schema: draft → in-progress lo hace el
-        orquestador al abrir cycle-01 de esa spec, nunca antes).
-        Si el orquestador lanzó subagentes (functional/planner/architect) vía la tool
-        Agent, capturar la notificación `agent-usage-notification` de cada uno
-        (`<usage><subagent_tokens>N</subagent_tokens>…</usage>`, exacta, approx: false,
-        split 85/15 en tokens_in/tokens_out) y agregarla a by_agent en su nombre si el
-        propio subagente no llegó a registrarla.
-6. sdd-implementor-back → implementar TASK-BE una a la vez
-        Una task pasa a "done" en tasks.json solo cuando además de la implementación
-        tiene su `usage` completo (provider_model, effort, tokens_in/tokens_out, approx,
-        source, recorded_at) — sin `usage` la task NO está cerrada.
-7. sdd-implementor-front → implementar TASK-FE una a la vez (solo si hay frontend)
-        Misma condición de cierre que 6: sin `usage` en la task, no es "done".
-8. sdd-reviewer     → validar, actualizar cycle-[XX]/cycle.json a "completed" con reviewer_report,
-        actualizar todos los JSONs de estado (global.json, specs/index.json, tasks del ciclo)
-        y dejar pnpm sdd:validate en verde
-        ⛔ TELEMETRÍA: agregar la entrada propia (agent: "reviewer") en
-        metrics.usage.by_agent[], derivar by_tier agrupando by_agent por provider_model
-        y sumar el top-level — ver review-cycle.prompt.md paso 4c
-9. ⛔ CONTEXTO GATE, mecanismo aditivo (parte del paso del reviewer — OBLIGATORIO):
-        - Escribir el fragmento append-only:
-          sdd/context/[apps|libs|tools]/[nombre]/updates/YYYY-MM-DD-[spec-id]-cycle-[XX].md
-          (NUNCA editar directamente constitution.md/context_prompt.md del subproyecto
-          ni su línea `> Última actualización:` durante el ciclo)
-        - sdd/context/constitution.md → actualizar SOLO la fila propia de la
-          tabla-snapshot del subproyecto
-        - sdd/context/context_prompt.md → agregar fila nueva si se creó app/lib/tool
-        El ciclo NO puede cerrarse sin haber escrito el fragmento en updates/.
-
-⚠️ Documentos de apoyo: si se generan docs extra (exploración, diseño, ejemplos),
-   guardarlos SIEMPRE en artifacts/ y referenciarlos en cycle.json["artifacts"].
+3. sdd-planner      → tasks.json + planner.md + pnpm sdd:rebuild-tasks-index (PARALELO con 4)
+        ⛔ TELEMETRÍA: entrada propia (agent: "planner")
+4. sdd-architect    → architect.md + sdd/schema.json + sdd/api.json (PARALELO con 3)
+        ⛔ TELEMETRÍA: entrada propia (agent: "architect")
+5. pnpm sdd:gate <spec-id> cycle-[XX] → GATE B APROBADO antes de cualquier implementación.
+        Si el orquestador lanzó subagentes vía la tool Agent, capturar la notificación
+        `agent-usage-notification` de cada uno (exacta, approx: false, split 85/15) y volcarla
+        en by_agent si el propio subagente no la registró.
+6. sdd-implementor-back → TASK-BE una a la vez. Una task pasa a "done" solo con su `usage`
+        completo — sin `usage` la task NO está cerrada.
+7. sdd-implementor-front → TASK-FE una a la vez (solo si hay frontend). Misma condición.
+8. sdd-reviewer → review-cycle.prompt.md: validate, telemetría consolidada (by_agent +
+        by_tier derivado + suma), cycle.json "completed" con reviewer_report, JSONs de estado.
+9. ⛔ CONTEXTO GATE (parte del reviewer): fragmento aditivo en
+        sdd/context/[apps|libs|tools]/[nombre]/updates/YYYY-MM-DD-[spec-id]-cycle-[XX].md
+        (NUNCA editar los archivos base durante el ciclo) + fila propia en las tablas globales.
+        MEMORIA GATE si hubo lección real. El ciclo NO se cierra sin esto.
 ```
+
+## Cómo usarlo — flow `lite` (un solo actor)
+
+```
+[LITE] Iniciá el Ciclo [N] del proyecto [nombre-del-proyecto] para el módulo [nombre].
+Spec: sdd/specs/spec-[gh-user]-[NNN]-[slug]/…spec.md
+
+1. pnpm sdd:gate <spec-id> → APROBADO (pegar la salida). Consolidación de contexto y
+   destilación de memoria igual que en full, si corresponde.
+2. Abrir el ciclo: cycle.json con status "in-progress", flow "lite", metrics con contadores en
+   0 y usage.by_agent: []; módulo a in_progress_modules; spec draft → in-progress si es cycle-01.
+3. Escribir plan.md (template: sdd-file-structure §3.8 — objetivo · historias · tasks en prosa ·
+   decisiones técnicas; la última es obligatoria si toca schema.json/api.json/components.json,
+   y en ese caso actualizar esos registros bajo el app-key correcto).
+4. Crear tasks.json (flow "lite"; user_stories puede ir [] si plan.md no numera historias) y
+   correr pnpm sdd:rebuild-tasks-index.
+5. pnpm sdd:gate <spec-id> cycle-[XX] → GATE B APROBADO. Recién ahí implementar, una task a la
+   vez; cada task pasa a "done" con su `usage` (tier estándar para implementar).
+6. Cerrar como reviewer: pnpm sdd:validate en verde, tasks resueltas (done/skipped),
+   cycle.json "completed" con reviewer_report y metrics.usage consolidado — una sola entrada
+   { agent: "orchestrator", label: "solo" } cubre plan + revisión, más las de cada task —,
+   global.json / specs/index.json actualizados, CONTEXTO GATE (fragmento aditivo) y MEMORIA
+   GATE si hubo lección.
+```
+
+> Si un ciclo `lite` creó tablas o endpoints nuevos, `pnpm sdd:validate` lo avisa: el próximo
+> ciclo de esa spec se abre `full`.
 
 ---
 
@@ -123,5 +117,5 @@ Spec: sdd/specs/spec-[gh-user]-[NNN]-[slug]/spec-[gh-user]-[NNN]-[slug].spec.md
 Objetivo del ciclo:
 [Describir en una oración qué se logra al finalizar este ciclo.]
 
-Siguiendo flujo SDD obligatorio con SPEC GATE.
+Siguiendo flujo SDD obligatorio con SPEC GATE (pnpm sdd:gate).
 ```

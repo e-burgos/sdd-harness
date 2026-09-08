@@ -54,12 +54,14 @@ const SDD_TREE: TreeNode = {
     { name: 'skills/', note: '19 skills' },
     { name: 'prompts/', note: 'gates como slash commands' },
     { name: 'schemas/', note: 'JSON Schema estricto — additionalProperties: false' },
-    { name: 'scripts/', note: 'validate · rebuild · setup' },
+    { name: 'scripts/', note: 'spec-gate.mjs (SPEC GATE) · validate · rebuild · setup' },
     { name: 'docs/', note: 'visor sin dependencias' },
     { name: 'memory/', note: 'lessons + journal — MEMORIA GATE' },
     { name: 'templates/', note: 'blueprints de scaffolding' },
-    { name: 'dual-harness/', note: 'AGENTS.md + CLAUDE.md + GEMINI.md + rules/' },
+    { name: 'dual-harness/', note: 'capa 1: AGENTS.md + CLAUDE.md + GEMINI.md (~22 KB) + copilot-instructions.md' },
+    { name: 'dual-harness/rules/', note: 'capa 2: gates + telemetría canónicos' },
     { name: 'specs/ · context/ · fixes/', note: 'specs, contexto por subproyecto, fixes' },
+    { name: 'specs/[spec]/cycles/cycle-XX/', note: 'brief · functional · planner · architect · plan.md (flow lite) · cycle.json · tasks.json · artifacts/' },
     { name: 'api.json · components.json · schema.json', note: 'registros de arquitectura: endpoints, componentes, tablas' },
     { name: 'tasks.json · fixes.json · catalog.json', note: 'índices agregados — los lee el visor' },
     { name: 'kit.json · pricing.json', note: 'hashes para update sdd · tarifas de Costos' },
@@ -258,10 +260,10 @@ export const HERMES_PHASES: HermesPhase[] = [
     id: 'loop',
     label: '05 · Loop',
     title: 'El loop de ciclos corre — y es retomable',
-    body: 'Módulo por módulo, los 7 agentes hacen su fase con todos los gates activos. El estado vive en los registros, no en la sesión: cualquier sesión futura retoma exactamente donde quedó.',
+    body: 'Módulo por módulo, los 7 agentes hacen su fase con todos los gates activos. El estado vive en los registros, no en la sesión: cualquier sesión futura retoma exactamente donde quedó. Con perfil solo el loop corre ciclos lite: un solo actor abre, implementa y cierra cada módulo — mismos gates, mismos invariantes.',
     code: [
       'mientras queden módulos pendientes:',
-      '  orquestador  → brief + cycle.json (SPEC GATE)',
+      '  orquestador  → pnpm sdd:gate + cycle.json (SPEC GATE)',
       '  5 agentes    → diseño, tasks, código, review',
       '  cierre       → contexto + memoria + telemetría',
       '',
@@ -281,11 +283,12 @@ export type Command = {
 export const COMMANDS: Command[] = [
   {
     name: 'init',
-    usage: 'harness init [--name] [--mode nx|standalone] [--standalone] [--config <file>] [--here] [--dir <path>] [--skip-verify] [-y]',
+    usage: 'harness init [--name] [--mode nx|standalone] [--standalone] [--config <file>] [--profile team|solo] [--here] [--dir <path>] [--skip-verify] [-y]',
     summary: 'Genera un repo desde cero: monorepo Nx o app standalone.',
     points: [
       'Prompts guiados: nombre, descripción, modo, apps, libs, servicios Docker.',
-      '--config <archivo .json|.mjs|.js>: vía 100% no interactiva para agentes AI y CI — config validada con zod (mode, project, apps, libs, services, sdd, npm) y cero prompts.',
+      '--config <archivo .json|.mjs|.js>: vía 100% no interactiva para agentes AI y CI — config validada con zod (mode, project, apps, libs, services, sdd —incluido sdd.profile—, npm) y cero prompts.',
+      '--profile team|solo: perfil de trabajo, que baja a sdd/global.json → profile. team (default) abre los ciclos en flow full; solo los abre en flow lite (un solo actor, plan.md en vez de los cuatro documentos). Con --config manda sdd.profile. Si no se pasa, la clave no se escribe y el repo queda en team.',
       '--here (o --dir .) genera en el directorio actual en vez de ./<name>; también se infiere si el --config vive en el cwd o si basename(cwd) == nombre del proyecto — ya no anida <name>/<name>/ cuando el dev ya hizo git init y harness idea en la carpeta.',
       'Si el cwd ya es un repo git no corre git init: commitea en la rama actual y mergea un .gitignore previo en vez de pisarlo.',
       'Cierra ejecutando el gate de FASE 3 (sdd:validate + nx run-many -t lint test build, o los scripts lint/test/build en standalone): si algo da rojo, init falla (exit 1) y no hace el commit inicial. --skip-verify lo omite.',
@@ -355,12 +358,13 @@ export const COMMANDS: Command[] = [
   },
   {
     name: 'configure sdd',
-    usage: 'harness configure sdd --name <n> --description <d>',
+    usage: 'harness configure sdd --name <n> --description <d> [--profile team|solo]',
     summary: 'Instala (o resetea) el sistema SDD en un proyecto existente.',
     points: [
       'Detección de forma: monorepo Nx o repo standalone.',
       'Merge automático de package.json + absorción del arnés previo.',
       'Sin prompts con --name y --description: un agente puede correrlo.',
+      '--profile team|solo: mismo perfil que en init — se escribe en sdd/global.json → profile solo si se pasa (ausente = team, ciclos full).',
     ],
   },
   {
@@ -400,7 +404,7 @@ export const COMMANDS: Command[] = [
 export type Agent = { name: string; role: string; writes: string };
 
 export const AGENTS: Agent[] = [
-  { name: 'orchestrator', role: 'Valida el SPEC GATE y abre el ciclo', writes: 'brief.yaml · cycle.json' },
+  { name: 'orchestrator', role: 'Corre pnpm sdd:gate, decide el flow y abre el ciclo', writes: 'brief.yaml / plan.md · cycle.json' },
   { name: 'functional', role: 'Spec → historias de usuario', writes: 'functional.md' },
   { name: 'planner', role: 'Historias → tareas técnicas', writes: 'planner.md · tasks.json' },
   { name: 'architect', role: 'Valida diseño, define contratos', writes: 'architect.md · schema.json · api.json' },
@@ -414,13 +418,13 @@ export type Gate = { name: string; rule: string; how: string };
 export const GATES: Gate[] = [
   {
     name: 'SPEC GATE',
-    rule: 'Ni una línea de código sin spec, brief, plan, arquitectura y tasks.',
-    how: 'Checklist de 10 verificaciones sobre archivos reales del ciclo. Si una da NO, se detiene todo.',
+    rule: 'Ni una línea de código sin spec registrada, ciclo abierto, plan y tasks — en cualquier flow.',
+    how: 'Dos momentos, y los dos se contestan con un comando en vez de leer archivos a mano: pnpm sdd:gate <spec-id|slug> es el GATE A, la apertura del ciclo que corre el orquestador (spec registrada en specs/index.json · módulo en pending_modules o in_progress_modules · ningún otro ciclo de esa spec in-progress · depends_on completed · spec ni completed ni cancelled), y pnpm sdd:gate <spec-id|slug> cycle-XX es el GATE B, el que corre quien va a escribir código (cycle.json in-progress · módulo en in_progress_modules · tasks.json con al menos una task · los documentos del flow de ESE ciclo · constitution.md de cada subproyecto de cycle.json.apps). Imprime una línea por condición con ✔/✘, cierra con APROBADO o BLOQUEADO y sale 0/1 (--json para agentes); en GATE A además dice cuál es el próximo ciclo y qué flow sugiere. Los invariantes no cambian nunca: spec registrada, módulo en global.json, cycle.json in-progress antes de la primera línea de código, tasks.json con tasks y ninguna task en done sin su usage. Lo que cambia es la forma — flow full (brief · functional · planner · architect), reduced (brief) o lite (plan.md, un solo actor) — y lo decide sdd/global.json → profile: team abre full, solo abre lite, y los prefijos [LITE] / [FULL] en el pedido le ganan al perfil.',
   },
   {
     name: 'FIX GATE',
     rule: 'Los bugs urgentes no esperan un ciclo completo — pero quedan registrados.',
-    how: 'Prefijos [HOTFIX] [BUGFIX] [FIX] [IMPROVEMENT] activan un bypass liviano con trazabilidad en fixes.json.',
+    how: 'Prefijos [HOTFIX] [BUGFIX] [FIX] [IMPROVEMENT] activan un bypass liviano con trazabilidad en fixes.json. Con profile: solo el atajo es más corto todavía: sin cuestionario (el actor completa fixes.json desde el pedido mismo y pregunta solo lo que no puede deducir), documento mínimo (problema · solución · archivos) y elegibilidad reducida a "no crea contratos ni entidades nuevas" — registro, usage, fragmento de contexto y sdd:validate siguen igual.',
   },
   {
     name: 'CONTEXTO GATE',
@@ -455,6 +459,7 @@ export const SERVICE_CATALOG = ['postgres', 'redis', 'rabbitmq', 'minio'];
 
 export const SDD_SCRIPTS = [
   { cmd: 'pnpm sdd:validate', what: 'Valida TODOS los registros contra sus schemas + reglas cruzadas + regla de portabilidad' },
+  { cmd: 'pnpm sdd:gate', what: 'Contesta el SPEC GATE: <spec-id|slug> para abrir un ciclo (GATE A) y <spec-id|slug> cycle-XX para habilitar el código (GATE B). Una línea por condición, APROBADO/BLOQUEADO, exit 0/1 y --json para agentes' },
   { cmd: 'pnpm sdd:docs', what: 'Visor del sistema SDD — vanilla JS, cero dependencias, funciona offline' },
   { cmd: 'pnpm setup:agents', what: 'Symlinks del arnés multi-proveedor: .claude/, .github/, .agents/, .agent/, .gemini/, AGENTS.md, CLAUDE.md, GEMINI.md' },
   { cmd: 'pnpm sdd:rebuild-tasks-index', what: 'Regenera el índice de tasks desde los tasks.json per-cycle' },
@@ -485,6 +490,7 @@ export const HARNESSES: Harness[] = [
     reads: [
       'AGENTS.md → sdd/dual-harness/AGENTS.md',
       '.github/agents · skills · prompts (custom agents + prompt files)',
+      '.github/copilot-instructions.md — archivo real (no symlink: los lectores server-side de GitHub no los siguen), sembrado por pnpm setup:agents desde sdd/dual-harness/copilot-instructions.md solo si no existe; después es del proyecto y nunca se pisa',
     ],
     models:
       'Los 8 agentes SDD llevan model: pinneado por rol en el frontmatter (alias Claude opus/sonnet); el equipo lo mapea una vez al modelo del mismo tier de su org. En Copilot CLI: --model y --reasoning-effort.',
@@ -645,7 +651,7 @@ export const UI = {
     title2: ' Specs antes que código.',
     body: ' genera repos con la metodología SDD integrada: 8 agentes especializados, gates que impiden codear sin diseño, registros validados por schema y un arnés multi-proveedor que Claude Code, GitHub Copilot y Gemini leen por igual.',
     cta: 'Ver los 3 modos',
-    chips: ['8 agentes SDD', '19 skills', '5 gates', 'schemas estrictos', 'costos en vivo', 'memoria portable', 'Nx · standalone · existente'],
+    chips: ['8 agentes SDD', '19 skills', '5 gates', 'SPEC GATE como comando', 'flow lite · perfil solo', 'schemas estrictos', 'costos en vivo', 'memoria portable', 'Nx · standalone · existente'],
   },
   modes: {
     kicker: '01 — los tres modos',
@@ -666,6 +672,7 @@ export const UI = {
     features: [
       { t: 'Telemetría honesta', d: 'Al cerrar cada ciclo se registran tokens por proveedor/modelo y minutos en cycle.json → metrics.usage — es obligatorio, y va marcado approx: true cuando el arnés no expone contador, así la estimación se declara en vez de esconderse. Cada agente suma su propia unidad en by_agent al cerrarla; by_tier se deriva de ahí. La fuente agent-usage-notification (Claude Code) es exacta, no estimada. El costo agéntico sale de tarifas editables en sdd/pricing.json; la estimación tradicional, de las horas que ya estiman tus tasks.' },
       { t: 'rtk activo por defecto', d: 'Desde el kit v0.12.0 la salida de los comandos de shell (git, pnpm, vitest, tsc, eslint…) llega comprimida al agente — rtk reporta 60–90% menos texto — sin tocar la lectura de archivos y sin que el dev haga nada: la instalación y el update dejan el hook puesto. El interruptor vive en sdd/tools.json (pnpm sdd:rtk -- --disable), es best effort —si el binario falta, el comando corre igual— y el ahorro se ve en la pestaña RTK de Costos.' },
+      { t: 'Menos contexto por sesión (v0.13.0)', d: 'El arnés raíz que se carga siempre pasó de ~32 KB a ~22 KB: la definición completa de los gates y del contrato de telemetría se mudó a sdd/dual-harness/rules/, que se lee cuando hace falta. En la misma línea, el SPEC GATE se contesta con pnpm sdd:gate en vez de leer diez archivos a mano, y el flow lite (perfil solo) resuelve el ciclo con un solo actor y un plan.md en lugar de cuatro documentos y cinco agentes — menos tokens por ciclo, exactamente los mismos invariantes.' },
       { t: 'Reactividad quirúrgica', d: 'El visor pollea un fingerprint POR ÁREA de los registros cada 4 segundos. Solo re-renderiza tu vista si cambió un área de la que depende: cerrar un ciclo actualiza Costos y Ciclos, pero no te toca la vista de Agentes.' },
       { t: 'Tu UI queda intacta', d: 'Secciones expandidas, búsquedas escritas y posición de scroll se preservan en cada actualización. Y si tenés un documento abierto o la pestaña oculta, el refresh espera. En hosting estático, el botón Actualizar de siempre.' },
     ],
@@ -705,9 +712,9 @@ export const UI = {
   methodology: {
     kicker: '05 — la metodología',
     title: 'Siete agentes, cinco gates, cero improvisación',
-    lead: 'Cada feature atraviesa un ciclo de diseño antes de tocar código. Los agentes escriben artefactos verificables; los gates los exigen.',
+    lead: 'Cada feature atraviesa un ciclo de diseño antes de tocar código. Los agentes escriben artefactos verificables; los gates los exigen. En el flow lite (perfil solo) los siete roles los cubre un solo actor: abre el ciclo, escribe plan.md, implementa task por task y cierra como reviewer — sin fan-out de subagentes y con los mismos gates.',
     footnote1: 'specs por autor: spec-jdoe-001-user-onboarding / cycles/cycle-01/',
-    footnote2: '6 artefactos por ciclo — brief · functional · planner · architect · tasks · cycle',
+    footnote2: 'artefactos por ciclo — full: brief · functional · planner · architect · tasks · cycle / lite: plan · tasks · cycle',
   },
   multiHarness: {
     kicker: '06 — el arnés',
@@ -717,7 +724,7 @@ export const UI = {
     modelsLabel: 'Regla de modelos (⚙️)',
     dualNote: {
       title: 'La salvedad del nombre: ya no es «dual»',
-      body: 'El arnés nació dual — Claude Code y GitHub Copilot — y así se llamó su carpeta. Desde v0.7.0 es multi-harness: se sumó Gemini con dos superficies (Antigravity IDE y Gemini CLI). El directorio sdd/dual-harness/ conserva el nombre por compatibilidad (los hashes de kit.json y update sdd dependen de esa ruta), pero adentro viven las tres ediciones del mismo contrato — AGENTS.md, CLAUDE.md y GEMINI.md — más las rules condensadas de Antigravity en rules/.',
+      body: 'El arnés nació dual — Claude Code y GitHub Copilot — y así se llamó su carpeta. Desde v0.7.0 es multi-harness: se sumó Gemini con dos superficies (Antigravity IDE y Gemini CLI). El directorio sdd/dual-harness/ conserva el nombre por compatibilidad (los hashes de kit.json y update sdd dependen de esa ruta), pero adentro viven las tres ediciones del mismo contrato — AGENTS.md, CLAUDE.md y GEMINI.md — más las rules de Antigravity en rules/ y copilot-instructions.md. Desde v0.13.0 el arnés está en dos capas: la capa 1 son los archivos raíz, que se cargan siempre y quedaron en ~22 KB (antes ~32) con las reglas y los gates en forma corta y punteros; la capa 2 es sdd/dual-harness/rules/, que se lee cuando hace falta y guarda las definiciones canónicas — sdd-gates.md (el SPEC GATE completo, en sus dos momentos, con los flows y el perfil) y sdd-model-budget.md (el contrato de telemetría: quién registra qué y cuándo, la tabla de fuentes por arnés y las reglas del validador). Si un gate cambia, cambia en un solo archivo.',
     },
     telemetryNote:
       'Los cuatro registran la misma telemetría y es obligatoria: cycle.json → metrics.usage.by_agent[] (uno por agente que cerró una unidad, con proveedor/modelo — claude/opus, gemini/pro, copilot/claude-sonnet; Antigravity va bajo gemini/*), de donde se deriva by_tier, más usage por task y por fix. Declarar proveedor y modelo no es opcional: desde 2026-09-02 el validador falla (antes: warning) si falta. Los arneses sin contador por sesión (Copilot, Antigravity) registran una estimación declarada con approx: true, y la vista Costos la muestra como estimado en la columna Origen — nunca se omite.',
@@ -729,7 +736,9 @@ export const UI = {
     invokeNote: '/sdd-steward sin argumentos ejecuta el status completo. El mismo comando existe en los cuatro arneses — slash command en Claude Code, prompt en Copilot, workflow en Antigravity, comando TOML en Gemini CLI — y lo crea pnpm setup:agents.',
     examplesTitle: 'El día a día, en una línea',
     examples: [
-      { cmd: '/sdd-steward', what: 'Status completo: versión del kit vs npm, módulos, ciclos en vuelo, fixes abiertos, memoria, validate y salud de los symlinks' },
+      { cmd: '/sdd-steward', what: 'Status completo: versión del kit vs npm, perfil del repo (team/solo) y el flow que abre por defecto, módulos, ciclos en vuelo, fixes abiertos, memoria, validate y salud de los symlinks' },
+      { cmd: '/sdd-steward pasame a perfil solo', what: 'Cambia sdd/global.json → profile y explica qué cambia: los ciclos nuevos se abren lite, los ya abiertos conservan su flow, y una spec que crea contratos que otro subproyecto consume vuelve a full. Es el único registro que el steward edita, y solo a pedido explícito' },
+      { cmd: '/sdd-steward ¿qué me ahorra el flow lite?', what: 'Explica los flows desde sdd/dual-harness/rules/sdd-gates.md: plan.md en lugar de los cuatro documentos, un solo actor, el contexto leído una vez — con los invariantes y el cierre intactos' },
       { cmd: '/sdd-steward actualizá la librería', what: 'Conduce update sdd con el checklist post-update: conflictos *.new, setup:agents, validate en verde' },
       { cmd: '/sdd-steward arrancá esta idea: …', what: 'Intake mínimo y delegación a sdd-hermes — el loop idea → producto con sus checkpoints humanos' },
       { cmd: '/sdd-steward ¿cuánto gastamos por proveedor?', what: 'Agrega la telemetría de ciclos, tasks y fixes con las tarifas por proveedor/modelo de pricing.json' },

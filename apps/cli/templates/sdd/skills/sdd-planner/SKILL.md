@@ -22,7 +22,7 @@ description: Skill del Agente Planner SDD. Convierte historias de usuario en tas
 
 1. **Una task = una acción técnica verificable de ≤ 1 día** (máx 5 SP). Si supera 8h → dividirla.
 2. **IDs:** `TASK-[NNN]` (`TASK-001`, `TASK-002`…) — el scope es el archivo del ciclo, sin prefijo de spec/ciclo.
-3. **Toda task cubre al menos una HU** (`user_stories`); `[]` solo si el ciclo es `flow: "reduced"`.
+3. **Toda task cubre al menos una HU** (`user_stories`); `[]` solo si el ciclo es `flow: "reduced"` o `"lite"`.
 4. **`estimation_hours` y `story_points` obligatorios.** Escala: ≤1h→1SP · 2h→2SP · 3h→3SP · 4h→5SP · >5h→8SP.
 5. **Camino crítico explícito:** `depends_on` solo con IDs del mismo archivo; identificar qué bloquea qué.
    Ordenar las tasks para que las dependencias siempre apunten hacia arriba (orden topológico).

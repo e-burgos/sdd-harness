@@ -12,11 +12,14 @@ import {
   toWorkspaceOptions,
 } from "../config/load.js";
 import { IDEA_FILENAME } from "../generators/idea.generator.js";
+import { parseProfile } from "../generators/sdd.generator.js";
+import type { SddProfile } from "../generators/sdd.generator.js";
 import { CONFIG_SCHEMA_FILENAME } from "../config/json-schema.js";
 
 /** Flags de destino compartidos por las tres vías de init. */
 interface TargetFlags {
   here: boolean;
+  profile?: SddProfile;
   dir?: string;
   skipVerify: boolean;
 }
@@ -159,15 +162,29 @@ export const initCommand = defineCommand({
         "Skip the FASE 3 gate (sdd:validate + nx run-many -t lint test build) that init runs and fails on",
       default: false,
     },
+    profile: {
+      type: "string",
+      description:
+        "Working profile written to sdd/global.json: team (full cycles, default) | solo (lite cycles, single actor). With --config, sdd.profile wins when set",
+    },
   },
   async run({ args }) {
     warnIfNxRootMismatch();
     p.intro(pc.bgCyan(pc.black(" harness init ")));
 
+    let profile: SddProfile | undefined;
+    try {
+      profile = parseProfile(args.profile);
+    } catch (err) {
+      logger.error((err as Error).message);
+      process.exit(1);
+    }
+
     const target: TargetFlags = {
       here: args.here,
       dir: args.dir,
       skipVerify: args.skipVerify,
+      profile,
     };
 
     if (args.config) {
@@ -298,6 +315,7 @@ async function runConfigFlow(
     if (config.mode === "standalone") {
       await generateStandalone({
         ...toStandaloneOptions(config),
+        sddProfile: config.sdd?.profile ?? flags.profile,
         targetDir,
         harnessFiles,
         skipVerify: flags.skipVerify,
@@ -305,6 +323,7 @@ async function runConfigFlow(
     } else {
       await generateWorkspace({
         ...toWorkspaceOptions(config),
+        sddProfile: config.sdd?.profile ?? flags.profile,
         targetDir,
         harnessFiles,
         skipVerify: flags.skipVerify,
@@ -378,6 +397,7 @@ async function runStandaloneFlow(
       description,
       appType: appType as string,
       services: services as string[],
+      sddProfile: flags.profile,
       ...resolveInitTarget(process.cwd(), projectName, flags),
       harnessFiles: harnessFilesNextTo(undefined, process.cwd()),
       skipVerify: flags.skipVerify,
@@ -552,6 +572,7 @@ async function runNxFlow(
       apps,
       libs,
       services: services as string[],
+      sddProfile: flags.profile,
       ...resolveInitTarget(process.cwd(), projectName, flags),
       harnessFiles: harnessFilesNextTo(undefined, process.cwd()),
       skipVerify: flags.skipVerify,

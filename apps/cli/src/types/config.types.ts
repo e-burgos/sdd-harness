@@ -53,6 +53,8 @@ export interface ModuleSeed {
 export interface SDDConfig {
   enabled: boolean;
   author?: string;
+  /** team (ciclos full, default) | solo (ciclos lite, un solo actor) → sdd/global.json.profile */
+  profile?: 'team' | 'solo';
   modules: Array<string | ModuleSeed>;
   cycles?: CycleConfig[];
   skills?: {
