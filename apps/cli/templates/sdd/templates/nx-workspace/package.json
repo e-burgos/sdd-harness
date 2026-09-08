@@ -14,6 +14,7 @@
     "sdd:validate": "node sdd/scripts/validate-sdd.mjs",
     "sdd:rebuild-tasks-index": "node sdd/scripts/rebuild-tasks-index.mjs",
     "sdd:rebuild-catalog": "node sdd/scripts/rebuild-catalog.mjs",
+    "sdd:gate": "node sdd/scripts/spec-gate.mjs",
     "sdd:rtk": "node sdd/scripts/setup-rtk.mjs",
     "postinstall": "node -e \"const f='sdd/scripts/setup-rtk.mjs';if(require('fs').existsSync(f)){require('child_process').execFileSync(process.execPath,[f],{stdio:'inherit'})}\""
   },

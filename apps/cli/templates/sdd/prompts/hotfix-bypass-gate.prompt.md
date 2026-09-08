@@ -13,6 +13,13 @@ El FIX GATE es un **bypass controlado del SPEC GATE**. No lo elimina — lo reem
 El SPEC GATE normal exige spec, ciclo completo, agentes funcional/planner/architect, etc.  
 El FIX GATE exige: **justificación + registro + documentación**.
 
+> **`profile: solo`** (`sdd/global.json`, fuente: `sdd/dual-harness/rules/sdd-gates.md` § FIX
+> GATE): el proceso es el mismo con tres atajos — el PASO 2 no es un cuestionario (el actor
+> completa los datos desde el pedido y pregunta solo lo que no puede deducir), el PASO 3 se
+> reduce a "no crea contratos ni entidades nuevas", y el PASO 6 usa el template mínimo
+> (problema · solución · archivos). Registro en `fixes.json`, `usage`, fragmento de contexto y
+> `pnpm sdd:validate` no se recortan.
+
 ---
 
 ## Palabras clave activadoras
@@ -57,7 +64,8 @@ Confirmá los siguientes datos para proceder:
 
 ### PASO 2 — Recolectar datos del fix (preguntar al desarrollador)
 
-El orquestador solicita los siguientes datos:
+El orquestador solicita los siguientes datos (con `profile: solo`: los completa desde el
+pedido y solo pregunta los que falten):
 
 ```
 1. Tipo exacto: [HOTFIX] / [BUGFIX] / [IMPROVEMENT]
@@ -70,7 +78,7 @@ El orquestador solicita los siguientes datos:
 
 ### PASO 3 — Validar elegibilidad
 
-Antes de registrar, verificar:
+Antes de registrar, verificar (con `profile: solo` solo aplican las tres primeras):
 
 ```
 [ ] El fix NO modifica el contrato de API (nuevos endpoints requieren ciclo SDD)
@@ -127,7 +135,8 @@ El ID sigue la convención: `FIX-[gh-user]-[spec-NNN]-[seq]` para fixes vinculad
 
 - **Fix vinculado a una spec:** crear `sdd/specs/{spec-id}/fixes/fix-[gh-user]-[spec-NNN]-[seq].md`
 - **Fix repo-level (sin spec):** crear `sdd/fixes/fix-[gh-user]-[seq].md`
-- Usar el template de la sección 9 de `sdd/skills/sdd-file-structure/SKILL.md`.
+- Usar el template de la sección 9 de `sdd/skills/sdd-file-structure/SKILL.md` (con
+  `profile: solo`, el template mínimo de la misma sección: problema · solución · archivos).
 - El nombre del archivo usa kebab-case del ID: `FIX-jdoe-001` → `fix-jdoe-001.md`
 
 ### PASO 7 — Autorizar al implementador

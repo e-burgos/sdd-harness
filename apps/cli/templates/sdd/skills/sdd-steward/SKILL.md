@@ -9,7 +9,7 @@ description: Conserje del kit SDD - puerta de entrada para status del harness, a
 
 - El pedido es sobre el **kit en sí**: "¿en qué estado está el SDD?", "actualizá
   la librería", "¿cuánto llevamos gastado?", "¿los arneses están sanos?",
-  "¿cómo funciona el FIX GATE?".
+  "¿cómo funciona el FIX GATE?", "pasame a modo solo / ciclos lite".
 - El pedido es difuso y hay que **clasificarlo** antes de tocar nada.
 - NO invocarla para trabajar un ciclo ya ruteado — eso es del `sdd-orchestrator`
   y sus agentes.
@@ -34,6 +34,8 @@ description: Conserje del kit SDD - puerta de entrada para status del harness, a
 | ¿Qué versión del kit hay instalada?   | `sdd/kit.json` → `kit_version`                                   |
 | ¿Hay versión nueva?                   | `npm view @e-burgos/sdd-harness version`                         |
 | ¿Qué módulos hay y en qué estado?     | `sdd/global.json` → `*_modules`                                  |
+| ¿En qué perfil trabaja el repo?       | `sdd/global.json` → `profile` (ausente = `team`)                 |
+| ¿Se puede abrir/implementar un ciclo? | `pnpm sdd:gate <spec-id> [cycle-XX]` — nunca contestarlo a mano  |
 | ¿Qué specs/ciclos están en vuelo?     | `sdd/specs/index.json` + `cycle.json` de los ciclos in-progress  |
 | ¿Qué fixes hay pendientes?            | `sdd/fixes.json` → `status` != validated/absorbed                |
 | ¿Qué aprendimos hasta acá?            | `sdd/memory/lessons.md` (¿journal ≥5? → avisar destilación)      |
@@ -49,14 +51,15 @@ description: Conserje del kit SDD - puerta de entrada para status del harness, a
 Reporte compacto, en este orden, leyendo solo las fuentes del mapa:
 
 1. **Kit**: versión instalada vs npm latest → "al día" o "update disponible".
-2. **Módulos**: pending / in-progress / completed (de `global.json`).
-3. **Ciclos en vuelo**: spec, ciclo, fase, tasks done/total.
-4. **Fixes abiertos**: id, tipo, severidad.
-5. **Memoria**: fecha de última destilación; avisar si `journal/` acumula ≥5.
-6. **Registros**: resultado de `pnpm sdd:validate` (una línea).
-7. **Arneses**: existencia de los symlinks raíz (`AGENTS.md`, `CLAUDE.md`,
-   `GEMINI.md`) y de `.claude/ .github/ .agents/ .agent/ .gemini/` — si falta
-   alguno, ofrecer `pnpm setup:agents`.
+2. **Perfil**: `team` o `solo` (de `global.json → profile`) y qué flow abre por defecto.
+3. **Módulos**: pending / in-progress / completed (de `global.json`).
+4. **Ciclos en vuelo**: spec, ciclo, flow, fase, tasks done/total.
+5. **Fixes abiertos**: id, tipo, severidad.
+6. **Memoria**: fecha de última destilación; avisar si `journal/` acumula ≥5.
+7. **Registros**: resultado de `pnpm sdd:validate` (una línea).
+8. **Arneses**: existencia de los symlinks raíz (`AGENTS.md`, `CLAUDE.md`,
+   `GEMINI.md`), de `.github/copilot-instructions.md` y de `.claude/ .github/ .agents/
+   .agent/ .gemini/` — si falta alguno, ofrecer `pnpm setup:agents`.
 8. **rtk**: estado del interruptor (`sdd/tools.json`) y del binario vía
    `node sdd/scripts/setup-rtk.mjs --status`; si falta el binario, ofrecer
    `pnpm sdd:rtk`.
@@ -119,6 +122,34 @@ rtk comprime la salida de los comandos de shell que leen los agentes y viene
 5. **Nunca apagarlo por iniciativa propia** — la decisión es del dev.
 6. **Los números viven en el visor**: `pnpm sdd:docs` → Costos → pestaña **RTK**
    (son estimaciones y son de la máquina que corre el visor).
+
+## Playbook 6 — Perfil de trabajo y flow de los ciclos (`team` ↔ `solo`)
+
+El perfil decide la **forma** del SPEC GATE, nunca su fondo (fuente:
+`sdd/dual-harness/rules/sdd-gates.md` § Flow):
+
+| Perfil | Flow por defecto | Qué cambia                                                                                   |
+| ------ | ---------------- | -------------------------------------------------------------------------------------------- |
+| `team` | `full`           | Un rol por documento (brief/functional/planner/architect), implementores, reviewer; FIX GATE con cuestionario |
+| `solo` | `lite`           | Un solo actor con `plan.md` + `tasks.json`; FIX GATE sin cuestionario y template mínimo       |
+
+Invariantes en los dos: spec registrada, `cycle.json` in-progress antes del código, `tasks.json`,
+`usage` por task, CONTEXTO/MEMORIA GATE y `sdd:validate` al cerrar.
+
+1. **Solo a pedido explícito del dev.** Nunca cambiar el perfil por iniciativa propia ni
+   porque "el equipo es chico".
+2. **Cambiar**: editar `sdd/global.json → profile` (`"team"` o `"solo"`; borrar la clave
+   equivale a `team`). Es la única escritura manual de registro permitida al steward.
+3. **Verificar**: `pnpm sdd:validate` en verde y `pnpm sdd:gate <spec-id>` sobre una spec
+   abierta muestra el flow sugerido nuevo.
+4. **Explicar el efecto**: ciclos ya abiertos conservan su `flow` (queda en `cycle.json`);
+   el perfil solo afecta ciclos nuevos. Un pedido puntual se fuerza con `[LITE]`/`[FULL]`
+   sin tocar el perfil.
+5. **Advertir las excepciones**: aunque el perfil sea `solo`, una spec que crea contratos
+   que otro subproyecto consume (tablas, endpoints) o tiene dependientes se abre `full`; y
+   si un ciclo `lite` igual los creó, `sdd:validate` avisa que el próximo va `full`.
+6. Duda de metodología sobre flows ("¿qué me ahorra lite?", "¿qué pierdo?"): responder desde
+   `sdd/dual-harness/rules/sdd-gates.md` y `sdd/documentation/` — lectura quirúrgica.
 
 ## Ruteo (pedidos que NO son del steward)
 

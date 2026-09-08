@@ -50,6 +50,7 @@ contexts from any project. Every registry is empty and validates against its sch
        "setup:agents": "node -e \"if(process.platform==='win32'){require('child_process').execSync('powershell -ExecutionPolicy Bypass -File sdd/scripts/setup-agents.ps1',{stdio:'inherit'})}else{require('child_process').execSync('bash sdd/scripts/setup-agents.sh',{stdio:'inherit'})}\"",
        "sdd:docs": "node sdd/docs/serve.mjs",
        "sdd:validate": "node sdd/scripts/validate-sdd.mjs",
+       "sdd:gate": "node sdd/scripts/spec-gate.mjs",
        "sdd:rebuild-tasks-index": "node sdd/scripts/rebuild-tasks-index.mjs",
        "sdd:rebuild-catalog": "node sdd/scripts/rebuild-catalog.mjs"
      }
@@ -68,6 +69,11 @@ contexts from any project. Every registry is empty and validates against its sch
    the kit items are linked inside them; on a name collision (your own
    `.github/skills/sdd-reviewer/`, a hand-written root `AGENTS.md`) yours stays and the kit
    version lands next to it as `<name>.new`, listed at the end for you to merge.
+
+   It also **seeds** `.github/copilot-instructions.md` from
+   `sdd/dual-harness/copilot-instructions.md` **only if it does not exist** (it is a real file,
+   not a symlink: GitHub's server-side readers do not follow those). An existing file is never
+   overwritten.
 
 4. **Fill in the templates** — look for the `[...]` markers:
    - `sdd/global.json` → `project`, `description`, `monorepo` (real apps/libs).
@@ -89,6 +95,27 @@ contexts from any project. Every registry is empty and validates against its sch
    (`.github/workflows/sdd-validate.yml`) so every PR touching `sdd/**` runs
    `pnpm sdd:validate`.
 
+## Working profile (`team` | `solo`)
+
+`sdd/global.json → profile` decides the **flow** new cycles open with: `team` (default, may be
+omitted) opens `full` cycles; `solo` opens `lite` cycles (a single actor, `plan.md` instead of the
+four documents). It can be set from the CLI:
+
+```bash
+npx @e-burgos/sdd-harness init --profile solo          # when generating the repo
+npx @e-burgos/sdd-harness configure sdd --profile team # on an already-generated repo
+```
+
+With `init --config`, the same option goes in the configuration file:
+
+```json
+{ "sdd": { "profile": "solo" } }
+```
+
+The key is only written to `sdd/global.json` when you pass it; without it the repo stays on
+`team`. Afterwards the **sdd-steward** changes it at the dev's request. Flow details:
+`README.md` → SPEC GATE.
+
 ## What is included
 
 | Folder / file      | Contents                                                                                        |
@@ -101,9 +128,9 @@ contexts from any project. Every registry is empty and validates against its sch
 | `pricing.json`     | Editable per-provider rates for the viewer's Costs dashboard (`claude/*`, `gemini/*`, `copilot/*`) |
 | `tools.json`       | rtk switch (`enabled`, `auto_install`) — project data: `update sdd` never overwrites it         |
 | `schemas/`         | Strict JSON Schemas for every registry                                                          |
-| `scripts/`         | validate, rebuild-tasks-index, rebuild-catalog, setup-agents (bash + PowerShell) and the three rtk ones: `setup-rtk.mjs`, `rtk-hook.mjs`, `rtk-common.mjs` |
+| `scripts/`         | validate, spec-gate (`sdd:gate`), rebuild-tasks-index, rebuild-catalog, setup-agents (bash + PowerShell) and the three rtk ones: `setup-rtk.mjs`, `rtk-hook.mjs`, `rtk-common.mjs` |
 | `docs/`            | Portable, bilingual documentation viewer (vanilla JS, zero deps)                                |
-| `dual-harness/`    | CLAUDE.md / AGENTS.md / GEMINI.md to link at the repo root, plus `rules/` for Antigravity        |
+| `dual-harness/`    | CLAUDE.md / AGENTS.md / GEMINI.md to link at the repo root, `copilot-instructions.md` (seed for `.github/`) plus `rules/` (canonical gates and telemetry) |
 | `context/`         | Constitution and context prompt templates (global + example)                                    |
 | `specs/`, `fixes/` | Empty, ready for the first specs and fixes                                                      |
 | `*.json`           | Empty, valid state registries (`sdd:validate` OK)                                               |

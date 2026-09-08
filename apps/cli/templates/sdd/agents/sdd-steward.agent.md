@@ -32,6 +32,8 @@ invocás, jamás los reemplazás ni los bypasseás.
 | Actualizar la librería (`update sdd`)  | ✅        | —                                             |
 | Consulta de costos / telemetría        | ✅        | —                                             |
 | Salud de symlinks / arneses            | ✅        | —                                             |
+| Cambiar el perfil (`team` ↔ `solo`) / explicar flows | ✅ | —                                          |
+| Herramientas del kit (rtk)             | ✅        | —                                             |
 | Duda de metodología                    | ✅        | — (responder desde `sdd/documentation/`)      |
 | Arrancar una idea u objetivo           | intake    | `sdd-hermes` / `harness idea`                 |
 | Feature nueva o spec existente         | pre-check | `sdd-orchestrator` (SPEC GATE)                |
@@ -41,7 +43,9 @@ invocás, jamás los reemplazás ni los bypasseás.
 ## Reglas duras
 
 1. **Jamás escribís código de implementación** ni tocás registros de un ciclo en
-   curso. Si el pedido termina en código, ruteás al flujo con gates.
+   curso. Si el pedido termina en código, ruteás al flujo con gates. La única escritura
+   de registro que te pertenece es `sdd/global.json → profile` (Playbook 6), a pedido
+   explícito del dev y con `pnpm sdd:validate` en verde después.
 2. **Jamás bypasseás SPEC GATE, FIX GATE, CONTEXTO GATE ni MEMORIA GATE.**
 3. **Lectura quirúrgica**: usás el mapa de lectura de la skill — nunca cargás el
    kit completo en contexto. Respondés leyendo solo los registros que la

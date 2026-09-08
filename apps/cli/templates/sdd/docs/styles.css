@@ -960,6 +960,32 @@ button {
   border-color: var(--border-soft);
 }
 
+.stat-tile {
+  display: block;
+  min-width: 0;
+  text-decoration: none;
+}
+
+/* El valor achica y parte antes que desbordar: "US$ 9.625,00" no entra a 24px
+   en una columna angosta y quedaba recortado. */
+.stat-tile-value {
+  font-family: var(--font-mono);
+  font-size: clamp(var(--text-16), 0.55rem + 1.1vw, var(--text-24));
+  font-weight: var(--weight-semibold);
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.stat-tile-label {
+  margin-top: 4px;
+  font-family: var(--font-mono);
+  font-size: var(--text-10);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-widest);
+  color: var(--text-faint);
+  overflow-wrap: anywhere;
+}
+
 /* Dato secundario de una tile (porcentaje, delta): va aparte del valor para
    que el número principal no se parta en dos líneas cuando la tarjeta es angosta. */
 .tile-sub {
@@ -2105,9 +2131,15 @@ pre code {
   z-index: 1;
 }
 
+/* El SVG se dibuja 1:1 (fitVizCharts mide el ancho real): sin `width:100%` el
+   viewBox no reescala el texto y los ticks quedan en su tamaño de píxel. */
+.viz-host {
+  width: 100%;
+}
+
 .viz-svg {
   display: block;
-  width: 100%;
+  max-width: 100%;
   height: auto;
   overflow: visible;
 }

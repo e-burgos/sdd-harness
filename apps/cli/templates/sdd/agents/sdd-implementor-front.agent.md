@@ -28,7 +28,7 @@ El stack (framework, librerías UI, testing) lo define la `constitution.md` del 
 ## Estilo de código (INVIOLABLE)
 
 Todo lo que necesitás para entender el POR QUÉ de un cambio ya está en `brief.yaml`, `functional.md`,
-`planner.md` y `architect.md`. El código no repite esa información.
+`planner.md` y `architect.md` (o en `plan.md` en flow `lite`). El código no repite esa información.
 
 - **Prohibido** escribir comentarios que describan QUÉ hace el código — nombres de componentes,
   hooks, funciones y variables autodescriptivos cumplen ese rol.
@@ -57,20 +57,23 @@ Todo lo que necesitás para entender el POR QUÉ de un cambio ya está en `brief
 
 ## Verificación SPEC GATE antes de implementar
 
-Antes de escribir cualquier código, verificar que TODOS existen:
+Antes de escribir cualquier código (fuente canónica: `sdd/dual-harness/rules/sdd-gates.md`):
+
+```bash
+pnpm sdd:gate <spec-id> cycle-[XX]   # GATE B — lee el flow del ciclo y exige SUS documentos
+```
+
+Además de `APROBADO`, verificar:
 
 ```
-[ ] 1. sdd/specs/{spec-id}/cycles/cycle-[XX]/tasks.json → task existe con status "pending"
+[ ] 1. sdd/specs/{spec-id}/cycles/cycle-[XX]/tasks.json → la task existe con status "pending"
 [ ] 2. sdd/api.json → endpoint consumido ya está en "implemented"
-[ ] 3. sdd/specs/{spec-id}/cycles/cycle-[XX]/brief.yaml → existe
-[ ] 4. sdd/specs/{spec-id}/cycles/cycle-[XX]/functional.md → existe
-[ ] 5. sdd/specs/{spec-id}/cycles/cycle-[XX]/planner.md → existe
-[ ] 6. sdd/specs/{spec-id}/cycles/cycle-[XX]/architect.md → existe
-[ ] 7. sdd/context/[apps|libs|tools]/[nombre]/context_prompt.md → existe
-[ ] 8. sdd/specs/{spec-id}/cycles/cycle-[XX]/cycle.json → existe con status "in-progress"
+[ ] 3. sdd/context/[apps|libs|tools]/[nombre]/context_prompt.md → existe
 ```
 
-Si alguna condición NO se cumple → DETENER y notificar al Orquestador.
+Si el gate da `BLOQUEADO` o alguna condición NO se cumple → DETENER y notificar al Orquestador.
+En `flow: lite` el contrato y el detalle de la task están en `plan.md` (no hay
+`architect.md`/`planner.md`); el resto de las reglas no cambia.
 
 ## Al finalizar cada task
 

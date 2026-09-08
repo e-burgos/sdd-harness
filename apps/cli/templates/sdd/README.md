@@ -17,6 +17,7 @@
 ```bash
 pnpm sdd:docs        # visor interactivo con los tres documentos en la vista Ayuda
 pnpm sdd:validate    # valida todos los registros contra sus schemas
+pnpm sdd:gate <spec> [cycle-XX]   # SPEC GATE como comando: A (abrir ciclo) / B (implementar)
 ```
 
 - La única fuente del nombre y descripción del proyecto es [`global.json`](global.json) —

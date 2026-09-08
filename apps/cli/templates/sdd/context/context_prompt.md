@@ -58,24 +58,20 @@ El proyecto usa **Nx** como monorepo manager con **pnpm** como package manager. 
 
 Este proyecto usa **SDD**. Toda funcionalidad pasa por un ciclo de agentes antes de ser implementada. **NUNCA escribir código sin haber pasado por el ciclo.**
 
-### ⛔ SPEC GATE — Verificación obligatoria antes de implementar
+### ⛔ SPEC GATE — antes de implementar (fuente canónica: `sdd/dual-harness/rules/sdd-gates.md`)
 
-```
-1. ¿Existe sdd/specs/spec-[gh-user]-[NNN]-[slug]/spec-[gh-user]-[NNN]-[slug].spec.md?  → SI / NO
-2. ¿La spec está registrada en sdd/specs/index.json?                                   → SI / NO
-3. ¿El módulo está en in_progress_modules en global.json?                              → SI / NO
-4. ¿Existe sdd/specs/{spec-id}/cycles/cycle-[XX]/brief.yaml?                           → SI / NO
-5. ¿Existe sdd/specs/{spec-id}/cycles/cycle-[XX]/functional.md?                        → SI / NO
-6. ¿Existe sdd/specs/{spec-id}/cycles/cycle-[XX]/planner.md?                           → SI / NO
-7. ¿Existe sdd/specs/{spec-id}/cycles/cycle-[XX]/architect.md?                         → SI / NO
-8. ¿Existe sdd/specs/{spec-id}/cycles/cycle-[XX]/cycle.json (status: in-progress)?     → SI / NO
-9. ¿Existe sdd/context/[apps|libs|tools]/[nombre]/constitution.md?                           → SI / NO
+El gate lo responde un comando, no una lectura a mano:
+
+```bash
+pnpm sdd:gate <spec-id|slug>            # GATE A — ¿se puede abrir un ciclo?  (sdd-orchestrator)
+pnpm sdd:gate <spec-id|slug> cycle-XX   # GATE B — ¿se puede escribir código? (quien implementa)
 ```
 
-→ Si alguna respuesta es NO: usar `sdd/prompts/check-spec-before-implement.prompt.md`
-→ Solo si TODAS son SI: invocar `sdd/prompts/start-sdd-cycle.prompt.md`
+→ `BLOQUEADO`: completar lo que el script señala (`sdd/prompts/check-spec-before-implement.prompt.md`)
+→ `APROBADO` en A: `sdd/prompts/start-sdd-cycle.prompt.md` decide el **flow** (`full` · `reduced` ·
+`lite`) según `sdd/global.json → profile` (`team`/`solo`) o el prefijo `[LITE]`/`[FULL]` del pedido.
 
-### Los 7 agentes y su orden obligatorio
+### Los 7 agentes y su orden obligatorio (flow `full`)
 
 ```
 1. Orquestador  → lee especificación (sdd/specs/), crea `sdd/specs/{spec-id}/cycles/cycle-[XX]/brief.yaml`
@@ -87,11 +83,15 @@ Este proyecto usa **SDD**. Toda funcionalidad pasa por un ciclo de agentes antes
 7. Reviewer     → valida calidad, actualiza todos los JSONs de estado, cierra el ciclo
 ```
 
+> En `flow: lite` (perfil `solo` o prefijo `[LITE]`) **un solo actor** asume los sombreros en
+> ese orden: escribe `plan.md` (reemplaza brief/functional/planner/architect), crea `tasks.json`,
+> implementa y cierra como reviewer. Los gates de cierre son los mismos.
+
 ---
 
 ## 4. Reglas generales del proyecto
 
-1. **SPEC GATE:** Ninguna implementación sin spec + cycle_brief + historias + tasks + contratos
+1. **SPEC GATE:** Ninguna implementación sin `pnpm sdd:gate` en `APROBADO` (spec registrada, `cycle.json` in-progress, `tasks.json` y los documentos del flow)
 2. **Leer `sdd/global.json` antes de cualquier tarea**
 3. **Nunca escribir código sin haber pasado por el ciclo SDD**
 4. **Un módulo a la vez, en el orden de ciclos definido**

@@ -39,7 +39,22 @@ Si el cambio toca código/UI/config existente, el FIX GATE es obligatorio.
 
 ### Si la solicitud es funcionalidad nueva:
 
-Continuar con el flujo normal (Inputs requeridos → SPEC GATE → ciclo SDD).
+Continuar con el flujo normal (SPEC GATE A por script → decisión de flow → ciclo SDD).
+
+### Flow del ciclo (se decide una vez, al abrir — fuente: `sdd/dual-harness/rules/sdd-gates.md` § Flow)
+
+| Señal                                                        | Flow      |
+| ------------------------------------------------------------ | --------- |
+| Prefijo `[LITE]` en el pedido                                | `lite`    |
+| Prefijo `[FULL]` en el pedido                                | `full`    |
+| `sdd/global.json → profile: "solo"` (sin prefijo)            | `lite`    |
+| `profile: "team"` o ausente (sin prefijo)                    | `full`    |
+| La spec crea contratos que otro subproyecto consume, o tiene dependientes | `full` (aunque el perfil sea solo) |
+
+`flow: "lite"` = **vos sos el único actor**: escribís `plan.md` (reemplaza brief/functional/
+planner/architect), creás `tasks.json`, corrés el GATE B, implementás una task a la vez y cerrás
+como reviewer. Sin subagentes de documentos; los gates de cierre no se recortan. El perfil lo
+cambia el sdd-steward a pedido del dev — nunca vos.
 
 ---
 
@@ -59,8 +74,10 @@ Continuar con el flujo normal (Inputs requeridos → SPEC GATE → ciclo SDD).
 
 Antes de hacer cualquier cosa, leer en este orden (del más general al más específico):
 
-0. `sdd/skills/sdd-file-structure/SKILL.md` — **⛔ OBLIGATORIO: convenciones de naming, templates y checklist de ciclo**
-   0b. `sdd/skills/sdd-data-schemas/SKILL.md` — **⛔ OBLIGATORIO: schemas campo-a-campo de cada registro JSON (api.json, schema.json, components.json, tasks.json, fixes.json, global.json, cycle.json)**
+0. `pnpm sdd:gate <spec-id>` — **el SPEC GATE A lo responde el script**, no una lectura.
+   `sdd/skills/sdd-file-structure/SKILL.md` y `sdd/skills/sdd-data-schemas/SKILL.md` se
+   consultan **por sección, cuando toca escribir un artefacto** (el template de `brief.yaml`,
+   `cycle.json`, `plan.md`…), no como paso previo completo: son referencia, no gate.
 1. `sdd/context/context_prompt.md` — entry point global (gobernanza, links a subproyectos)
 2. `sdd/global.json` — estado actual del proyecto
 3. La especificación bajo `sdd/specs/` correspondiente al módulo
@@ -165,21 +182,19 @@ Prefijos explícitos reconocidos (facilitan la clasificación, pero no son oblig
 
 ## Proceso
 
-### PASO 0 — SPEC GATE (obligatorio, no omitir)
+### PASO 0 — SPEC GATE A (obligatorio, no omitir)
 
-Antes de cualquier otra acción, ejecutar esta verificación y reportar el resultado:
+Antes de cualquier otra acción:
 
-```
-[ ] 1. Existe sdd/specs/spec-[gh-user]-[NNN]-[slug]/spec-[gh-user]-[NNN]-[slug].spec.md
-       → si NO existe, DETENER y solicitar creación
-[ ] 2. La spec está registrada en sdd/specs/index.json → si NO, registrarla (append-only)
-[ ] 3. El módulo está en pending_modules o in_progress_modules de sdd/global.json → si NO, DETENER y agregar
-[ ] 4. La spec NO tiene otro ciclo con status "in-progress" → un ciclo activo POR SPEC
-       (otros devs pueden tener sus propias specs en progreso en paralelo — eso es válido)
-[ ] 5. Las dependencias de la spec (depends_on en index.json) están completed → si NO, DETENER
+```bash
+pnpm sdd:gate <spec-id|slug>     # A1 spec registrada · A2 módulo en global.json · A3 sin otro
+                                 # ciclo in-progress de la spec · A4 depends_on completed · A5 spec abierta
 ```
 
-Si alguna verificación falla → comunicar explícitamente qué falta y NO continuar.
+Pegar la salida como reporte del gate. `BLOQUEADO` → comunicar qué falta y NO continuar (si la
+spec no existe: `harness add spec`; si falta el ModuleEntry: agregarlo a `pending_modules`).
+`APROBADO` → fijar el **flow** (tabla de arriba) y seguir. Otros devs pueden tener sus propias
+specs en progreso en paralelo — el gate es por spec.
 
 ### PASO 1 — Leer estado y especificación
 
@@ -195,15 +210,20 @@ Si alguna verificación falla → comunicar explícitamente qué falta y NO cont
 
 ### PASO 3 — Registrar ciclo
 
-7. Crear el archivo `sdd/specs/{spec-id}/cycles/cycle-[XX]/brief.yaml` con el cycle_brief completo en formato YAML
-8. Crear `sdd/specs/{spec-id}/cycles/cycle-[XX]/cycle.json` con `status: "in-progress"` y
+7. `full`/`reduced`: crear `sdd/specs/{spec-id}/cycles/cycle-[XX]/brief.yaml` con el cycle_brief completo
+   en formato YAML. `lite`: escribir `plan.md` (template `sdd-file-structure` §3.8) — el brief
+   vive en su encabezado; no se crea `brief.yaml`
+8. Crear `sdd/specs/{spec-id}/cycles/cycle-[XX]/cycle.json` con `status: "in-progress"`, `flow` y
    `metrics` **con contadores en 0 y `usage: { tokens_in: 0, tokens_out: 0, by_agent: [] }`**
    (nunca `metrics: null` desde v0.11.0 — es el receptáculo donde cada agente hace push de su
    entrada al cerrar su unidad de trabajo; template canónico en `sdd-file-structure` §3.2 —
    valida contra `sdd/schemas/cycle.schema.json`)
 8b. Si este es el `cycle-01` de la spec y su entrada en `sdd/specs/index.json` tiene
     `status: "draft"` → pasarla a `"in-progress"` (no tocar otro campo de la entrada)
-9. El Planner creará `sdd/specs/{spec-id}/cycles/cycle-[XX]/tasks.json` — el índice `sdd/tasks.json` se regenera con `pnpm sdd:rebuild-tasks-index` (nunca editarlo a mano)
+9. El Planner creará `sdd/specs/{spec-id}/cycles/cycle-[XX]/tasks.json` (en `lite` lo creás vos,
+   con `flow: "lite"`) — el índice `sdd/tasks.json` se regenera con `pnpm sdd:rebuild-tasks-index`
+   (nunca editarlo a mano). Antes de implementar, quien implemente corre
+   `pnpm sdd:gate <spec-id> cycle-[XX]` (GATE B)
 10. Leer el contexto del subproyecto afectado en `sdd/context/[apps|libs|tools]/[nombre]/context_prompt.md` y adjuntarlo al brief para los agentes especializados
 11. Correr `pnpm sdd:validate` — el ciclo no queda registrado hasta que esté en verde
 
@@ -319,13 +339,15 @@ cycle_brief:
 
 ## Reglas
 
-- **SPEC GATE es inviolable** — sin spec no hay ciclo, sin ciclo no hay implementación
+- **SPEC GATE es inviolable** — sin spec no hay ciclo, sin ciclo no hay implementación; lo
+  responde `pnpm sdd:gate`, nunca una lectura a mano
+- **El flow se decide al abrir y no se cambia** — queda en `cycle.json` y `tasks.json`
 - Si el módulo tiene dependencias no completadas → alertar y detener
 - Si el ciclo es muy grande → dividir en sub-ciclos de máximo 2 semanas
 - Nunca pasar la especificación completa a un agente especializado
 - Cada agente recibe SOLO lo que necesita para su tarea
 - Al finalizar el ciclo, actualizar `sdd/global.json`
-- Crear SIEMPRE `sdd/specs/{spec-id}/cycles/cycle-[XX]/brief.yaml` antes de invocar cualquier otro agente
+- Crear SIEMPRE `sdd/specs/{spec-id}/cycles/cycle-[XX]/brief.yaml` antes de invocar cualquier otro agente (en `lite`, `plan.md`)
 - Leer SIEMPRE el contexto del subproyecto afectado en `sdd/context/[apps|libs|tools]/[nombre]/` e incluirlo en el brief
 - Los documentos de ciclo siguen la convención: `sdd/specs/{spec-id}/cycles/cycle-[XX]/brief.yaml`, `functional.md`, `planner.md`, `architect.md`, `cycle.json`. Documentos de soporte adicionales van en `cycle-[XX]/artifacts/`
 

@@ -31,15 +31,19 @@ Al recibir cualquier solicitud, clasificarla inmediatamente:
 
 ### Si es funcionalidad nueva
 
-Continuar con el flujo SDD normal (SPEC GATE → ciclos → agentes).
+Continuar con el flujo SDD normal (SPEC GATE A → flow → ciclo → agentes).
 
 ---
 
 ## Qué hace (flujo SDD normal)
 
-0. **Lee `sdd/skills/sdd-file-structure/SKILL.md`** — convenciones de naming, templates y checklist obligatorio
-1. Lee `sdd/global.json` para verificar el estado actual
-2. Verifica dependencias
+0. **Corre `pnpm sdd:gate <spec-id>`** (GATE A, fuente canónica `sdd/dual-harness/rules/sdd-gates.md`)
+   y pega la salida. `sdd-file-structure` y `sdd-data-schemas` se consultan por sección cuando
+   toca escribir cada artefacto — no se cargan enteras
+1. Lee `sdd/global.json` para verificar el estado actual y el `profile` (`team` → `full`,
+   `solo` → `lite`; el prefijo `[LITE]`/`[FULL]` del pedido gana). En `lite` sos el único actor:
+   `plan.md` (§3.8) + `tasks.json`, GATE B, implementación y cierre como reviewer
+2. Verifica dependencias (las cubre el gate)
 3. **Revisa `sdd/context/[apps|libs|tools]/[nombre]/updates/` del subproyecto involucrado**
    y, si hay fragmentos pendientes, los consolida (ver "Consolidación de contexto" abajo)
    antes de generar el brief. **Revisa también `sdd/memory/journal/`**: con ≥5 entradas,
@@ -47,8 +51,9 @@ Continuar con el flujo SDD normal (SPEC GATE → ciclos → agentes).
 4. Lee solo la sección relevante de la especificación bajo `sdd/specs/`
 5. Prepara el brief con el contexto mínimo por agente
 6. Mueve el módulo a `in_progress_modules` en `sdd/global.json`
-7. **Crea `sdd/specs/{spec-id}/cycles/cycle-[XX]/cycle.json` con `status: "in-progress"`** — obligatorio
-   antes de que cualquier agente implementador escriba código.
+7. **Crea `sdd/specs/{spec-id}/cycles/cycle-[XX]/cycle.json` con `status: "in-progress"` y `flow`** —
+   obligatorio antes de que cualquier agente implementador escriba código (GATE B:
+   `pnpm sdd:gate <spec-id> cycle-[XX]`).
 
 ## Consolidación de contexto (patrón changesets)
 

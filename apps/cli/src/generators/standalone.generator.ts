@@ -7,6 +7,7 @@ import { initGitRepo } from "../utils/git.js";
 import { logger } from "../utils/logger.js";
 import { generateDockerCompose, writeEnvExample } from "./docker.generator.js";
 import { generateSDD, ensureHarnessPackageJson } from "./sdd.generator.js";
+import type { SddProfile } from "./sdd.generator.js";
 import { seedModules } from "./spec.generator.js";
 import {
   applyVitePort,
@@ -29,6 +30,7 @@ export interface StandaloneOptions {
   services: string[];
   npmScopes?: NpmScope[];
   sddAuthor?: string;
+  sddProfile?: SddProfile;
   modules?: ModuleSeed[];
   /** Ver WorkspaceOptions.targetDir — mismo criterio de generación en el cwd. */
   targetDir?: string;
@@ -99,6 +101,7 @@ export async function generateStandalone(
       apps: [{ name: opts.projectName, type: opts.appType, port: opts.port }],
       libs: [],
       services: opts.services,
+      sddProfile: opts.sddProfile,
     },
     { layout: "standalone" },
   );

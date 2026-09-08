@@ -105,6 +105,7 @@ npx vitest run       # suite completa (incluye integración real)
 | `apps/cli/src/generators/idea.generator`       | `harness idea`: idea file (evidencia + decisiones + protocolo autosuficiente), stub de config y su JSON Schema |
 | `apps/cli/src/utils/blueprint.ts`              | Copia de blueprints con renombre de tokens                          |
 | `apps/cli/templates/sdd/`                      | **Kit SDD portable canónico** (se publica en npm)                   |
+| `apps/cli/templates/sdd/scripts/spec-gate.mjs` | SPEC GATE como comando (`pnpm sdd:gate <spec> [cycle-XX]`): GATE A apertura / GATE B implementación, forma según `flow` (full · reduced · lite). Fuente canónica de los gates: `templates/sdd/dual-harness/rules/sdd-gates.md`; los arneses raíz solo apuntan ahí |
 | `apps/cli/templates/sdd/scripts/rtk-*.mjs`     | Integración de rtk en el kit: `setup-rtk.mjs` (instalador + merge de hooks), `rtk-hook.mjs` (puente que llaman los hooks) y `rtk-common.mjs` (versión fijada y resolución del binario) |
 | `apps/cli/templates/workspace/`                | `eslint.config.mjs` del modo nx (la CLI agrega `@nx/eslint-plugin` + `typescript-eslint` a las deps) |
 | `apps/documentation/`                          | Sitio de docs interactivo (React/Vite/Tailwind v4, independiente). Contenido bilingüe en `src/data/content.ts` + `content.en.ts` — si cambia la CLI, actualizar ambos. Deploy automático a Cloudflare Pages vía `.github/workflows/deploy-docs.yml` (el proyecto de Pages es direct upload: no buildea solo) |

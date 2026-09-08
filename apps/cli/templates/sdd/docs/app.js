@@ -2503,9 +2503,9 @@ function dashboardStatCell({ value, label, href, accent = false, sub = '' }) {
     ? `<div class="tile-sub${accent ? ' tile-sub--accent' : ''}">${escapeHtml(String(sub))}</div>`
     : '';
   return `
-    <a class="tile" href="${escapeHtml(href)}" style="display:block;text-decoration:none">
-      <div style="font-family:var(--font-mono);font-size:var(--text-24);font-weight:var(--weight-semibold);white-space:nowrap;color:${valueColor}">${escapeHtml(String(value))}</div>
-      <div style="margin-top:4px;font-family:var(--font-mono);font-size:var(--text-10);text-transform:uppercase;letter-spacing:var(--tracking-widest);color:var(--text-faint)">${escapeHtml(label)}</div>
+    <a class="tile stat-tile" href="${escapeHtml(href)}">
+      <div class="stat-tile-value" style="color:${valueColor}">${escapeHtml(String(value))}</div>
+      <div class="stat-tile-label">${escapeHtml(label)}</div>
       ${subHtml}
     </a>
   `;
@@ -7919,7 +7919,78 @@ function vizShowsXLabel(index, count, every) {
   const last = count - 1;
   if (index === last) return true;
   if (index % every !== 0) return false;
-  return every === 1 || last - index >= Math.ceil(every / 2);
+  return every === 1 || last - index >= every;
+}
+
+/** Mono 10px ≈ 6px por caracter: adelgaza el eje x hasta que la etiqueta más larga entre. */
+function vizLabelEvery(points, slot) {
+  const widest = points.reduce(
+    (max, point) => Math.max(max, String(point.label ?? '').length),
+    0,
+  );
+  return Math.max(1, Math.ceil((widest * 6 + 8) / Math.max(1, slot)));
+}
+
+const VIZ_MIN_WIDTH = 240;
+const vizCharts = new Map();
+let vizChartSeq = 0;
+let vizResizeObserver = null;
+let vizResizeQueued = false;
+
+/**
+ * Los SVG se dibujan 1:1: el ancho real recién se conoce cuando el HTML está montado,
+ * así que cada gráfico deja un host con su spec y `fitVizCharts` lo vuelve a dibujar
+ * con el `clientWidth` medido. Sin esto el viewBox escalaba el texto al doble.
+ */
+function vizChart(kind, spec) {
+  const id = `viz${++vizChartSeq}`;
+  vizCharts.set(id, { kind, spec, host: null });
+  return `<div class="viz-host" data-viz="${id}">${vizChartSvg(kind, spec, spec.width)}</div>`;
+}
+
+function vizChartSvg(kind, spec, width) {
+  return kind === 'line'
+    ? vizLineSvg({ ...spec, width })
+    : vizColumnsSvg({ ...spec, width });
+}
+
+function vizChartObserver() {
+  if (vizResizeObserver || typeof ResizeObserver !== 'function') return vizResizeObserver;
+  vizResizeObserver = new ResizeObserver(() => {
+    if (vizResizeQueued) return;
+    vizResizeQueued = true;
+    requestAnimationFrame(() => {
+      vizResizeQueued = false;
+      fitVizCharts();
+    });
+  });
+  return vizResizeObserver;
+}
+
+function fitVizCharts(root) {
+  const hosts = (root ?? document).querySelectorAll('[data-viz]');
+  const observer = vizChartObserver();
+  const seen = new Set();
+  for (const host of hosts) {
+    const entry = vizCharts.get(host.dataset.viz);
+    if (!entry) continue;
+    seen.add(host.dataset.viz);
+    entry.host = host;
+    observer?.observe(host);
+    const measured = Math.round(host.clientWidth);
+    // Host todavía sin montar (o en una pestaña oculta): el observer reintenta.
+    if (measured <= 0) continue;
+    const width = Math.max(VIZ_MIN_WIDTH, measured);
+    if (host.dataset.vizWidth === String(width)) continue;
+    host.dataset.vizWidth = String(width);
+    host.innerHTML = vizChartSvg(entry.kind, entry.spec, width);
+  }
+  if (root) return;
+  for (const [id, entry] of vizCharts) {
+    if (seen.has(id)) continue;
+    if (entry.host) observer?.unobserve(entry.host);
+    vizCharts.delete(id);
+  }
 }
 
 function vizLegend(entries) {
@@ -7942,7 +8013,11 @@ function vizLegend(entries) {
  * reader aims at the slot, not at a 2px column. `labels` prints the value on each cap —
  * only for short categorical axes where the disparity between series is the story.
  */
-function vizColumns({
+function vizColumns(spec) {
+  return vizChart('columns', spec);
+}
+
+function vizColumnsSvg({
   points,
   series,
   format,
@@ -7970,7 +8045,7 @@ function vizColumns({
   const barW = Math.max(3, Math.min(24, (slot * 0.68 - (perSlot - 1) * 2) / perSlot));
   const groupW = barW * perSlot + (perSlot - 1) * 2;
   const ticks = 4;
-  const every = xLabelEvery ?? Math.max(1, Math.ceil(points.length / 8));
+  const every = Math.max(xLabelEvery ?? 1, vizLabelEvery(points, slot));
 
   const gridlines = Array.from({ length: ticks + 1 }, (_, index) => {
     const y = padTop + plotH - (plotH * index) / ticks;
@@ -8036,7 +8111,7 @@ function vizColumns({
     .join('');
 
   return `
-    <svg class="viz-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeHtml(t('Gráfico de columnas'))}">
+    <svg class="viz-svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeHtml(t('Gráfico de columnas'))}">
       ${gridlines}
       <line x1="${padLeft}" x2="${width - padRight}" y1="${padTop + plotH}" y2="${padTop + plotH}" class="viz-axis" />
       ${columns}
@@ -8044,7 +8119,11 @@ function vizColumns({
 }
 
 /** Single-series line with a soft area wash; the end marker carries a 2px surface ring. */
-function vizLine({ points, color, format, height = 170, width = 640 }) {
+function vizLine(spec) {
+  return vizChart('line', spec);
+}
+
+function vizLineSvg({ points, color, format, height = 170, width = 640 }) {
   const padLeft = 44;
   const padRight = 12;
   const padTop = 10;
@@ -8071,7 +8150,7 @@ function vizLine({ points, color, format, height = 170, width = 640 }) {
     coords.length > 1
       ? `${linePath}L${coords[coords.length - 1].x.toFixed(1)} ${padTop + plotH}L${coords[0].x.toFixed(1)} ${padTop + plotH}Z`
       : '';
-  const every = Math.max(1, Math.ceil(points.length / 8));
+  const every = vizLabelEvery(points, step || plotW);
   const labels = points
     .map((point, index) =>
       vizShowsXLabel(index, points.length, every)
@@ -8087,7 +8166,7 @@ function vizLine({ points, color, format, height = 170, width = 640 }) {
     .join('');
   const last = coords[coords.length - 1];
   return `
-    <svg class="viz-svg" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeHtml(t('Gráfico de línea'))}">
+    <svg class="viz-svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="${escapeHtml(t('Gráfico de línea'))}">
       ${gridlines}
       ${areaPath ? `<path d="${areaPath}" fill="${color}" fill-opacity="0.1" />` : ''}
       <path d="${linePath}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" />
@@ -8157,8 +8236,9 @@ function vizBarList({ rows, format, color, maxRows = 12 }) {
   }`;
 }
 
+// Tope de 4 por fila: con 7 KPIs, `auto-fit` los apretaba hasta recortar el valor.
 function costsKpiRow(cells) {
-  return `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;margin-bottom:20px">${cells.join('')}</div>`;
+  return `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(max(170px,calc(25% - 6px)),1fr));gap:8px;margin-bottom:20px">${cells.join('')}</div>`;
 }
 
 function costsTotals(units) {
@@ -8966,6 +9046,7 @@ async function renderCosts(container, params = []) {
   }
 
   await COSTS_TAB_RENDERERS[tab](container, data);
+  fitVizCharts(container);
   attachCostsTooltip(container);
 }
 
@@ -9386,6 +9467,7 @@ async function mountView(view, params) {
     }
     if (token !== mountToken) return;
     viewport.replaceChildren(container);
+    fitVizCharts();
   } catch (error) {
     if (token !== mountToken) return;
     viewport.innerHTML = errorState(error);

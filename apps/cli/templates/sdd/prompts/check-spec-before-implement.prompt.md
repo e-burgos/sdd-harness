@@ -1,137 +1,58 @@
 # Prompt: Verificar SPEC GATE antes de implementar
 
-> Usar este prompt SIEMPRE antes de escribir código de implementación
+> Usar este prompt SIEMPRE antes de escribir código de implementación. Fuente canónica del
+> gate: `sdd/dual-harness/rules/sdd-gates.md`.
 
 ## Qué es el SPEC GATE
 
-El SPEC GATE es una verificación obligatoria que garantiza que ninguna
-implementación se inicia sin haber completado el flujo de diseño SDD.
+Garantiza que ninguna implementación arranca sin el flujo de diseño SDD. Tiene dos momentos:
+**A** (¿se puede abrir un ciclo?) y **B** (¿se puede escribir código en este ciclo?). Este
+prompt es el **GATE B**: lo responde un comando, no una lectura a mano.
 
 ## Cómo usar
 
-Antes de cualquier implementación, ejecutar este checklist y reportar el resultado:
-
-```
-SPEC GATE — Verificación para el módulo: [NOMBRE DEL MÓDULO]
-Ciclo: [N]
-Fecha: [FECHA]
-
-ESTADO DE PRERREQUISITOS:
-────────────────────────────────────────────────────────────
-[ ] 1. Spec existe con formato correcto: sdd/specs/spec-[gh-user]-[NNN]-[slug]/spec-[gh-user]-[NNN]-[slug].spec.md
-        → Ruta: sdd/specs/spec-___-_____________.spec.md
-        → Estado: EXISTE / NO EXISTE
-
-[ ] 1b. Spec registrada en sdd/specs/index.json
-        → SPEC-ID: SPEC-___
-        → Estado: REGISTRADA / NO REGISTRADA
-
-[ ] 1c. Status de la spec en sdd/specs/index.json ≠ "draft"
-        → Estados posibles: draft / in-progress / completed / cancelled
-        → Estado actual: _____________
-        → ⚠️ "draft" = spec escrita pero sin ciclo abierto todavía: una spec "draft"
-           NO se implementa. Primero el sdd-orchestrator abre cycle-01 y la pasa a
-           "in-progress" (ver start-sdd-cycle.prompt.md) — recién ahí puede continuar
-           el SPEC GATE.
-
-[ ] 2. Módulo registrado en sdd/global.json
-        → En pending_modules: SI / NO
-        → En in_progress_modules: SI / NO
-        → En completed_modules: SI / NO
-
-[ ] 3. Ningún otro módulo en in_progress_modules
-        → Módulos en progreso: _____________ (ninguno si vacío)
-
-[ ] 4. Dependencias completadas
-        → Dependencias requeridas: _____________
-        → Todas en completed_modules: SI / NO
-
-[ ] 5. Cycle brief generado
-        → Archivo: sdd/specs/{spec-id}/cycles/cycle-[XX]/brief.yaml
-        → Estado: EXISTE / NO EXISTE
-
-[ ] 6. Historias de usuario generadas (sdd-functional)
-        → Estado: GENERADAS / PENDIENTE
-
-[ ] 7. Tasks técnicas en sdd/specs/{spec-id}/cycles/cycle-[XX]/tasks.json (sdd-planner)
-        → tasks.json del ciclo: TIENE TASKS / VACÍO / NO EXISTE
-        → índice sdd/tasks.json actualizado (pnpm sdd:rebuild-tasks-index --check): SI / NO
-
-[ ] 8. Schema y contratos definidos (sdd-architect)
-        → sdd/schema.json actualizado: SI / NO
-        → sdd/api.json actualizado: SI / NO
-
-[ ] 9. Cycle JSON de estado creado
-        → Archivo: sdd/specs/{spec-id}/cycles/cycle-[XX]/cycle.json
-        → Estado: EXISTE con status "in-progress" / NO EXISTE
-        → ⚠️ OBLIGATORIO antes de escribir cualquier línea de código.
-           El sdd-orchestrator crea este archivo al iniciar el ciclo.
-           Al finalizar, el sdd-reviewer lo actualiza a "completed".
-────────────────────────────────────────────────────────────
-
-RESULTADO:
-→ Todos los ítems ✅: APROBADO — puede continuar a implementación
-→ Algún ítem ❌: BLOQUEADO — completar los pasos faltantes primero
+```bash
+pnpm sdd:gate <spec-id|slug> cycle-[XX]
 ```
 
-## Pasos para completar los requisitos faltantes
-
-Si la spec NO existe:
-
-```
-Crear la spec en sdd/specs/<modulo>.spec.md con:
-- Objetivo del módulo
-- Alcance (qué incluye y qué no)
-- Capas a implementar (domain, service, rest, etc.)
-- Criterios de aceptación
-- Tablas y endpoints involucrados
-```
-
-Si el módulo NO está en global.json:
+Pegar la salida completa como reporte del gate. El script lee el `flow` del ciclo y exige los
+documentos de **ese** flow:
 
 ```
-Agregar en pending_modules de sdd/global.json:
-{
-  "id": "<modulo>",
-  "name": "<nombre descriptivo>",
-  "spec": "sdd/specs/<modulo>.spec.md",
-  "dependencies": [],
-  "priority": "alta|media|baja"
-}
+SPEC GATE B — implementación · spec-[…] · cycle-[XX] (flow: full|reduced|lite)
+  B1. cycle.json existe con status in-progress
+  B2. Módulo en in_progress_modules de global.json
+  B3. tasks.json del ciclo con al menos una task
+  B4. Documentos del flow: full → brief/functional/planner/architect · reduced → brief · lite → plan.md
+  B5. constitution.md de cada subproyecto de cycle.json → apps[]
+→ APROBADO / BLOQUEADO
 ```
 
-Si el cycle_brief NO existe:
+**`APROBADO` → puede continuar a implementación.**
+**`BLOQUEADO` → cero líneas de código: completar los pasos faltantes y volver a correrlo.**
 
-```
-Invocar sdd-orchestrator con:
-"Iniciar ciclo [N] del módulo <modulo>"
-→ El orquestador crea sdd/specs/{spec-id}/cycles/cycle-[XX]/brief.yaml
-```
+> Una spec `draft` (sin ciclo abierto) nunca pasa el GATE B: primero el sdd-orchestrator corre
+> el GATE A y abre el ciclo (`sdd/prompts/start-sdd-cycle.prompt.md`).
 
-Si NO hay historias:
+## Cómo completar lo que falta (solo lo que el script señala)
 
-```
-Invocar sdd-functional con el cycle_brief
-```
+| Falta                                   | Quién lo resuelve                                                                                     |
+| --------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| `cycle.json` / módulo no in-progress    | sdd-orchestrator abre el ciclo (GATE A + `start-sdd-cycle.prompt.md`)                                 |
+| `brief.yaml`                            | sdd-orchestrator (template: `sdd-file-structure` §3.1)                                                |
+| `functional.md`                         | sdd-functional con el brief                                                                            |
+| `planner.md` / `tasks.json`             | sdd-planner con las historias (§3.5, §3.3b) + `pnpm sdd:rebuild-tasks-index`                          |
+| `architect.md`, `schema.json`, `api.json` | sdd-architect con las historias (§3.6)                                                              |
+| `plan.md` (flow lite)                   | el mismo actor que abrió el ciclo (§3.8)                                                              |
+| `constitution.md` del subproyecto       | `harness add app|lib` lo genera; si el subproyecto ya existe sin contexto, crearlo desde el template de `sdd-file-structure` §2.3 |
+| La spec no existe                       | `npx @e-burgos/sdd-harness add spec <slug> --apps apps/<app>` (registra índice + `pending_modules`) |
 
-Si NO hay tasks en el tasks.json del ciclo:
-
-```
-Invocar sdd-planner con las historias generadas
-```
-
-Si schema/contratos NO están definidos:
-
-```
-Invocar sdd-architect con las historias generadas
-```
-
----
+Leer el template de un artefacto **solo cuando toca escribirlo** — no cargar
+`sdd-file-structure` ni `sdd-data-schemas` enteras para contestar el gate.
 
 ## Ejemplo de uso
 
 ```
-Antes de implementar el módulo "migration-legacy" ciclo 1,
-ejecutar el SPEC GATE con el prompt check-spec-before-implement.prompt.md
-y reportar el estado de cada prerequisito.
+Antes de implementar TASK-003 del módulo "migration-legacy", ciclo 1:
+pnpm sdd:gate migration-legacy cycle-01 → APROBADO (flow: full)
 ```

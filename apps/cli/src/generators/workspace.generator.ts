@@ -12,6 +12,7 @@ import {
 } from "./root-package.js";
 import { generateDockerCompose, writeEnvExample } from "./docker.generator.js";
 import { generateSDD } from "./sdd.generator.js";
+import type { SddProfile } from "./sdd.generator.js";
 import {
   generateApp,
   nxWebpackPluginEntry,
@@ -36,6 +37,8 @@ export interface WorkspaceOptions {
   npmScopes?: NpmScope[];
   /** GitHub user que firma las specs sembradas desde `sdd.modules`. */
   sddAuthor?: string;
+  /** Perfil de trabajo → `sdd/global.json.profile`: team (ciclos full) | solo (ciclos lite). Ausente = team. */
+  sddProfile?: SddProfile;
   /** Backlog inicial: una spec `draft` + entrada en pending_modules por módulo. */
   modules?: ModuleSeed[];
   /**

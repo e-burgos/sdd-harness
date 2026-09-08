@@ -133,6 +133,17 @@ foreach ($name in @("AGENTS.md", "CLAUDE.md", "GEMINI.md")) {
     Link-Item (Join-Path $root $name) (Join-Path $dualHarnessDir $name) $name
 }
 
+# .github/copilot-instructions.md: a REAL file on purpose (GitHub's server-side readers do
+# not follow links). Seeded once from the kit; afterwards it belongs to the project.
+$copilotTarget = Join-Path $root ".github\copilot-instructions.md"
+New-Item -ItemType Directory -Force -Path (Join-Path $root ".github") | Out-Null
+if (Test-Path $copilotTarget) {
+    Write-Host "kept             : .github/copilot-instructions.md (yours)"
+} else {
+    Copy-Item -Path (Join-Path $dualHarnessDir "copilot-instructions.md") -Destination $copilotTarget
+    Write-Host "created  file    : .github/copilot-instructions.md (seeded from sdd/dual-harness/)"
+}
+
 # ─── 5. Antigravity / Gemini CLI ─────────────────────────────────────────────
 
 # .agents/rules: individual links per SDD rule (preserves user rules)

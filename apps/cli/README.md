@@ -98,12 +98,12 @@ $ npx @e-burgos/sdd-harness init
 >
 > | Command             | Unattended form                                                                 |
 > | ------------------- | -------------------------------------------------------------------------------- |
-> | `init`              | `--config <path>` (the whole wizard as a validated file), plus `--here`/`--dir <path>` for the target and `--skip-verify` to skip the closing gate |
+> | `init`              | `--config <path>` (the whole wizard as a validated file), plus `--here`/`--dir <path>` for the target, `--profile team\|solo` for the SDD working profile and `--skip-verify` to skip the closing gate |
 > | `add app`           | `<type> --name <name>`                                                            |
 > | `add spec`          | `<slug> --author <user> --title <text> --app apps/<name> [--apps <a,b>] [--depends-on <id|slug>]` |
 > | `add skill`         | `<name> --description <text>`                                                     |
 > | `add service`       | `<type>`                                                                          |
-> | `configure sdd`     | `--name <project> --description <text>` (plus `-y` only to reset an existing kit) |
+> | `configure sdd`     | `--name <project> --description <text> [--profile team\|solo]` (plus `-y` only to reset an existing kit) |
 > | `configure docker`  | `--services postgres,redis`                                                       |
 > | `configure mcp`     | `--servers <a,b>`                                                                 |
 > | `configure memory`  | `--providers <a,b>`                                                               |
@@ -120,7 +120,7 @@ $ npx @e-burgos/sdd-harness init
 Initialize a new AI-agent-ready repo from scratch — Nx monorepo or standalone app.
 
 ```bash
-harness init [--name <name>] [--mode nx|standalone] [--standalone] [--config <path>] [--here] [--dir <path>] [--skip-verify] [-y|--yes]
+harness init [--name <name>] [--mode nx|standalone] [--standalone] [--config <path>] [--here] [--dir <path>] [--profile team|solo] [--skip-verify] [-y|--yes]
 ```
 
 | Flag             | Description                                 |
@@ -131,6 +131,7 @@ harness init [--name <name>] [--mode nx|standalone] [--standalone] [--config <pa
 | `--config`       | Config file (`.json`, `.mjs`, `.js`) — fully non-interactive, agent/CI-friendly |
 | `--here`         | Generate in the current directory instead of `./<name>` |
 | `--dir <path>`   | Target directory (`.` = here). Default: `./<name>` |
+| `--profile`      | SDD working profile written to `sdd/global.json`: `team` (full cycles, default) or `solo` (lite cycles, single actor). With `--config`, `sdd.profile` wins |
 | `--skip-verify`  | Skip the closing FASE 3 gate (see below)    |
 | `-y, --yes`      | Skip the confirmation prompt                |
 
@@ -465,13 +466,14 @@ Presents a multi-select with all 4 services, pre-selecting any already configure
 Configure or reset the SDD (Spec-Driven Development) agent infrastructure.
 
 ```bash
-harness configure sdd [--name <project>] [--description <text>] [-y]
+harness configure sdd [--name <project>] [--description <text>] [--profile team|solo] [-y]
 ```
 
 | Argument        | Description                                                                       |
 | --------------- | --------------------------------------------------------------------------------- |
 | `--name`        | Project name — skips the prompt (defaults to `package.json` name or the directory) |
 | `--description` | Project description — skips the prompt                                             |
+| `--profile`     | Working profile written to `sdd/global.json`: `team` (full cycles, default) or `solo` (lite cycles) |
 | `-y`, `--yes`   | Skip the reset confirmation. **Destructive** when `sdd/` already exists            |
 
 - **Shape detection**: Nx monorepo (`nx.json`/`apps/`) → registers every app in `apps/`; otherwise the repo registers as a single logical app (standalone convention). App types are inferred from stack markers (`pom.xml`, `nest-cli.json`, `vite.config.ts`, ...)
@@ -627,18 +629,18 @@ The kit is portable by design: **`sdd/global.json` is the single source of truth
 | `sdd/skills/`             | 16+ skills (cycle, scaffold-nx, init-nx-workspace, code generators)      |
 | `sdd/prompts/`            | Gate prompts (SPEC GATE, FIX GATE, start/review cycle)                   |
 | `sdd/templates/`          | Scaffolding blueprints: nx-workspace, java-api, react-app, ts-lib        |
-| `sdd/scripts/`            | `validate-sdd.mjs`, `rebuild-tasks-index.mjs`, `rebuild-catalog.mjs`, `setup-agents`, `setup-rtk.mjs` + `rtk-hook.mjs` (rtk bridge/installer) |
+| `sdd/scripts/`            | `validate-sdd.mjs`, `spec-gate.mjs` (the SPEC GATE as a command), `rebuild-tasks-index.mjs`, `rebuild-catalog.mjs`, `setup-agents`, `setup-rtk.mjs` + `rtk-hook.mjs` (rtk bridge/installer) |
 | `sdd/docs/`               | Zero-dependency docs viewer (`pnpm sdd:docs`) — includes the **Costos** dashboard in four tabs with charts (General · Specs · Fixes · RTK token savings) and live auto-refresh on registry changes |
 | `sdd/memory/`             | Portable self-learning layer: `lessons.md` (distilled, read every session) + `journal/` (episodic, MEMORIA GATE) |
 | `sdd/pricing.json`        | Editable rates feeding the Costos dashboard (hourly rate + $/MTok per model tier) |
 | `sdd/tools.json`          | Switch for the kit's helper tools — today [rtk](https://github.com/rtk-ai/rtk), which compresses shell output for the agents and ships **on by default** (`pnpm sdd:rtk -- --disable` turns it off; `update sdd` never overwrites this file) |
-| `sdd/dual-harness/`       | Source of truth for root `AGENTS.md` / `CLAUDE.md`                       |
+| `sdd/dual-harness/`       | Source of truth for root `AGENTS.md` / `CLAUDE.md` / `GEMINI.md`, plus `rules/` — the canonical gates (`sdd-gates.md`) and telemetry contract (`sdd-model-budget.md`) the root files point at — and `copilot-instructions.md`, seeded into `.github/` by `setup:agents` when that file does not exist |
 | `AGENTS.md` / `CLAUDE.md` | **Symlinks** to `sdd/dual-harness/` (created by `pnpm setup:agents`)     |
 | `.claude/` / `.github/`   | Symlinks exposing agents, skills and prompts to Claude Code & Copilot    |
 | `.claude/settings.json` / `.gemini/settings.json` | Pre-command hooks routing shell commands through the rtk bridge (merged, never clobbered) |
 | `.nxignore`               | Keeps `sdd/templates` blueprints out of the Nx project graph             |
 
-The root `package.json` ships the kit scripts: `setup:agents`, `sdd:docs`, `sdd:validate`, `sdd:rebuild-tasks-index`, `sdd:rebuild-catalog`, `sdd:rtk` and — when the project has none of its own — a `postinstall` that keeps the rtk binary installed for whoever clones the repo (plus `ajv`/`ajv-formats` as devDependencies for the validator).
+The root `package.json` ships the kit scripts: `setup:agents`, `sdd:docs`, `sdd:validate`, `sdd:gate` (answers the SPEC GATE for a spec or a cycle), `sdd:rebuild-tasks-index`, `sdd:rebuild-catalog`, `sdd:rtk` and — when the project has none of its own — a `postinstall` that keeps the rtk binary installed for whoever clones the repo (plus `ajv`/`ajv-formats` as devDependencies for the validator).
 
 ### The SDD Cycle
 
@@ -653,6 +655,39 @@ The root `package.json` ships the kit scripts: `setup:agents`, `sdd:docs`, `sdd:
 ```
 
 Specs follow the v2.0 multi-developer convention: `sdd/specs/spec-[gh-user]-[NNN]-[slug]/` with per-spec cycles and per-author counters. `harness add spec` creates the structure and registers it in `sdd/specs/index.json`.
+
+### SPEC GATE as a Command
+
+The gate is no longer a checklist an agent reads by hand — a script answers it, at two moments:
+
+```bash
+pnpm sdd:gate <spec-id|slug>            # GATE A — can a cycle be opened for this spec?
+pnpm sdd:gate <spec-id|slug> cycle-XX   # GATE B — can code be written in this cycle?
+pnpm sdd:gate <spec-id|slug> --json     # same answer, structured for agents
+```
+
+It prints one line per condition (✔/✘) and ends in `APROBADO` or `BLOQUEADO` — exit `0` when it
+passes, `1` when blocked, `2` on a usage error. GATE A also prints the next cycle id, the
+suggested flow and the active profile. GATE B is flow-aware: it requires the documents of the
+cycle's own `flow`. The script only reads; it writes nothing. The canonical definition lives in
+`sdd/dual-harness/rules/sdd-gates.md`, which the root harness files, the prompts and the agents
+all point at.
+
+### Profiles: `team` and `solo`
+
+`sdd/global.json → profile` decides the **flow** new cycles open with (`--profile` on `init` /
+`configure sdd`, or `sdd.profile` in the config file; absent = `team`):
+
+| Profile | Flow of new cycles | Shape                                                                                                    |
+| ------- | ------------------ | -------------------------------------------------------------------------------------------------------- |
+| `team`  | `full`             | One role per document (brief · functional · planner · architect), implementors, reviewer; FIX GATE with questionnaire |
+| `solo`  | `lite`             | A single actor opens, implements and closes; `plan.md` replaces the four documents; short FIX GATE       |
+
+A `[LITE]` / `[FULL]` prefix in the request wins over the profile, and a spec whose contracts
+another subproject consumes (new tables or endpoints) or that has dependents opens `full` anyway.
+The invariants never change: spec registered, `cycle.json` in-progress before the code,
+`tasks.json` with tasks, `usage` on every task, and the close gates plus `pnpm sdd:validate`
+green. The `sdd-steward` switches the profile on the dev's request.
 
 ### Scaffolding Blueprints
 
@@ -692,6 +727,7 @@ export default defineConfig({
   sdd: {
     enabled: true,
     author: "jdoe", // GitHub user — signs the seeded specs (spec-jdoe-NNN-<slug>)
+    profile: "team", // "team" → full cycles (default) | "solo" → lite cycles
     modules: [
       "auth", // plain slug
       {
@@ -764,6 +800,7 @@ Key constraints:
 - `services[].type` — one of: `postgres`, `redis`, `rabbitmq`, `minio`
 - `services[].port` — optional, between 1000 and 65535 (catalog defaults apply)
 - `sdd.author` — optional GitHub username (lowercase); signs the specs seeded from `sdd.modules`
+- `sdd.profile` — optional `team` (full cycles, default) or `solo` (lite cycles, single actor); written to `sdd/global.json` only when set, and it wins over `--profile`
 - `sdd.modules[]` — a string slug, or an object `{ name, title?, description?, app?, apps?, depends_on? }` — each seeds a `draft` spec + a `pending_modules` entry at `init` time
 - `npm.scopes[]` — `{ scope: "@org", registry: "<url>" }` — becomes `@org:registry=<url>` lines in the generated `.npmrc` (URL only, never a credential)
 - `infra.provider` — one of: `digitalocean`, `aws`, `gcp`, `vercel`, `railway`

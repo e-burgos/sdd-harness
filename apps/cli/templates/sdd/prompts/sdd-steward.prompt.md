@@ -10,8 +10,9 @@ Protocolo:
 
 1. Clasificá el pedido con la **tabla de ruteo** de la skill.
 2. Si es una operación del steward (status, update de la librería, costos,
-   salud de arneses, duda de metodología): ejecutá el playbook correspondiente
-   con lectura quirúrgica — solo las fuentes que el mapa de lectura indica.
+   salud de arneses, herramientas del kit, cambio de perfil `team`/`solo`, duda de
+   metodología): ejecutá el playbook correspondiente con lectura quirúrgica — solo
+   las fuentes que el mapa de lectura indica.
 3. Si tiene otro dueño (idea → `sdd-hermes`, ciclo/spec → `sdd-orchestrator`,
    fix → FIX GATE): hacé el pre-check/intake mínimo y delegá con un brief
    corto. Jamás bypassees un gate ni escribas código de implementación.

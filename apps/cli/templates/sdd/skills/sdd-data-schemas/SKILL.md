@@ -95,6 +95,7 @@ description: >
   "project": "[nombre-del-proyecto]",
   "description": "...",
   "version": "1.0.0",
+  "profile": "team",
   "completed_modules": [],
   "in_progress_modules": [],
   "pending_modules": [],
@@ -108,6 +109,11 @@ description: >
 ```
 
 > ⚠️ Ya **no existe `current_cycle` global** — la numeración de ciclos es per-spec (`cycles/cycle-XX`).
+
+- `profile` (opcional, desde v0.13.0): `"team"` (default si falta) abre ciclos `flow: "full"`;
+  `"solo"` abre `flow: "lite"` (un solo actor, `plan.md`). Lo cambia el **sdd-steward** a pedido
+  del dev; el prefijo `[LITE]`/`[FULL]` del pedido gana sobre el perfil. Detalle:
+  `sdd/dual-harness/rules/sdd-gates.md` § Flow.
 
 ### ModuleEntry — campos
 
@@ -336,7 +342,8 @@ pending_modules → in_progress_modules → completed_modules
 }
 ```
 
-- `flow: "reduced"` = ciclo de refactor estructural sin HUs (las tasks pueden tener `user_stories: []`).
+- `flow: "reduced"` = ciclo de refactor estructural sin HUs; `flow: "lite"` = ciclo de un solo actor
+  conducido por `plan.md`. En ambos las tasks pueden tener `user_stories: []`.
 - Cada developer/implementador **solo escribe en el archivo de SU ciclo** → sin merge conflicts entre specs.
 
 ### 6b. `sdd/tasks.json` — índice (generado)
@@ -409,7 +416,7 @@ pending_modules → in_progress_modules → completed_modules
 | ------------------ | ------------------------------------------------------------------------------------------------------------------- | ------------------ |
 | `id`               | Formato `TASK-[NNN]`: `TASK-001`, `TASK-002`… El scope es el archivo del ciclo — sin prefijo de spec ni ciclo.      | sdd-planner        |
 | `title`            | Conciso, en español, describe la acción técnica                                                                     | sdd-planner        |
-| `user_stories`     | Historias de usuario del `functional.md` que cubre esta task. `[]` solo si `flow: "reduced"`.                       | sdd-planner        |
+| `user_stories`     | Historias de usuario del `functional.md` (o `plan.md`) que cubre esta task. `[]` solo si `flow: "reduced"` o `"lite"`. | sdd-planner        |
 | `estimation_hours` | **Obligatorio.** Número decimal de horas estimadas (ej: `1`, `1.5`, `3`). Generado por sdd-planner en `planner.md`. | **sdd-planner**    |
 | `story_points`     | **Obligatorio.** Entero Fibonacci (1, 2, 3, 5, 8, 13). Escala orientativa: 0.5-1h→1SP, 2h→2SP, 3h→3SP, 4h→5SP.      | **sdd-planner**    |
 | `depends_on`       | `[]` si no tiene dependencias. Solo IDs del mismo archivo.                                                          | sdd-planner        |
@@ -551,8 +558,8 @@ pending → in-progress → implemented (dev) → validated | absorbed (sdd-revi
 }
 ```
 
-- `apps` es **siempre array**. Campos opcionales: `phase`, `flow` (`"reduced"` para refactors sin HUs), `objectives`.
-- En `documents` solo se listan archivos que existen (un ciclo `flow: "reduced"` puede omitir functional/planner/architect).
+- `apps` es **siempre array**. Campos opcionales: `phase`, `flow` (`"full"` default · `"reduced"` refactor sin HUs · `"lite"` un solo actor con `plan.md`), `objectives`.
+- En `documents` solo se listan archivos que existen (un ciclo `flow: "reduced"` puede omitir functional/planner/architect; uno `"lite"` lista `plan` en lugar de esos cuatro).
 - **`metrics` no nace `null` desde v0.11.0**: el orquestador lo crea con contadores en 0 y
   `usage.by_agent: []` al abrir el ciclo — es el receptáculo donde cada agente (functional,
   planner, architect, cada task, el propio orquestador) hace push de su entrada al cerrar su

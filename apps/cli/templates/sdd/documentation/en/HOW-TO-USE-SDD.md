@@ -10,6 +10,7 @@
 1. [The concept in 30 seconds](#1-the-concept-in-30-seconds)
 2. [Initial setup (once)](#2-initial-setup-once)
 3. [Normal flow — New functionality](#3-normal-flow--new-functionality)
+   - [Lite flow — a single actor (`solo` profile)](#lite-flow--a-single-actor-solo-profile)
 4. [Subproject context — additive updates](#4-subproject-context--additive-updates)
 5. [Fast flow — Fix / Improvement](#5-fast-flow--fix--improvement)
 6. [SDD file reference](#6-sdd-file-reference)
@@ -133,14 +134,19 @@ tab (per-machine, estimated numbers).
 
 ### Step 0 — Check the project state
 
-Before starting, verify there is no module in progress. The Orchestrator does this
-automatically, but you can also check it directly:
+Before starting, run **SPEC GATE A** on the spec: it answers the whole state in one output, with
+no registry read by hand.
 
 ```bash
-cat sdd/global.json
+pnpm sdd:gate <spec-id|slug>    # one line per condition (✔/✘) + APROBADO / BLOQUEADO
+cat sdd/global.json             # if you want the raw state
 ```
 
-Conditions to be able to start:
+`BLOQUEADO` → complete what the script points at before continuing. `APROBADO` → it also prints
+the next `cycle-XX`, the suggested flow and the active profile. **Paste the output** as the gate
+report in the message to the Orchestrator.
+
+Conditions to be able to start (the ones the gate checks):
 
 - **Your spec has no other open cycle** — the rule is _one active cycle per spec_.
   Several devs can have their modules in `in_progress_modules` in parallel (multi-developer model).
@@ -169,7 +175,8 @@ Attached references:
 - sdd/context/apps/<app-name>/constitution.md
 ```
 
-**The Orchestrator automatically generates:**
+**The Orchestrator automatically generates** (after running `pnpm sdd:gate <spec-id>` and pasting
+its `APROBADO` output; if the spec does not exist yet, it creates and registers it first):
 
 1. The `.spec.md` spec file with goal, context, scope and acceptance criteria.
 2. The corresponding entry in `sdd/specs/index.json`.
@@ -242,8 +249,15 @@ The Architect reads `functional.md`, `brief.yaml`, `sdd/schema.json` and `sdd/ap
 
 ### Step 4 — Implementation
 
-With the 6 cycle documents ready and approved, the implementors are invoked **task by task**.
-One task per conversation, no batching. The stack is defined by the subproject's `constitution.md`.
+With the cycle documents ready and approved, **before the first line of code** run **SPEC GATE B**:
+
+```bash
+pnpm sdd:gate <spec-id|slug> cycle-01   # reads the cycle's flow and requires THAT flow's documents
+```
+
+`BLOQUEADO` → zero code until what is missing is completed. On `APROBADO` (paste the output) the
+implementors are invoked **task by task**. One task per conversation, no batching. The stack is
+defined by the subproject's `constitution.md`.
 
 **Prompt to the `sdd-implementor-back` agent (one task at a time):**
 
@@ -299,6 +313,69 @@ The Reviewer performs, **in mandatory order**:
 
 > The cycle **cannot close** with the CONTEXTO GATE pending or the validation red —
 > the same check runs in CI (`.github/workflows/sdd-validate.yml`) and breaks the PR.
+
+---
+
+### Lite flow — a single actor (`solo` profile)
+
+**When:** you work alone (or the cycle is small) and five agents with five documents are more
+ceremony than value. One actor wears the three hats: opens the cycle, implements it and closes it
+as reviewer. There is no subagent fan-out, so the context is read **once**.
+
+**How to switch to it** (any of the three):
+
+```
+# 1. Ask the steward (the only one who touches the profile):
+/sdd-steward switch me to the solo profile
+
+# 2. When generating the repo, or reconfiguring it:
+npx @e-burgos/sdd-harness init --profile solo
+npx @e-burgos/sdd-harness configure sdd --profile solo
+
+# 3. For a one-off request, without touching the profile: a prefix in the message
+[LITE] Implement the date filter of the orders list.
+[FULL] Implement the payments module.   # forces the full flow even with the solo profile
+```
+
+The profile lives in `sdd/global.json → profile` (`team` by default → `full` cycles; `solo` →
+`lite` cycles). The request prefix **wins** over the profile. Cycles already open keep the `flow`
+written in their `cycle.json`.
+
+**What the cycle looks like:**
+
+1. `pnpm sdd:gate <spec-id>` → `APROBADO` (the same GATE A as in `full`; paste the output).
+2. Open `cycle.json` with `status: "in-progress"`, `flow: "lite"` and `metrics` with
+   `usage.by_agent: []`; move the module to `in_progress_modules`.
+3. Write **`plan.md`**, which replaces `brief.yaml` + `functional.md` + `planner.md` +
+   `architect.md`. Four fixed sections (template: `sdd/skills/sdd-file-structure/SKILL.md` §3.8):
+   objective · stories · tasks in prose · **technical decisions**, the last one mandatory if the
+   cycle touches `schema.json`, `api.json` or `components.json` (and those registries are updated
+   exactly as in `full`).
+4. Create `tasks.json` with `flow: "lite"` (`user_stories` may be `[]`) and run
+   `pnpm sdd:rebuild-tasks-index`.
+5. `pnpm sdd:gate <spec-id> cycle-XX` → `APROBADO` (GATE B) and only then implement, one task at a
+   time, each moving to `done` with its `usage`.
+6. Close as reviewer: `pnpm sdd:validate` green, `cycle.json` `completed` with `reviewer_report`,
+   CONTEXTO GATE (additive fragment) and MEMORIA GATE if there was a lesson.
+
+**What is kept** (none of this is cut in `lite`):
+
+- The four invariants: spec registered, module in `global.json`, `cycle.json` in-progress before
+  the code, `tasks.json` with tasks and no task `done` without its `usage`.
+- The close gates: CONTEXTO GATE, MEMORIA GATE and `pnpm sdd:validate` green.
+- Telemetry: `usage` on every task, plus **one single** entry in
+  `cycle.json → metrics.usage.by_agent[]` with `agent: "orchestrator"`, `label: "solo"`, covering
+  the plan and the review.
+
+**Exceptions — the cycle opens `full` even with the `solo` profile:**
+
+- The spec declares contracts another subproject consumes (new tables or endpoints).
+- The spec has dependents (other specs declare it in their `depends_on`).
+
+> ⚠️ If a `lite` cycle ended up creating tables or endpoints anyway, `pnpm sdd:validate` leaves a
+> **warning**: the next cycle of that spec opens `full`.
+
+With `profile: solo` the FIX GATE is shortened too (see section 5).
 
 ---
 
@@ -406,6 +483,15 @@ When the change **does not justify a full SDD cycle**, use the FIX GATE.
 and `test_reference`. The Reviewer will mark it `validated` or `absorbed` on cycle close.
 Run `pnpm sdd:validate` before committing.
 
+### With `profile: solo` — short FIX GATE
+
+- **No questionnaire:** the actor fills `sdd/fixes.json` from the request itself and only asks
+  what cannot be deduced (step 2 disappears).
+- **Minimal document:** problem · solution · files.
+- **Eligibility reduced** to "creates no new contracts or entities".
+- **Unchanged:** the `fixes.json` registration, the fix's `usage`, the context fragment and
+  `pnpm sdd:validate` green.
+
 ---
 
 ## 6. SDD file reference
@@ -424,6 +510,7 @@ Run `pnpm sdd:validate` before committing.
 | `sdd/fixes.json`             | Registry of out-of-flow fixes                   | Orchestrator (FIX GATE) + dev (close) + Reviewer (validates)             |
 | `sdd/specs/index.json`       | Spec registry (append-only)                     | Whoever creates the spec + Reviewer (close)                              |
 | `sdd/schemas/*.schema.json`  | Strict JSON Schemas (machine source)            | Manual — a schema change is a team decision                              |
+| `sdd/scripts/spec-gate.mjs`  | SPEC GATE A and B as a command (read-only)      | `pnpm sdd:gate <spec-id> [cycle-XX]`                                     |
 
 ### Context files (read before any task)
 
@@ -436,14 +523,18 @@ Run `pnpm sdd:validate` before committing.
 | `sdd/context/apps/<app>/updates/*.md`      | Per-cycle/fix fragments — **read together with the base** |
 | `sdd/context/tools/<tool>/`                | Same, for tools that are neither app nor lib              |
 
-### Cycle documents (6 files per cycle, only these)
+### Cycle documents (whitelist: only these 7 + `artifacts/`)
+
+Which of them apply is decided by the cycle's `flow`: `full` uses the four documents; `reduced`,
+only `brief.yaml`; `lite`, only `plan.md`.
 
 ```
 sdd/specs/<spec-id>/cycles/cycle-<XX>/
-  ├── brief.yaml       ← Orchestrator
-  ├── functional.md    ← Functional agent
-  ├── planner.md       ← Planner agent
-  ├── architect.md     ← Architect agent
+  ├── brief.yaml       ← Orchestrator                   (full · reduced)
+  ├── functional.md    ← Functional agent               (full)
+  ├── planner.md       ← Planner agent                  (full)
+  ├── architect.md     ← Architect agent                (full)
+  ├── plan.md          ← The cycle's single actor       (lite — replaces the four above)
   ├── tasks.json       ← Planner (creates) + Implementors (status) — the cycle's CANONICAL tasks
   ├── cycle.json       ← Orchestrator (open) + Reviewer (close)
   └── artifacts/       ← Supporting docs (referenced in cycle.json)
@@ -500,20 +591,27 @@ fix-<gh-user>-<spec-NNN>-<seq>.md   ← spec-scoped (sdd/specs/<id>/fixes/)
 
 ### ⛔ SPEC GATE — before implementing
 
-```
-1. Does the spec's .spec.md file exist?                    → YES / NO
-2. Is the spec in sdd/specs/index.json?                    → YES / NO
-3. Is the module in in_progress_modules (global.json)?     → YES / NO
-4. Does the cycle's brief.yaml exist?                      → YES / NO
-5. Does the cycle's functional.md exist?                   → YES / NO
-6. Does the cycle's planner.md exist?                      → YES / NO
-7. Does the cycle's architect.md exist?                    → YES / NO
-8. Does cycle.json exist with status "in-progress"?        → YES / NO
-9. Does the cycle's tasks.json exist, with tasks?          → YES / NO
-10. Does the affected subproject's constitution.md exist?  → YES / NO
+It is not answered by hand: a script answers it, at two moments (canonical source:
+`sdd/dual-harness/rules/sdd-gates.md`).
+
+```bash
+pnpm sdd:gate <spec-id|slug>            # GATE A — can a cycle be opened?
+pnpm sdd:gate <spec-id|slug> cycle-XX   # GATE B — can code be written in that cycle?
+pnpm sdd:gate <spec-id|slug> --json     # same answer, structured for agents
 ```
 
-**If any is NO → STOP. Complete that step before continuing.**
+- **GATE A:** A1 spec registered and its `.spec.md` exists · A2 module in `pending_modules` or
+  `in_progress_modules` · A3 no other cycle of the spec `in-progress` · A4 `depends_on` completed ·
+  A5 the spec is neither `completed` nor `cancelled`.
+- **GATE B:** B1 `cycle.json` with `status: "in-progress"` · B2 module in `in_progress_modules` ·
+  B3 `tasks.json` with at least one task · B4 the documents of the `flow` (full →
+  brief/functional/planner/architect · reduced → brief · lite → `plan.md`) · B5 `constitution.md`
+  for every subproject in `cycle.json → apps[]`.
+
+**`BLOQUEADO` → STOP. Complete what the script points at before continuing** (exit `0` passes,
+`1` blocked, `2` usage error). The four invariants hold in every flow and every profile: spec
+registered, module in `global.json`, `cycle.json` in-progress before the code, `tasks.json` with
+tasks and no task `done` without its `usage`.
 
 ### ⛔ CONTEXTO GATE — before closing a cycle (ADDITIVE)
 
@@ -531,7 +629,7 @@ And if point 4 is NO, something is wrong: only consolidation touches the bases (
 
 - **One active cycle per spec.** Different devs advance their specs in parallel, but a given
   spec never has two open cycles.
-- **Only 6 files at the cycle root** (`brief.yaml`, `functional.md`, `planner.md`, `architect.md`, `cycle.json`, `tasks.json`). Anything else → `artifacts/`.
+- **Only 7 files at the cycle root** (`brief.yaml`, `functional.md`, `planner.md`, `architect.md`, `plan.md` —this one only in the `lite` flow—, `cycle.json`, `tasks.json`). Anything else → `artifacts/`.
 - **Strict typing:** every `sdd/**/*.json` registry validates against `sdd/schemas/`. Run `pnpm sdd:validate` after any write.
 - **`sdd/specs/index.json` is append-only** — never edit existing entries.
 - **Implementors receive ONE task per message**, not several.
@@ -564,7 +662,12 @@ And if point 4 is NO, something is wrong: only consolidation touches the bases (
 ## 9. Prompt cheat sheet
 
 ```bash
-# See the project state
+# Run the SPEC GATE (A without a cycle, B with one)
+pnpm sdd:gate <spec-id|slug>
+pnpm sdd:gate <spec-id|slug> cycle-01
+pnpm sdd:gate <spec-id|slug> --json      # structured output for agents
+
+# See the project state (includes "profile": team | solo)
 cat sdd/global.json
 
 # See registered specs
@@ -613,6 +716,13 @@ ls sdd/context/*/*/updates/*.md 2>/dev/null | wc -l
 
 # Urgent fix
 "[BUGFIX] <description of the problem>"
+
+# Force the flow of a one-off request (wins over the profile)
+"[LITE] <description>"    # a single actor: plan.md + tasks.json
+"[FULL] <description>"    # full cycle with the five agents
+
+# Change the repo's profile (only the steward touches it)
+"/sdd-steward switch me to the solo profile"
 ```
 
 ---
@@ -798,6 +908,28 @@ without losing what you had expanded. On static hosting it falls back to manual 
 │         ↓                                                       │
 │  sdd-reviewer → VALIDATION GATE + cycle.json (completed)       │
 │               + CONTEXTO GATE + pnpm sdd:validate green        │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│          NEW FUNCTIONALITY — lite flow (solo profile)           │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  Dev asks with [LITE] (or global.json → profile: "solo")       │
+│         ↓                                                       │
+│  pnpm sdd:gate <spec-id>  → GATE A APROBADO                    │
+│         ↓                                                       │
+│  A SINGLE ACTOR → cycle.json (in-progress, flow "lite")        │
+│                 → plan.md (replaces brief/functional/          │
+│                   planner/architect) + tasks.json               │
+│         ↓                                                       │
+│  pnpm sdd:gate <spec-id> cycle-XX → GATE B APROBADO            │
+│         ↓                                                       │
+│  Implements task by task (done + usage on each one)             │
+│         ↓                                                       │
+│  Closes as reviewer → cycle.json (completed) + one by_agent    │
+│  entry {orchestrator, "solo"} + CONTEXTO/MEMORIA GATE           │
+│  + pnpm sdd:validate green                                      │
 │                                                                 │
 └─────────────────────────────────────────────────────────────────┘
 

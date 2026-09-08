@@ -5,6 +5,99 @@ All notable changes to `@e-burgos/sdd-harness` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.0] - 2026-09-08
+
+The SPEC GATE was five slightly different checklists in five files (one asked for
+`pending_modules`, another for `in_progress_modules`), answered by agents reading ten files by
+hand, and every session started by loading ~47 KB of harness text before the first action. This
+release makes the gate a command, gives it a shape per cycle flow, adds a single-actor flow for
+solo developers, and moves the reference material out of the always-loaded files.
+
+### Added — the SPEC GATE as a command, in two moments
+
+- **`pnpm sdd:gate <spec-id|slug> [cycle-XX] [--json]`** (`sdd/scripts/spec-gate.mjs`): answers the
+  gate deterministically, one line per condition, `APROBADO`/`BLOQUEADO`, exit 0/1 (2 on usage
+  errors). **GATE A** (no cycle argument — can a cycle be opened? spec registered, module in
+  `pending`/`in_progress_modules`, no other `in-progress` cycle of that spec, `depends_on`
+  completed, spec not closed) prints the next cycle id and the suggested flow. **GATE B**
+  (`cycle-XX` — can code be written? `cycle.json` in-progress, module in `in_progress_modules`,
+  `tasks.json` with tasks, the documents of *that* cycle's flow, `constitution.md` of every app)
+  reads `cycle.json → flow` and only asks for the documents that flow requires. A slug resolves
+  when unique; ambiguous or unknown references are usage errors. `init`, `configure sdd` and
+  `update sdd` add the `sdd:gate` script to `package.json`.
+- **One canonical gate definition**: `sdd/dual-harness/rules/sdd-gates.md` now holds the full
+  SPEC GATE (invariants, A/B tables, flow table, profile rules), typing, CONTEXTO GATE and FIX
+  GATE. `AGENTS.md`/`CLAUDE.md`/`GEMINI.md`, `context_prompt.md`, both gate prompts, the
+  orchestrator, the implementors and `sdd-file-structure` §5 point there instead of repeating the
+  checklist. The invariants that hold in every flow: spec registered, module in `global.json`,
+  `cycle.json` in-progress before the first line of code, `tasks.json` with tasks and no task
+  `done` without `usage`.
+
+### Added — flow `lite` and profile `team | solo`
+
+- **`flow: "lite"`** in `cycle.json` and `tasks.json` (enum now `full | reduced | lite`; absent =
+  full): a single actor opens, implements and closes the cycle. **`plan.md`** replaces
+  `brief.yaml` + `functional.md` + `planner.md` + `architect.md` (template in
+  `sdd-file-structure` §3.8: objetivo · historias · tasks en prosa · decisiones técnicas — the last
+  one mandatory when the cycle touches `schema.json`/`api.json`/`components.json`). Tasks may carry
+  `user_stories: []` as in `reduced`. Telemetry: `usage` per task plus one `by_agent` entry
+  `{agent: "orchestrator", label: "solo"}` for plan + review. Nothing of the close is cut:
+  CONTEXTO GATE, MEMORIA GATE and `sdd:validate` green stay mandatory. `plan.md` joins the cycle
+  root whitelist.
+- **`sdd/global.json → profile`** (optional, `team | solo`, absent = team): `team` opens `full`
+  cycles, `solo` opens `lite`. The `[LITE]`/`[FULL]` prefix of a request wins over the profile;
+  a spec that creates contracts other subprojects consume (tables, endpoints) or has dependents
+  goes back to `full` even in `solo`. The **sdd-steward** switches the profile on request (new
+  Playbook 6 — the only registry write it owns), reports it in its status and explains what each
+  flow saves; no agent changes it on its own. `harness init --profile`, `harness configure sdd
+  --profile` and `sdd.profile` in `harness.config.json` write it at install.
+- **FIX GATE with `profile: solo`**: no questionnaire (the actor fills `fixes.json` from the
+  request and asks only what it cannot deduce), minimal fix document (problema · solución ·
+  archivos), eligibility reduced to "no new contracts or entities". Registration, `usage`,
+  context fragment and validation unchanged.
+- `validate-sdd.mjs`: warning for an in-progress cycle without `tasks.json`, for a `lite` cycle
+  without `plan.md`, and for a completed `lite` cycle that created tables/endpoints (the next
+  cycle of that spec should open `full`). `user_stories: []` no longer fails in `lite`.
+
+### Changed — dual-harness in two layers (fewer tokens per session)
+
+- `AGENTS.md`/`CLAUDE.md`/`GEMINI.md` went from ~32 KB to ~22 KB: the rules and gates stay in
+  short form with pointers (layer one, always loaded); the full telemetry contract (who records
+  what and when, sources per harness, validator rules) moved to
+  `sdd/dual-harness/rules/sdd-model-budget.md` and the full gates to `rules/sdd-gates.md` (layer
+  two, read when needed). Graphify maintenance details live in the `setup-graphify` skill; the
+  rtk, additive-context, memory, typing and CONTEXTO GATE sections were condensed without
+  dropping a rule. These files are hybrid: `update sdd` leaves the new version as `*.new` next to
+  yours, as always.
+- The orchestrator no longer reads `sdd-file-structure` (770 lines) and `sdd-data-schemas`
+  (791 lines) as a mandatory step 0: they are reference, consulted per section when an artifact is
+  about to be written. `start-sdd-cycle` and `check-spec-before-implement` were rewritten around
+  the command, with the `full` and `lite` step lists side by side.
+
+### Added — Copilot surface seeded by the kit
+
+- New kit file `sdd/dual-harness/copilot-instructions.md`; `pnpm setup:agents` (sh and ps1)
+  copies it to `.github/copilot-instructions.md` **only when the file does not exist** — a real
+  file, because GitHub's server-side readers do not follow symlinks; afterwards it belongs to the
+  project. Until now it had to be written by hand, and the token-budget rule never reached
+  Copilot.
+
+### Changed — Costs viewer
+
+- Charts render 1:1 with the card: each chart is re-rendered at the container's real width (a
+  single debounced `ResizeObserver` re-fits on resize), so tick, cap and axis labels are 10px
+  instead of being scaled up ~2× by the viewBox; x labels thin out by measured density. KPI
+  rows show at most four cards per row and values wrap or shrink instead of overflowing the card.
+
+### Tests
+
+- `spec-gate.integration.spec.ts`: profile written to `global.json`, `sdd:gate` script installed,
+  GATE A on a draft spec (approved, `lite` suggested with `profile: solo`), blocked by an
+  incomplete dependency, ambiguous/unknown references, GATE B on a `lite` cycle (blocked without
+  `plan.md`/`tasks.json`/module, approved once they exist, validator warnings while incomplete),
+  the one-open-cycle rule and GATE B on `full`. The install and update suites assert
+  `sdd:gate` and the seeded `.github/copilot-instructions.md` (never overwritten).
+
 ## [0.12.1] - 2026-09-07
 
 ### Fixed

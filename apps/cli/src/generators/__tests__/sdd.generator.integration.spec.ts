@@ -60,6 +60,15 @@ describe.skipIf(process.platform === 'win32')(
       expect(fs.readFileSync(resolve(ws, 'AGENTS.md'), 'utf-8')).toContain('SDD');
     });
 
+    it('setup-agents siembra .github/copilot-instructions.md como archivo real y no lo pisa', () => {
+      const target = resolve(ws, '.github/copilot-instructions.md');
+      expect(fs.lstatSync(target).isSymbolicLink()).toBe(false);
+      expect(fs.readFileSync(target, 'utf-8')).toContain('sdd:gate');
+      fs.writeFileSync(target, '# mine\n');
+      execFileSync('bash', [resolve(ws, 'sdd/scripts/setup-agents.sh')], { cwd: ws, stdio: 'ignore' });
+      expect(fs.readFileSync(target, 'utf-8')).toBe('# mine\n');
+    });
+
     it('setup-agents expone el arnés a Antigravity y Gemini CLI', () => {
       expect(fs.lstatSync(resolve(ws, 'GEMINI.md')).isSymbolicLink()).toBe(true);
       expect(fs.readFileSync(resolve(ws, 'GEMINI.md'), 'utf-8')).toContain('SDD');

@@ -42,9 +42,10 @@
     "flow": {
       "enum": [
         "full",
-        "reduced"
+        "reduced",
+        "lite"
       ],
-      "description": "full = complete SDD cycle (functional/planner/architect). reduced = structural refactor without user stories (tasks may have empty user_stories)."
+      "description": "full = complete SDD cycle (functional/planner/architect). reduced = structural refactor without user stories. lite = single-actor cycle driven by plan.md. Tasks may have empty user_stories only in reduced and lite."
     },
     "user_stories_generated": {
       "type": "boolean"
