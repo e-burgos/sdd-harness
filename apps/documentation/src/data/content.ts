@@ -1,3 +1,5 @@
+export { USAGE_TABS } from './usage';
+export type { UsageTab, UsageBlock } from './usage';
 export type TreeNode = {
   name: string;
   note?: string;
@@ -330,6 +332,16 @@ export const COMMANDS: Command[] = [
     ],
   },
   {
+    name: 'add tool',
+    usage: 'harness add tool [nombre] --type <qué es>',
+    summary: 'Registra una tool como subproyecto SDD. No genera código.',
+    points: [
+      'Escribe la entrada en sdd/global.json → monorepo.tools (la clave se crea recién con la primera tool: es opcional en el schema) y crea sdd/context/tools/<nombre>/ con constitution.md, context_prompt.md y updates/.',
+      'Una tool es lo que el equipo escribe en tools/<nombre>/ — scripts, CLIs internas, generadores. El comando aporta lo que faltaba para que exista como subproyecto: su registro y su contexto.',
+      'Con eso el visor la lista en Contexto y en el Dashboard, y el SPEC GATE B puede exigir su constitution.md cuando un ciclo la toca.',
+    ],
+  },
+  {
     name: 'add spec',
     usage: 'harness add spec [slug] --author <gh-user> --title <t> --app apps/<n> [--apps <a,b>] [--depends-on <id|slug>] [--description <t>]',
     summary: 'Crea una spec con la convención multi-developer v2.0.',
@@ -419,7 +431,7 @@ export const GATES: Gate[] = [
   {
     name: 'SPEC GATE',
     rule: 'Ni una línea de código sin spec registrada, ciclo abierto, plan y tasks — en cualquier flow.',
-    how: 'Dos momentos, y los dos se contestan con un comando en vez de leer archivos a mano: pnpm sdd:gate <spec-id|slug> es el GATE A, la apertura del ciclo que corre el orquestador (spec registrada en specs/index.json · módulo en pending_modules o in_progress_modules · ningún otro ciclo de esa spec in-progress · depends_on completed · spec ni completed ni cancelled), y pnpm sdd:gate <spec-id|slug> cycle-XX es el GATE B, el que corre quien va a escribir código (cycle.json in-progress · módulo en in_progress_modules · tasks.json con al menos una task · los documentos del flow de ESE ciclo · constitution.md de cada subproyecto de cycle.json.apps). Imprime una línea por condición con ✔/✘, cierra con APROBADO o BLOQUEADO y sale 0/1 (--json para agentes); en GATE A además dice cuál es el próximo ciclo y qué flow sugiere. Los invariantes no cambian nunca: spec registrada, módulo en global.json, cycle.json in-progress antes de la primera línea de código, tasks.json con tasks y ninguna task en done sin su usage. Lo que cambia es la forma — flow full (brief · functional · planner · architect), reduced (brief) o lite (plan.md, un solo actor) — y lo decide sdd/global.json → profile: team abre full, solo abre lite, y los prefijos [LITE] / [FULL] en el pedido le ganan al perfil.',
+    how: 'Dos momentos, y los dos se contestan con un comando en vez de leer archivos a mano: pnpm sdd:gate <spec-id|slug> es el GATE A, la apertura del ciclo que corre el orquestador (spec registrada en specs/index.json · módulo en pending_modules o in_progress_modules · ningún otro ciclo de esa spec in-progress · depends_on completed · spec ni completed ni cancelled), y pnpm sdd:gate <spec-id|slug> cycle-XX es el GATE B, el que corre quien va a escribir código (cycle.json in-progress · módulo en in_progress_modules · tasks.json con al menos una task · los documentos del flow de ESE ciclo · constitution.md de cada subproyecto de cycle.json.apps). Imprime una línea por condición con ✔/✘, cierra con APPROVED o BLOCKED y sale 0/1 (--json para agentes); en GATE A además dice cuál es el próximo ciclo y qué flow sugiere. Los invariantes no cambian nunca: spec registrada, módulo en global.json, cycle.json in-progress antes de la primera línea de código, tasks.json con tasks y ninguna task en done sin su usage. Lo que cambia es la forma — flow full (brief · functional · planner · architect), reduced (brief) o lite (plan.md, un solo actor) — y lo decide sdd/global.json → profile: team abre full, solo abre lite, y los prefijos [LITE] / [FULL] en el pedido le ganan al perfil.',
   },
   {
     name: 'FIX GATE',
@@ -459,7 +471,7 @@ export const SERVICE_CATALOG = ['postgres', 'redis', 'rabbitmq', 'minio'];
 
 export const SDD_SCRIPTS = [
   { cmd: 'pnpm sdd:validate', what: 'Valida TODOS los registros contra sus schemas + reglas cruzadas + regla de portabilidad' },
-  { cmd: 'pnpm sdd:gate', what: 'Contesta el SPEC GATE: <spec-id|slug> para abrir un ciclo (GATE A) y <spec-id|slug> cycle-XX para habilitar el código (GATE B). Una línea por condición, APROBADO/BLOQUEADO, exit 0/1 y --json para agentes' },
+  { cmd: 'pnpm sdd:gate', what: 'Contesta el SPEC GATE: <spec-id|slug> para abrir un ciclo (GATE A) y <spec-id|slug> cycle-XX para habilitar el código (GATE B). Una línea por condición, APPROVED/BLOCKED, exit 0/1 y --json para agentes' },
   { cmd: 'pnpm sdd:docs', what: 'Visor del sistema SDD — vanilla JS, cero dependencias, funciona offline' },
   { cmd: 'pnpm setup:agents', what: 'Symlinks del arnés multi-proveedor: .claude/, .github/, .agents/, .agent/, .gemini/, AGENTS.md, CLAUDE.md, GEMINI.md' },
   { cmd: 'pnpm sdd:rebuild-tasks-index', what: 'Regenera el índice de tasks desde los tasks.json per-cycle' },
@@ -642,6 +654,8 @@ export const UI = {
     guiaLabel: 'guía sdd',
     sddDocsMenu: 'sdd:docs — el visor',
     guiaMenu: 'guía sdd — el manual completo',
+    usageLabel: 'cómo usarlo',
+    usageMenu: 'cómo usarlo — la guía práctica',
     openMenu: 'Abrir menú',
     closeMenu: 'Cerrar menú',
   },
@@ -839,5 +853,13 @@ export const UI = {
     installedNote: ' — se instala tal cual en cada repo',
     tocHeading: 'En este documento',
     langNote: null as string | null,
+  },
+  usage: {
+    back: 'volver a la documentación',
+    kicker: 'cómo usarlo — de elegir el install a cerrar la primera spec',
+    h1a: 'Cómo se usa esto,',
+    h1b: ' paso a paso.',
+    body: 'Cinco pestañas con el recorrido completo: elegir cuál de los tres modos de instalación te toca y qué contesta el wizard, cómo subir el kit de versión sin perder nada tuyo, qué exige el SPEC GATE en cada perfil, cuándo el FIX GATE es la salida correcta, y cómo se construye una spec de punta a punta hablándole al sdd-steward.',
+    tocHeading: 'En esta pestaña',
   },
 } as const;

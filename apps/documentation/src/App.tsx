@@ -16,6 +16,7 @@ import { LiveCostsDemo } from './components/LiveCostsDemo';
 import { Section, cascade, rise } from './components/Section';
 import { SddDocsPage } from './pages/SddDocsPage';
 import { GuiaSddPage } from './pages/GuiaSddPage';
+import { ComoUsarloPage } from './pages/ComoUsarloPage';
 import { useContent, useLang, type Lang } from './i18n';
 
 function useHashRoute() {
@@ -84,7 +85,8 @@ export function App() {
   const [menuOpen, setMenuOpen] = useState(false);
   const onDocsPage = route === 'sdd-docs';
   const onGuiaPage = route === 'guia-sdd';
-  const onSubPage = onDocsPage || onGuiaPage;
+  const onUsagePage = route === 'como-usarlo';
+  const onSubPage = onDocsPage || onGuiaPage || onUsagePage;
 
   useEffect(() => {
     if (onSubPage) {
@@ -148,6 +150,16 @@ export function App() {
                 </div>
               );
             })}
+            <a
+              href="#/como-usarlo"
+              className={`rounded-full border px-3 py-1 font-mono text-[12px] transition-all ${
+                onUsagePage
+                  ? 'border-accent-500/50 bg-accent-dim text-accent-300'
+                  : 'hairline text-zinc-400 hover:border-accent-500/40 hover:text-accent-300'
+              }`}
+            >
+              {UI.nav.usageLabel}
+            </a>
             <a
               href="#/sdd-docs"
               className={`rounded-full border px-3 py-1 font-mono text-[12px] transition-all ${
@@ -227,6 +239,16 @@ export function App() {
                 ))}
                 <motion.a
                   variants={rise}
+                  href="#/como-usarlo"
+                  onClick={() => setMenuOpen(false)}
+                  className={`border-b hairline py-3 font-mono text-[13px] ${
+                    onUsagePage ? 'text-accent-300' : 'text-zinc-400'
+                  }`}
+                >
+                  {UI.nav.usageMenu}
+                </motion.a>
+                <motion.a
+                  variants={rise}
                   href="#/sdd-docs"
                   onClick={() => setMenuOpen(false)}
                   className={`border-b hairline py-3 font-mono text-[13px] ${
@@ -269,6 +291,8 @@ export function App() {
           <SddDocsPage />
         ) : onGuiaPage ? (
           <GuiaSddPage />
+        ) : onUsagePage ? (
+          <ComoUsarloPage />
         ) : (
           <>
             <Hero />

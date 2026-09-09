@@ -310,7 +310,7 @@ pnpm sdd:gate <spec-id|slug> cycle-XX   # GATE B — can code be written? (whoev
 pnpm sdd:gate <spec-id|slug> --json     # same answer, structured for agents
 ```
 
-The script prints one line per condition (✔/✘) and ends in `APROBADO` or `BLOQUEADO`
+The script prints one line per condition (✔/✘) and ends in `APPROVED` or `BLOCKED`
 (exit `0` when it passes, `1` when blocked, `2` on a usage error). **It writes nothing:** it only
 answers. Paste its output as the gate report.
 
@@ -324,7 +324,7 @@ answers. Paste its output as the gate report.
 | A4  | Its `depends_on` are `completed`                                               |
 | A5  | The spec is neither `completed` nor `cancelled`                                |
 
-`APROBADO` in A also prints the next `cycle-XX`, the suggested flow and the active profile. Only
+`APPROVED` in A also prints the next `cycle-XX`, the suggested flow and the active profile. Only
 then does the orchestrator create `cycle.json` (`status: "in-progress"`, `flow`, `metrics` with
 `usage.by_agent: []`), move the module to `in_progress_modules` and, if it is `cycle-01`, move the
 spec from `draft` to `in-progress`. Only the reviewer later moves it to `status: "completed"`.
@@ -339,7 +339,7 @@ spec from `draft` to `in-progress`. Only the reviewer later moves it to `status:
 | B4  | Documents of the `flow`: full → brief/functional/planner/architect · reduced → brief · lite → plan.md |
 | B5  | `constitution.md` for every subproject in `cycle.json → apps[]`                                         |
 
-**`BLOQUEADO` → zero lines of code** until what the script points at is completed.
+**`BLOCKED` → zero lines of code** until what the script points at is completed.
 
 ### Cycle flow — full · reduced · lite
 

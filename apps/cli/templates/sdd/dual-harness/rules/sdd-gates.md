@@ -26,7 +26,7 @@ cuatro puntos.
 ## ⛔ SPEC GATE A — apertura de ciclo (lo corre el sdd-orchestrator)
 
 ```bash
-pnpm sdd:gate <spec-id|slug>          # → APROBADO / BLOQUEADO, una línea por condición
+pnpm sdd:gate <spec-id|slug>          # → APPROVED / BLOCKED, una línea por condición
 ```
 
 | #  | Condición                                                                  |
@@ -37,7 +37,7 @@ pnpm sdd:gate <spec-id|slug>          # → APROBADO / BLOQUEADO, una línea por
 | A4 | Sus `depends_on` están `completed`                                          |
 | A5 | La spec no está `completed` ni `cancelled`                                  |
 
-**BLOQUEADO → detener y completar lo que falta** (el script dice qué). **APROBADO →** el
+**BLOCKED → detener y completar lo que falta** (el script dice qué). **APPROVED →** el
 orquestador decide el `flow` (ver abajo), crea `cycle.json` (`status: "in-progress"`, `flow`,
 `metrics` con `usage.by_agent: []`), mueve el módulo a `in_progress_modules` y, si es
 `cycle-01`, pasa la spec de `draft` a `in-progress`. El script no escribe nada: solo responde.
@@ -89,7 +89,7 @@ pnpm sdd:gate <spec-id|slug> cycle-XX   # lee el flow del ciclo y exige los docu
 | B4 | Documentos del `flow`: full → brief/functional/planner/architect · reduced → brief · lite → plan.md |
 | B5 | `cycle.json → apps[]` no vacío y `constitution.md` de cada subproyecto listado      |
 
-**BLOQUEADO → cero líneas de código.** El script dice qué falta; recién ahí se lee el
+**BLOCKED → cero líneas de código.** El script dice qué falta; recién ahí se lee el
 template de ese artefacto (`sdd-file-structure` §3) — no antes.
 
 **Raíz del ciclo (whitelist, `sdd:validate` falla si hay otra cosa):** `brief.yaml`,

@@ -138,11 +138,11 @@ Before starting, run **SPEC GATE A** on the spec: it answers the whole state in 
 no registry read by hand.
 
 ```bash
-pnpm sdd:gate <spec-id|slug>    # one line per condition (✔/✘) + APROBADO / BLOQUEADO
+pnpm sdd:gate <spec-id|slug>    # one line per condition (✔/✘) + APPROVED / BLOCKED
 cat sdd/global.json             # if you want the raw state
 ```
 
-`BLOQUEADO` → complete what the script points at before continuing. `APROBADO` → it also prints
+`BLOCKED` → complete what the script points at before continuing. `APPROVED` → it also prints
 the next `cycle-XX`, the suggested flow and the active profile. **Paste the output** as the gate
 report in the message to the Orchestrator.
 
@@ -176,7 +176,7 @@ Attached references:
 ```
 
 **The Orchestrator automatically generates** (after running `pnpm sdd:gate <spec-id>` and pasting
-its `APROBADO` output; if the spec does not exist yet, it creates and registers it first):
+its `APPROVED` output; if the spec does not exist yet, it creates and registers it first):
 
 1. The `.spec.md` spec file with goal, context, scope and acceptance criteria.
 2. The corresponding entry in `sdd/specs/index.json`.
@@ -255,7 +255,7 @@ With the cycle documents ready and approved, **before the first line of code** r
 pnpm sdd:gate <spec-id|slug> cycle-01   # reads the cycle's flow and requires THAT flow's documents
 ```
 
-`BLOQUEADO` → zero code until what is missing is completed. On `APROBADO` (paste the output) the
+`BLOCKED` → zero code until what is missing is completed. On `APPROVED` (paste the output) the
 implementors are invoked **task by task**. One task per conversation, no batching. The stack is
 defined by the subproject's `constitution.md`.
 
@@ -343,7 +343,7 @@ written in their `cycle.json`.
 
 **What the cycle looks like:**
 
-1. `pnpm sdd:gate <spec-id>` → `APROBADO` (the same GATE A as in `full`; paste the output).
+1. `pnpm sdd:gate <spec-id>` → `APPROVED` (the same GATE A as in `full`; paste the output).
 2. Open `cycle.json` with `status: "in-progress"`, `flow: "lite"` and `metrics` with
    `usage.by_agent: []`; move the module to `in_progress_modules`.
 3. Write **`plan.md`**, which replaces `brief.yaml` + `functional.md` + `planner.md` +
@@ -353,7 +353,7 @@ written in their `cycle.json`.
    exactly as in `full`).
 4. Create `tasks.json` with `flow: "lite"` (`user_stories` may be `[]`) and run
    `pnpm sdd:rebuild-tasks-index`.
-5. `pnpm sdd:gate <spec-id> cycle-XX` → `APROBADO` (GATE B) and only then implement, one task at a
+5. `pnpm sdd:gate <spec-id> cycle-XX` → `APPROVED` (GATE B) and only then implement, one task at a
    time, each moving to `done` with its `usage`.
 6. Close as reviewer: `pnpm sdd:validate` green, `cycle.json` `completed` with `reviewer_report`,
    CONTEXTO GATE (additive fragment) and MEMORIA GATE if there was a lesson.
@@ -608,7 +608,7 @@ pnpm sdd:gate <spec-id|slug> --json     # same answer, structured for agents
   brief/functional/planner/architect · reduced → brief · lite → `plan.md`) · B5 `constitution.md`
   for every subproject in `cycle.json → apps[]`.
 
-**`BLOQUEADO` → STOP. Complete what the script points at before continuing** (exit `0` passes,
+**`BLOCKED` → STOP. Complete what the script points at before continuing** (exit `0` passes,
 `1` blocked, `2` usage error). The four invariants hold in every flow and every profile: spec
 registered, module in `global.json`, `cycle.json` in-progress before the code, `tasks.json` with
 tasks and no task `done` without its `usage`.
@@ -917,13 +917,13 @@ without losing what you had expanded. On static hosting it falls back to manual 
 │                                                                 │
 │  Dev asks with [LITE] (or global.json → profile: "solo")       │
 │         ↓                                                       │
-│  pnpm sdd:gate <spec-id>  → GATE A APROBADO                    │
+│  pnpm sdd:gate <spec-id>  → GATE A APPROVED                    │
 │         ↓                                                       │
 │  A SINGLE ACTOR → cycle.json (in-progress, flow "lite")        │
 │                 → plan.md (replaces brief/functional/          │
 │                   planner/architect) + tasks.json               │
 │         ↓                                                       │
-│  pnpm sdd:gate <spec-id> cycle-XX → GATE B APROBADO            │
+│  pnpm sdd:gate <spec-id> cycle-XX → GATE B APPROVED            │
 │         ↓                                                       │
 │  Implements task by task (done + usage on each one)             │
 │         ↓                                                       │

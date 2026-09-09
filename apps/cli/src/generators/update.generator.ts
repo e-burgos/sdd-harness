@@ -8,6 +8,7 @@ import {
   hashFile,
   isGenerated,
   isHybrid,
+  isKitOwned,
   listDataPlaceholders,
   listKitFiles,
   readManifest,
@@ -99,6 +100,10 @@ export async function updateSDD(root: string): Promise<UpdateReport> {
   if (oldManifest) {
     for (const rel of Object.keys(oldManifest.files)) {
       if (newManifest.files[rel]) continue;
+      // Un archivo que dejó de ser kit-owned (pasó a data) sale del manifiesto nuevo sin
+      // que el kit lo haya dado de baja: borrarlo acá destruiría datos del usuario. El
+      // barrido existe solo para los archivos del kit que un release eliminó.
+      if (!isKitOwned(rel)) continue;
       const dest = resolve(sddDir, rel);
       if (!(await fs.pathExists(dest))) continue;
       if (hashFile(dest) === oldManifest.files[rel]) {
@@ -120,12 +125,17 @@ export async function updateSDD(root: string): Promise<UpdateReport> {
     report.added.push(rel);
   }
 
-  // sdd/tools.json is data (the update never rewrites it) but new since v0.12: seed it
-  // once so rtk comes up enabled on kits installed before it existed.
-  const toolsDest = resolve(sddDir, 'tools.json');
-  if (!(await fs.pathExists(toolsDest))) {
-    await fs.copy(resolve(kitDir, 'tools.json'), toolsDest);
-    report.added.push('tools.json');
+  // Data files whose initial content ships with the kit: seeded once when missing and
+  // never rewritten afterwards. `tools.json` is new since v0.12 (so rtk comes up enabled
+  // on older kits); `memory/lessons.md` is the project's distilled memory — the kit only
+  // provides its starting point, and a release touching that seed must never land a
+  // `.new` next to real accumulated lessons.
+  for (const rel of ['tools.json', 'memory/lessons.md']) {
+    const dest = resolve(sddDir, rel);
+    if (await fs.pathExists(dest)) continue;
+    await fs.ensureDir(dirname(dest));
+    await fs.copy(resolve(kitDir, rel), dest);
+    report.added.push(rel);
   }
 
   await fs.copy(resolve(kitDir, 'catalog.json'), resolve(sddDir, 'catalog.json'));

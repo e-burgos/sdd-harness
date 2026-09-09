@@ -23,14 +23,14 @@ const json = args.includes('--json');
 const positional = args.filter((a) => !a.startsWith('--'));
 
 if (args.includes('--help') || args.includes('-h') || positional.length === 0) {
-  console.log(`Uso: pnpm sdd:gate <spec-id|slug> [cycle-XX] [--json]
+  console.log(`Usage: pnpm sdd:gate <spec-id|slug> [cycle-XX] [--json]
 
-  Sin ciclo   → GATE A (apertura): ¿se puede abrir un ciclo de esta spec?
-  Con ciclo   → GATE B (implementación): ¿se puede escribir código en ese ciclo?
-                (según flow: full → brief/functional/planner/architect · reduced → brief · lite → plan.md)
-  --json      → salida estructurada para agentes
+  No cycle    → GATE A (opening): can a cycle be opened for this spec?
+  With cycle  → GATE B (implementation): can code be written in that cycle?
+                (per flow: full → brief/functional/planner/architect · reduced → brief · lite → plan.md)
+  --json      → structured output for agents
 
-Sale con 0 si el gate pasa, 1 si está bloqueado, 2 ante un error de uso.`);
+Exits 0 if the gate passes, 1 if it is blocked, 2 on a usage error.`);
   process.exit(positional.length === 0 && !args.includes('--help') && !args.includes('-h') ? 2 : 0);
 }
 
@@ -55,15 +55,15 @@ function resolveSpec(query) {
   );
   if (matches.length === 1) return matches[0];
   if (matches.length > 1)
-    usageError(`"${query}" es ambiguo: ${matches.map((s) => s.id).join(', ')}`);
+    usageError(`"${query}" is ambiguous: ${matches.map((s) => s.id).join(', ')}`);
   usageError(
-    `spec "${query}" no está en sdd/specs/index.json (${specsIndex.specs.length} registradas)`,
+    `spec "${query}" is not in sdd/specs/index.json (${specsIndex.specs.length} registered)`,
   );
 }
 
 function normalizeCycle(raw) {
   const m = /^(?:cycle-)?(\d{1,2})$/.exec(raw);
-  if (!m) usageError(`ciclo inválido "${raw}" — usar cycle-XX`);
+  if (!m) usageError(`invalid cycle "${raw}" — use cycle-XX`);
   return `cycle-${m[1].padStart(2, '0')}`;
 }
 
@@ -100,40 +100,40 @@ function gateA(spec) {
   const specFile = join(REPO, spec.file);
   checks.push({
     id: 'A1',
-    label: 'Spec registrada en specs/index.json y su archivo existe',
+    label: 'Spec registered in specs/index.json and its file exists',
     ok: existsSync(specFile),
-    detail: existsSync(specFile) ? spec.file : `falta ${spec.file}`,
+    detail: existsSync(specFile) ? spec.file : `missing ${spec.file}`,
   });
   const mod = moduleEntry(spec);
   const modOk = !!mod && mod.bucket !== 'completed_modules';
   checks.push({
     id: 'A2',
-    label: 'Módulo en pending_modules o in_progress_modules de global.json',
+    label: 'Module in pending_modules or in_progress_modules of global.json',
     ok: modOk,
     detail: mod
       ? `${mod.entry.module} → ${mod.bucket}`
-      : 'sin ModuleEntry — harness add spec lo registra; si la spec ya existe, agregarlo a pending_modules',
+      : 'no ModuleEntry — harness add spec registers it; if the spec already exists, add it to pending_modules',
   });
   const cycles = cyclesOf(spec);
   const open = cycles.filter((c) => c.data?.status === 'in-progress');
   checks.push({
     id: 'A3',
-    label: 'Ningún otro ciclo de esta spec está in-progress',
+    label: 'No other cycle of this spec is in-progress',
     ok: open.length === 0,
-    detail: open.length ? `abierto: ${open.map((c) => c.id).join(', ')} — cerrarlo primero` : 'sin ciclos abiertos',
+    detail: open.length ? `open: ${open.map((c) => c.id).join(', ')} — close it first` : 'no open cycles',
   });
   const missingDeps = (spec.depends_on ?? []).filter(
     (dep) => specsIndex.specs.find((s) => s.id === dep)?.status !== 'completed',
   );
   checks.push({
     id: 'A4',
-    label: 'Dependencias de la spec (depends_on) completadas',
+    label: 'Spec dependencies (depends_on) completed',
     ok: missingDeps.length === 0,
-    detail: missingDeps.length ? `pendientes: ${missingDeps.join(', ')}` : 'sin dependencias pendientes',
+    detail: missingDeps.length ? `pending: ${missingDeps.join(', ')}` : 'no pending dependencies',
   });
   checks.push({
     id: 'A5',
-    label: 'La spec no está completed ni cancelled',
+    label: 'The spec is neither completed nor cancelled',
     ok: spec.status !== 'completed' && spec.status !== 'cancelled',
     detail: `status: ${spec.status}`,
   });
@@ -157,16 +157,16 @@ function gateB(spec, cycleId) {
   const data = cycle?.data ?? null;
   checks.push({
     id: 'B1',
-    label: 'cycle.json existe con status in-progress',
+    label: 'cycle.json exists with status in-progress',
     ok: data?.status === 'in-progress',
-    detail: data ? `status: ${data.status}` : `falta ${rel('cycle.json')} — lo crea el orquestador al abrir el ciclo`,
+    detail: data ? `status: ${data.status}` : `missing ${rel('cycle.json')} — the orchestrator creates it when opening the cycle`,
   });
   const mod = moduleEntry(spec);
   checks.push({
     id: 'B2',
-    label: 'Módulo en in_progress_modules de global.json',
+    label: 'Module in in_progress_modules of global.json',
     ok: mod?.bucket === 'in_progress_modules',
-    detail: mod ? `${mod.entry.module} → ${mod.bucket}` : 'sin ModuleEntry en global.json',
+    detail: mod ? `${mod.entry.module} → ${mod.bucket}` : 'no ModuleEntry in global.json',
   });
   let tasks = null;
   try {
@@ -177,18 +177,18 @@ function gateB(spec, cycleId) {
   const taskCount = tasks?.tasks?.length ?? 0;
   checks.push({
     id: 'B3',
-    label: 'tasks.json del ciclo con al menos una task',
+    label: 'Cycle tasks.json with at least one task',
     ok: taskCount > 0,
-    detail: tasks ? `${taskCount} task(s)` : `falta ${rel('tasks.json')}`,
+    detail: tasks ? `${taskCount} task(s)` : `missing ${rel('tasks.json')}`,
   });
   const flow = data?.flow ?? tasks?.flow ?? 'full';
   const docs = DOCS_BY_FLOW[flow] ?? DOCS_BY_FLOW.full;
   const missingDocs = docs.filter((d) => !existsSync(join(cycleDir, d)));
   checks.push({
     id: 'B4',
-    label: `Documentos del ciclo según flow ${flow}: ${docs.join(', ')}`,
+    label: `Cycle documents required by flow ${flow}: ${docs.join(', ')}`,
     ok: missingDocs.length === 0,
-    detail: missingDocs.length ? `faltan: ${missingDocs.join(', ')}` : 'completos',
+    detail: missingDocs.length ? `missing: ${missingDocs.join(', ')}` : 'complete',
   });
   const apps = data?.apps ?? mod?.entry.apps ?? [];
   const missingCtx = apps.filter((app) => {
@@ -197,13 +197,13 @@ function gateB(spec, cycleId) {
   });
   checks.push({
     id: 'B5',
-    label: 'constitution.md de cada subproyecto del ciclo',
+    label: 'constitution.md of every subproject in the cycle',
     ok: apps.length > 0 && missingCtx.length === 0,
     detail:
       apps.length === 0
-        ? 'el ciclo no declara apps[]'
+        ? 'the cycle declares no apps[]'
         : missingCtx.length
-          ? `faltan: ${missingCtx.map((a) => `context/${a}/constitution.md`).join(', ')}`
+          ? `missing: ${missingCtx.map((a) => `context/${a}/constitution.md`).join(', ')}`
           : apps.join(', '),
   });
   return { gate: 'B', checks, flow, cycle: cycleId };
@@ -219,8 +219,8 @@ if (json) {
 } else {
   const title =
     result.gate === 'A'
-      ? `SPEC GATE A — apertura de ciclo · ${spec.id}`
-      : `SPEC GATE B — implementación · ${spec.id} · ${result.cycle} (flow: ${result.flow})`;
+      ? `SPEC GATE A — opening a cycle · ${spec.id}`
+      : `SPEC GATE B — implementation · ${spec.id} · ${result.cycle} (flow: ${result.flow})`;
   console.log(`\n${title}`);
   for (const c of result.checks) {
     console.log(`  ${c.ok ? '✔' : '✘'} ${c.id}. ${c.label}\n      ${c.detail}`);
@@ -228,8 +228,8 @@ if (json) {
   const pending = result.checks.filter((c) => !c.ok).length;
   console.log(
     passed
-      ? `\n→ APROBADO${result.gate === 'A' ? ` — próximo ciclo: ${result.next.cycle}, flow sugerido: ${result.next.flow} (profile: ${result.next.profile}; [LITE]/[FULL] en el pedido lo fuerzan)` : ''}`
-      : `\n→ BLOQUEADO — ${pending} condición(es) pendiente(s). Completarlas antes de continuar.`,
+      ? `\n→ APPROVED${result.gate === 'A' ? ` — next cycle: ${result.next.cycle}, suggested flow: ${result.next.flow} (profile: ${result.next.profile}; [LITE]/[FULL] in the request override it)` : ''}`
+      : `\n→ BLOCKED — ${pending} pending condition(s). Complete them before continuing.`,
   );
 }
 process.exit(passed ? 0 : 1);

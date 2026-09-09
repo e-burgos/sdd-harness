@@ -13,8 +13,8 @@ El script contesta A1–A5 (spec registrada · módulo en `pending_modules`/`in_
 · ningún otro ciclo `in-progress` de esa spec · `depends_on` completadas · spec no cerrada) y
 sugiere el próximo ciclo y el flow.
 
-**→ `BLOQUEADO`: completar lo que señala antes de continuar (no se abre nada).**
-**→ `APROBADO`: decidir el flow y proceder con el ciclo.**
+**→ `BLOCKED`: completar lo que señala antes de continuar (no se abre nada).**
+**→ `APPROVED`: decidir el flow y proceder con el ciclo.**
 
 ## Flow del ciclo (se decide UNA vez, al abrir)
 
@@ -39,7 +39,7 @@ Módulo a desarrollar: [nombre del módulo]
 Spec en: sdd/specs/spec-[gh-user]-[NNN]-[slug]/spec-[gh-user]-[NNN]-[slug].spec.md
 
 Antes de empezar:
-1. pnpm sdd:gate <spec-id> → tiene que dar APROBADO (pegar la salida como reporte del gate)
+1. pnpm sdd:gate <spec-id> → tiene que dar APPROVED (pegar la salida como reporte del gate)
 2. Consolidación de contexto (sdd-orchestrator, antes del brief): si
    sdd/context/[apps|libs|tools]/[nombre]/updates/ tiene fragmentos para el subproyecto de
    este ciclo, fundirlos en constitution.md + context_prompt.md base, actualizar
@@ -48,7 +48,7 @@ Antes de empezar:
 3. Destilación de memoria: si sdd/memory/journal/ tiene ≥5 entradas, destilar en lessons.md
    (commit aparte: `chore(sdd): distill memory journal into lessons`)
 
-Pasos en orden (solo con el GATE A en APROBADO):
+Pasos en orden (solo con el GATE A en APPROVED):
 1. sdd-orchestrator → brief.yaml + cycle.json con status "in-progress", flow "full" y
         metrics { contadores en 0, usage: { tokens_in: 0, tokens_out: 0, by_agent: [] } };
         mover el módulo a in_progress_modules; si es cycle-01, pasar la spec de "draft" a
@@ -62,7 +62,7 @@ Pasos en orden (solo con el GATE A en APROBADO):
         ⛔ TELEMETRÍA: entrada propia (agent: "planner")
 4. sdd-architect    → architect.md + sdd/schema.json + sdd/api.json (PARALELO con 3)
         ⛔ TELEMETRÍA: entrada propia (agent: "architect")
-5. pnpm sdd:gate <spec-id> cycle-[XX] → GATE B APROBADO antes de cualquier implementación.
+5. pnpm sdd:gate <spec-id> cycle-[XX] → GATE B APPROVED antes de cualquier implementación.
         Si el orquestador lanzó subagentes vía la tool Agent, capturar la notificación
         `agent-usage-notification` de cada uno (exacta, approx: false, split 85/15) y volcarla
         en by_agent si el propio subagente no la registró.
@@ -83,7 +83,7 @@ Pasos en orden (solo con el GATE A en APROBADO):
 [LITE] Iniciá el Ciclo [N] del proyecto [nombre-del-proyecto] para el módulo [nombre].
 Spec: sdd/specs/spec-[gh-user]-[NNN]-[slug]/…spec.md
 
-1. pnpm sdd:gate <spec-id> → APROBADO (pegar la salida). Consolidación de contexto y
+1. pnpm sdd:gate <spec-id> → APPROVED (pegar la salida). Consolidación de contexto y
    destilación de memoria igual que en full, si corresponde.
 2. Abrir el ciclo: cycle.json con status "in-progress", flow "lite", metrics con contadores en
    0 y usage.by_agent: []; módulo a in_progress_modules; spec draft → in-progress si es cycle-01.
@@ -92,7 +92,7 @@ Spec: sdd/specs/spec-[gh-user]-[NNN]-[slug]/…spec.md
    y en ese caso actualizar esos registros bajo el app-key correcto).
 4. Crear tasks.json (flow "lite"; user_stories puede ir [] si plan.md no numera historias) y
    correr pnpm sdd:rebuild-tasks-index.
-5. pnpm sdd:gate <spec-id> cycle-[XX] → GATE B APROBADO. Recién ahí implementar, una task a la
+5. pnpm sdd:gate <spec-id> cycle-[XX] → GATE B APPROVED. Recién ahí implementar, una task a la
    vez; cada task pasa a "done" con su `usage` (tier estándar para implementar).
 6. Cerrar como reviewer: pnpm sdd:validate en verde, tasks resueltas (done/skipped),
    cycle.json "completed" con reviewer_report y metrics.usage consolidado — una sola entrada

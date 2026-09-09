@@ -57,6 +57,13 @@
             { "type": "object", "additionalProperties": { "type": "string" } },
             { "type": "string" }
           ]
+        },
+        "tools": {
+          "description": "Optional. Name -> description map, same shape as `apps` and `libs`, so the docs viewer can discover each tool's context under sdd/context/tools/. Absent means the repo registers no tools as SDD subprojects; a plain string is accepted but in that form tools are not listed in sdd:docs.",
+          "oneOf": [
+            { "type": "object", "additionalProperties": { "type": "string" } },
+            { "type": "string" }
+          ]
         }
       }
     }

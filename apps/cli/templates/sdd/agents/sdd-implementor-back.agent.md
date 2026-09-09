@@ -61,7 +61,7 @@ Antes de escribir cualquier código (fuente canónica: `sdd/dual-harness/rules/s
 pnpm sdd:gate <spec-id> cycle-[XX]   # GATE B — lee el flow del ciclo y exige SUS documentos
 ```
 
-Además de `APROBADO`, verificar:
+Además de `APPROVED`, verificar:
 
 ```
 [ ] 1. sdd/specs/{spec-id}/cycles/cycle-[XX]/tasks.json → la task existe con status "pending"
@@ -69,7 +69,7 @@ Además de `APROBADO`, verificar:
 [ ] 3. sdd/context/[apps|libs|tools]/[nombre]/context_prompt.md → existe
 ```
 
-Si el gate da `BLOQUEADO` o alguna condición NO se cumple → DETENER y notificar al Orquestador.
+Si el gate da `BLOCKED` o alguna condición NO se cumple → DETENER y notificar al Orquestador.
 En `flow: lite` el contrato y el detalle de la task están en `plan.md` (no hay
 `architect.md`/`planner.md`); el resto de las reglas no cambia.
 

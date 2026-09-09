@@ -5,6 +5,78 @@ All notable changes to `@e-burgos/sdd-harness` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.14.0] - 2026-09-09
+
+The docs viewer knew the `tools` category but nothing ever fed it, `sdd:gate` was the last Spanish
+console surface in the kit, and `update sdd` could drop a `.new` on top of the project's distilled
+memory. This release closes the `tools` loop end to end, moves the gate's output to English, and
+fixes the memory boundary.
+
+
+### Added
+
+- **`harness add tool <name> [--type <what it is>]`**: registers a tool as an SDD subproject. It
+  generates no code — a tool is whatever the team writes under `tools/<name>/` — but it writes the
+  entry in `sdd/global.json → monorepo.tools` and creates `sdd/context/tools/<name>/`
+  (`constitution.md`, `context_prompt.md`, `updates/`). That was the missing half: `sdd/context/`,
+  the validator and the docs viewer already knew the `tools` category, but nothing in the CLI ever
+  produced one, so it existed only for repos that hand-wrote it.
+- **Dashboard: a `Tools` section**, mirroring `Libs` (same row, derived from the context catalog by
+  `entry.category`). It renders only when the repo has tools registered, so workspaces with just
+  apps and libs see no empty section.
+
+### Changed
+
+- **`sdd/scripts/spec-gate.mjs` now prints in English**: usage text, condition labels and details,
+  and the verdicts — `APROBADO`/`BLOQUEADO` are now **`APPROVED`/`BLOCKED`**. The gate is the one
+  script whose output agents paste back into their reports, and it was the last Spanish console
+  surface in the kit. Every file that quoted those words (harnesses, prompts, agents,
+  `rules/sdd-gates.md`, both documentation sets) was updated. **Agents or CI that grep for
+  `APROBADO`/`BLOQUEADO` must be updated**; exit codes are unchanged (`0` pass, `1` blocked,
+  `2` usage error), and so is the `--json` shape.
+- **`parseAppRef()` in the docs viewer accepts `tools/<name>` refs.** `ModuleEntry.apps` has always
+  allowed `^(apps|libs|tools)/…` in the schema, but the viewer's parser only matched `apps|libs`,
+  so a module, spec or registry pointing at a tool was dropped in silence. A tool is now discovered
+  either by `monorepo.tools` or by any `tools/<name>` reference, exactly like `libs/`.
+
+### Fixed
+
+- **A project named after a common word failed `sdd:validate` on a clean install.** The portability
+  check (kit files must never hardcode the project name) compared `global.json → project` against
+  every kit file with a word-boundary match, so a repo called `legacy` failed because
+  `sdd/templates/README.md` talks about TypeScript's "legacy `paths`" wiring — and since `init` runs
+  `sdd:validate` in its closing gate, the install itself failed. Files that are byte-identical to
+  what the kit shipped (checked against `sdd/kit.json`) are now skipped: they cannot have leaked a
+  name that did not exist when they were written. The rule keeps its teeth — writing the name into a
+  kit file changes its hash and it is caught again — and installs with no manifest keep the previous
+  behaviour.
+
+- **`update sdd` could drop a `lessons.md.new` on top of the project's distilled memory.**
+  `sdd/memory/lessons.md` was classified as a *hybrid* kit file and listed in
+  `sdd/kit.json → files`, so any release that touched its seed — which already happened once, in
+  v0.11.0 — landed a `.new` full of generic kit lessons next to the repo's real memory. The user's
+  file was never overwritten, but the conflict invited merging seed content into the one file
+  agents read **in full at the start of every session**, under a hard 120-line cap. `lessons.md` is
+  now **data**, like `global.json` or `tools.json`: the update never rewrites it, and it is seeded
+  once only when missing. Two hazards of that reclassification are covered by their own tests — the
+  stale-file sweep no longer removes a path that moved from kit-owned to data (an untouched
+  `lessons.md` would otherwise have been **deleted**), and the seed never overwrites an existing
+  file.
+
+- **The docs viewer never discovered `sdd/context/tools/*`.** `collectContextCandidates()`
+  (`sdd/docs/app.js`) built its candidate list from `global.monorepo.apps` and
+  `global.monorepo.libs` and never from `global.monorepo.tools`, so the `#/context` view rendered
+  no `TOOLS` section and the subproject counter excluded them — even though the category was
+  already wired into `CONTEXT_CATEGORY_ORDER`, `CONTEXT_CATEGORY_LABELS` and
+  `addContextCandidate()`. Tools registered in `global.json` are now listed, with their
+  `constitution.md` and `context_prompt.md`, exactly like apps and libs. No data was ever at
+  risk: the files were on disk and `serve.mjs` was serving them.
+- **`sdd/schemas/global.schema.json` rejected `monorepo.tools`.** The object declares
+  `additionalProperties: false` and only allowed `tool`, `package_manager`, `apps` and `libs`, so
+  a repo that registered its tools failed `pnpm sdd:validate`. `tools` is now an accepted
+  **optional** key with the same shape as `libs` (name → description map, plain string tolerated).
+  Absent, as in every kit shipped so far, nothing changes.
+
 ## [0.13.0] - 2026-09-08
 
 The SPEC GATE was five slightly different checklists in five files (one asked for

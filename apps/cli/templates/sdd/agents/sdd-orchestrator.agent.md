@@ -191,9 +191,9 @@ pnpm sdd:gate <spec-id|slug>     # A1 spec registrada · A2 módulo en global.js
                                  # ciclo in-progress de la spec · A4 depends_on completed · A5 spec abierta
 ```
 
-Pegar la salida como reporte del gate. `BLOQUEADO` → comunicar qué falta y NO continuar (si la
+Pegar la salida como reporte del gate. `BLOCKED` → comunicar qué falta y NO continuar (si la
 spec no existe: `harness add spec`; si falta el ModuleEntry: agregarlo a `pending_modules`).
-`APROBADO` → fijar el **flow** (tabla de arriba) y seguir. Otros devs pueden tener sus propias
+`APPROVED` → fijar el **flow** (tabla de arriba) y seguir. Otros devs pueden tener sus propias
 specs en progreso en paralelo — el gate es por spec.
 
 ### PASO 1 — Leer estado y especificación

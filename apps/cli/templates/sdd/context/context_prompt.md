@@ -67,8 +67,8 @@ pnpm sdd:gate <spec-id|slug>            # GATE A — ¿se puede abrir un ciclo? 
 pnpm sdd:gate <spec-id|slug> cycle-XX   # GATE B — ¿se puede escribir código? (quien implementa)
 ```
 
-→ `BLOQUEADO`: completar lo que el script señala (`sdd/prompts/check-spec-before-implement.prompt.md`)
-→ `APROBADO` en A: `sdd/prompts/start-sdd-cycle.prompt.md` decide el **flow** (`full` · `reduced` ·
+→ `BLOCKED`: completar lo que el script señala (`sdd/prompts/check-spec-before-implement.prompt.md`)
+→ `APPROVED` en A: `sdd/prompts/start-sdd-cycle.prompt.md` decide el **flow** (`full` · `reduced` ·
 `lite`) según `sdd/global.json → profile` (`team`/`solo`) o el prefijo `[LITE]`/`[FULL]` del pedido.
 
 ### Los 7 agentes y su orden obligatorio (flow `full`)
@@ -91,7 +91,7 @@ pnpm sdd:gate <spec-id|slug> cycle-XX   # GATE B — ¿se puede escribir código
 
 ## 4. Reglas generales del proyecto
 
-1. **SPEC GATE:** Ninguna implementación sin `pnpm sdd:gate` en `APROBADO` (spec registrada, `cycle.json` in-progress, `tasks.json` y los documentos del flow)
+1. **SPEC GATE:** Ninguna implementación sin `pnpm sdd:gate` en `APPROVED` (spec registrada, `cycle.json` in-progress, `tasks.json` y los documentos del flow)
 2. **Leer `sdd/global.json` antes de cualquier tarea**
 3. **Nunca escribir código sin haber pasado por el ciclo SDD**
 4. **Un módulo a la vez, en el orden de ciclos definido**
