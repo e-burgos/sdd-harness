@@ -310,7 +310,7 @@ pnpm sdd:gate <spec-id|slug> cycle-XX   # GATE B — ¿se puede escribir código
 pnpm sdd:gate <spec-id|slug> --json     # misma respuesta, estructurada para agentes
 ```
 
-El script imprime una línea por condición (✔/✘) y cierra en `APROBADO` o `BLOQUEADO`
+El script imprime una línea por condición (✔/✘) y cierra en `APPROVED` o `BLOCKED`
 (exit `0` si pasa, `1` si está bloqueado, `2` ante un error de uso). **No escribe nada:** solo
 responde. La salida se pega como reporte del gate.
 
@@ -324,7 +324,7 @@ responde. La salida se pega como reporte del gate.
 | A4  | Sus `depends_on` están `completed`                                          |
 | A5  | La spec no está `completed` ni `cancelled`                                  |
 
-`APROBADO` en A imprime además el próximo `cycle-XX`, el flow sugerido y el perfil activo. Recién
+`APPROVED` en A imprime además el próximo `cycle-XX`, el flow sugerido y el perfil activo. Recién
 ahí el orquestador crea `cycle.json` (`status: "in-progress"`, `flow`, `metrics` con
 `usage.by_agent: []`), mueve el módulo a `in_progress_modules` y, si es `cycle-01`, pasa la spec
 de `draft` a `in-progress`. Solo el reviewer lo pasa después a `status: "completed"`.
@@ -339,7 +339,7 @@ de `draft` a `in-progress`. Solo el reviewer lo pasa después a `status: "comple
 | B4  | Documentos del `flow`: full → brief/functional/planner/architect · reduced → brief · lite → plan.md |
 | B5  | `constitution.md` de cada subproyecto en `cycle.json → apps[]`                                       |
 
-**`BLOQUEADO` → cero líneas de código** hasta completar lo que el script señala.
+**`BLOCKED` → cero líneas de código** hasta completar lo que el script señala.
 
 ### Flow del ciclo — full · reduced · lite
 

@@ -82,9 +82,11 @@ describe('update.generator', () => {
     );
   });
 
-  it('memoria: journal es data intocable, lessons.md es híbrido preservado con edición local', async () => {
+  it('memoria: journal y lessons.md son data — el update no los toca ni los lista', async () => {
     const manifest = await fs.readJSON(resolve(ws, 'sdd/kit.json'));
-    expect(manifest.files['memory/lessons.md']).toMatch(/^[a-f0-9]{64}$/);
+    // lessons.md es la memoria destilada del proyecto: fuera del manifiesto, como
+    // cualquier otro dato. El kit solo aporta su contenido inicial.
+    expect(manifest.files['memory/lessons.md']).toBeUndefined();
     expect(manifest.files['memory/journal/.gitkeep']).toBeUndefined();
 
     const journalEntry = resolve(
@@ -100,8 +102,66 @@ describe('update.generator', () => {
     const report = await updateSDD(ws);
 
     expect(await fs.pathExists(journalEntry)).toBe(true);
-    expect(report.keptCustom).toContain('memory/lessons.md');
     expect(await fs.readFile(lessonsPath, 'utf-8')).toBe(customizedLessons);
+    expect(report.conflicts).not.toContain('memory/lessons.md');
+    expect(report.updated).not.toContain('memory/lessons.md');
+    expect(await fs.pathExists(`${lessonsPath}.new`)).toBe(false);
+  });
+
+  it('un release que toca el seed de lessons.md no deja un .new sobre la memoria real', async () => {
+    // Regresión: lessons.md era hybrid y estaba en kit.json → files. Cualquier release
+    // que tocara el seed (pasó en v0.11.0) dejaba un lessons.md.new con lecciones
+    // genéricas al lado de la memoria destilada del repo — y ese archivo se lee COMPLETO
+    // al inicio de cada sesión de agente, con cap de 120 líneas.
+    const lessonsPath = resolve(ws, 'sdd/memory/lessons.md');
+    const mine = '# Memoria del proyecto\n\n- El mock de pagos no simula timeouts.\n';
+    await fs.writeFile(lessonsPath, mine);
+
+    // Baseline al estilo viejo: el manifest anota lessons.md como kit-owned y el kit
+    // nuevo difiere de ese hash (release que tocó el seed).
+    const manifestPath = resolve(ws, 'sdd/kit.json');
+    const manifest = await fs.readJSON(manifestPath);
+    manifest.files['memory/lessons.md'] = sha256('seed viejo del kit\n');
+    await fs.writeJSON(manifestPath, manifest, { spaces: 2 });
+
+    const report = await updateSDD(ws);
+
+    expect(report.conflicts).not.toContain('memory/lessons.md');
+    expect(await fs.pathExists(`${lessonsPath}.new`)).toBe(false);
+    expect(await fs.readFile(lessonsPath, 'utf-8')).toBe(mine);
+  });
+
+  it('el barrido de stale no borra un archivo que pasó de kit-owned a data', async () => {
+    // Al sacar lessons.md del manifiesto, un repo cuyo lessons.md seguía igual al seed
+    // (hash == baseline viejo) entraba al barrido de stale y quedaba BORRADO.
+    const lessonsPath = resolve(ws, 'sdd/memory/lessons.md');
+    const asShipped = await fs.readFile(lessonsPath, 'utf-8');
+
+    const manifestPath = resolve(ws, 'sdd/kit.json');
+    const manifest = await fs.readJSON(manifestPath);
+    manifest.files['memory/lessons.md'] = sha256(asShipped); // baseline == instalado
+    await fs.writeJSON(manifestPath, manifest, { spaces: 2 });
+
+    const report = await updateSDD(ws);
+
+    expect(report.removedStale).not.toContain('memory/lessons.md');
+    expect(await fs.pathExists(lessonsPath)).toBe(true);
+    expect(await fs.readFile(lessonsPath, 'utf-8')).toBe(asShipped);
+  });
+
+  it('siembra memory/lessons.md si falta y jamás lo pisa si existe', async () => {
+    const lessonsPath = resolve(ws, 'sdd/memory/lessons.md');
+    await fs.remove(lessonsPath);
+
+    const seeded = await updateSDD(ws);
+    expect(seeded.added).toContain('memory/lessons.md');
+    expect(await fs.readFile(lessonsPath, 'utf-8')).toContain('lecciones destiladas');
+
+    const mine = '# Solo mis lecciones\n';
+    await fs.writeFile(lessonsPath, mine);
+    const kept = await updateSDD(ws);
+    expect(kept.added).not.toContain('memory/lessons.md');
+    expect(await fs.readFile(lessonsPath, 'utf-8')).toBe(mine);
   });
 
   it('actualiza archivos no tocados cuando el kit cambió, y marca conflicto cuando cambiaron ambos', async () => {

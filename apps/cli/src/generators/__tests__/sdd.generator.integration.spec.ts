@@ -227,6 +227,47 @@ describe.skipIf(process.platform === 'win32')(
       expect(output).toContain('OK');
     });
 
+    it('un proyecto llamado como una palabra del kit no dispara el check de portabilidad', async () => {
+      // Regresión: el check compara el nombre del proyecto contra los archivos del kit
+      // con word-boundary, así que un repo llamado `legacy` fallaba en instalación limpia
+      // porque templates/README.md habla de "legacy `paths`" de TypeScript. Un archivo
+      // byte-idéntico al que shippeó el kit no puede haber filtrado nada.
+      const root = resolve(ws, 'legacy-named');
+      await fs.ensureDir(root);
+
+      await generateSDD(
+        root,
+        {
+          projectName: 'legacy',
+          description: 'Repo heredado que se migra por partes.',
+          packageScope: '@legacy',
+          apps: [{ name: 'legacy', type: 'fastify' }],
+          libs: [],
+          services: [],
+        },
+        { layout: 'standalone', mergePackageJson: true },
+      );
+
+      await linkAjv(root);
+      const output = execFileSync(
+        'node',
+        [resolve(root, 'sdd/scripts/validate-sdd.mjs')],
+        { encoding: 'utf-8' },
+      );
+      expect(output).toContain('OK');
+
+      // Y la regla conserva los dientes: filtrar el nombre a mano en un archivo del kit
+      // cambia su hash, así que vuelve a entrar al escaneo y falla.
+      const skill = resolve(root, 'sdd/skills/sdd-file-structure/SKILL.md');
+      await fs.appendFile(skill, '\n<!-- proyecto: legacy -->\n');
+      expect(() =>
+        execFileSync('node', [resolve(root, 'sdd/scripts/validate-sdd.mjs')], {
+          encoding: 'utf-8',
+          stdio: 'pipe',
+        }),
+      ).toThrow(/hardcodes global.json/);
+    });
+
     it('absorbe AGENTS.md/CLAUDE.md previos dentro de sdd/dual-harness', async () => {
       const root = resolve(ws, 'existing');
       await fs.ensureDir(root);

@@ -62,6 +62,10 @@ const EN_STRINGS = {
   'No hay subproyectos de categoría libs con contexto disponible.':
     'There are no libs subprojects with context available.',
   '{count} librerías': '{count} libraries',
+  'Sin tools registradas': 'No tools registered',
+  'No hay subproyectos de categoría tools con contexto disponible.':
+    'There are no tools subprojects with context available.',
+  '{count} herramientas': '{count} tools',
   'Sin datos del monorepo': 'No monorepo data',
   'Ciclos completados': 'Cycles completed',
   Versión: 'Version',
@@ -2441,6 +2445,7 @@ async function renderDashboard(container, params) {
       <div style="flex:2 1 420px;display:flex;flex-direction:column;gap:24px;min-width:0">
         ${renderDashboardAppsSection(globalData, contextEntries)}
         ${renderDashboardLibsSection(contextEntries, contextError)}
+        ${renderDashboardToolsSection(contextEntries, contextError)}
       </div>
       <div style="flex:1 1 240px;min-width:0">
         ${renderDashboardMonorepoPanel(globalData)}
@@ -2623,7 +2628,7 @@ function dashboardAppRow(name, description, status, index, contextEntries) {
   `;
 }
 
-function dashboardLibRow(entry, index) {
+function dashboardSubprojectRow(entry, index) {
   return `
     <div class="row" tabindex="0" role="button" data-dashboard-context="${escapeHtml(dashboardContextKey(entry.category, entry.name))}" style="cursor:pointer" aria-label="${escapeHtml(t('Ver contexto de {name}', { name: entry.name }))}">
       <span class="row-lead" style="font-family:var(--font-mono);font-size:var(--text-12);color:var(--text-subtle)">${String(index + 1).padStart(2, '0')}</span>
@@ -2669,8 +2674,19 @@ function renderDashboardLibsSection(contextEntries, contextError) {
           t('Sin libs registradas'),
           t('No hay subproyectos de categoría libs con contexto disponible.'),
         )
-      : libs.map((entry, index) => dashboardLibRow(entry, index)).join('');
+      : libs.map((entry, index) => dashboardSubprojectRow(entry, index)).join('');
   return `<div>${dashboardSectionHeading('Libs', contextError ? '—' : t('{count} librerías', { count: libs.length }))}${body}</div>`;
+}
+
+function renderDashboardToolsSection(contextEntries, contextError) {
+  const tools = contextEntries.filter((entry) => entry.category === 'tools');
+  // A repo with no tools registered in global.json shows nothing: the section would
+  // be permanent noise for the (many) workspaces that only have apps and libs.
+  if (!contextError && tools.length === 0) return '';
+  const body = contextError
+    ? errorState(contextError)
+    : tools.map((entry, index) => dashboardSubprojectRow(entry, index)).join('');
+  return `<div>${dashboardSectionHeading('Tools', contextError ? '—' : t('{count} herramientas', { count: tools.length }))}${body}</div>`;
 }
 
 function dashboardCyclesCompletedTotal(globalData) {
@@ -5310,7 +5326,7 @@ function contextDocPath(category, name, file) {
 
 function parseAppRef(ref) {
   if (typeof ref !== 'string') return null;
-  const prefixed = /^(apps|libs)\/([a-z][a-z0-9-]*)$/.exec(ref);
+  const prefixed = /^(apps|libs|tools)\/([a-z][a-z0-9-]*)$/.exec(ref);
   if (prefixed) return { category: prefixed[1], name: prefixed[2] };
   if (/^[a-z][a-z0-9-]*$/.test(ref)) return { category: 'apps', name: ref };
   return null;
@@ -5369,6 +5385,12 @@ function collectContextCandidates({
   if (monorepoLibs && typeof monorepoLibs === 'object') {
     for (const name of Object.keys(monorepoLibs))
       addContextCandidate(candidates, 'libs', name);
+  }
+
+  const monorepoTools = global?.monorepo?.tools;
+  if (monorepoTools && typeof monorepoTools === 'object') {
+    for (const name of Object.keys(monorepoTools))
+      addContextCandidate(candidates, 'tools', name);
   }
 
   const modules = [

@@ -88,12 +88,14 @@ export async function generateSDD(
 }
 
 /**
- * Registra una app o lib en sdd/global.json (sección monorepo) y crea su
- * contexto de subproyecto. Usado por `harness add app` en workspaces existentes.
+ * Registra una app, lib o tool en sdd/global.json (sección monorepo) y crea su
+ * contexto de subproyecto. Usado por `harness add app` y `harness add tool` en
+ * workspaces existentes. `monorepo.tools` es opcional en el schema: la clave se
+ * crea recién cuando se registra la primera tool.
  */
 export async function registerSubprojectInSDD(
   root: string,
-  category: 'apps' | 'libs',
+  category: 'apps' | 'libs' | 'tools',
   name: string,
   type: string,
 ): Promise<void> {

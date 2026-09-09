@@ -95,9 +95,9 @@ describe.skipIf(process.platform === 'win32')('spec-gate.mjs (integration)', () 
   it('GATE A aprueba una spec draft recién registrada y sugiere lite con profile solo', () => {
     const run = runGate('orders');
     expect(run.status).toBe(0);
-    expect(run.output).toContain('APROBADO');
+    expect(run.output).toContain('APPROVED');
     expect(run.output).toContain('cycle-01');
-    expect(run.output).toContain('flow sugerido: lite');
+    expect(run.output).toContain('suggested flow: lite');
 
     const asJson = runGate(specId, '--json');
     expect(asJson.json?.passed).toBe(true);
@@ -114,7 +114,7 @@ describe.skipIf(process.platform === 'win32')('spec-gate.mjs (integration)', () 
     });
     const run = runGate(dependent.specId);
     expect(run.status).toBe(1);
-    expect(run.output).toContain('BLOQUEADO');
+    expect(run.output).toContain('BLOCKED');
     expect(run.output).toContain('A4');
     expect(run.output).toContain(specId);
   });
@@ -157,7 +157,7 @@ describe.skipIf(process.platform === 'win32')('spec-gate.mjs (integration)', () 
     const blocked = runGate('orders', '1');
     expect(blocked.status).toBe(1);
     expect(blocked.output).toContain('flow: lite');
-    expect(blocked.output).toContain('faltan: plan.md');
+    expect(blocked.output).toContain('missing: plan.md');
     expect(blocked.output).toContain('B3');
 
     // El validador avisa (no falla) mientras el ciclo lite no tiene plan.md ni tasks.json.
@@ -203,7 +203,7 @@ describe.skipIf(process.platform === 'win32')('spec-gate.mjs (integration)', () 
 
     const approved = runGate('orders', 'cycle-01');
     expect(approved.status).toBe(0);
-    expect(approved.output).toContain('APROBADO');
+    expect(approved.output).toContain('APPROVED');
 
     // user_stories vacías son válidas en lite; plan.md es un archivo permitido en la raíz.
     const validated = runValidate();

@@ -28,6 +28,12 @@ const DATA_FILES = new Set([
   'components.json',
   'fixes.json',
   'tools.json',
+  // La memoria destilada del proyecto. El kit aporta su contenido inicial (se sirve
+  // en la instalación, que copia el kit entero) pero a partir de ahí es del usuario:
+  // como híbrido, cualquier release que tocara el seed dejaba un lessons.md.new con
+  // lecciones genéricas al lado de la memoria real del repo — y este archivo se lee
+  // COMPLETO en cada sesión de agente, con cap de 120 líneas. Ver `seedDataFile`.
+  'memory/lessons.md',
 ]);
 
 const GENERATED_FILES = new Set(['catalog.json']);
@@ -43,7 +49,6 @@ const HYBRID_FILES = new Set([
   'dual-harness/AGENTS.md',
   'dual-harness/CLAUDE.md',
   'dual-harness/GEMINI.md',
-  'memory/lessons.md',
   'pricing.json',
 ]);
 

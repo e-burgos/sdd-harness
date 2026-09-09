@@ -25,11 +25,11 @@ SPEC GATE B — implementación · spec-[…] · cycle-[XX] (flow: full|reduced|
   B3. tasks.json del ciclo con al menos una task
   B4. Documentos del flow: full → brief/functional/planner/architect · reduced → brief · lite → plan.md
   B5. constitution.md de cada subproyecto de cycle.json → apps[]
-→ APROBADO / BLOQUEADO
+→ APPROVED / BLOCKED
 ```
 
-**`APROBADO` → puede continuar a implementación.**
-**`BLOQUEADO` → cero líneas de código: completar los pasos faltantes y volver a correrlo.**
+**`APPROVED` → puede continuar a implementación.**
+**`BLOCKED` → cero líneas de código: completar los pasos faltantes y volver a correrlo.**
 
 > Una spec `draft` (sin ciclo abierto) nunca pasa el GATE B: primero el sdd-orchestrator corre
 > el GATE A y abre el ciclo (`sdd/prompts/start-sdd-cycle.prompt.md`).
@@ -54,5 +54,5 @@ Leer el template de un artefacto **solo cuando toca escribirlo** — no cargar
 
 ```
 Antes de implementar TASK-003 del módulo "migration-legacy", ciclo 1:
-pnpm sdd:gate migration-legacy cycle-01 → APROBADO (flow: full)
+pnpm sdd:gate migration-legacy cycle-01 → APPROVED (flow: full)
 ```

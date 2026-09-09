@@ -269,7 +269,7 @@ pnpm sdd:gate <spec-id|slug>            # GATE A — ¿se puede abrir un ciclo? 
 pnpm sdd:gate <spec-id|slug> cycle-XX   # GATE B — ¿se puede escribir código? (quien implementa)
 ```
 
-`BLOQUEADO` → detener y completar lo que el script señala. `APROBADO` en A → el orquestador
+`BLOCKED` → detener y completar lo que el script señala. `APPROVED` en A → el orquestador
 decide el **flow** del ciclo y lo escribe en `cycle.json`/`tasks.json`; en B → implementar.
 
 **Flow del ciclo (la forma del gate, no su fondo):** `full` (brief + functional + planner +

@@ -3,6 +3,7 @@
 // plus cross-registry consistency rules. Run with: pnpm sdd:validate
 // Exits non-zero on any error so it can gate CI or a pre-commit hook.
 import { readFileSync, readdirSync, existsSync } from 'fs';
+import { createHash } from 'crypto';
 import { join, resolve } from 'path';
 import { fileURLToPath } from 'url';
 import { execFileSync } from 'child_process';
@@ -676,10 +677,32 @@ if (globalJson) {
     ([, value]) => typeof value === 'string' && value.trim().length >= 5,
   );
 
+  // A kit file that is byte-identical to what the kit shipped CANNOT have leaked the
+  // project name: whatever it says, it said before this repo existed. Skipping those
+  // kills a whole class of false positives — a project named `legacy`, `example` or
+  // `catalog` used to fail here because the kit's own prose contains the word — without
+  // weakening the rule: a generator writing the name into a kit file changes its hash,
+  // so it is still caught. Installs with no manifest keep the previous behaviour.
+  let pristine = new Set();
+  const manifestPath = join(SDD, 'kit.json');
+  if (existsSync(manifestPath)) {
+    try {
+      const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+      for (const [rel, hash] of Object.entries(manifest.files ?? {})) {
+        const abs = join(SDD, rel);
+        if (!existsSync(abs)) continue;
+        const actual = createHash('sha256').update(readFileSync(abs)).digest('hex');
+        if (actual === hash) pristine.add(abs);
+      }
+    } catch {
+      pristine = new Set();
+    }
+  }
+
   const kitFiles = [
     ...KIT_FILES.map((file) => join(SDD, file)),
     ...KIT_DIRS.flatMap((dir) => walkTextFiles(join(SDD, dir))),
-  ].filter((path) => existsSync(path));
+  ].filter((path) => existsSync(path) && !pristine.has(path));
 
   // Word-boundary match: a project named "shop" must not be reported because an app is
   // called "shop-api", and a subproject legitimately named after the repo is not a leak.

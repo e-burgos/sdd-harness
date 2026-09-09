@@ -100,6 +100,7 @@ $ npx @e-burgos/sdd-harness init
 > | ------------------- | -------------------------------------------------------------------------------- |
 > | `init`              | `--config <path>` (the whole wizard as a validated file), plus `--here`/`--dir <path>` for the target, `--profile team\|solo` for the SDD working profile and `--skip-verify` to skip the closing gate |
 > | `add app`           | `<type> --name <name>`                                                            |
+> | `add tool`          | `<name> --type <what it is>`                                                      |
 > | `add spec`          | `<slug> --author <user> --title <text> --app apps/<name> [--apps <a,b>] [--depends-on <id|slug>]` |
 > | `add skill`         | `<name> --description <text>`                                                     |
 > | `add service`       | `<type>`                                                                          |
@@ -308,6 +309,36 @@ harness add app
 
 # Non-interactive
 harness add app nestjs --name payments-api
+```
+
+---
+
+### `harness add tool`
+
+Register a tool as an SDD subproject. Unlike `add app` it **generates no code**: a tool is
+whatever the team writes under `tools/<name>/` (scripts, internal CLIs, generators). What the
+command adds is what was missing for the tool to exist for the system.
+
+```bash
+harness add tool [name] [--type <what it is>]
+```
+
+| Argument | Description                                                          |
+| -------- | -------------------------------------------------------------------- |
+| `name`   | (positional, optional) Tool name in lowercase kebab-case             |
+| `--type` | One line describing what it is; it lands in `global.json` (default: `tool`) |
+
+It writes the entry in `sdd/global.json → monorepo.tools` — an optional key created with the
+first tool — and creates `sdd/context/tools/<name>/` with `constitution.md`, `context_prompt.md`
+and `updates/`. From there the docs viewer lists the tool under Context and on the Dashboard, and
+SPEC GATE B can require its `constitution.md` when a cycle touches it.
+
+```bash
+# Interactive
+harness add tool
+
+# Non-interactive
+harness add tool qa-flows --type "playwright QA scripts"
 ```
 
 ---
@@ -666,7 +697,7 @@ pnpm sdd:gate <spec-id|slug> cycle-XX   # GATE B — can code be written in this
 pnpm sdd:gate <spec-id|slug> --json     # same answer, structured for agents
 ```
 
-It prints one line per condition (✔/✘) and ends in `APROBADO` or `BLOQUEADO` — exit `0` when it
+It prints one line per condition (✔/✘) and ends in `APPROVED` or `BLOCKED` — exit `0` when it
 passes, `1` when blocked, `2` on a usage error. GATE A also prints the next cycle id, the
 suggested flow and the active profile. GATE B is flow-aware: it requires the documents of the
 cycle's own `flow`. The script only reads; it writes nothing. The canonical definition lives in

@@ -632,7 +632,7 @@ canónica del gate: `sdd/dual-harness/rules/sdd-gates.md`.
 
 ```
 SPEC GATE A:
-[ ] 1. pnpm sdd:gate <spec-id> → APROBADO (pegar la salida: A1–A5)
+[ ] 1. pnpm sdd:gate <spec-id> → APPROVED (pegar la salida: A1–A5)
 
 APERTURA (flow según profile / prefijo [LITE]|[FULL]):
 [ ] 2. Crear cycle-[XX]/cycle.json ← status: "in-progress", flow, metrics con contadores en 0
@@ -646,7 +646,7 @@ APERTURA (flow según profile / prefijo [LITE]|[FULL]):
 → full: invocar sdd-functional. lite: pnpm sdd:gate <spec-id> cycle-[XX] (GATE B) e implementar.
 ```
 
-> ⛔ Si el gate da BLOQUEADO → DETENER y comunicar qué falta. No continuar.
+> ⛔ Si el gate da BLOCKED → DETENER y comunicar qué falta. No continuar.
 
 ---
 

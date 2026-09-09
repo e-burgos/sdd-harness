@@ -1,3 +1,4 @@
+export { USAGE_TABS } from './usage.en';
 import type { Mode, HermesPhase, Command, Agent, Gate, ViewerShot, Harness } from './content';
 import type { TreeNode } from './content';
 
@@ -275,6 +276,16 @@ export const COMMANDS: Command[] = [
     ],
   },
   {
+    name: 'add tool',
+    usage: 'harness add tool [name] --type <what it is>',
+    summary: 'Registers a tool as an SDD subproject. It generates no code.',
+    points: [
+      'Writes the entry in sdd/global.json → monorepo.tools (the key is created with the first tool: it is optional in the schema) and creates sdd/context/tools/<name>/ with constitution.md, context_prompt.md and updates/.',
+      'A tool is whatever the team writes under tools/<name>/ — scripts, internal CLIs, generators. The command supplies what was missing for it to exist as a subproject: its registration and its context.',
+      'With that the viewer lists it under Context and on the Dashboard, and SPEC GATE B can require its constitution.md when a cycle touches it.',
+    ],
+  },
+  {
     name: 'add spec',
     usage: 'harness add spec [slug] --author <gh-user> --title <t> --app apps/<n> [--apps <a,b>] [--depends-on <id|slug>] [--description <t>]',
     summary: 'Creates a spec with the multi-developer v2.0 convention.',
@@ -360,7 +371,7 @@ export const GATES: Gate[] = [
   {
     name: 'SPEC GATE',
     rule: 'Not a single line of code without a registered spec, an open cycle, a plan and tasks — in every flow.',
-    how: 'Two moments, and both are answered by a command instead of reading files by hand: pnpm sdd:gate <spec-id|slug> is GATE A, the cycle opening the orchestrator runs (spec registered in specs/index.json · module in pending_modules or in_progress_modules · no other cycle of that spec in-progress · depends_on completed · spec neither completed nor cancelled), and pnpm sdd:gate <spec-id|slug> cycle-XX is GATE B, run by whoever is about to write code (cycle.json in-progress · module in in_progress_modules · tasks.json with at least one task · the documents of THAT cycle\'s flow · constitution.md of every subproject in cycle.json.apps). It prints one ✔/✘ line per condition, ends with APROBADO or BLOQUEADO and exits 0/1 (--json for agents); GATE A also reports the next cycle id and the suggested flow. The invariants never change: spec registered, module in global.json, cycle.json in-progress before the first line of code, tasks.json with tasks, and no task moved to done without its usage. What changes is the shape — flow full (brief · functional · planner · architect), reduced (brief) or lite (plan.md, a single actor) — decided by sdd/global.json → profile: team opens full, solo opens lite, and a [LITE] / [FULL] prefix in the request beats the profile.',
+    how: 'Two moments, and both are answered by a command instead of reading files by hand: pnpm sdd:gate <spec-id|slug> is GATE A, the cycle opening the orchestrator runs (spec registered in specs/index.json · module in pending_modules or in_progress_modules · no other cycle of that spec in-progress · depends_on completed · spec neither completed nor cancelled), and pnpm sdd:gate <spec-id|slug> cycle-XX is GATE B, run by whoever is about to write code (cycle.json in-progress · module in in_progress_modules · tasks.json with at least one task · the documents of THAT cycle\'s flow · constitution.md of every subproject in cycle.json.apps). It prints one ✔/✘ line per condition, ends with APPROVED or BLOCKED and exits 0/1 (--json for agents); GATE A also reports the next cycle id and the suggested flow. The invariants never change: spec registered, module in global.json, cycle.json in-progress before the first line of code, tasks.json with tasks, and no task moved to done without its usage. What changes is the shape — flow full (brief · functional · planner · architect), reduced (brief) or lite (plan.md, a single actor) — decided by sdd/global.json → profile: team opens full, solo opens lite, and a [LITE] / [FULL] prefix in the request beats the profile.',
   },
   {
     name: 'FIX GATE',
@@ -400,7 +411,7 @@ export const SERVICE_CATALOG = ['postgres', 'redis', 'rabbitmq', 'minio'];
 
 export const SDD_SCRIPTS = [
   { cmd: 'pnpm sdd:validate', what: 'Validates ALL registries against their schemas + cross-checks + the portability rule' },
-  { cmd: 'pnpm sdd:gate', what: 'Answers the SPEC GATE: <spec-id|slug> to open a cycle (GATE A) and <spec-id|slug> cycle-XX to authorize code (GATE B). One line per condition, APROBADO/BLOQUEADO, exit 0/1 and --json for agents' },
+  { cmd: 'pnpm sdd:gate', what: 'Answers the SPEC GATE: <spec-id|slug> to open a cycle (GATE A) and <spec-id|slug> cycle-XX to authorize code (GATE B). One line per condition, APPROVED/BLOCKED, exit 0/1 and --json for agents' },
   { cmd: 'pnpm sdd:docs', what: 'The SDD system viewer — vanilla JS, zero dependencies, works offline' },
   { cmd: 'pnpm setup:agents', what: 'Multi-provider harness symlinks: .claude/, .github/, .agents/, .agent/, .gemini/, AGENTS.md, CLAUDE.md, GEMINI.md' },
   { cmd: 'pnpm sdd:rebuild-tasks-index', what: 'Regenerates the tasks index from the per-cycle tasks.json files' },
@@ -570,6 +581,8 @@ export const UI = {
     guiaLabel: 'sdd guide',
     sddDocsMenu: 'sdd:docs — the viewer',
     guiaMenu: 'sdd guide — the full manual',
+    usageLabel: 'how to use it',
+    usageMenu: 'how to use it — the practical guide',
     openMenu: 'Open menu',
     closeMenu: 'Close menu',
   },
@@ -767,5 +780,13 @@ export const UI = {
     installedNote: ' — installs verbatim in every repo',
     tocHeading: 'In this document',
     langNote: null as string | null,
+  },
+  usage: {
+    back: 'back to the documentation',
+    kicker: 'how to use it — from picking an install to closing the first spec',
+    h1a: 'How this is used,',
+    h1b: ' step by step.',
+    body: 'Five tabs covering the whole path: which of the three install modes is yours and what the wizard asks, how to move the kit up a version without losing anything of yours, what the SPEC GATE demands under each profile, when the FIX GATE is the right way out, and how a spec is built end to end by talking to the sdd-steward.',
+    tocHeading: 'In this tab',
   },
 } as const;
