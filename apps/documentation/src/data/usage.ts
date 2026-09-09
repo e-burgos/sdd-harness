@@ -300,7 +300,7 @@ const INSTALL: UsageTab = {
         '    "name": "flexi-market",',
         '    "description": "Marketplace de órdenes",',
         '    "packageScope": "@flexi-market"',
-        '  },'
+        '  },',
         '  "mode": "nx",',
         '  "apps": [',
         '    { "name": "portal", "type": "react" },',
