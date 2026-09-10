@@ -5,6 +5,35 @@ All notable changes to `@e-burgos/sdd-harness` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.14.1] - 2026-09-10
+
+### Added
+
+- **`update sdd` now reports the kit's own renames that went stale in your files.** When the kit
+  changes vocabulary it prints something like *"v0.14.0 — the SPEC GATE verdict is printed in
+  English: APROBADO/BLOQUEADO → APPROVED/BLOCKED. 14 occurrence(s) of the old form remain in 6
+  file(s) the update does not touch (they are yours)"*, with a per-file count. The update is the
+  only place in the system that knows **which version you came from** — `sdd/kit.json` is
+  overwritten right after, so `sdd:validate` can no longer tell. It scans only what the update
+  does not rewrite (your data and the kit files you edited); a file byte-identical to what the kit
+  shipped already carries the new wording and cannot contribute a hit.
+  It **reports, it does not correct**, and it says so: the same word often has more than one use in
+  a real repo — the gate verdict, a team's own reviewer vocabulary, the prose of a closed cycle —
+  and telling them apart is judgement, not a regex. The notice fires once, on the update that
+  crosses the version; a migration entry is dropped from the table a couple of releases later.
+
+### Fixed
+
+- **`setup:agents` exposed `update sdd`'s `*.new` conflicts as real harness surfaces, then left
+  the links dangling.** `link_items` iterated every entry of a kit directory, so a conflict like
+  `sdd/prompts/start-sdd-cycle.prompt.md.new` was linked into `.github/prompts/` — a duplicate
+  prompt discovered by every harness alongside the real one — and once the developer resolved the
+  conflict and deleted the `.new`, the link stayed behind, broken. Re-running `setup:agents` did
+  not clean it. Merge artifacts are now skipped, and each run prunes the links it should never
+  have made: dangling ones, and `*.new` ones that still resolve. Only links resolving into `sdd/`
+  are touched — a broken link of the team's own pointing elsewhere is left alone. Mirrored in
+  `setup-agents.ps1`. Found in a real v0.14.0 migration, where it left 7 broken symlinks.
+
 ## [0.14.0] - 2026-09-09
 
 The docs viewer knew the `tools` category but nothing ever fed it, `sdd:gate` was the last Spanish

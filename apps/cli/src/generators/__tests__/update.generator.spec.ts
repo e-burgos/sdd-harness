@@ -310,6 +310,42 @@ describe('update.generator', () => {
     expect((await fs.readJSON(resolve(ws, 'package.json'))).scripts.postinstall).toBe('echo mine');
   });
 
+  it('avisa del vocabulario que el kit renombró, solo en archivos que no reescribe', async () => {
+    // El update es el único que sabe DE QUÉ versión venís: después pisa kit.json y la
+    // evidencia se pierde. Reporta, no corrige — la misma palabra puede ser el veredicto
+    // del gate, vocabulario propio del equipo o prosa de un ciclo ya cerrado.
+    const manifestPath = resolve(ws, 'sdd/kit.json');
+    const manifest = await fs.readJSON(manifestPath);
+    manifest.kit_version = '0.13.0';
+    await fs.writeJSON(manifestPath, manifest, { spaces: 2 });
+
+    const mine = resolve(ws, 'sdd/context/constitution.md');
+    await fs.appendFile(mine, '\n- Si el gate da APROBADO seguir; con BLOQUEADO parar.\n');
+
+    const report = await updateSDD(ws);
+
+    const notice = report.migrations.find((m) => m.since === '0.14.0');
+    expect(notice).toBeDefined();
+    const hit = notice?.hits.find((h) => h.file === 'sdd/context/constitution.md');
+    expect(hit?.count).toBe(2);
+
+    // Un archivo del kit sin tocar ya viene renombrado: no puede aportar hits.
+    expect(
+      notice?.hits.some((h) => h.file === 'sdd/dual-harness/rules/sdd-gates.md'),
+    ).toBe(false);
+  });
+
+  it('el aviso de migración no se repite una vez que el repo ya está en esa versión', async () => {
+    const mine = resolve(ws, 'sdd/context/constitution.md');
+    await fs.appendFile(mine, '\n- El gate dice APROBADO.\n');
+
+    // kit.json quedó en la versión de esta CLI al generar: la migración ya no aplica,
+    // aunque el término viejo siga en el archivo.
+    const report = await updateSDD(ws);
+
+    expect(report.migrations).toEqual([]);
+  });
+
   it('falla claro si no hay instalación SDD', async () => {
     const empty = mkdtempSync(resolve(tmpdir(), 'harness-noupdate-'));
     await expect(updateSDD(empty)).rejects.toThrow('No SDD installation');
