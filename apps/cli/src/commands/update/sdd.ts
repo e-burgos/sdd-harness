@@ -7,6 +7,7 @@ import { logger } from '../../utils/logger.js';
 import { warnIfNxRootMismatch } from '../../utils/env.js';
 import { updateSDD } from '../../generators/update.generator.js';
 import { readManifest } from '../../generators/kit-manifest.js';
+import { MIGRATION_MAX_LISTED } from '../../generators/kit-migrations.js';
 import { version } from '../../version.js';
 
 export const updateSddCommand = defineCommand({
@@ -96,6 +97,29 @@ export const updateSddCommand = defineCommand({
         !report.removedStale.length
       ) {
         logger.success('Kit already up to date — nothing to change.');
+      }
+
+      // Va al final, después del resumen de archivos: es lo único del reporte que le
+      // deja trabajo al dev, y el CHANGELOG solo no alcanzó para que se enterara a tiempo.
+      for (const migration of report.migrations) {
+        const total = migration.hits.reduce((sum, h) => sum + h.count, 0);
+        logger.warn(
+          `v${migration.since} — ${migration.summary}.\n` +
+            `  ${total} occurrence(s) of the old form remain in ${migration.hits.length} file(s) the update does not touch (they are yours):`,
+        );
+        // Un solo mensaje: @clack separa cada log.message con su propia línea de canal,
+        // y una lista de doce archivos en ese formato se vuelve ilegible.
+        const listed = migration.hits
+          .slice(0, MIGRATION_MAX_LISTED)
+          .map((hit) => `  ~ ${hit.file}  (${hit.count})`);
+        if (migration.hits.length > MIGRATION_MAX_LISTED) {
+          listed.push(
+            `  … and ${migration.hits.length - MIGRATION_MAX_LISTED} more`,
+          );
+        }
+        p.log.message(
+          pc.dim(`${listed.join('\n')}\n\n  ${migration.caveat}`),
+        );
       }
 
       logger.success('Harness symlinks refreshed (setup:agents)');

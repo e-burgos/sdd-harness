@@ -15,6 +15,11 @@ import {
   writeManifest,
 } from './kit-manifest.js';
 import { ensureHarnessPackageJson } from './sdd.generator.js';
+import {
+  collectMigrationNotices,
+  type MigrationNotice,
+} from './kit-migrations.js';
+import { version as cliVersion } from '../version.js';
 
 export type UpdateReport = {
   legacyMode: boolean;
@@ -24,6 +29,8 @@ export type UpdateReport = {
   removedStale: string[];
   keptCustom: string[];
   validateOk: boolean | null;
+  /** Vocabulario que el kit renombró y quedó viejo en archivos que el update no toca. */
+  migrations: MigrationNotice[];
 };
 
 /**
@@ -57,6 +64,7 @@ export async function updateSDD(root: string): Promise<UpdateReport> {
     removedStale: [],
     keptCustom: [],
     validateOk: null,
+    migrations: [],
   };
 
   for (const rel of await listKitFiles(kitDir)) {
@@ -139,6 +147,17 @@ export async function updateSDD(root: string): Promise<UpdateReport> {
   }
 
   await fs.copy(resolve(kitDir, 'catalog.json'), resolve(sddDir, 'catalog.json'));
+
+  // Antes de pisar el manifiesto: es el último momento en que se sabe de qué versión
+  // venía este repo. Sin manifest la instalación es anterior a v0.9.x, o sea, por debajo
+  // de cualquier migración registrada.
+  report.migrations = await collectMigrationNotices(
+    root,
+    oldManifest?.kit_version ?? '0.0.0',
+    cliVersion,
+    newManifest.files,
+  );
+
   await writeManifest(sddDir, newManifest);
 
   const pkgJson = await fs.readJSON(resolve(root, 'package.json')).catch(() => null);
