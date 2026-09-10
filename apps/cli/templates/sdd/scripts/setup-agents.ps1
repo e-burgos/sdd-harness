@@ -67,11 +67,37 @@ function Link-Item {
     }
 }
 
+# Prune-StaleLinks DIR — a broken link into sdd/ is always ours and always noise: it is what
+# is left after a `*.new` conflict is resolved and the file deleted. Links resolving anywhere
+# else are the user's and are left alone.
+function Prune-StaleLinks {
+    param($dir)
+    if (-not (Test-Path $dir)) { return }
+    foreach ($entry in Get-ChildItem $dir -Force -ErrorAction SilentlyContinue) {
+        if (-not $entry.LinkType) { continue }
+        $targetPath = $entry.Target | Select-Object -First 1
+        if (-not $targetPath) { continue }
+        if ($targetPath -notmatch '[\\/]sdd[\\/]|^sdd[\\/]') { continue }
+        $resolves = Test-Path -LiteralPath $targetPath
+        if (-not $resolves) {
+            Remove-Item -Force -Recurse -LiteralPath $entry.FullName -ErrorAction SilentlyContinue
+            Write-Host "pruned dangling  : $($entry.Name)"
+        }
+        elseif ($entry.Name -like "*.new") {
+            Remove-Item -Force -Recurse -LiteralPath $entry.FullName -ErrorAction SilentlyContinue
+            Write-Host "pruned .new link : $($entry.Name)"
+        }
+    }
+}
+
 # Link-Items DIR SOURCE_DIR LABEL — one link per kit item inside an existing real directory.
 function Link-Items {
     param($dir, $sourceDir, $label, $filter = "*")
     $null = New-Item -ItemType Directory -Force -Path $dir
+    Prune-StaleLinks $dir
     foreach ($item in Get-ChildItem $sourceDir -Filter $filter -Force) {
+        # `*.new` is a merge artifact of `update sdd`, not a surface to expose.
+        if ($item.Name -like "*.new") { continue }
         Link-Item (Join-Path $dir $item.Name) $item.FullName "$label/$($item.Name)"
     }
 }

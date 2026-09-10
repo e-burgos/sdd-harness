@@ -46,15 +46,52 @@ link_item() {
   fi
 }
 
+# prune_stale_links DIR
+# Two kinds of link into sdd/ are always ours and always wrong, and both survive a plain
+# re-run because nothing ever removed them:
+#   · dangling — what is left after a `*.new` conflict is resolved and the file deleted.
+#   · named `*.new` — created by setup-agents before it learned to skip merge artifacts;
+#     while the `.new` still exists the entry is a duplicate skill/agent/prompt that every
+#     harness discovers.
+# Links resolving outside sdd/ are the user's and are never touched.
+prune_stale_links() {
+  local dir="$1"
+  [ -d "$dir" ] || return 0
+  for entry in "$dir"/* "$dir"/.[!.]*; do
+    [ -L "$entry" ] || continue
+    case "$(readlink "$entry")" in
+      */sdd/*|sdd/*) ;;
+      *) continue ;;
+    esac
+    if [ ! -e "$entry" ]; then
+      rm -f "$entry"
+      echo "pruned dangling  : ${entry#"$ROOT"/}"
+    else
+      case "$(basename "$entry")" in
+        *.new)
+          rm -f "$entry"
+          echo "pruned .new link : ${entry#"$ROOT"/}"
+          ;;
+      esac
+    fi
+  done
+}
+
 # link_items DIR REL_BASE ABS_SOURCE_DIR LABEL
 # One relative symlink per kit item inside an existing real directory.
 link_items() {
   local dir="$1" relbase="$2" src="$3" label="$4"
   mkdir -p "$dir"
+  prune_stale_links "$dir"
   for item in "$src"/*; do
     [ -e "$item" ] || continue
     local name
     name="$(basename "$item")"
+    # `*.new` is a merge artifact of `update sdd`, not a surface: linking it would expose a
+    # duplicate skill/agent/prompt to every harness, and leave a dangling link once resolved.
+    case "$name" in
+      *.new) continue ;;
+    esac
     link_item "$dir/$name" "$relbase/$name" "$item" "$label/$name"
   done
 }

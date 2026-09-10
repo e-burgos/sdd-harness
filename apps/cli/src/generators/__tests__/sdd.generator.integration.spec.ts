@@ -60,6 +60,43 @@ describe.skipIf(process.platform === 'win32')(
       expect(fs.readFileSync(resolve(ws, 'AGENTS.md'), 'utf-8')).toContain('SDD');
     });
 
+    it('setup-agents ignora los *.new del kit y limpia los links que dejó de más', () => {
+      // Regresión: `update sdd` deja los conflictos como `<archivo>.new` DENTRO de sdd/, y
+      // link_items linkeaba todo el directorio — así el .new quedaba expuesto como un
+      // prompt/skill/agente duplicado a los cuatro arneses, y al resolver el conflicto y
+      // borrarlo, el symlink quedaba colgado. Reportado en una migración real a v0.14.0.
+      const kitNew = resolve(ws, 'sdd/prompts/start-sdd-cycle.prompt.md.new');
+      fs.copyFileSync(resolve(ws, 'sdd/prompts/start-sdd-cycle.prompt.md'), kitNew);
+
+      execFileSync('bash', [resolve(ws, 'sdd/scripts/setup-agents.sh')], {
+        cwd: ws,
+        stdio: 'ignore',
+      });
+      const exposed = resolve(ws, '.github/prompts/start-sdd-cycle.prompt.md.new');
+      expect(fs.existsSync(exposed)).toBe(false);
+
+      // Un repo que ya venía con el link creado por la versión anterior se repara solo,
+      // resuelva el .new o no.
+      fs.symlinkSync('../../sdd/prompts/start-sdd-cycle.prompt.md.new', exposed);
+      const stale = resolve(ws, '.github/skills/ghost.new');
+      fs.symlinkSync('../../sdd/skills/ghost.new', stale);
+
+      execFileSync('bash', [resolve(ws, 'sdd/scripts/setup-agents.sh')], {
+        cwd: ws,
+        stdio: 'ignore',
+      });
+      expect(fs.existsSync(exposed)).toBe(false);
+      expect(fs.lstatSync(stale, { throwIfNoEntry: false })).toBeUndefined();
+
+      // Y las superficies legítimas siguen enteras.
+      expect(
+        fs.lstatSync(resolve(ws, '.github/prompts/start-sdd-cycle.prompt.md')).isSymbolicLink(),
+      ).toBe(true);
+      expect(fs.readdirSync(resolve(ws, '.github/skills')).length).toBeGreaterThan(10);
+
+      fs.rmSync(kitNew, { force: true });
+    });
+
     it('setup-agents siembra .github/copilot-instructions.md como archivo real y no lo pisa', () => {
       const target = resolve(ws, '.github/copilot-instructions.md');
       expect(fs.lstatSync(target).isSymbolicLink()).toBe(false);

@@ -5,6 +5,20 @@ All notable changes to `@e-burgos/sdd-harness` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.14.1] - 2026-09-10
+
+### Fixed
+
+- **`setup:agents` exposed `update sdd`'s `*.new` conflicts as real harness surfaces, then left
+  the links dangling.** `link_items` iterated every entry of a kit directory, so a conflict like
+  `sdd/prompts/start-sdd-cycle.prompt.md.new` was linked into `.github/prompts/` — a duplicate
+  prompt discovered by every harness alongside the real one — and once the developer resolved the
+  conflict and deleted the `.new`, the link stayed behind, broken. Re-running `setup:agents` did
+  not clean it. Merge artifacts are now skipped, and each run prunes the links it should never
+  have made: dangling ones, and `*.new` ones that still resolve. Only links resolving into `sdd/`
+  are touched — a broken link of the team's own pointing elsewhere is left alone. Mirrored in
+  `setup-agents.ps1`. Found in a real v0.14.0 migration, where it left 7 broken symlinks.
+
 ## [0.14.0] - 2026-09-09
 
 The docs viewer knew the `tools` category but nothing ever fed it, `sdd:gate` was the last Spanish
