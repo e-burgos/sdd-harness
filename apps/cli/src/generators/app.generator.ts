@@ -407,6 +407,24 @@ export async function applyVitePort(
 }
 
 // ─── Next.js ────────────────────────────────────────────────────────────────
+//
+// build/serve/start los infiere `@nx/next/plugin` desde next.config.js (misma estrategia que
+// NestJS con webpack). El scaffold explícito anterior nacía roto: `@nx/next:build` hacía
+// scandir de `public/` y fallaba con ENOENT si no existía, y el `serve` con `@nx/next:server`
+// no declaraba `buildTarget`, así que `nx serve <app>` nunca funcionó. El puerto va como
+// opción del target inferido (run-commands lo reenvía como `--port`).
+
+/** Entrada de nx.json para `@nx/next/plugin` (dev se llama `serve`, como el resto del kit). */
+export function nxNextPluginEntry(): { plugin: string; options: Record<string, string> } {
+  return {
+    plugin: "@nx/next/plugin",
+    options: {
+      buildTargetName: "build",
+      devTargetName: "serve",
+      startTargetName: "start",
+    },
+  };
+}
 
 async function generateNextApp(
   dir: string,
@@ -414,6 +432,9 @@ async function generateNextApp(
   port: number,
 ): Promise<void> {
   await fs.ensureDir(resolve(dir, "app"));
+  // Next sirve lo que haya acá; vacío es válido, ausente no (`next build` lo lista).
+  await fs.ensureDir(resolve(dir, "public"));
+  await fs.writeFile(resolve(dir, "public/.gitkeep"), "", "utf-8");
 
   await fs.writeFile(
     resolve(dir, "project.json"),
@@ -425,14 +446,7 @@ async function generateNextApp(
         projectType: "application",
         tags: ["scope:web", "type:app"],
         targets: {
-          build: {
-            executor: "@nx/next:build",
-            options: { outputPath: `dist/apps/${name}` },
-          },
-          serve: {
-            executor: "@nx/next:server",
-            options: { dev: true, port },
-          },
+          serve: { options: { port } },
           lint: { executor: "@nx/eslint:lint" },
         },
       },
@@ -471,12 +485,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     "utf-8",
   );
 
+  // Config plana: `composePlugins`/`withNx` de @nx/next están deprecados (Nx los quita en v24)
+  // y, medido con Nx 23 + Next 15, `withNx` impedía resolver los alias `paths` del workspace.
   await fs.writeFile(
     resolve(dir, "next.config.js"),
-    `const { composePlugins, withNx } = require('@nx/next');
+    `/** @type {import('next').NextConfig} */
 const nextConfig = {};
-const plugins = [withNx];
-module.exports = composePlugins(...plugins)(nextConfig);
+
+module.exports = nextConfig;
 `,
     "utf-8",
   );
