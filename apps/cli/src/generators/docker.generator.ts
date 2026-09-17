@@ -211,7 +211,8 @@ function generateEnvExample(services: string[], apps: AppSpec[]): string {
   }
 
   lines.push('# App');
-  lines.push('NODE_ENV=development');
+  // NODE_ENV is owned by the tooling (`next build`, `nx`, test runners): a `NODE_ENV=development`
+  // copied into apps/<app>/.env made `next build` fail in the /404 prerender.
   lines.push('JWT_SECRET=change-me-in-production');
   lines.push('');
 

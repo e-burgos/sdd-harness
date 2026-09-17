@@ -375,9 +375,11 @@ for (const [file, c] of cycles) {
         `flow: lite created ${c.tables_created.length} table(s) / ${c.endpoints_implemented.length} endpoint(s) — contracts other subprojects consume deserve a full cycle: open the next cycle of this spec as flow: full`,
       );
   }
+  // artifacts[]: paths relative to the cycle directory (`artifacts/x`, what the docs suggest)
+  // or to the repo root; a directory counts. Until v0.15.0 only repo-relative paths resolved.
   for (const art of c.artifacts) {
-    if (!existsSync(join(REPO, art)))
-      fail(file, `artifact does not exist: ${art}`);
+    if (!existsSync(join(cycleDir, art)) && !existsSync(join(REPO, art)))
+      fail(file, `artifact does not exist: ${art} (looked relative to the cycle directory and to the repo root)`);
   }
 }
 
@@ -629,6 +631,30 @@ if (existsSync(join(SDD, 'pricing.json'))) {
 // ---- 12. Tools (rtk switch) — ships with the kit since v0.12; absence is not an error ----
 if (existsSync(join(SDD, 'tools.json'))) {
   validate('tools.json', 'tools.schema.json');
+}
+
+// ---- 13. Workspace invariant promised by init-nx-workspace (TS solution setup only) ----
+// When tsconfig.base.json declares `customConditions`, Nx keys every lib's conditional exports
+// with the root package.json `name`: if they differ, TypeScript resolves to dist instead of src.
+// The kit's own nx-workspace template uses legacy `paths` and has no customConditions, so a
+// repo generated from it is not checked. Warning, not failure: the kit never breaks a repo
+// over a workspace setting it did not write.
+{
+  const tsBase = join(REPO, 'tsconfig.base.json');
+  const rootPkg = join(REPO, 'package.json');
+  if (existsSync(tsBase) && existsSync(rootPkg)) {
+    try {
+      const conditions = JSON.parse(readFileSync(tsBase, 'utf8'))?.compilerOptions?.customConditions;
+      const name = JSON.parse(readFileSync(rootPkg, 'utf8'))?.name;
+      if (Array.isArray(conditions) && typeof name === 'string' && !conditions.includes(name))
+        warn(
+          'tsconfig.base.json',
+          `customConditions [${conditions.join(', ')}] does not include the root package.json name "${name}" — with the TS solution setup Nx keys the libs' conditional exports with that name, so types resolve to dist instead of src (init-nx-workspace invariant)`,
+        );
+    } catch {
+      // JSONC or a file the kit does not own: nothing to check.
+    }
+  }
 }
 
 // ---- Content catalog: schema + freshness vs filesystem (viewer depends on it) ----

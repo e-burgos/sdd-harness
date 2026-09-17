@@ -377,6 +377,56 @@ describe('workspace.generator v0.11.0', () => {
     expect(pkg.devDependencies['ts-node']).toBeUndefined();
   });
 
+  it('Next.js: targets inferidos por @nx/next/plugin, public/ presente y .next ignorado', async () => {
+    await generateWorkspace({
+      projectName: 'next-project',
+      description: 'Next test',
+      packageScope: '@next',
+      apps: [{ name: 'site', type: 'nextjs', port: 3100 }],
+      libs: [],
+      services: [],
+    });
+    const root = resolve(parentDir, 'next-project');
+
+    // `@nx/next:build` hacía scandir de public/ y fallaba con ENOENT si no existía.
+    expect(fs.existsSync(resolve(root, 'apps/site/public/.gitkeep'))).toBe(true);
+
+    // build/dev/start los infiere @nx/next/plugin desde next.config.js: el project.json no
+    // declara ejecutores de Next (el `serve` explícito nacía sin buildTarget y nunca funcionó).
+    const project = fs.readJSONSync(resolve(root, 'apps/site/project.json'));
+    expect(project.targets.build).toBeUndefined();
+    expect(project.targets.serve?.executor).toBeUndefined();
+    expect(project.targets.serve).toEqual({ options: { port: 3100 } });
+    expect(project.targets.lint.executor).toBe('@nx/eslint:lint');
+
+    const nxJson = fs.readJSONSync(resolve(root, 'nx.json'));
+    expect(nxJson.plugins).toContainEqual({
+      plugin: '@nx/next/plugin',
+      options: { buildTargetName: 'build', devTargetName: 'serve', startTargetName: 'start' },
+    });
+    expect(nxJson.plugins.map((p: { plugin: string }) => p.plugin)).not.toContain('@nx/next');
+
+    const gitignore = fs.readFileSync(resolve(root, '.gitignore'), 'utf-8');
+    expect(gitignore).toMatch(/^\.next\/$/m);
+    expect(gitignore).toMatch(/^next-env\.d\.ts$/m);
+
+    // next.config.js plano: composePlugins/withNx están deprecados (Nx 24) y withNx rompía
+    // la resolución de los alias `paths` en `next build`.
+    const nextConfig = fs.readFileSync(resolve(root, 'apps/site/next.config.js'), 'utf-8');
+    expect(nextConfig).not.toContain('composePlugins');
+    expect(nextConfig).not.toContain('@nx/next');
+
+    // Next 15 solo resuelve `paths` con baseUrl; TS 6 lo deprecó, de ahí ignoreDeprecations.
+    const tsBase = fs.readJSONSync(resolve(root, 'tsconfig.base.json'));
+    expect(tsBase.compilerOptions.baseUrl).toBe('.');
+    expect(tsBase.compilerOptions.ignoreDeprecations).toBe('6.0');
+
+    // `.next/types/**` se genera en el build y no debe entrar al lint.
+    const eslint = fs.readFileSync(resolve(root, 'eslint.config.mjs'), 'utf-8');
+    expect(eslint).toContain("'**/.next'");
+    expect(eslint).toContain("'**/next-env.d.ts'");
+  });
+
   it('siembra sdd.modules como specs draft registradas en pending_modules', async () => {
     await generateWorkspace({
       ...baseOpts,

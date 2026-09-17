@@ -11,6 +11,10 @@ tmp/
 out-tsc/
 coverage/
 
+# Next.js (build output and the types file `next build` regenerates)
+.next/
+next-env.d.ts
+
 **/target/
 
 .gradle/

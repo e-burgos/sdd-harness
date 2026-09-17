@@ -221,7 +221,9 @@ implementada, el documento (functional/planner/architect), la coordinación del
 orquestador. Cuando Hermes o el orquestador lanzan un subagente vía la tool `Agent`
 (Claude Code), la notificación `agent-usage-notification`
 (`<usage><subagent_tokens>N</subagent_tokens>…</usage>`) del padre es la fuente exacta
-para esa entrada — `approx: false`, split 85/15 en `tokens_in`/`tokens_out`. El
+para esa entrada — `approx: false`, split 85/15 en `tokens_in`/`tokens_out`; si el mismo
+subagente se reanuda con `SendMessage`, `N` llega **acumulado** desde el lanzamiento y se
+registra la diferencia con la notificación anterior. El
 **reviewer**, al cerrar, verifica que `by_agent` esté completo, agrega su propia
 entrada, deriva `by_tier` agrupando por `provider_model` (`claude/opus`, `gemini/pro`,
 `copilot/claude-sonnet`; Antigravity bajo `gemini/*`) y suma el total top-level — nunca

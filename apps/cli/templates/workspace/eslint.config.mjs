@@ -4,7 +4,9 @@ export default [
   ...nx.configs['flat/base'],
   ...nx.configs['flat/typescript'],
   {
-    ignores: ['**/dist'],
+    // dist: build output. .next + next-env.d.ts: Next.js regenerates them on every build (typed routes
+    // with `Object`/`Function` and a triple-slash reference the rules reject).
+    ignores: ['**/dist', '**/.next', '**/next-env.d.ts'],
   },
   {
     files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],

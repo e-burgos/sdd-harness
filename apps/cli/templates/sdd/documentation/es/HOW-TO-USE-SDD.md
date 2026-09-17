@@ -237,7 +237,9 @@ El Arquitecto lee `functional.md`, `brief.yaml`, `sdd/schema.json` y `sdd/api.js
 **El dev revisa ambos documentos.** Si hay inconsistencias entre planner y architect (ej. una task menciona un endpoint que el arquitecto no definió), se le indica a cada agente que lo corrija.
 
 > Documentos de apoyo (diagramas, ejemplos de endpoints, exploración de código) que el Arquitecto genere:
-> → guardar **siempre** en `cycle-01/artifacts/` y referenciar en `cycle.json["artifacts"]`.
+> → guardar **siempre** en `cycle-01/artifacts/` y referenciar en `cycle.json["artifacts"]` con la
+> ruta relativa al ciclo (`artifacts/api-samples/`); se aceptan directorios, y también la ruta desde
+> la raíz del repo.
 
 ---
 
@@ -645,9 +647,10 @@ Y si el punto 4 es NO, hay un error: los base solo los toca la consolidación (v
   (`pnpm sdd:rtk -- --disable` es decisión del dev).
 - **Invariantes del workspace** (los garantiza la skill `init-nx-workspace`, y romperlos falla en
   silencio): pnpm es el único package manager; los proyectos viven en `apps/`, `libs/` y `tools/`
-  —nunca en `packages/`—; `customConditions` de `tsconfig.base.json` es **idéntico** al `name` del
-  `package.json` raíz; y `.nxignore` contiene `sdd/templates` para que los blueprints no entren al
-  project graph.
+  —nunca en `packages/`—; si el repo usa el TS solution setup, `customConditions` de
+  `tsconfig.base.json` es **idéntico** al `name` del `package.json` raíz (el template del kit usa
+  `paths` y no lo declara; `sdd:validate` avisa si divergen); y `.nxignore` contiene
+  `sdd/templates` para que los blueprints no entren al project graph.
 - **El nombre y la descripción del proyecto viven SOLO en `sdd/global.json`** (`project` /
   `description`). Ningún otro archivo de `sdd/` los hardcodea — eso es lo que mantiene `sdd/`
   portable, y `pnpm sdd:validate` falla si el valor se filtra a los documentos del kit.

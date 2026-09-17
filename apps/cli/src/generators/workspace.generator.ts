@@ -15,6 +15,7 @@ import { generateSDD } from "./sdd.generator.js";
 import type { SddProfile } from "./sdd.generator.js";
 import {
   generateApp,
+  nxNextPluginEntry,
   nxWebpackPluginEntry,
   portEnvVar,
   resolveAppPort,
@@ -495,7 +496,8 @@ function getNxPlugins(apps: AppSpec[]): NxPluginEntry[] {
         add({ plugin: "@nx/vite" });
         break;
       case "nextjs":
-        add({ plugin: "@nx/next" });
+        // build/serve/start inferidos desde apps/<name>/next.config.js (ver app.generator)
+        add(nxNextPluginEntry());
         add({ plugin: "@nx/react" });
         break;
       case "fastify":

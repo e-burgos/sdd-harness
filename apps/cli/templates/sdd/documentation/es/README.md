@@ -1085,7 +1085,9 @@ acción del dev.
   reporta estado, `-- --disable` / `-- --enable` apagan y prenden.
 - **Hooks**: `.claude/settings.json` (`PreToolUse` sobre `Bash`) y `.gemini/settings.json`
   (`BeforeTool` sobre `run_shell_command`) — versionados, así que el equipo los recibe con un
-  `git pull`. Copilot y Antigravity todavía no tienen hook y funcionan igual sin él.
+  `git pull`. Copilot y Antigravity todavía no tienen hook y funcionan igual sin él. El kit
+  instala **solo** este hook: cualquier otro `PreToolUse` (por ejemplo `block-no-verify` de un
+  plugin de terceros) viene de la configuración o los plugins del usuario, no de `sdd/`.
 - **Best effort**: si el binario falta o el hook falla, el comando pasa sin comprimir; nunca
   bloquea. El binario se instala fuera del repo (`~/.local/bin`) y su historial es **por
   máquina**, así que el ahorro es el de quien corre el visor.

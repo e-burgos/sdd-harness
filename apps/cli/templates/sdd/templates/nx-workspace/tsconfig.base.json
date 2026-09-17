@@ -13,6 +13,8 @@
     "strict": true,
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
+    "baseUrl": ".",
+    "ignoreDeprecations": "6.0",
     "paths": {
       "@shared-lib": ["./libs/shared-lib/src/index.ts"]
     }

@@ -124,5 +124,6 @@ campo.
 
 Ver `sdd/agents/sdd-orchestrator.agent.md` § Registro de consumo — creás `metrics` con
 `by_agent: []` al abrir el ciclo, capturás la notificación exacta (`agent-usage-notification`)
-de cada subagente que dispares y la volcás en `by_agent` + `usage` de su task, y registrás tu
+de cada subagente que dispares (acumulada por agente si lo reanudás con `SendMessage`: anotá
+la diferencia) y la volcás en `by_agent` + `usage` de su task, y registrás tu
 propia entrada `{ "agent": "orchestrator", ... }` si el reviewer todavía no la agregó.

@@ -116,7 +116,7 @@
       "items": {
         "type": "string"
       },
-      "description": "Support docs under cycle-XX/artifacts/, not implemented source files."
+      "description": "Support docs under cycle-XX/artifacts/ (files or directories), not implemented source files. Paths are relative to the cycle directory (artifacts/x) or to the repo root."
     },
     "metrics": {
       "oneOf": [
