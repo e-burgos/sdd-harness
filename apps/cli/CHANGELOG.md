@@ -5,6 +5,53 @@ All notable changes to `@e-burgos/sdd-harness` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- **Next.js apps are scaffolded with inferred tasks and a plain `next.config.js`.** `harness init`
+  / `add app nextjs` no longer writes `@nx/next:build` / `@nx/next:server` targets: `build`, `serve`
+  and `start` are inferred by `@nx/next/plugin` from `next.config.js` (the same strategy NestJS
+  already used with webpack), the port travels as an option of the inferred `serve`,
+  `apps/<app>/public/` ships with a `.gitkeep`, and the workspace `.gitignore` ignores `.next/` and
+  `next-env.d.ts`. The explicit scaffold was broken twice over: `@nx/next:build` failed with
+  `ENOENT … scandir 'apps/<app>/public'` and the `serve` target had no `buildTarget`, so
+  `nx serve <app>` never worked. `next.config.js` is now a plain config object:
+  `composePlugins`/`withNx` are deprecated (removed in Nx 24) and, measured with Nx 23 + Next 15,
+  `withNx` kept the workspace `paths` aliases from resolving in `next build`.
+- **`tsconfig.base.json` template declares `baseUrl: "."` and `ignoreDeprecations: "6.0"`.** Next 15
+  only resolves `paths` aliases (`@shared-lib`) with a `baseUrl`, and TypeScript 6 (what the
+  template pins) deprecates it; without both, importing a workspace lib from a Next app fails with
+  `Module not found: Can't resolve '@…'`. The workspace `eslint.config.mjs` also ignores `.next/`
+  and `next-env.d.ts`, which Next regenerates on every build and which failed lint right after the
+  first `nx build`.
+
+### Fixed
+
+- **`.env.example` no longer sets `NODE_ENV=development`.** Next reads `apps/<app>/.env`, and with
+  that line present `next build` failed in the `/404` prerender (`<Html> should not be imported
+  outside of pages/_document`). `NODE_ENV` belongs to the tooling, never to the example env.
+- **`sdd:gate` (GATE A) suggested `cycle-02` when `cycles/cycle-01/` existed without a
+  `cycle.json`** (artifacts captured before the cycle was opened). The next number now comes from
+  the cycles that were actually opened, not from the directories.
+- **`sdd:validate` resolves `cycle.json → artifacts[]` relative to the cycle directory first**
+  (`artifacts/api-samples/README.md`, what the docs suggest) and to the repo root as a fallback;
+  directories are accepted. It only resolved repo-relative paths before, so the documented form
+  failed with `artifact does not exist`. Schema description and docs say so now.
+- **`customConditions` invariant: docs and template disagreed, and nothing checked it.** The
+  dual-harness invariants and `HOW-TO-USE-SDD` demanded `customConditions === package.json name`
+  while the kit's `tsconfig.base.json` template uses legacy `paths` and never declares it. The
+  invariant now reads "TS solution setup only", and `sdd:validate` warns (never fails) when a
+  repo that does declare `customConditions` diverges from the root `name`. The `paths` template
+  itself gained the `baseUrl` Next needs (see *Changed*).
+- **Docs: `subagent_tokens` is cumulative when a subagent is resumed with `SendMessage`.** The
+  model-budget rule and the orchestrator said the notification was an exact per-task figure; it is
+  exact per agent, so a resumed agent's next notification includes everything before it. Record
+  the delta.
+- **Docs: the kit installs only the rtk `PreToolUse` hook.** A `block-no-verify` hook that blocks
+  commands on false positives was reported as coming from the kit; it comes from a third-party
+  plugin (`everything-claude-code`), and the README now says which hook is the kit's.
+
 ## [0.15.0] - 2026-09-17
 
 ### Added
