@@ -602,7 +602,8 @@ fijas; la cuarta es **obligatoria** si el ciclo toca `schema.json`, `api.json` o
 
 Reglas: historias en 1–2 líneas cada una (sin narrativa), tasks en prosa espejo de
 `tasks.json` (`user_stories` puede ir `[]` si las historias no se numeran), nada de secciones
-extra — lo que no entra acá va a `artifacts/`.
+extra — lo que no entra acá va a `artifacts/`. `cycle.json → artifacts[]` lista archivos o
+directorios con ruta relativa al ciclo (`artifacts/…`); también vale la ruta desde la raíz del repo.
 
 ---
 

@@ -30,6 +30,8 @@ describe.skipIf(process.platform === 'win32')('spec-gate.mjs (integration)', () 
     return { status: run.status, output, json };
   };
 
+  const relativeCycleDir = () => cycleDir.slice(ws.length + 1).split('\\').join('/');
+
   const runValidate = () => {
     const run = spawnSync('node', [resolve(ws, 'sdd/scripts/validate-sdd.mjs')], {
       encoding: 'utf-8',
@@ -226,5 +228,54 @@ describe.skipIf(process.platform === 'win32')('spec-gate.mjs (integration)', () 
     expect(run.output).toContain('flow: full');
     expect(run.output).toContain('brief.yaml');
     expect(run.output).toContain('architect.md');
+  });
+
+  it('GATE A deriva el próximo ciclo de los cycle.json, no de los directorios', async () => {
+    // Caso real: artifacts capturados en cycles/cycle-01/artifacts/ ANTES de abrir el ciclo.
+    // Hasta v0.15.0 el gate contaba el directorio y sugería cycle-02.
+    const spec = await createSpec(ws, { slug: 'payments', author: 'eburgos', app: 'apps/demo-api' });
+    const early = resolve(ws, spec.folder, 'cycles/cycle-01/artifacts/api-samples');
+    await fs.ensureDir(early);
+    await fs.writeFile(resolve(early, 'README.md'), '# samples\n');
+
+    const run = runGate('payments', '--json');
+    expect(run.status).toBe(0);
+    expect(run.json?.next?.cycle).toBe('cycle-01');
+  });
+
+  it('validate-sdd resuelve cycle.json → artifacts[] relativo al ciclo y también a la raíz, y acepta directorios', async () => {
+    const cycle = await fs.readJSON(resolve(cycleDir, 'cycle.json'));
+    await fs.ensureDir(resolve(cycleDir, 'artifacts/api-samples'));
+    await fs.writeFile(resolve(cycleDir, 'artifacts/api-samples/README.md'), '# samples\n');
+    cycle.artifacts = [
+      'artifacts/api-samples/README.md',
+      'artifacts/api-samples',
+      `${relativeCycleDir()}/artifacts/api-samples/README.md`,
+    ];
+    await fs.writeJSON(resolve(cycleDir, 'cycle.json'), cycle);
+    expect(runValidate().output).not.toContain('artifact does not exist');
+
+    cycle.artifacts = ['artifacts/missing.md'];
+    await fs.writeJSON(resolve(cycleDir, 'cycle.json'), cycle);
+    const out = runValidate().output;
+    expect(out).toContain('artifact does not exist: artifacts/missing.md');
+
+    cycle.artifacts = [];
+    await fs.writeJSON(resolve(cycleDir, 'cycle.json'), cycle);
+  });
+
+  it('validate-sdd avisa cuando customConditions no coincide con el name del package.json raíz', async () => {
+    // Invariante de init-nx-workspace; solo aplica al TS solution setup (el template del kit usa paths).
+    const pkgPath = resolve(ws, 'package.json');
+    const pkg = await fs.readJSON(pkgPath);
+    pkg.name = '@gate/source';
+    await fs.writeJSON(pkgPath, pkg, { spaces: 2 });
+    const tsPath = resolve(ws, 'tsconfig.base.json');
+    await fs.writeJSON(tsPath, { compilerOptions: { customConditions: ['@other/source'] } });
+    expect(runValidate().output).toContain('customConditions');
+
+    await fs.writeJSON(tsPath, { compilerOptions: { customConditions: ['@gate/source'] } });
+    expect(runValidate().output).not.toContain('customConditions');
+    await fs.remove(tsPath);
   });
 });

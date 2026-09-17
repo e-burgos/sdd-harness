@@ -228,7 +228,7 @@ pnpm sdd:rebuild-catalog && pnpm sdd:validate
 - [ ] `ls package-lock.json yarn.lock` → no existen
 - [ ] `cat pnpm-workspace.yaml` → `apps/*`, `libs/*`, `tools/*`
 - [ ] `pnpm nx show projects` → no aparece ningún proyecto de `sdd/templates`
-- [ ] `customConditions` de `tsconfig.base.json` === `name` del `package.json` raíz
+- [ ] Solo con TS solution setup: `customConditions` de `tsconfig.base.json` === `name` del `package.json` raíz (`pnpm sdd:validate` avisa si divergen; con el template `paths` del kit no aplica)
 - [ ] Lib de prueba en `libs/`: la ve `pnpm nx show projects` **y** `pnpm list --recursive`; borrarla después
 - [ ] `head -1 AGENTS.md` resuelve el symlink a `sdd/dual-harness/`
 - [ ] `pnpm sdd:validate` → verde

@@ -243,7 +243,9 @@ The Architect reads `functional.md`, `brief.yaml`, `sdd/schema.json` and `sdd/ap
 (e.g. a task mentions an endpoint the architect did not define), tell each agent to fix it.
 
 > Supporting documents (diagrams, endpoint examples, code exploration) produced by the Architect:
-> → **always** store them in `cycle-01/artifacts/` and reference them in `cycle.json["artifacts"]`.
+> → **always** store them in `cycle-01/artifacts/` and reference them in `cycle.json["artifacts"]`
+> with the path relative to the cycle (`artifacts/api-samples/`); directories are accepted, and so
+> is a path from the repo root.
 
 ---
 
@@ -650,9 +652,10 @@ And if point 4 is NO, something is wrong: only consolidation touches the bases (
   (`pnpm sdd:rtk -- --disable` is the developer's call).
 - **Workspace invariants** (guaranteed by the `init-nx-workspace` skill; breaking them fails
   silently): pnpm is the only package manager; projects live in `apps/`, `libs/` and `tools/`
-  — never in `packages/` —; `customConditions` in `tsconfig.base.json` is **identical** to the
-  root `package.json` `name`; and `.nxignore` contains `sdd/templates` so the blueprints stay
-  out of the project graph.
+  — never in `packages/` —; if the repo uses the TS solution setup, `customConditions` in
+  `tsconfig.base.json` is **identical** to the root `package.json` `name` (the kit's template uses
+  `paths` and does not declare it; `sdd:validate` warns when they differ); and `.nxignore`
+  contains `sdd/templates` so the blueprints stay out of the project graph.
 - **The project name and description live ONLY in `sdd/global.json`** (`project` /
   `description`). No other file in `sdd/` hardcodes them — that is what keeps `sdd/` portable,
   and `pnpm sdd:validate` fails if the value leaks into the kit's documents.

@@ -137,7 +137,11 @@ function gateA(spec) {
     ok: spec.status !== 'completed' && spec.status !== 'cancelled',
     detail: `status: ${spec.status}`,
   });
-  const last = cycles.length ? Number(cycles[cycles.length - 1].id.slice(6)) : 0;
+  // The next number comes from the cycles that were actually opened (a cycle.json exists), not
+  // from the directories: cycles/cycle-01/artifacts/ captured before opening the cycle is still
+  // cycle-01, not a reason to suggest cycle-02.
+  const opened = cycles.filter((c) => c.data);
+  const last = opened.length ? Math.max(...opened.map((c) => Number(c.id.slice(6)))) : 0;
   return {
     gate: 'A',
     checks,

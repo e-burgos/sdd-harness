@@ -63,8 +63,11 @@ Invariantes que la skill garantiza y que **ningún cambio puede romper**:
   `npm install` ni `yarn` en este repo — generan un lockfile rival y Nx infiere el PM del lockfile.
 - **Los proyectos viven en `apps/`, `libs/` y `tools/`** — nunca en `packages/`. Los globs de
   `pnpm-workspace.yaml` y todo el sistema SDD asumen eso.
-- **`customConditions` de `tsconfig.base.json` === `name` del `package.json` raíz.** Nx lo deriva
-  literal de ahí; si divergen, TypeScript resuelve a `dist` en vez de a `src`.
+- **Si el repo usa el TS solution setup (`customConditions` en `tsconfig.base.json`), ese valor
+  === `name` del `package.json` raíz.** Nx lo deriva literal de ahí; si divergen, TypeScript
+  resuelve a `dist` en vez de a `src`. El template del kit (`sdd/templates/nx-workspace/`) usa el
+  wiring legacy `paths` y no declara `customConditions`: ahí no aplica. `pnpm sdd:validate` avisa
+  si divergen.
 - **`.nxignore` contiene `sdd/templates`** — son blueprints, no proyectos Nx.
 - **Crear apps/libs es otra skill:** `scaffold-nx`, y siempre dentro de un ciclo SDD.
 
