@@ -55,6 +55,12 @@ describe('docker.generator', () => {
     expect(content).toContain('REDIS_URL=');
   });
 
+  it('.env.example nunca fija NODE_ENV (Next lee apps/<app>/.env y `next build` falla con NODE_ENV=development)', async () => {
+    await generateDockerCompose(tmpDir, ['postgres']);
+    const content = fs.readFileSync(resolve(tmpDir, '.env.example'), 'utf-8');
+    expect(content).not.toMatch(/^NODE_ENV=/m);
+  });
+
   it('genera docker-compose.yml con rabbitmq', async () => {
     await generateDockerCompose(tmpDir, ['rabbitmq']);
 
