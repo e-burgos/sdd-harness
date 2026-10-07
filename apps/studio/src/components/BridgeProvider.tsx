@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useStore } from 'zustand';
 import { bootstrap } from '@/lib/bootstrap';
 import { BridgeClient, BridgeError, type ConnectionState } from '@/lib/bridge/client';
@@ -27,10 +27,16 @@ export function BridgeProvider({ pairing, children }: { pairing: PairingInfo; ch
   const [connection, setConnection] = useState<ConnectionState>(client.state);
   const [syncError, setSyncError] = useState<string | null>(null);
 
+  const runRef = useRef(0);
+
   const sync = useCallback(() => {
+    const run = ++runRef.current;
     bootstrap(client, store).then(
-      () => setSyncError(null),
+      () => {
+        if (run === runRef.current) setSyncError(null);
+      },
       (error: unknown) => {
+        if (run !== runRef.current) return;
         if (error instanceof BridgeError && error.code === 'disconnected') return;
         console.error('[sdd-studio] bootstrap:', error);
         setSyncError(error instanceof Error ? error.message : String(error));
@@ -42,6 +48,10 @@ export function BridgeProvider({ pairing, children }: { pairing: PairingInfo; ch
     const offState = client.onState((s) => {
       setConnection(s);
       if (s.status === 'open') sync();
+      else {
+        runRef.current++; // invalida cualquier sync en vuelo
+        setSyncError(null);
+      }
     });
     const offEvents = client.onEvent((e) => store.getState().receive(e));
     client.connect();
