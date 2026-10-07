@@ -16,7 +16,7 @@ export interface WorkspaceWatcher {
   close(): Promise<void>;
 }
 
-const IGNORED = /[\\/]sdd[\\/](docs|node_modules)([\\/]|$)/;
+const IGNORED_DIRS = ['docs', 'node_modules', 'documentation'];
 
 export async function startWorkspaceWatcher(opts: {
   root: string;
@@ -26,11 +26,11 @@ export async function startWorkspaceWatcher(opts: {
 }): Promise<WorkspaceWatcher> {
   let current = mergeSnapshot(null, await loadWorkspaceSnapshot(opts.root));
   let timer: NodeJS.Timeout | null = null;
-  let running: Promise<WorkspaceUpdate | null> | null = null;
-  let dirty = false;
+  let queue: Promise<unknown> = Promise.resolve();
   let closed = false;
 
-  const refresh = async (): Promise<WorkspaceUpdate | null> => {
+  const doRefresh = async (): Promise<WorkspaceUpdate | null> => {
+    if (closed) return null;
     const next = mergeSnapshot(current, await loadWorkspaceSnapshot(opts.root));
     const areas = changedAreas(current, next);
     if (areas.length === 0 || closed) return null;
@@ -40,48 +40,47 @@ export async function startWorkspaceWatcher(opts: {
     return update;
   };
 
-  const run = async (): Promise<void> => {
-    timer = null;
-    if (running) {
-      dirty = true;
-      return;
-    }
-    running = refresh().catch((error) => {
-      opts.onError?.(error);
-      return null;
-    });
-    await running;
-    running = null;
-    if (dirty && !closed) {
-      dirty = false;
-      schedule();
-    }
+  // Every refresh (debounced or public) goes through one chain: never concurrent, always diffed against the latest state.
+  const enqueue = (): Promise<WorkspaceUpdate | null> => {
+    const result = queue.then(doRefresh);
+    queue = result.catch(() => null);
+    return result;
   };
 
   const schedule = (): void => {
     if (closed) return;
     if (timer) clearTimeout(timer);
-    timer = setTimeout(() => void run(), opts.debounceMs ?? 200);
+    timer = setTimeout(() => {
+      timer = null;
+      enqueue().catch((error) => opts.onError?.(error));
+    }, opts.debounceMs ?? 200);
   };
 
-  const watcher = chokidar.watch(path.join(opts.root, 'sdd'), {
-    ignoreInitial: true,
-    ignored: (p: string) => IGNORED.test(p),
-  });
+  const sddDir = path.join(opts.root, 'sdd');
+  const ignoredRoots = IGNORED_DIRS.map((d) => path.join(sddDir, d));
+  const isIgnored = (p: string): boolean =>
+    ignoredRoots.some((r) => p === r || p.startsWith(r + path.sep));
+
+  const watcher = chokidar.watch(sddDir, { ignoreInitial: true, ignored: isIgnored });
   watcher.on('all', schedule);
+  await new Promise<void>((resolve, reject) => {
+    watcher.once('ready', () => resolve());
+    watcher.once('error', (error) => reject(error));
+  }).catch(async (error) => {
+    closed = true;
+    await watcher.close();
+    throw error;
+  });
   watcher.on('error', (error) => opts.onError?.(error));
-  await new Promise<void>((resolve) => watcher.once('ready', () => resolve()));
 
   return {
     current: () => current,
-    refresh: async () => {
-      if (running) await running;
-      return refresh();
-    },
+    refresh: () => enqueue(),
     close: async () => {
       closed = true;
       if (timer) clearTimeout(timer);
       await watcher.close();
+      await queue;
     },
   };
 }

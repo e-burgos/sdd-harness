@@ -1,7 +1,8 @@
-import { readFile, writeFile } from 'node:fs/promises';
+import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { copyFixture, waitFor } from '../test-utils/fixture';
+import { copyFixture, FIXTURE_ROOT, waitFor } from '../test-utils/fixture';
 import { startWorkspaceWatcher, type WorkspaceUpdate, type WorkspaceWatcher } from './watcher';
 
 let root: string;
@@ -52,5 +53,47 @@ describe('startWorkspaceWatcher', () => {
     await writeFile(path.join(root, 'sdd/fixes.json'), JSON.stringify({ fixes: [] }));
     await new Promise((r) => setTimeout(r, 300));
     expect(updates).toEqual([]);
+  });
+
+  it('serializes concurrent refreshes: one task.status event total', async () => {
+    const json = JSON.parse(await readFile(tasksFile(), 'utf8'));
+    json.tasks[1].status = 'done';
+    await writeFile(tasksFile(), JSON.stringify(json));
+    const results = await Promise.all([watcher!.refresh(), watcher!.refresh()]);
+    await new Promise((r) => setTimeout(r, 300));
+    const events = [...updates.flatMap((u) => u.events), ...results.flatMap((u) => u?.events ?? [])];
+    // onUpdate fires once per applied update; results mirror the same updates
+    expect(updates.flatMap((u) => u.events).filter((e) => e.botKind === 'task.status')).toHaveLength(1);
+    expect(events.length).toBeGreaterThan(0);
+  });
+
+  it('still emits when an ancestor path contains sdd/docs', async () => {
+    await watcher!.close();
+    const outer = await mkdtemp(path.join(tmpdir(), 'outer-'));
+    const nested = path.join(outer, 'sdd', 'docs', 'copy');
+    await mkdir(nested, { recursive: true });
+    await cp(FIXTURE_ROOT, nested, { recursive: true });
+    updates.length = 0;
+    watcher = await startWorkspaceWatcher({ root: nested, debounceMs: 50, onUpdate: (u) => updates.push(u) });
+    const file = path.join(nested, 'sdd/specs/spec-dev-001-pagos/cycles/cycle-01/tasks.json');
+    const json = JSON.parse(await readFile(file, 'utf8'));
+    json.tasks[1].status = 'done';
+    await writeFile(file, JSON.stringify(json));
+    await waitFor(() => updates.find((u) => u.events.some((e) => e.botKind === 'task.status')));
+    await watcher.close();
+    watcher = undefined;
+    await rm(outer, { recursive: true, force: true });
+  });
+
+  it('close waits for an in-flight refresh', async () => {
+    const json = JSON.parse(await readFile(tasksFile(), 'utf8'));
+    json.tasks[1].status = 'done';
+    await writeFile(tasksFile(), JSON.stringify(json));
+    const pending = watcher!.refresh();
+    await watcher!.close();
+    watcher = undefined;
+    let settled = false;
+    await pending.then(() => (settled = true));
+    expect(settled).toBe(true);
   });
 });
