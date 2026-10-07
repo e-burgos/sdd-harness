@@ -11,11 +11,13 @@ import type {
 } from '@sdd-studio/protocol';
 
 type Json = Record<string, any>;
-type ReadResult = { ok: true; value: Json | null } | { ok: false };
+type ReadResult = { ok: true; value: Json | null; missing?: boolean } | { ok: false };
 
 export interface LoadResult {
   snapshot: WorkspaceSnapshot;
   failed: Area[];
+  /** Areas whose source file does not exist (ENOENT). Only 'specs' and 'fixes'. */
+  missing: Area[];
 }
 
 const str = (v: unknown, fallback = ''): string => (typeof v === 'string' ? v : fallback);
@@ -27,7 +29,7 @@ async function readJson(file: string): Promise<ReadResult> {
   try {
     raw = await readFile(file, 'utf8');
   } catch (error) {
-    return (error as NodeJS.ErrnoException).code === 'ENOENT' ? { ok: true, value: null } : { ok: false };
+    return (error as NodeJS.ErrnoException).code === 'ENOENT' ? { ok: true, value: null, missing: true } : { ok: false };
   }
   try {
     return { ok: true, value: JSON.parse(raw) as Json };
@@ -63,14 +65,22 @@ const toFix = (f: Json): FixSummary => ({
 
 async function loadSpecs(root: string, sdd: string) {
   const index = await readJson(path.join(sdd, 'specs', 'index.json'));
-  if (!index.ok) return { ok: false, specs: [] as SpecSummary[], cycles: [] as CycleSummary[] };
+  if (!index.ok) return { ok: false, missing: false, specs: [] as SpecSummary[], cycles: [] as CycleSummary[] };
   let ok = true;
   const specs = (Array.isArray(index.value?.specs) ? index.value.specs : []).map(toSpec);
   const cycles: CycleSummary[] = [];
   for (const spec of specs) {
-    if (!spec.folder) continue;
-    const dir = path.join(root, ...spec.folder.split('/'), 'cycles');
-    const names = await readdir(dir).catch(() => [] as string[]);
+    const segments = spec.folder.split('/');
+    if (!spec.folder.startsWith('sdd/') || segments.includes('..')) continue;
+    const dir = path.join(root, ...segments, 'cycles');
+    let names: string[];
+    try {
+      names = await readdir(dir);
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException).code;
+      if (code !== 'ENOENT' && code !== 'ENOTDIR') ok = false;
+      continue;
+    }
     for (const name of names.filter((n) => /^cycle-\d{2}$/.test(n)).sort()) {
       const [cycle, tasks] = await Promise.all([
         readJson(path.join(dir, name, 'cycle.json')),
@@ -80,6 +90,7 @@ async function loadSpecs(root: string, sdd: string) {
         ok = false;
         continue;
       }
+      if (cycle.value === null && tasks.value === null) continue;
       const list = (Array.isArray(tasks.value?.tasks) ? tasks.value.tasks : []).map(toTask);
       const counted = list.filter((t: TaskSummary) => t.status !== 'skipped');
       cycles.push({
@@ -94,7 +105,7 @@ async function loadSpecs(root: string, sdd: string) {
       });
     }
   }
-  return { ok, specs, cycles };
+  return { ok, missing: index.missing === true, specs, cycles };
 }
 
 function parseFrontmatter(text: string): Record<string, string> {
@@ -107,11 +118,23 @@ function parseFrontmatter(text: string): Record<string, string> {
   return out;
 }
 
-async function loadAgents(dir: string): Promise<AgentSummary[]> {
-  const names = await readdir(dir).catch(() => [] as string[]);
+async function loadAgents(dir: string): Promise<{ ok: boolean; agents: AgentSummary[] }> {
   const agents: AgentSummary[] = [];
+  let names: string[];
+  try {
+    names = await readdir(dir);
+  } catch (error) {
+    return { ok: (error as NodeJS.ErrnoException).code === 'ENOENT', agents };
+  }
+  let ok = true;
   for (const name of names.filter((n) => n.endsWith('.agent.md')).sort()) {
-    const text = await readFile(path.join(dir, name), 'utf8').catch(() => '');
+    let text: string;
+    try {
+      text = await readFile(path.join(dir, name), 'utf8');
+    } catch {
+      ok = false;
+      continue;
+    }
     const fm = parseFrontmatter(text);
     agents.push({
       id: fm.name ?? name.replace(/\.agent\.md$/, ''),
@@ -119,18 +142,20 @@ async function loadAgents(dir: string): Promise<AgentSummary[]> {
       model: fm.model ?? null,
     });
   }
-  return agents;
+  return { ok, agents };
 }
 
 export async function loadWorkspaceSnapshot(root: string): Promise<LoadResult> {
   const sdd = path.join(root, 'sdd');
   const failed: Area[] = [];
+  const missing: Area[] = [];
   const read = async (area: Area, rel: string): Promise<Json | null> => {
     const result = await readJson(path.join(sdd, rel));
     if (!result.ok) {
       failed.push(area);
       return null;
     }
+    if (result.missing && area === 'fixes') missing.push(area);
     return result.value;
   };
   const [global, tools, pricing, kit, fixes] = await Promise.all([
@@ -142,6 +167,9 @@ export async function loadWorkspaceSnapshot(root: string): Promise<LoadResult> {
   ]);
   const specs = await loadSpecs(root, sdd);
   if (!specs.ok) failed.push('specs');
+  else if (specs.missing) missing.push('specs');
+  const agents = await loadAgents(path.join(sdd, 'agents'));
+  if (!agents.ok) failed.push('agents');
   const snapshot: WorkspaceSnapshot = {
     project: str(global?.project, path.basename(root)),
     profile: str(global?.profile, 'team'),
@@ -149,12 +177,12 @@ export async function loadWorkspaceSnapshot(root: string): Promise<LoadResult> {
     specs: specs.specs,
     cycles: specs.cycles,
     fixes: Array.isArray(fixes?.fixes) ? fixes.fixes.map(toFix) : [],
-    agents: await loadAgents(path.join(sdd, 'agents')),
+    agents: agents.agents,
     gateMode: tools?.claude_mod?.gate === 'warn' ? 'warn' : 'block',
     pricing: pricing && typeof pricing === 'object' ? pricing : null,
     stale: [],
   };
-  return { snapshot, failed };
+  return { snapshot, failed, missing };
 }
 
 const AREA_FIELDS: Record<Area, (keyof WorkspaceSnapshot)[]> = {
@@ -169,8 +197,9 @@ const AREA_FIELDS: Record<Area, (keyof WorkspaceSnapshot)[]> = {
 
 export function mergeSnapshot(prev: WorkspaceSnapshot | null, next: LoadResult): WorkspaceSnapshot {
   const out: WorkspaceSnapshot = { ...next.snapshot, stale: [...next.failed] };
+  if (prev) for (const area of next.missing) if (!out.stale.includes(area)) out.stale.push(area);
   if (prev) {
-    for (const area of next.failed) {
+    for (const area of [...next.failed, ...next.missing]) {
       for (const field of AREA_FIELDS[area]) (out as Record<string, unknown>)[field] = prev[field];
     }
   }
