@@ -3,7 +3,9 @@ import type { Options, Query } from '@anthropic-ai/claude-agent-sdk';
 import { defaultThreadOptions, type ThreadEvent } from '@sdd-studio/protocol';
 import { describe, expect, it, vi } from 'vitest';
 import { buildQueryOptions, ClaudeAgentSdkEngine, type QueryFn } from './claude-sdk-engine';
-import type { ApprovalRequest, EngineTurnInput } from './types';
+import type { ApprovalRequest, EngineCallbacks, EngineTurnInput } from './types';
+
+type EngineCallbacksApproval = EngineCallbacks['requestApproval'];
 
 const input = (over: Partial<EngineTurnInput['options']> = {}, resume: string | null = null): EngineTurnInput => ({
   threadId: 't', text: 'hola', cwd: '/repo', resumeSessionId: resume, options: { ...defaultThreadOptions(), ...over },
@@ -108,5 +110,59 @@ describe('ClaudeAgentSdkEngine', () => {
       return Object.assign(run(), { interrupt: async () => undefined }) as unknown as Query;
     };
     await expect(start(fn).done).rejects.toThrow('boom');
+  });
+
+  it('swallows a throw with no error result only when interrupt() was called', async () => {
+    let release!: () => void;
+    const gate = new Promise<void>((r) => (release = r));
+    const fn: QueryFn = () => {
+      async function* run() {
+        yield { type: 'system', subtype: 'init', session_id: 's', model: 'm' };
+        await gate;
+        throw new Error('after interrupt');
+      }
+      return Object.assign(run(), { interrupt: async () => release() }) as unknown as Query;
+    };
+    const turn = start(fn);
+    await turn.interrupt();
+    await expect(turn.done).resolves.toBeUndefined();
+  });
+
+  describe('canUseTool contract', () => {
+    const run = async (
+      decision: Awaited<ReturnType<EngineCallbacksApproval>>,
+      toolUseID: string | undefined,
+    ) => {
+      const asked: { req: ApprovalRequest; signal: AbortSignal }[] = [];
+      const sdkSignal = new AbortController().signal;
+      const toolInput = { file_path: '/r/a.ts' };
+      let result: unknown;
+      const fn: QueryFn = ({ options }) => {
+        async function* gen() {
+          result = await options?.canUseTool?.('Write', toolInput, { signal: sdkSignal, toolUseID, agentID: undefined } as never);
+        }
+        return Object.assign(gen(), { interrupt: async () => undefined }) as unknown as Query;
+      };
+      await new ClaudeAgentSdkEngine(fn).startTurn(input(), {
+        emit: () => {}, onSessionId: () => {},
+        requestApproval: async (req, signal) => (asked.push({ req, signal }), decision),
+      }).done;
+      return { result, asked, sdkSignal, toolInput };
+    };
+
+    it('allow returns the same input as updatedInput and forwards the SDK signal', async () => {
+      const { result, asked, sdkSignal, toolInput } = await run({ behavior: 'allow' }, 'tu1');
+      expect(result).toEqual({ behavior: 'allow', updatedInput: toolInput });
+      expect(asked[0]?.signal).toBe(sdkSignal);
+      expect(asked[0]?.req.toolUseId).toBe('tu1');
+    });
+    it('deny carries the callback message', async () => {
+      const { result } = await run({ behavior: 'deny', message: 'nope' }, 'tu1');
+      expect(result).toEqual({ behavior: 'deny', message: 'nope' });
+    });
+    it('missing toolUseID becomes null', async () => {
+      const { asked } = await run({ behavior: 'allow' }, undefined);
+      expect(asked[0]?.req.toolUseId).toBeNull();
+    });
   });
 });
