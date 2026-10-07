@@ -38,7 +38,7 @@ jobs:
           pnpm --filter @sdd-studio/protocol --filter @e-burgos/sdd-studio test
 
       - name: Build
-        run: pnpm --filter @e-burgos/sdd-studio build
+        run: pnpm --filter sdd-studio-web build:local && pnpm --filter @e-burgos/sdd-studio build
 
       - name: Check if version is already published
         id: version_check
