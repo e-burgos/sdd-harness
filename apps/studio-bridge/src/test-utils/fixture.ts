@@ -8,7 +8,7 @@ export const FIXTURE_ROOT = fileURLToPath(new URL('../../test/fixtures/workspace
 export async function copyFixture(): Promise<{ root: string; cleanup: () => Promise<void> }> {
   const root = await mkdtemp(path.join(tmpdir(), 'sdd studio '));
   await cp(FIXTURE_ROOT, root, { recursive: true });
-  return { root, cleanup: () => rm(root, { recursive: true, force: true }) };
+  return { root, cleanup: () => rm(root, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }) };
 }
 
 export async function waitFor<T>(fn: () => T | undefined | null | false, timeoutMs = 5000): Promise<T> {
