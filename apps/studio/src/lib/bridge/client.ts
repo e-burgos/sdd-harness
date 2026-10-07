@@ -31,6 +31,8 @@ interface Pending {
   timer: ReturnType<typeof setTimeout>;
 }
 
+const HANDSHAKE_TIMEOUT_MS = 10_000;
+
 export interface BridgeClientOptions {
   url: string;
   token: string;
@@ -49,6 +51,7 @@ export class BridgeClient {
   private everOpened = false;
   private stopped = true;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private handshakeTimer: ReturnType<typeof setTimeout> | null = null;
   private lastHandshake: { code: string; message: string } | null = null;
   private readonly pending = new Map<string, Pending>();
   private readonly eventListeners = new Set<(e: ServerEvent) => void>();
@@ -68,6 +71,7 @@ export class BridgeClient {
     this.stopped = true;
     if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
     this.reconnectTimer = null;
+    this.clearHandshakeTimer();
     const ws = this.ws;
     this.ws = null;
     ws?.close(1000);
@@ -109,6 +113,16 @@ export class BridgeClient {
     this.ws = ws;
     ws.onopen = () => {
       if (this.ws !== ws) return;
+      this.clearHandshakeTimer();
+      this.handshakeTimer = setTimeout(() => {
+        this.handshakeTimer = null;
+        if (this.ws !== ws) return;
+        this.stopped = true;
+        this.ws = null;
+        ws.close(1000);
+        this.rejectAll('disconnected', 'el puente no completó el handshake');
+        this.setState({ status: 'failed', reason: 'bad-message', message: 'el puente no completó el handshake' });
+      }, HANDSHAKE_TIMEOUT_MS);
       ws.send(
         JSON.stringify({ kind: 'hello', token: this.o.token, protocolVersion: PROTOCOL_VERSION, clientVersion: this.o.clientVersion }),
       );
@@ -128,6 +142,7 @@ export class BridgeClient {
     const message = decoded.value;
     switch (message.kind) {
       case 'welcome':
+        this.clearHandshakeTimer();
         this.everOpened = true;
         this.failures = 0;
         this.setState({ status: 'open', welcome: message });
@@ -156,6 +171,7 @@ export class BridgeClient {
   }
 
   private onClose(code: number): void {
+    this.clearHandshakeTimer();
     this.ws = null;
     this.rejectAll('disconnected', 'se perdió la conexión con el puente');
     if (this.stopped) return;
@@ -182,6 +198,11 @@ export class BridgeClient {
       if (!this.stopped) this.open();
     }, delayMs);
     this.setState({ status: 'reconnecting', attempt: this.failures, delayMs });
+  }
+
+  private clearHandshakeTimer(): void {
+    if (this.handshakeTimer) clearTimeout(this.handshakeTimer);
+    this.handshakeTimer = null;
   }
 
   private rejectAll(code: string, message: string): void {

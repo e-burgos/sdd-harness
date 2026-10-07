@@ -33,7 +33,7 @@ export function ChannelView({ channelId, onOpenThread, composer }: { channelId: 
         <h1 className="truncate text-lg font-semibold">
           {dmAgent ? t('channel.dmWith', { name: agentMeta(dmAgent).name }) : `# ${spec?.id ?? channelId}`}
         </h1>
-        {spec && <span className="rounded-full bg-ink-800 px-2 py-0.5 text-[11px] text-ink-300">{spec.status}</span>}
+        {spec && <span className="rounded-full bg-ink-800 px-2 py-0.5 text-[11px] text-ink-300">{spec.status === 'in-progress' || spec.status === 'completed' ? t(`channel.status.${spec.status}`) : spec.status}</span>}
         {cycle && (
           <div className="ml-auto flex items-center gap-2 text-xs text-ink-300">
             <span>{cycle.cycle} · {cycle.flow}</span>

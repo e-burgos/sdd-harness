@@ -26,6 +26,15 @@ describe('ApprovalCard', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Denegar' }));
     expect(onRespond.mock.calls).toEqual([['allow', 'once', undefined], ['allow', 'thread', undefined], ['deny', 'once', 'no']]);
   });
+  it('does not deny when Enter confirms an IME composition in the reason box', () => {
+    const onRespond = vi.fn(() => Promise.resolve());
+    wrap(<ApprovalCard item={base} onRespond={onRespond} />);
+    const input = screen.getByPlaceholderText('Motivo (opcional)');
+    fireEvent.keyDown(input, { key: 'Enter', isComposing: true });
+    expect(onRespond).not.toHaveBeenCalled();
+    fireEvent.keyDown(input, { key: 'Enter' });
+    expect(onRespond).toHaveBeenCalledWith('deny', 'once', undefined);
+  });
   it('shows gate warning, diff and truncated input in scrollable blocks', () => {
     wrap(<ApprovalCard item={{ ...base, tool: 'Write', diff: '+export {}', input: 'x'.repeat(20_000), inputTruncated: true, gateWarning: 'SPEC GATE: ojo' }} onRespond={vi.fn()} />);
     expect(screen.getByText('SPEC GATE: ojo')).toBeInTheDocument();

@@ -21,6 +21,6 @@ describe('Timeline', () => {
     expect(screen.getByText('Planner empezó a trabajar')).toBeInTheDocument();
     expect(screen.getByText('plan')).toBeInTheDocument();
     expect(screen.getByText('Orchestrator usó 2 herramienta(s)')).toBeInTheDocument();
-    expect(screen.getByText('claude-haiku-4-5-20251001 · 121.3k in · 1.2k out · $0.078')).toBeInTheDocument();
+    expect(screen.getByText('claude-haiku-4-5-20251001 · low · 121.3k in · 1.2k out · $0.078')).toBeInTheDocument();
   });
 });

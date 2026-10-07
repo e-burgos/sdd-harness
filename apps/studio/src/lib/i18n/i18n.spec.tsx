@@ -27,6 +27,13 @@ describe('i18n', () => {
     expect(screen.getByRole('button')).toHaveTextContent('No bridge is listening on port 4320');
     expect(localStorage.getItem('sdd-studio:lang')).toBe('en');
   });
+  it('keeps <html lang> in sync with the selected language', () => {
+    localStorage.clear();
+    render(<I18nProvider initial="es"><Probe /></I18nProvider>);
+    expect(document.documentElement.lang).toBe('es');
+    act(() => screen.getByRole('button').click());
+    expect(document.documentElement.lang).toBe('en');
+  });
   it('has the bad-message connection key in both languages', () => {
     expect(es['conn.bad-message']).toContain('rechazó');
     expect(en['conn.bad-message']).toContain('rejected');

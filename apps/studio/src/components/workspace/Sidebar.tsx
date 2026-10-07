@@ -5,6 +5,7 @@ import { dmAgentOfChannel, type AuthMode, type Presence } from '@sdd-studio/prot
 import { agentMeta } from '@/lib/agents';
 import { useT } from '@/lib/i18n/i18n';
 import { channelsOf, dmChannelsOf, type ChannelEntry } from '@/lib/store/selectors';
+import type { ConnectionState } from '@/lib/bridge/client';
 import { useBridge, useStudio } from '../BridgeProvider';
 
 const DOT: Record<Presence['state'], string> = {
@@ -13,12 +14,20 @@ const DOT: Record<Presence['state'], string> = {
   open: 'bg-accent-500/60',
   idle: 'border border-ink-500',
 };
+const CONN_DOT = {
+  open: { cls: 'bg-accent-400', key: 'conn.dot.open' },
+  connecting: { cls: 'bg-amberish animate-pulse motion-reduce:animate-none', key: 'conn.dot.connecting' },
+  reconnecting: { cls: 'bg-amberish animate-pulse motion-reduce:animate-none', key: 'conn.dot.connecting' },
+  failed: { cls: 'bg-roseish', key: 'conn.dot.down' },
+  idle: { cls: 'bg-roseish', key: 'conn.dot.down' },
+} as const;
 const PRESENCE_KEY = { working: 'presence.working', waiting: 'presence.waiting', open: 'presence.open', idle: 'presence.idle' } as const;
 
 export interface SidebarViewProps {
   project: string;
   kitVersion: string | null;
   authMode: AuthMode | null;
+  connection: ConnectionState['status'];
   channels: ChannelEntry[];
   dms: ChannelEntry[];
   presence: Presence[];
@@ -37,7 +46,8 @@ export function SidebarView(p: SidebarViewProps) {
       <header>
         <div className="truncate text-base font-semibold">{p.project}</div>
         <div className="mt-0.5 flex items-center gap-2 text-[11px] text-ink-300">
-          <span className="h-2 w-2 rounded-full bg-accent-400" />
+          <span data-testid="conn-dot" aria-hidden className={`h-2 w-2 rounded-full ${CONN_DOT[p.connection].cls}`} />
+          <span className="sr-only">{t(CONN_DOT[p.connection].key)}</span>
           {p.authMode ? t(`auth.${p.authMode}`) : '…'}
           {p.kitVersion && <span>· kit {p.kitVersion}</span>}
           <button className="ml-auto rounded hover:text-ink-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" onClick={() => setLang(lang === 'es' ? 'en' : 'es')}>{t('lang.switch')}</button>
@@ -98,6 +108,7 @@ export function Sidebar({ activeChannel, onSelect }: { activeChannel: string; on
       project={snapshot?.project ?? welcome?.workspace.project ?? '…'}
       kitVersion={snapshot?.kitVersion ?? null}
       authMode={welcome?.authMode ?? null}
+      connection={connection.status}
       channels={channelsOf(snapshot)}
       dms={dmChannelsOf(snapshot)}
       presence={presence}

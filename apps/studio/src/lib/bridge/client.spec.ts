@@ -270,6 +270,27 @@ describe('BridgeClient', () => {
     expect(() => socket().receive({ kind: 'result', id, ok: true, data: [] })).not.toThrow();
   });
 
+  it('fails terminally when the socket opens but no welcome arrives within 10 s', () => {
+    const { client, states, socket } = make();
+    client.connect();
+    socket().open();
+    vi.advanceTimersByTime(9_999);
+    expect(states.at(-1)).toMatchObject({ status: 'connecting' });
+    vi.advanceTimersByTime(2);
+    expect(states.at(-1)).toEqual({ status: 'failed', reason: 'bad-message', message: 'el puente no completó el handshake' });
+    expect(socket().readyState).toBe(3);
+    vi.advanceTimersByTime(60_000);
+    expect(FakeSocket.instances).toHaveLength(1);
+  });
+  it('clears the handshake timer once welcome arrives', () => {
+    const { client, states, socket } = make();
+    client.connect();
+    socket().open();
+    socket().receive(welcome);
+    vi.advanceTimersByTime(30_000);
+    expect(states.at(-1)).toMatchObject({ status: 'open' });
+  });
+
   it('fails terminally on close 4000 bad-message, retries on timeout', () => {
     const a = make();
     a.client.connect();

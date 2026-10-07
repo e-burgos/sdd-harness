@@ -81,6 +81,7 @@ export function Timeline({ items, onRespond }: { items: TimelineItem[]; onRespon
               <li key={item.id} className="pl-11 font-mono text-[11px] text-ink-500">
                 {t('usage.footer', {
                   model: item.usage.model,
+                  effort: item.usage.effort ?? 'kit',
                   tokensIn: formatTokens(item.usage.tokensIn),
                   tokensOut: formatTokens(item.usage.tokensOut),
                   cost: formatCost(item.usage.costUsd),

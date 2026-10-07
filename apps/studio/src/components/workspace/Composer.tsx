@@ -5,6 +5,7 @@ import {
   DEFAULT_AGENT,
   defaultThreadOptions,
   dmAgentOfChannel,
+  specIdOfChannel,
   ThreadInfo,
   type Effort,
   type ModelChoice,
@@ -15,7 +16,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { z } from 'zod';
 import { agentMeta } from '@/lib/agents';
 import { useT } from '@/lib/i18n/i18n';
-import { parseSlash } from '@/lib/slash';
+import { parseSlash, SAFE_ARG } from '@/lib/slash';
 import { useBridge, useStudio } from '../BridgeProvider';
 
 const RunResult = z.object({ runId: z.string().min(1) });
@@ -165,8 +166,10 @@ export function Composer({ channelId, threadId, onThreadCreated }: { channelId: 
         return false;
       }
       if (action.kind === 'run') {
-        const { runId } = RunResult.parse(await client.request({ cmd: 'command.run', name: action.name, args: action.args }));
-        store.getState().startRun({ runId, name: action.name, args: action.args });
+        const specId = specIdOfChannel(channelId);
+        const args = action.name === 'gate' && action.args.length === 0 && specId && SAFE_ARG.test(specId) ? [specId] : action.args;
+        const { runId } = RunResult.parse(await client.request({ cmd: 'command.run', name: action.name, args }));
+        store.getState().startRun({ runId, name: action.name, args });
         return true;
       }
       const file = FileResult.parse(await client.request({ cmd: 'workspace.readFile', path: action.path }));

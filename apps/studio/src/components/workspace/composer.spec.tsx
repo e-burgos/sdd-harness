@@ -91,6 +91,16 @@ describe('Composer (connected)', () => {
     await waitFor(() => expect(store.getState().runs['r1']).toMatchObject({ name: 'validate', args: [] }));
     expect(client.request).toHaveBeenCalledWith({ cmd: 'command.run', name: 'validate', args: [] });
   });
+  it('/gate without args in a spec channel gates that spec', async () => {
+    const { client, box } = connected('spec:spec-dev-001-pagos', null, async () => ({ runId: 'r2' }));
+    enter(box, '/gate');
+    await waitFor(() => expect(client.request).toHaveBeenCalledWith({ cmd: 'command.run', name: 'gate', args: ['spec-dev-001-pagos'] }));
+  });
+  it('/gate without args outside a spec channel keeps no args', async () => {
+    const { client, box } = connected('general', null, async () => ({ runId: 'r3' }));
+    enter(box, '/gate');
+    await waitFor(() => expect(client.request).toHaveBeenCalledWith({ cmd: 'command.run', name: 'gate', args: [] }));
+  });
   it('/open-cycle reads the prompt then creates the thread with prompt + args', async () => {
     const { client, onThreadCreated, box } = connected('general', null, async (c) =>
       c.cmd === 'workspace.readFile' ? { path: 'p', content: 'PROMPT' } : info('t9'));

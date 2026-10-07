@@ -13,7 +13,7 @@ export type SlashAction =
   | { kind: 'error'; reason: 'unknown' | 'args'; name: string }
   | null;
 
-const SAFE_ARG = /^[A-Za-z0-9._-]{1,80}$/;
+export const SAFE_ARG = /^[A-Za-z0-9._-]{1,80}$/;
 
 export function parseSlash(text: string): SlashAction {
   const match = /^\/([a-z-]+)(?:\s+([\s\S]*))?$/.exec(text.trim());

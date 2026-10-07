@@ -85,7 +85,7 @@ export function ApprovalCard({ item, onRespond }: { item: Approval; onRespond: R
             aria-label={t('approval.reason')}
             disabled={sending}
             onKeyDown={(e) => {
-              if (e.key === 'Enter') deny();
+              if (e.key === 'Enter' && !e.nativeEvent.isComposing) deny();
             }}
             onChange={(e) => setReason(e.target.value)}
           />

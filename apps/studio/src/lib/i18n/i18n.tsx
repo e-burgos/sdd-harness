@@ -39,6 +39,9 @@ export function I18nProvider({ children, initial }: { children: ReactNode; initi
     if (initial) return;
     setLangState(detectLang(typeof navigator === 'undefined' ? undefined : navigator.language, readStored()));
   }, [initial]);
+  useEffect(() => {
+    document.documentElement.lang = lang;
+  }, [lang]);
   const setLang = useCallback((next: Lang) => {
     setLangState(next);
     try {
