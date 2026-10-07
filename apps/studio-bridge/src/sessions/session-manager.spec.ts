@@ -113,6 +113,19 @@ describe('SessionManager', () => {
     expect((await waitFor(() => pendingApproval(t.id))).gateWarning).toContain('SPEC GATE');
   });
 
+  it('shares one write scope across all dm channels, but not with spec channels', async () => {
+    const { m } = await manager();
+    const a = await m.createThread({ channelId: 'dm:sdd-planner', options: { ...opts, agent: 'sdd-planner' }, text: '#slow' });
+    const b = await m.createThread({ channelId: 'dm:sdd-architect', options: { ...opts, agent: 'sdd-architect' }, text: 'hola' });
+    const c = await m.createThread({ channelId: 'spec:spec-dev-001-pagos', options: opts, text: '#slow' });
+    expect(statusOf(m, a.id)).toBe('running');
+    expect(statusOf(m, b.id)).toBe('queued');
+    expect(statusOf(m, c.id)).toBe('running');
+    await m.interrupt(a.id);
+    await waitFor(() => statusOf(m, b.id) === 'idle');
+    await m.interrupt(c.id);
+  });
+
   it('queues a second writing thread in the same channel and starts it after the first', async () => {
     const { m } = await manager();
     const a = await m.createThread({ channelId: 'spec:spec-dev-001-pagos', options: opts, text: '#slow' });

@@ -80,6 +80,9 @@ interface PendingApproval {
   settle: (decision: ApprovalDecision) => void;
 }
 
+/** Todos los canales dm:* comparten un único alcance de escritura; el resto usa su propio canal. */
+const writeScopeOf = (channelId: string): string => (channelId.startsWith('dm:') ? 'dm' : channelId);
+
 const toInfo = ({ engineSessionId: _ignored, ...info }: StoredThread): ThreadInfo => info;
 const reportError = (error: unknown): void => console.error('[sdd-studio] session manager:', error);
 
@@ -237,8 +240,9 @@ export class SessionManager {
 
   private blocked(thread: StoredThread): boolean {
     if (!this.liveOf(thread.id).writes) return false;
-    return this.deps.store.list(thread.channelId).some((other) => {
-      if (other.id === thread.id) return false;
+    const scope = writeScopeOf(thread.channelId);
+    return this.deps.store.list().some((other) => {
+      if (other.id === thread.id || writeScopeOf(other.channelId) !== scope) return false;
       const l = this.live.get(other.id);
       return !!l?.turn && l.writes;
     });
@@ -292,8 +296,10 @@ export class SessionManager {
   }
 
   private drain(channelId: string): void {
+    const scope = writeScopeOf(channelId);
     const waiting = this.deps.store
-      .list(channelId)
+      .list()
+      .filter((t) => writeScopeOf(t.channelId) === scope)
       .filter((t) => this.live.get(t.id)?.queued != null)
       .sort((a, b) => this.liveOf(a.id).queuedAt - this.liveOf(b.id).queuedAt);
     for (const thread of waiting) {

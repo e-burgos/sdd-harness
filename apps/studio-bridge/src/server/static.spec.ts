@@ -53,7 +53,15 @@ describe('serveStatic', () => {
     expect(w.headers.get('content-type')).toContain('text/html');
     expect(w.headers.get('cache-control')).toBe('no-store');
     expect(w.headers.get('x-content-type-options')).toBe('nosniff');
+    expect(w.headers.get('content-security-policy')).toBe("frame-ancestors 'none'");
+    expect(w.headers.get('referrer-policy')).toBe('no-referrer');
     expect(await w.text()).toBe('<h1>workspace</h1>');
+  });
+  it('sends the framing and referrer headers on assets too', async () => {
+    const r = await fetch(`${base}/_next/static/app.js`);
+    expect(r.headers.get('content-security-policy')).toBe("frame-ancestors 'none'");
+    expect(r.headers.get('referrer-policy')).toBe('no-referrer');
+    expect(r.headers.get('x-content-type-options')).toBe('nosniff');
   });
   it('redirects /w to /w/ keeping nothing else', async () => {
     const r = await fetch(`${base}/w`, { redirect: 'manual' });

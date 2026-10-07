@@ -15,8 +15,14 @@ const TYPES: Record<string, string> = {
   '.txt': 'text/plain; charset=utf-8',
 };
 
+const SECURITY_HEADERS = {
+  'x-content-type-options': 'nosniff',
+  'content-security-policy': "frame-ancestors 'none'",
+  'referrer-policy': 'no-referrer',
+} as const;
+
 function send(res: ServerResponse, status: number, body = ''): void {
-  res.writeHead(status, { 'content-type': 'text/plain; charset=utf-8', 'x-content-type-options': 'nosniff' });
+  res.writeHead(status, { 'content-type': 'text/plain; charset=utf-8', ...SECURITY_HEADERS });
   res.end(body);
 }
 
@@ -39,7 +45,7 @@ export async function serveStatic(dir: string, req: IncomingMessage, res: Server
   let info = await stat(target).catch(() => null);
   if (info?.isDirectory()) {
     if (!pathname.endsWith('/')) {
-      res.writeHead(308, { location: `/${segments.join('/')}/` });
+      res.writeHead(308, { location: `/${segments.join('/')}/`, ...SECURITY_HEADERS });
       return void res.end();
     }
     target = path.join(target, 'index.html');
@@ -54,7 +60,7 @@ export async function serveStatic(dir: string, req: IncomingMessage, res: Server
   res.writeHead(200, {
     'content-type': type,
     'content-length': info.size,
-    'x-content-type-options': 'nosniff',
+    ...SECURITY_HEADERS,
     'cache-control': type.startsWith('text/html') ? 'no-store' : 'public, max-age=3600',
   });
   if (req.method === 'HEAD') {
