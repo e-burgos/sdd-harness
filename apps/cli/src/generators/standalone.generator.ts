@@ -515,7 +515,9 @@ module.exports = nextConfig;
         plugins: [{ name: "next" }],
       },
       include: ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
-      exclude: ["node_modules"],
+      // The kit's blueprints (sdd/templates/apps/react-app imports react-router-dom) are not
+      // this app's code: without this, `next build` type-checks them and fails.
+      exclude: ["node_modules", "sdd"],
     },
     { spaces: 2 },
   );

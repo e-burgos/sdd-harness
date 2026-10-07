@@ -29,6 +29,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   own gate at `nest build` under TypeScript 6 (`Cannot find name 'process'`, missing `rootDir`,
   deprecated `baseUrl`). The generated `tsconfig.json` now declares `types: ["node"]` and
   `rootDir: "./src"` and drops the unused `baseUrl`. Reproduced on the published 0.15.1.
+- **Standalone Next.js repos build again.** Next's `tsconfig.json` includes `**/*.tsx`, so `next build`
+  type-checked the kit's own blueprints (`sdd/templates/apps/react-app` imports `react-router-dom`)
+  and the init gate failed. The generated tsconfig now excludes `sdd`.
 
 ## [0.15.1] - 2026-09-17
 
