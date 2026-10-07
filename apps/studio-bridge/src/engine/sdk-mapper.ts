@@ -21,6 +21,7 @@ export class SdkEventMapper {
   private lastTotalCost = 0;
   private model: string | null = null;
   private counter = 0;
+  private readonly textBlocksByMessage = new Map<string, number>();
   private readonly subagentByToolUse = new Map<string, string>();
   private readonly subagentById = new Map<string, string>();
 
@@ -86,9 +87,12 @@ export class SdkEventMapper {
     const blocks = Array.isArray(message.content) ? (message.content as Block[]) : [];
     const baseId = str(message.id) || `m${++this.counter}`;
     const out: ThreadEvent[] = [];
-    blocks.forEach((block, index) => {
+    blocks.forEach((block) => {
       if (block.type === 'text' && str(block.text).trim()) {
-        const messageId = `${baseId}:${index}`;
+        // The SDK splits blocks into separate assistant messages sharing message.id, each starting at index 0.
+        const n = this.textBlocksByMessage.get(baseId) ?? 0;
+        this.textBlocksByMessage.set(baseId, n + 1);
+        const messageId = `${baseId}:${n}`;
         out.push(
           { type: 'message.start', messageId, author },
           { type: 'message.delta', messageId, text: str(block.text) },

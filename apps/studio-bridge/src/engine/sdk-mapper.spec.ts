@@ -36,6 +36,13 @@ describe('SdkEventMapper (synthetic)', () => {
     ]);
   });
 
+  it('gives distinct message ids to split assistant messages sharing a message.id', () => {
+    const m = new SdkEventMapper(MAIN, null);
+    const say = (text: string) => m.mapMessage({ type: 'assistant', parent_tool_use_id: null, message: { id: 'same', content: [{ type: 'text', text }] } });
+    const ids = [...say('a'), ...say('b')].filter((e) => e.type === 'message.start').map((e) => (e as { messageId: string }).messageId);
+    expect(ids).toEqual(['same:0', 'same:1']);
+  });
+
   it('maps tool results, skipping plain user text', () => {
     const m = new SdkEventMapper(MAIN, null);
     expect(m.mapMessage({ type: 'user', parent_tool_use_id: null, message: { content: 'hola' } })).toEqual([]);
@@ -117,6 +124,14 @@ describe('SdkEventMapper (recorded fixtures)', () => {
     const { events } = replay('subagent');
     expect(events).toContainEqual(expect.objectContaining({ type: 'subagent.start', agentType: 'sdd-planner' }));
     expect(events.some((e) => (e.type === 'message.start' || e.type === 'tool.start') && e.author.agent === 'sdd-planner')).toBe(true);
+    const agentStart = events.find((e) => e.type === 'tool.start' && e.tool === 'Agent');
+    if (agentStart?.type !== 'tool.start') throw new Error('no Agent tool.start');
+    const planned = events.find((e) => e.type === 'message.start' && e.author.agent === 'sdd-planner');
+    expect(planned).toMatchObject({ author: { agent: 'sdd-planner', parentToolUseId: agentStart.toolUseId } });
+    expect(events).toContainEqual(expect.objectContaining({ type: 'tool.end', toolUseId: agentStart.toolUseId }));
+    const costs = events.flatMap((e) => (e.type === 'turn.end' ? [e.usage.costUsd] : []));
+    expect(costs[0]).toBeGreaterThan(0);
+    expect(costs.reduce((a, b) => a + b, 0)).toBeCloseTo(0.1328077, 6); // last result's cumulative total_cost_usd
   });
 
   it('permission: canUseTool carried a tool use id and the denied Write ends in error', () => {
