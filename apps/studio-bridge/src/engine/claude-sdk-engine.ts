@@ -1,10 +1,19 @@
 import { query as sdkQuery, type HookInput, type Options, type PreToolUseHookInput, type Query } from '@anthropic-ai/claude-agent-sdk';
-import { DEFAULT_AGENT } from '@sdd-studio/protocol';
+import { DEFAULT_AGENT, type ThreadOptions } from '@sdd-studio/protocol';
 import type { JudgeContext, ToolVerdict } from './types';
 import { SdkEventMapper, type SdkMessageLike } from './sdk-mapper';
 import type { AgentEngine, EngineCallbacks, EngineTurn, EngineTurnInput } from './types';
 
 export type QueryFn = (params: { prompt: string; options?: Options }) => Query;
+
+// Full ids, not aliases: a live run with model 'haiku' reported init.model haiku but was billed as
+// claude-sonnet-5-5. Update when the kit's tier table moves to newer models.
+export const MODEL_IDS: Record<Exclude<ThreadOptions['model'], 'kit'>, string> = {
+  haiku: 'claude-haiku-4-5-20251001',
+  sonnet: 'claude-sonnet-5-5',
+  opus: 'claude-opus-5-5',
+  fable: 'claude-fable-5-1',
+};
 
 export function buildQueryOptions(
   input: EngineTurnInput,
@@ -52,7 +61,7 @@ export function buildQueryOptions(
   };
   if (agent !== DEFAULT_AGENT) options.agent = agent;
   if (model !== 'kit') {
-    options.model = model;
+    options.model = MODEL_IDS[model];
     if (effort) options.effort = effort;
   }
   if (input.resumeSessionId) options.resume = input.resumeSessionId;

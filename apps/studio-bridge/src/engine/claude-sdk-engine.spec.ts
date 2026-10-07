@@ -47,7 +47,16 @@ describe('buildQueryOptions', () => {
   });
   it('pins model and effort, uses the DM agent and resumes', () => {
     const o = buildQueryOptions(input({ agent: 'sdd-planner', model: 'opus', effort: 'high', permissionMode: 'plan' }, 'sess-1'), handlers());
-    expect(o).toMatchObject({ agent: 'sdd-planner', model: 'opus', effort: 'high', permissionMode: 'plan', resume: 'sess-1' });
+    expect(o).toMatchObject({ agent: 'sdd-planner', model: 'claude-opus-5-5', effort: 'high', permissionMode: 'plan', resume: 'sess-1' });
+  });
+  // Aliases are not reliable: a live run with model 'haiku' was billed as claude-sonnet-5-5.
+  it.each([
+    ['haiku', 'claude-haiku-4-5-20251001'],
+    ['sonnet', 'claude-sonnet-5-5'],
+    ['opus', 'claude-opus-5-5'],
+    ['fable', 'claude-fable-5-1'],
+  ] as const)('pins %s to the full model id %s', (choice, id) => {
+    expect(buildQueryOptions(input({ model: choice }), handlers()).model).toBe(id);
   });
   it('ignores effort when the model is kit', () => {
     expect(buildQueryOptions(input({ effort: 'max' }), handlers()).effort).toBeUndefined();
