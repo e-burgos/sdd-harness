@@ -816,7 +816,7 @@ export const UI = {
       },
       {
         title: 'Security',
-        body: 'The port is local-only (127.0.0.1) and every start generates a fresh token. Actions ask for your approval according to the thread's permission mode (in "accept edits" mode edits are auto-accepted), and code edits always pass the kit's SPEC GATE. The web app never sees credentials.',
+        body: 'The port is local-only (127.0.0.1) and every start generates a fresh token. Actions ask for your approval according to the thread\'s permission mode (in "accept edits" mode edits are auto-accepted), and code edits always pass the kit\'s SPEC GATE. The web app never sees credentials.',
         command: null as string | null,
       },
       {
