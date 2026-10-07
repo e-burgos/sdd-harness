@@ -14,7 +14,7 @@ export type ConnectionState =
   | { status: 'connecting'; attempt: number }
   | { status: 'open'; welcome: Welcome }
   | { status: 'reconnecting'; attempt: number; delayMs: number }
-  | { status: 'failed'; reason: 'bad-token' | 'protocol-mismatch' | 'unreachable'; message: string };
+  | { status: 'failed'; reason: 'bad-token' | 'protocol-mismatch' | 'bad-message' | 'unreachable'; message: string };
 
 export class BridgeError extends Error {
   constructor(
@@ -49,7 +49,7 @@ export class BridgeClient {
   private everOpened = false;
   private stopped = true;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
-  private lastHandshakeMessage: string | null = null;
+  private lastHandshake: { code: string; message: string } | null = null;
   private readonly pending = new Map<string, Pending>();
   private readonly eventListeners = new Set<(e: ServerEvent) => void>();
   private readonly stateListeners = new Set<(s: ConnectionState) => void>();
@@ -57,7 +57,10 @@ export class BridgeClient {
   constructor(private readonly o: BridgeClientOptions) {}
 
   connect(): void {
+    if (!this.stopped) return;
     this.stopped = false;
+    this.failures = 0;
+    this.everOpened = false;
     this.open();
   }
 
@@ -99,17 +102,20 @@ export class BridgeClient {
   }
 
   private open(): void {
-    this.lastHandshakeMessage = null;
+    this.lastHandshake = null;
     if (!this.everOpened) this.setState({ status: 'connecting', attempt: this.failures + 1 });
     const Impl = this.o.WebSocketImpl ?? WebSocket;
     const ws = new Impl(this.o.url);
     this.ws = ws;
     ws.onopen = () => {
+      if (this.ws !== ws) return;
       ws.send(
         JSON.stringify({ kind: 'hello', token: this.o.token, protocolVersion: PROTOCOL_VERSION, clientVersion: this.o.clientVersion }),
       );
     };
-    ws.onmessage = (event) => this.handle(String(event.data));
+    ws.onmessage = (event) => {
+      if (this.ws === ws) this.handle(String(event.data));
+    };
     ws.onclose = (event) => {
       if (this.ws === ws) this.onClose(event.code);
     };
@@ -127,7 +133,7 @@ export class BridgeClient {
         this.setState({ status: 'open', welcome: message });
         return;
       case 'handshake.error':
-        this.lastHandshakeMessage = message.message;
+        this.lastHandshake = { code: message.code, message: message.message };
         return;
       case 'result': {
         const pending = this.pending.get(message.id);
@@ -139,7 +145,13 @@ export class BridgeClient {
         return;
       }
       default:
-        for (const fn of this.eventListeners) fn(message);
+        for (const fn of [...this.eventListeners]) {
+          try {
+            fn(message);
+          } catch {
+            // oyente aislado
+          }
+        }
     }
   }
 
@@ -149,11 +161,15 @@ export class BridgeClient {
     if (this.stopped) return;
     if (code === 4001) {
       this.stopped = true;
-      return this.setState({ status: 'failed', reason: 'bad-token', message: this.lastHandshakeMessage ?? 'token inválido' });
+      return this.setState({ status: 'failed', reason: 'bad-token', message: this.lastHandshake?.message ?? 'token inválido' });
     }
     if (code === 4002) {
       this.stopped = true;
-      return this.setState({ status: 'failed', reason: 'protocol-mismatch', message: this.lastHandshakeMessage ?? 'versión de protocolo incompatible' });
+      return this.setState({ status: 'failed', reason: 'protocol-mismatch', message: this.lastHandshake?.message ?? 'versión de protocolo incompatible' });
+    }
+    if (code === 4000 && this.lastHandshake?.code === 'bad-message') {
+      this.stopped = true;
+      return this.setState({ status: 'failed', reason: 'bad-message', message: this.lastHandshake.message });
     }
     this.failures += 1;
     if (!this.everOpened && this.failures >= (this.o.unreachableAfter ?? 3)) {
@@ -161,11 +177,11 @@ export class BridgeClient {
       return this.setState({ status: 'failed', reason: 'unreachable', message: 'no se pudo conectar al puente' });
     }
     const delayMs = Math.min(this.o.maxDelayMs ?? 30_000, 500 * 2 ** (this.failures - 1));
-    this.setState({ status: 'reconnecting', attempt: this.failures, delayMs });
     this.reconnectTimer = setTimeout(() => {
       this.reconnectTimer = null;
       if (!this.stopped) this.open();
     }, delayMs);
+    this.setState({ status: 'reconnecting', attempt: this.failures, delayMs });
   }
 
   private rejectAll(code: string, message: string): void {
@@ -178,6 +194,12 @@ export class BridgeClient {
 
   private setState(state: ConnectionState): void {
     this.state = state;
-    for (const fn of this.stateListeners) fn(state);
+    for (const fn of [...this.stateListeners]) {
+      try {
+        fn(state);
+      } catch {
+        // un oyente defectuoso no debe frenar a los demás ni la reconexión
+      }
+    }
   }
 }

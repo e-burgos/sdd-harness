@@ -41,5 +41,9 @@ describe('BridgeClient ↔ real bridge', () => {
     client.connect();
     await waitFor(() => client.state.status === 'failed');
     expect(client.state).toMatchObject({ status: 'failed', reason: 'bad-token' });
+    const count = states.length;
+    await new Promise((r) => setTimeout(r, 1000));
+    expect(states).toHaveLength(count);
+    expect(states.some((s) => s.status === 'reconnecting')).toBe(false);
   });
 });

@@ -6,13 +6,19 @@ export interface PairingInfo {
 export interface PairingWindow {
   location: { hash: string; pathname: string; search: string };
   history: { replaceState(data: unknown, unused: string, url: string): void };
-  sessionStorage: { getItem(key: string): string | null; setItem(key: string, value: string): void };
+  sessionStorage: {
+    getItem(key: string): string | null;
+    setItem(key: string, value: string): void;
+    removeItem(key: string): void;
+  };
 }
 
 export const PAIRING_KEY = 'sdd-studio:pairing';
 
+const TOKEN_FORMAT = /^[A-Za-z0-9_-]{16,256}$/;
+
 function valid(port: unknown, token: unknown): token is string {
-  return typeof port === 'number' && Number.isInteger(port) && port >= 1 && port <= 65535 && typeof token === 'string' && token.length > 0;
+  return typeof port === 'number' && Number.isInteger(port) && port >= 1 && port <= 65535 && typeof token === 'string' && TOKEN_FORMAT.test(token);
 }
 
 export function parsePairing(hash: string): PairingInfo | null {
@@ -34,6 +40,10 @@ export function resolvePairing(win: PairingWindow): PairingInfo | null {
     win.history.replaceState(null, '', win.location.pathname + win.location.search);
     return fromHash;
   }
+  // Un token inválido tampoco debe quedar en la URL.
+  if (win.location.hash.includes('token=')) {
+    win.history.replaceState(null, '', win.location.pathname + win.location.search);
+  }
   try {
     const raw = win.sessionStorage.getItem(PAIRING_KEY);
     if (!raw) return null;
@@ -45,3 +55,11 @@ export function resolvePairing(win: PairingWindow): PairingInfo | null {
 }
 
 export const bridgeUrl = (p: PairingInfo): string => `ws://127.0.0.1:${p.port}`;
+
+export function clearPairing(win: PairingWindow): void {
+  try {
+    win.sessionStorage.removeItem(PAIRING_KEY);
+  } catch {
+    // Nada que limpiar si el almacenamiento no está disponible.
+  }
+}
