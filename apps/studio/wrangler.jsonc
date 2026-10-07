@@ -1,0 +1,10 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "sdd-studio",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": { "directory": ".open-next/assets", "binding": "ASSETS" },
+  // El dominio tiene que existir como zona en la misma cuenta de Cloudflare.
+  "routes": [{ "pattern": "studio.sdd.estebanburgos.com.ar", "custom_domain": true }]
+}

@@ -36,3 +36,15 @@ pnpm test         # full suite, includes real integration tests
 ```
 
 Full CLI documentation: [`apps/cli/README.md`](apps/cli/README.md).
+
+## SDD Studio
+
+A Slack-style web interface to operate a repo with the SDD kit: chat with the Orchestrator or any agent,
+watch who is working live and approve every action. Run it at the repo root:
+
+```bash
+npx @e-burgos/sdd-studio              # opens the web app paired with a local bridge (127.0.0.1)
+npx @e-burgos/sdd-studio --local-ui   # serve the UI from the bridge itself (offline / Safari)
+```
+
+Details in [`apps/studio/README.md`](apps/studio/README.md).
