@@ -32,6 +32,8 @@
 - **Comandos con barra**: `/gate [spec] [cycle]`, `/validate` (scripts); `/open-cycle`, `/review`, `/hotfix`, `/check`, `/resume`, `/steward` (prompts del kit: `start-sdd-cycle`, `review-cycle`, `hotfix-bypass-gate`, `check-spec-before-implement`, `hermes-resume`, `sdd-steward`). No hay `/new-spec`: el kit no tiene ese prompt; una spec nueva se pide conversando en `#general`.
 - **Workspaces recientes en localStorage**: no se implementan (el token rota en cada arranque, una lista sin token no reconecta).
 - **sdd-bot**: los eventos no traen timestamp; el canal los muestra en un feed propio (más recientes primero), no intercalados con los hilos.
+- **Panel de actividad**: muestra agentes, estado y herramienta actual por hilo (sin duración/tokens/costo por agente; el uso queda en el pie del timeline).
+- **Alcance de escritura de los DMs**: todos los canales `dm:*` comparten un único alcance de escritura (un solo hilo escritor a la vez entre todos los DMs); los canales de spec siguen teniendo el suyo.
 
 ## Review Focus
 
