@@ -1,18 +1,41 @@
 'use client';
 
 import { ShieldWarning } from '@phosphor-icons/react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { agentMeta } from '@/lib/agents';
 import { useT } from '@/lib/i18n/i18n';
 import type { TimelineItem } from '@/lib/store/timeline';
 
 type Approval = Extract<TimelineItem, { kind: 'approval' }>;
-export type RespondFn = (decision: 'allow' | 'deny', scope: 'once' | 'thread', reason?: string) => void;
+export type RespondFn = (decision: 'allow' | 'deny', scope: 'once' | 'thread', reason?: string) => Promise<unknown>;
 
 export function ApprovalCard({ item, onRespond }: { item: Approval; onRespond: RespondFn }) {
   const { t } = useT();
   const [reason, setReason] = useState('');
   const pending = item.decision === 'pending';
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const inFlight = useRef(false);
+  useEffect(() => {
+    inFlight.current = false;
+    setSending(false);
+    setError(null);
+  }, [item.decision]);
+  const send: RespondFn = async (...args) => {
+    if (inFlight.current) return;
+    inFlight.current = true;
+    setSending(true);
+    setError(null);
+    try {
+      await onRespond(...args);
+    } catch (e) {
+      inFlight.current = false;
+      setSending(false);
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  };
+  const deny = () => void send('deny', 'once', reason.trim() || undefined);
+  const ring = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-50';
   return (
     <div className={`min-w-0 rounded-xl border p-4 ${pending ? 'border-amberish/50 bg-amberish/5' : 'border-ink-700 bg-ink-900'}`}>
       <div className="mb-2 flex items-center gap-2 text-sm font-medium">
@@ -33,23 +56,32 @@ export function ApprovalCard({ item, onRespond }: { item: Approval; onRespond: R
           </pre>
         </details>
       )}
+      {error && (
+        <p role="alert" className="mt-2 text-xs text-roseish">{error}</p>
+      )}
       {pending ? (
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          <button className="rounded-md bg-accent-500 px-3 py-1.5 text-sm font-medium text-ink-950 hover:bg-accent-400" onClick={() => onRespond('allow', 'once', undefined)}>
+          <button className={`rounded-md bg-accent-500 ${ring} px-3 py-1.5 text-sm font-medium text-ink-950 hover:bg-accent-400`} disabled={sending} onClick={() => void send('allow', 'once', undefined)}>
             {t('approval.allow')}
           </button>
-          <button className="rounded-md border border-ink-700 px-3 py-1.5 text-sm hover:bg-ink-800" onClick={() => onRespond('allow', 'thread', undefined)}>
+          <button className={`rounded-md border border-ink-700 px-3 py-1.5 text-sm hover:bg-ink-800 ${ring}`} disabled={sending} onClick={() => void send('allow', 'thread', undefined)}>
             {t('approval.always')}
           </button>
           <input
-            className="min-w-0 flex-1 basis-40 rounded-md border border-ink-700 bg-ink-950 px-2 py-1.5 text-sm outline-none focus:border-roseish/60"
+            className={`min-w-0 flex-1 basis-40 rounded-md border border-ink-700 bg-ink-950 px-2 py-1.5 text-sm ${ring}`}
             placeholder={t('approval.reason')}
             value={reason}
+            maxLength={2000}
+            aria-label={t('approval.reason')}
+            disabled={sending}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') deny();
+            }}
             onChange={(e) => setReason(e.target.value)}
           />
           <button
-            className="rounded-md border border-roseish/50 px-3 py-1.5 text-sm text-roseish hover:bg-roseish/10"
-            onClick={() => onRespond('deny', 'once', reason.trim() || undefined)}
+            className={`rounded-md border border-roseish/50 px-3 py-1.5 text-sm text-roseish hover:bg-roseish/10 ${ring}`}
+            disabled={sending} onClick={deny}
           >
             {t('approval.deny')}
           </button>

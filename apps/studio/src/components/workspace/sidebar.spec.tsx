@@ -17,7 +17,7 @@ describe('Sidebar', () => {
       </I18nProvider>,
     );
     expect(screen.getByText('studio fixture')).toBeInTheDocument();
-    expect(screen.getByLabelText('Planner: trabajando')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Planner, trabajando' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /# s1/ }));
     fireEvent.click(screen.getByRole('button', { name: /Planner/ }));
     expect(onSelect.mock.calls).toEqual([['spec:s1'], ['dm:sdd-planner']]);

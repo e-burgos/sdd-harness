@@ -52,7 +52,7 @@ export function ChannelView({ channelId, onOpenThread, composer }: { channelId: 
             {list.map((thread) => (
               <li key={thread.id}>
                 <button
-                  className="flex w-full items-center gap-3 rounded-lg border border-ink-800 bg-ink-900 px-3 py-2 text-left hover:border-ink-700"
+                  className="flex w-full items-center gap-3 rounded-lg border border-ink-800 bg-ink-900 px-3 py-2 text-left hover:border-ink-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"
                   onClick={() => onOpenThread(thread.id)}
                 >
                   <AgentAvatar agent={thread.agent} size={24} />
@@ -68,7 +68,7 @@ export function ChannelView({ channelId, onOpenThread, composer }: { channelId: 
             <h2 className="mb-2 text-[11px] uppercase tracking-wider text-ink-500">{t('channel.bot')}</h2>
             <ul className="space-y-1 font-mono text-xs text-ink-300">
               {[...(bot ?? [])].reverse().map((e, i) => (
-                <li key={`${e.botKind}:${i}`}>🤖 {botText(t, e)}</li>
+                <li key={`${e.botKind}:${i}`}><span aria-hidden>🤖</span> {botText(t, e)}</li>
               ))}
             </ul>
           </section>

@@ -11,7 +11,7 @@ import { AgentAvatar } from './AgentAvatar';
 import { ApprovalCard, type RespondFn } from './ApprovalCard';
 import { Markdown } from './Markdown';
 
-export function Timeline({ items, onRespond }: { items: TimelineItem[]; onRespond: (approvalId: string, ...args: Parameters<RespondFn>) => void }) {
+export function Timeline({ items, onRespond }: { items: TimelineItem[]; onRespond: (approvalId: string, ...args: Parameters<RespondFn>) => Promise<unknown> }) {
   const { t } = useT();
   const blocks = useMemo(() => groupTimeline(items), [items]);
   return (
@@ -31,7 +31,8 @@ export function Timeline({ items, onRespond }: { items: TimelineItem[]; onRespon
                   {block.items.map((tool) => (
                     <li key={tool.id} className="font-mono text-[11px]">
                       <span className={tool.status === 'error' ? 'text-roseish' : tool.status === 'running' ? 'text-amberish' : 'text-accent-300'}>
-                        {tool.status === 'running' ? '⟳' : tool.status === 'error' ? '✗' : '✓'}
+                        <span aria-hidden>{tool.status === 'running' ? '⟳' : tool.status === 'error' ? '✗' : '✓'}</span>
+                        <span className="sr-only">{t(`tool.${tool.status}`)}</span>
                       </span>{' '}
                       <span className="text-ink-300">{tool.tool}</span> <span className="break-all">{tool.summary}</span>
                       {tool.diff && <pre className="mt-1 max-h-48 overflow-auto rounded bg-ink-950 p-2">{tool.diff}</pre>}
@@ -47,7 +48,7 @@ export function Timeline({ items, onRespond }: { items: TimelineItem[]; onRespon
           case 'user':
             return (
               <li key={item.id} className="flex gap-3">
-                <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-ink-700 text-xs">Vos</span>
+                <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-ink-700 text-xs">{t('timeline.you')}</span>
                 <p className="min-w-0 whitespace-pre-wrap break-words pt-1 text-sm">{item.text}</p>
               </li>
             );
