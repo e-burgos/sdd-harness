@@ -62,4 +62,20 @@ describe('ApprovalCard', () => {
     fireEvent.keyDown(input, { key: 'Enter' });
     expect(onRespond).toHaveBeenCalledWith('deny', 'once', 'nope');
   });
+  it('unlocks without error when the decision never arrives within 20 s', async () => {
+    vi.useFakeTimers();
+    try {
+      const onRespond = vi.fn(() => Promise.resolve());
+      wrap(<ApprovalCard item={base} onRespond={onRespond} />);
+      await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Aprobar' })); });
+      expect(screen.getByRole('button', { name: 'Aprobar' })).toBeDisabled();
+      await act(async () => { vi.advanceTimersByTime(19_999); });
+      expect(screen.getByRole('button', { name: 'Aprobar' })).toBeDisabled();
+      await act(async () => { vi.advanceTimersByTime(2); });
+      expect(screen.getByRole('button', { name: 'Aprobar' })).toBeEnabled();
+      expect(screen.queryByRole('alert')).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });

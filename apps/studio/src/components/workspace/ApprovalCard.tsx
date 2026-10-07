@@ -7,6 +7,7 @@ import { useT } from '@/lib/i18n/i18n';
 import type { TimelineItem } from '@/lib/store/timeline';
 
 type Approval = Extract<TimelineItem, { kind: 'approval' }>;
+const UNLOCK_MS = 20_000;
 export type RespondFn = (decision: 'allow' | 'deny', scope: 'once' | 'thread', reason?: string) => Promise<unknown>;
 
 export function ApprovalCard({ item, onRespond }: { item: Approval; onRespond: RespondFn }) {
@@ -21,6 +22,15 @@ export function ApprovalCard({ item, onRespond }: { item: Approval; onRespond: R
     setSending(false);
     setError(null);
   }, [item.decision]);
+  // Respuesta aceptada pero la decisión no llegó: destrabar sin error tras 20 s.
+  useEffect(() => {
+    if (!sending || !pending) return;
+    const timer = setTimeout(() => {
+      inFlight.current = false;
+      setSending(false);
+    }, UNLOCK_MS);
+    return () => clearTimeout(timer);
+  }, [sending, pending]);
   const send: RespondFn = async (...args) => {
     if (inFlight.current) return;
     inFlight.current = true;

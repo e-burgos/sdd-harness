@@ -29,6 +29,7 @@ export interface SidebarViewProps {
 export function SidebarView(p: SidebarViewProps) {
   const { t, lang, setLang } = useT();
   const stateOf = (agent: string) => p.presence.find((x) => x.agent === agent)?.state ?? 'idle';
+  const statusText = (status: string) => (status === 'in-progress' || status === 'completed' ? t(`channel.status.${status}`) : status);
   const item = (active: boolean) =>
     `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-sm ${active ? 'bg-accent-dim text-accent-300' : 'text-ink-300 hover:bg-ink-800 hover:text-ink-100'}`;
   return (
@@ -50,13 +51,13 @@ export function SidebarView(p: SidebarViewProps) {
             {c.status === 'in-progress' && (
               <>
                 <span aria-hidden className="ml-auto h-1.5 w-1.5 rounded-full bg-accent-400" />
-                <span className="sr-only">{c.status}</span>
+                <span className="sr-only">, {statusText(c.status)}</span>
               </>
             )}
             {c.status === 'completed' && (
               <>
                 <span aria-hidden className="ml-auto text-[10px] text-ink-500">✓</span>
-                <span className="sr-only">{c.status}</span>
+                <span className="sr-only">, {statusText(c.status)}</span>
               </>
             )}
           </button>
