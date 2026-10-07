@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { en } from './en';
 import { es, type Dict } from './es';
 
@@ -32,9 +32,13 @@ interface I18nValue {
 const I18nContext = createContext<I18nValue | null>(null);
 
 export function I18nProvider({ children, initial }: { children: ReactNode; initial?: Lang }) {
-  const [lang, setLangState] = useState<Lang>(
-    () => initial ?? detectLang(typeof navigator === 'undefined' ? undefined : navigator.language, readStored()),
-  );
+  // Primer render determinista ('es' o initial) para no romper la hidratación;
+  // la detección real corre en un efecto.
+  const [lang, setLangState] = useState<Lang>(initial ?? 'es');
+  useEffect(() => {
+    if (initial) return;
+    setLangState(detectLang(typeof navigator === 'undefined' ? undefined : navigator.language, readStored()));
+  }, [initial]);
   const setLang = useCallback((next: Lang) => {
     setLangState(next);
     try {

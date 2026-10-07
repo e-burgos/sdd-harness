@@ -25,6 +25,12 @@ export async function loadBotHistory(client: Requester, store: StudioStore, chan
 
 /** Carga inicial (y re-sincronización tras reconectar). */
 export async function bootstrap(client: Requester, store: StudioStore): Promise<void> {
+  // Sincrónico, antes del primer await: los eventos en vivo que lleguen mientras
+  // se piden snapshot/lista/presencia se bufferean en vez de abrir un hueco de seq.
+  const known = Object.entries(store.getState().threads)
+    .filter(([, t]) => t.synced || t.lastSeq >= 0)
+    .map(([id]) => id);
+  for (const id of known) store.getState().beginSync(id);
   const [snapshot, threads, presence] = await Promise.all([
     client.request({ cmd: 'workspace.snapshot' }),
     client.request({ cmd: 'thread.list' }),
@@ -34,8 +40,5 @@ export async function bootstrap(client: Requester, store: StudioStore): Promise<
   state.setSnapshot(WorkspaceSnapshot.parse(snapshot));
   state.setThreads(z.array(ThreadInfo).parse(threads));
   state.setPresence(z.array(Presence).parse(presence));
-  const loaded = Object.entries(store.getState().threads)
-    .filter(([, t]) => t.synced || t.lastSeq >= 0)
-    .map(([id]) => id);
-  await Promise.all(loaded.map((id) => openThread(client, store, id)));
+  await Promise.all(known.map((id) => openThread(client, store, id)));
 }

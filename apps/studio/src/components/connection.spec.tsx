@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { I18nProvider } from '@/lib/i18n/i18n';
 import { PAIRING_KEY } from '@/lib/bridge/pairing';
 import type { ConnectionState } from '@/lib/bridge/client';
@@ -10,7 +10,7 @@ import { Connected } from './WorkspaceApp';
 const wrap = (ui: React.ReactNode) => render(<I18nProvider initial="es">{ui}</I18nProvider>);
 
 function renderConnected(connection: ConnectionState) {
-  const value = { client: {}, store: {}, connection, pairing: { port: 4455, token: 'x'.repeat(20) } } as never;
+  const value = { client: {}, store: {}, syncError: null, retrySync: () => {}, connection, pairing: { port: 4455, token: 'x'.repeat(20) } } as never;
   return render(
     <I18nProvider initial="es">
       <BridgeContext.Provider value={value}>
@@ -52,5 +52,21 @@ describe('connection UI', () => {
     renderConnected({ status: 'failed', reason: 'protocol-mismatch', message: 'm' });
     expect(screen.getByRole('alert')).toHaveTextContent('no es compatible');
     expect(sessionStorage.getItem(PAIRING_KEY)).toBe('keep');
+  });
+
+  it('shows a sync error with a retry button', () => {
+    const retry = vi.fn();
+    wrap(<ConnectionBanner connection={{ status: 'idle' }} syncError="boom" onRetry={retry} />);
+    expect(screen.getByRole('alert')).toHaveTextContent('No se pudo sincronizar con el puente: boom');
+    fireEvent.click(screen.getByRole('button', { name: 'Reintentar' }));
+    expect(retry).toHaveBeenCalledOnce();
+  });
+  it('does not claim copied without clipboard', async () => {
+    Object.defineProperty(navigator, 'clipboard', { value: undefined, configurable: true });
+    wrap(<ConnectScreen />);
+    fireEvent.click(screen.getByRole('button', { name: /Copiar/ }));
+    await Promise.resolve();
+    expect(screen.queryByText('Copiado')).toBeNull();
+    expect(screen.getByRole('button', { name: /Copiar/ })).toBeInTheDocument();
   });
 });

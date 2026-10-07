@@ -7,6 +7,8 @@ export const en = {
   'connect.copied': 'Copied',
   'connect.localUi': 'If your browser blocks the connection to the local port (e.g. Safari), use --local-ui.',
   'connect.auth': 'Uses your local Claude Code login (or ANTHROPIC_API_KEY). The web never sees credentials.',
+  'conn.syncError': 'Could not sync with the bridge: {message}',
+  'conn.retry': 'Retry',
   'conn.connecting': 'Connecting to the bridge…',
   'conn.reconnecting': 'Reconnecting in {seconds}s…',
   'conn.bad-token': 'The token is not valid. Open the link printed by sdd-studio again.',

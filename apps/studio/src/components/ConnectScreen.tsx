@@ -13,7 +13,7 @@ export function ConnectScreen({ error }: { error?: string }) {
     <main className="flex min-h-full items-center justify-center p-6">
       <section className="w-full max-w-lg rounded-2xl border border-ink-700 bg-ink-900 p-8 shadow-xl">
         <div className="mb-6 flex items-center gap-3">
-          <Plugs size={28} className="text-accent-400" weight="duotone" />
+          <Plugs aria-hidden="true" size={28} className="text-accent-400" weight="duotone" />
           <h1 className="text-2xl font-semibold">{t('connect.title')}</h1>
           <button className="ml-auto text-xs text-ink-300 hover:text-ink-100" onClick={() => setLang(lang === 'es' ? 'en' : 'es')}>
             {t('lang.switch')}
@@ -25,12 +25,16 @@ export function ConnectScreen({ error }: { error?: string }) {
           <code className="flex-1 text-accent-300">{BRIDGE_COMMAND}</code>
           <button
             className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-ink-300 hover:bg-ink-800 hover:text-ink-100"
-            onClick={() => {
-              void navigator.clipboard?.writeText(BRIDGE_COMMAND);
-              setCopied(true);
+            onClick={async () => {
+              try {
+                await navigator.clipboard.writeText(BRIDGE_COMMAND);
+                setCopied(true);
+              } catch {
+                setCopied(false);
+              }
             }}
           >
-            <CopySimple size={16} /> {copied ? t('connect.copied') : t('connect.copy')}
+            <CopySimple size={16} aria-hidden="true" /> <span aria-live="polite">{copied ? t('connect.copied') : t('connect.copy')}</span>
           </button>
         </div>
         <p className="mt-4 text-xs text-ink-300">{t('connect.auth')}</p>

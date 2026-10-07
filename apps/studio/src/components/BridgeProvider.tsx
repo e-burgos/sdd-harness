@@ -1,9 +1,9 @@
 'use client';
 
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useStore } from 'zustand';
 import { bootstrap } from '@/lib/bootstrap';
-import { BridgeClient, type ConnectionState } from '@/lib/bridge/client';
+import { BridgeClient, BridgeError, type ConnectionState } from '@/lib/bridge/client';
 import { bridgeUrl, type PairingInfo } from '@/lib/bridge/pairing';
 import type { StudioState } from '@/lib/store/state';
 import { createStudioStore, type StudioActions, type StudioStore } from '@/lib/store/store';
@@ -15,6 +15,8 @@ export interface BridgeContextValue {
   store: StudioStore;
   connection: ConnectionState;
   pairing: PairingInfo;
+  syncError: string | null;
+  retrySync: () => void;
 }
 
 export const BridgeContext = createContext<BridgeContextValue | null>(null);
@@ -23,11 +25,23 @@ export function BridgeProvider({ pairing, children }: { pairing: PairingInfo; ch
   const [client] = useState(() => new BridgeClient({ url: bridgeUrl(pairing), token: pairing.token, clientVersion: CLIENT_VERSION }));
   const [store] = useState(createStudioStore);
   const [connection, setConnection] = useState<ConnectionState>(client.state);
+  const [syncError, setSyncError] = useState<string | null>(null);
+
+  const sync = useCallback(() => {
+    bootstrap(client, store).then(
+      () => setSyncError(null),
+      (error: unknown) => {
+        if (error instanceof BridgeError && error.code === 'disconnected') return;
+        console.error('[sdd-studio] bootstrap:', error);
+        setSyncError(error instanceof Error ? error.message : String(error));
+      },
+    );
+  }, [client, store]);
 
   useEffect(() => {
     const offState = client.onState((s) => {
       setConnection(s);
-      if (s.status === 'open') void bootstrap(client, store).catch((error) => console.error('[sdd-studio] bootstrap:', error));
+      if (s.status === 'open') sync();
     });
     const offEvents = client.onEvent((e) => store.getState().receive(e));
     client.connect();
@@ -36,9 +50,12 @@ export function BridgeProvider({ pairing, children }: { pairing: PairingInfo; ch
       offEvents();
       client.close();
     };
-  }, [client, store]);
+  }, [client, store, sync]);
 
-  const value = useMemo(() => ({ client, store, connection, pairing }), [client, store, connection, pairing]);
+  const value = useMemo(
+    () => ({ client, store, connection, pairing, syncError, retrySync: sync }),
+    [client, store, connection, pairing, syncError, sync],
+  );
   return <BridgeContext.Provider value={value}>{children}</BridgeContext.Provider>;
 }
 

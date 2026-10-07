@@ -85,4 +85,32 @@ describe('bootstrap', () => {
     expect(client.calls).toEqual([{ cmd: 'channel.botHistory', channelId: 'fixes', limit: 100 }]);
     expect(store.getState().bot.fixes).toHaveLength(1);
   });
+
+  it('buffers live events during reconnect so a gap is fetched', async () => {
+    const store = createStudioStore();
+    store.getState().loadHistory('t1', [0, 1, 2, 3, 4].map((seq) => ({ seq, event: { type: 'user.message' as const, text: `m${seq}` } })));
+    const calls: Record<string, unknown>[] = [];
+    let release!: () => void;
+    const gate = new Promise<void>((r) => (release = r));
+    const client = {
+      request: async (cmd: Record<string, unknown>) => {
+        calls.push(cmd);
+        if (cmd.cmd === 'workspace.snapshot') {
+          await gate;
+          return snapshot;
+        }
+        if (cmd.cmd === 'thread.list') return [thread];
+        if (cmd.cmd === 'presence.get') return [];
+        return [5, 6, 7, 8, 9].map((seq) => ({ seq, event: { type: 'user.message', text: `m${seq}` } }));
+      },
+    };
+    const done = bootstrap(client as never, store);
+    store.getState().receive({ kind: 'thread.event', threadId: 't1', seq: 10, event: { type: 'user.message', text: 'm10' } } as never);
+    release();
+    await done;
+    expect(calls).toContainEqual({ cmd: 'thread.history', threadId: 't1', sinceSeq: 5 });
+    expect(store.getState().threads.t1?.items.map((i) => (i as { text?: string }).text)).toEqual(
+      [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => `m${n}`),
+    );
+  });
 });

@@ -9,7 +9,7 @@ import { ConnectionBanner } from './ConnectionBanner';
 import { Workspace } from './workspace/Workspace';
 
 export function Connected() {
-  const { connection, pairing } = useBridge();
+  const { connection, pairing, syncError, retrySync } = useBridge();
   const { t } = useT();
   const failedReason = connection.status === 'failed' ? connection.reason : null;
   const staleToken = failedReason === 'bad-token' || failedReason === 'bad-message';
@@ -25,7 +25,7 @@ export function Connected() {
   }
   return (
     <div className="flex h-full flex-col">
-      <ConnectionBanner connection={connection} />
+      <ConnectionBanner connection={connection} syncError={syncError} onRetry={retrySync} />
       <Workspace />
     </div>
   );

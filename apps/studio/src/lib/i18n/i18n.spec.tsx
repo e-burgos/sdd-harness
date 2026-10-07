@@ -45,4 +45,18 @@ describe('i18n', () => {
       expect(holders(en[key]), key).toEqual(holders(es[key]));
     }
   });
+
+  it('renders es on the first pass and applies the detected language after effects', async () => {
+    localStorage.clear();
+    const spy = vi.spyOn(navigator, 'language', 'get').mockReturnValue('en-US');
+    const seen: string[] = [];
+    function Rec() {
+      seen.push(useT().lang);
+      return null;
+    }
+    render(<I18nProvider><Rec /></I18nProvider>);
+    spy.mockRestore();
+    expect(seen[0]).toBe('es');
+    expect(seen.at(-1)).toBe('en');
+  });
 });
