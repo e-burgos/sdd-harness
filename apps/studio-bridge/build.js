@@ -1,14 +1,16 @@
 import { cp, rm, stat } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
 import esbuild from 'esbuild';
 
-await rm('dist', { recursive: true, force: true });
+const distDir = new URL('./dist/', import.meta.url);
+await rm(distDir, { recursive: true, force: true });
 await esbuild.build({
-  entryPoints: ['src/cli.ts'],
+  entryPoints: [fileURLToPath(new URL('./src/cli.ts', import.meta.url))],
   bundle: true,
   platform: 'node',
   target: 'node20',
   format: 'esm',
-  outdir: 'dist',
+  outdir: fileURLToPath(distDir),
   // @sdd-studio/protocol se empaqueta adentro (es privado); el resto son dependencias reales.
   external: ['@anthropic-ai/claude-agent-sdk', 'chokidar', 'citty', 'picocolors', 'ws', 'zod'],
 });

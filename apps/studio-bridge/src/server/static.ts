@@ -1,7 +1,8 @@
 import { createReadStream } from 'node:fs';
-import { realpath, stat } from 'node:fs/promises';
+import { open, realpath, stat } from 'node:fs/promises';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import path from 'node:path';
+import { pipeline } from 'node:stream';
 
 const TYPES: Record<string, string> = {
   '.html': 'text/html; charset=utf-8',
@@ -29,13 +30,17 @@ export async function serveStatic(dir: string, req: IncomingMessage, res: Server
   } catch {
     return send(res, 400);
   }
-  if (pathname.includes('\0') || pathname.split('/').some((s) => s === '..')) return send(res, 404);
+  if (pathname.startsWith('//') || pathname.includes('\0')) return send(res, 404);
+  const segments = pathname.split('/').filter(Boolean);
+  if (segments.some((s) => s === '..' || s.includes('\\') || s.includes(':'))) return send(res, 404);
   const root = await realpath(dir);
-  let target = path.join(root, ...pathname.split('/').filter(Boolean));
+  let target = path.resolve(root, ...segments);
+  // Confinamiento lógico antes de cualquier llamada al fs.
+  if (target !== root && !target.startsWith(root + path.sep)) return send(res, 404);
   let info = await stat(target).catch(() => null);
   if (info?.isDirectory()) {
     if (!pathname.endsWith('/')) {
-      res.writeHead(308, { location: `${pathname}/` });
+      res.writeHead(308, { location: `/${segments.join('/')}/` });
       return void res.end();
     }
     target = path.join(target, 'index.html');
@@ -44,6 +49,8 @@ export async function serveStatic(dir: string, req: IncomingMessage, res: Server
   if (!info?.isFile()) return send(res, 404);
   const real = await realpath(target).catch(() => null);
   if (!real || (real !== root && !real.startsWith(root + path.sep))) return send(res, 404);
+  const handle = await open(real).catch(() => null);
+  if (!handle) return send(res, 500);
   const type = TYPES[path.extname(real).toLowerCase()] ?? 'application/octet-stream';
   res.writeHead(200, {
     'content-type': type,
@@ -51,6 +58,13 @@ export async function serveStatic(dir: string, req: IncomingMessage, res: Server
     'x-content-type-options': 'nosniff',
     'cache-control': type.startsWith('text/html') ? 'no-store' : 'public, max-age=3600',
   });
-  if (req.method === 'HEAD') return void res.end();
-  createReadStream(real).pipe(res);
+  if (req.method === 'HEAD') {
+    await handle.close().catch(() => undefined);
+    return void res.end();
+  }
+  pipeline(createReadStream(real, { fd: handle.fd, autoClose: true }), res, (err) => {
+    if (!err) return;
+    if (!res.headersSent) send(res, 500);
+    else res.destroy();
+  });
 }
