@@ -1,20 +1,9 @@
-import { spawn } from 'node:child_process';
 import { defineCommand, runMain } from 'citty';
 import pc from 'picocolors';
 import { BridgeStartError, DEFAULT_ORIGINS, DEFAULT_WEB_URL, startBridge } from './main';
+import { parseEngine, parsePort, parseWebUrl } from './cli-options';
+import { openBrowser } from './open-browser';
 import { BRIDGE_VERSION } from './version';
-
-function openBrowser(url: string): void {
-  const [cmd, args] =
-    process.platform === 'darwin'
-      ? ['open', [url]]
-      : process.platform === 'win32'
-        ? ['cmd', ['/c', 'start', '""', url]]
-        : ['xdg-open', [url]];
-  const child = spawn(cmd, args as string[], { detached: true, stdio: 'ignore' });
-  child.on('error', () => undefined);
-  child.unref();
-}
 
 const main = defineCommand({
   meta: { name: 'sdd-studio', version: BRIDGE_VERSION, description: 'Puente local de SDD Studio' },
@@ -27,16 +16,18 @@ const main = defineCommand({
     open: { type: 'boolean', description: 'Abrir el navegador (--no-open para no abrirlo)', default: true },
   },
   async run({ args }) {
-    const engine = args.engine === 'fake' ? 'fake' : 'claude';
     const extraOrigins = (args['allow-origin'] ?? '').split(',').map((s) => s.trim()).filter(Boolean);
     try {
+      const engine = parseEngine(args.engine);
+      const port = args.port === undefined ? 4320 : parsePort(args.port);
+      const webUrl = parseWebUrl(args['web-url']);
       const bridge = await startBridge({
         root: args.root ?? process.cwd(),
-        port: args.port ? Number(args.port) : 4320,
-        strictPort: Boolean(args.port),
+        port,
+        strictPort: args.port !== undefined,
         engine,
         allowedOrigins: [...DEFAULT_ORIGINS, ...extraOrigins],
-        webUrl: args['web-url'],
+        webUrl,
       });
       const auth = bridge.authMode === 'api-key' ? 'API key (ANTHROPIC_API_KEY)' : 'login local de Claude Code';
       console.log(`${pc.bold('SDD Studio')} ${pc.dim(`v${BRIDGE_VERSION}`)} · ${bridge.project}`);
@@ -47,7 +38,11 @@ const main = defineCommand({
       console.log(pc.dim('  Ctrl+C para cerrar.'));
       if (args.open) openBrowser(bridge.url);
       const shutdown = async () => {
-        await bridge.close();
+        try {
+          await bridge.close();
+        } catch (error) {
+          console.error(pc.red(String(error)));
+        }
         process.exit(0);
       };
       process.once('SIGINT', shutdown);

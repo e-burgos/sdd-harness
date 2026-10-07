@@ -1,14 +1,29 @@
 import { readFileSync } from 'node:fs';
+import { createServer } from 'node:net';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { PROTOCOL_VERSION, defaultThreadOptions, type ServerMessage } from '@sdd-studio/protocol';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import WebSocket from 'ws';
 import { detectAuthMode } from './auth-mode';
 import { BridgeStartError, DEFAULT_ORIGINS, startBridge } from './main';
 import { copyFixture, waitFor } from './test-utils/fixture';
 import { BRIDGE_VERSION } from './version';
+
+const watchers = vi.hoisted(() => [] as { close: () => Promise<void> }[]);
+vi.mock('./workspace/watcher', async (orig) => {
+  const mod = await orig<typeof import('./workspace/watcher')>();
+  return {
+    ...mod,
+    startWorkspaceWatcher: async (...a: Parameters<typeof mod.startWorkspaceWatcher>) => {
+      const w = await mod.startWorkspaceWatcher(...a);
+      const close = vi.spyOn(w, 'close');
+      watchers.push({ close: async () => undefined, spy: close } as never);
+      return w;
+    },
+  };
+});
 
 const cleanups: (() => Promise<void>)[] = [];
 afterEach(async () => {
@@ -46,6 +61,23 @@ describe('startBridge', () => {
   });
 });
 
+describe('startBridge partial start', () => {
+  it('closes the watcher when listen fails', async () => {
+    const { root, cleanup } = await copyFixture();
+    cleanups.push(cleanup);
+    const blocker = createServer();
+    await new Promise<void>((r) => blocker.listen(0, '127.0.0.1', r));
+    cleanups.push(() => new Promise<void>((r) => blocker.close(() => r())));
+    const port = (blocker.address() as { port: number }).port;
+    watchers.length = 0;
+    await expect(
+      startBridge({ root, port, strictPort: true, engine: 'fake', allowedOrigins: [], webUrl: 'x' }),
+    ).rejects.toMatchObject({ code: 'EADDRINUSE' });
+    expect(watchers).toHaveLength(1);
+    expect((watchers[0] as unknown as { spy: { mock: { calls: unknown[] } } }).spy.mock.calls).toHaveLength(1);
+  });
+});
+
 describe('detectAuthMode', () => {
   it('uses the API key when present, the local login otherwise', () => {
     expect(detectAuthMode({ ANTHROPIC_API_KEY: 'k' })).toBe('api-key');
@@ -57,5 +89,18 @@ describe('BRIDGE_VERSION', () => {
   it('matches package.json', () => {
     const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
     expect(BRIDGE_VERSION).toBe(pkg.version);
+  });
+});
+
+describe('startBridge close', () => {
+  it('closes everything even when one part rejects, then rethrows', async () => {
+    const { root, cleanup } = await copyFixture();
+    cleanups.push(cleanup);
+    watchers.length = 0;
+    const bridge = await startBridge({ root, port: 0, strictPort: true, engine: 'fake', allowedOrigins: [], webUrl: 'x' });
+    const spy = (watchers[0] as unknown as { spy: ReturnType<typeof vi.spyOn> }).spy;
+    spy.mockRejectedValueOnce(new Error('boom'));
+    await expect(bridge.close()).rejects.toThrow('boom');
+    await expect(fetch(`http://127.0.0.1:${bridge.port}`)).rejects.toThrow();
   });
 });

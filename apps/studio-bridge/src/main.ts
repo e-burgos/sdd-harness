@@ -77,9 +77,14 @@ export async function startBridge(o: {
     authMode,
     project: watcher.current().project,
     close: async () => {
-      await server?.close();
-      await watcher.close();
-      await store.flush();
+      const results = await Promise.allSettled([
+        server?.close() ?? Promise.resolve(),
+        watcher.close(),
+        store.flush(),
+      ]);
+      const failed = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected');
+      if (failed.length === 1) throw failed[0]!.reason;
+      if (failed.length > 1) throw new AggregateError(failed.map((f) => f.reason), 'Falló el cierre del puente');
     },
   };
 }
