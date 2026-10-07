@@ -1,4 +1,4 @@
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { chmod, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { copyFixture } from '../test-utils/fixture';
@@ -71,6 +71,25 @@ describe('loadWorkspaceSnapshot read failures and edge cases', () => {
     await mkdir(path.join(root, 'sdd/agents/broken.agent.md'));
     const { failed } = await loadWorkspaceSnapshot(root);
     expect(failed).toEqual(['agents']);
+  });
+
+  it('marks agents as failed when the agents path is a file (readdir ENOTDIR)', async () => {
+    await rm(path.join(root, 'sdd/agents'), { recursive: true });
+    await writeFile(path.join(root, 'sdd/agents'), 'x');
+    const { failed } = await loadWorkspaceSnapshot(root);
+    expect(failed).toEqual(['agents']);
+  });
+
+  it('marks specs as failed when the cycles dir is unreadable (EACCES)', async (ctx) => {
+    if (process.platform === 'win32' || process.getuid?.() === 0) ctx.skip();
+    const cycles = path.join(specDir(), 'cycles');
+    await chmod(cycles, 0o000);
+    try {
+      const { failed } = await loadWorkspaceSnapshot(root);
+      expect(failed).toContain('specs');
+    } finally {
+      await chmod(cycles, 0o755);
+    }
   });
 
   it('treats a cycles path that is a file (ENOTDIR) as no cycles, not a failure', async () => {
