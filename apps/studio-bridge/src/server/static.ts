@@ -1,4 +1,3 @@
-import { createReadStream } from 'node:fs';
 import { open, realpath, stat } from 'node:fs/promises';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import path from 'node:path';
@@ -62,7 +61,7 @@ export async function serveStatic(dir: string, req: IncomingMessage, res: Server
     await handle.close().catch(() => undefined);
     return void res.end();
   }
-  pipeline(createReadStream(real, { fd: handle.fd, autoClose: true }), res, (err) => {
+  pipeline(handle.createReadStream(), res, (err) => {
     if (!err) return;
     if (!res.headersSent) send(res, 500);
     else res.destroy();
