@@ -1,0 +1,1 @@
+{ "fixes": [ { "id": "FIX-dev-001-001", "title": "Typo en el recibo", "status": "pending", "severity": "low", "spec_id": "spec-dev-001-pagos" } ] }

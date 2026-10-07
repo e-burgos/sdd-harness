@@ -657,6 +657,8 @@ export const UI = {
     guiaMenu: 'guía sdd — el manual completo',
     usageLabel: 'cómo usarlo',
     usageMenu: 'cómo usarlo — la guía práctica',
+    studioLabel: 'studio',
+    studioMenu: 'studio — la interfaz tipo Slack',
     openMenu: 'Abrir menú',
     closeMenu: 'Cerrar menú',
   },
@@ -867,5 +869,34 @@ export const UI = {
     h1b: ' paso a paso.',
     body: 'Cinco pestañas con el recorrido completo: elegir cuál de los tres modos de instalación te toca y qué contesta el wizard, cómo subir el kit de versión sin perder nada tuyo, qué exige el SPEC GATE en cada perfil, cuándo el FIX GATE es la salida correcta, y cómo se construye una spec de punta a punta hablándole al sdd-steward.',
     tocHeading: 'En esta pestaña',
+  },
+  studio: {
+    back: 'volver a la documentación',
+    kicker: 'sdd studio — el kit desde una interfaz tipo Slack',
+    h1a: 'SDD Studio,',
+    h1b: ' tu repo en un chat.',
+    body: 'Operá tu repo con el kit SDD desde una interfaz tipo Slack: chateá con el Orchestrator o con cada agente, mirá quién trabaja en vivo y aprobá cada acción.',
+    sections: [
+      {
+        title: 'Cómo arrancar',
+        body: 'Corré el puente local en la raíz del repo. Se abre la web ya emparejada con tu máquina.',
+        command: 'npx @e-burgos/sdd-studio',
+      },
+      {
+        title: 'Sin internet o con Safari',
+        body: 'La UI también viaja dentro del puente: se sirve desde 127.0.0.1, sin depender del sitio publicado ni de las restricciones de Safari con ws:// local.',
+        command: 'npx @e-burgos/sdd-studio --local-ui',
+      },
+      {
+        title: 'Seguridad',
+        body: 'El puerto es sólo local (127.0.0.1) y cada arranque genera un token nuevo. Las acciones piden tu aprobación según el modo de permisos del hilo (en "aceptar ediciones" las ediciones se aceptan solas), y las ediciones de código siempre pasan por el SPEC GATE del kit. La web nunca ve credenciales.',
+        command: null as string | null,
+      },
+      {
+        title: 'Autenticación',
+        body: 'Usá el login local de Claude Code o definí ANTHROPIC_API_KEY. Aviso: según la documentación del Claude Agent SDK, salvo aprobación previa, Anthropic no permite que desarrolladores de terceros ofrezcan el login de claude.ai ni sus límites de uso en sus productos, incluidos los agentes construidos sobre el Agent SDK.',
+        command: null as string | null,
+      },
+    ],
   },
 } as const;
