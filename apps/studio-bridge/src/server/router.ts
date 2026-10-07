@@ -1,3 +1,4 @@
+import { constants } from 'node:fs';
 import { open } from 'node:fs/promises';
 import type { AuthMode, ClientCommand } from '@sdd-studio/protocol';
 import type { CommandRunner } from '../commands/runner';
@@ -32,10 +33,13 @@ export function createHandlers(d: {
       switch (command.cmd) {
         case 'workspace.snapshot':
           return d.watcher.current();
+        case 'presence.get':
+          return d.sessions.presence();
         case 'workspace.readFile': {
           const file = await resolveSddPath(d.root, command.path);
           // Un único handle: fstat + lectura sobre el mismo fd (sin TOCTOU entre stat y read).
-          const handle = await open(file, 'r');
+          // O_NONBLOCK: un FIFO no puede colgar el open(); igual se exige isFile() abajo.
+          const handle = await open(file, constants.O_RDONLY | (constants.O_NONBLOCK ?? 0));
           try {
             const info = await handle.stat();
             if (!info.isFile()) throw new SessionError('bad-request', 'no es un archivo regular');

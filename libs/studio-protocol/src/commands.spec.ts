@@ -14,6 +14,10 @@ describe('ClientCommand', () => {
     }
     expect(ClientCommand.safeParse({ ...base, cmd: 'command.run', name: 'gate', args: ['spec-dev-001-x', 'cycle-01'] }).success).toBe(true);
   });
+  it('parses presence.get', () => {
+    const cmd = { ...base, cmd: 'presence.get' };
+    expect(ClientCommand.parse(cmd)).toEqual(cmd);
+  });
   it('rejects commands outside the allowlist', () => {
     expect(ClientCommand.safeParse({ ...base, cmd: 'command.run', name: 'rm', args: [] }).success).toBe(false);
   });

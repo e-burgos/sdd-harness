@@ -10,7 +10,7 @@ type EngineCallbacksApproval = EngineCallbacks['requestApproval'];
 const input = (over: Partial<EngineTurnInput['options']> = {}, resume: string | null = null): EngineTurnInput => ({
   threadId: 't', text: 'hola', cwd: '/repo', resumeSessionId: resume, options: { ...defaultThreadOptions(), ...over },
 });
-const handlers = () => ({ abort: new AbortController(), canUseTool: vi.fn(), onHook: vi.fn() });
+const handlers = () => ({ abort: new AbortController(), canUseTool: vi.fn(), onHook: vi.fn(), judgeTool: vi.fn() });
 
 describe('buildQueryOptions', () => {
   it('leaves model, effort and agent to the kit by default', () => {
@@ -20,7 +20,30 @@ describe('buildQueryOptions', () => {
     expect(o.effort).toBeUndefined();
     expect(o.agent).toBeUndefined();
     expect(o.resume).toBeUndefined();
-    expect(Object.keys(o.hooks ?? {})).toEqual(['SubagentStart', 'SubagentStop']);
+    expect(Object.keys(o.hooks ?? {})).toEqual(['SubagentStart', 'SubagentStop', 'PreToolUse']);
+  });
+  describe('PreToolUse hook', () => {
+    const call = async (verdict: unknown) => {
+      const h = { ...handlers(), judgeTool: vi.fn(() => verdict) };
+      const o = buildQueryOptions(input(), h as never);
+      const hook = o.hooks?.PreToolUse?.[0]?.hooks[0];
+      const out = await hook!(
+        { hook_event_name: 'PreToolUse', tool_name: 'Write', tool_input: { file_path: '/r/a.ts' }, tool_use_id: 'tu1', agent_id: undefined } as never,
+        'tu1', { signal: new AbortController().signal });
+      return { out, h };
+    };
+    it('returns the SDK deny shape for a gated edit', async () => {
+      const { out, h } = await call({ kind: 'deny', reason: 'SPEC GATE x' });
+      expect(out).toEqual({ hookSpecificOutput: { hookEventName: 'PreToolUse', permissionDecision: 'deny', permissionDecisionReason: 'SPEC GATE x' } });
+      expect(h.judgeTool).toHaveBeenCalledWith('Write', { file_path: '/r/a.ts' }, expect.objectContaining({ tool_use_id: 'tu1' }));
+    });
+    it('asks on a warn so canUseTool is consulted', async () => {
+      const { out } = await call({ kind: 'warn', reason: 'w' });
+      expect(out).toMatchObject({ hookSpecificOutput: { permissionDecision: 'ask' } });
+    });
+    it('does not decide on allow', async () => {
+      expect((await call({ kind: 'allow' })).out).toEqual({});
+    });
   });
   it('pins model and effort, uses the DM agent and resumes', () => {
     const o = buildQueryOptions(input({ agent: 'sdd-planner', model: 'opus', effort: 'high', permissionMode: 'plan' }, 'sess-1'), handlers());
@@ -65,7 +88,7 @@ describe('ClaudeAgentSdkEngine', () => {
     const turn = new ClaudeAgentSdkEngine(fn).startTurn(input(), {
       emit: (e) => events.push(e),
       onSessionId: (id) => sessions.push(id),
-      requestApproval: async (r) => (asked.push(r), { behavior: 'deny', message: 'no' }),
+      judgeTool: () => ({ kind: 'allow' }), requestApproval: async (r) => (asked.push(r), { behavior: 'deny', message: 'no' }),
     });
     await turn.done;
     expect(sessions).toHaveLength(1);
@@ -77,7 +100,7 @@ describe('ClaudeAgentSdkEngine', () => {
   it('interrupts through the query', async () => {
     const { fn, interrupt } = replayQuery('simple');
     const turn = new ClaudeAgentSdkEngine(fn).startTurn(input(), {
-      emit: () => {}, onSessionId: () => {}, requestApproval: async () => ({ behavior: 'allow' }),
+      emit: () => {}, onSessionId: () => {}, judgeTool: () => ({ kind: 'allow' }), requestApproval: async () => ({ behavior: 'allow' }),
     });
     await turn.interrupt();
     await turn.done;
@@ -86,7 +109,7 @@ describe('ClaudeAgentSdkEngine', () => {
 
   const start = (fn: QueryFn) =>
     new ClaudeAgentSdkEngine(fn).startTurn(input(), {
-      emit: () => {}, onSessionId: () => {}, requestApproval: async () => ({ behavior: 'allow' }),
+      emit: () => {}, onSessionId: () => {}, judgeTool: () => ({ kind: 'allow' }), requestApproval: async () => ({ behavior: 'allow' }),
     });
 
   it('swallows the iterator error after an interrupt', async () => {
@@ -145,7 +168,7 @@ describe('ClaudeAgentSdkEngine', () => {
       };
       await new ClaudeAgentSdkEngine(fn).startTurn(input(), {
         emit: () => {}, onSessionId: () => {},
-        requestApproval: async (req, signal) => (asked.push({ req, signal }), decision),
+        judgeTool: () => ({ kind: 'allow' }), requestApproval: async (req, signal) => (asked.push({ req, signal }), decision),
       }).done;
       return { result, asked, sdkSignal, toolInput };
     };

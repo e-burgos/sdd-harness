@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { createServer } from 'node:net';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, realpath, rm, symlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { PROTOCOL_VERSION, defaultThreadOptions, type ServerMessage } from '@sdd-studio/protocol';
@@ -58,6 +58,27 @@ describe('startBridge', () => {
     await expect(
       startBridge({ root: dir, port: 0, strictPort: true, engine: 'fake', allowedOrigins: [], webUrl: 'x' }),
     ).rejects.toBeInstanceOf(BridgeStartError);
+  });
+});
+
+describe('startBridge root resolution (M5)', () => {
+  it('uses the physical path of a symlinked root', async () => {
+    const { root, cleanup } = await copyFixture();
+    cleanups.push(cleanup);
+    const linkDir = await mkdtemp(path.join(tmpdir(), 'link-'));
+    cleanups.push(() => rm(linkDir, { recursive: true, force: true }));
+    const link = path.join(linkDir, 'repo');
+    await symlink(root, link);
+    const bridge = await startBridge({ root: link, port: 0, strictPort: true, engine: 'fake', allowedOrigins: DEFAULT_ORIGINS, webUrl: 'x' });
+    cleanups.push(bridge.close);
+    const ws = new WebSocket(`ws://127.0.0.1:${bridge.port}`);
+    const inbox: ServerMessage[] = [];
+    ws.on('message', (raw) => inbox.push(JSON.parse(raw.toString())));
+    await new Promise((r) => ws.once('open', r));
+    ws.send(JSON.stringify({ kind: 'hello', token: bridge.token, protocolVersion: PROTOCOL_VERSION, clientVersion: 't' }));
+    const welcome = (await waitFor(() => inbox.find((m) => m.kind === 'welcome'))) as Extract<ServerMessage, { kind: 'welcome' }>;
+    expect(welcome.workspace.root).toBe(await realpath(root));
+    ws.close();
   });
 });
 

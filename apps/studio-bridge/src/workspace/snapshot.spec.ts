@@ -165,4 +165,14 @@ describe('mergeSnapshot / changedAreas', () => {
     const next = mergeSnapshot(prev, await loadWorkspaceSnapshot(root));
     expect(changedAreas(prev, next)).toEqual(['fixes']);
   });
+
+  it('I1: skips specs whose id is not a safe channel segment', async () => {
+    const file = path.join(root, 'sdd/specs/index.json');
+    const index = JSON.parse(await readFile(file, 'utf8'));
+    index.specs.push({ id: 'x/../../escaped', title: 'evil', status: 'in-progress', folder: 'sdd/specs/spec-dev-001-pagos' });
+    await writeFile(file, JSON.stringify(index));
+    const { snapshot } = await loadWorkspaceSnapshot(root);
+    expect(snapshot.specs.map((sp) => sp.id)).toEqual(['spec-dev-001-pagos', 'spec-dev-002-borrador']);
+    expect(snapshot.cycles.every((c) => c.specId !== 'x/../../escaped')).toBe(true);
+  });
 });

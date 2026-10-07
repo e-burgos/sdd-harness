@@ -1,5 +1,6 @@
 import { defaultThreadOptions, type ServerEvent, type ThreadEvent, type WorkspaceSnapshot } from '@sdd-studio/protocol';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import path from 'node:path';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FakeEngine } from '../engine/fake-engine';
 import type { AgentEngine, EngineCallbacks, EngineTurn, EngineTurnInput } from '../engine/types';
 import { copyFixture, waitFor } from '../test-utils/fixture';
@@ -330,6 +331,180 @@ describe('SessionManager', () => {
       await new Promise((r) => setTimeout(r, 150));
       expect(statusOf(m, b.id)).toBe('interrupted');
       expect(eventsOf(b.id).some((e) => e.type === 'turn.end')).toBe(false);
+    });
+
+    describe('final review fixes', () => {
+      const acceptEdits = { ...opts, permissionMode: 'acceptEdits' as const };
+      const gated = () => {
+        snapshot = { ...snapshot, cycles: snapshot.cycles.map((c) => ({ ...c, status: 'completed' })), fixes: [] };
+      };
+      const approvalEvents = (id: string) => eventsOf(id).filter((e) => e.type.startsWith('approval.'));
+
+      it('C1: acceptEdits edit without an active cycle is denied by the SPEC GATE with no tool', async () => {
+        gated();
+        const { m } = await manager();
+        const t = await m.createThread({ channelId: 'general', options: acceptEdits, text: '#edit' });
+        await waitFor(() => statusOf(m, t.id) === 'idle');
+        expect(approvalEvents(t.id).map((e) => e.type)).toEqual(['approval.requested', 'approval.resolved']);
+        expect(approvalEvents(t.id)[1]).toMatchObject({ decision: 'deny' });
+        expect(eventsOf(t.id).some((e) => e.type === 'tool.start')).toBe(false);
+      });
+
+      it('C1: acceptEdits edit with an active cycle runs without an approval prompt', async () => {
+        const { m } = await manager();
+        const t = await m.createThread({ channelId: 'general', options: acceptEdits, text: '#edit' });
+        await waitFor(() => statusOf(m, t.id) === 'idle');
+        expect(eventsOf(t.id).some((e) => e.type === 'tool.start')).toBe(true);
+        expect(approvalEvents(t.id)).toEqual([]);
+      });
+
+      it('C1: judgeTool classifies without emitting for allow/warn, and emits the deny pair for deny', async () => {
+        const { engine, runs } = scripted();
+        const { m } = await manager(engine);
+        const t = await m.createThread({ channelId: 'general', options: acceptEdits, text: 'x' });
+        const file = path.join(root, 'apps', 'x.ts');
+        expect(runs[0]!.cb.judgeTool('Write', { file_path: file })).toEqual({ kind: 'allow' });
+        expect(runs[0]!.cb.judgeTool('Bash', { command: 'ls' })).toEqual({ kind: 'allow' });
+        expect(approvalEvents(t.id)).toEqual([]);
+        gated();
+        const verdict = runs[0]!.cb.judgeTool('Write', { file_path: file });
+        expect(verdict).toMatchObject({ kind: 'deny' });
+        expect(approvalEvents(t.id).map((e) => e.type)).toEqual(['approval.requested', 'approval.resolved']);
+        runs[0]!.finish();
+      });
+
+      it('C1: requestApproval does not emit a second deny pair for a toolUseId the hook already denied', async () => {
+        const { engine, runs } = scripted();
+        const { m } = await manager(engine);
+        const t = await m.createThread({ channelId: 'general', options: opts, text: 'x' });
+        gated();
+        const file = path.join(root, 'apps', 'x.ts');
+        const ctx = { author: { agent: 'main', parentToolUseId: null }, toolUseId: 'tu-1' };
+        runs[0]!.cb.judgeTool('Write', { file_path: file }, ctx);
+        const decision = await runs[0]!.cb.requestApproval(
+          { toolName: 'Write', input: { file_path: file }, author: ctx.author, toolUseId: 'tu-1' }, runs[0]!.ac.signal);
+        expect(decision.behavior).toBe('deny');
+        expect(approvalEvents(t.id)).toHaveLength(2);
+        runs[0]!.finish();
+      });
+
+      it('C2: approval.requested carries the full Bash command in input', async () => {
+        const { engine, runs } = scripted();
+        const { m } = await manager(engine);
+        const t = await m.createThread({ channelId: 'general', options: opts, text: 'x' });
+        const command = `echo ${'a'.repeat(300)} && rm -rf /tmp/zzz`;
+        void runs[0]!.cb.requestApproval({ ...req, input: { command } }, runs[0]!.ac.signal);
+        const e = await waitFor(() => pendingApproval(t.id));
+        expect(e.summary.length).toBeLessThanOrEqual(160);
+        expect(JSON.parse(e.input ?? '')).toEqual({ command });
+        expect(e.inputTruncated).toBeUndefined();
+        await m.interrupt(t.id);
+      });
+
+      it('C2: input over 16 KB is capped and flagged inputTruncated', async () => {
+        const { engine, runs } = scripted();
+        const { m } = await manager(engine);
+        const t = await m.createThread({ channelId: 'general', options: opts, text: 'x' });
+        void runs[0]!.cb.requestApproval({ ...req, input: { command: 'b'.repeat(20_000) } }, runs[0]!.ac.signal);
+        const e = await waitFor(() => pendingApproval(t.id));
+        expect(e.input?.length).toBe(16_384);
+        expect(e.inputTruncated).toBe(true);
+        await m.interrupt(t.id);
+      });
+
+      it('C2: gate denies also carry the input', async () => {
+        gated();
+        const { m } = await manager();
+        const t = await m.createThread({ channelId: 'general', options: opts, text: '#edit' });
+        await waitFor(() => statusOf(m, t.id) === 'idle');
+        expect(pendingApproval(t.id)?.input).toContain('file_path');
+      });
+
+      it('I2: always-allow on a Bash command only covers that exact command', async () => {
+        const { engine, runs } = scripted();
+        const { m } = await manager(engine);
+        const t = await m.createThread({ channelId: 'general', options: opts, text: 'x' });
+        const ask = (command: string) =>
+          runs[0]!.cb.requestApproval({ ...req, input: { command } }, runs[0]!.ac.signal);
+        const first = ask('ls');
+        m.respondApproval((await waitFor(() => pendingApproval(t.id))).approvalId, 'allow', undefined, 'thread');
+        await first;
+        expect(await ask('ls')).toEqual({ behavior: 'allow' });
+        sent.length = 0;
+        void ask('rm -rf x');
+        expect(await waitFor(() => pendingApproval(t.id))).toMatchObject({ tool: 'Bash' });
+        await m.interrupt(t.id);
+      });
+
+      it('I2: thread scope on an mcp__ tool asks again', async () => {
+        const { engine, runs } = scripted();
+        const { m } = await manager(engine);
+        const t = await m.createThread({ channelId: 'general', options: opts, text: 'x' });
+        const ask = () => runs[0]!.cb.requestApproval({ ...req, toolName: 'mcp__srv__do', input: {} }, runs[0]!.ac.signal);
+        const first = ask();
+        m.respondApproval((await waitFor(() => pendingApproval(t.id))).approvalId, 'allow', undefined, 'thread');
+        await first;
+        sent.length = 0;
+        void ask();
+        await waitFor(() => pendingApproval(t.id));
+        await m.interrupt(t.id);
+      });
+
+      it('M1: thread.updated is broadcast before the first thread.event', async () => {
+        const { m } = await manager();
+        const t = await m.createThread({ channelId: 'general', options: opts, text: 'hola' });
+        const firstUpdated = sent.findIndex((e) => e.kind === 'thread.updated' && e.thread.id === t.id);
+        const firstEvent = sent.findIndex((e) => e.kind === 'thread.event' && e.threadId === t.id);
+        expect(firstUpdated).toBeGreaterThanOrEqual(0);
+        expect(firstUpdated).toBeLessThan(firstEvent);
+        await waitFor(() => statusOf(m, t.id) === 'idle');
+      });
+
+      it('M3: requestApproval refreshes the snapshot once before a gate deny is final', async () => {
+        gated();
+        const fresh = { ...snapshot, cycles: [{ ...snapshot.cycles[0]!, status: 'in-progress' }] };
+        const store = new ThreadStore(root);
+        await store.init();
+        stores.push(store);
+        const refresh = vi.fn(async () => {
+          snapshot = fresh;
+        });
+        const { engine, runs } = scripted();
+        const m = new SessionManager({
+          root, engine, store, snapshot: () => snapshot, broadcast: (e) => sent.push(e), refreshSnapshot: refresh,
+        });
+        const t = await m.createThread({ channelId: 'general', options: opts, text: 'x' });
+        const file = path.join(root, 'apps', 'x.ts');
+        // Goes straight to requestApproval (the sync hook path cannot await the refresh and uses the debounced snapshot).
+        void runs[0]!.cb.requestApproval({ ...req, toolName: 'Write', input: { file_path: file } }, runs[0]!.ac.signal);
+        const e = await waitFor(() => pendingApproval(t.id));
+        expect(e.gateWarning).toBeUndefined();
+        expect(refresh).toHaveBeenCalledTimes(1);
+        await m.interrupt(t.id);
+      });
+    });
+
+    describe('restart recovery (I3)', () => {
+      it('announces lost approvals and the interruption in the thread history', async () => {
+        const { m, store } = await manager();
+        const t = await m.createThread({ channelId: 'general', options: opts, text: '#tool' });
+        await waitFor(() => pendingApproval(t.id));
+        await store.flush();
+        const store2 = new ThreadStore(root);
+        await store2.init();
+        stores.push(store2);
+        expect(store2.recoveredThreadIds()).toEqual([t.id]);
+        const m2 = new SessionManager({ root, engine: new FakeEngine(1), store: store2, snapshot: () => snapshot, broadcast: () => {} });
+        await m2.recover();
+        const hist = (await m2.history(t.id, 0)).map((h) => h.event);
+        const requested = hist.find((e) => e.type === 'approval.requested');
+        const last2 = hist.slice(-2);
+        expect(last2[0]).toMatchObject({
+          type: 'approval.resolved', approvalId: (requested as { approvalId: string }).approvalId, decision: 'deny', reason: 'el puente se reinició',
+        });
+        expect(last2[1]).toMatchObject({ type: 'session.status', status: 'interrupted' });
+        await m.interrupt(t.id);
+      });
     });
   });
 });

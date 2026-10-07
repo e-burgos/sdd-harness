@@ -54,8 +54,8 @@ export class PresenceTracker {
         t.approvals.delete(event.approvalId);
         break;
       case 'turn.end':
+        // Sólo las herramientas: las aprobaciones pendientes se limpian con approval.resolved o al salir de running.
         t.tools.clear();
-        t.approvals.clear();
         break;
       default:
         break;

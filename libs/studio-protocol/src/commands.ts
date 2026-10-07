@@ -11,6 +11,7 @@ export type KitCommandName = z.infer<typeof KitCommandName>;
 
 export const ClientCommand = z.discriminatedUnion('cmd', [
   z.object({ ...cmd('workspace.snapshot') }),
+  z.object({ ...cmd('presence.get') }),
   z.object({ ...cmd('workspace.readFile'), path: z.string().min(1).max(512) }),
   z.object({ ...cmd('thread.create'), channelId: ChannelId, options: ThreadOptions, text: Text }),
   z.object({ ...cmd('thread.send'), threadId: Id, text: Text }),

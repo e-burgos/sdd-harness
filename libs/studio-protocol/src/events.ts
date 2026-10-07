@@ -34,6 +34,9 @@ export const ThreadEvent = z.discriminatedUnion('type', [
     tool: z.string(),
     summary: z.string(),
     diff: z.string().optional(),
+    /** JSON.stringify of the full tool input, capped at 16 384 chars. */
+    input: z.string().optional(),
+    inputTruncated: z.boolean().optional(),
     gateWarning: z.string().optional(),
   }),
   z.object({

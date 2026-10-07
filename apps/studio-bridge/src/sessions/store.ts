@@ -1,6 +1,6 @@
 import { appendFile, mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import type { BotEvent, ThreadEvent, ThreadInfo } from '@sdd-studio/protocol';
+import { ChannelId, type BotEvent, ThreadEvent, ThreadInfo } from '@sdd-studio/protocol';
 
 export interface StoredThread extends ThreadInfo {
   engineSessionId: string | null;
@@ -39,6 +39,8 @@ async function ensureTrailingNewline(file: string): Promise<void> {
 export class ThreadStore {
   private readonly threads = new Map<string, StoredThread>();
   private readonly seqs = new Map<string, number>();
+  private readonly recovered: string[] = [];
+  private readonly repairedFiles = new Set<string>();
   private chain: Promise<void> = Promise.resolve();
 
   constructor(
@@ -54,8 +56,9 @@ export class ThreadStore {
     return path.join(this.dir, 'threads', `${id}.jsonl`);
   }
 
-  // ChannelId ya está validado por el protocolo: sólo letras, dígitos, `.`, `_`, `-` y un `:`.
-  private channelFile(channelId: string): string {
+  /** null si el id no cumple ChannelId (nunca se arma una ruta con un id sin validar). */
+  private channelFile(channelId: string): string | null {
+    if (!ChannelId.safeParse(channelId).success) return null;
     return path.join(this.dir, 'channels', `${channelId.replace(':', '__')}.jsonl`);
   }
 
@@ -70,7 +73,10 @@ export class ThreadStore {
       stored = [];
     }
     for (const t of Array.isArray(stored) ? (stored as StoredThread[]) : []) {
-      if (BUSY.has(t.status)) t.status = 'interrupted';
+      if (BUSY.has(t.status)) {
+        this.recovered.push(t.id);
+        t.status = 'interrupted';
+      }
       this.threads.set(t.id, t);
       const threadFile = this.threadFile(t.id);
       const nextSeq = await nextSeqFromFile(threadFile);
@@ -78,6 +84,11 @@ export class ThreadStore {
       this.seqs.set(t.id, nextSeq);
     }
     await this.persist();
+  }
+
+  /** Hilos que estaban ocupados antes del reinicio (ya marcados como interrupted). */
+  recoveredThreadIds(): string[] {
+    return [...this.recovered];
   }
 
   list(channelId?: string): StoredThread[] {
@@ -101,9 +112,8 @@ export class ThreadStore {
     const seq = this.seqs.get(threadId) ?? 0;
     this.seqs.set(threadId, seq + 1);
     void this.enqueue(async () => {
-      const file = this.threadFile(threadId);
-      await ensureTrailingNewline(file);
-      await appendFile(file, `${JSON.stringify({ seq, event })}\n`);
+      // Los archivos de hilo se reparan sólo en init(): acá no se relee el archivo.
+      await appendFile(this.threadFile(threadId), `${JSON.stringify({ seq, event })}\n`);
     });
     return seq;
   }
@@ -126,14 +136,20 @@ export class ThreadStore {
   appendBot(event: BotEvent): void {
     void this.enqueue(async () => {
       const file = this.channelFile(event.channelId);
-      await ensureTrailingNewline(file);
+      if (!file) throw new Error(`channelId inválido: ${event.channelId}`);
+      if (!this.repairedFiles.has(file)) {
+        await ensureTrailingNewline(file);
+        this.repairedFiles.add(file);
+      }
       await appendFile(file, `${JSON.stringify(event)}\n`);
     });
   }
 
   async botHistory(channelId: string, limit: number): Promise<BotEvent[]> {
     await this.flush();
-    const lines = await readLines(this.channelFile(channelId));
+    const file = this.channelFile(channelId);
+    if (!file) return [];
+    const lines = await readLines(file);
     const out: BotEvent[] = [];
     for (const line of lines.slice(-limit)) {
       try {

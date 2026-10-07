@@ -9,8 +9,8 @@ import type {
   WorkspaceSnapshot,
 } from '@sdd-studio/protocol';
 import { diffFor, summarizeTool } from '../engine/tool-summary';
-import type { AgentEngine, ApprovalDecision, ApprovalRequest, EngineTurn } from '../engine/types';
-import { editTargetOf, judgeEdit } from '../gate/judge';
+import type { AgentEngine, ApprovalDecision, ApprovalRequest, EngineTurn, JudgeContext, ToolVerdict } from '../engine/types';
+import { EDIT_TOOLS, editTargetOf, judgeEdit } from '../gate/judge';
 import { PresenceTracker } from './presence';
 import type { HistoryEntry, StoredThread, ThreadStore } from './store';
 
@@ -31,6 +31,30 @@ export interface SessionManagerDeps {
   broadcast: (message: ServerEvent) => void;
   newId?: () => string;
   now?: () => string;
+  /**
+   * Forces a fresh workspace snapshot. Used once by requestApproval before a gate deny is final.
+   * The synchronous PreToolUse path (judgeTool) cannot await it and relies on the debounced watcher snapshot.
+   */
+  refreshSnapshot?: () => Promise<void>;
+}
+
+const INPUT_CAP = 16_384;
+
+function serializeInput(input: Record<string, unknown>): { input: string; inputTruncated?: true } {
+  let text: string;
+  try {
+    text = JSON.stringify(input) ?? '{}';
+  } catch {
+    text = '"[input no serializable]"';
+  }
+  return text.length > INPUT_CAP ? { input: text.slice(0, INPUT_CAP), inputTruncated: true } : { input: text };
+}
+
+/** Clave de "siempre en este hilo": null = el alcance 'thread' se trata como 'once'. */
+function alwaysKeyOf(toolName: string, input: Record<string, unknown>): string | null {
+  if (EDIT_TOOLS.has(toolName) || toolName.startsWith('mcp__')) return null;
+  if (toolName === 'Bash') return typeof input.command === 'string' ? `Bash:${input.command}` : null;
+  return toolName;
 }
 
 interface Live {
@@ -39,6 +63,8 @@ interface Live {
   /** Orden FIFO monótono de la cola del canal. */
   queuedAt: number;
   alwaysAllow: Set<string>;
+  /** toolUseId → motivo de los denies ya anunciados por el hook PreToolUse (evita duplicar el par). */
+  hookDenied: Map<string, string>;
   /** Se levanta en interrupt(), se baja al arrancar un turno nuevo. */
   interrupted: boolean;
   /** Generación del turno: invalida callbacks tardíos de un turno anterior. */
@@ -49,7 +75,7 @@ interface Live {
 
 interface PendingApproval {
   threadId: string;
-  toolName: string;
+  alwaysKey: string | null;
   settle: (decision: ApprovalDecision) => void;
 }
 
@@ -100,6 +126,7 @@ export class SessionManager {
     };
     this.persist(thread);
     this.tracker.onThread(toInfo(thread));
+    this.deps.broadcast({ kind: 'thread.updated', thread: toInfo(thread) });
     await this.send(thread.id, args.text);
     return toInfo(this.require(thread.id));
   }
@@ -150,8 +177,25 @@ export class SessionManager {
   respondApproval(approvalId: string, decision: 'allow' | 'deny', reason: string | undefined, scope: 'once' | 'thread'): void {
     const pending = this.approvals.get(approvalId);
     if (!pending) throw new SessionError('not-found', `no hay una aprobación pendiente ${approvalId}`);
-    if (decision === 'allow' && scope === 'thread') this.liveOf(pending.threadId).alwaysAllow.add(pending.toolName);
+    if (decision === 'allow' && scope === 'thread' && pending.alwaysKey) this.liveOf(pending.threadId).alwaysAllow.add(pending.alwaysKey);
     pending.settle(decision === 'allow' ? { behavior: 'allow' } : { behavior: 'deny', message: reason ?? 'denegado por el usuario' });
+  }
+
+  /** Tras un reinicio: anuncia las aprobaciones perdidas y la interrupción de los hilos que estaban ocupados. */
+  async recover(): Promise<void> {
+    for (const threadId of this.deps.store.recoveredThreadIds()) {
+      const thread = this.deps.store.get(threadId);
+      if (!thread) continue;
+      const history = await this.deps.store.history(threadId, 0);
+      const resolved = new Set<string>();
+      for (const { event } of history) if (event.type === 'approval.resolved') resolved.add(event.approvalId);
+      for (const { event } of history) {
+        if (event.type === 'approval.requested' && !resolved.has(event.approvalId)) {
+          this.emit(thread, { type: 'approval.resolved', approvalId: event.approvalId, decision: 'deny', reason: 'el puente se reinició' });
+        }
+      }
+      this.emit(thread, { type: 'session.status', status: 'interrupted' });
+    }
   }
 
   // ── internos ─────────────────────────────────────────────────────────────
@@ -165,7 +209,7 @@ export class SessionManager {
   private liveOf(threadId: string): Live {
     let live = this.live.get(threadId);
     if (!live) {
-      live = { turn: null, queued: null, queuedAt: 0, alwaysAllow: new Set(), interrupted: false, gen: 0, writes: false };
+      live = { turn: null, queued: null, queuedAt: 0, alwaysAllow: new Set(), hookDenied: new Map(), interrupted: false, gen: 0, writes: false };
       this.live.set(threadId, live);
     }
     return live;
@@ -212,6 +256,7 @@ export class SessionManager {
             this.persist(thread);
           },
           requestApproval: (request, signal) => this.requestApproval(thread, gen, request, signal),
+          judgeTool: (toolName, input, ctx) => this.judgeTool(thread, gen, toolName, input, ctx),
         },
       );
     } catch (error) {
@@ -256,6 +301,36 @@ export class SessionManager {
     }
   }
 
+  /** Anuncia un deny del SPEC GATE con el mismo par de eventos que ve la UI para cualquier aprobación. */
+  private announceDeny(thread: StoredThread, author: ApprovalRequest['author'], toolName: string, input: Record<string, unknown>, reason: string): void {
+    const approvalId = this.newId();
+    const diff = diffFor(toolName, input);
+    this.emit(thread, {
+      type: 'approval.requested',
+      approvalId,
+      author,
+      tool: toolName,
+      summary: summarizeTool(toolName, input),
+      ...(diff ? { diff } : {}),
+      ...serializeInput(input),
+    });
+    this.emit(thread, { type: 'approval.resolved', approvalId, decision: 'deny', reason });
+  }
+
+  /** SPEC GATE síncrono (hook PreToolUse del motor): no depende de canUseTool ni del modo de permisos. */
+  private judgeTool(thread: StoredThread, gen: number, toolName: string, input: Record<string, unknown>, ctx?: JudgeContext): ToolVerdict {
+    const live = this.liveOf(thread.id);
+    if (live.interrupted || live.gen !== gen) return { kind: 'deny', reason: 'interrupted' };
+    const target = editTargetOf(toolName, input);
+    if (!target) return { kind: 'allow' };
+    const verdict = judgeEdit(this.deps.snapshot(), this.deps.root, target);
+    if (verdict.kind !== 'deny') return verdict;
+    const author = ctx?.author ?? { agent: thread.agent, parentToolUseId: null };
+    if (ctx?.toolUseId) live.hookDenied.set(ctx.toolUseId, verdict.reason);
+    this.announceDeny(thread, author, toolName, input, verdict.reason);
+    return verdict;
+  }
+
   /**
    * Un turno interrumpido (o de una generación vieja, o con señal ya abortada) recibe deny inmediato
    * y no emite eventos de aprobación: nunca pisa `interrupted` ni queda colgado.
@@ -265,23 +340,32 @@ export class SessionManager {
     if (live.interrupted || live.gen !== gen) return { behavior: 'deny', message: 'interrupted' };
     if (signal.aborted) return { behavior: 'deny', message: 'aborted' };
 
-    const summary = summarizeTool(request.toolName, request.input);
-    const diff = diffFor(request.toolName, request.input);
-    const extra = diff ? { diff } : {};
+    const hookReason = request.toolUseId ? live.hookDenied.get(request.toolUseId) : undefined;
+    if (hookReason !== undefined) return { behavior: 'deny', message: hookReason };
+
     let gateWarning: string | undefined;
     const target = editTargetOf(request.toolName, request.input);
     if (target) {
-      const verdict = judgeEdit(this.deps.snapshot(), this.deps.root, target);
+      let verdict = judgeEdit(this.deps.snapshot(), this.deps.root, target);
+      if (verdict.kind === 'deny' && this.deps.refreshSnapshot) {
+        // El snapshot puede estar atrasado por el debounce del watcher: una única relectura antes de negar.
+        await this.deps.refreshSnapshot().catch(reportError);
+        if (live.interrupted || live.gen !== gen) return { behavior: 'deny', message: 'interrupted' };
+        if (signal.aborted) return { behavior: 'deny', message: 'aborted' };
+        verdict = judgeEdit(this.deps.snapshot(), this.deps.root, target);
+      }
       if (verdict.kind === 'deny') {
-        const approvalId = this.newId();
-        this.emit(thread, { type: 'approval.requested', approvalId, author: request.author, tool: request.toolName, summary, ...extra });
-        this.emit(thread, { type: 'approval.resolved', approvalId, decision: 'deny', reason: verdict.reason });
+        this.announceDeny(thread, request.author, request.toolName, request.input, verdict.reason);
         return { behavior: 'deny', message: verdict.reason };
       }
       if (verdict.kind === 'warn') gateWarning = verdict.reason;
     }
-    if (!gateWarning && live.alwaysAllow.has(request.toolName)) return { behavior: 'allow' };
+    const alwaysKey = alwaysKeyOf(request.toolName, request.input);
+    if (!gateWarning && alwaysKey && live.alwaysAllow.has(alwaysKey)) return { behavior: 'allow' };
 
+    const summary = summarizeTool(request.toolName, request.input);
+    const diff = diffFor(request.toolName, request.input);
+    const extra = diff ? { diff } : {};
     const approvalId = this.newId();
     // Se registra la aprobación pendiente ANTES de anunciarla: un cliente puede responder en cuanto ve el evento.
     const decision = new Promise<ApprovalDecision>((resolve) => {
@@ -299,7 +383,7 @@ export class SessionManager {
         if (thread.status === 'waiting-approval' && !stillWaiting) this.setStatus(thread, 'running');
         resolve(result);
       };
-      this.approvals.set(approvalId, { threadId: thread.id, toolName: request.toolName, settle });
+      this.approvals.set(approvalId, { threadId: thread.id, alwaysKey: alwaysKeyOf(request.toolName, request.input), settle });
       signal.addEventListener('abort', onAbort, { once: true });
     });
     // Estado antes del broadcast; si se resuelve síncronamente durante el broadcast, settle lo devuelve a running.
@@ -311,6 +395,7 @@ export class SessionManager {
       tool: request.toolName,
       summary,
       ...extra,
+      ...serializeInput(request.input),
       ...(gateWarning ? { gateWarning } : {}),
     });
     return decision;

@@ -63,11 +63,16 @@ const toFix = (f: Json): FixSummary => ({
   specId: strOrNull(f.spec_id),
 });
 
+const SAFE_SPEC_ID = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
+
 async function loadSpecs(root: string, sdd: string) {
   const index = await readJson(path.join(sdd, 'specs', 'index.json'));
   if (!index.ok) return { ok: false, missing: false, specs: [] as SpecSummary[], cycles: [] as CycleSummary[] };
   let ok = true;
-  const specs = (Array.isArray(index.value?.specs) ? index.value.specs : []).map(toSpec);
+  // Los ids de spec forman parte de un ChannelId y de rutas en .sdd-studio/: se descartan los inseguros.
+  const specs = (Array.isArray(index.value?.specs) ? index.value.specs : [])
+    .map(toSpec)
+    .filter((sp: SpecSummary) => SAFE_SPEC_ID.test(sp.id));
   const cycles: CycleSummary[] = [];
   for (const spec of specs) {
     const segments = spec.folder.split('/');

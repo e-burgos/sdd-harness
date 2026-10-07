@@ -12,9 +12,13 @@ npx @e-burgos/sdd-studio
 
 Abre el navegador en la web de Studio ya emparejada con este repo.
 
+> La web de Studio es el Plan 2 (vista previa): hasta que esté desplegada, usá `--web-url` apuntando
+> a un build local de la web.
+
 | Opción | Default | Descripción |
 |---|---|---|
-| `--port <n>` | `4320` (o el siguiente libre) | Puerto del WebSocket en 127.0.0.1; valores inválidos abortan con error en español |
+| `--root <dir>` | directorio actual | Raíz del repo (donde está `sdd/`) |
+| `--port <n>` | `4320` (o el siguiente libre) | Puerto del WebSocket en 127.0.0.1. Un `--port` explícito es estricto: falla si está ocupado; sin `--port` se usa 4320 y, si está ocupado, el siguiente libre. Valores inválidos abortan con error en español |
 | `--engine claude\|fake` | `claude` | `fake` no gasta tokens (demo y tests); valores inválidos abortan con error en español |
 | `--allow-origin <a,b>` | — | Orígenes extra permitidos |
 | `--web-url <url>` | `https://studio.sdd.estebanburgos.com.ar` | Web a abrir; valores inválidos abortan con error en español |
@@ -36,7 +40,12 @@ consultá a Anthropic.
   (rota en cada arranque) y valida el `Origin` del navegador.
 - Sólo lee archivos bajo `sdd/` y sólo ejecuta los scripts del kit
   (`spec-gate`, `validate-sdd`, `rebuild-tasks-index`, `rebuild-catalog`).
-- Las ediciones de código de los agentes pasan por el SPEC GATE del kit y por tu aprobación.
+- Las ediciones de código de los agentes pasan por el SPEC GATE del kit: un hook `PreToolUse` lo evalúa
+  en cada uso de herramienta, también en modo `acceptEdits` y para herramientas permitidas por
+  `permissions.allow` de `.claude/settings.json`; sin ciclo `in-progress` ni fix abierto la edición se
+  deniega (en modo `warn` se te pregunta con el aviso). Las demás aprobaciones muestran el input completo
+  de la herramienta (hasta 16 KB) y "siempre en este hilo" sólo aplica al comando Bash exacto o a
+  herramientas no-edición y no-MCP.
 
 ## Navegador
 

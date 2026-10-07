@@ -5,7 +5,7 @@ import type { AgentEngine, EngineCallbacks, EngineTurn, EngineTurnInput } from '
 /**
  * Motor guionado para tests y `--engine=fake`. Marcadores en el texto del prompt:
  * #sub (habla sdd-planner como subagente), #tool (pide aprobación para Bash),
- * #edit (pide aprobación para Write en apps/x.ts), #slow (no termina hasta interrupt), #fail.
+ * #edit (pide aprobación para Write en apps/x.ts; en acceptEdits no pregunta, como el SDK), #slow (no termina hasta interrupt), #fail.
  */
 export class FakeEngine implements AgentEngine {
   readonly name = 'fake';
@@ -24,10 +24,17 @@ export class FakeEngine implements AgentEngine {
       cb.emit({ type: 'message.delta', messageId, text });
       cb.emit({ type: 'message.end', messageId });
     };
-    const askAndRun = async (toolName: string, toolInput: Record<string, unknown>, summary: string) => {
+    const askAndRun = async (toolName: string, toolInput: Record<string, unknown>, summary: string, isEdit = false) => {
       const toolUseId = `fake-tool-${++this.counter}`;
-      const decision = await cb.requestApproval({ toolName, input: toolInput, author: main, toolUseId }, ac.signal);
-      if (stopped || decision.behavior !== 'allow') return;
+      // Mirrors the SDK: the gate hook runs first; acceptEdits skips the permission prompt for edit tools
+      // (except when the hook asked, i.e. a gate warning).
+      const verdict = cb.judgeTool(toolName, toolInput, { author: main, toolUseId });
+      if (verdict.kind === 'deny') return;
+      const skipPrompt = isEdit && input.options.permissionMode === 'acceptEdits' && verdict.kind === 'allow';
+      if (!skipPrompt) {
+        const decision = await cb.requestApproval({ toolName, input: toolInput, author: main, toolUseId }, ac.signal);
+        if (stopped || decision.behavior !== 'allow') return;
+      }
       cb.emit({ type: 'tool.start', toolUseId, author: main, tool: toolName, summary });
       cb.emit({ type: 'tool.end', toolUseId, isError: false, summary: 'ok' });
     };
@@ -50,7 +57,7 @@ export class FakeEngine implements AgentEngine {
       if (input.text.includes('#tool')) await askAndRun('Bash', { command: 'echo hi' }, '$ echo hi');
       if (input.text.includes('#edit')) {
         const file = path.join(input.cwd, 'apps', 'x.ts');
-        await askAndRun('Write', { file_path: file, content: 'export {};' }, file);
+        await askAndRun('Write', { file_path: file, content: 'export {};' }, file, true);
       }
       if (stopped) return;
       say(main, `echo: ${input.text}`);

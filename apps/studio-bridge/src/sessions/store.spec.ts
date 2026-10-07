@@ -93,4 +93,46 @@ describe('ThreadStore', () => {
     const hist = await s2.history('t1', 0);
     expect(hist.map((e) => e.seq)).toEqual([0, 1]);
   });
+
+  it('I1: refuses channel ids that would escape .sdd-studio/channels', async () => {
+    const errors: unknown[] = [];
+    const s = new ThreadStore(root, (e) => errors.push(e));
+    await s.init();
+    s.appendBot({ channelId: 'spec:x/../../escaped', botKind: 'task.status', payload: {} } as never);
+    await s.flush();
+    expect(errors.length).toBeGreaterThan(0);
+    expect(await s.botHistory('spec:x/../../escaped', 10)).toEqual([]);
+    await expect(readFile(path.join(root, '.sdd-studio', 'escaped.jsonl'), 'utf8')).rejects.toThrow();
+    await expect(readFile(path.join(root, 'escaped.jsonl'), 'utf8')).rejects.toThrow();
+  });
+
+  it('I3: recoveredThreadIds lists threads that were busy before the restart', async () => {
+    const a = new ThreadStore(root);
+    await a.init();
+    await a.upsert(thread({ id: 'r', status: 'running' }));
+    await a.upsert(thread({ id: 'i', status: 'idle' }));
+    await a.flush();
+    const b = new ThreadStore(root);
+    await b.init();
+    expect(b.recoveredThreadIds()).toEqual(['r']);
+  });
+
+  it('I5: appends do not re-read the thread file (repair happens at init only)', async () => {
+    const s = new ThreadStore(root);
+    await s.init();
+    await s.upsert(thread());
+    for (let i = 0; i < 3; i++) s.append('t1', { type: 'message.end', messageId: `m${i}` });
+    await s.flush();
+    expect((await s.history('t1', 0)).map((e) => e.seq)).toEqual([0, 1, 2]);
+  });
+
+  it('I5: a channel file with a truncated last line is repaired once, before the first append', async () => {
+    const file = path.join(root, '.sdd-studio/channels/fixes.jsonl');
+    const s = new ThreadStore(root);
+    await s.init();
+    await writeFile(file, '{"channelId":"fixes","botKind":"a","payload":{"i":0}}\n{"channelId":"fix');
+    s.appendBot({ channelId: 'fixes', botKind: 'task.status', payload: { i: 1 } });
+    s.appendBot({ channelId: 'fixes', botKind: 'task.status', payload: { i: 2 } });
+    expect((await s.botHistory('fixes', 10)).map((e) => e.payload.i)).toEqual([0, 1, 2]);
+  });
 });

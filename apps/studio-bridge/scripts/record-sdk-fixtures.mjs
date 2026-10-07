@@ -3,8 +3,8 @@
 // mapeo sin gastar tokens. Necesita `claude` logueado (o ANTHROPIC_API_KEY). Usa haiku/low.
 // Uso: pnpm --filter @e-burgos/sdd-studio record-fixtures [escenario]
 import { query } from '@anthropic-ai/claude-agent-sdk';
-import { cp, mkdir, mkdtemp, readdir, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { cp, mkdir, mkdtemp, readdir, realpath, writeFile } from 'node:fs/promises';
+import { homedir, tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -31,6 +31,27 @@ async function makeWorkspace() {
     await cp(path.join(kitAgents, file), path.join(dir, '.claude/agents', file));
   }
   return dir;
+}
+
+/** Removes machine-specific data before a fixture is written (they are committed to the repo). */
+async function scrub(lines, cwd) {
+  const physicalCwd = await realpath(cwd).catch(() => cwd);
+  const replacements = [
+    [physicalCwd, '/tmp/workspace'],
+    [cwd, '/tmp/workspace'],
+    [homedir(), '/Users/user'],
+  ].filter(([from]) => from && from !== '/');
+  return lines.map((line) => {
+    const record = JSON.parse(line);
+    const init = record.data;
+    if (record.kind === 'message' && init?.type === 'system' && init.subtype === 'init') {
+      if (Array.isArray(init.tools)) init.tools = init.tools.filter((tool) => !String(tool).startsWith('mcp__'));
+      init.mcp_servers = [];
+    }
+    let text = JSON.stringify(record);
+    for (const [from, to] of replacements) text = text.split(from).join(to).split(from.replaceAll('/', '\\/')).join(to);
+    return text;
+  });
 }
 
 async function record(name, scenario) {
@@ -69,7 +90,8 @@ async function record(name, scenario) {
     log('error', { name: err?.name, message: String(err?.message ?? err).slice(0, 500), errorClass: err?.errorClass ?? null });
     if (!scenario.interrupt) throw err;
   }
-  await writeFile(path.join(outDir, `${name}.jsonl`), lines.join('\n') + '\n');
+  const clean = await scrub(lines, cwd);
+  await writeFile(path.join(outDir, `${name}.jsonl`), clean.join('\n') + '\n');
   console.log(`${name}: ${lines.length} records (cwd ${cwd})`);
 }
 

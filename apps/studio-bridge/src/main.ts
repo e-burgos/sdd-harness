@@ -1,4 +1,5 @@
 import { existsSync } from 'node:fs';
+import { realpath } from 'node:fs/promises';
 import path from 'node:path';
 import type { AuthMode, ServerMessage } from '@sdd-studio/protocol';
 import { detectAuthMode } from './auth-mode';
@@ -27,12 +28,14 @@ export async function startBridge(o: {
   webUrl: string;
   token?: string;
 }): Promise<{ url: string; port: number; token: string; authMode: AuthMode; project: string; close(): Promise<void> }> {
-  const root = path.resolve(o.root);
-  if (!existsSync(path.join(root, 'sdd'))) {
+  const resolved = path.resolve(o.root);
+  if (!existsSync(path.join(resolved, 'sdd'))) {
     throw new BridgeStartError(
-      `No encontré sdd/ en ${root}. Corré sdd-studio en la raíz de un repo con el kit (instalalo con \`harness init\`).`,
+      `No encontré sdd/ en ${resolved}. Corré sdd-studio en la raíz de un repo con el kit (instalalo con \`harness init\`).`,
     );
   }
+  // Ruta física: el SPEC GATE compara rutas y un symlink en la raíz no debe esquivarlo.
+  const root = await realpath(resolved);
   const store = new ThreadStore(root);
   await store.init();
   let server: BridgeServer | null = null;
@@ -40,6 +43,7 @@ export async function startBridge(o: {
 
   const watcher = await startWorkspaceWatcher({
     root,
+    onError: (error) => console.error('[sdd-studio] watcher:', error),
     onUpdate: (update) => {
       broadcast({ kind: 'workspace.changed', areas: update.areas, snapshot: update.snapshot });
       for (const event of update.events) {
@@ -53,7 +57,15 @@ export async function startBridge(o: {
   let started: BridgeServer;
   try {
     const engine = o.engine === 'fake' ? new FakeEngine() : new ClaudeAgentSdkEngine();
-    const sessions = new SessionManager({ root, engine, store, snapshot: () => watcher.current(), broadcast });
+    const sessions = new SessionManager({
+      root,
+      engine,
+      store,
+      snapshot: () => watcher.current(),
+      broadcast,
+      refreshSnapshot: () => watcher.refresh().then(() => undefined),
+    });
+    await sessions.recover();
     const runner = new CommandRunner(root, broadcast);
 
     started = await startBridgeServer({

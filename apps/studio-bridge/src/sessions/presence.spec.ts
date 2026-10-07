@@ -69,4 +69,15 @@ describe('PresenceTracker', () => {
     p.onEvent('t1', { type: 'approval.resolved', approvalId: 'a2', decision: 'deny' });
     expect(stateOf(p, 'sdd-reviewer')?.state).toBe('idle');
   });
+
+  it('M2: turn.end clears tools but keeps pending approvals until resolved or the thread leaves running', () => {
+    const p = new PresenceTracker(agents);
+    p.onThread(thread('waiting-approval'));
+    p.onEvent('t1', { type: 'tool.start', toolUseId: 'u', author: { agent: 'sdd-orchestrator', parentToolUseId: null }, tool: 'Read', summary: '' });
+    p.onEvent('t1', { type: 'approval.requested', approvalId: 'p', author: { agent: 'sdd-orchestrator', parentToolUseId: null }, tool: 'Bash', summary: '' });
+    p.onEvent('t1', { type: 'turn.end', usage: { model: 'm', effort: null, tokensIn: 1, tokensOut: 1, costUsd: 0 } });
+    expect(stateOf(p, 'sdd-orchestrator')).toMatchObject({ state: 'waiting', tool: null });
+    p.onEvent('t1', { type: 'approval.resolved', approvalId: 'p', decision: 'allow' });
+    expect(stateOf(p, 'sdd-orchestrator')?.state).toBe('working');
+  });
 });

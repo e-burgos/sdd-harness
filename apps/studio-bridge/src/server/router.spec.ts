@@ -57,4 +57,19 @@ describe('createHandlers', () => {
     expect(await h.handle(cmd({ cmd: 'command.run', name: 'validate', args: [] }))).toEqual({ runId: 'run-1' });
     expect(await h.handle(cmd({ cmd: 'channel.botHistory', channelId: 'fixes', limit: 10 }))).toEqual([]);
   });
+
+  it('I4: presence.get returns the current presence', async () => {
+    const h = await handlers();
+    const presence = (await h.handle(cmd({ cmd: 'presence.get' }))) as { agent: string; state: string }[];
+    expect(presence.map((p) => p.agent)).toEqual(['sdd-orchestrator', 'sdd-planner']);
+    expect(presence.every((p) => p.state === 'idle')).toBe(true);
+  });
+
+  it.skipIf(process.platform === 'win32')('T16: a FIFO under sdd/ is refused without blocking', async () => {
+    const { execFileSync } = await import('node:child_process');
+    const fifo = path.join(root, 'sdd', 'pipe.md');
+    execFileSync('mkfifo', [fifo]);
+    const h = await handlers();
+    await expect(h.handle(cmd({ cmd: 'workspace.readFile', path: 'sdd/pipe.md' }))).rejects.toMatchObject({ code: 'bad-request' });
+  }, 5000);
 });

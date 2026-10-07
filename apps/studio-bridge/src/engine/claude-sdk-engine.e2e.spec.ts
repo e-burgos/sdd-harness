@@ -19,7 +19,7 @@ describe.skipIf(!process.env.SDD_STUDIO_E2E)('ClaudeAgentSdkEngine (real)', () =
       const turn = new ClaudeAgentSdkEngine().startTurn(
         { threadId: 'e2e', text: 'Reply with exactly the word OK.', cwd: root, resumeSessionId: null,
           options: { agent: 'sdd-orchestrator', model: 'haiku', effort: 'low', permissionMode: 'plan' } },
-        { emit: (e) => events.push(e), onSessionId: () => {}, requestApproval: async () => ({ behavior: 'deny', message: 'e2e' }) },
+        { emit: (e) => events.push(e), onSessionId: () => {}, judgeTool: () => ({ kind: 'allow' }), requestApproval: async () => ({ behavior: 'deny', message: 'e2e' }) },
       );
       await turn.done;
       const text = events.flatMap((e) => (e.type === 'message.delta' ? [e.text] : [])).join('');

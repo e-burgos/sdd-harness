@@ -15,6 +15,7 @@ describe('ThreadEvent', () => {
       { type: 'subagent.start', agentId: 'a1', agentType: 'sdd-planner' },
       { type: 'subagent.stop', agentId: 'a1', agentType: 'sdd-planner' },
       { type: 'approval.requested', approvalId: 'p1', author, tool: 'Bash', summary: '$ ls', gateWarning: 'w' },
+      { type: 'approval.requested', approvalId: 'p2', author, tool: 'Bash', summary: '$ ls', input: '{"command":"ls"}', inputTruncated: true },
       { type: 'approval.resolved', approvalId: 'p1', decision: 'deny', reason: 'no' },
       { type: 'turn.end', usage: { model: 'claude-haiku', effort: null, tokensIn: 1, tokensOut: 2, costUsd: 0.01 } },
       { type: 'session.status', status: 'error', error: { code: 'x', message: 'y' } },
