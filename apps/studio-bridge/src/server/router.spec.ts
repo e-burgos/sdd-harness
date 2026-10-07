@@ -1,4 +1,6 @@
 import { defaultThreadOptions, type ClientCommand } from '@sdd-studio/protocol';
+import { writeFile } from 'node:fs/promises';
+import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { CommandRunner } from '../commands/runner';
 import { FakeEngine } from '../engine/fake-engine';
@@ -36,6 +38,13 @@ describe('createHandlers', () => {
     const h = await handlers();
     expect(await h.handle(cmd({ cmd: 'workspace.readFile', path: 'sdd/global.json' }))).toMatchObject({ path: 'sdd/global.json' });
     await expect(h.handle(cmd({ cmd: 'workspace.readFile', path: 'sdd/../package.json' }))).rejects.toMatchObject({ code: 'bad-path' });
+  });
+
+  it('rejects oversized files and directories as bad-request', async () => {
+    const h = await handlers();
+    await writeFile(path.join(root, 'sdd', 'big.md'), 'x'.repeat(2 * 1024 * 1024 + 1));
+    await expect(h.handle(cmd({ cmd: 'workspace.readFile', path: 'sdd/big.md' }))).rejects.toMatchObject({ code: 'bad-request' });
+    await expect(h.handle(cmd({ cmd: 'workspace.readFile', path: 'sdd/scripts' }))).rejects.toMatchObject({ code: 'bad-request' });
   });
 
   it('creates threads, lists them and runs kit commands', async () => {

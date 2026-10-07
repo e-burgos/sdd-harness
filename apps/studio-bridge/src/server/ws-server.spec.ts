@@ -1,4 +1,5 @@
 import { PROTOCOL_VERSION, type ServerMessage } from '@sdd-studio/protocol';
+import { createServer as createNetServer } from 'node:net';
 import { afterEach, describe, expect, it } from 'vitest';
 import WebSocket from 'ws';
 import { waitFor } from '../test-utils/fixture';
@@ -33,7 +34,59 @@ const opened = (ws: WebSocket) => new Promise<void>((res, rej) => (ws.once('open
 const hello = (token = TOKEN, protocolVersion = PROTOCOL_VERSION) =>
   JSON.stringify({ kind: 'hello', token, protocolVersion, clientVersion: 'test' });
 
+const holdPort = () =>
+  new Promise<{ port: number; close: () => Promise<void> }>((resolve) => {
+    const blocker = createNetServer();
+    blocker.listen(0, '127.0.0.1', () => {
+      const port = (blocker.address() as { port: number }).port;
+      resolve({ port, close: () => new Promise((r) => blocker.close(() => r())) });
+    });
+  });
+const baseOptions = (handle: (cmd: never) => Promise<unknown> = async () => null) => ({
+  token: TOKEN,
+  allowedOrigins: ['http://localhost:*'],
+  handlers: {
+    welcome: () => ({ bridgeVersion: '0.1.0', workspace: { root: '/r', project: 'p' }, kitVersion: null, authMode: 'local-claude-login' as const }),
+    handle,
+  },
+});
+
 describe('startBridgeServer', () => {
+  it('falls back to a free port when the preferred one is taken', async () => {
+    const held = await holdPort();
+    try {
+      server = await startBridgeServer({ ...baseOptions(), port: held.port, strictPort: false });
+      expect(server.port).not.toBe(held.port);
+      expect(server.port).toBeGreaterThan(held.port);
+      expect(server.port).toBeLessThan(held.port + 10);
+    } finally {
+      await held.close();
+    }
+  });
+
+  it('rejects when the port is taken and strictPort is set', async () => {
+    const held = await holdPort();
+    try {
+      await expect(startBridgeServer({ ...baseOptions(), port: held.port, strictPort: true })).rejects.toMatchObject({ code: 'EADDRINUSE' });
+    } finally {
+      await held.close();
+    }
+  });
+
+  it('ignores pipelined frames after a rejected handshake', async () => {
+    let handled = 0;
+    server = await startBridgeServer({ ...baseOptions(async () => (handled++, [])), port: 0, strictPort: true });
+    const c = connect(server);
+    await opened(c.ws);
+    c.ws.send(hello('nope'));
+    c.ws.send(hello());
+    c.ws.send(JSON.stringify({ kind: 'command', id: 'a', cmd: 'thread.list' }));
+    await waitFor(() => c.closed());
+    expect(c.closed()).toBe(4001);
+    expect(handled).toBe(0);
+    expect(c.inbox.map((m) => m.kind)).toEqual(['handshake.error']);
+  });
+
   it('listens on loopback only', async () => {
     const s = await start();
     expect(s.port).toBeGreaterThan(0);

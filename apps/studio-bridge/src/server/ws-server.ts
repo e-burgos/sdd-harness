@@ -64,44 +64,53 @@ export async function startBridgeServer(o: {
     maxPayload: MAX_PAYLOAD_BYTES,
     verifyClient: (info, done) => done(originAllowed(info.origin || undefined, o.allowedOrigins), 403),
   });
+  // wss re-emite los 'error' del http (p. ej. EADDRINUSE); sin listener serían una excepción no capturada y listen() nunca rechazaría.
+  wss.on('error', () => {});
   const clients = new Set<WebSocket>();
   const send = (ws: WebSocket, message: ServerMessage) => {
     if (ws.readyState === ws.OPEN) ws.send(JSON.stringify(message));
   };
 
   wss.on('connection', (ws) => {
-    let authed = false;
+    let state: 'pending' | 'authed' | 'rejected' = 'pending';
     const reject = (code: 'bad-message' | 'bad-token' | 'protocol-mismatch' | 'timeout', message: string, closeCode: number) => {
+      state = 'rejected';
       send(ws, { kind: 'handshake.error', code, message });
       ws.close(closeCode);
     };
     const timer = setTimeout(() => reject('timeout', 'no llegó el hello a tiempo', 4000), o.helloTimeoutMs ?? 5000);
 
     ws.on('message', async (raw) => {
-      const decoded = decodeClientMessage(raw.toString());
-      if (!authed) {
-        clearTimeout(timer);
-        if (!decoded.ok || decoded.value.kind !== 'hello') return reject('bad-message', 'se esperaba hello', 4000);
-        if (!tokensMatch(decoded.value.token, o.token)) return reject('bad-token', 'token inválido', 4001);
-        if (decoded.value.protocolVersion !== PROTOCOL_VERSION) {
-          return reject('protocol-mismatch', `el puente habla el protocolo ${PROTOCOL_VERSION}`, 4002);
-        }
-        authed = true;
-        clients.add(ws);
-        send(ws, { kind: 'welcome', protocolVersion: PROTOCOL_VERSION, ...o.handlers.welcome() });
-        return undefined;
-      }
-      if (!decoded.ok) {
-        send(ws, { kind: 'result', id: 'unknown', ok: false, error: { code: 'bad-request', message: decoded.error } });
-        return undefined;
-      }
-      if (decoded.value.kind === 'hello') return undefined;
-      const command = decoded.value;
+      // close() sólo pasa a CLOSING: los frames ya encolados no deben procesarse tras un rechazo.
+      if (state === 'rejected' || ws.readyState !== ws.OPEN) return undefined;
       try {
-        const data = await o.handlers.handle(command);
-        send(ws, { kind: 'result', id: command.id, ok: true, data: data ?? null });
-      } catch (error) {
-        send(ws, { kind: 'result', id: command.id, ok: false, error: toError(error) });
+        const decoded = decodeClientMessage(raw.toString());
+        if (state === 'pending') {
+          clearTimeout(timer);
+          if (!decoded.ok || decoded.value.kind !== 'hello') return reject('bad-message', 'se esperaba hello', 4000);
+          if (!tokensMatch(decoded.value.token, o.token)) return reject('bad-token', 'token inválido', 4001);
+          if (decoded.value.protocolVersion !== PROTOCOL_VERSION) {
+            return reject('protocol-mismatch', `el puente habla el protocolo ${PROTOCOL_VERSION}`, 4002);
+          }
+          state = 'authed';
+          clients.add(ws);
+          send(ws, { kind: 'welcome', protocolVersion: PROTOCOL_VERSION, ...o.handlers.welcome() });
+          return undefined;
+        }
+        if (!decoded.ok) {
+          send(ws, { kind: 'result', id: 'unknown', ok: false, error: { code: 'bad-request', message: decoded.error } });
+          return undefined;
+        }
+        if (decoded.value.kind === 'hello') return undefined;
+        const command = decoded.value;
+        try {
+          const data = await o.handlers.handle(command);
+          send(ws, { kind: 'result', id: command.id, ok: true, data: data ?? null });
+        } catch (error) {
+          send(ws, { kind: 'result', id: command.id, ok: false, error: toError(error) });
+        }
+      } catch {
+        ws.close(1011);
       }
       return undefined;
     });

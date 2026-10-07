@@ -22,6 +22,7 @@ describe('security', () => {
     ['https://evil.example', false],
     ['http://localhost.evil.example:80', false],
     ['https://studio.sdd.estebanburgos.com.ar.evil.example', false],
+    ['null', false],
     [undefined, true],
   ])('origin %s → %s', (origin, expected) => {
     expect(originAllowed(origin, ALLOWED)).toBe(expected);

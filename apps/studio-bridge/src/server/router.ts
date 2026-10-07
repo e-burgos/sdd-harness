@@ -1,4 +1,4 @@
-import { readFile, stat } from 'node:fs/promises';
+import { open } from 'node:fs/promises';
 import type { AuthMode, ClientCommand } from '@sdd-studio/protocol';
 import type { CommandRunner } from '../commands/runner';
 import { SessionError, type SessionManager } from '../sessions/session-manager';
@@ -34,8 +34,16 @@ export function createHandlers(d: {
           return d.watcher.current();
         case 'workspace.readFile': {
           const file = await resolveSddPath(d.root, command.path);
-          if ((await stat(file)).size > MAX_READ_BYTES) throw new SessionError('bad-request', 'archivo demasiado grande');
-          return { path: command.path, content: await readFile(file, 'utf8') };
+          // Un único handle: fstat + lectura sobre el mismo fd (sin TOCTOU entre stat y read).
+          const handle = await open(file, 'r');
+          try {
+            const info = await handle.stat();
+            if (!info.isFile()) throw new SessionError('bad-request', 'no es un archivo regular');
+            if (info.size > MAX_READ_BYTES) throw new SessionError('bad-request', 'archivo demasiado grande');
+            return { path: command.path, content: await handle.readFile('utf8') };
+          } finally {
+            await handle.close();
+          }
         }
         case 'thread.create':
           return d.sessions.createThread(command);
