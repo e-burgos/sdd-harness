@@ -1,3 +1,12 @@
+'use client';
+
+import { ConnectScreen } from '@/components/ConnectScreen';
+import { I18nProvider } from '@/lib/i18n/i18n';
+
 export default function Home() {
-  return <main className="p-8">SDD Studio</main>;
+  return (
+    <I18nProvider>
+      <ConnectScreen />
+    </I18nProvider>
+  );
 }
