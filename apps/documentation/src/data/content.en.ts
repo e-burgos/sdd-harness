@@ -816,12 +816,12 @@ export const UI = {
       },
       {
         title: 'Security',
-        body: 'The port is local-only (127.0.0.1) and every start generates a fresh token. The SPEC GATE and approvals are enforced: nothing runs until you approve it. The web app never sees credentials.',
+        body: 'The port is local-only (127.0.0.1) and every start generates a fresh token. Actions ask for your approval according to the thread's permission mode (in "accept edits" mode edits are auto-accepted), and code edits always pass the kit's SPEC GATE. The web app never sees credentials.',
         command: null as string | null,
       },
       {
         title: 'Authentication',
-        body: 'Use your local Claude Code login or set ANTHROPIC_API_KEY. Note: Anthropic states that subscription login (Claude Pro/Max) is not intended for third-party products; for sustained use in third-party products use an API key.',
+        body: 'Use your local Claude Code login or set ANTHROPIC_API_KEY. Note: per the Claude Agent SDK docs, unless previously approved, Anthropic does not allow third-party developers to offer claude.ai login or rate limits for their products, including agents built on the Claude Agent SDK.',
         command: null as string | null,
       },
     ],

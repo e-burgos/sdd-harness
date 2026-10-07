@@ -24,3 +24,9 @@ Abrí la URL que imprime el puente (`/w#bridge=…&token=…`).
 ## Tests
 
 `pnpm --filter sdd-studio-web test` (vitest) y `pnpm --filter sdd-studio-web e2e` (Playwright contra el puente con `--engine fake --local-ui`; requiere `pnpm build` antes). El puerto del e2e se puede cambiar con `E2E_PORT`.
+
+## Antes del primer deploy
+
+- La zona de `studio.sdd.estebanburgos.com.ar` tiene que existir en la misma cuenta de Cloudflare.
+- `CLOUDFLARE_API_TOKEN` necesita permiso de Workers (y definir `CLOUDFLARE_ACCOUNT_ID`) como secrets del repo.
+- El primer deploy corre al mergear esto a `main` (workflow `deploy-studio.yml`).

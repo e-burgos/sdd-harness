@@ -889,12 +889,12 @@ export const UI = {
       },
       {
         title: 'Seguridad',
-        body: 'El puerto es sólo local (127.0.0.1) y cada arranque genera un token nuevo. El SPEC GATE y las aprobaciones se respetan: nada se ejecuta sin que lo apruebes. La web nunca ve credenciales.',
+        body: 'El puerto es sólo local (127.0.0.1) y cada arranque genera un token nuevo. Las acciones piden tu aprobación según el modo de permisos del hilo (en "aceptar ediciones" las ediciones se aceptan solas), y las ediciones de código siempre pasan por el SPEC GATE del kit. La web nunca ve credenciales.',
         command: null as string | null,
       },
       {
         title: 'Autenticación',
-        body: 'Usá el login local de Claude Code o definí ANTHROPIC_API_KEY. Aviso: Anthropic indica que el login de suscripción (Claude Pro/Max) no está pensado para productos de terceros; para un uso sostenido en productos de terceros usá una API key.',
+        body: 'Usá el login local de Claude Code o definí ANTHROPIC_API_KEY. Aviso: según la documentación del Claude Agent SDK, salvo aprobación previa, Anthropic no permite que desarrolladores de terceros ofrezcan el login de claude.ai ni sus límites de uso en sus productos, incluidos los agentes construidos sobre el Agent SDK.',
         command: null as string | null,
       },
     ],
