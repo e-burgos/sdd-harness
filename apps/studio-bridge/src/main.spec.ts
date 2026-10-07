@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { createServer } from 'node:net';
-import { mkdtemp, realpath, rm, symlink } from 'node:fs/promises';
+import { mkdir, mkdtemp, realpath, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { PROTOCOL_VERSION, defaultThreadOptions, type ServerMessage } from '@sdd-studio/protocol';
@@ -31,6 +31,27 @@ afterEach(async () => {
 });
 
 describe('startBridge', () => {
+  it('serves the local UI and returns a loopback URL when localUiDir is set', async () => {
+    const { root, cleanup } = await copyFixture();
+    cleanups.push(cleanup);
+    const web = await mkdtemp(path.join(tmpdir(), 'web-'));
+    cleanups.push(() => rm(web, { recursive: true, force: true }));
+    await mkdir(path.join(web, 'w'), { recursive: true });
+    await writeFile(path.join(web, 'w', 'index.html'), '<h1>ws</h1>');
+    const bridge = await startBridge({ root, port: 0, strictPort: true, engine: 'fake', allowedOrigins: DEFAULT_ORIGINS, webUrl: 'x', localUiDir: web });
+    cleanups.push(bridge.close);
+    expect(bridge.url).toBe(`http://127.0.0.1:${bridge.port}/w/#bridge=${bridge.port}&token=${bridge.token}`);
+    expect(await (await fetch(`http://127.0.0.1:${bridge.port}/w/`)).text()).toBe('<h1>ws</h1>');
+  });
+  it('refuses a localUiDir without w/index.html', async () => {
+    const { root, cleanup } = await copyFixture();
+    cleanups.push(cleanup);
+    const web = await mkdtemp(path.join(tmpdir(), 'web-'));
+    cleanups.push(() => rm(web, { recursive: true, force: true }));
+    await expect(
+      startBridge({ root, port: 0, strictPort: true, engine: 'fake', allowedOrigins: [], webUrl: 'x', localUiDir: web }),
+    ).rejects.toBeInstanceOf(BridgeStartError);
+  });
   it('serves the fixture end to end with the fake engine', async () => {
     const { root, cleanup } = await copyFixture();
     cleanups.push(cleanup);

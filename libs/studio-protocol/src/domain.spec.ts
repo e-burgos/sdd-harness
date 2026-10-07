@@ -3,12 +3,22 @@ import {
   ChannelId,
   ThreadOptions,
   WorkspaceSnapshot,
+  channelForDm,
   channelForSpec,
   defaultThreadOptions,
+  dmAgentOfChannel,
   specIdOfChannel,
 } from './index';
 
 describe('ChannelId', () => {
+  it('accepts dm channels and maps them to agents', () => {
+    expect(ChannelId.safeParse('dm:sdd-planner').success).toBe(true);
+    expect(ChannelId.safeParse('dm:').success).toBe(false);
+    expect(ChannelId.safeParse('dm:../x').success).toBe(false);
+    expect(channelForDm('sdd-planner')).toBe('dm:sdd-planner');
+    expect(dmAgentOfChannel('dm:sdd-planner')).toBe('sdd-planner');
+    expect(dmAgentOfChannel('general')).toBeNull();
+  });
   it('accepts general, fixes and spec channels (mixed-case authors included)', () => {
     for (const id of ['general', 'fixes', 'spec:spec-dev-001-pagos', 'spec:spec-EBurgos-002-x']) {
       expect(ChannelId.safeParse(id).success).toBe(true);

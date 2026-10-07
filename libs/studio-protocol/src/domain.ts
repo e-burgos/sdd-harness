@@ -23,7 +23,9 @@ export type PermissionModeChoice = z.infer<typeof PermissionModeChoice>;
 export const AuthMode = z.enum(['local-claude-login', 'api-key']);
 export type AuthMode = z.infer<typeof AuthMode>;
 
-export const ChannelId = z.string().regex(/^(general|fixes|spec:[A-Za-z0-9][A-Za-z0-9._-]{0,127})$/);
+export const ChannelId = z
+  .string()
+  .regex(/^(general|fixes|spec:[A-Za-z0-9][A-Za-z0-9._-]{0,127}|dm:[A-Za-z0-9][A-Za-z0-9_-]{0,63})$/);
 export type ChannelId = z.infer<typeof ChannelId>;
 
 export const ThreadOptions = z.object({
@@ -66,6 +68,10 @@ export type Presence = z.infer<typeof Presence>;
 export const channelForSpec = (specId: string): string => `spec:${specId}`;
 export const specIdOfChannel = (channelId: string): string | null =>
   channelId.startsWith('spec:') ? channelId.slice(5) : null;
+
+export const channelForDm = (agent: string): string => `dm:${agent}`;
+export const dmAgentOfChannel = (channelId: string): string | null =>
+  channelId.startsWith('dm:') ? channelId.slice(3) : null;
 
 export function defaultThreadOptions(agent: string = DEFAULT_AGENT): ThreadOptions {
   return { agent, model: 'kit', effort: null, permissionMode: 'default' };

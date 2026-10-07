@@ -43,6 +43,16 @@ const pendingApproval = (threadId: string) =>
 const opts = defaultThreadOptions();
 
 describe('SessionManager', () => {
+  it('runs DMs with the channel agent and rejects a mismatched agent', async () => {
+    const { m } = await manager();
+    const t = await m.createThread({ channelId: 'dm:sdd-planner', options: { ...opts, agent: 'sdd-planner' }, text: 'hola' });
+    await waitFor(() => statusOf(m, t.id) === 'idle');
+    expect(t.agent).toBe('sdd-planner');
+    await expect(
+      m.createThread({ channelId: 'dm:sdd-planner', options: opts, text: 'hola' }),
+    ).rejects.toMatchObject({ code: 'bad-request' });
+  });
+
   it('runs a turn end to end and persists the history', async () => {
     const { m } = await manager();
     const t = await m.createThread({ channelId: 'general', options: opts, text: 'hola' });

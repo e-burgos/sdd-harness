@@ -25,3 +25,10 @@ export function parseWebUrl(raw: string): string {
   }
   return raw;
 }
+
+export function parseToken(raw: string): string {
+  if (!/^[A-Za-z0-9_-]{16,256}$/.test(raw)) {
+    throw new BridgeStartError('Token inválido: usá al menos 16 caracteres [A-Za-z0-9_-].');
+  }
+  return raw;
+}

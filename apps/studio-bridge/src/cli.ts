@@ -1,7 +1,8 @@
+import { fileURLToPath } from 'node:url';
 import { defineCommand, runMain } from 'citty';
 import pc from 'picocolors';
 import { BridgeStartError, DEFAULT_ORIGINS, DEFAULT_WEB_URL, startBridge } from './main';
-import { parseEngine, parsePort, parseWebUrl } from './cli-options';
+import { parseEngine, parsePort, parseToken, parseWebUrl } from './cli-options';
 import { openBrowser } from './open-browser';
 import { BRIDGE_VERSION } from './version';
 
@@ -13,6 +14,8 @@ const main = defineCommand({
     engine: { type: 'string', description: 'claude | fake', default: 'claude' },
     'allow-origin': { type: 'string', description: 'Orígenes extra permitidos, separados por coma' },
     'web-url': { type: 'string', description: 'URL de la web', default: DEFAULT_WEB_URL },
+    token: { type: 'string', description: 'Token de emparejamiento fijo (tests/scripts; por defecto se genera uno nuevo)' },
+    'local-ui': { type: 'boolean', description: 'Servir la web desde el puente (http://127.0.0.1:<puerto>/w/)', default: false },
     open: { type: 'boolean', description: 'Abrir el navegador (--no-open para no abrirlo)', default: true },
   },
   async run({ args }) {
@@ -28,6 +31,8 @@ const main = defineCommand({
         engine,
         allowedOrigins: [...DEFAULT_ORIGINS, ...extraOrigins],
         webUrl,
+        token: args.token !== undefined ? parseToken(args.token) : undefined,
+        localUiDir: args['local-ui'] ? fileURLToPath(new URL('./web', import.meta.url)) : undefined,
       });
       const auth = bridge.authMode === 'api-key' ? 'API key (ANTHROPIC_API_KEY)' : 'login local de Claude Code';
       console.log(`${pc.bold('SDD Studio')} ${pc.dim(`v${BRIDGE_VERSION}`)} · ${bridge.project}`);

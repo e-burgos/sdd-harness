@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { dmAgentOfChannel } from '@sdd-studio/protocol';
 import type {
   Presence,
   ServerEvent,
@@ -112,6 +113,10 @@ export class SessionManager {
   }
 
   async createThread(args: { channelId: string; options: ThreadOptions; text: string }): Promise<ThreadInfo> {
+    const dmAgent = dmAgentOfChannel(args.channelId);
+    if (dmAgent !== null && args.options.agent !== dmAgent) {
+      throw new SessionError('bad-request', `un DM con ${dmAgent} sólo admite ese agente`);
+    }
     const now = this.now();
     const thread: StoredThread = {
       id: this.newId(),

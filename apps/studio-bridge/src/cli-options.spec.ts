@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseEngine, parsePort, parseWebUrl } from './cli-options';
+import { parseEngine, parsePort, parseToken, parseWebUrl } from './cli-options';
 import { BridgeStartError } from './main';
 
 describe('cli option validators', () => {
@@ -22,5 +22,14 @@ describe('cli option validators', () => {
     for (const bad of ['ftp://a.test', 'nope', 'https://a.test/?x=1', 'https://a.test/#h']) {
       expect(() => parseWebUrl(bad)).toThrow(BridgeStartError);
     }
+  });
+});
+
+describe('parseToken', () => {
+  it('accepts 16+ url-safe chars', () => {
+    expect(parseToken('e2e-token-0123456789abcdef')).toBe('e2e-token-0123456789abcdef');
+  });
+  it.each(['short', 'has space in it 1234', 'ñññññññññññññññññ', ''])('rejects %j', (raw) => {
+    expect(() => parseToken(raw)).toThrow(BridgeStartError);
   });
 });

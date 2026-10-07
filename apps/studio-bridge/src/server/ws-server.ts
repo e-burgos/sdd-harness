@@ -11,6 +11,7 @@ import { WebSocketServer, type WebSocket } from 'ws';
 import { SessionError } from '../sessions/session-manager';
 import { PathError } from '../workspace/paths';
 import { originAllowed, tokensMatch } from './security';
+import { serveStatic } from './static';
 
 export const MAX_PAYLOAD_BYTES = 1_048_576;
 
@@ -54,10 +55,18 @@ export async function startBridgeServer(o: {
   allowedOrigins: string[];
   handlers: BridgeHandlers;
   helloTimeoutMs?: number;
+  localUiDir?: string;
 }): Promise<BridgeServer> {
-  const http = createServer((_req, res) => {
+  const http = createServer((req, res) => {
+    if (o.localUiDir) {
+      return void serveStatic(o.localUiDir, req, res).catch(() => {
+        if (!res.headersSent) res.writeHead(500);
+        res.end();
+      });
+    }
     res.writeHead(426, { 'content-type': 'text/plain; charset=utf-8' });
     res.end('SDD Studio bridge: conectate por WebSocket.');
+    return undefined;
   });
   const wss = new WebSocketServer({
     server: http,

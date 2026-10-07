@@ -23,6 +23,8 @@ Abre el navegador en la web de Studio ya emparejada con este repo.
 | `--allow-origin <a,b>` | — | Orígenes extra permitidos |
 | `--web-url <url>` | `https://studio.sdd.estebanburgos.com.ar` | Web a abrir; valores inválidos abortan con error en español |
 | `--no-open` | — | No abrir el navegador |
+| `--local-ui` | — | Sirve la web desde el puente (`http://127.0.0.1:<puerto>/w/`). Usalo si tu navegador bloquea la conexión de la web hosteada al puerto local (p. ej. Safari) o para usar Studio sin internet. Requiere un build con la web incluida (`dist/web`) |
+| `--token <t>` | generado | Token de emparejamiento fijo (≥16 caracteres `[A-Za-z0-9_-]`), para tests y scripts |
 
 ## Autenticación
 

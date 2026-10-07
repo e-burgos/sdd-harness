@@ -68,6 +68,13 @@ describe('ThreadStore', () => {
     expect(await s.botHistory('fixes', 10)).toEqual([]);
   });
 
+  it('round-trips bot history of a dm channel', async () => {
+    const s = new ThreadStore(root);
+    await s.init();
+    s.appendBot({ channelId: 'dm:sdd-planner', botKind: 'task.status', payload: { i: 1 } });
+    expect((await s.botHistory('dm:sdd-planner', 10)).map((e) => e.payload.i)).toEqual([1]);
+  });
+
   it('handles disk errors without crashing on append', async () => {
     const errors: unknown[] = [];
     const s = new ThreadStore(root, (e) => errors.push(e));
