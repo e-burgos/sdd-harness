@@ -6,7 +6,7 @@ interface ThreadPresence {
   status: ThreadInfo['status'];
   tools: Map<string, string>;
   subagents: Map<string, string>;
-  waitingAgent: string | null;
+  approvals: Map<string, string>;
 }
 
 export class PresenceTracker {
@@ -21,14 +21,14 @@ export class PresenceTracker {
       status: thread.status,
       tools: new Map<string, string>(),
       subagents: new Map<string, string>(),
-      waitingAgent: null,
+      approvals: new Map<string, string>(),
     };
     entry.status = thread.status;
-    // Clear subagents, tools, and waitingAgent when thread ends (idle/interrupted/error).
+    // Clear subagents, tools, and approvals when thread ends (idle/interrupted/error).
     if (thread.status === 'idle' || thread.status === 'interrupted' || thread.status === 'error') {
       entry.subagents.clear();
       entry.tools.clear();
-      entry.waitingAgent = null;
+      entry.approvals.clear();
     }
     this.threads.set(thread.id, entry);
   }
@@ -48,14 +48,14 @@ export class PresenceTracker {
         t.tools.delete(event.agentType);
         break;
       case 'approval.requested':
-        t.waitingAgent = event.author.agent;
+        t.approvals.set(event.approvalId, event.author.agent);
         break;
       case 'approval.resolved':
-        t.waitingAgent = null;
+        t.approvals.delete(event.approvalId);
         break;
       case 'turn.end':
         t.tools.clear();
-        t.waitingAgent = null;
+        t.approvals.clear();
         break;
       default:
         break;
@@ -77,7 +77,7 @@ export class PresenceTracker {
     });
     const entries = [...this.threads.entries()];
     for (const [id, t] of entries) {
-      if (t.status === 'waiting-approval' && t.waitingAgent === agent) return at(id, t, 'waiting');
+      if (t.status === 'waiting-approval' && [...t.approvals.values()].includes(agent)) return at(id, t, 'waiting');
     }
     for (const [id, t] of entries) {
       const active = t.main === agent || [...t.subagents.values()].includes(agent);

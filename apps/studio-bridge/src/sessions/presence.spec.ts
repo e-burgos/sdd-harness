@@ -53,4 +53,20 @@ describe('PresenceTracker', () => {
     p.onThread(thread('idle'));
     expect(stateOf(p, 'sdd-planner')?.state).toBe('idle');
   });
+
+  it('tracks multiple approvals and keeps waiting until all resolved', () => {
+    const p = new PresenceTracker(agents);
+    p.onThread(thread('waiting-approval'));
+    p.onEvent('t1', { type: 'approval.requested', approvalId: 'a1', author: { agent: 'sdd-planner', parentToolUseId: 'x' }, tool: 'Bash', summary: '' });
+    p.onEvent('t1', { type: 'approval.requested', approvalId: 'a2', author: { agent: 'sdd-reviewer', parentToolUseId: 'y' }, tool: 'Edit', summary: '' });
+    expect(stateOf(p, 'sdd-planner')?.state).toBe('waiting');
+    expect(stateOf(p, 'sdd-reviewer')?.state).toBe('waiting');
+
+    p.onEvent('t1', { type: 'approval.resolved', approvalId: 'a1', decision: 'allow' });
+    expect(stateOf(p, 'sdd-planner')?.state).toBe('idle');
+    expect(stateOf(p, 'sdd-reviewer')?.state).toBe('waiting');
+
+    p.onEvent('t1', { type: 'approval.resolved', approvalId: 'a2', decision: 'deny' });
+    expect(stateOf(p, 'sdd-reviewer')?.state).toBe('idle');
+  });
 });
