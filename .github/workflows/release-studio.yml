@@ -1,0 +1,61 @@
+name: Release Studio Bridge
+
+on:
+  push:
+    tags:
+      - 'studio-v*'
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'pnpm'
+
+      - name: Upgrade npm
+        run: npm install -g npm@latest
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck and test
+        run: |
+          pnpm --filter @sdd-studio/protocol --filter @e-burgos/sdd-studio typecheck
+          pnpm --filter @sdd-studio/protocol --filter @e-burgos/sdd-studio test
+
+      - name: Build
+        run: pnpm --filter @e-burgos/sdd-studio build
+
+      - name: Check if version is already published
+        id: version_check
+        run: |
+          PKG_VERSION=$(node -p "require('./apps/studio-bridge/package.json').version")
+          TAG_VERSION="${GITHUB_REF_NAME#studio-v}"
+          if [ "$GITHUB_EVENT_NAME" = "push" ] && [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
+            echo "::error::tag $GITHUB_REF_NAME no coincide con package.json ($PKG_VERSION)"
+            exit 1
+          fi
+          if npm view "@e-burgos/sdd-studio@$PKG_VERSION" version >/dev/null 2>&1; then
+            echo "already_published=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::@e-burgos/sdd-studio@$PKG_VERSION ya está en npm."
+          else
+            echo "already_published=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish to npm
+        if: steps.version_check.outputs.already_published == 'false'
+        run: pnpm --filter @e-burgos/sdd-studio publish --access public --no-git-checks --provenance

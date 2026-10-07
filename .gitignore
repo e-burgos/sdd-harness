@@ -12,3 +12,6 @@ demo
 
 # Tokens (Cloudflare, Hostinger) para deploys manuales
 .env
+
+# SDD Studio local history
+.sdd-studio/
