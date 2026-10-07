@@ -11,7 +11,7 @@ import {
   type PermissionModeChoice,
   type ThreadOptions,
 } from '@sdd-studio/protocol';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { z } from 'zod';
 import { agentMeta } from '@/lib/agents';
 import { useT } from '@/lib/i18n/i18n';
@@ -21,6 +21,9 @@ import { useBridge, useStudio } from '../BridgeProvider';
 const RunResult = z.object({ runId: z.string().min(1) });
 const FileResult = z.object({ path: z.string(), content: z.string() });
 
+const MAX_MESSAGE = 100_000;
+const errorText = (e: unknown) => (e instanceof Error ? e.message : String(e));
+
 const MODELS: ModelChoice[] = ['kit', 'haiku', 'sonnet', 'opus', 'fable'];
 const EFFORTS: Effort[] = ['low', 'medium', 'high', 'xhigh', 'max'];
 const PERMS: PermissionModeChoice[] = ['default', 'acceptEdits', 'plan'];
@@ -28,7 +31,8 @@ const PERMS: PermissionModeChoice[] = ['default', 'acceptEdits', 'plan'];
 export interface ComposerViewProps {
   options: ThreadOptions;
   onOptionsChange(patch: Partial<ThreadOptions>): void;
-  onSubmit(text: string): void;
+  /** Resuelve true si el mensaje se envió (el texto se limpia); false o rechazo conservan el texto. */
+  onSubmit(text: string): Promise<boolean>;
   agents: string[];
   agentLocked: boolean;
   error: string | null;
@@ -37,11 +41,27 @@ export interface ComposerViewProps {
 export function ComposerView(p: ComposerViewProps) {
   const { t } = useT();
   const [text, setText] = useState('');
-  const submit = () => {
+  const [pending, setPending] = useState(false);
+  const busy = useRef(false);
+  const box = useRef<HTMLTextAreaElement>(null);
+  const wasPending = useRef(false);
+  useEffect(() => {
+    if (wasPending.current && !pending) box.current?.focus();
+    wasPending.current = pending;
+  }, [pending]);
+  const submit = async () => {
     const value = text.trim();
-    if (!value) return;
-    p.onSubmit(value);
-    setText('');
+    if (!value || busy.current) return;
+    busy.current = true;
+    setPending(true);
+    try {
+      if (await p.onSubmit(value)) setText('');
+    } catch {
+      // el error lo informa el contenedor; el texto se conserva
+    } finally {
+      busy.current = false;
+      setPending(false);
+    }
   };
   const select = 'rounded-md border border-ink-700 bg-ink-950 px-2 py-1 text-xs text-ink-100 disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400';
   return (
@@ -52,12 +72,14 @@ export function ComposerView(p: ComposerViewProps) {
           className="block max-h-48 min-h-[44px] w-full resize-y bg-transparent px-3 py-2 text-sm outline-none"
           aria-label={t('composer.placeholder')}
           placeholder={t('composer.placeholder')}
+          ref={box}
           value={text}
+          disabled={pending}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
+            if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
               e.preventDefault();
-              submit();
+              void submit();
             }
           }}
         />
@@ -93,7 +115,7 @@ export function ComposerView(p: ComposerViewProps) {
           <select id="composer-perm" className={select} value={p.options.permissionMode} onChange={(e) => p.onOptionsChange({ permissionMode: e.target.value as PermissionModeChoice })}>
             {PERMS.map((x) => <option key={x} value={x}>{t(`perm.${x}`)}</option>)}
           </select>
-          <button aria-label={t('composer.send')} className="ml-auto rounded-md bg-accent-500 p-1.5 text-ink-950 hover:bg-accent-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" onClick={submit}>
+          <button aria-label={t('composer.send')} className="ml-auto rounded-md bg-accent-500 p-1.5 text-ink-950 hover:bg-accent-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-50" disabled={pending} onClick={() => void submit()}>
             <PaperPlaneRight size={16} weight="fill" />
           </button>
         </div>
@@ -110,45 +132,57 @@ export function Composer({ channelId, threadId, onThreadCreated }: { channelId: 
   const dmAgent = dmAgentOfChannel(channelId);
   const [draft, setDraft] = useState<ThreadOptions>(() => defaultThreadOptions(dmAgent ?? DEFAULT_AGENT));
   const [error, setError] = useState<string | null>(null);
+  const busy = useRef(false);
   const options = threadInfo?.options ?? { ...draft, agent: dmAgent ?? draft.agent };
   const agents = useMemo(() => {
     const ids = snapshot?.agents.map((a) => a.id) ?? [];
     return ids.includes(options.agent) ? ids : [options.agent, ...ids];
   }, [snapshot, options.agent]);
 
-  const send = async (text: string) => {
+  const send = async (text: string): Promise<boolean> => {
+    if (text.length > MAX_MESSAGE) {
+      setError(t('composer.tooLong'));
+      return false;
+    }
     if (threadId) {
       await client.request({ cmd: 'thread.send', threadId, text });
     } else {
       const created = ThreadInfo.parse(await client.request({ cmd: 'thread.create', channelId, options, text }));
       onThreadCreated(created.id);
     }
+    return true;
   };
 
-  const onSubmit = (text: string) => {
+  const onSubmit = async (text: string): Promise<boolean> => {
+    if (busy.current) return false;
+    busy.current = true;
     setError(null);
-    const action = parseSlash(text);
-    const run = async () => {
-      if (!action) return send(text);
+    try {
+      const action = parseSlash(text);
+      if (!action) return await send(text);
       if (action.kind === 'error') {
         setError(action.reason === 'unknown' ? t('composer.unknownCommand', { name: action.name }) : t('composer.badArgs', { name: action.name }));
-        return;
+        return false;
       }
       if (action.kind === 'run') {
         const { runId } = RunResult.parse(await client.request({ cmd: 'command.run', name: action.name, args: action.args }));
         store.getState().startRun({ runId, name: action.name, args: action.args });
-        return;
+        return true;
       }
       const file = FileResult.parse(await client.request({ cmd: 'workspace.readFile', path: action.path }));
-      return send(action.args ? `${file.content}\n\n---\n${action.args}` : file.content);
-    };
-    void run().catch((e: unknown) => setError(e instanceof Error ? e.message : String(e)));
+      return await send(action.args ? `${file.content}\n\n---\n${action.args}` : file.content);
+    } catch (e) {
+      setError(errorText(e));
+      return false;
+    } finally {
+      busy.current = false;
+    }
   };
 
   const onOptionsChange = (patch: Partial<ThreadOptions>) => {
     if (threadId) {
       const { agent: _agent, ...allowed } = patch;
-      void client.request({ cmd: 'thread.setOptions', threadId, options: allowed }).catch((e: unknown) => setError(String(e)));
+      void client.request({ cmd: 'thread.setOptions', threadId, options: allowed }).catch((e: unknown) => setError(errorText(e)));
     } else {
       setDraft((d) => ({ ...d, ...patch }));
     }

@@ -24,7 +24,7 @@ export function Workspace() {
         key={`${view.channelId}:${view.threadId ?? ''}`}
         channelId={view.channelId}
         threadId={view.threadId}
-        onThreadCreated={(threadId) => setView({ ...view, threadId })}
+        onThreadCreated={(threadId) => setView((v) => (v.channelId === view.channelId ? { ...v, threadId } : v))}
       />
     </>
   );

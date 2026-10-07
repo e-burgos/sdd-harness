@@ -11,11 +11,13 @@ import { AgentAvatar } from './AgentAvatar';
 import { StatusBadge } from './StatusBadge';
 
 const MARK: Record<string, string> = { done: '✓', 'in-progress': '▸', skipped: '–' };
+const TASK_KEYS = { done: 'task.done', 'in-progress': 'task.in-progress', skipped: 'task.skipped', pending: 'task.pending' } as const;
+const PRESENCE_KEYS = { working: 'presence.working', waiting: 'presence.waiting', open: 'presence.open', idle: 'presence.idle' } as const;
 
 export function RightPanelView({ activity, cycle, onOpenThread }: { activity: ActivityEntry[]; cycle: CycleSummary | null; onOpenThread(id: string): void }) {
   const { t } = useT();
   return (
-    <aside className="flex h-full flex-col gap-6 overflow-y-auto border-l border-ink-800 bg-ink-900 p-4">
+    <aside aria-label={t('panel.label')} className="flex h-full flex-col gap-6 overflow-y-auto border-l border-ink-800 bg-ink-900 p-4">
       <section>
         <h2 className="mb-2 text-[11px] uppercase tracking-wider text-ink-500">{t('panel.activity')}</h2>
         {activity.length === 0 && <p className="text-sm text-ink-300">{t('panel.noActivity')}</p>}
@@ -23,7 +25,7 @@ export function RightPanelView({ activity, cycle, onOpenThread }: { activity: Ac
           {activity.map((entry) => (
             <li key={entry.threadId} className="rounded-lg border border-ink-800 p-2">
               <button className="flex w-full items-center gap-2 rounded-md text-left text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" onClick={() => onOpenThread(entry.threadId)}>
-                <span className="min-w-0 flex-1 truncate">{entry.title}</span>
+                <span className="min-w-0 flex-1 truncate" title={entry.title}>{entry.title}</span>
                 <StatusBadge status={entry.status} />
               </button>
               <ul className="mt-2 space-y-1">
@@ -31,8 +33,18 @@ export function RightPanelView({ activity, cycle, onOpenThread }: { activity: Ac
                   <li key={a.agent} className="flex items-center gap-2 text-xs">
                     <AgentAvatar agent={a.agent} size={18} />
                     <span>{agentMeta(a.agent).name}</span>
-                    {a.state === 'waiting' && <span className="text-amberish">⏸</span>}
-                    {a.state === 'working' && <span className="animate-pulse text-accent-400">⟳</span>}
+                    {a.state === 'waiting' && (
+                      <span className="text-amberish">
+                        <span aria-hidden>⏸</span>
+                        <span className="sr-only">{t(PRESENCE_KEYS.waiting)}</span>
+                      </span>
+                    )}
+                    {a.state === 'working' && (
+                      <span className="text-accent-400">
+                        <span aria-hidden className="inline-block animate-pulse motion-reduce:animate-none">⟳</span>
+                        <span className="sr-only">{t(PRESENCE_KEYS.working)}</span>
+                      </span>
+                    )}
                     {a.tool && <span className="ml-auto font-mono text-ink-300">{a.tool}</span>}
                   </li>
                 ))}
@@ -51,7 +63,14 @@ export function RightPanelView({ activity, cycle, onOpenThread }: { activity: Ac
               <span className="font-semibold">{cycle.cycle}</span>
               <span className="text-xs text-ink-300">{cycle.flow} · {cycle.status}</span>
             </div>
-            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-ink-800">
+            <div
+              role="progressbar"
+              aria-label={t('panel.details')}
+              aria-valuemin={0}
+              aria-valuemax={cycle.tasksTotal}
+              aria-valuenow={cycle.tasksDone}
+              className="mt-2 h-1.5 overflow-hidden rounded-full bg-ink-800"
+            >
               <div className="h-full bg-accent-400" style={{ width: `${cycle.tasksTotal ? (100 * cycle.tasksDone) / cycle.tasksTotal : 0}%` }} />
             </div>
             <p className="mt-1 text-xs text-ink-300">{t('cycle.progress', { done: cycle.tasksDone, total: cycle.tasksTotal })}</p>
@@ -60,10 +79,11 @@ export function RightPanelView({ activity, cycle, onOpenThread }: { activity: Ac
               {cycle.tasks.map((task) => (
                 <li key={task.id} className="flex gap-2 text-xs">
                   <span className={task.status === 'done' ? 'text-accent-300' : task.status === 'in-progress' ? 'text-amberish' : 'text-ink-500'}>
-                    {MARK[task.status] ?? '·'}
+                    <span aria-hidden>{MARK[task.status] ?? '·'}</span>
+                    <span className="sr-only">{task.status in TASK_KEYS ? t(TASK_KEYS[task.status as keyof typeof TASK_KEYS]) : task.status}</span>
                   </span>
                   <span className="font-mono text-ink-300">{task.id}</span>
-                  <span className="truncate">{task.title}</span>
+                  <span className="truncate" title={task.title}>{task.title}</span>
                 </li>
               ))}
             </ul>

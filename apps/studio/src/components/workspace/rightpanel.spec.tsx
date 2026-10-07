@@ -21,6 +21,11 @@ describe('RightPanelView', () => {
     expect(screen.getByText('Edit')).toBeInTheDocument();
     expect(screen.getByText('1/2 tasks')).toBeInTheDocument();
     expect(screen.getByText('✓')).toBeInTheDocument();
+    expect(screen.getByRole('complementary', { name: 'Panel de actividad y detalles' })).toBeInTheDocument();
+    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '1');
+    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuemax', '2');
+    expect(screen.getByText('hecha')).toBeInTheDocument();
+    expect(screen.getAllByText('trabajando')).toHaveLength(2);
     fireEvent.click(screen.getByRole('button', { name: /pagos v2/ }));
     expect(onOpenThread).toHaveBeenCalledWith('t');
   });
