@@ -121,6 +121,9 @@ importers:
         specifier: ^4.0.0
         version: 4.6.5
     devDependencies:
+      '@sdd-studio/protocol':
+        specifier: workspace:*
+        version: link:../../libs/studio-protocol
       '@types/node':
         specifier: ^20.19.9
         version: 20.19.43
