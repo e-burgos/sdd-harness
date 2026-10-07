@@ -31,4 +31,18 @@ describe('i18n', () => {
     expect(es['conn.bad-message']).toContain('rechazó');
     expect(en['conn.bad-message']).toContain('rejected');
   });
+  it('falls back to the key for unknown entries', () => {
+    function Unknown() {
+      const { t } = useT();
+      return <span>{t('nope.missing' as keyof typeof es)}</span>;
+    }
+    render(<I18nProvider initial="es"><Unknown /></I18nProvider>);
+    expect(screen.getByText('nope.missing')).toBeInTheDocument();
+  });
+  it('has the same placeholders in es and en for every key', () => {
+    const holders = (v: string) => [...v.matchAll(/\{(\w+)\}/g)].map((m) => m[1]).sort();
+    for (const key of Object.keys(es) as (keyof typeof es)[]) {
+      expect(holders(en[key]), key).toEqual(holders(es[key]));
+    }
+  });
 });

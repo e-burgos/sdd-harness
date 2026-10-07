@@ -16,6 +16,9 @@ describe('parseSlash', () => {
     });
     expect(parseSlash('/review')).toMatchObject({ kind: 'prompt', path: 'sdd/prompts/review-cycle.prompt.md', args: '' });
   });
+  it('does not resolve Object prototype keys as commands', () => {
+    expect(parseSlash('/constructor')).toEqual({ kind: 'error', reason: 'unknown', name: 'constructor' });
+  });
   it('flags unknown commands', () => {
     expect(parseSlash('/nope x')).toEqual({ kind: 'error', reason: 'unknown', name: 'nope' });
   });

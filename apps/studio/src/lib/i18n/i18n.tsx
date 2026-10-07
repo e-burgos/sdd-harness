@@ -46,7 +46,7 @@ export function I18nProvider({ children, initial }: { children: ReactNode; initi
   const value = useMemo<I18nValue>(() => {
     const dict = DICTS[lang];
     const t: TFunction = (key, vars = {}) =>
-      dict[key].replace(/\{(\w+)\}/g, (_m, k: string) => (k in vars ? String(vars[k]) : `{${k}}`));
+      (dict[key] ?? key).replace(/\{(\w+)\}/g, (_m, k: string) => (k in vars ? String(vars[k]) : `{${k}}`));
     return { t, lang, setLang };
   }, [lang, setLang]);
   return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;

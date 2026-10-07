@@ -26,7 +26,7 @@ export function parseSlash(text: string): SlashAction {
     if (args.length > max || !args.every((a) => SAFE_ARG.test(a))) return { kind: 'error', reason: 'args', name };
     return { kind: 'run', name, args };
   }
-  if (name in PROMPT_COMMANDS) {
+  if (Object.hasOwn(PROMPT_COMMANDS, name)) {
     const key = name as keyof typeof PROMPT_COMMANDS;
     return { kind: 'prompt', name: key, path: PROMPT_COMMANDS[key], args: rest };
   }
