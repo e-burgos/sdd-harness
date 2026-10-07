@@ -1,0 +1,39 @@
+{
+  "name": "@e-burgos/sdd-studio",
+  "version": "0.1.0",
+  "description": "Local bridge for SDD Studio: drives the SDD kit agents with Claude on your own machine",
+  "type": "module",
+  "bin": { "sdd-studio": "./bin/sdd-studio.mjs" },
+  "files": ["bin/", "dist/"],
+  "engines": { "node": ">=20" },
+  "homepage": "https://sdd.estebanburgos.com.ar",
+  "author": "Esteban Burgos",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/e-burgos/sdd-harness.git",
+    "directory": "apps/studio-bridge"
+  },
+  "scripts": {
+    "build": "node build.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit -p tsconfig.lib.json && tsc --noEmit -p tsconfig.spec.json",
+    "record-fixtures": "node scripts/record-sdk-fixtures.mjs"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "0.3.292",
+    "chokidar": "^4.0.3",
+    "citty": "^0.1.6",
+    "picocolors": "^1.1.1",
+    "ws": "^8.18.0",
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.9",
+    "@types/ws": "^8.5.12",
+    "esbuild": "^0.28.0",
+    "typescript": "~5.9.2",
+    "vitest": "~4.1.0"
+  }
+}
