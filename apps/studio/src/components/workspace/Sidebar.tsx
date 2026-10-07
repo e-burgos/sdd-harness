@@ -1,0 +1,97 @@
+'use client';
+
+import { Hash, SquaresFour } from '@phosphor-icons/react';
+import { dmAgentOfChannel, type AuthMode, type Presence } from '@sdd-studio/protocol';
+import { agentMeta } from '@/lib/agents';
+import { useT } from '@/lib/i18n/i18n';
+import { channelsOf, dmChannelsOf, type ChannelEntry } from '@/lib/store/selectors';
+import { useBridge, useStudio } from '../BridgeProvider';
+
+const DOT: Record<Presence['state'], string> = {
+  working: 'bg-accent-400 animate-pulse',
+  waiting: 'bg-amberish',
+  open: 'bg-accent-500/60',
+  idle: 'border border-ink-500',
+};
+const PRESENCE_KEY = { working: 'presence.working', waiting: 'presence.waiting', open: 'presence.open', idle: 'presence.idle' } as const;
+
+export interface SidebarViewProps {
+  project: string;
+  kitVersion: string | null;
+  authMode: AuthMode | null;
+  channels: ChannelEntry[];
+  dms: ChannelEntry[];
+  presence: Presence[];
+  activeChannel: string;
+  onSelect(channelId: string): void;
+}
+
+export function SidebarView(p: SidebarViewProps) {
+  const { t, lang, setLang } = useT();
+  const stateOf = (agent: string) => p.presence.find((x) => x.agent === agent)?.state ?? 'idle';
+  const item = (active: boolean) =>
+    `flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-sm ${active ? 'bg-accent-dim text-accent-300' : 'text-ink-300 hover:bg-ink-800 hover:text-ink-100'}`;
+  return (
+    <nav className="flex h-full flex-col gap-5 overflow-y-auto border-r border-ink-800 bg-ink-900 p-3">
+      <header>
+        <div className="truncate text-base font-semibold">{p.project}</div>
+        <div className="mt-0.5 flex items-center gap-2 text-[11px] text-ink-300">
+          <span className="h-2 w-2 rounded-full bg-accent-400" />
+          {p.authMode ? t(`auth.${p.authMode}`) : '…'}
+          {p.kitVersion && <span>· kit {p.kitVersion}</span>}
+          <button className="ml-auto hover:text-ink-100" onClick={() => setLang(lang === 'es' ? 'en' : 'es')}>{t('lang.switch')}</button>
+        </div>
+      </header>
+      <section>
+        <h2 className="mb-1 px-2 text-[11px] uppercase tracking-wider text-ink-500">{t('sidebar.channels')}</h2>
+        {p.channels.map((c) => (
+          <button key={c.id} className={item(p.activeChannel === c.id)} onClick={() => p.onSelect(c.id)}>
+            <Hash size={14} />
+            <span className="truncate"># {c.label}</span>
+            {c.status === 'in-progress' && <span className="ml-auto h-1.5 w-1.5 rounded-full bg-accent-400" />}
+            {c.status === 'completed' && <span className="ml-auto text-[10px] text-ink-500">✓</span>}
+          </button>
+        ))}
+      </section>
+      <section>
+        <h2 className="mb-1 px-2 text-[11px] uppercase tracking-wider text-ink-500">{t('sidebar.agents')}</h2>
+        {p.dms.map((c) => {
+          const agent = dmAgentOfChannel(c.id) ?? c.label;
+          const state = stateOf(agent);
+          const meta = agentMeta(agent);
+          return (
+            <button key={c.id} className={item(p.activeChannel === c.id)} onClick={() => p.onSelect(c.id)}>
+              <span aria-label={`${meta.name}: ${t(PRESENCE_KEY[state])}`} className={`h-2 w-2 rounded-full ${DOT[state]}`} />
+              <span className="truncate">{meta.name}</span>
+            </button>
+          );
+        })}
+      </section>
+      <section>
+        <h2 className="mb-1 px-2 text-[11px] uppercase tracking-wider text-ink-500">{t('sidebar.views')}</h2>
+        <div className="flex items-center gap-2 px-2 text-xs text-ink-500">
+          <SquaresFour size={14} /> {t('sidebar.viewsSoon')}
+        </div>
+      </section>
+    </nav>
+  );
+}
+
+export function Sidebar({ activeChannel, onSelect }: { activeChannel: string; onSelect(channelId: string): void }) {
+  const { connection } = useBridge();
+  const snapshot = useStudio((s) => s.snapshot);
+  const presence = useStudio((s) => s.presence);
+  const welcome = connection.status === 'open' ? connection.welcome : null;
+  return (
+    <SidebarView
+      project={snapshot?.project ?? welcome?.workspace.project ?? '…'}
+      kitVersion={snapshot?.kitVersion ?? null}
+      authMode={welcome?.authMode ?? null}
+      channels={channelsOf(snapshot)}
+      dms={dmChannelsOf(snapshot)}
+      presence={presence}
+      activeChannel={activeChannel}
+      onSelect={onSelect}
+    />
+  );
+}
