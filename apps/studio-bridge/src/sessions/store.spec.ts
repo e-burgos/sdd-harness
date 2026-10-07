@@ -1,0 +1,70 @@
+import { readFile } from 'node:fs/promises';
+import path from 'node:path';
+import { defaultThreadOptions } from '@sdd-studio/protocol';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { copyFixture } from '../test-utils/fixture';
+import { ThreadStore, type StoredThread } from './store';
+
+let root: string;
+let cleanup: () => Promise<void>;
+beforeEach(async () => ({ root, cleanup } = await copyFixture()));
+afterEach(() => cleanup());
+
+const thread = (over: Partial<StoredThread> = {}): StoredThread => ({
+  id: 't1', channelId: 'general', title: 'hola', agent: 'sdd-orchestrator', options: defaultThreadOptions(),
+  status: 'idle', createdAt: '2026-10-07T00:00:00.000Z', lastActivity: '2026-10-07T00:00:00.000Z',
+  engineSessionId: null, ...over,
+});
+
+describe('ThreadStore', () => {
+  it('creates a self-ignoring .sdd-studio folder', async () => {
+    await new ThreadStore(root).init();
+    expect(await readFile(path.join(root, '.sdd-studio/.gitignore'), 'utf8')).toBe('*\n');
+  });
+
+  it('persists threads and events across instances', async () => {
+    const a = new ThreadStore(root);
+    await a.init();
+    await a.upsert(thread({ engineSessionId: 'sess-1' }));
+    expect(a.append('t1', { type: 'user.message', text: 'hola' })).toBe(0);
+    expect(a.append('t1', { type: 'message.end', messageId: 'm' })).toBe(1);
+    await a.flush();
+
+    const b = new ThreadStore(root);
+    await b.init();
+    expect(b.get('t1')?.engineSessionId).toBe('sess-1');
+    expect(await b.history('t1', 1)).toEqual([{ seq: 1, event: { type: 'message.end', messageId: 'm' } }]);
+    expect(b.append('t1', { type: 'message.end', messageId: 'n' })).toBe(2);
+  });
+
+  it('marks busy threads as interrupted after a restart', async () => {
+    const a = new ThreadStore(root);
+    await a.init();
+    await a.upsert(thread({ id: 'r', status: 'running' }));
+    await a.upsert(thread({ id: 'w', status: 'waiting-approval' }));
+    await a.upsert(thread({ id: 'q', status: 'queued' }));
+    await a.flush();
+    const b = new ThreadStore(root);
+    await b.init();
+    expect(b.list().map((t) => [t.id, t.status])).toEqual([['r', 'interrupted'], ['w', 'interrupted'], ['q', 'interrupted']]);
+  });
+
+  it('filters by channel and returns [] for unknown thread history', async () => {
+    const s = new ThreadStore(root);
+    await s.init();
+    await s.upsert(thread({ id: 'a', channelId: 'fixes' }));
+    await s.upsert(thread({ id: 'b', channelId: 'general' }));
+    expect(s.list('fixes').map((t) => t.id)).toEqual(['a']);
+    expect(await s.history('../../etc/passwd', 0)).toEqual([]);
+  });
+
+  it('keeps the last N bot events per channel', async () => {
+    const s = new ThreadStore(root);
+    await s.init();
+    for (let i = 0; i < 5; i++) {
+      s.appendBot({ channelId: 'spec:s1', botKind: 'task.status', payload: { i } });
+    }
+    expect((await s.botHistory('spec:s1', 2)).map((e) => e.payload.i)).toEqual([3, 4]);
+    expect(await s.botHistory('fixes', 10)).toEqual([]);
+  });
+});
