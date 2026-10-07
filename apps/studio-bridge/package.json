@@ -27,7 +27,7 @@
     "citty": "^0.1.6",
     "picocolors": "^1.1.1",
     "ws": "^8.18.0",
-    "zod": "^3.23.0"
+    "zod": "^4.0.0"
   },
   "devDependencies": {
     "@types/node": "^20.19.9",
