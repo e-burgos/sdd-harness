@@ -17,6 +17,21 @@ describe('relativeToRoot', () => {
   ])('%s → %s', (input, expected) => {
     expect(relativeToRoot(ROOT, input)).toBe(expected);
   });
+  it('normalizes the root (double slash, dot, trailing slash)', () => {
+    expect(relativeToRoot('/a//repo', '/a/repo/apps/a.ts')).toBe('apps/a.ts');
+    expect(relativeToRoot('/a/./repo', '/a/repo/apps/a.ts')).toBe('apps/a.ts');
+    expect(relativeToRoot('/a/repo/', '/a/repo/apps/a.ts')).toBe('apps/a.ts');
+  });
+  it('does not match sibling prefixes', () => {
+    expect(relativeToRoot('/repo', '/repo2/x.ts')).toBeNull();
+  });
+  it('compares Windows drive letters case-insensitively', () => {
+    expect(relativeToRoot('C:\\work\\repo', 'c:\\work\\repo\\apps\\a.ts')).toBe('apps/a.ts');
+  });
+  it('compares case-insensitively on darwin/win32 keeping file casing', (ctx) => {
+    if (process.platform !== 'darwin' && process.platform !== 'win32') ctx.skip();
+    expect(relativeToRoot('/Users/x/Repo', '/Users/x/repo/Apps/a.ts')).toBe('Apps/a.ts');
+  });
   it('handles Windows paths', () => {
     expect(relativeToRoot('C:\\work\\repo', 'C:\\work\\repo\\apps\\a.ts')).toBe('apps/a.ts');
     expect(relativeToRoot('C:\\work\\repo', 'D:\\other\\a.ts')).toBeNull();
@@ -38,6 +53,13 @@ describe('editTargetOf', () => {
     expect(editTargetOf('NotebookEdit', { notebook_path: '/n.ipynb' })).toBe('/n.ipynb');
     expect(editTargetOf('Bash', { command: 'rm -rf /' })).toBeNull();
     expect(editTargetOf('Write', {})).toBeNull();
+    expect(editTargetOf('Write', { file_path: '/w' })).toBe('/w');
+    expect(editTargetOf('MultiEdit', { file_path: '/m' })).toBe('/m');
+  });
+  it('picks the key per tool, ignoring decoys', () => {
+    expect(editTargetOf('NotebookEdit', { file_path: 'sdd/x.md', notebook_path: '/n.ipynb' })).toBe('/n.ipynb');
+    expect(editTargetOf('Edit', { file_path: '/a', notebook_path: '/n.ipynb' })).toBe('/a');
+    expect(editTargetOf('Edit', { notebook_path: '/n.ipynb' })).toBeNull();
   });
 });
 
@@ -62,8 +84,30 @@ describe('judgeEdit', () => {
     fix.fixes[0]!.status = 'in-progress';
     expect(judgeEdit(fix, ROOT, `${ROOT}/apps/a.ts`)).toEqual({ kind: 'allow' });
   });
-  it('allows when specs or fixes could not be read', () => {
+  it('allows when specs are stale and there is no last-good data', () => {
     expect(judgeEdit({ ...idle, stale: ['specs'] }, ROOT, `${ROOT}/apps/a.ts`)).toEqual({ kind: 'allow' });
+  });
+  it('judges on last-good data when stale but specs are known', () => {
+    const spec = { id: 's', title: 's', status: 'approved', folder: 'f', module: null, app: null, dependsOn: [] };
+    expect(judgeEdit({ ...idle, specs: [spec], stale: ['specs'] }, ROOT, `${ROOT}/apps/a.ts`).kind).toBe('deny');
+  });
+  it('judges stale fixes on kept data', () => {
+    expect(judgeEdit({ ...idle, stale: ['fixes'] }, ROOT, `${ROOT}/apps/a.ts`).kind).toBe('deny');
+  });
+  it('allows with a pending fix', () => {
+    const fix = structuredClone(idle);
+    fix.fixes[0]!.status = 'pending';
+    expect(judgeEdit(fix, ROOT, `${ROOT}/apps/a.ts`)).toEqual({ kind: 'allow' });
+  });
+  it.each(['completed', 'cancelled'])('ignores in-progress cycles under a %s spec', (status) => {
+    const snap = structuredClone(idle);
+    snap.cycles[0]!.status = 'in-progress';
+    snap.specs = [{ id: 's', title: 's', status, folder: 'f', module: null, app: null, dependsOn: [] }];
+    expect(judgeEdit(snap, ROOT, `${ROOT}/apps/a.ts`).kind).toBe('deny');
+  });
+  it('points to the real gate command', () => {
+    const v = judgeEdit(idle, ROOT, `${ROOT}/apps/a.ts`);
+    expect(v.kind !== 'allow' && v.reason).toContain('pnpm sdd:gate <spec> → sdd-orchestrator');
   });
   it('allows files outside the repo (not ours to judge)', () => {
     expect(judgeEdit(idle, ROOT, '/tmp/x.ts')).toEqual({ kind: 'allow' });
