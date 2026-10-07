@@ -1,8 +1,10 @@
 'use client';
 
 import { useState } from 'react';
+import { useBridge } from '../BridgeProvider';
 import { Composer } from './Composer';
 import { ChannelView } from './ChannelView';
+import { RightPanel } from './RightPanel';
 import { RunOutput } from './RunOutput';
 import { Sidebar } from './Sidebar';
 import { ThreadView } from './ThreadView';
@@ -13,6 +15,7 @@ export interface View {
 }
 
 export function Workspace() {
+  const { store } = useBridge();
   const [view, setView] = useState<View>({ channelId: 'general', threadId: null });
   const composer = (
     <>
@@ -35,7 +38,13 @@ export function Workspace() {
           <ChannelView channelId={view.channelId} onOpenThread={(threadId) => setView({ ...view, threadId })} composer={composer} />
         )}
       </main>
-      <aside aria-hidden className="min-h-0 overflow-y-auto border-l border-ink-800 bg-ink-900" />
+      <RightPanel
+        channelId={view.channelId}
+        onOpenThread={(threadId) => {
+          const channelId = store.getState().threads[threadId]?.info?.channelId ?? view.channelId;
+          setView({ channelId, threadId });
+        }}
+      />
     </div>
   );
 }
