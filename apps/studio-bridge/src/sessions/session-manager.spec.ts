@@ -1,7 +1,7 @@
 import { defaultThreadOptions, type ServerEvent, type ThreadEvent, type WorkspaceSnapshot } from '@sdd-studio/protocol';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { FakeEngine } from '../engine/fake-engine';
-import type { AgentEngine, EngineTurnInput } from '../engine/types';
+import type { AgentEngine, EngineCallbacks, EngineTurn, EngineTurnInput } from '../engine/types';
 import { copyFixture, waitFor } from '../test-utils/fixture';
 import { loadWorkspaceSnapshot } from '../workspace/snapshot';
 import { SessionError, SessionManager } from './session-manager';
@@ -174,5 +174,162 @@ describe('SessionManager', () => {
     const { m } = await manager();
     await expect(m.send('nope', 'x')).rejects.toBeInstanceOf(SessionError);
     expect(() => m.respondApproval('nope', 'allow', undefined, 'once')).toThrow(SessionError);
+  });
+
+  describe('state transitions and approvals', () => {
+    interface Run {
+      input: EngineTurnInput;
+      cb: EngineCallbacks;
+      ac: AbortController;
+      finish: () => void;
+    }
+    /** Motor guionado: cada turno queda abierto hasta que el test lo termine; `onStart` puede lanzar. */
+    function scripted(onStart?: (input: EngineTurnInput, n: number) => void) {
+      const runs: Run[] = [];
+      const engine: AgentEngine = {
+        name: 'scripted',
+        startTurn: (input, cb): EngineTurn => {
+          onStart?.(input, runs.length);
+          const ac = new AbortController();
+          let finish!: () => void;
+          const done = new Promise<void>((resolve) => (finish = resolve));
+          runs.push({ input, cb, ac, finish });
+          return { done, interrupt: async () => ac.abort() };
+        },
+      };
+      return { engine, runs };
+    }
+    const req = { toolName: 'Bash', input: { command: 'ls' }, author: { agent: 'main', parentToolUseId: null }, toolUseId: null };
+
+    it('does not leave the thread running when startTurn throws, and still starts the queued thread', async () => {
+      const fake = new FakeEngine(1);
+      const engine: AgentEngine = {
+        name: 'throwing',
+        startTurn: (input, cb) => {
+          if (input.text.includes('boom')) throw new Error('no se pudo arrancar');
+          return fake.startTurn(input, cb);
+        },
+      };
+      const { m } = await manager(engine);
+      const ch = 'general';
+      const a = await m.createThread({ channelId: ch, options: opts, text: '#slow' });
+      const b = await m.createThread({ channelId: ch, options: opts, text: 'boom' });
+      const c = await m.createThread({ channelId: ch, options: opts, text: 'hola' });
+      expect(statusOf(m, b.id)).toBe('queued');
+      await m.interrupt(a.id);
+      await waitFor(() => statusOf(m, c.id) === 'idle');
+      expect(statusOf(m, b.id)).toBe('error');
+      expect(eventsOf(b.id).filter((e) => e.type === 'session.status' && e.status === 'error')).toHaveLength(1);
+    });
+
+    it('marks error when startTurn throws synchronously on a direct send', async () => {
+      const { engine } = scripted(() => {
+        throw new Error('boom');
+      });
+      const { m } = await manager(engine);
+      const t = await m.createThread({ channelId: 'general', options: opts, text: 'x' });
+      expect(statusOf(m, t.id)).toBe('error');
+    });
+
+    it('starts queued writers in FIFO order, a late writer goes behind', async () => {
+      const { m } = await manager();
+      const ch = 'spec:spec-dev-001-pagos';
+      const a = await m.createThread({ channelId: ch, options: opts, text: '#slow' });
+      const b = await m.createThread({ channelId: ch, options: opts, text: '#slow' });
+      await m.interrupt(a.id);
+      const c = await m.createThread({ channelId: ch, options: opts, text: 'hola' });
+      await waitFor(() => statusOf(m, b.id) === 'running');
+      expect(statusOf(m, c.id)).toBe('queued');
+      await m.interrupt(b.id);
+      await waitFor(() => statusOf(m, c.id) === 'idle');
+    });
+
+    it('denies an approval requested after interrupt and keeps the thread interrupted', async () => {
+      const { engine, runs } = scripted();
+      const { m } = await manager(engine);
+      const t = await m.createThread({ channelId: 'general', options: opts, text: 'x' });
+      await m.interrupt(t.id);
+      let decision: unknown;
+      void runs[0]!.cb.requestApproval(req, runs[0]!.ac.signal).then((d) => (decision = d));
+      await waitFor(() => decision);
+      expect(decision).toEqual({ behavior: 'deny', message: 'interrupted' });
+      expect(statusOf(m, t.id)).toBe('interrupted');
+      runs[0]!.finish();
+      await waitFor(() => runs.length > 0);
+      expect(statusOf(m, t.id)).toBe('interrupted');
+    });
+
+    it('denies immediately when the signal is already aborted', async () => {
+      const { engine, runs } = scripted();
+      const { m } = await manager(engine);
+      const t = await m.createThread({ channelId: 'general', options: opts, text: 'x' });
+      const ac = new AbortController();
+      ac.abort();
+      let decision: unknown;
+      void runs[0]!.cb.requestApproval(req, ac.signal).then((d) => (decision = d));
+      await waitFor(() => decision);
+      expect(decision).toMatchObject({ behavior: 'deny' });
+      expect(statusOf(m, t.id)).toBe('running');
+      runs[0]!.finish();
+    });
+
+    it('settles pending approvals when the turn ends', async () => {
+      const { engine, runs } = scripted();
+      const { m } = await manager(engine);
+      const t = await m.createThread({ channelId: 'general', options: opts, text: 'uno' });
+      let decision: unknown;
+      void runs[0]!.cb.requestApproval(req, runs[0]!.ac.signal).then((d) => (decision = d));
+      const pending = await waitFor(() => pendingApproval(t.id));
+      expect(statusOf(m, t.id)).toBe('waiting-approval');
+      runs[0]!.finish();
+      await waitFor(() => statusOf(m, t.id) === 'idle');
+      expect(decision).toEqual({ behavior: 'deny', message: 'turn ended' });
+      expect(eventsOf(t.id)).toContainEqual({ type: 'approval.resolved', approvalId: pending.approvalId, decision: 'deny', reason: 'turn ended' });
+      expect(() => m.respondApproval(pending.approvalId, 'allow', undefined, 'once')).toThrow(SessionError);
+      await m.send(t.id, 'dos');
+      expect(statusOf(m, t.id)).toBe('running');
+      runs[1]!.finish();
+      await waitFor(() => statusOf(m, t.id) === 'idle');
+    });
+
+    it('keeps the write mode frozen for a running turn when options change', async () => {
+      const { m } = await manager();
+      const ch = 'spec:spec-dev-001-pagos';
+      const a = await m.createThread({ channelId: ch, options: opts, text: '#slow' });
+      await m.setOptions(a.id, { permissionMode: 'plan' });
+      const b = await m.createThread({ channelId: ch, options: opts, text: 'hola' });
+      expect(statusOf(m, b.id)).toBe('queued');
+      await m.interrupt(a.id);
+      await waitFor(() => statusOf(m, b.id) === 'idle');
+    });
+
+    it('"always in this thread" never bypasses a SPEC GATE deny', async () => {
+      const base = snapshot;
+      snapshot = { ...base, gateMode: 'warn', cycles: [], fixes: [] };
+      const { m } = await manager();
+      const t = await m.createThread({ channelId: 'general', options: opts, text: '#edit' });
+      m.respondApproval((await waitFor(() => pendingApproval(t.id))).approvalId, 'allow', undefined, 'thread');
+      await waitFor(() => statusOf(m, t.id) === 'idle');
+      snapshot = { ...base, cycles: base.cycles.map((c) => ({ ...c, status: 'completed' })), fixes: [] };
+      sent.length = 0;
+      await m.send(t.id, '#edit');
+      await waitFor(() => statusOf(m, t.id) === 'idle');
+      const resolved = eventsOf(t.id).find((e) => e.type === 'approval.resolved');
+      expect(resolved).toMatchObject({ decision: 'deny' });
+      expect(eventsOf(t.id).some((e) => e.type === 'tool.start')).toBe(false);
+    });
+
+    it('interrupting a queued thread keeps it interrupted and it never starts', async () => {
+      const { m } = await manager();
+      const ch = 'spec:spec-dev-001-pagos';
+      const a = await m.createThread({ channelId: ch, options: opts, text: '#slow' });
+      const b = await m.createThread({ channelId: ch, options: opts, text: 'hola' });
+      await m.interrupt(b.id);
+      expect(statusOf(m, b.id)).toBe('interrupted');
+      await m.interrupt(a.id);
+      await new Promise((r) => setTimeout(r, 150));
+      expect(statusOf(m, b.id)).toBe('interrupted');
+      expect(eventsOf(b.id).some((e) => e.type === 'turn.end')).toBe(false);
+    });
   });
 });

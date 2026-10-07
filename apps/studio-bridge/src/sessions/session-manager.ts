@@ -36,7 +36,15 @@ export interface SessionManagerDeps {
 interface Live {
   turn: EngineTurn | null;
   queued: string | null;
+  /** Orden FIFO monótono de la cola del canal. */
+  queuedAt: number;
   alwaysAllow: Set<string>;
+  /** Se levanta en interrupt(), se baja al arrancar un turno nuevo. */
+  interrupted: boolean;
+  /** Generación del turno: invalida callbacks tardíos de un turno anterior. */
+  gen: number;
+  /** Modo de escritura congelado al encolar/arrancar; setOptions sólo afecta al próximo turno. */
+  writes: boolean;
 }
 
 interface PendingApproval {
@@ -46,6 +54,7 @@ interface PendingApproval {
 }
 
 const toInfo = ({ engineSessionId: _ignored, ...info }: StoredThread): ThreadInfo => info;
+const reportError = (error: unknown): void => console.error('[sdd-studio] session manager:', error);
 
 export class SessionManager {
   private readonly live = new Map<string, Live>();
@@ -54,18 +63,20 @@ export class SessionManager {
   private readonly newId: () => string;
   private readonly now: () => string;
   private lastPresence = '';
+  private queueCounter = 0;
 
   constructor(private readonly deps: SessionManagerDeps) {
     this.newId = deps.newId ?? randomUUID;
     this.now = deps.now ?? (() => new Date().toISOString());
     this.tracker = new PresenceTracker(() => deps.snapshot().agents.map((a) => a.id));
+    for (const thread of deps.store.list()) this.tracker.onThread(toInfo(thread));
   }
 
   list(channelId?: string): ThreadInfo[] {
     return this.deps.store.list(channelId).map(toInfo);
   }
 
-  history(threadId: string, sinceSeq: number): Promise<HistoryEntry[]> {
+  async history(threadId: string, sinceSeq: number): Promise<HistoryEntry[]> {
     this.require(threadId);
     return this.deps.store.history(threadId, sinceSeq);
   }
@@ -87,7 +98,8 @@ export class SessionManager {
       lastActivity: now,
       engineSessionId: null,
     };
-    await this.deps.store.upsert(thread);
+    this.persist(thread);
+    this.tracker.onThread(toInfo(thread));
     await this.send(thread.id, args.text);
     return toInfo(this.require(thread.id));
   }
@@ -96,10 +108,13 @@ export class SessionManager {
     const thread = this.require(threadId);
     const live = this.liveOf(threadId);
     if (live.turn || live.queued !== null) throw new SessionError('conflict', 'el hilo está ocupado: esperá o interrumpilo');
+    live.writes = this.writes(thread);
+    live.interrupted = false;
     this.emit(thread, { type: 'user.message', text });
     if (this.blocked(thread)) {
       live.queued = text;
-      await this.setStatus(thread, 'queued');
+      live.queuedAt = ++this.queueCounter;
+      this.setStatus(thread, 'queued');
       return;
     }
     this.start(thread, text);
@@ -109,21 +124,25 @@ export class SessionManager {
     const thread = this.require(threadId);
     const live = this.liveOf(threadId);
     const wasQueued = live.queued !== null;
-    live.queued = null;
     if (!live.turn && !wasQueued) return;
-    await this.setStatus(thread, 'interrupted');
-    for (const [, pending] of this.approvals) {
-      if (pending.threadId === threadId) pending.settle({ behavior: 'deny', message: 'interrupted' });
-    }
-    await live.turn?.interrupt();
+    // Todo el trabajo en memoria primero; el disco va último y sin esperar.
+    live.queued = null;
+    live.interrupted = true;
+    this.setStatus(thread, 'interrupted');
+    this.settleThread(threadId, 'interrupted');
     if (wasQueued) this.drain(thread.channelId);
+    try {
+      await live.turn?.interrupt();
+    } catch (error) {
+      reportError(error);
+    }
   }
 
   async setOptions(threadId: string, patch: Partial<Omit<ThreadOptions, 'agent'>>): Promise<ThreadInfo> {
     const thread = this.require(threadId);
     const { agent: _fixed, ...allowed } = patch as Partial<ThreadOptions>;
     thread.options = { ...thread.options, ...allowed };
-    await this.deps.store.upsert(thread);
+    this.persist(thread);
     this.deps.broadcast({ kind: 'thread.updated', thread: toInfo(thread) });
     return toInfo(thread);
   }
@@ -146,7 +165,7 @@ export class SessionManager {
   private liveOf(threadId: string): Live {
     let live = this.live.get(threadId);
     if (!live) {
-      live = { turn: null, queued: null, alwaysAllow: new Set() };
+      live = { turn: null, queued: null, queuedAt: 0, alwaysAllow: new Set(), interrupted: false, gen: 0, writes: false };
       this.live.set(threadId, live);
     }
     return live;
@@ -156,42 +175,68 @@ export class SessionManager {
     return thread.options.permissionMode !== 'plan';
   }
 
+  /** Persistencia fire-and-forget: el store ya reporta sus errores por onError. */
+  private persist(thread: StoredThread): void {
+    this.deps.store.upsert(thread).catch(reportError);
+  }
+
+  private settleThread(threadId: string, message: string): void {
+    for (const pending of [...this.approvals.values()]) {
+      if (pending.threadId === threadId) pending.settle({ behavior: 'deny', message });
+    }
+  }
+
   private blocked(thread: StoredThread): boolean {
-    if (!this.writes(thread)) return false;
-    return this.deps.store
-      .list(thread.channelId)
-      .some((other) => other.id !== thread.id && this.writes(other) && this.live.get(other.id)?.turn);
+    if (!this.liveOf(thread.id).writes) return false;
+    return this.deps.store.list(thread.channelId).some((other) => {
+      if (other.id === thread.id) return false;
+      const l = this.live.get(other.id);
+      return !!l?.turn && l.writes;
+    });
   }
 
   private start(thread: StoredThread, text: string): void {
     const live = this.liveOf(thread.id);
-    void this.setStatus(thread, 'running');
-    const turn = this.deps.engine.startTurn(
-      { threadId: thread.id, text, options: thread.options, resumeSessionId: thread.engineSessionId, cwd: this.deps.root },
-      {
-        emit: (event) => this.emit(thread, event),
-        onSessionId: (id) => {
-          if (thread.engineSessionId === id) return;
-          thread.engineSessionId = id;
-          void this.deps.store.upsert(thread);
+    live.interrupted = false;
+    const gen = ++live.gen;
+    this.setStatus(thread, 'running');
+    let turn: EngineTurn;
+    try {
+      turn = this.deps.engine.startTurn(
+        { threadId: thread.id, text, options: thread.options, resumeSessionId: thread.engineSessionId, cwd: this.deps.root },
+        {
+          emit: (event) => this.emit(thread, event, true),
+          onSessionId: (id) => {
+            if (thread.engineSessionId === id) return;
+            thread.engineSessionId = id;
+            this.persist(thread);
+          },
+          requestApproval: (request, signal) => this.requestApproval(thread, gen, request, signal),
         },
-        requestApproval: (request, signal) => this.requestApproval(thread, request, signal),
-      },
-    );
+      );
+    } catch (error) {
+      this.finish(thread, true, error);
+      return;
+    }
     live.turn = turn;
-    turn.done.then(
-      () => this.finish(thread, null),
-      (error: unknown) => this.finish(thread, error),
-    );
+    turn.done
+      .then(
+        () => this.finish(thread, false, null),
+        (error: unknown) => this.finish(thread, true, error),
+      )
+      .catch(reportError);
   }
 
-  private async finish(thread: StoredThread, error: unknown): Promise<void> {
+  private finish(thread: StoredThread, failed: boolean, error: unknown): void {
     this.liveOf(thread.id).turn = null;
-    if (error && thread.status !== 'interrupted') {
-      const message = error instanceof Error ? error.message : String(error);
-      this.emit(thread, { type: 'session.status', status: 'error', error: { code: 'engine', message: message.slice(0, 500) } });
+    this.settleThread(thread.id, 'turn ended');
+    if (failed) {
+      if (thread.status !== 'interrupted' && thread.status !== 'error') {
+        const message = error instanceof Error ? error.message : String(error);
+        this.setStatus(thread, 'error', { code: 'engine', message: message.slice(0, 500) });
+      }
     } else if (thread.status === 'running' || thread.status === 'waiting-approval') {
-      await this.setStatus(thread, 'idle');
+      this.setStatus(thread, 'idle');
     }
     this.drain(thread.channelId);
   }
@@ -200,17 +245,26 @@ export class SessionManager {
     const waiting = this.deps.store
       .list(channelId)
       .filter((t) => this.live.get(t.id)?.queued != null)
-      .sort((a, b) => a.lastActivity.localeCompare(b.lastActivity));
+      .sort((a, b) => this.liveOf(a.id).queuedAt - this.liveOf(b.id).queuedAt);
     for (const thread of waiting) {
-      if (this.blocked(thread)) break;
       const live = this.liveOf(thread.id);
-      const text = live.queued!;
+      if (live.queued === null) continue; // ya arrancado por una reentrada
+      if (this.blocked(thread)) break;
+      const text = live.queued;
       live.queued = null;
       this.start(thread, text);
     }
   }
 
-  private async requestApproval(thread: StoredThread, request: ApprovalRequest, signal: AbortSignal): Promise<ApprovalDecision> {
+  /**
+   * Un turno interrumpido (o de una generación vieja, o con señal ya abortada) recibe deny inmediato
+   * y no emite eventos de aprobación: nunca pisa `interrupted` ni queda colgado.
+   */
+  private async requestApproval(thread: StoredThread, gen: number, request: ApprovalRequest, signal: AbortSignal): Promise<ApprovalDecision> {
+    const live = this.liveOf(thread.id);
+    if (live.interrupted || live.gen !== gen) return { behavior: 'deny', message: 'interrupted' };
+    if (signal.aborted) return { behavior: 'deny', message: 'aborted' };
+
     const summary = summarizeTool(request.toolName, request.input);
     const diff = diffFor(request.toolName, request.input);
     const extra = diff ? { diff } : {};
@@ -226,28 +280,30 @@ export class SessionManager {
       }
       if (verdict.kind === 'warn') gateWarning = verdict.reason;
     }
-    if (!gateWarning && this.liveOf(thread.id).alwaysAllow.has(request.toolName)) return { behavior: 'allow' };
+    if (!gateWarning && live.alwaysAllow.has(request.toolName)) return { behavior: 'allow' };
 
     const approvalId = this.newId();
     // Se registra la aprobación pendiente ANTES de anunciarla: un cliente puede responder en cuanto ve el evento.
     const decision = new Promise<ApprovalDecision>((resolve) => {
       const onAbort = () => settle({ behavior: 'deny', message: 'aborted' });
-      const settle = (decision: ApprovalDecision) => {
+      const settle = (result: ApprovalDecision) => {
         if (!this.approvals.delete(approvalId)) return;
         signal.removeEventListener('abort', onAbort);
         this.emit(thread, {
           type: 'approval.resolved',
           approvalId,
-          decision: decision.behavior,
-          ...(decision.behavior === 'deny' ? { reason: decision.message } : {}),
+          decision: result.behavior,
+          ...(result.behavior === 'deny' ? { reason: result.message } : {}),
         });
         const stillWaiting = [...this.approvals.values()].some((p) => p.threadId === thread.id);
-        if (thread.status === 'waiting-approval' && !stillWaiting) void this.setStatus(thread, 'running');
-        resolve(decision);
+        if (thread.status === 'waiting-approval' && !stillWaiting) this.setStatus(thread, 'running');
+        resolve(result);
       };
       this.approvals.set(approvalId, { threadId: thread.id, toolName: request.toolName, settle });
       signal.addEventListener('abort', onAbort, { once: true });
     });
+    // Estado antes del broadcast; si se resuelve síncronamente durante el broadcast, settle lo devuelve a running.
+    if (thread.status === 'running') this.setStatus(thread, 'waiting-approval');
     this.emit(thread, {
       type: 'approval.requested',
       approvalId,
@@ -257,13 +313,13 @@ export class SessionManager {
       ...extra,
       ...(gateWarning ? { gateWarning } : {}),
     });
-    await this.setStatus(thread, 'waiting-approval');
     return decision;
   }
 
-  private emit(thread: StoredThread, event: ThreadEvent): void {
+  /** `fromEngine`: los session.status del motor no pisan `interrupted`. */
+  private emit(thread: StoredThread, event: ThreadEvent, fromEngine = false): void {
     if (event.type === 'session.status') {
-      if (thread.status === 'interrupted' && event.status === 'error') return;
+      if (fromEngine && thread.status === 'interrupted') return;
       this.applyStatus(thread, event.status);
     }
     const seq = this.deps.store.append(thread.id, event);
@@ -272,10 +328,9 @@ export class SessionManager {
     this.publishPresence();
   }
 
-  private async setStatus(thread: StoredThread, status: SessionStatus): Promise<void> {
+  private setStatus(thread: StoredThread, status: SessionStatus, error?: { code: string; message: string }): void {
     if (thread.status === status) return;
-    this.emit(thread, { type: 'session.status', status });
-    await this.deps.store.upsert(thread);
+    this.emit(thread, { type: 'session.status', status, ...(error ? { error } : {}) });
   }
 
   private applyStatus(thread: StoredThread, status: SessionStatus): void {
@@ -283,7 +338,7 @@ export class SessionManager {
     thread.lastActivity = this.now();
     this.tracker.onThread(toInfo(thread));
     this.deps.broadcast({ kind: 'thread.updated', thread: toInfo(thread) });
-    void this.deps.store.upsert(thread);
+    this.persist(thread);
   }
 
   private publishPresence(): void {
