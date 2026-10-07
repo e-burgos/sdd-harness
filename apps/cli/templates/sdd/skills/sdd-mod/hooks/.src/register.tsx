@@ -1,10 +1,12 @@
 // Claude Code mod of the SDD kit. Off unless sdd/tools.json → claude_mod.enabled is true
 // (`pnpm sdd:mod -- --enable`); the switch is re-read on every refresh, no reload needed.
 // The rules stay in sdd/dual-harness/rules/sdd-gates.md: this only shows and applies them.
+// Sources live in dot-directories on purpose: TypeScript's `**/*` globs skip them, so the host
+// project's tsc / next build never tries to compile a module that imports 'claude-code'.
 import { atom, read, update } from 'claude-code';
 import type { EngineInterface, Register } from 'claude-code';
 
-import type { Snapshot } from '../types';
+import type { Snapshot } from '../../.claude-plugin/contract';
 import { bandLine, judgeEdit, loadSnapshot, progress } from './sdd';
 
 const snapshot = atom({ plugin: 'sdd-mod', key: 'snapshot' } as const, null);

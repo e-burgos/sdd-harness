@@ -492,6 +492,7 @@ export const HARNESSES: Harness[] = [
     reads: [
       'CLAUDE.md → sdd/dual-harness/CLAUDE.md',
       '.claude/agents · skills · prompts · commands (slash commands SDD)',
+      '.claude/skills/sdd-mod — mod opcional (apagado por defecto): franja con el ciclo en curso, /sdd y SPEC GATE sobre las ediciones de código',
     ],
     models:
       'Pasa model y effort explícitos en cada subagente y workflow, según la tabla canónica de tiers del arnés. El fan-out de lectores va en económico; la síntesis y el review en alto.',
@@ -740,6 +741,10 @@ export const UI = {
       title: 'La salvedad del nombre: ya no es «dual»',
       body: 'El arnés nació dual — Claude Code y GitHub Copilot — y así se llamó su carpeta. Desde v0.7.0 es multi-harness: se sumó Gemini con dos superficies (Antigravity IDE y Gemini CLI). El directorio sdd/dual-harness/ conserva el nombre por compatibilidad (los hashes de kit.json y update sdd dependen de esa ruta), pero adentro viven las tres ediciones del mismo contrato — AGENTS.md, CLAUDE.md y GEMINI.md — más las rules de Antigravity en rules/ y copilot-instructions.md. Desde v0.13.0 el arnés está en dos capas: la capa 1 son los archivos raíz, que se cargan siempre y quedaron en ~22 KB (antes ~32) con las reglas y los gates en forma corta y punteros; la capa 2 es sdd/dual-harness/rules/, que se lee cuando hace falta y guarda las definiciones canónicas — sdd-gates.md (el SPEC GATE completo, en sus dos momentos, con los flows y el perfil) y sdd-model-budget.md (el contrato de telemetría: quién registra qué y cuándo, la tabla de fuentes por arnés y las reglas del validador). Si un gate cambia, cambia en un solo archivo.',
     },
+    modNote: {
+      title: 'Claude Code suma un mod opcional — y los demás no cambian (v0.16.0)',
+      body: 'sdd/skills/sdd-mod/ es un mod de Claude Code que viene en el kit y arranca apagado. Claude lo carga solo desde .claude/skills/ cuando la carpeta del proyecto es de confianza; se prende con pnpm sdd:mod -- --enable. Prendido, muestra sobre el prompt una franja con el ciclo en curso (spec · ciclo · flow · tareas hechas), suma /sdd con el detalle de tareas y fixes abiertos, y aplica el SPEC GATE a las ediciones: sin un ciclo in-progress ni un fix abierto, editar código se rechaza (o solo avisa, con --gate=warn). Copilot, Antigravity y Gemini CLI no lo ven — setup:agents lo enlaza solo en .claude/ — y siguen las mismas reglas desde sus archivos de siempre, con pnpm sdd:validate como red común en CI. Las reglas no se mudaron al mod: el mod las muestra y las aplica.',
+    },
     telemetryNote:
       'Los cuatro registran la misma telemetría y es obligatoria: cycle.json → metrics.usage.by_agent[] (uno por agente que cerró una unidad, con proveedor/modelo — claude/opus, gemini/pro, copilot/claude-sonnet; Antigravity va bajo gemini/*), de donde se deriva by_tier, más usage por task y por fix. Declarar proveedor y modelo no es opcional: desde 2026-09-02 el validador falla (antes: warning) si falta. Los arneses sin contador por sesión (Copilot, Antigravity) registran una estimación declarada con approx: true, y la vista Costos la muestra como estimado en la columna Origen — nunca se omite.',
   },
@@ -756,6 +761,7 @@ export const UI = {
       { cmd: '/sdd-steward actualizá la librería', what: 'Conduce update sdd con el checklist post-update: conflictos *.new, setup:agents, validate en verde' },
       { cmd: '/sdd-steward arrancá esta idea: …', what: 'Intake mínimo y delegación a sdd-hermes — el loop idea → producto con sus checkpoints humanos' },
       { cmd: '/sdd-steward ¿cuánto gastamos por proveedor?', what: 'Agrega la telemetría de ciclos, tasks y fixes con las tarifas por proveedor/modelo de pricing.json' },
+      { cmd: '/sdd-steward prendé el mod de Claude Code', what: 'Corre pnpm sdd:mod -- --enable y te dice qué cambia: la franja del ciclo, /sdd y el SPEC GATE sobre las ediciones (block por defecto, warn a pedido). Solo a pedido del dev — nunca lo prende por su cuenta' },
       { cmd: '/sdd-steward [BUGFIX] se rompió el login', what: 'Clasifica el prefijo y rutea al FIX GATE — la trazabilidad la pone el gate, no el steward' },
       { cmd: '/sdd-steward ¿cómo funciona el CONTEXTO GATE?', what: 'Responde desde sdd/documentation/ con lectura quirúrgica — sin cargar el kit entero en contexto' },
     ],

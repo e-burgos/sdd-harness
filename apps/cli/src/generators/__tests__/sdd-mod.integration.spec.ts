@@ -4,6 +4,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import fs from 'fs-extra';
+import ts from 'typescript';
 
 // The Claude Code mod of the kit: setup-agents exposes it to Claude only, and sdd-mod.mjs is
 // the switch in sdd/tools.json. Real scripts over a copy of templates/sdd/.
@@ -55,6 +56,18 @@ describe.skipIf(process.platform === 'win32')('sdd-mod (integration)', () => {
     } finally {
       rmSync(own, { recursive: true, force: true });
     }
+  });
+
+  it('el tsc del proyecto anfitrión no ve el mod (import de claude-code rompía next build)', () => {
+    setupAgents(ws);
+    const config = ts.parseJsonConfigFileContent(
+      { compilerOptions: { allowJs: true }, include: ['**/*.ts', '**/*.tsx', '**/*.js'] },
+      ts.sys,
+      ws,
+    );
+    const modFiles = config.fileNames.filter((f) => f.includes('sdd-mod'));
+    expect(modFiles).toEqual([]);
+    expect(fs.existsSync(resolve(ws, 'sdd/skills/sdd-mod/hooks/.src/register.tsx'))).toBe(true);
   });
 
   it('viene apagado; --enable/--disable/--gate escriben sdd/tools.json sin tocar rtk', () => {

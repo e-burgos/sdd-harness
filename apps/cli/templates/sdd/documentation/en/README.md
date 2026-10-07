@@ -1210,7 +1210,7 @@ ls sdd/context/*/*/updates/*.md 2>/dev/null | wc -l
 
 > The version history below is kept in Spanish in
 > [documentation/es/README.md](../es/README.md#changelog) — it is the historical record of how
-> this system evolved (rtk on by default plus the 4-tab Costs dashboard with charts in v5.5,
+> this system evolved (the optional Claude Code mod `sdd-mod` — cycle band, `/sdd` and the SPEC GATE on edits — in v5.6, rtk on by default plus the 4-tab Costs dashboard with charts in v5.5,
 > mandatory telemetry with declared estimates — `approx`/`source` — and
 > `skipped` counted as resolved in v5.4, Gemini/Antigravity as a third harness provider with
 > provider-namespaced cost telemetry and a bilingual viewer in v5.3, skills back to uppercase `SKILL.md` — the Agent

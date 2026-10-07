@@ -391,7 +391,10 @@ export class AppService {
         target: "ES2022",
         sourceMap: true,
         outDir: "./dist",
-        baseUrl: "./",
+        // TypeScript 6: no implicit @types (process), rootDir required with outDir, baseUrl
+        // deprecated — each one failed `nest build` on a fresh standalone repo.
+        rootDir: "./src",
+        types: ["node"],
         incremental: true,
         skipLibCheck: true,
         strictNullChecks: true,

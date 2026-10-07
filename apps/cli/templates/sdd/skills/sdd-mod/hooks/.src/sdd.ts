@@ -6,7 +6,7 @@ import type {
   ModSettings,
   OpenFix,
   Snapshot,
-} from '../types';
+} from '../../.claude-plugin/contract';
 
 export type Reader = {
   read: (path: string) => Promise<string>;

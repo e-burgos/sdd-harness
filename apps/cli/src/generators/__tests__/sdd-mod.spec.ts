@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { resolve } from 'node:path';
 
-// The mod's pure logic (templates/sdd/skills/sdd-mod/hooks/sdd.ts) is loaded at run time: its
+// The mod's pure logic (templates/sdd/skills/sdd-mod/hooks/.src/sdd.ts) is loaded at run time: its
 // type contract augments the 'claude-code' module, which only Claude Code provides, so tsc must
 // not follow the import. The local types below mirror what the tests touch.
-const SDD_TS = resolve(__dirname, '../../../templates/sdd/skills/sdd-mod/hooks/sdd.ts');
+const SDD_TS = resolve(__dirname, '../../../templates/sdd/skills/sdd-mod/hooks/.src/sdd.ts');
 
 type Snapshot = {
   settings: { enabled: boolean; gate: 'block' | 'warn' };

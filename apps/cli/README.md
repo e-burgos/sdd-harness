@@ -1,6 +1,8 @@
 # @e-burgos/sdd-harness
 
 > CLI to bootstrap AI-agent-ready repos with SDD (Spec-Driven Development) methodology.
+>
+> 📖 **Documentation:** [sdd.estebanburgos.com.ar](https://sdd.estebanburgos.com.ar)
 
 ## Three modes
 

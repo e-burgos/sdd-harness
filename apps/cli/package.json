@@ -1,6 +1,6 @@
 {
   "name": "@e-burgos/sdd-harness",
-  "version": "0.15.1",
+  "version": "0.16.0",
   "description": "CLI to bootstrap AI-agent-ready Nx monorepos with SDD methodology",
   "type": "module",
   "bin": {
@@ -31,6 +31,7 @@
     "scaffold",
     "cli"
   ],
+  "homepage": "https://sdd.estebanburgos.com.ar",
   "author": "Esteban Burgos",
   "license": "MIT",
   "repository": {

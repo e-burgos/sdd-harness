@@ -871,6 +871,20 @@ function MultiHarnessSection() {
           {UI.multiHarness.dualNote.body}
         </p>
       </motion.div>
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: '-40px' }}
+        transition={{ type: 'spring', stiffness: 90, damping: 18 }}
+        className="mt-5 rounded-2xl border border-accent-500/25 bg-accent-500/[0.04] p-6"
+      >
+        <h3 className="text-[15px] font-medium tracking-tight text-accent-300">
+          {UI.multiHarness.modNote.title}
+        </h3>
+        <p className="mt-2 max-w-[92ch] text-[13.5px] leading-relaxed text-zinc-400">
+          {UI.multiHarness.modNote.body}
+        </p>
+      </motion.div>
       <p className="mt-6 max-w-[92ch] text-[13px] leading-relaxed text-zinc-500">
         {UI.multiHarness.telemetryNote}
       </p>

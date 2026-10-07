@@ -425,6 +425,7 @@ export const HARNESSES: Harness[] = [
     reads: [
       'CLAUDE.md → sdd/dual-harness/CLAUDE.md',
       '.claude/agents · skills · prompts · commands (SDD slash commands)',
+      '.claude/skills/sdd-mod — optional mod (off by default): band with the cycle in progress, /sdd and the SPEC GATE on code edits',
     ],
     models:
       'Passes explicit model and effort on every subagent and workflow, following the harness canonical tier table. Reader fan-outs run on the economy tier; synthesis and review on the high tier.',
@@ -667,6 +668,10 @@ export const UI = {
       title: 'The naming caveat: it is no longer “dual”',
       body: 'The harness was born dual — Claude Code and GitHub Copilot — and its folder was named after that. Since v0.7.0 it is a multi-harness: Gemini joined with two surfaces (Antigravity IDE and Gemini CLI). The sdd/dual-harness/ directory keeps its name for compatibility (kit.json hashes and update sdd depend on that path), but inside live the three editions of the same contract — AGENTS.md, CLAUDE.md and GEMINI.md — plus the Antigravity rules in rules/ and copilot-instructions.md. Since v0.13.0 the harness comes in two layers: layer 1 is the root files, always loaded, trimmed to ~22 KB (from ~32) with the rules and gates in short form plus pointers; layer 2 is sdd/dual-harness/rules/, read when needed, holding the canonical definitions — sdd-gates.md (the full SPEC GATE, both moments, with the flows and the profile) and sdd-model-budget.md (the telemetry contract: who records what and when, the per-harness source table and the validator rules). When a gate changes, it changes in exactly one file.',
     },
+    modNote: {
+      title: 'Claude Code gets an optional mod — and the others do not change (v0.16.0)',
+      body: 'sdd/skills/sdd-mod/ is a Claude Code mod that ships with the kit, switched off. Claude loads it on its own from .claude/skills/ once the project folder is trusted; pnpm sdd:mod -- --enable turns it on. When on, it shows a band above the prompt with the cycle in progress (spec · cycle · flow · tasks done), adds /sdd with the task and open-fix detail, and applies the SPEC GATE to edits: with no in-progress cycle and no open fix, editing code is rejected (or only warned about, with --gate=warn). Copilot, Antigravity and Gemini CLI do not see it — setup:agents links it only under .claude/ — and follow the same rules from their usual files, with pnpm sdd:validate as the shared net in CI. The rules did not move into the mod: the mod shows them and applies them.',
+    },
     telemetryNote:
       'All four record the same telemetry, and it is mandatory: cycle.json → metrics.usage.by_agent[] (one entry per agent that closed a unit, with provider/model — claude/opus, gemini/pro, copilot/claude-sonnet; Antigravity records under gemini/*), from which by_tier is derived, plus per-task and per-fix usage. Declaring provider and model is not optional: since 2026-09-02 the validator fails (previously: warning) if it is missing. Harnesses with no per-session counter (Copilot, Antigravity) record a declared estimate with approx: true, and the Costs view shows it as estimated in the Source column — it is never omitted.',
   },
@@ -683,6 +688,7 @@ export const UI = {
       { cmd: '/sdd-steward update the library', what: 'Drives update sdd with the post-update checklist: *.new conflicts, setup:agents, validate green' },
       { cmd: '/sdd-steward kick off this idea: …', what: 'Minimal intake and delegation to sdd-hermes — the idea → product loop with its human checkpoints' },
       { cmd: '/sdd-steward how much did we spend per provider?', what: 'Aggregates cycle, task and fix telemetry with the provider/model rates from pricing.json' },
+      { cmd: '/sdd-steward turn on the Claude Code mod', what: 'Runs pnpm sdd:mod -- --enable and tells you what changes: the cycle band, /sdd and the SPEC GATE on edits (block by default, warn on request). Only when the dev asks — it never turns it on by itself' },
       { cmd: '/sdd-steward [BUGFIX] login is broken', what: 'Classifies the prefix and routes to the FIX GATE — traceability comes from the gate, not the steward' },
       { cmd: '/sdd-steward how does the CONTEXTO GATE work?', what: 'Answers from sdd/documentation/ with surgical reading — never loading the whole kit into context' },
     ],
