@@ -36,9 +36,12 @@ export interface ThreadState {
   info: ThreadInfo | null;
   items: TimelineItem[];
   lastSeq: number;
+  /** false until history was applied; live events are buffered meanwhile */
+  synced: boolean;
+  buffer: { seq: number; event: ThreadEvent }[];
 }
 
-export const emptyThread = (): ThreadState => ({ info: null, items: [], lastSeq: -1 });
+export const emptyThread = (): ThreadState => ({ info: null, items: [], lastSeq: -1, synced: false, buffer: [] });
 
 function update<K extends TimelineItem['kind']>(
   items: TimelineItem[],
@@ -117,5 +120,5 @@ export function applyThreadEvent(thread: ThreadState, seq: number, event: Thread
       }
       break;
   }
-  return { info, items, lastSeq: seq };
+  return { ...thread, info, items, lastSeq: seq };
 }

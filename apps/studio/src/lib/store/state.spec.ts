@@ -1,5 +1,5 @@
 import type { ThreadInfo, WorkspaceSnapshot } from '@sdd-studio/protocol';
-import { applyServerEvent, initialState, loadHistory, setBotHistory, setThreads, startRun } from './state';
+import { applyServerEvent, beginSync, initialState, loadHistory, setBotHistory, setThreads, startRun } from './state';
 
 const info = (over: Partial<ThreadInfo> = {}): ThreadInfo => ({
   id: 't1', channelId: 'general', title: 'hola', agent: 'sdd-orchestrator',
@@ -9,19 +9,60 @@ const info = (over: Partial<ThreadInfo> = {}): ThreadInfo => ({
 
 describe('state reducers', () => {
   it('merges thread.updated into existing timelines', () => {
-    let s = applyServerEvent(initialState(), { kind: 'thread.event', threadId: 't1', seq: 0, event: { type: 'user.message', text: 'hola' } });
+    let s = loadHistory(initialState(), 't1', [{ seq: 0, event: { type: 'user.message', text: 'hola' } }]);
     s = applyServerEvent(s, { kind: 'thread.updated', thread: info({ status: 'running' }) });
     expect(s.threads.t1?.info?.status).toBe('running');
     expect(s.threads.t1?.items).toHaveLength(1);
   });
 
-  it('replays history without duplicating live events', () => {
+  const userText = (s: ReturnType<typeof initialState>) =>
+    s.threads.t1?.items.map((i) => (i.kind === 'user' ? i.text : '')) ?? [];
+
+  it('replays history without losing or duplicating a live event that arrived first', () => {
     let s = applyServerEvent(initialState(), { kind: 'thread.event', threadId: 't1', seq: 1, event: { type: 'user.message', text: 'b' } });
+    expect(s.threads.t1?.items).toHaveLength(0);
     s = loadHistory(s, 't1', [
       { seq: 0, event: { type: 'user.message', text: 'a' } },
       { seq: 1, event: { type: 'user.message', text: 'b' } },
     ]);
-    expect(s.threads.t1?.items.map((i) => (i.kind === 'user' ? i.text : ''))).toEqual(['b']);
+    expect(userText(s)).toEqual(['a', 'b']);
+    expect(s.threads.t1?.synced).toBe(true);
+    expect(s.threads.t1?.buffer).toEqual([]);
+  });
+
+  it('buffers live events of an unknown thread until history is loaded', () => {
+    let s = applyServerEvent(initialState(), { kind: 'thread.event', threadId: 't1', seq: 0, event: { type: 'user.message', text: 'a' } });
+    s = applyServerEvent(s, { kind: 'thread.updated', thread: info() });
+    expect(s.threads.t1?.info?.id).toBe('t1');
+    expect(s.threads.t1?.items).toHaveLength(0);
+    s = loadHistory(s, 't1', []);
+    expect(userText(s)).toEqual(['a']);
+  });
+
+  it('beginSync buffers live events until the gap history arrives', () => {
+    let s = loadHistory(initialState(), 't1', [{ seq: 0, event: { type: 'user.message', text: 'a' } }]);
+    s = beginSync(s, 't1');
+    s = applyServerEvent(s, { kind: 'thread.event', threadId: 't1', seq: 2, event: { type: 'user.message', text: 'c' } });
+    expect(userText(s)).toEqual(['a']);
+    s = loadHistory(s, 't1', [{ seq: 1, event: { type: 'user.message', text: 'b' } }]);
+    expect(userText(s)).toEqual(['a', 'b', 'c']);
+  });
+
+  it('caps the live buffer at 1000 events, dropping the oldest', () => {
+    let s = initialState();
+    for (let seq = 0; seq < 1005; seq++) {
+      s = applyServerEvent(s, { kind: 'thread.event', threadId: 't1', seq, event: { type: 'user.message', text: String(seq) } });
+    }
+    const buffer = s.threads.t1?.buffer ?? [];
+    expect(buffer).toHaveLength(1000);
+    expect(buffer[0]?.seq).toBe(5);
+  });
+
+  it('keeps identities when incoming thread info is equal', () => {
+    const s = setThreads(initialState(), [info()]);
+    expect(setThreads(s, [info()])).toBe(s);
+    expect(applyServerEvent(s, { kind: 'thread.updated', thread: info() })).toBe(s);
+    expect(applyServerEvent(s, { kind: 'thread.updated', thread: info({ status: 'running' }) })).not.toBe(s);
   });
 
   it('resolves an approval answered in another tab', () => {

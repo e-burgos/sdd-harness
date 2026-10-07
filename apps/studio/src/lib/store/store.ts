@@ -3,6 +3,7 @@ import { createStore, type StoreApi } from 'zustand/vanilla';
 import {
   applyServerEvent,
   initialState,
+  beginSync,
   loadHistory,
   setBotHistory,
   setThreads,
@@ -14,6 +15,7 @@ export interface StudioActions {
   receive(e: ServerEvent): void;
   setSnapshot(s: WorkspaceSnapshot): void;
   setThreads(list: ThreadInfo[]): void;
+  beginSync(threadId: string): void;
   loadHistory(threadId: string, entries: { seq: number; event: ThreadEvent }[]): void;
   setPresence(p: Presence[]): void;
   setBotHistory(channelId: string, events: BotEvent[]): void;
@@ -28,6 +30,7 @@ export function createStudioStore(): StudioStore {
     receive: (e) => set((s) => applyServerEvent(s, e)),
     setSnapshot: (snapshot) => set({ snapshot }),
     setThreads: (list) => set((s) => setThreads(s, list)),
+    beginSync: (id) => set((s) => beginSync(s, id)),
     loadHistory: (id, entries) => set((s) => loadHistory(s, id, entries)),
     setPresence: (presence) => set({ presence }),
     setBotHistory: (c, events) => set((s) => setBotHistory(s, c, events)),
