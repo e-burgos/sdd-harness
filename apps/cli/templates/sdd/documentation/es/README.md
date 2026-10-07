@@ -1209,6 +1209,22 @@ ls sdd/context/*/*/updates/*.md 2>/dev/null | wc -l
 
 ## Changelog
 
+### v5.6 (2026-10-07) — sdd-mod: el SDD dentro de Claude Code (opcional)
+
+- ✅ **Mod de Claude Code en el kit** (kit v0.16.0): `sdd/skills/sdd-mod/`. Claude Code lo carga
+  solo desde `.claude/skills/` cuando la carpeta del proyecto es de confianza — sin marketplace
+  ni instalación aparte. Viene **apagado**: `pnpm sdd:mod -- --enable` lo prende.
+- ✅ **Franja sobre el prompt** con el ciclo en curso (spec · ciclo · flow · tareas hechas) y
+  **`/sdd`** con el detalle de tareas y fixes abiertos.
+- ✅ **SPEC GATE aplicado a las ediciones**: sin un ciclo `in-progress` ni un fix abierto,
+  `Edit`/`Write`/`NotebookEdit` sobre código se rechazan (`gate: "block"`, default) o solo avisan
+  (`gate: "warn"`). `sdd/`, las carpetas de los arneses y el markdown raíz quedan libres; si el mod
+  no puede leer `sdd/`, deja pasar (la red sigue siendo `sdd:validate`). No cubre comandos de shell.
+- ✅ **Interruptor en `sdd/tools.json → claude_mod`** (schema estricto, protegido del `update
+  sdd`), releído en cada turno. Nueva entrada en el steward: Playbook 7.
+- ✅ **Los demás arneses no cambian**: `setup-agents` enlaza el mod solo en `.claude/`; Copilot,
+  Antigravity y Gemini CLI siguen las mismas reglas desde sus archivos.
+
 ### v5.5 (2026-09-06) — rtk activo por defecto, Costos en 4 pestañas con gráficos
 
 - ✅ **rtk viene activo por defecto** (kit v0.12.0, cero acción del dev): comprime la salida de

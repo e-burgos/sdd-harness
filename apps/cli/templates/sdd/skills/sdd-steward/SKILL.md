@@ -63,6 +63,8 @@ Reporte compacto, en este orden, leyendo solo las fuentes del mapa:
 8. **rtk**: estado del interruptor (`sdd/tools.json`) y del binario vía
    `node sdd/scripts/setup-rtk.mjs --status`; si falta el binario, ofrecer
    `pnpm sdd:rtk`.
+9. **Mod de Claude Code**: `pnpm sdd:mod -- --status` → prendido/apagado, modo del
+   gate y si `.claude/skills/sdd-mod` existe (si no, ofrecer `pnpm setup:agents`).
 
 Nada de análisis no pedido: el status es un tablero, no un ensayo.
 
@@ -151,6 +153,25 @@ Invariantes en los dos: spec registrada, `cycle.json` in-progress antes del cód
 6. Duda de metodología sobre flows ("¿qué me ahorra lite?", "¿qué pierdo?"): responder desde
    `sdd/dual-harness/rules/sdd-gates.md` y `sdd/documentation/` — lectura quirúrgica.
 
+## Playbook 7 — Mod de Claude Code (sdd-mod)
+
+`sdd/skills/sdd-mod/` es un mod de Claude Code que el kit trae **apagado**. Prendido,
+Claude Code muestra una franja sobre el prompt con el ciclo en curso (spec · ciclo · flow ·
+tareas), suma `/sdd` con el detalle y aplica el SPEC GATE a `Edit`/`Write`/`NotebookEdit`:
+sin un ciclo `in-progress` ni un fix abierto, la edición de código se rechaza (`gate:
+"block"`) o solo avisa (`gate: "warn"`). Es solo para Claude Code: Copilot, Gemini y el
+resto siguen las mismas reglas desde los arneses y `pnpm sdd:validate`, que no cambian.
+
+1. **Estado**: `pnpm sdd:mod -- --status`.
+2. **Prender / apagar / modo — solo a pedido del dev**: `pnpm sdd:mod -- --enable`,
+   `--disable`, `--gate=warn|block`. El mod relee `sdd/tools.json` en cada turno: no hace
+   falta reiniciar Claude Code.
+3. **No carga**: Claude Code lo levanta solo desde `.claude/skills/sdd-mod/` cuando la
+   carpeta del proyecto es de confianza. Si falta el link, `pnpm setup:agents`; si el dev
+   no aceptó el diálogo de confianza, aceptarlo y correr `/reload-plugins`.
+4. El gate del mod es un chequeo grueso (hay trabajo autorizado en curso); el gate fino
+   sigue siendo `pnpm sdd:gate <spec> [cycle-XX]`. No cubre comandos de shell.
+
 ## Ruteo (pedidos que NO son del steward)
 
 | Pedido                                  | Destino                                        |
@@ -170,8 +191,9 @@ Ninguno en operación normal. Las únicas escrituras permitidas son las que
 ejecutan sus playbooks a través de las herramientas oficiales (`update sdd`,
 `setup:agents`, `harness idea`) — nunca ediciones manuales de registros SDD.
 
-Única excepción: `sdd/tools.json` (interruptor de rtk), y solo a pedido explícito
-del dev — preferentemente vía `pnpm sdd:rtk -- --disable|--enable`.
+Única excepción: `sdd/tools.json` (interruptores de rtk y del mod de Claude Code), y
+solo a pedido explícito del dev — preferentemente vía `pnpm sdd:rtk -- --disable|--enable`
+y `pnpm sdd:mod -- --enable|--disable|--gate=…`.
 
 ## Registro de consumo (obligatorio)
 

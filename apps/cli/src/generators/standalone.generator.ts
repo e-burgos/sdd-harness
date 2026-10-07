@@ -391,7 +391,10 @@ export class AppService {
         target: "ES2022",
         sourceMap: true,
         outDir: "./dist",
-        baseUrl: "./",
+        // TypeScript 6: no implicit @types (process), rootDir required with outDir, baseUrl
+        // deprecated — each one failed `nest build` on a fresh standalone repo.
+        rootDir: "./src",
+        types: ["node"],
         incremental: true,
         skipLibCheck: true,
         strictNullChecks: true,
@@ -512,7 +515,9 @@ module.exports = nextConfig;
         plugins: [{ name: "next" }],
       },
       include: ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
-      exclude: ["node_modules"],
+      // The kit's blueprints (sdd/templates/apps/react-app imports react-router-dom) are not
+      // this app's code: without this, `next build` type-checks them and fails.
+      exclude: ["node_modules", "sdd"],
     },
     { spaces: 2 },
   );

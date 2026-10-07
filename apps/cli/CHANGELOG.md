@@ -5,6 +5,34 @@ All notable changes to `@e-burgos/sdd-harness` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.16.0] - 2026-10-07
+
+### Added
+
+- **`sdd-mod`: an optional Claude Code mod inside the kit** (`sdd/skills/sdd-mod/`). Claude Code
+  loads it on its own from `.claude/skills/` once the project folder is trusted — no marketplace,
+  no install step. It ships **off**; `pnpm sdd:mod -- --enable` turns it on (switch in
+  `sdd/tools.json → claude_mod`, re-read every turn). When on it shows a band above the prompt with
+  the cycle in progress (spec · cycle · flow · tasks done), adds `/sdd` with the task and open-fix
+  detail, and applies the SPEC GATE to `Edit`/`Write`/`NotebookEdit` on code: with no
+  `in-progress` cycle and no open fix the edit is rejected (`gate: "block"`, default) or only
+  warned about (`gate: "warn"`). `sdd/`, the harness folders and root markdown stay free; a gate
+  that cannot read `sdd/` lets the edit through. Copilot, Gemini and the rest are unchanged:
+  `setup-agents` exposes the mod only under `.claude/`, and the rules still live in the harness
+  files and `sdd:validate`. The mod's sources and type contract live in dot-directories
+  (`hooks/.src/`, `.claude-plugin/contract/`): TypeScript's `**/*` globs skip them, so the host
+  project's `tsc` / `next build` never tries to compile a module that imports `claude-code`.
+
+### Fixed
+
+- **Standalone NestJS repos build again.** `harness init --standalone` with a NestJS app failed its
+  own gate at `nest build` under TypeScript 6 (`Cannot find name 'process'`, missing `rootDir`,
+  deprecated `baseUrl`). The generated `tsconfig.json` now declares `types: ["node"]` and
+  `rootDir: "./src"` and drops the unused `baseUrl`. Reproduced on the published 0.15.1.
+- **Standalone Next.js repos build again.** Next's `tsconfig.json` includes `**/*.tsx`, so `next build`
+  type-checked the kit's own blueprints (`sdd/templates/apps/react-app` imports `react-router-dom`)
+  and the init gate failed. The generated tsconfig now excludes `sdd`.
+
 ## [0.15.1] - 2026-09-17
 
 ### Changed

@@ -33,7 +33,7 @@ invocás, jamás los reemplazás ni los bypasseás.
 | Consulta de costos / telemetría        | ✅        | —                                             |
 | Salud de symlinks / arneses            | ✅        | —                                             |
 | Cambiar el perfil (`team` ↔ `solo`) / explicar flows | ✅ | —                                          |
-| Herramientas del kit (rtk)             | ✅        | —                                             |
+| Herramientas del kit (rtk, mod de Claude Code) | ✅ | —                                     |
 | Duda de metodología                    | ✅        | — (responder desde `sdd/documentation/`)      |
 | Arrancar una idea u objetivo           | intake    | `sdd-hermes` / `harness idea`                 |
 | Feature nueva o spec existente         | pre-check | `sdd-orchestrator` (SPEC GATE)                |

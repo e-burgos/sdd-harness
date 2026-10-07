@@ -127,6 +127,27 @@ antes de que el agente la lea: 60–90% menos texto, sin tocar la lectura de arc
 está, el comando corre igual, sin comprimir. El ahorro se ve con `rtk gain --project` o en
 `pnpm sdd:docs` → Costos → pestaña **RTK** (números por máquina y estimados).
 
+### sdd-mod — el SDD dentro de Claude Code (opcional, apagado por defecto)
+
+Solo para quien usa Claude Code. `sdd/skills/sdd-mod/` es un mod que Claude Code carga solo
+desde `.claude/skills/` (cuando la carpeta del proyecto es de confianza). Prendido, muestra una
+franja sobre el prompt con el ciclo en curso (spec · ciclo · flow · tareas hechas), suma `/sdd`
+con el detalle de tareas y fixes abiertos, y aplica el SPEC GATE a las ediciones de código: sin
+un ciclo `in-progress` ni un fix abierto, `Edit`/`Write` sobre código se rechazan (o solo
+avisan, con `--gate=warn`). `sdd/`, las carpetas de los arneses y el markdown de la raíz quedan
+libres.
+
+```bash
+pnpm sdd:mod -- --status       # prendido/apagado, modo del gate, link en .claude/skills
+pnpm sdd:mod -- --enable       # prenderlo (se relee en cada turno, sin reiniciar)
+pnpm sdd:mod -- --gate=warn    # avisar en vez de bloquear (block es el default)
+pnpm sdd:mod -- --disable      # apagarlo
+```
+
+Copilot, Gemini y el resto de los agentes no lo ven y no cambian: siguen las mismas reglas desde
+`AGENTS.md`/`GEMINI.md`/`copilot-instructions.md`, y `pnpm sdd:validate` sigue siendo la red de
+seguridad común en CI. El gate del mod no cubre comandos de shell.
+
 ---
 
 ## 3. Flujo normal — Funcionalidad nueva

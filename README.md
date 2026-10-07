@@ -3,6 +3,8 @@
 Monorepo of the **`@e-burgos/sdd-harness`** CLI — bootstrap AI-agent-ready repos with the
 SDD (Spec-Driven Development) methodology.
 
+📖 **Documentation site:** [sdd.estebanburgos.com.ar](https://sdd.estebanburgos.com.ar)
+
 ## Layout
 
 | Path                              | What it is                                                        |

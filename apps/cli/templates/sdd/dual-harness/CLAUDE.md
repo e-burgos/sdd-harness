@@ -81,6 +81,19 @@ transparente: pedís `git status` y se ejecuta `rtk git status`.
   effort y por máquina: sin binario o con hook roto el comando pasa **sin comprimir** y nunca
   se bloquea.
 
+## 🧩 sdd-mod — el SDD dentro de Claude Code (OPCIONAL, apagado por defecto)
+
+`sdd/skills/sdd-mod/` es un mod de Claude Code que se carga solo desde `.claude/skills/`. Con
+`claude_mod.enabled: true` en `sdd/tools.json` muestra el ciclo en curso sobre el prompt, suma
+`/sdd` y aplica el SPEC GATE a `Edit`/`Write`/`NotebookEdit` sobre código.
+
+- **Si una edición vuelve rechazada con `SPEC GATE: …`**, no la reintentes ni la rodees con
+  comandos de shell: no hay ciclo `in-progress` ni fix abierto. Seguí el camino que indica el
+  mensaje (abrir el ciclo vía `sdd-orchestrator`, o el FIX GATE).
+- **Nunca lo prendas, apagues ni cambies su modo por tu cuenta**: es decisión del dev
+  (`pnpm sdd:mod -- --status | --enable | --disable | --gate=warn|block`; el sdd-steward lo
+  opera a pedido).
+
 ## ⚙️ Selección de modelo y esfuerzo (OBLIGATORIO — optimización de tokens/contexto)
 
 > [!IMPORTANT]
