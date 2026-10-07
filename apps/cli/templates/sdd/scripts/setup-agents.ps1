@@ -204,6 +204,8 @@ function Link-Items {
     foreach ($item in Get-ChildItem $sourceDir -Filter $filter -Force) {
         # `*.new` is a merge artifact of `update sdd`, not a surface to expose.
         if ($item.Name -like "*.new") { continue }
+        # A Claude Code plugin (sdd/skills/sdd-mod) has no SKILL.md: only .claude/ gets it.
+        if ((Test-Path (Join-Path $item.FullName ".claude-plugin")) -and -not $label.StartsWith(".claude/")) { continue }
         Link-Item (Join-Path $dir $item.Name) $item.FullName "$label/$($item.Name)"
     }
 }

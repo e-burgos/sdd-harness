@@ -110,6 +110,13 @@ link_items() {
     case "$name" in
       *.new) continue ;;
     esac
+    # A Claude Code plugin (sdd/skills/sdd-mod) has no SKILL.md: only .claude/ gets it.
+    if [ -d "$item/.claude-plugin" ]; then
+      case "$label" in
+        .claude/*) ;;
+        *) continue ;;
+      esac
+    fi
     link_item "$dir/$name" "$relbase/$name" "$item" "$label/$name"
   done
 }

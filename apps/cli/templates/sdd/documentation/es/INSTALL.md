@@ -125,9 +125,9 @@ SPEC GATE.
 | `prompts/`         | Prompts de gates (SPEC GATE, FIX GATE, inicio/cierre de ciclo, hermes-resume)                   |
 | `memory/`          | Memoria del proyecto: `lessons.md` destilado + `journal/` episódico (MEMORIA GATE)              |
 | `pricing.json`     | Tarifas editables por proveedor del dashboard de Costos del visor (`claude/*`, `gemini/*`, `copilot/*`) |
-| `tools.json`       | Interruptor de rtk (`enabled`, `auto_install`) — dato del proyecto: `update sdd` no lo pisa    |
+| `tools.json`       | Interruptores de rtk (`enabled`, `auto_install`) y del mod de Claude Code (`claude_mod`) — dato del proyecto: `update sdd` no lo pisa |
 | `schemas/`         | JSON Schemas estrictos de todos los registros                                                   |
-| `scripts/`         | validate, spec-gate (`sdd:gate`), rebuild-tasks-index, rebuild-catalog, setup-agents (bash + PowerShell) y los tres de rtk: `setup-rtk.mjs`, `rtk-hook.mjs`, `rtk-common.mjs` |
+| `scripts/`         | validate, spec-gate (`sdd:gate`), rebuild-tasks-index, rebuild-catalog, setup-agents (bash + PowerShell) los tres de rtk: `setup-rtk.mjs`, `rtk-hook.mjs`, `rtk-common.mjs`, y `sdd-mod.mjs` (interruptor del mod de Claude Code) |
 | `docs/`            | Visor portable y bilingüe de documentación (JS vanilla, cero deps)                               |
 | `dual-harness/`    | CLAUDE.md / AGENTS.md / GEMINI.md para linkear en la raíz del repo, `copilot-instructions.md` (semilla de `.github/`) y `rules/` (gates y telemetría canónicos) |
 | `context/`         | Plantillas de constitución y context prompt (global + example)                                  |
@@ -150,5 +150,11 @@ pnpm sdd:rtk -- --enable    # volver a prenderlo
 ```
 
 El interruptor vive en `sdd/tools.json`; con `auto_install: false` nunca se descarga el binario.
+
+### Mod de Claude Code (opcional, apagado)
+
+`setup-agents` deja `sdd/skills/sdd-mod/` visible en `.claude/skills/` (y en ninguna carpeta de
+otro agente). Viene apagado: `pnpm sdd:mod -- --enable` lo prende. Detalle en
+[HOW-TO-USE-SDD.md](HOW-TO-USE-SDD.md#sdd-mod--el-sdd-dentro-de-claude-code-opcional-apagado-por-defecto).
 
 Guía de uso completa: [HOW-TO-USE-SDD.md](HOW-TO-USE-SDD.md) · Referencia del sistema: [README.md](README.md)

@@ -5,6 +5,22 @@ All notable changes to `@e-burgos/sdd-harness` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **`sdd-mod`: an optional Claude Code mod inside the kit** (`sdd/skills/sdd-mod/`). Claude Code
+  loads it on its own from `.claude/skills/` once the project folder is trusted — no marketplace,
+  no install step. It ships **off**; `pnpm sdd:mod -- --enable` turns it on (switch in
+  `sdd/tools.json → claude_mod`, re-read every turn). When on it shows a band above the prompt with
+  the cycle in progress (spec · cycle · flow · tasks done), adds `/sdd` with the task and open-fix
+  detail, and applies the SPEC GATE to `Edit`/`Write`/`NotebookEdit` on code: with no
+  `in-progress` cycle and no open fix the edit is rejected (`gate: "block"`, default) or only
+  warned about (`gate: "warn"`). `sdd/`, the harness folders and root markdown stay free; a gate
+  that cannot read `sdd/` lets the edit through. Copilot, Gemini and the rest are unchanged:
+  `setup-agents` exposes the mod only under `.claude/`, and the rules still live in the harness
+  files and `sdd:validate`.
+
 ## [0.15.1] - 2026-09-17
 
 ### Changed

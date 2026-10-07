@@ -128,6 +128,26 @@ it with a `git pull`. The switch lives in `sdd/tools.json` and is operated with
 just uncompressed. Savings show up in `rtk gain --project` or in `pnpm sdd:docs` → Costs → **RTK**
 tab (per-machine, estimated numbers).
 
+### sdd-mod — SDD inside Claude Code (optional, off by default)
+
+Claude Code only. `sdd/skills/sdd-mod/` is a mod Claude Code loads on its own from
+`.claude/skills/` (once the project folder is trusted). When on, it shows a band above the
+prompt with the cycle in progress (spec · cycle · flow · tasks done), adds `/sdd` with the task
+and open-fix detail, and applies the SPEC GATE to code edits: with no `in-progress` cycle and no
+open fix, `Edit`/`Write` on code are rejected (or only warned about, with `--gate=warn`). `sdd/`,
+the harness folders and root markdown stay free.
+
+```bash
+pnpm sdd:mod -- --status       # on/off, gate mode, link in .claude/skills
+pnpm sdd:mod -- --enable       # turn it on (re-read every turn, no restart)
+pnpm sdd:mod -- --gate=warn    # warn instead of blocking (block is the default)
+pnpm sdd:mod -- --disable      # turn it off
+```
+
+Copilot, Gemini and the other agents do not see it and do not change: they follow the same
+rules from `AGENTS.md`/`GEMINI.md`/`copilot-instructions.md`, and `pnpm sdd:validate` stays the
+shared safety net in CI. The mod's gate does not cover shell commands.
+
 ---
 
 ## 3. Normal flow — New functionality

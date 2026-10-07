@@ -126,9 +126,9 @@ The key is only written to `sdd/global.json` when you pass it; without it the re
 | `prompts/`         | Gate prompts (SPEC GATE, FIX GATE, cycle open/close, hermes-resume)                             |
 | `memory/`          | Project memory: distilled `lessons.md` + episodic `journal/` (MEMORIA GATE)                     |
 | `pricing.json`     | Editable per-provider rates for the viewer's Costs dashboard (`claude/*`, `gemini/*`, `copilot/*`) |
-| `tools.json`       | rtk switch (`enabled`, `auto_install`) — project data: `update sdd` never overwrites it         |
+| `tools.json`       | Switches for rtk (`enabled`, `auto_install`) and the Claude Code mod (`claude_mod`) — project data: `update sdd` never overwrites it |
 | `schemas/`         | Strict JSON Schemas for every registry                                                          |
-| `scripts/`         | validate, spec-gate (`sdd:gate`), rebuild-tasks-index, rebuild-catalog, setup-agents (bash + PowerShell) and the three rtk ones: `setup-rtk.mjs`, `rtk-hook.mjs`, `rtk-common.mjs` |
+| `scripts/`         | validate, spec-gate (`sdd:gate`), rebuild-tasks-index, rebuild-catalog, setup-agents (bash + PowerShell) the three rtk ones: `setup-rtk.mjs`, `rtk-hook.mjs`, `rtk-common.mjs`, and `sdd-mod.mjs` (Claude Code mod switch) |
 | `docs/`            | Portable, bilingual documentation viewer (vanilla JS, zero deps)                                |
 | `dual-harness/`    | CLAUDE.md / AGENTS.md / GEMINI.md to link at the repo root, `copilot-instructions.md` (seed for `.github/`) plus `rules/` (canonical gates and telemetry) |
 | `context/`         | Constitution and context prompt templates (global + example)                                    |
@@ -152,5 +152,11 @@ pnpm sdd:rtk -- --enable    # turn it back on
 ```
 
 The switch lives in `sdd/tools.json`; with `auto_install: false` the binary is never downloaded.
+
+### Claude Code mod (optional, off)
+
+`setup-agents` exposes `sdd/skills/sdd-mod/` in `.claude/skills/` (and in no other agent's
+folder). It ships off: `pnpm sdd:mod -- --enable` turns it on. Details in
+[HOW-TO-USE-SDD.md](HOW-TO-USE-SDD.md#sdd-mod--sdd-inside-claude-code-optional-off-by-default).
 
 Full usage guide: [HOW-TO-USE-SDD.md](HOW-TO-USE-SDD.md) · System reference: [README.md](README.md)

@@ -67,7 +67,7 @@ const SDD_TREE: TreeNode = {
     { name: 'api.json · components.json · schema.json', note: 'registros de arquitectura: endpoints, componentes, tablas' },
     { name: 'tasks.json · fixes.json · catalog.json', note: 'índices agregados — los lee el visor' },
     { name: 'kit.json · pricing.json', note: 'hashes para update sdd · tarifas de Costos' },
-    { name: 'tools.json', note: 'interruptor de rtk' },
+    { name: 'tools.json', note: 'interruptores de rtk y del mod de Claude Code (sdd-mod, apagado)' },
     { name: 'documentation/', note: 'INSTALL · HOW-TO · README — en es/ y en/' },
     { name: 'README.md', note: 'índice bilingüe de la documentación' },
   ],
