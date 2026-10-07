@@ -38,4 +38,11 @@ describe('CommandRunner', () => {
     expect((await waitFor(() => exitOf('r3'))).exitCode).not.toBe(0);
     expect(sent.filter((e) => e.kind === 'command.exit')).toHaveLength(1);
   });
+
+  it('decodes multi-byte output split across chunks', async () => {
+    const runner = new CommandRunner(root, (e) => sent.push(e), () => 'r4');
+    runner.run('rebuild-tasks-index', []);
+    await waitFor(() => exitOf('r4'));
+    expect(outputOf('r4', 'stdout')).toBe('ñandú ✓\n');
+  });
 });

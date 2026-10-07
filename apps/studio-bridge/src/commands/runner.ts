@@ -21,18 +21,20 @@ export class CommandRunner {
   run(name: KitCommandName, args: string[]): string {
     const runId = this.newId();
     const script = path.join(this.root, 'sdd', 'scripts', SCRIPTS[name]);
-    const child = spawn(process.execPath, [script, ...args], { cwd: this.root, shell: false });
+    const child = spawn(process.execPath, [script, ...args], { cwd: this.root, shell: false, stdio: ['ignore', 'pipe', 'pipe'] });
+    child.stdout.setEncoding('utf8');
+    child.stderr.setEncoding('utf8');
     let exited = false;
     const exit = (exitCode: number) => {
       if (exited) return;
       exited = true;
       this.broadcast({ kind: 'command.exit', runId, exitCode });
     };
-    child.stdout.on('data', (chunk: Buffer) =>
-      this.broadcast({ kind: 'command.output', runId, stream: 'stdout', chunk: chunk.toString('utf8') }),
+    child.stdout.on('data', (chunk: string) =>
+      this.broadcast({ kind: 'command.output', runId, stream: 'stdout', chunk }),
     );
-    child.stderr.on('data', (chunk: Buffer) =>
-      this.broadcast({ kind: 'command.output', runId, stream: 'stderr', chunk: chunk.toString('utf8') }),
+    child.stderr.on('data', (chunk: string) =>
+      this.broadcast({ kind: 'command.output', runId, stream: 'stderr', chunk }),
     );
     child.on('error', (error) => {
       this.broadcast({ kind: 'command.output', runId, stream: 'stderr', chunk: error.message });
