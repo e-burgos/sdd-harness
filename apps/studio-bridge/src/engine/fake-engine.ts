@@ -15,6 +15,7 @@ export class FakeEngine implements AgentEngine {
 
   startTurn(input: EngineTurnInput, cb: EngineCallbacks): EngineTurn {
     let stopped = false;
+    const ac = new AbortController();
     const wait = () => new Promise((r) => setTimeout(r, this.delayMs));
     const main: Author = { agent: input.options.agent, parentToolUseId: null };
     const say = (author: Author, text: string) => {
@@ -25,10 +26,7 @@ export class FakeEngine implements AgentEngine {
     };
     const askAndRun = async (toolName: string, toolInput: Record<string, unknown>, summary: string) => {
       const toolUseId = `fake-tool-${++this.counter}`;
-      const decision = await cb.requestApproval(
-        { toolName, input: toolInput, author: main, toolUseId },
-        new AbortController().signal,
-      );
+      const decision = await cb.requestApproval({ toolName, input: toolInput, author: main, toolUseId }, ac.signal);
       if (stopped || decision.behavior !== 'allow') return;
       cb.emit({ type: 'tool.start', toolUseId, author: main, tool: toolName, summary });
       cb.emit({ type: 'tool.end', toolUseId, isError: false, summary: 'ok' });
@@ -45,6 +43,7 @@ export class FakeEngine implements AgentEngine {
       if (input.text.includes('#sub')) {
         cb.emit({ type: 'subagent.start', agentId: 'fake-sub', agentType: 'sdd-planner' });
         await wait();
+        if (stopped) return;
         say({ agent: 'sdd-planner', parentToolUseId: 'fake-agent-call' }, 'planned');
         cb.emit({ type: 'subagent.stop', agentId: 'fake-sub', agentType: 'sdd-planner' });
       }
@@ -65,6 +64,7 @@ export class FakeEngine implements AgentEngine {
       done,
       interrupt: async () => {
         stopped = true;
+        ac.abort();
       },
     };
   }

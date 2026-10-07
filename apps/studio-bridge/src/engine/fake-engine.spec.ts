@@ -4,14 +4,14 @@ import { describe, expect, it } from 'vitest';
 import { FakeEngine } from './fake-engine';
 import type { ApprovalDecision, EngineCallbacks } from './types';
 
-function harness(decision: ApprovalDecision = { behavior: 'allow' }) {
+function harness(decision: ApprovalDecision = { behavior: 'allow' }, requestApprovalOverride?: (r: any, signal: AbortSignal) => Promise<ApprovalDecision>) {
   const events: ThreadEvent[] = [];
   const sessions: string[] = [];
   const approvals: string[] = [];
   const cb: EngineCallbacks = {
     emit: (e) => events.push(e),
     onSessionId: (id) => sessions.push(id),
-    requestApproval: async (r) => (approvals.push(r.toolName), decision),
+    requestApproval: requestApprovalOverride || (async (r) => (approvals.push(r.toolName), decision)),
   };
   return { events, sessions, approvals, cb };
 }
@@ -51,5 +51,32 @@ describe('FakeEngine', () => {
   it('rejects with #fail', async () => {
     const h = harness();
     await expect(new FakeEngine(1).startTurn(input('#fail'), h.cb).done).rejects.toThrow('fake failure');
+  });
+
+  it('aborts requestApproval on interrupt', async () => {
+    let signalAborted = false;
+    const h = harness(
+      undefined,
+      async (r, signal) => {
+        await new Promise<void>((resolve) => {
+          if (signal.aborted) {
+            signalAborted = true;
+            resolve();
+          } else {
+            signal.addEventListener('abort', () => {
+              signalAborted = true;
+              resolve();
+            });
+          }
+        });
+        return { behavior: 'deny', message: 'aborted' };
+      },
+    );
+    const turn = new FakeEngine(10).startTurn(input('#tool'), h.cb);
+    await new Promise((r) => setTimeout(r, 5));
+    await turn.interrupt();
+    await turn.done;
+    expect(signalAborted).toBe(true);
+    expect(h.events.some((e) => e.type === 'tool.start')).toBe(false);
   });
 });
