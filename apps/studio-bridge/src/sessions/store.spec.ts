@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+import { readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { defaultThreadOptions } from '@sdd-studio/protocol';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -66,5 +66,32 @@ describe('ThreadStore', () => {
     }
     expect((await s.botHistory('spec:s1', 2)).map((e) => e.payload.i)).toEqual([3, 4]);
     expect(await s.botHistory('fixes', 10)).toEqual([]);
+  });
+
+  it('handles disk errors without crashing on append', async () => {
+    const errors: unknown[] = [];
+    const s = new ThreadStore(root, (e) => errors.push(e));
+    await s.init();
+    await s.upsert(thread());
+    s.append('t1', { type: 'user.message', text: 'msg' });
+    await rm(path.join(root, '.sdd-studio/threads'), { recursive: true });
+    s.append('t1', { type: 'message.end', messageId: 'm' });
+    await s.flush();
+    expect(errors).toHaveLength(1);
+  });
+
+  it('recovers from truncated lines and derives seq correctly', async () => {
+    const s = new ThreadStore(root);
+    await s.init();
+    await s.upsert(thread());
+    const threadFile = path.join(root, '.sdd-studio/threads/t1.jsonl');
+    await writeFile(threadFile, '{"seq":0,"event":{"type":"user.message","text":"first"}}\n{"seq":1,"ev');
+    const s2 = new ThreadStore(root);
+    await s2.init();
+    const nextSeq = s2.append('t1', { type: 'message.end', messageId: 'm' });
+    expect(nextSeq).toBe(1);
+    await s2.flush();
+    const hist = await s2.history('t1', 0);
+    expect(hist.map((e) => e.seq)).toEqual([0, 1]);
   });
 });

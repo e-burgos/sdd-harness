@@ -18,12 +18,33 @@ async function readLines(file: string): Promise<string[]> {
   return raw.split('\n').filter((line) => line.trim() !== '');
 }
 
+async function nextSeqFromFile(file: string): Promise<number> {
+  let maxSeq = -1;
+  for (const line of await readLines(file)) {
+    try {
+      const entry = JSON.parse(line) as { seq?: number };
+      if (typeof entry.seq === 'number' && entry.seq > maxSeq) maxSeq = entry.seq;
+    } catch {
+      // ignore truncated lines
+    }
+  }
+  return maxSeq + 1;
+}
+
+async function ensureTrailingNewline(file: string): Promise<void> {
+  const raw = await readFile(file, 'utf8').catch(() => '');
+  if (raw && !raw.endsWith('\n')) await appendFile(file, '\n');
+}
+
 export class ThreadStore {
   private readonly threads = new Map<string, StoredThread>();
   private readonly seqs = new Map<string, number>();
   private chain: Promise<void> = Promise.resolve();
 
-  constructor(private readonly root: string) {}
+  constructor(
+    private readonly root: string,
+    private readonly onError: (error: unknown) => void = (e) => console.error('[sdd-studio] store write failed:', e),
+  ) {}
 
   private get dir(): string {
     return path.join(this.root, '.sdd-studio');
@@ -51,7 +72,10 @@ export class ThreadStore {
     for (const t of Array.isArray(stored) ? (stored as StoredThread[]) : []) {
       if (BUSY.has(t.status)) t.status = 'interrupted';
       this.threads.set(t.id, t);
-      this.seqs.set(t.id, (await readLines(this.threadFile(t.id))).length);
+      const threadFile = this.threadFile(t.id);
+      const nextSeq = await nextSeqFromFile(threadFile);
+      await ensureTrailingNewline(threadFile);
+      this.seqs.set(t.id, nextSeq);
     }
     await this.persist();
   }
@@ -76,7 +100,11 @@ export class ThreadStore {
   append(threadId: string, event: ThreadEvent): number {
     const seq = this.seqs.get(threadId) ?? 0;
     this.seqs.set(threadId, seq + 1);
-    void this.enqueue(() => appendFile(this.threadFile(threadId), `${JSON.stringify({ seq, event })}\n`));
+    void this.enqueue(async () => {
+      const file = this.threadFile(threadId);
+      await ensureTrailingNewline(file);
+      await appendFile(file, `${JSON.stringify({ seq, event })}\n`);
+    });
     return seq;
   }
 
@@ -96,7 +124,11 @@ export class ThreadStore {
   }
 
   appendBot(event: BotEvent): void {
-    void this.enqueue(() => appendFile(this.channelFile(event.channelId), `${JSON.stringify(event)}\n`));
+    void this.enqueue(async () => {
+      const file = this.channelFile(event.channelId);
+      await ensureTrailingNewline(file);
+      await appendFile(file, `${JSON.stringify(event)}\n`);
+    });
   }
 
   async botHistory(channelId: string, limit: number): Promise<BotEvent[]> {
@@ -126,7 +158,9 @@ export class ThreadStore {
   }
 
   private enqueue(fn: () => Promise<void>): Promise<void> {
-    const next = this.chain.then(fn);
+    const next = this.chain.then(fn).catch((error) => {
+      this.onError(error);
+    });
     this.chain = next.catch(() => undefined);
     return next;
   }
