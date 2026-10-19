@@ -33,6 +33,7 @@
 - **Workspaces recientes en localStorage**: no se implementan (el token rota en cada arranque, una lista sin token no reconecta).
 - **sdd-bot**: los eventos no traen timestamp; el canal los muestra en un feed propio (más recientes primero), no intercalados con los hilos.
 - **Panel de actividad**: muestra agentes, estado y herramienta actual por hilo (sin duración/tokens/costo por agente; el uso queda en el pie del timeline).
+- **Deploy en Cloudflare Pages, no Worker** (decidido 2026-10-19): la zona `estebanburgos.com.ar` vive en Hostinger, así que la web se publica como las docs: export estático en Pages + CNAME. Se quitaron `open-next.config.ts`, `wrangler.jsonc` y `@opennextjs/cloudflare`; OpenNext vuelve cuando haya backend.
 - **Alcance de escritura de los DMs**: todos los canales `dm:*` comparten un único alcance de escritura (un solo hilo escritor a la vez entre todos los DMs); los canales de spec siguen teniendo el suyo.
 
 ## Review Focus

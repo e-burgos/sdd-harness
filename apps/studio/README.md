@@ -17,9 +17,9 @@ Abrí la URL que imprime el puente (`/w#bridge=…&token=…`).
 
 | Script | Resultado |
 |---|---|
-| `build` | `next build` (Worker vía OpenNext con `build:worker`) |
+| `build` | `next build` (build normal de Next, para desarrollo/verificación) |
 | `build:local` | export estático en `out/`; el build del puente lo copia a `dist/web` para `--local-ui` |
-| `deploy` | OpenNext → Cloudflare Workers (`studio.sdd.estebanburgos.com.ar`) |
+| `deploy` | sube `out/` a Cloudflare Pages, proyecto `sdd-studio` (correr `build:local` antes) |
 
 ## Tests
 
@@ -27,6 +27,13 @@ Abrí la URL que imprime el puente (`/w#bridge=…&token=…`).
 
 ## Antes del primer deploy
 
-- La zona de `studio.sdd.estebanburgos.com.ar` tiene que existir en la misma cuenta de Cloudflare.
-- `CLOUDFLARE_API_TOKEN` necesita permiso de Workers (y definir `CLOUDFLARE_ACCOUNT_ID`) como secrets del repo.
-- El primer deploy corre al mergear esto a `main` (workflow `deploy-studio.yml`).
+La web se publica igual que las docs (`sdd.estebanburgos.com.ar`): export estático en Cloudflare Pages
+y un CNAME en el DNS de Hostinger. La zona del dominio no se mueve a Cloudflare.
+
+- El workflow `deploy-studio.yml` crea el proyecto de Pages `sdd-studio` si no existe y despliega al
+  mergear a `main` (usa los mismos secrets que las docs: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`).
+- En Hostinger: CNAME `studio.sdd` → `sdd-studio.pages.dev`.
+- En Cloudflare → Pages → `sdd-studio` → *Custom domains*: agregar `studio.sdd.estebanburgos.com.ar`.
+- Los headers de seguridad de Pages viven en `public/_headers`.
+- Si más adelante hace falta backend (auth, equipos), se pasa a un Worker con OpenNext; eso requiere
+  la zona en Cloudflare o un subdominio `workers.dev`.

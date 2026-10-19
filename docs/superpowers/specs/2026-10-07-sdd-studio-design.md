@@ -279,9 +279,11 @@ reglas del kit; la app sólo muestra el uso en vivo que reporta el motor.
 
 ## 9. Despliegue y versionado
 
-- **Web**: `@opennextjs/cloudflare` → Cloudflare Workers en `studio.sdd.estebanburgos.com.ar`;
-  workflow `deploy-studio.yml` disparado por cambios en `apps/studio/**` o
-  `libs/studio-protocol/**`.
+- **Web**: export estático en Cloudflare Pages (proyecto `sdd-studio`) con CNAME
+  `studio.sdd.estebanburgos.com.ar` en Hostinger, igual que las docs; workflow `deploy-studio.yml`
+  disparado por cambios en `apps/studio/**` o `libs/studio-protocol/**`. *(Decisión 2026-10-19: la
+  zona `estebanburgos.com.ar` no está en Cloudflare y no se mueve; el Worker con OpenNext queda para
+  cuando haya backend en la nube.)*
 - **Puente**: `@e-burgos/sdd-studio` en npm, versión propia; tag `studio-v*` publica
   (separado de los `v*` de la CLI). Build esbuild que empaqueta `studio-protocol`. Node ≥ 20.
   Dependencias principales: `@anthropic-ai/claude-agent-sdk` (versión fijada), `ws`, `chokidar`,
