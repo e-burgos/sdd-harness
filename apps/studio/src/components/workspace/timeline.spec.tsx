@@ -6,7 +6,7 @@ import { Timeline } from './Timeline';
 const main = { agent: 'sdd-orchestrator', parentToolUseId: null };
 const planner = { agent: 'sdd-planner', parentToolUseId: 'x' };
 const items: TimelineItem[] = [
-  { kind: 'user', id: 'u', seq: 0, text: 'abrí el ciclo' },
+  { kind: 'user', id: 'u', seq: 0, text: 'open the cycle' },
   { kind: 'subagent', id: 's', seq: 1, agentType: 'sdd-planner', phase: 'start' },
   { kind: 'message', id: 'm', seq: 2, author: planner, text: '**plan** listo', done: true },
   { kind: 'tool', id: 't1', seq: 3, author: main, tool: 'Read', summary: 'a.ts', status: 'ok' },
@@ -17,7 +17,7 @@ const items: TimelineItem[] = [
 describe('Timeline', () => {
   it('attributes subagent output and groups tools', () => {
     render(<I18nProvider initial="es"><Timeline items={items} onRespond={vi.fn()} /></I18nProvider>);
-    expect(screen.getByText('abrí el ciclo')).toBeInTheDocument();
+    expect(screen.getByText('open the cycle')).toBeInTheDocument();
     expect(screen.getByText('Planner empezó a trabajar')).toBeInTheDocument();
     expect(screen.getByText('plan')).toBeInTheDocument();
     expect(screen.getByText('Orchestrator usó 2 herramienta(s)')).toBeInTheDocument();

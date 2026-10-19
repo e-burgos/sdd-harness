@@ -17,7 +17,7 @@ export class CommandRunner {
     private readonly newId: () => string = randomUUID,
   ) {}
 
-  /** `args` ya viene validado por el protocolo; se pasa sin shell. */
+  /** `args` is already validated by the protocol; passed without a shell. */
   run(name: KitCommandName, args: string[]): string {
     const runId = this.newId();
     const script = path.join(this.root, 'sdd', 'scripts', SCRIPTS[name]);

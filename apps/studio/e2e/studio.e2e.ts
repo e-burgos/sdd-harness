@@ -8,7 +8,7 @@ const PORT = process.env.E2E_PORT ?? '4399';
 const TOKEN = 'e2e-token-0123456789abcdef';
 
 test.beforeEach(async ({ page }) => {
-  await page.addInitScript(() => localStorage.setItem('sdd-studio:lang', 'es'));
+  await page.addInitScript(() => localStorage.setItem('sdd-studio:lang', 'en'));
 });
 
 test('pairs, chats with subagents, approves a tool, sees sdd-bot and runs /validate', async ({ page }) => {
@@ -16,12 +16,12 @@ test('pairs, chats with subagents, approves a tool, sees sdd-bot and runs /valid
   await expect(page.getByText('studio fixture').first()).toBeVisible();
   await expect(page).toHaveURL(/\/w\/$/);
 
-  await page.getByPlaceholder('Escribí un mensaje… (/ para comandos)').fill('hola #sub #tool');
+  await page.getByPlaceholder('Type a message… (/ for commands)').fill('hola #sub #tool');
   await page.keyboard.press('Enter');
-  await expect(page.getByText('Planner empezó a trabajar')).toBeVisible();
+  await expect(page.getByText('Planner started working')).toBeVisible();
   await expect(page.getByText('planned')).toBeVisible();
-  await page.getByRole('button', { name: 'Aprobar' }).click();
-  await expect(page.getByText('Aprobado')).toBeVisible();
+  await page.getByRole('button', { name: 'Approve' }).click();
+  await expect(page.getByText('Approved')).toBeVisible();
   await expect(page.getByText('echo: hola #sub #tool')).toBeVisible();
 
   const tasks = path.join(WORKSPACE, 'sdd/specs/spec-dev-001-pagos/cycles/cycle-01/tasks.json');
@@ -29,13 +29,13 @@ test('pairs, chats with subagents, approves a tool, sees sdd-bot and runs /valid
   json.tasks[1].status = 'done';
   await writeFile(tasks, JSON.stringify(json));
   await page.getByRole('button', { name: /# spec-dev-001-pagos/ }).click();
-  await expect(page.getByText(/TASK-BE-002 «Tests de pagos»: pending → done/)).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByText(/TASK-BE-002 “Tests de pagos”: pending → done/)).toBeVisible({ timeout: 10_000 });
   await expect(page.getByText('2/2 tasks').first()).toBeVisible();
 
-  await page.getByPlaceholder('Escribí un mensaje… (/ para comandos)').fill('/validate');
+  await page.getByPlaceholder('Type a message… (/ for commands)').fill('/validate');
   await page.keyboard.press('Enter');
   await expect(page.getByText('validate ok')).toBeVisible();
-  await expect(page.getByText('terminó con código 0')).toBeVisible();
+  await expect(page.getByText('exited with code 0')).toBeVisible();
 });
 
 test('reloading keeps the pairing from sessionStorage', async ({ page }) => {

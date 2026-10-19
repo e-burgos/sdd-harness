@@ -118,9 +118,9 @@ describe('Composer (connected)', () => {
     expect(client.request.mock.calls[0]![0]).toMatchObject({ cmd: 'thread.create', options: { agent: 'sdd-planner' } });
   });
   it('keeps the text and shows the error when the send is rejected', async () => {
-    const { box } = connected('general', null, async () => { throw new Error('bridge caído'); });
+    const { box } = connected('general', null, async () => { throw new Error('bridge down'); });
     enter(box, 'hola');
-    expect(await screen.findByRole('alert')).toHaveTextContent('bridge caído');
+    expect(await screen.findByRole('alert')).toHaveTextContent('bridge down');
     expect(box).toHaveValue('hola');
   });
   it('refuses messages over 100 000 characters', async () => {

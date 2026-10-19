@@ -10,7 +10,7 @@ const A: Components['a'] = ({ node: _node, ...props }) => <a {...props} target="
 
 export function Markdown({ text }: { text: string }) {
   const { t } = useT();
-  // Las imágenes remotas no se cargan (privacidad): se muestran como enlace.
+  // Remote images are not loaded (privacy): they are shown as a link.
   const components = useMemo<Components>(
     () => ({
       a: A,

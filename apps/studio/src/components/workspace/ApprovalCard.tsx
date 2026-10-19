@@ -22,7 +22,7 @@ export function ApprovalCard({ item, onRespond }: { item: Approval; onRespond: R
     setSending(false);
     setError(null);
   }, [item.decision]);
-  // Respuesta aceptada pero la decisión no llegó: destrabar sin error tras 20 s.
+  // Response accepted but the decision never arrived: unlock without error after 20 s.
   useEffect(() => {
     if (!sending || !pending) return;
     const timer = setTimeout(() => {

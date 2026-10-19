@@ -131,9 +131,9 @@ describe('BridgeClient', () => {
     const a = make();
     a.client.connect();
     a.socket().open();
-    a.socket().receive({ kind: 'handshake.error', code: 'bad-token', message: 'token inválido' });
+    a.socket().receive({ kind: 'handshake.error', code: 'bad-token', message: 'invalid token' });
     a.socket().drop(4001);
-    expect(a.states.at(-1)).toEqual({ status: 'failed', reason: 'bad-token', message: 'token inválido' });
+    expect(a.states.at(-1)).toEqual({ status: 'failed', reason: 'bad-token', message: 'invalid token' });
     vi.advanceTimersByTime(60_000);
     expect(FakeSocket.instances).toHaveLength(1);
 
@@ -277,7 +277,7 @@ describe('BridgeClient', () => {
     vi.advanceTimersByTime(9_999);
     expect(states.at(-1)).toMatchObject({ status: 'connecting' });
     vi.advanceTimersByTime(2);
-    expect(states.at(-1)).toEqual({ status: 'failed', reason: 'bad-message', message: 'el puente no completó el handshake' });
+    expect(states.at(-1)).toEqual({ status: 'failed', reason: 'bad-message', message: 'the bridge did not complete the handshake' });
     expect(socket().readyState).toBe(3);
     vi.advanceTimersByTime(60_000);
     expect(FakeSocket.instances).toHaveLength(1);

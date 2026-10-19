@@ -45,7 +45,7 @@ async function listen(http: Server, port: number, strictPort: boolean): Promise<
       if ((error as NodeJS.ErrnoException).code !== 'EADDRINUSE' || strictPort) throw error;
     }
   }
-  throw new Error(`no hay puertos libres desde ${port}`);
+  throw new Error(`no free ports from ${port}`);
 }
 
 export async function startBridgeServer(o: {
@@ -65,7 +65,7 @@ export async function startBridgeServer(o: {
       });
     }
     res.writeHead(426, { 'content-type': 'text/plain; charset=utf-8' });
-    res.end('SDD Studio bridge: conectate por WebSocket.');
+    res.end('SDD Studio bridge: connect via WebSocket.');
     return undefined;
   });
   const wss = new WebSocketServer({
@@ -73,7 +73,7 @@ export async function startBridgeServer(o: {
     maxPayload: MAX_PAYLOAD_BYTES,
     verifyClient: (info, done) => done(originAllowed(info.origin || undefined, o.allowedOrigins), 403),
   });
-  // wss re-emite los 'error' del http (p. ej. EADDRINUSE); sin listener serían una excepción no capturada y listen() nunca rechazaría.
+  // wss re-emits http 'error' events (e.g. EADDRINUSE); without a listener they would be an uncaught exception and listen() would never reject.
   wss.on('error', () => {});
   const clients = new Set<WebSocket>();
   const send = (ws: WebSocket, message: ServerMessage) => {
@@ -87,19 +87,19 @@ export async function startBridgeServer(o: {
       send(ws, { kind: 'handshake.error', code, message });
       ws.close(closeCode);
     };
-    const timer = setTimeout(() => reject('timeout', 'no llegó el hello a tiempo', 4000), o.helloTimeoutMs ?? 5000);
+    const timer = setTimeout(() => reject('timeout', 'hello did not arrive in time', 4000), o.helloTimeoutMs ?? 5000);
 
     ws.on('message', async (raw) => {
-      // close() sólo pasa a CLOSING: los frames ya encolados no deben procesarse tras un rechazo.
+      // close() only moves to CLOSING: already-queued frames must not be processed after a rejection.
       if (state === 'rejected' || ws.readyState !== ws.OPEN) return undefined;
       try {
         const decoded = decodeClientMessage(raw.toString());
         if (state === 'pending') {
           clearTimeout(timer);
           if (!decoded.ok || decoded.value.kind !== 'hello') return reject('bad-message', 'se esperaba hello', 4000);
-          if (!tokensMatch(decoded.value.token, o.token)) return reject('bad-token', 'token inválido', 4001);
+          if (!tokensMatch(decoded.value.token, o.token)) return reject('bad-token', 'invalid token', 4001);
           if (decoded.value.protocolVersion !== PROTOCOL_VERSION) {
-            return reject('protocol-mismatch', `el puente habla el protocolo ${PROTOCOL_VERSION}`, 4002);
+            return reject('protocol-mismatch', `the bridge speaks protocol ${PROTOCOL_VERSION}`, 4002);
           }
           state = 'authed';
           clients.add(ws);
@@ -123,8 +123,8 @@ export async function startBridgeServer(o: {
       }
       return undefined;
     });
-    // ws emite 'error' (p. ej. frame > maxPayload) antes de cerrar con 1009; sin listener sería una excepción no capturada que tumba el puente.
-    ws.on('error', () => {}); // ws cierra solo (1009) tras emitirlo
+    // ws emits 'error' (e.g. frame > maxPayload) before closing with 1009; without a listener it would be an uncaught exception that takes the bridge down.
+    ws.on('error', () => {}); // ws closes by itself (1009) after emitting it
     ws.on('close', () => {
       clearTimeout(timer);
       clients.delete(ws);

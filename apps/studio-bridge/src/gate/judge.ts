@@ -2,7 +2,7 @@ import type { WorkspaceSnapshot } from '@sdd-studio/protocol';
 
 export type Verdict = { kind: 'allow' } | { kind: 'warn'; reason: string } | { kind: 'deny'; reason: string };
 
-// Misma regla que sdd-mod (templates/sdd/skills/sdd-mod/hooks/.src/sdd.ts): mantener en sincronía.
+// Same rule as sdd-mod (templates/sdd/skills/sdd-mod/hooks/.src/sdd.ts): keep in sync.
 const EXEMPT_DIRS = new Set(['sdd', '.claude', '.github', '.gemini', '.agents', '.agent', '.vscode', '.idea']);
 const CLOSED_SPEC = new Set(['completed', 'cancelled']);
 const OPEN_FIX = new Set(['pending', 'in-progress']);
@@ -26,7 +26,7 @@ function segmentsOf(p: string): string[] {
   return parts;
 }
 
-/** Ruta relativa a la raíz con `/`, o null si cae fuera. */
+/** Path relative to the root using `/`, or null if it falls outside. */
 export function relativeToRoot(root: string, filePath: string): string | null {
   const raw = filePath.replace(/\\/g, '/');
   const isAbsolute = raw.startsWith('/') || /^[A-Za-z]:\//.test(raw);
@@ -50,7 +50,7 @@ export function isCodePath(rel: string): boolean {
 }
 
 export function judgeEdit(snapshot: WorkspaceSnapshot, root: string, filePath: string): Verdict {
-  // Sin datos buenos de specs (nunca se pudieron leer) no hay base para juzgar; con datos previos se juzga sobre lo último bueno.
+  // Without good spec data (never readable) there is no basis to judge; with earlier data, judge on the last good one.
   if (snapshot.stale.includes('specs') && snapshot.specs.length === 0) return { kind: 'allow' };
   const rel = relativeToRoot(root, filePath);
   if (rel === null || !isCodePath(rel)) return { kind: 'allow' };
@@ -59,8 +59,8 @@ export function judgeEdit(snapshot: WorkspaceSnapshot, root: string, filePath: s
     snapshot.cycles.some((c) => c.status === 'in-progress' && !closedSpecs.has(c.specId)) || snapshot.fixes.some((f) => OPEN_FIX.has(f.status));
   if (active) return { kind: 'allow' };
   const reason =
-    `SPEC GATE: no hay ningún ciclo in-progress ni un fix abierto, así que todavía no se escribe ` +
-    `código (${rel}). Abrí un ciclo (pnpm sdd:gate <spec> → sdd-orchestrator) o registrá el cambio con ` +
-    `[FIX]/[BUGFIX]/[HOTFIX]. Reglas: sdd/dual-harness/rules/sdd-gates.md.`;
+    `SPEC GATE: there is no in-progress cycle nor open fix, so code cannot be written yet ` +
+    `(${rel}). Open a cycle (pnpm sdd:gate <spec> → sdd-orchestrator) or register the change with ` +
+    `[FIX]/[BUGFIX]/[HOTFIX]. Rules: sdd/dual-harness/rules/sdd-gates.md.`;
   return snapshot.gateMode === 'block' ? { kind: 'deny', reason } : { kind: 'warn', reason };
 }

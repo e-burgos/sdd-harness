@@ -7,9 +7,9 @@ type Requester = Pick<BridgeClient, 'request'>;
 const History = z.array(z.object({ seq: z.number().int().nonnegative(), event: ThreadEvent }));
 
 /**
- * Sincroniza un hilo: marca el inicio del sync (los eventos en vivo se bufferean)
- * y pide el historial desde lastSeq+1. Si falla, el hilo queda sin sincronizar
- * y se reintenta en la próxima apertura/bootstrap.
+ * Syncs a thread: marks the start of the sync (live events are buffered)
+ * and requests history from lastSeq+1. On failure the thread stays unsynced
+ * and is retried on the next open/bootstrap.
  */
 export async function openThread(client: Requester, store: StudioStore, threadId: string): Promise<void> {
   store.getState().beginSync(threadId);
@@ -23,10 +23,10 @@ export async function loadBotHistory(client: Requester, store: StudioStore, chan
   store.getState().setBotHistory(channelId, events);
 }
 
-/** Carga inicial (y re-sincronización tras reconectar). */
+/** Initial load (and re-sync after reconnecting). */
 export async function bootstrap(client: Requester, store: StudioStore): Promise<void> {
-  // Sincrónico, antes del primer await: los eventos en vivo que lleguen mientras
-  // se piden snapshot/lista/presencia se bufferean en vez de abrir un hueco de seq.
+  // Synchronous, before the first await: live events arriving while
+  // snapshot/list/presence are requested are buffered instead of opening a seq gap.
   const known = Object.entries(store.getState().threads)
     .filter(([, t]) => t.synced || t.lastSeq >= 0)
     .map(([id]) => id);

@@ -22,9 +22,9 @@ function renderConnected(connection: ConnectionState) {
 
 describe('connection UI', () => {
   it('shows the bridge command and an error', () => {
-    wrap(<ConnectScreen error="token inválido" />);
+    wrap(<ConnectScreen error="invalid token" />);
     expect(screen.getByText('npx @e-burgos/sdd-studio')).toBeInTheDocument();
-    expect(screen.getByRole('alert')).toHaveTextContent('token inválido');
+    expect(screen.getByRole('alert')).toHaveTextContent('invalid token');
   });
   it('shows reconnect countdown and hides when open', () => {
     const { rerender } = wrap(<ConnectionBanner connection={{ status: 'reconnecting', attempt: 2, delayMs: 2000 }} />);

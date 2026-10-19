@@ -32,7 +32,7 @@ const PERMS: PermissionModeChoice[] = ['default', 'acceptEdits', 'plan'];
 export interface ComposerViewProps {
   options: ThreadOptions;
   onOptionsChange(patch: Partial<ThreadOptions>): void;
-  /** Resuelve true si el mensaje se envió (el texto se limpia); false o rechazo conservan el texto. */
+  /** Resolves true if the message was sent (the text is cleared); false or a rejection keeps the text. */
   onSubmit(text: string): Promise<boolean>;
   agents: string[];
   agentLocked: boolean;

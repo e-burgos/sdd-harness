@@ -14,7 +14,7 @@ function resultText(content: unknown): string {
   return (content as Block[]).map((b) => (b.type === 'text' ? str(b.text) : '')).join('\n');
 }
 
-/** Traduce el stream del Agent SDK a eventos del protocolo. Sin dependencias del SDK. */
+/** Translates the Agent SDK stream into protocol events. No SDK dependencies. */
 export class SdkEventMapper {
   sessionId: string | null = null;
   private errorSeen = false;

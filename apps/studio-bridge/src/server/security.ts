@@ -10,7 +10,7 @@ export function tokensMatch(a: string, b: string): boolean {
 
 const escapeRe = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
-/** Sin Origin (cliente no navegador) se acepta: el token sigue siendo obligatorio. */
+/** A missing Origin (non-browser client) is accepted: the token is still required. */
 export function originAllowed(origin: string | undefined, allowed: string[]): boolean {
   if (!origin) return true;
   return allowed.some((pattern) =>

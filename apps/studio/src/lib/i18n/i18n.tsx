@@ -12,7 +12,7 @@ export type TFunction = (key: keyof Dict, vars?: Record<string, string | number>
 
 export function detectLang(navigatorLang: string | undefined, stored: string | null): Lang {
   if (stored === 'es' || stored === 'en') return stored;
-  return navigatorLang?.toLowerCase().startsWith('en') ? 'en' : 'es';
+  return navigatorLang?.toLowerCase().startsWith('es') ? 'es' : 'en';
 }
 
 function readStored(): string | null {
@@ -32,9 +32,9 @@ interface I18nValue {
 const I18nContext = createContext<I18nValue | null>(null);
 
 export function I18nProvider({ children, initial }: { children: ReactNode; initial?: Lang }) {
-  // Primer render determinista ('es' o initial) para no romper la hidratación;
-  // la detección real corre en un efecto.
-  const [lang, setLangState] = useState<Lang>(initial ?? 'es');
+  // Deterministic first render ('en' or initial) so hydration does not break;
+  // the real detection runs in an effect.
+  const [lang, setLangState] = useState<Lang>(initial ?? 'en');
   useEffect(() => {
     if (initial) return;
     setLangState(detectLang(typeof navigator === 'undefined' ? undefined : navigator.language, readStored()));
@@ -47,7 +47,7 @@ export function I18nProvider({ children, initial }: { children: ReactNode; initi
     try {
       localStorage.setItem(LANG_KEY, next);
     } catch {
-      // sin storage: el cambio vale para esta sesión
+      // no storage: the change only lasts for this session
     }
   }, []);
   const value = useMemo<I18nValue>(() => {

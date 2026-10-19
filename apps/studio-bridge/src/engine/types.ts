@@ -41,7 +41,7 @@ export interface EngineTurn {
   interrupt(): Promise<void>;
 }
 
-/** Frontera del motor: la web y el SessionManager nunca ven tipos del SDK. */
+/** Engine boundary: the web app and the SessionManager never see SDK types. */
 export interface AgentEngine {
   readonly name: string;
   startTurn(input: EngineTurnInput, callbacks: EngineCallbacks): EngineTurn;

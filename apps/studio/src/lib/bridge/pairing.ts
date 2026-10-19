@@ -40,7 +40,7 @@ export function resolvePairing(win: PairingWindow): PairingInfo | null {
     win.history.replaceState(null, '', win.location.pathname + win.location.search);
     return fromHash;
   }
-  // Un token inválido tampoco debe quedar en la URL.
+  // An invalid token must not stay in the URL either.
   if (win.location.hash.includes('token=')) {
     win.history.replaceState(null, '', win.location.pathname + win.location.search);
   }
@@ -60,6 +60,6 @@ export function clearPairing(win: PairingWindow): void {
   try {
     win.sessionStorage.removeItem(PAIRING_KEY);
   } catch {
-    // Nada que limpiar si el almacenamiento no está disponible.
+    // Nothing to clean if storage is unavailable.
   }
 }

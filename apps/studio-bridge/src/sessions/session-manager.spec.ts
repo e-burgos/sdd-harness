@@ -207,7 +207,7 @@ describe('SessionManager', () => {
       ac: AbortController;
       finish: () => void;
     }
-    /** Motor guionado: cada turno queda abierto hasta que el test lo termine; `onStart` puede lanzar. */
+    /** Scripted engine: each turn stays open until the test ends it; `onStart` may throw. */
     function scripted(onStart?: (input: EngineTurnInput, n: number) => void) {
       const runs: Run[] = [];
       const engine: AgentEngine = {
@@ -523,7 +523,7 @@ describe('SessionManager', () => {
         const requested = hist.find((e) => e.type === 'approval.requested');
         const last2 = hist.slice(-2);
         expect(last2[0]).toMatchObject({
-          type: 'approval.resolved', approvalId: (requested as { approvalId: string }).approvalId, decision: 'deny', reason: 'el puente se reinició',
+          type: 'approval.resolved', approvalId: (requested as { approvalId: string }).approvalId, decision: 'deny', reason: 'the bridge restarted',
         });
         expect(last2[1]).toMatchObject({ type: 'session.status', status: 'interrupted' });
         await m.interrupt(t.id);

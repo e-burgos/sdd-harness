@@ -10,7 +10,7 @@ describe('cli option validators', () => {
     for (const bad of ['abc', '', '65536', '-1', '1.5', '12ab']) {
       expect(() => parsePort(bad)).toThrow(BridgeStartError);
     }
-    expect(() => parsePort('abc')).toThrow(/Puerto inválido: abc/);
+    expect(() => parsePort('abc')).toThrow(/Invalid port: abc/);
   });
   it('parseEngine rejects unknown engines', () => {
     expect(parseEngine('fake')).toBe('fake');
