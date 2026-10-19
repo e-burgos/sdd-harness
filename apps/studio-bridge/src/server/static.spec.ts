@@ -11,7 +11,7 @@ let server: Server;
 let port: number;
 let base: string;
 
-/** Petición con path crudo (fetch normaliza `/../` y `%2e%2e` antes de enviar). */
+/** Request with a raw path (fetch normalizes `/../` and `%2e%2e` before sending). */
 function raw(p: string, method = 'GET'): Promise<{ status: number; location?: string; body: string }> {
   return new Promise((resolve, reject) => {
     const req = request({ host: '127.0.0.1', port, path: p, method }, (res) => {

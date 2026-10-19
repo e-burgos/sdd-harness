@@ -16,8 +16,10 @@ describe('i18n', () => {
   it('detects the language', () => {
     expect(detectLang('en-US', null)).toBe('en');
     expect(detectLang('es-AR', null)).toBe('es');
-    expect(detectLang(undefined, null)).toBe('es');
+    expect(detectLang('fr-FR', null)).toBe('en');
+    expect(detectLang(undefined, null)).toBe('en');
     expect(detectLang('en-US', 'es')).toBe('es');
+    expect(detectLang('es-AR', 'en')).toBe('en');
   });
   it('interpolates and switches language', () => {
     localStorage.clear();
@@ -53,9 +55,9 @@ describe('i18n', () => {
     }
   });
 
-  it('renders es on the first pass and applies the detected language after effects', async () => {
+  it('renders en on the first pass and applies the detected language after effects', async () => {
     localStorage.clear();
-    const spy = vi.spyOn(navigator, 'language', 'get').mockReturnValue('en-US');
+    const spy = vi.spyOn(navigator, 'language', 'get').mockReturnValue('es-AR');
     const seen: string[] = [];
     function Rec() {
       seen.push(useT().lang);
@@ -63,7 +65,7 @@ describe('i18n', () => {
     }
     render(<I18nProvider><Rec /></I18nProvider>);
     spy.mockRestore();
-    expect(seen[0]).toBe('es');
-    expect(seen.at(-1)).toBe('en');
+    expect(seen[0]).toBe('en');
+    expect(seen.at(-1)).toBe('es');
   });
 });

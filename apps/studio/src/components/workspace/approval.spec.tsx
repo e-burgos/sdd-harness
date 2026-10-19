@@ -13,7 +13,7 @@ const wrap = (ui: React.ReactNode) => render(<I18nProvider initial="es">{ui}</I1
 describe('ApprovalCard', () => {
   it('approves once, always, and denies with a reason', () => {
     const onRespond = vi.fn(() => Promise.resolve());
-    // tras responder la tarjeta queda bloqueada hasta que cambia la decisión: una instancia por acción
+    // after responding the card stays locked until the decision changes: one instance per action
     wrap(<ApprovalCard item={base} onRespond={onRespond} />);
     expect(screen.getByText('Impl-back quiere usar Bash')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Aprobar' }));
@@ -58,8 +58,8 @@ describe('ApprovalCard', () => {
     expect(allow).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Denegar' })).toBeDisabled();
     expect(screen.getByPlaceholderText('Motivo (opcional)')).toBeDisabled();
-    await act(async () => reject(new Error('bridge caído')));
-    expect(screen.getByRole('alert')).toHaveTextContent('bridge caído');
+    await act(async () => reject(new Error('bridge down')));
+    expect(screen.getByRole('alert')).toHaveTextContent('bridge down');
     expect(screen.getByRole('button', { name: 'Aprobar' })).toBeEnabled();
   });
   it('limits and labels the reason, and Enter denies', () => {

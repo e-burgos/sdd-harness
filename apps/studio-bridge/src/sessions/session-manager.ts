@@ -51,7 +51,7 @@ function serializeInput(input: Record<string, unknown>): { input: string; inputT
   return text.length > INPUT_CAP ? { input: text.slice(0, INPUT_CAP), inputTruncated: true } : { input: text };
 }
 
-/** Clave de "siempre en este hilo": null = el alcance 'thread' se trata como 'once'. */
+/** "Always in this thread" key: null = the 'thread' scope is treated as 'once'. */
 function alwaysKeyOf(toolName: string, input: Record<string, unknown>): string | null {
   if (EDIT_TOOLS.has(toolName) || toolName.startsWith('mcp__')) return null;
   if (toolName === 'Bash') return typeof input.command === 'string' ? `Bash:${input.command}` : null;
@@ -61,16 +61,16 @@ function alwaysKeyOf(toolName: string, input: Record<string, unknown>): string |
 interface Live {
   turn: EngineTurn | null;
   queued: string | null;
-  /** Orden FIFO monótono de la cola del canal. */
+  /** Monotonic FIFO order of the channel queue. */
   queuedAt: number;
   alwaysAllow: Set<string>;
-  /** toolUseId → motivo de los denies ya anunciados por el hook PreToolUse (evita duplicar el par). */
+  /** toolUseId → reason of denies already announced by the PreToolUse hook (avoids duplicating the pair). */
   hookDenied: Map<string, string>;
-  /** Se levanta en interrupt(), se baja al arrancar un turno nuevo. */
+  /** Raised in interrupt(), lowered when a new turn starts. */
   interrupted: boolean;
-  /** Generación del turno: invalida callbacks tardíos de un turno anterior. */
+  /** Turn generation: invalidates late callbacks from a previous turn. */
   gen: number;
-  /** Modo de escritura congelado al encolar/arrancar; setOptions sólo afecta al próximo turno. */
+  /** Write mode frozen when queued/started; setOptions only affects the next turn. */
   writes: boolean;
 }
 
@@ -80,7 +80,7 @@ interface PendingApproval {
   settle: (decision: ApprovalDecision) => void;
 }
 
-/** Todos los canales dm:* comparten un único alcance de escritura; el resto usa su propio canal. */
+/** All dm:* channels share a single write scope; the rest use their own channel. */
 const writeScopeOf = (channelId: string): string => (channelId.startsWith('dm:') ? 'dm' : channelId);
 
 const toInfo = ({ engineSessionId: _ignored, ...info }: StoredThread): ThreadInfo => info;
@@ -118,7 +118,7 @@ export class SessionManager {
   async createThread(args: { channelId: string; options: ThreadOptions; text: string }): Promise<ThreadInfo> {
     const dmAgent = dmAgentOfChannel(args.channelId);
     if (dmAgent !== null && args.options.agent !== dmAgent) {
-      throw new SessionError('bad-request', `un DM con ${dmAgent} sólo admite ese agente`);
+      throw new SessionError('bad-request', `a DM with ${dmAgent} only accepts that agent`);
     }
     const now = this.now();
     const thread: StoredThread = {
@@ -142,7 +142,7 @@ export class SessionManager {
   async send(threadId: string, text: string): Promise<void> {
     const thread = this.require(threadId);
     const live = this.liveOf(threadId);
-    if (live.turn || live.queued !== null) throw new SessionError('conflict', 'el hilo está ocupado: esperá o interrumpilo');
+    if (live.turn || live.queued !== null) throw new SessionError('conflict', 'the thread is busy: wait or interrupt it');
     live.writes = this.writes(thread);
     live.interrupted = false;
     this.emit(thread, { type: 'user.message', text });
@@ -160,7 +160,7 @@ export class SessionManager {
     const live = this.liveOf(threadId);
     const wasQueued = live.queued !== null;
     if (!live.turn && !wasQueued) return;
-    // Todo el trabajo en memoria primero; el disco va último y sin esperar.
+    // All in-memory work first; disk goes last and is not awaited.
     live.queued = null;
     live.interrupted = true;
     this.setStatus(thread, 'interrupted');
@@ -184,12 +184,12 @@ export class SessionManager {
 
   respondApproval(approvalId: string, decision: 'allow' | 'deny', reason: string | undefined, scope: 'once' | 'thread'): void {
     const pending = this.approvals.get(approvalId);
-    if (!pending) throw new SessionError('not-found', `no hay una aprobación pendiente ${approvalId}`);
+    if (!pending) throw new SessionError('not-found', `no pending approval ${approvalId}`);
     if (decision === 'allow' && scope === 'thread' && pending.alwaysKey) this.liveOf(pending.threadId).alwaysAllow.add(pending.alwaysKey);
-    pending.settle(decision === 'allow' ? { behavior: 'allow' } : { behavior: 'deny', message: reason ?? 'denegado por el usuario' });
+    pending.settle(decision === 'allow' ? { behavior: 'allow' } : { behavior: 'deny', message: reason ?? 'denied by the user' });
   }
 
-  /** Tras un reinicio: anuncia las aprobaciones perdidas y la interrupción de los hilos que estaban ocupados. */
+  /** After a restart: announces the lost approvals and the interruption of threads that were busy. */
   async recover(): Promise<void> {
     for (const threadId of this.deps.store.recoveredThreadIds()) {
       const thread = this.deps.store.get(threadId);
@@ -199,7 +199,7 @@ export class SessionManager {
       for (const { event } of history) if (event.type === 'approval.resolved') resolved.add(event.approvalId);
       for (const { event } of history) {
         if (event.type === 'approval.requested' && !resolved.has(event.approvalId)) {
-          this.emit(thread, { type: 'approval.resolved', approvalId: event.approvalId, decision: 'deny', reason: 'el puente se reinició' });
+          this.emit(thread, { type: 'approval.resolved', approvalId: event.approvalId, decision: 'deny', reason: 'the bridge restarted' });
         }
       }
       this.emit(thread, { type: 'session.status', status: 'interrupted' });
@@ -210,7 +210,7 @@ export class SessionManager {
 
   private require(threadId: string): StoredThread {
     const thread = this.deps.store.get(threadId);
-    if (!thread) throw new SessionError('not-found', `no existe el hilo ${threadId}`);
+    if (!thread) throw new SessionError('not-found', `thread ${threadId} does not exist`);
     return thread;
   }
 
@@ -227,7 +227,7 @@ export class SessionManager {
     return thread.options.permissionMode !== 'plan';
   }
 
-  /** Persistencia fire-and-forget: el store ya reporta sus errores por onError. */
+  /** Fire-and-forget persistence: the store already reports its errors via onError. */
   private persist(thread: StoredThread): void {
     this.deps.store.upsert(thread).catch(reportError);
   }
@@ -304,7 +304,7 @@ export class SessionManager {
       .sort((a, b) => this.liveOf(a.id).queuedAt - this.liveOf(b.id).queuedAt);
     for (const thread of waiting) {
       const live = this.liveOf(thread.id);
-      if (live.queued === null) continue; // ya arrancado por una reentrada
+      if (live.queued === null) continue; // already started by a re-entry
       if (this.blocked(thread)) break;
       const text = live.queued;
       live.queued = null;
@@ -312,7 +312,7 @@ export class SessionManager {
     }
   }
 
-  /** Anuncia un deny del SPEC GATE con el mismo par de eventos que ve la UI para cualquier aprobación. */
+  /** Announces a SPEC GATE deny with the same event pair the UI sees for any approval. */
   private announceDeny(thread: StoredThread, author: ApprovalRequest['author'], toolName: string, input: Record<string, unknown>, reason: string): void {
     const approvalId = this.newId();
     const diff = diffFor(toolName, input);
@@ -328,7 +328,7 @@ export class SessionManager {
     this.emit(thread, { type: 'approval.resolved', approvalId, decision: 'deny', reason });
   }
 
-  /** SPEC GATE síncrono (hook PreToolUse del motor): no depende de canUseTool ni del modo de permisos. */
+  /** Synchronous SPEC GATE (engine PreToolUse hook): independent of canUseTool and the permission mode. */
   private judgeTool(thread: StoredThread, gen: number, toolName: string, input: Record<string, unknown>, ctx?: JudgeContext): ToolVerdict {
     const live = this.liveOf(thread.id);
     if (live.interrupted || live.gen !== gen) return { kind: 'deny', reason: 'interrupted' };
@@ -343,8 +343,8 @@ export class SessionManager {
   }
 
   /**
-   * Un turno interrumpido (o de una generación vieja, o con señal ya abortada) recibe deny inmediato
-   * y no emite eventos de aprobación: nunca pisa `interrupted` ni queda colgado.
+   * An interrupted turn (or one from an old generation, or with an already-aborted signal) gets an immediate deny
+   * and emits no approval events: it never overrides `interrupted` nor hangs.
    */
   private async requestApproval(thread: StoredThread, gen: number, request: ApprovalRequest, signal: AbortSignal): Promise<ApprovalDecision> {
     const live = this.liveOf(thread.id);
@@ -359,7 +359,7 @@ export class SessionManager {
     if (target) {
       let verdict = judgeEdit(this.deps.snapshot(), this.deps.root, target);
       if (verdict.kind === 'deny' && this.deps.refreshSnapshot) {
-        // El snapshot puede estar atrasado por el debounce del watcher: una única relectura antes de negar.
+        // The snapshot may lag behind due to the watcher debounce: a single re-read before denying.
         await this.deps.refreshSnapshot().catch(reportError);
         if (live.interrupted || live.gen !== gen) return { behavior: 'deny', message: 'interrupted' };
         if (signal.aborted) return { behavior: 'deny', message: 'aborted' };
@@ -378,7 +378,7 @@ export class SessionManager {
     const diff = diffFor(request.toolName, request.input);
     const extra = diff ? { diff } : {};
     const approvalId = this.newId();
-    // Se registra la aprobación pendiente ANTES de anunciarla: un cliente puede responder en cuanto ve el evento.
+    // The pending approval is registered BEFORE announcing it: a client may answer as soon as it sees the event.
     const decision = new Promise<ApprovalDecision>((resolve) => {
       const onAbort = () => settle({ behavior: 'deny', message: 'aborted' });
       const settle = (result: ApprovalDecision) => {
@@ -397,7 +397,7 @@ export class SessionManager {
       this.approvals.set(approvalId, { threadId: thread.id, alwaysKey: alwaysKeyOf(request.toolName, request.input), settle });
       signal.addEventListener('abort', onAbort, { once: true });
     });
-    // Estado antes del broadcast; si se resuelve síncronamente durante el broadcast, settle lo devuelve a running.
+    // State before the broadcast; if it resolves synchronously during the broadcast, settle returns it to running.
     if (thread.status === 'running') this.setStatus(thread, 'waiting-approval');
     this.emit(thread, {
       type: 'approval.requested',
@@ -412,7 +412,7 @@ export class SessionManager {
     return decision;
   }
 
-  /** `fromEngine`: los session.status del motor no pisan `interrupted`. */
+  /** `fromEngine`: engine session.status events do not override `interrupted`. */
   private emit(thread: StoredThread, event: ThreadEvent, fromEngine = false): void {
     if (event.type === 'session.status') {
       if (fromEngine && thread.status === 'interrupted') return;

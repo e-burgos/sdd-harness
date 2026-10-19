@@ -69,7 +69,7 @@ async function loadSpecs(root: string, sdd: string) {
   const index = await readJson(path.join(sdd, 'specs', 'index.json'));
   if (!index.ok) return { ok: false, missing: false, specs: [] as SpecSummary[], cycles: [] as CycleSummary[] };
   let ok = true;
-  // Los ids de spec forman parte de un ChannelId y de rutas en .sdd-studio/: se descartan los inseguros.
+  // Spec ids are part of a ChannelId and of paths in .sdd-studio/: unsafe ones are dropped.
   const specs = (Array.isArray(index.value?.specs) ? index.value.specs : [])
     .map(toSpec)
     .filter((sp: SpecSummary) => SAFE_SPEC_ID.test(sp.id));

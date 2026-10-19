@@ -26,7 +26,7 @@ function send(res: ServerResponse, status: number, body = ''): void {
   res.end(body);
 }
 
-/** Sirve el export estático de la web (sólo GET/HEAD, confinado a `dir`). */
+/** Serves the web app's static export (GET/HEAD only, confined to `dir`). */
 export async function serveStatic(dir: string, req: IncomingMessage, res: ServerResponse): Promise<void> {
   if (req.method !== 'GET' && req.method !== 'HEAD') return send(res, 405);
   let pathname: string;
@@ -40,7 +40,7 @@ export async function serveStatic(dir: string, req: IncomingMessage, res: Server
   if (segments.some((s) => s === '..' || s.includes('\\') || s.includes(':'))) return send(res, 404);
   const root = await realpath(dir);
   let target = path.resolve(root, ...segments);
-  // Confinamiento lógico antes de cualquier llamada al fs.
+  // Logical confinement before any fs call.
   if (target !== root && !target.startsWith(root + path.sep)) return send(res, 404);
   let info = await stat(target).catch(() => null);
   if (info?.isDirectory()) {

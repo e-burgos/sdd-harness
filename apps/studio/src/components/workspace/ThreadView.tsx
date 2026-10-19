@@ -28,7 +28,7 @@ export function ThreadView({ threadId, onBack, composer }: { threadId: string; o
     openThread(client, store, threadId).catch((e: unknown) => setLoadError(msg(e)));
   }, [client, store, threadId]);
 
-  // Si el hilo ya está sincronizado, el bootstrap se ocupa de re-sincronizar al reconectar.
+  // If the thread is already synced, the bootstrap re-syncs it on reconnect.
   useEffect(() => {
     if (connection.status === 'open' && !synced) load();
   }, [connection.status, synced, load]);

@@ -6,7 +6,7 @@ import type { ReactNode } from 'react';
 
 export const metadata: Metadata = {
   title: 'SDD Studio',
-  description: 'Centro de operación de repos con el kit SDD',
+  description: 'Operations center for repos with the SDD kit',
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

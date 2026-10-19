@@ -31,16 +31,16 @@ export async function startBridge(o: {
 }): Promise<{ url: string; port: number; token: string; authMode: AuthMode; project: string; close(): Promise<void> }> {
   if (o.localUiDir && !existsSync(path.join(o.localUiDir, 'w', 'index.html'))) {
     throw new BridgeStartError(
-      `Este build del puente no incluye la web local (falta ${path.join(o.localUiDir, 'w', 'index.html')}).`,
+      `This bridge build does not include the local web UI (missing ${path.join(o.localUiDir, 'w', 'index.html')}).`,
     );
   }
   const resolved = path.resolve(o.root);
   if (!existsSync(path.join(resolved, 'sdd'))) {
     throw new BridgeStartError(
-      `No encontré sdd/ en ${resolved}. Corré sdd-studio en la raíz de un repo con el kit (instalalo con \`harness init\`).`,
+      `No sdd/ folder found in ${resolved}. Run sdd-studio at the root of a repo with the SDD kit (install it with \`npx @e-burgos/sdd-harness configure sdd\`).`,
     );
   }
-  // Ruta física: el SPEC GATE compara rutas y un symlink en la raíz no debe esquivarlo.
+  // Physical path: the SPEC GATE compares paths and a symlink at the root must not bypass it.
   const root = await realpath(resolved);
   const store = new ThreadStore(root);
   await store.init();
@@ -84,7 +84,7 @@ export async function startBridge(o: {
     });
     server = started;
   } catch (error) {
-    // Arranque parcial (p. ej. listen rechazó): no dejar el watcher vivo.
+    // Partial startup (e.g. listen rejected): do not leave the watcher running.
     await watcher.close().catch(() => undefined);
     throw error;
   }
@@ -105,7 +105,7 @@ export async function startBridge(o: {
       ]);
       const failed = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected');
       if (failed.length === 1) throw failed[0]!.reason;
-      if (failed.length > 1) throw new AggregateError(failed.map((f) => f.reason), 'Falló el cierre del puente');
+      if (failed.length > 1) throw new AggregateError(failed.map((f) => f.reason), 'Bridge shutdown failed');
     },
   };
 }

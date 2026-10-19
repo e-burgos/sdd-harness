@@ -3,9 +3,9 @@ import type { Author } from '@sdd-studio/protocol';
 import type { AgentEngine, EngineCallbacks, EngineTurn, EngineTurnInput } from './types';
 
 /**
- * Motor guionado para tests y `--engine=fake`. Marcadores en el texto del prompt:
- * #sub (habla sdd-planner como subagente), #tool (pide aprobación para Bash),
- * #edit (pide aprobación para Write en apps/x.ts; en acceptEdits no pregunta, como el SDK), #slow (no termina hasta interrupt), #fail.
+ * Scripted engine for tests and `--engine=fake`. Markers in the prompt text:
+ * #sub (sdd-planner speaks as a subagent), #tool (asks approval for Bash),
+ * #edit (asks approval for Write in apps/x.ts; in acceptEdits it does not ask, like the SDK), #slow (does not finish until interrupt), #fail.
  */
 export class FakeEngine implements AgentEngine {
   readonly name = 'fake';

@@ -56,7 +56,7 @@ export class ThreadStore {
     return path.join(this.dir, 'threads', `${id}.jsonl`);
   }
 
-  /** null si el id no cumple ChannelId (nunca se arma una ruta con un id sin validar). */
+  /** null if the id does not satisfy ChannelId (a path is never built from an unvalidated id). */
   private channelFile(channelId: string): string | null {
     if (!ChannelId.safeParse(channelId).success) return null;
     return path.join(this.dir, 'channels', `${channelId.replace(':', '__')}.jsonl`);
@@ -86,7 +86,7 @@ export class ThreadStore {
     await this.persist();
   }
 
-  /** Hilos que estaban ocupados antes del reinicio (ya marcados como interrupted). */
+  /** Threads that were busy before the restart (already marked as interrupted). */
   recoveredThreadIds(): string[] {
     return [...this.recovered];
   }
@@ -107,12 +107,12 @@ export class ThreadStore {
     return this.persist();
   }
 
-  /** Asigna el seq de forma síncrona (orden garantizado) y encola la escritura. */
+  /** Assigns seq synchronously (guaranteed order) and queues the write. */
   append(threadId: string, event: ThreadEvent): number {
     const seq = this.seqs.get(threadId) ?? 0;
     this.seqs.set(threadId, seq + 1);
     void this.enqueue(async () => {
-      // Los archivos de hilo se reparan sólo en init(): acá no se relee el archivo.
+      // Thread files are repaired only in init(): the file is not re-read here.
       await appendFile(this.threadFile(threadId), `${JSON.stringify({ seq, event })}\n`);
     });
     return seq;
@@ -127,7 +127,7 @@ export class ThreadStore {
         const entry = JSON.parse(line) as HistoryEntry;
         if (entry.seq >= sinceSeq) out.push(entry);
       } catch {
-        // Línea truncada por un corte: se ignora.
+        // Line truncated by a crash: ignored.
       }
     }
     return out;
@@ -136,7 +136,7 @@ export class ThreadStore {
   appendBot(event: BotEvent): void {
     void this.enqueue(async () => {
       const file = this.channelFile(event.channelId);
-      if (!file) throw new Error(`channelId inválido: ${event.channelId}`);
+      if (!file) throw new Error(`invalid channelId: ${event.channelId}`);
       if (!this.repairedFiles.has(file)) {
         await ensureTrailingNewline(file);
         this.repairedFiles.add(file);

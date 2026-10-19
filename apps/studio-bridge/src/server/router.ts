@@ -37,13 +37,13 @@ export function createHandlers(d: {
           return d.sessions.presence();
         case 'workspace.readFile': {
           const file = await resolveSddPath(d.root, command.path);
-          // Un único handle: fstat + lectura sobre el mismo fd (sin TOCTOU entre stat y read).
-          // O_NONBLOCK: un FIFO no puede colgar el open(); igual se exige isFile() abajo.
+          // A single handle: fstat + read on the same fd (no TOCTOU between stat and read).
+          // O_NONBLOCK: a FIFO cannot hang open(); isFile() is still enforced below.
           const handle = await open(file, constants.O_RDONLY | (constants.O_NONBLOCK ?? 0));
           try {
             const info = await handle.stat();
-            if (!info.isFile()) throw new SessionError('bad-request', 'no es un archivo regular');
-            if (info.size > MAX_READ_BYTES) throw new SessionError('bad-request', 'archivo demasiado grande');
+            if (!info.isFile()) throw new SessionError('bad-request', 'not a regular file');
+            if (info.size > MAX_READ_BYTES) throw new SessionError('bad-request', 'file too large');
             return { path: command.path, content: await handle.readFile('utf8') };
           } finally {
             await handle.close();

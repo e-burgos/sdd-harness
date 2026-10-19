@@ -75,7 +75,7 @@ The web is a static page; everything that touches your code runs in the bridge, 
 | `--no-open` | — | Don't open the browser (the pairing link is printed) |
 | `--token <t>` | generated | Fixed pairing token (≥16 chars `[A-Za-z0-9_-]`), for tests/scripts only: it is visible in the process list |
 
-Invalid values abort with an error message (messages are in Spanish, the kit's language).
+Invalid values abort with an error message.
 
 ## Authentication
 
@@ -111,7 +111,7 @@ Thread history lives in `.sdd-studio/` at the repo root; the folder ignores itse
 | "No bridge is listening on port …" | Start `npx @e-burgos/sdd-studio` in the repo (or check the port) |
 | Chrome never connects | Allow "local network access" for the site (lock icon → site settings) |
 | Safari never connects | Use `npx @e-burgos/sdd-studio --local-ui` |
-| "No encontré sdd/ …" | Run it at the repo root, or install the kit first (see Quick start) |
+| "No sdd/ folder found in …" | Run it at the repo root, or install the kit first (see Quick start) |
 
 ## License
 

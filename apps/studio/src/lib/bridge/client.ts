@@ -75,7 +75,7 @@ export class BridgeClient {
     const ws = this.ws;
     this.ws = null;
     ws?.close(1000);
-    this.rejectAll('disconnected', 'conexión cerrada');
+    this.rejectAll('disconnected', 'connection closed');
     this.setState({ status: 'idle' });
   }
 
@@ -92,13 +92,13 @@ export class BridgeClient {
   request(cmd: CommandInput): Promise<unknown> {
     const ws = this.ws;
     if (this.state.status !== 'open' || !ws) {
-      return Promise.reject(new BridgeError('not-connected', 'sin conexión con el puente'));
+      return Promise.reject(new BridgeError('not-connected', 'not connected to the bridge'));
     }
     const id = `c${++this.seq}`;
     return new Promise<unknown>((resolve, reject) => {
       const timer = setTimeout(() => {
         this.pending.delete(id);
-        reject(new BridgeError('timeout', `el puente no respondió a ${cmd.cmd}`));
+        reject(new BridgeError('timeout', `the bridge did not respond to ${cmd.cmd}`));
       }, this.o.requestTimeoutMs ?? 15_000);
       this.pending.set(id, { resolve, reject, timer });
       ws.send(JSON.stringify({ kind: 'command', id, ...cmd }));
@@ -120,8 +120,8 @@ export class BridgeClient {
         this.stopped = true;
         this.ws = null;
         ws.close(1000);
-        this.rejectAll('disconnected', 'el puente no completó el handshake');
-        this.setState({ status: 'failed', reason: 'bad-message', message: 'el puente no completó el handshake' });
+        this.rejectAll('disconnected', 'the bridge did not complete the handshake');
+        this.setState({ status: 'failed', reason: 'bad-message', message: 'the bridge did not complete the handshake' });
       }, HANDSHAKE_TIMEOUT_MS);
       ws.send(
         JSON.stringify({ kind: 'hello', token: this.o.token, protocolVersion: PROTOCOL_VERSION, clientVersion: this.o.clientVersion }),
@@ -173,15 +173,15 @@ export class BridgeClient {
   private onClose(code: number): void {
     this.clearHandshakeTimer();
     this.ws = null;
-    this.rejectAll('disconnected', 'se perdió la conexión con el puente');
+    this.rejectAll('disconnected', 'lost connection to the bridge');
     if (this.stopped) return;
     if (code === 4001) {
       this.stopped = true;
-      return this.setState({ status: 'failed', reason: 'bad-token', message: this.lastHandshake?.message ?? 'token inválido' });
+      return this.setState({ status: 'failed', reason: 'bad-token', message: this.lastHandshake?.message ?? 'invalid token' });
     }
     if (code === 4002) {
       this.stopped = true;
-      return this.setState({ status: 'failed', reason: 'protocol-mismatch', message: this.lastHandshake?.message ?? 'versión de protocolo incompatible' });
+      return this.setState({ status: 'failed', reason: 'protocol-mismatch', message: this.lastHandshake?.message ?? 'incompatible protocol version' });
     }
     if (code === 4000 && this.lastHandshake?.code === 'bad-message') {
       this.stopped = true;
@@ -219,7 +219,7 @@ export class BridgeClient {
       try {
         fn(state);
       } catch {
-        // un oyente defectuoso no debe frenar a los demás ni la reconexión
+        // a faulty listener must not stop the others nor the reconnection
       }
     }
   }
