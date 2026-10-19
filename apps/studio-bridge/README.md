@@ -1,58 +1,118 @@
 # @e-burgos/sdd-studio
 
-Puente local de **SDD Studio**: conecta la web de Studio con un repo que tiene instalado el kit
-SDD (`@e-burgos/sdd-harness`) y ejecuta sus agentes con Claude **en tu máquina**.
+> Local bridge for **SDD Studio** — a Slack-like workspace to run the agents of the SDD kit
+> on your own repo, from the browser, with Claude running on your machine.
+>
+> 🧭 **App:** [studio.sdd.estebanburgos.com.ar](https://studio.sdd.estebanburgos.com.ar) ·
+> 📖 **SDD Harness docs:** [sdd.estebanburgos.com.ar](https://sdd.estebanburgos.com.ar)
 
-## Uso
+## Quick start
 
-```bash
-cd mi-repo            # raíz del repo, donde está sdd/
-npx @e-burgos/sdd-studio
+1. **Your repo needs the SDD kit** (an `sdd/` folder at the root). If it does not have one yet:
+
+   ```bash
+   npx @e-burgos/sdd-harness configure sdd   # existing repo
+   npx @e-burgos/sdd-harness init            # new project
+   ```
+
+2. **At the root of the repo, start the bridge:**
+
+   ```bash
+   npx @e-burgos/sdd-studio
+   ```
+
+3. **Your browser opens SDD Studio already paired with the repo.** From there you chat with the
+   Orchestrator (or DM any agent), watch who is working live, approve each action, and follow
+   specs, cycles and tasks as they change.
+
+## What you get
+
+- **Channels** — `#general`, one channel per spec, `#fixes`, plus a DM with each kit agent
+  (Orchestrator, Functional, Planner, Architect, Impl-back, Impl-front, Reviewer, Steward).
+- **Live threads** — agent and subagent messages with their names, grouped tool activity and
+  diffs, usage per turn (model, effort, tokens, cost).
+- **Approvals in chat** — every tool call that needs permission shows its full input; approve,
+  deny with a reason, or allow it for the thread.
+- **SPEC GATE enforced** — code edits without an `in-progress` cycle or an open fix are denied,
+  in every permission mode.
+- **Model and effort per thread** — `kit` (as the agents decide per `AGENTS.md`) or a fixed
+  model (`haiku`, `sonnet`, `opus`, `fable`) and effort.
+- **Kit commands** — `/gate`, `/validate` and the kit prompts (`/open-cycle`, `/review`,
+  `/hotfix`, `/check`, `/resume`, `/steward`).
+- **sdd-bot** — specs, cycles, tasks and fixes changing on disk show up in their channel.
+
+## How it works
+
+```
+Browser (studio.sdd.estebanburgos.com.ar)        Your machine
+┌───────────────────────────┐   WebSocket    ┌──────────────────────────────────────┐
+│ SDD Studio web (static)   │◄──────────────►│ sdd-studio (this package)            │
+│ never sees credentials    │  127.0.0.1 +   │  ├─ reads/watches sdd/               │
+└───────────────────────────┘  pairing token │  ├─ Claude Agent SDK → kit agents    │
+                                              │  └─ history in .sdd-studio/          │
+                                              └──────────────────────────────────────┘
 ```
 
-Abre el navegador en la web de Studio ya emparejada con este repo.
+The web is a static page; everything that touches your code runs in the bridge, on your machine.
 
-> La web de Studio es el Plan 2 (vista previa): hasta que esté desplegada, usá `--web-url` apuntando
-> a un build local de la web.
+## Requirements
 
-| Opción | Default | Descripción |
+- Node 20 or later.
+- Claude Code signed in (`claude login`) **or** `ANTHROPIC_API_KEY` in the environment.
+- Chrome or Firefox. In **Chrome**, allow the "local network access" permission the first time.
+  **Safari** blocks a secure page from talking to `127.0.0.1` — use `--local-ui`.
+
+## Options
+
+| Option | Default | Description |
 |---|---|---|
-| `--root <dir>` | directorio actual | Raíz del repo (donde está `sdd/`) |
-| `--port <n>` | `4320` (o el siguiente libre) | Puerto del WebSocket en 127.0.0.1. Un `--port` explícito es estricto: falla si está ocupado; sin `--port` se usa 4320 y, si está ocupado, el siguiente libre. Valores inválidos abortan con error en español |
-| `--engine claude\|fake` | `claude` | `fake` no gasta tokens (demo y tests); valores inválidos abortan con error en español |
-| `--allow-origin <a,b>` | — | Orígenes extra permitidos |
-| `--web-url <url>` | `https://studio.sdd.estebanburgos.com.ar` | Web a abrir; valores inválidos abortan con error en español |
-| `--no-open` | — | No abrir el navegador |
-| `--local-ui` | — | Sirve la web desde el puente (`http://127.0.0.1:<puerto>/w/`). Usalo si tu navegador bloquea la conexión de la web hosteada al puerto local (p. ej. Safari) o para usar Studio sin internet. Requiere un build con la web incluida (`dist/web`) |
-| `--token <t>` | generado | Token de emparejamiento fijo (≥16 caracteres `[A-Za-z0-9_-]`), sólo para tests y scripts: queda visible en la lista de procesos (`ps`) |
+| `--root <dir>` | current directory | Repo root (where `sdd/` lives) |
+| `--port <n>` | `4320` (or the next free one) | WebSocket port on 127.0.0.1. An explicit `--port` is strict: it fails if the port is busy |
+| `--engine claude\|fake` | `claude` | `fake` spends no tokens (demo and tests) |
+| `--local-ui` | — | Serve the web from the bridge itself (`http://127.0.0.1:<port>/w/`): offline use, or browsers that block the hosted page (Safari) |
+| `--web-url <url>` | `https://studio.sdd.estebanburgos.com.ar` | Web to open |
+| `--allow-origin <a,b>` | — | Extra allowed browser origins |
+| `--no-open` | — | Don't open the browser (the pairing link is printed) |
+| `--token <t>` | generated | Fixed pairing token (≥16 chars `[A-Za-z0-9_-]`), for tests/scripts only: it is visible in the process list |
 
-## Autenticación
+Invalid values abort with an error message (messages are in Spanish, the kit's language).
 
-- Sin `ANTHROPIC_API_KEY`: usa el **login local de Claude Code** (`claude login`) de tu máquina.
-- Con `ANTHROPIC_API_KEY`: usa la API key.
+## Authentication
 
-El puente nunca lee, guarda ni transmite credenciales. Aviso: la documentación del Claude Agent
-SDK indica que, sin aprobación previa de Anthropic, productos de terceros no pueden ofrecer el
-login de claude.ai ni sus límites de uso. Si distribuís Studio a otras personas, usá API key o
-consultá a Anthropic.
+- Without `ANTHROPIC_API_KEY`: the bridge uses your **local Claude Code login**.
+- With `ANTHROPIC_API_KEY`: it uses the API key.
 
-## Seguridad
+The bridge never reads, stores or sends credentials; the web only learns which mode is active.
 
-- Escucha sólo en `127.0.0.1`; exige el token de emparejamiento que imprime al arrancar
-  (rota en cada arranque) y valida el `Origin` del navegador.
-- Sólo lee archivos bajo `sdd/` y sólo ejecuta los scripts del kit
-  (`spec-gate`, `validate-sdd`, `rebuild-tasks-index`, `rebuild-catalog`).
-- Las ediciones de código de los agentes pasan por el SPEC GATE del kit: un hook `PreToolUse` lo evalúa
-  en cada uso de herramienta, también en modo `acceptEdits` y para herramientas permitidas por
-  `permissions.allow` de `.claude/settings.json`; sin ciclo `in-progress` ni fix abierto la edición se
-  deniega (en modo `warn` se te pregunta con el aviso). Las demás aprobaciones muestran el input completo
-  de la herramienta (hasta 16 KB) y "siempre en este hilo" sólo aplica al comando Bash exacto o a
-  herramientas no-edición y no-MCP.
+> **Note:** per the Claude Agent SDK docs, unless previously approved, Anthropic does not allow
+> third-party developers to offer claude.ai login or rate limits for their products, including
+> agents built on the Claude Agent SDK.
 
-## Navegador
+## Security
 
-- En Windows, el navegador se abre con `rundll32 url.dll,FileProtocolHandler`.
+- Listens on `127.0.0.1` only; every connection must present the pairing token printed at start
+  (a new one on every run) and come from an allowed browser origin.
+- Reads files only under `sdd/`; runs only the kit scripts (`spec-gate`, `validate-sdd`,
+  `rebuild-tasks-index`, `rebuild-catalog`), without a shell.
+- Code edits go through the kit's **SPEC GATE** in a `PreToolUse` hook — also in `acceptEdits` mode
+  and for tools allowed by `.claude/settings.json`. Other approvals show the full tool input;
+  "always in this thread" applies only to the exact Bash command or to non-edit, non-MCP tools.
+- Agents inherit the MCP connectors of your Claude account; each call still asks for approval.
 
-## Datos locales
+## Local data
 
-El historial vive en `.sdd-studio/` en la raíz del repo; la carpeta se ignora sola en git.
+Thread history lives in `.sdd-studio/` at the repo root; the folder ignores itself in git.
+
+## Troubleshooting
+
+| Symptom | Fix |
+|---|---|
+| The page says the token is not valid | The bridge was restarted: open the new link it printed |
+| "No bridge is listening on port …" | Start `npx @e-burgos/sdd-studio` in the repo (or check the port) |
+| Chrome never connects | Allow "local network access" for the site (lock icon → site settings) |
+| Safari never connects | Use `npx @e-burgos/sdd-studio --local-ui` |
+| "No encontré sdd/ …" | Run it at the repo root, or install the kit first (see Quick start) |
+
+## License
+
+MIT
