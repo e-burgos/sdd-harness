@@ -32,7 +32,8 @@ y un CNAME en el DNS de Hostinger. La zona del dominio no se mueve a Cloudflare.
 
 - El workflow `deploy-studio.yml` crea el proyecto de Pages `sdd-studio` si no existe y despliega al
   mergear a `main` (usa los mismos secrets que las docs: `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`).
-- En Hostinger: CNAME `studio.sdd` → `sdd-studio.pages.dev`.
+- En Hostinger: CNAME `studio.sdd` → `sdd-studio-769.pages.dev` (TTL 300). Ojo: el subdominio
+  `sdd-studio.pages.dev` pertenece a otra cuenta; Cloudflare le asignó el sufijo `-769` a este proyecto.
 - En Cloudflare → Pages → `sdd-studio` → *Custom domains*: agregar `studio.sdd.estebanburgos.com.ar`.
 - Los headers de seguridad de Pages viven en `public/_headers`.
 - Si más adelante hace falta backend (auth, equipos), se pasa a un Worker con OpenNext; eso requiere

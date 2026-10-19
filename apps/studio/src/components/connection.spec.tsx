@@ -64,9 +64,9 @@ describe('connection UI', () => {
   it('does not claim copied without clipboard', async () => {
     Object.defineProperty(navigator, 'clipboard', { value: undefined, configurable: true });
     wrap(<ConnectScreen />);
-    fireEvent.click(screen.getByRole('button', { name: /Copiar/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Copiar: npx @e-burgos/sdd-studio' }));
     await Promise.resolve();
     expect(screen.queryByText('Copiado')).toBeNull();
-    expect(screen.getByRole('button', { name: /Copiar/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Copiar: npx @e-burgos/sdd-studio' })).toBeInTheDocument();
   });
 });

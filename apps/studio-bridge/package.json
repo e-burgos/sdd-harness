@@ -1,12 +1,13 @@
 {
   "name": "@e-burgos/sdd-studio",
-  "version": "0.1.0",
-  "description": "Local bridge for SDD Studio: drives the SDD kit agents with Claude on your own machine",
+  "version": "0.1.1",
+  "description": "Local bridge for SDD Studio: run the SDD kit agents on your repo from a Slack-like web app, with Claude on your own machine",
+  "keywords": ["sdd", "spec-driven-development", "claude", "claude-agent-sdk", "ai-agents", "studio", "cli"],
   "type": "module",
   "bin": { "sdd-studio": "./bin/sdd-studio.mjs" },
   "files": ["bin/", "dist/"],
   "engines": { "node": ">=20" },
-  "homepage": "https://sdd.estebanburgos.com.ar",
+  "homepage": "https://studio.sdd.estebanburgos.com.ar",
   "author": "Esteban Burgos",
   "license": "MIT",
   "repository": {
