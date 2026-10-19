@@ -1,0 +1,28 @@
+{
+  "specs": [
+    {
+      "id": "spec-dev-001-pagos",
+      "folder": "sdd/specs/spec-dev-001-pagos",
+      "file": "sdd/specs/spec-dev-001-pagos/spec-dev-001-pagos.spec.md",
+      "module": "pagos",
+      "app": "apps/api",
+      "status": "in-progress",
+      "title": "Pagos",
+      "created_at": "2026-10-01",
+      "completed_at": null,
+      "depends_on": []
+    },
+    {
+      "id": "spec-dev-002-borrador",
+      "folder": "sdd/specs/spec-dev-002-borrador",
+      "file": "sdd/specs/spec-dev-002-borrador/spec-dev-002-borrador.spec.md",
+      "module": "borrador",
+      "app": "apps/api",
+      "status": "draft",
+      "title": "Borrador",
+      "created_at": "2026-10-02",
+      "completed_at": null,
+      "depends_on": ["spec-dev-001-pagos"]
+    }
+  ]
+}

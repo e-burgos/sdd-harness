@@ -1,0 +1,183 @@
+import { appendFile, mkdir, readFile, rename, writeFile } from 'node:fs/promises';
+import path from 'node:path';
+import { ChannelId, type BotEvent, ThreadEvent, ThreadInfo } from '@sdd-studio/protocol';
+
+export interface StoredThread extends ThreadInfo {
+  engineSessionId: string | null;
+}
+
+export interface HistoryEntry {
+  seq: number;
+  event: ThreadEvent;
+}
+
+const BUSY = new Set(['running', 'waiting-approval', 'queued']);
+
+async function readLines(file: string): Promise<string[]> {
+  const raw = await readFile(file, 'utf8').catch(() => '');
+  return raw.split('\n').filter((line) => line.trim() !== '');
+}
+
+async function nextSeqFromFile(file: string): Promise<number> {
+  let maxSeq = -1;
+  for (const line of await readLines(file)) {
+    try {
+      const entry = JSON.parse(line) as { seq?: number };
+      if (typeof entry.seq === 'number' && entry.seq > maxSeq) maxSeq = entry.seq;
+    } catch {
+      // ignore truncated lines
+    }
+  }
+  return maxSeq + 1;
+}
+
+async function ensureTrailingNewline(file: string): Promise<void> {
+  const raw = await readFile(file, 'utf8').catch(() => '');
+  if (raw && !raw.endsWith('\n')) await appendFile(file, '\n');
+}
+
+export class ThreadStore {
+  private readonly threads = new Map<string, StoredThread>();
+  private readonly seqs = new Map<string, number>();
+  private readonly recovered: string[] = [];
+  private readonly repairedFiles = new Set<string>();
+  private chain: Promise<void> = Promise.resolve();
+
+  constructor(
+    private readonly root: string,
+    private readonly onError: (error: unknown) => void = (e) => console.error('[sdd-studio] store write failed:', e),
+  ) {}
+
+  private get dir(): string {
+    return path.join(this.root, '.sdd-studio');
+  }
+
+  private threadFile(id: string): string {
+    return path.join(this.dir, 'threads', `${id}.jsonl`);
+  }
+
+  /** null si el id no cumple ChannelId (nunca se arma una ruta con un id sin validar). */
+  private channelFile(channelId: string): string | null {
+    if (!ChannelId.safeParse(channelId).success) return null;
+    return path.join(this.dir, 'channels', `${channelId.replace(':', '__')}.jsonl`);
+  }
+
+  async init(): Promise<void> {
+    await mkdir(path.join(this.dir, 'threads'), { recursive: true });
+    await mkdir(path.join(this.dir, 'channels'), { recursive: true });
+    await writeFile(path.join(this.dir, '.gitignore'), '*\n');
+    let stored: unknown = [];
+    try {
+      stored = JSON.parse(await readFile(path.join(this.dir, 'threads.json'), 'utf8'));
+    } catch {
+      stored = [];
+    }
+    for (const t of Array.isArray(stored) ? (stored as StoredThread[]) : []) {
+      if (BUSY.has(t.status)) {
+        this.recovered.push(t.id);
+        t.status = 'interrupted';
+      }
+      this.threads.set(t.id, t);
+      const threadFile = this.threadFile(t.id);
+      const nextSeq = await nextSeqFromFile(threadFile);
+      await ensureTrailingNewline(threadFile);
+      this.seqs.set(t.id, nextSeq);
+    }
+    await this.persist();
+  }
+
+  /** Hilos que estaban ocupados antes del reinicio (ya marcados como interrupted). */
+  recoveredThreadIds(): string[] {
+    return [...this.recovered];
+  }
+
+  list(channelId?: string): StoredThread[] {
+    return [...this.threads.values()]
+      .filter((t) => !channelId || t.channelId === channelId)
+      .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  }
+
+  get(id: string): StoredThread | undefined {
+    return this.threads.get(id);
+  }
+
+  upsert(thread: StoredThread): Promise<void> {
+    this.threads.set(thread.id, thread);
+    if (!this.seqs.has(thread.id)) this.seqs.set(thread.id, 0);
+    return this.persist();
+  }
+
+  /** Asigna el seq de forma síncrona (orden garantizado) y encola la escritura. */
+  append(threadId: string, event: ThreadEvent): number {
+    const seq = this.seqs.get(threadId) ?? 0;
+    this.seqs.set(threadId, seq + 1);
+    void this.enqueue(async () => {
+      // Los archivos de hilo se reparan sólo en init(): acá no se relee el archivo.
+      await appendFile(this.threadFile(threadId), `${JSON.stringify({ seq, event })}\n`);
+    });
+    return seq;
+  }
+
+  async history(threadId: string, sinceSeq: number): Promise<HistoryEntry[]> {
+    if (!this.threads.has(threadId)) return [];
+    await this.flush();
+    const out: HistoryEntry[] = [];
+    for (const line of await readLines(this.threadFile(threadId))) {
+      try {
+        const entry = JSON.parse(line) as HistoryEntry;
+        if (entry.seq >= sinceSeq) out.push(entry);
+      } catch {
+        // Línea truncada por un corte: se ignora.
+      }
+    }
+    return out;
+  }
+
+  appendBot(event: BotEvent): void {
+    void this.enqueue(async () => {
+      const file = this.channelFile(event.channelId);
+      if (!file) throw new Error(`channelId inválido: ${event.channelId}`);
+      if (!this.repairedFiles.has(file)) {
+        await ensureTrailingNewline(file);
+        this.repairedFiles.add(file);
+      }
+      await appendFile(file, `${JSON.stringify(event)}\n`);
+    });
+  }
+
+  async botHistory(channelId: string, limit: number): Promise<BotEvent[]> {
+    await this.flush();
+    const file = this.channelFile(channelId);
+    if (!file) return [];
+    const lines = await readLines(file);
+    const out: BotEvent[] = [];
+    for (const line of lines.slice(-limit)) {
+      try {
+        out.push(JSON.parse(line) as BotEvent);
+      } catch {
+        // idem
+      }
+    }
+    return out;
+  }
+
+  flush(): Promise<void> {
+    return this.chain;
+  }
+
+  private persist(): Promise<void> {
+    return this.enqueue(async () => {
+      const tmp = path.join(this.dir, 'threads.json.tmp');
+      await writeFile(tmp, JSON.stringify([...this.threads.values()], null, 2));
+      await rename(tmp, path.join(this.dir, 'threads.json'));
+    });
+  }
+
+  private enqueue(fn: () => Promise<void>): Promise<void> {
+    const next = this.chain.then(fn).catch((error) => {
+      this.onError(error);
+    });
+    this.chain = next.catch(() => undefined);
+    return next;
+  }
+}

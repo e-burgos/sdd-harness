@@ -17,6 +17,7 @@ import { Section, cascade, rise } from './components/Section';
 import { SddDocsPage } from './pages/SddDocsPage';
 import { GuiaSddPage } from './pages/GuiaSddPage';
 import { ComoUsarloPage } from './pages/ComoUsarloPage';
+import { StudioPage } from './pages/StudioPage';
 import { useContent, useLang, type Lang } from './i18n';
 
 function useHashRoute() {
@@ -86,7 +87,8 @@ export function App() {
   const onDocsPage = route === 'sdd-docs';
   const onGuiaPage = route === 'guia-sdd';
   const onUsagePage = route === 'como-usarlo';
-  const onSubPage = onDocsPage || onGuiaPage || onUsagePage;
+  const onStudioPage = route === 'studio';
+  const onSubPage = onDocsPage || onGuiaPage || onUsagePage || onStudioPage;
 
   useEffect(() => {
     if (onSubPage) {
@@ -180,6 +182,16 @@ export function App() {
             >
               {UI.nav.guiaLabel}
             </a>
+            <a
+              href="#/studio"
+              className={`rounded-full border px-3 py-1 font-mono text-[12px] transition-all ${
+                onStudioPage
+                  ? 'border-accent-500/50 bg-accent-dim text-accent-300'
+                  : 'hairline text-zinc-400 hover:border-accent-500/40 hover:text-accent-300'
+              }`}
+            >
+              {UI.nav.studioLabel}
+            </a>
           </nav>
           <div className="flex items-center gap-3">
             <LangSwitch />
@@ -269,6 +281,16 @@ export function App() {
                 </motion.a>
                 <motion.a
                   variants={rise}
+                  href="#/studio"
+                  onClick={() => setMenuOpen(false)}
+                  className={`border-b hairline py-3 font-mono text-[13px] ${
+                    onStudioPage ? 'text-accent-300' : 'text-zinc-400'
+                  }`}
+                >
+                  {UI.nav.studioMenu}
+                </motion.a>
+                <motion.a
+                  variants={rise}
                   href="https://github.com/e-burgos/sdd-harness-examples"
                   target="_blank"
                   rel="noreferrer"
@@ -293,6 +315,8 @@ export function App() {
           <GuiaSddPage />
         ) : onUsagePage ? (
           <ComoUsarloPage />
+        ) : onStudioPage ? (
+          <StudioPage />
         ) : (
           <>
             <Hero />

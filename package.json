@@ -7,10 +7,11 @@
     "node": ">=18"
   },
   "scripts": {
-    "build": "pnpm --filter @e-burgos/sdd-harness build",
-    "test": "pnpm --filter @e-burgos/sdd-harness test",
+    "build": "pnpm --filter sdd-studio-web build:local && pnpm --filter @e-burgos/sdd-harness --filter @e-burgos/sdd-studio build",
+    "test": "pnpm --filter @e-burgos/sdd-harness --filter @sdd-studio/protocol --filter @e-burgos/sdd-studio --filter sdd-studio-web test",
     "test:watch": "pnpm --filter @e-burgos/sdd-harness test:watch",
-    "typecheck": "pnpm --filter @e-burgos/sdd-harness typecheck",
+    "typecheck": "pnpm --filter @e-burgos/sdd-harness --filter @sdd-studio/protocol --filter @e-burgos/sdd-studio --filter sdd-studio-web typecheck",
+    "dev:studio": "pnpm --filter sdd-studio-web dev",
     "dev:docs": "cd apps/documentation && pnpm dev"
   }
 }

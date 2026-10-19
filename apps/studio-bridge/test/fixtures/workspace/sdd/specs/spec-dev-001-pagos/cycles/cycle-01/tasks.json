@@ -1,0 +1,10 @@
+{
+  "spec": "spec-dev-001-pagos",
+  "cycle": "cycle-01",
+  "flow": "full",
+  "tasks": [
+    { "id": "TASK-BE-001", "title": "Endpoint de pagos", "status": "done", "story_points": 3 },
+    { "id": "TASK-BE-002", "title": "Tests de pagos", "status": "pending", "story_points": 2 },
+    { "id": "TASK-BE-003", "title": "Descartada", "status": "skipped", "story_points": 1 }
+  ]
+}
