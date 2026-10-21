@@ -65,7 +65,7 @@ Package manager: **pnpm**.
 pnpm install
 npm run build        # esbuild bundle + .d.ts → dist/
 npm run typecheck    # tsc lib + spec
-npx vitest run       # suite completa (incluye integración real)
+npm test             # suite completa por paquete (cli con integración real, studio, protocol)
 ```
 
 - La suite de integración corre `setup-agents.sh` y `validate-sdd.mjs` **de verdad** sobre

@@ -7,7 +7,9 @@ Notas específicas para Claude Code:
 
 - Este repo **no usa el ciclo SDD** (no hay `sdd/` en la raíz): es la CLI que lo instala.
   No aplicar SPEC GATE ni buscar specs acá.
-- Verificación fuerte antes de cerrar: `npm run build && npm run typecheck && npx vitest run`,
+- Verificación fuerte antes de cerrar: `npm run build && npm run typecheck && npm test`
+  (`npm test` corre la suite de cada paquete con su config; `npx vitest run` desde la raíz rompe
+  los specs de `apps/studio`, que necesitan jsdom),
   y para cambios en generadores o en `apps/cli/templates/sdd/`, una generación real en `examples/`
   (está gitignoreado — usarlo como banco de pruebas).
 - El costo de equivocarse es alto en `apps/cli/templates/sdd/`: todo lo que está ahí se publica en npm
