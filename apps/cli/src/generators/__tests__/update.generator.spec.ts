@@ -37,7 +37,7 @@ describe('update.generator', () => {
   });
 
   afterEach(() => {
-    rmSync(ws, { recursive: true, force: true });
+    rmSync(ws, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
   });
 
   it('instala el manifest con hashes al generar', async () => {
