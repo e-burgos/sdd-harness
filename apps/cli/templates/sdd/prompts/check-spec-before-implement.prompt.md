@@ -1,5 +1,8 @@
 # Prompt: Verificar SPEC GATE antes de implementar
 
+> **Regla cero (⓪ del dual-harness):** antes de actuar escribí `Regla cero → tier · modelo · esfuerzo`
+> y mantené el contexto mínimo.
+
 > Usar este prompt SIEMPRE antes de escribir código de implementación. Fuente canónica del
 > gate: `sdd/dual-harness/rules/sdd-gates.md`.
 

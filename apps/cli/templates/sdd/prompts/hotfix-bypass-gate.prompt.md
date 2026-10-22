@@ -1,5 +1,8 @@
 # Prompt: FIX GATE — Bypass controlado del SPEC GATE
 
+> **Regla cero (⓪ del dual-harness):** antes de actuar escribí `Regla cero → tier · modelo · esfuerzo`
+> y mantené el contexto mínimo.
+
 > **Activado cuando:** el desarrollador usa uno de los prefijos `[FIX]`, `[BUGFIX]`, `[HOTFIX]` o `[IMPROVEMENT]`  
 > **Ejecutado por:** sdd-orchestrator  
 > **Propósito:** Permitir implementaciones urgentes o correctivas fuera del flujo SDD normal, manteniendo trazabilidad completa.

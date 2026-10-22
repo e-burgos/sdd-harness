@@ -1,5 +1,8 @@
 # Prompt: Retomar el loop hermes desde los registros
 
+> **Regla cero (⓪ del dual-harness):** antes de actuar escribí `Regla cero → tier · modelo · esfuerzo`
+> y mantené el contexto mínimo.
+
 > Prompt standalone para reanudar el punta-a-punta (skill `sdd-hermes`) en una sesión
 > nueva, un cron/Routine o un `/loop`. No asume memoria de sesiones anteriores: TODO el
 > estado vive en los registros SDD.

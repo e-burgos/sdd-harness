@@ -32,6 +32,9 @@ import {
   CLAUDE_HOOK_COMMAND,
   GEMINI_HOOK_COMMAND,
   REPO_ROOT,
+  RULE_ZERO_CLAUDE_COMMAND,
+  RULE_ZERO_HOOK_MARKER,
+  RULE_ZERO_SESSION_MATCHER,
   RTK_MANUAL_INSTALL,
   RTK_PINNED_VERSION,
   RTK_RELEASES_URL,
@@ -95,17 +98,17 @@ function writeJson(path, value) {
  * Merge, never clobber: other hooks are kept, ours is added once. A hook wired by
  * `rtk init` (the upstream installer) is respected — two rewrites would fight.
  */
-function ensureHook({ file, label, eventKey, matcher, hook }) {
+function ensureHook({ file, label, eventKey, matcher, hook, tool = 'rtk', marker, nativeCheck = true }) {
   const settings = readJsonFile(file) ?? {};
   if (existsSync(file) && readJsonFile(file) === null) {
-    warn(`${label} is not valid JSON — rtk hook not added; fix the file and re-run pnpm sdd:rtk`);
+    warn(`${label} is not valid JSON — ${tool} hook not added; fix the file and re-run pnpm sdd:rtk`);
     return false;
   }
-  if (hasKitHook(settings, eventKey)) {
-    log(`present          : ${label} (${eventKey} rtk)`);
+  if (hasKitHook(settings, eventKey, marker)) {
+    log(`present          : ${label} (${eventKey} ${tool})`);
     return true;
   }
-  if (hasNativeRtkHook(settings, eventKey)) {
+  if (nativeCheck && hasNativeRtkHook(settings, eventKey)) {
     log(`kept yours       : ${label} already runs rtk's own hook`);
     return true;
   }
@@ -116,8 +119,22 @@ function ensureHook({ file, label, eventKey, matcher, hook }) {
   list.push({ matcher, hooks: [hook] });
   settings.hooks[eventKey] = list;
   writeJson(file, settings);
-  log(`merged           : ${label} (${eventKey} rtk)`);
+  log(`merged           : ${label} (${eventKey} ${tool})`);
   return true;
+}
+
+/** Rule zero must survive `rtk.enabled = false`, so it never consults tools.json. */
+function ensureRuleZeroHook() {
+  return ensureHook({
+    file: CLAUDE_SETTINGS,
+    label: '.claude/settings.json',
+    eventKey: 'SessionStart',
+    matcher: RULE_ZERO_SESSION_MATCHER,
+    hook: { type: 'command', command: RULE_ZERO_CLAUDE_COMMAND, timeout: 10 },
+    tool: 'rule-zero',
+    marker: RULE_ZERO_HOOK_MARKER,
+    nativeCheck: false,
+  });
 }
 
 function ensureHooks() {
@@ -325,6 +342,7 @@ function status() {
     version: rtkBinaryVersion(binary),
     install_dir: rtkInstallDir(),
     hooks: {
+      rule_zero: hasKitHook(claude, 'SessionStart', RULE_ZERO_HOOK_MARKER),
       claude: hasKitHook(claude, 'PreToolUse') || hasNativeRtkHook(claude, 'PreToolUse'),
       gemini: hasKitHook(gemini, 'BeforeTool') || hasNativeRtkHook(gemini, 'BeforeTool'),
     },
@@ -350,6 +368,7 @@ async function main() {
     });
     log('created          : sdd/tools.json');
   }
+  ensureRuleZeroHook();
   ensureHooks();
   if (!args.has('--no-install')) await ensureBinary(rtkSettings());
 }

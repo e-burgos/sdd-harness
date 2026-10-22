@@ -29,6 +29,12 @@ export const CLAUDE_HOOK_COMMAND =
 /** Gemini CLI runs hooks from the project directory and exposes no project-dir variable. */
 export const GEMINI_HOOK_COMMAND = 'node sdd/scripts/rtk-hook.mjs gemini';
 
+/** Rule zero (model/effort/context) is re-injected at session start; independent of rtk. */
+export const RULE_ZERO_HOOK_MARKER = 'rule-zero-hook.mjs';
+export const RULE_ZERO_CLAUDE_COMMAND =
+  'node "$CLAUDE_PROJECT_DIR/sdd/scripts/rule-zero-hook.mjs" claude';
+export const RULE_ZERO_SESSION_MATCHER = 'startup|resume|clear|compact';
+
 export function readToolsFile() {
   try {
     return JSON.parse(readFileSync(TOOLS_FILE, 'utf8'));
@@ -144,9 +150,9 @@ function entryCommands(entry) {
 }
 
 /** Whether a settings object already routes shell commands through the kit bridge. */
-export function hasKitHook(settings, eventKey) {
+export function hasKitHook(settings, eventKey, marker = HOOK_MARKER) {
   return hookEntries(settings, eventKey).some((entry) =>
-    entryCommands(entry).some((cmd) => cmd.includes(HOOK_MARKER)),
+    entryCommands(entry).some((cmd) => cmd.includes(marker)),
   );
 }
 

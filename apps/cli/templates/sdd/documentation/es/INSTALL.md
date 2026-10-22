@@ -127,7 +127,7 @@ SPEC GATE.
 | `pricing.json`     | Tarifas editables por proveedor del dashboard de Costos del visor (`claude/*`, `gemini/*`, `copilot/*`) |
 | `tools.json`       | Interruptores de rtk (`enabled`, `auto_install`) y del mod de Claude Code (`claude_mod`) — dato del proyecto: `update sdd` no lo pisa |
 | `schemas/`         | JSON Schemas estrictos de todos los registros                                                   |
-| `scripts/`         | validate, spec-gate (`sdd:gate`), rebuild-tasks-index, rebuild-catalog, setup-agents (bash + PowerShell) los tres de rtk: `setup-rtk.mjs`, `rtk-hook.mjs`, `rtk-common.mjs`, y `sdd-mod.mjs` (interruptor del mod de Claude Code) |
+| `scripts/`         | validate, spec-gate (`sdd:gate`), rebuild-tasks-index, rebuild-catalog, setup-agents (bash + PowerShell) los tres de rtk: `setup-rtk.mjs`, `rtk-hook.mjs`, `rtk-common.mjs`, `rule-zero-hook.mjs` (hook SessionStart que reinyecta la regla cero: modelo/esfuerzo/contexto; lo instala `setup-rtk.mjs` aunque rtk esté apagado), y `sdd-mod.mjs` (interruptor del mod de Claude Code) |
 | `docs/`            | Visor portable y bilingüe de documentación (JS vanilla, cero deps)                               |
 | `dual-harness/`    | CLAUDE.md / AGENTS.md / GEMINI.md para linkear en la raíz del repo, `copilot-instructions.md` (semilla de `.github/`) y `rules/` (gates y telemetría canónicos) |
 | `context/`         | Plantillas de constitución y context prompt (global + example)                                  |
