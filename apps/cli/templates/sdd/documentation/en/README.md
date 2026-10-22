@@ -128,7 +128,8 @@ sdd/
 │   ├── rebuild-catalog.mjs            ← Regenerates the viewer manifest (pnpm sdd:rebuild-catalog)
 │   ├── setup-rtk.mjs                  ← Installs/merges the rtk hooks (pnpm sdd:rtk)
 │   ├── rtk-hook.mjs                   ← Bridge the hooks call; on any failure the command passes through
-│   └── rtk-common.mjs                 ← rtk helpers (pinned version, binary resolution)
+│   ├── rtk-common.mjs                 ← rtk helpers (pinned version, binary resolution)
+│   └── rule-zero-hook.mjs             ← SessionStart hook (Claude Code): re-injects rule zero (model/effort/context)
 │
 ├── templates/                         ← Scaffolding blueprints (NOT Nx projects)
 │   ├── nx-workspace/                  ← Root config: nx.json, package.json, npmrc, pnpm-workspace

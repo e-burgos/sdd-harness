@@ -1,5 +1,8 @@
 # Prompt: Iniciar Ciclo SDD
 
+> **Regla cero (⓪ del dual-harness):** antes de actuar escribí `Regla cero → tier · modelo · esfuerzo`
+> y mantené el contexto mínimo.
+
 > Para uso en cualquier repo que implemente SDD. Fuente canónica de los gates:
 > `sdd/dual-harness/rules/sdd-gates.md`.
 

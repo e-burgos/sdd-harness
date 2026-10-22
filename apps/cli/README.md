@@ -665,7 +665,7 @@ The kit is portable by design: **`sdd/global.json` is the single source of truth
 | `sdd/skills/`             | 16+ skills (cycle, scaffold-nx, init-nx-workspace, code generators), plus `sdd-mod/`: an optional Claude Code mod — band with the cycle in progress, `/sdd`, and the SPEC GATE applied to code edits (off by default) |
 | `sdd/prompts/`            | Gate prompts (SPEC GATE, FIX GATE, start/review cycle)                   |
 | `sdd/templates/`          | Scaffolding blueprints: nx-workspace, java-api, react-app, ts-lib        |
-| `sdd/scripts/`            | `validate-sdd.mjs`, `spec-gate.mjs` (the SPEC GATE as a command), `rebuild-tasks-index.mjs`, `rebuild-catalog.mjs`, `setup-agents`, `setup-rtk.mjs` + `rtk-hook.mjs` (rtk bridge/installer), `sdd-mod.mjs` (Claude Code mod switch) |
+| `sdd/scripts/`            | `validate-sdd.mjs`, `spec-gate.mjs` (the SPEC GATE as a command), `rebuild-tasks-index.mjs`, `rebuild-catalog.mjs`, `setup-agents`, `setup-rtk.mjs` + `rtk-hook.mjs` (rtk bridge/installer), `rule-zero-hook.mjs` (SessionStart hook: re-injects rule zero), `sdd-mod.mjs` (Claude Code mod switch) |
 | `sdd/docs/`               | Zero-dependency docs viewer (`pnpm sdd:docs`) — includes the **Costos** dashboard in four tabs with charts (General · Specs · Fixes · RTK token savings) and live auto-refresh on registry changes |
 | `sdd/memory/`             | Portable self-learning layer: `lessons.md` (distilled, read every session) + `journal/` (episodic, MEMORIA GATE) |
 | `sdd/pricing.json`        | Editable rates feeding the Costos dashboard (hourly rate + $/MTok per model tier) |

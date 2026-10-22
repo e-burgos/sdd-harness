@@ -12,6 +12,31 @@ Por favor, lee este archivo antes de realizar cualquier cambio en el repositorio
 
 ---
 
+<!-- regla-cero:start -->
+## ⓪ REGLA CERO — modelo, esfuerzo y contexto (INVIOLABLE, antes de cualquier acción)
+
+> [!IMPORTANT]
+> **Antes de CUALQUIER acción de una tarea nueva —incluida la primera de la sesión, antes de
+> verificar el workspace, leer archivos o editar— escribí UNA línea visible:**
+>
+> `Regla cero → tier: <económico|estándar|alto|máximo> · modelo: <…> · esfuerzo: <…>`
+>
+> Sin esa línea no se empieza. Tabla de tiers y detalle: sección «⚙️ Selección de modelo y
+> esfuerzo» (anexo de esta regla, más abajo).
+
+- **Subagentes y workflows:** cada subagente declara modelo y `thinking`; fan-out de lectores →
+  Flash/Flash-Lite con `thinking` mínimo, la síntesis → Pro.
+- **Modelo activo:** en Antigravity no podés cambiar el dropdown vos: compará el modelo/thinking
+  activo con el tier requerido y, si no coincide (Pro/`high` para una tarea económica, o Flash
+  para una de tier alto), **avisá y pedile al usuario el cambio** antes de ejecutar. En Gemini
+  CLI elegí modelo por sesión/flag. Nunca quemes en silencio el tier caro; si el activo es más
+  barato que el necesario, avisá y escalá.
+- **Contexto mínimo:** si existe `graphify-out/graph.json`, consultalo antes de grep/lecturas a
+  ciegas; no releas lo ya establecido en la sesión ni narres opciones que no vas a seguir.
+<!-- regla-cero:end -->
+
+---
+
 ## 🛰️ Superficies del arnés en Antigravity y Gemini CLI
 
 `pnpm setup:agents` expone el sistema SDD completo a este arnés (mismas fuentes que
@@ -42,8 +67,9 @@ Por favor, lee este archivo antes de realizar cualquier cambio en el repositorio
 ## 🚀 Estructura del workspace — skill `init-nx-workspace` (AL INICIAR SESIÓN)
 
 > [!IMPORTANT]
-> **Al iniciar cualquier sesión, antes de la primera acción, verificá que el workspace esté
-> montado.** Es un solo comando y define si podés trabajar o si primero hay que inicializar:
+> **Primero la regla cero (⓪, arriba): su línea de declaración va antes que cualquier acción,
+> incluido este chequeo.** Después, antes de la primera acción de trabajo, verificá que el
+> workspace esté montado. Es un solo comando y define si podés trabajar o si primero hay que inicializar:
 >
 > ```bash
 > ls nx.json pnpm-workspace.yaml .npmrc .nxignore 2>&1; ls package-lock.json yarn.lock 2>/dev/null
@@ -108,7 +134,7 @@ transparente: pedís `git status` y se ejecuta `rtk git status`.
   effort y por máquina: sin binario o con hook roto el comando pasa **sin comprimir** y nunca
   se bloquea.
 
-## ⚙️ Selección de modelo y esfuerzo (OBLIGATORIO — optimización de tokens/contexto)
+## ⚙️ Selección de modelo y esfuerzo — anexo de la REGLA CERO (OBLIGATORIO — optimización de tokens/contexto)
 
 > [!IMPORTANT]
 > **Antes de encarar CUALQUIER tarea nueva —sin importar con qué proveedor o modelo

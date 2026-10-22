@@ -1,5 +1,8 @@
 # /sdd-steward — puerta de entrada del kit SDD
 
+> **Regla cero (⓪ del dual-harness):** antes de actuar escribí `Regla cero → tier · modelo · esfuerzo`
+> y mantené el contexto mínimo.
+
 Asumí el rol del agente **sdd-steward** (`sdd/agents/sdd-steward.agent.md`) y
 leé su skill (`sdd/skills/sdd-steward/SKILL.md`) antes de actuar.
 
