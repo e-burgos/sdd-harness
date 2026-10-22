@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Kit: "regla cero" (model / effort / context) is now applied at the start of every session.**
+  It used to be the fifth section of ~22 KB harness files, never named as a rule, and asked to
+  "decide explicitly" without any observable output, so skipping it was invisible. Now:
+  `dual-harness/{CLAUDE,AGENTS,GEMINI}.md` open with a `⓪ REGLA CERO` block (between
+  `<!-- regla-cero:start/end -->` markers, before the session-start workspace check) that requires
+  one visible line, `Regla cero → tier · modelo · esfuerzo`, before any action, the tier/model/effort
+  of every subagent, and a delegate-or-ask-for-`/model` rule when the active model does not match
+  the work. The detailed ⚙️ section stays as its annex; prompts and `copilot-instructions.md`
+  point to it.
+- **Claude Code `SessionStart` hook** (`sdd/scripts/rule-zero-hook.mjs`, matcher
+  `startup|resume|clear|compact`) re-injects the block deterministically. `setup-rtk.mjs` merges it
+  idempotently into `.claude/settings.json` without touching other hooks, and installs it even when
+  rtk is disabled. Gemini CLI is intentionally not wired (no confirmed `SessionStart` contract in
+  the kit).
+- `sdd:validate` warns (never fails) when the rule-zero markers or the Claude `SessionStart` hook
+  are missing.
 - **`configure sdd` no longer nests the kit into the project's own instructions.** A root
   `AGENTS.md`/`CLAUDE.md`/`GEMINI.md` that is an edited copy of the kit, a copy of an older kit
   version, or a degraded symlink (`sdd/...`, `./sdd/...`, `core.symlinks=false`) is no longer

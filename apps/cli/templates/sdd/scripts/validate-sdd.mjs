@@ -633,6 +633,41 @@ if (existsSync(join(SDD, 'tools.json'))) {
   validate('tools.json', 'tools.schema.json');
 }
 
+// ---- 12b. Rule zero (model/effort/context) — warning only: repos from before v0.17 lack it ----
+{
+  const START = '<!-- regla-cero:start -->';
+  const END = '<!-- regla-cero:end -->';
+  for (const name of ['CLAUDE.md', 'AGENTS.md', 'GEMINI.md']) {
+    const file = join(REPO, name);
+    if (!existsSync(file)) continue;
+    const text = readFileSync(file, 'utf8');
+    if (!text.includes(START) || !text.includes(END))
+      warn(
+        name,
+        'rule-zero block (<!-- regla-cero:start/end -->) is missing — run `harness update sdd` (a hybrid file keeps your copy; the kit version lands next to it as *.new)',
+      );
+  }
+  const claudeSettings = join(REPO, '.claude', 'settings.json');
+  if (existsSync(join(REPO, '.claude'))) {
+    let installed = false;
+    try {
+      const hooks = JSON.parse(readFileSync(claudeSettings, 'utf8').replace(/^﻿/, ''))?.hooks?.SessionStart;
+      installed =
+        Array.isArray(hooks) &&
+        hooks.some((entry) =>
+          (entry?.hooks ?? []).some((h) => typeof h?.command === 'string' && h.command.includes('rule-zero-hook.mjs')),
+        );
+    } catch {
+      // missing or non-JSON settings: reported as not installed below
+    }
+    if (!installed)
+      warn(
+        '.claude/settings.json',
+        'SessionStart hook for rule zero is missing — run `pnpm setup:agents` (installs sdd/scripts/rule-zero-hook.mjs so the model/effort rule is re-injected on every session start)',
+      );
+  }
+}
+
 // ---- 13. Workspace invariant promised by init-nx-workspace (TS solution setup only) ----
 // When tsconfig.base.json declares `customConditions`, Nx keys every lib's conditional exports
 // with the root package.json `name`: if they differ, TypeScript resolves to dist instead of src.

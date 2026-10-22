@@ -128,7 +128,7 @@ The key is only written to `sdd/global.json` when you pass it; without it the re
 | `pricing.json`     | Editable per-provider rates for the viewer's Costs dashboard (`claude/*`, `gemini/*`, `copilot/*`) |
 | `tools.json`       | Switches for rtk (`enabled`, `auto_install`) and the Claude Code mod (`claude_mod`) — project data: `update sdd` never overwrites it |
 | `schemas/`         | Strict JSON Schemas for every registry                                                          |
-| `scripts/`         | validate, spec-gate (`sdd:gate`), rebuild-tasks-index, rebuild-catalog, setup-agents (bash + PowerShell) the three rtk ones: `setup-rtk.mjs`, `rtk-hook.mjs`, `rtk-common.mjs`, and `sdd-mod.mjs` (Claude Code mod switch) |
+| `scripts/`         | validate, spec-gate (`sdd:gate`), rebuild-tasks-index, rebuild-catalog, setup-agents (bash + PowerShell) the three rtk ones: `setup-rtk.mjs`, `rtk-hook.mjs`, `rtk-common.mjs`, `rule-zero-hook.mjs` (SessionStart hook that re-injects rule zero: model/effort/context, installed by `setup-rtk.mjs` even with rtk off), and `sdd-mod.mjs` (Claude Code mod switch) |
 | `docs/`            | Portable, bilingual documentation viewer (vanilla JS, zero deps)                                |
 | `dual-harness/`    | CLAUDE.md / AGENTS.md / GEMINI.md to link at the repo root, `copilot-instructions.md` (seed for `.github/`) plus `rules/` (canonical gates and telemetry) |
 | `context/`         | Constitution and context prompt templates (global + example)                                    |

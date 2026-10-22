@@ -1,5 +1,8 @@
 # Prompt: Revisar y Cerrar Ciclo
 
+> **Regla cero (⓪ del dual-harness):** antes de actuar escribí `Regla cero → tier · modelo · esfuerzo`
+> y mantené el contexto mínimo.
+
 > Para uso en cualquier monorepo que implemente SDD
 
 ## Cómo usarlo

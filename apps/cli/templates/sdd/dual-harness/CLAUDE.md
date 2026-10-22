@@ -12,11 +12,37 @@ Por favor, lee este archivo antes de realizar cualquier cambio en el repositorio
 
 ---
 
+<!-- regla-cero:start -->
+## ⓪ REGLA CERO — modelo, esfuerzo y contexto (INVIOLABLE, antes de cualquier acción)
+
+> [!IMPORTANT]
+> **Antes de CUALQUIER acción de una tarea nueva —incluida la primera de la sesión, antes de
+> verificar el workspace, leer archivos o editar— escribí UNA línea visible:**
+>
+> `Regla cero → tier: <económico|estándar|alto|máximo> · modelo: <…> · esfuerzo: <…>`
+>
+> Sin esa línea no se empieza. Tabla de tiers y detalle: sección «⚙️ Selección de modelo y
+> esfuerzo» (anexo de esta regla, más abajo).
+
+- **Subagentes y workflows:** cada `Agent`/`Workflow` lleva `model` Y `effort` explícitos y los
+  declarás en la misma línea (tier + modelo + esfuerzo de cada uno). Fan-out de lectores →
+  económico; la síntesis → alto. Nunca un fleet entero en el tier caro por defecto.
+- **Modelo activo del main loop:** si es MÁS caro que el tier que pide el trabajo (p. ej. opus
+  para leer estado o editar mecánico), delegá ese trabajo a un subagente más barato o pedile al
+  usuario `/model` y `/effort`; nunca quemes en silencio el tier caro. Si es MÁS barato que el
+  necesario, avisá y escalá (subagente `opus`/`high` o `/model`).
+- **Contexto mínimo:** si existe `graphify-out/graph.json`, consultalo antes de grep/lecturas a
+  ciegas; no releas lo ya establecido en la sesión ni narres opciones que no vas a seguir.
+<!-- regla-cero:end -->
+
+---
+
 ## 🚀 Estructura del workspace — skill `init-nx-workspace` (AL INICIAR SESIÓN)
 
 > [!IMPORTANT]
-> **Al iniciar cualquier sesión, antes de la primera acción, verificá que el workspace esté
-> montado.** Es un solo comando y define si podés trabajar o si primero hay que inicializar:
+> **Primero la regla cero (⓪, arriba): su línea de declaración va antes que cualquier acción,
+> incluido este chequeo.** Después, antes de la primera acción de trabajo, verificá que el
+> workspace esté montado. Es un solo comando y define si podés trabajar o si primero hay que inicializar:
 >
 > ```bash
 > ls nx.json pnpm-workspace.yaml .npmrc .nxignore 2>&1; ls package-lock.json yarn.lock 2>/dev/null
@@ -94,7 +120,7 @@ transparente: pedís `git status` y se ejecuta `rtk git status`.
   (`pnpm sdd:mod -- --status | --enable | --disable | --gate=warn|block`; el sdd-steward lo
   opera a pedido).
 
-## ⚙️ Selección de modelo y esfuerzo (OBLIGATORIO — optimización de tokens/contexto)
+## ⚙️ Selección de modelo y esfuerzo — anexo de la REGLA CERO (OBLIGATORIO — optimización de tokens/contexto)
 
 > [!IMPORTANT]
 > **Antes de encarar CUALQUIER tarea nueva —sin importar con qué proveedor o modelo
