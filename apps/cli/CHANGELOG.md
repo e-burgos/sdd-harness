@@ -5,6 +5,23 @@ All notable changes to `@e-burgos/sdd-harness` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **`configure sdd` no longer nests the kit into the project's own instructions.** A root
+  `AGENTS.md`/`CLAUDE.md`/`GEMINI.md` that is an edited copy of the kit, a copy of an older kit
+  version, or a degraded symlink (`sdd/...`, `./sdd/...`, `core.symlinks=false`) is no longer
+  absorbed as team text: only what the team added is kept, and text already rescued from
+  `sdd/dual-harness/` is not absorbed a second time on re-runs (thanks @arogel-flx, #45).
+- **Standalone `configure sdd` derives a valid subproject id and npm scope** from the project name
+  (`Mi_Proyecto` -> `mi-proyecto`, `@mi-proyecto`) instead of registering an id the schemas reject,
+  and fails with a clear message when none can be derived (thanks @arogel-flx, #45).
+- **A lone `apps/` folder is a monorepo, not Nx**: only `nx.json` yields `.nxignore` and
+  `tool: "Nx"`; otherwise the layout is reported as "monorepo sin Nx" (thanks @arogel-flx, #45).
+- `setup-agents.sh` prints `kept` for directory symlinks that already point at the kit, matching
+  `setup-agents.ps1` (thanks @arogel-flx, #45).
+
 ## [0.16.0] - 2026-10-07
 
 ### Added

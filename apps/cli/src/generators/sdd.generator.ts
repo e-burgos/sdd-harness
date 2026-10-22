@@ -164,6 +164,11 @@ export async function ensureHarnessPackageJson(
   await fs.writeJSON(pkgPath, pkg, { spaces: 2 });
 }
 
+// Firma estable de una copia del kit en la raíz: presentes en CLAUDE/AGENTS/GEMINI.md de todas
+// las versiones desde v0.3.0.
+const KIT_TITLE = '# Proyecto SDD';
+const KIT_SIGNATURE = '## ⛔ SPEC GATE — REGLA GLOBAL INVIOLABLE';
+
 const ABSORBED_HEADING =
   '## Instrucciones previas del proyecto (absorbidas al instalar SDD)';
 
@@ -186,6 +191,7 @@ async function readExistingHarnessFiles(
   const found = new Map<string, string>();
   for (const file of ROOT_HARNESS_FILES) {
     const parts: string[] = [];
+    let rescued: string | null = null;
 
     const previous = resolve(root, 'sdd/dual-harness', file);
     if (await fs.pathExists(previous)) {
@@ -193,7 +199,10 @@ async function readExistingHarnessFiles(
       const idx = content.indexOf(ABSORBED_HEADING);
       if (idx !== -1) {
         const absorbed = content.slice(idx + ABSORBED_HEADING.length).trim();
-        if (absorbed) parts.push(absorbed);
+        if (absorbed) {
+          parts.push(absorbed);
+          rescued = absorbed;
+        }
       }
     }
 
@@ -205,7 +214,8 @@ async function readExistingHarnessFiles(
         const previousContent = (await fs.pathExists(previous))
           ? await fs.readFile(previous, 'utf-8')
           : null;
-        if (!isKitCopy(content, previousContent)) parts.push(content.trim());
+        const own = teamContribution(content, previousContent, rescued);
+        if (own) parts.push(own);
       }
     }
 
@@ -215,10 +225,74 @@ async function readExistingHarnessFiles(
 }
 
 /** Mismo contenido salvo fines de línea: la copia que dejó un link fallido, no texto del equipo. */
-function isKitCopy(content: string, kitContent: string | null): boolean {
-  if (kitContent === null) return false;
-  const fold = (s: string) => s.replace(/\r\n/g, '\n').trim();
-  return fold(content) === fold(kitContent);
+const fold = (s: string) => s.replace(/\r\n/g, '\n').trim();
+
+/**
+ * Qué parte de un archivo de instrucciones de la raíz es realmente del equipo.
+ *
+ * La raíz puede tener, además de un archivo propio: la copia que dejó un link fallido (idéntica
+ * al dual-harness), esa copia con ediciones encima, o — en un checkout con core.symlinks=false —
+ * el symlink degradado, que es un archivo de texto con la ruta destino adentro. Absorber
+ * cualquiera de las tres como "instrucciones previas" mete el kit dentro de sí mismo.
+ *
+ * Devuelve null si no hay nada del equipo que conservar.
+ */
+export function teamContribution(
+  content: string,
+  kitContent: string | null,
+  alreadyAbsorbed: string | null = null,
+): string | null {
+  const own = fold(content);
+  if (!own) return null;
+
+  // Symlink degradado: una sola línea que apunta a sdd/ (lo que escribe Git sin core.symlinks),
+  // con o sin "./" delante.
+  if (/^(\.[/\\])?(\.\.[/\\])*sdd[/\\][^\s]+$/.test(own)) return null;
+
+  if (kitContent !== null) {
+    const kit = fold(kitContent);
+    if (own === kit) return null;
+    // La copia del kit editada al final: conservar sólo lo agregado después del kit.
+    if (own.startsWith(kit)) {
+      const tail = own.slice(kit.length).trim();
+      return tail || null;
+    }
+  }
+
+  // Texto que ya está absorbido en el dual-harness anterior (la raíz es una copia del kit que
+  // incluye ese mismo tramo): no se agrega dos veces.
+  const idx = own.indexOf(ABSORBED_HEADING);
+  const isKit = own.includes(KIT_TITLE) && own.includes(KIT_SIGNATURE);
+  if (idx !== -1) {
+    const tail = own.slice(idx + ABSORBED_HEADING.length).trim();
+    if (isKit) {
+      logger.warn(
+        'Se encontró en la raíz una copia de una versión distinta del kit: se conserva sólo el texto absorbido, no el cuerpo del kit.',
+      );
+    }
+    return novelTail(tail, alreadyAbsorbed);
+  }
+
+  // Copia de una versión anterior del kit (o de un sdd/ ausente) sin texto del equipo: el cuerpo
+  // del kit nunca es texto del equipo.
+  if (isKit) {
+    logger.warn(
+      'Se encontró en la raíz una copia de una versión anterior del kit: su cuerpo no se absorbe.',
+    );
+    return null;
+  }
+  return own;
+}
+
+/** Lo de `tail` que no estaba ya en `already` (comparación sin fines de línea); null si nada. */
+function novelTail(tail: string, already: string | null): string | null {
+  if (!tail) return null;
+  if (!already) return tail;
+  const t = fold(tail);
+  const a = fold(already);
+  if (t === a || a.includes(t)) return null;
+  if (t.startsWith(a)) return t.slice(a.length).trim() || null;
+  return tail;
 }
 
 /**
