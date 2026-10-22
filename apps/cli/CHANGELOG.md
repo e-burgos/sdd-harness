@@ -17,6 +17,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Standalone `configure sdd` derives a valid subproject id and npm scope** from the project name
   (`Mi_Proyecto` -> `mi-proyecto`, `@mi-proyecto`) instead of registering an id the schemas reject,
   and fails with a clear message when none can be derived (thanks @arogel-flx, #45).
+- **The minimal `package.json` created for repos without one has a valid npm name** (`Mi_Proyecto`
+  -> `mi_proyecto`); npm rejects uppercase names.
 - **A lone `apps/` folder is a monorepo, not Nx**: only `nx.json` yields `.nxignore` and
   `tool: "Nx"`; otherwise the layout is reported as "monorepo sin Nx" (thanks @arogel-flx, #45).
 - `setup-agents.sh` prints `kept` for directory symlinks that already point at the kit, matching

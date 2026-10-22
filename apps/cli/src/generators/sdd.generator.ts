@@ -124,6 +124,18 @@ export async function registerSubprojectInSDD(
   await createSubprojectContext(root, category, name, type, 'nx');
 }
 
+/** `Mi_Proyecto` → `mi-proyecto`: npm rechaza mayúsculas y caracteres fuera de [a-z0-9._-]. */
+export function toPackageName(projectName: string): string {
+  return (
+    projectName
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9._-]+/g, '-')
+      .replace(/-{2,}/g, '-')
+      .replace(/^[-._]+|[-._]+$/g, '') || 'project'
+  );
+}
+
 /**
  * Garantiza que el package.json raíz tenga los scripts del arnés SDD
  * (tomados del propio kit, para no duplicar valores) y las devDependencies
@@ -141,7 +153,7 @@ export async function ensureHarnessPackageJson(
 
   const pkg = (await fs.pathExists(pkgPath))
     ? await fs.readJSON(pkgPath)
-    : { name: projectName, version: '0.1.0', private: true };
+    : { name: toPackageName(projectName), version: '0.1.0', private: true };
 
   pkg.scripts = pkg.scripts ?? {};
   for (const [key, value] of Object.entries<string>(kitPkg.scripts)) {

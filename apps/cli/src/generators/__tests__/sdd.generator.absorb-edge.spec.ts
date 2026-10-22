@@ -11,7 +11,7 @@ vi.mock('../../utils/exec.js', () => ({
   execSilent: vi.fn(() => ''),
 }));
 
-import { generateSDD, teamContribution } from '../sdd.generator.js';
+import { generateSDD, teamContribution, toPackageName } from '../sdd.generator.js';
 
 const ABSORBED =
   '## Instrucciones previas del proyecto (absorbidas al instalar SDD)';
@@ -103,5 +103,13 @@ describe('generateSDD — re-ejecuciones no duplican el texto del equipo', () =>
     );
     expect(dual.split('unico-marcador-equipo').length - 1).toBe(1);
     expect(dual.split(ABSORBED).length - 1).toBe(1);
+  });
+});
+
+describe('toPackageName', () => {
+  it('turns a directory-style name into a valid npm package name', () => {
+    expect(toPackageName('Mi_Proyecto')).toBe('mi_proyecto');
+    expect(toPackageName('My Repo!!')).toBe('my-repo');
+    expect(toPackageName('###')).toBe('project');
   });
 });
