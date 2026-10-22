@@ -15,3 +15,6 @@ demo
 
 # SDD Studio local history
 .sdd-studio/
+
+# Worktrees temporales de Claude Code (subagentes aislados)
+.claude/worktrees/
