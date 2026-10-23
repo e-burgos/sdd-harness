@@ -84,6 +84,42 @@
         "source": "declared-estimate",
         "recorded_at": "2026-10-23"
       }
+    },
+    {
+      "id": "FIX-e-burgos-001-001",
+      "author": "e-burgos",
+      "spec_id": "spec-e-burgos-001-studio-session-ux",
+      "fix_document": "sdd/specs/spec-e-burgos-001-studio-session-ux/fixes/fix-e-burgos-001-001.md",
+      "type": "BUGFIX",
+      "severity": "medium",
+      "created_at": "2026-10-23",
+      "resolved_at": "2026-10-23",
+      "validated_at": "2026-10-23",
+      "title": "workspace.snapshot rescans before answering so a reload recovers missed fs events",
+      "estimation_hours": 0.5,
+      "description": "FSEvents (chokidar on macOS) does not guarantee delivery under load; workspace.snapshot returned the watcher's in-memory snapshot, so a skill created in .claude/skills could stay invisible even after reloading the web. The router now awaits watcher.refresh() before answering; watcher tests stage files atomically and the .claude test retries twice.",
+      "justification": "Found during cycle-02 verification on the same subproject; one router line plus tests, no contract or entity change. Blocked CA-005.5 in real use.",
+      "related_modules": [
+        "studio-bridge"
+      ],
+      "affected_files": [
+        "apps/studio-bridge/src/server/router.ts",
+        "apps/studio-bridge/src/server/router.spec.ts",
+        "apps/studio-bridge/src/workspace/watcher.spec.ts"
+      ],
+      "test_reference": "apps/studio-bridge/src/server/router.spec.ts",
+      "status": "absorbed",
+      "cycle": "cycle-02",
+      "usage": {
+        "provider_model": "claude/opus",
+        "effort": "medium",
+        "agent": "orchestrator",
+        "tokens_in": 60000,
+        "tokens_out": 5000,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
     }
   ]
 }

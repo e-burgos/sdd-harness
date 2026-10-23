@@ -3,8 +3,7 @@
   "project": "sdd-harness-workspace",
   "description": "Monorepo del CLI @e-burgos/sdd-harness: bootstrapea repos listos para agentes de IA con la metodología SDD e incluye el sitio de documentación y SDD Studio (puente local + web).",
   "version": "0.1.0",
-  "completed_modules": [],
-  "in_progress_modules": [
+  "completed_modules": [
     {
       "module": "studio-session-ux",
       "spec": "spec-e-burgos-001-studio-session-ux",
@@ -13,10 +12,12 @@
         "apps/studio-bridge",
         "libs/studio-protocol"
       ],
-      "cycles_completed": 1,
-      "description": "UX de sesión de SDD Studio: 'Always' por sesión para cualquier herramienta, imágenes en el chat y lista de hilos activos con navegación."
+      "cycles_completed": 2,
+      "description": "UX de sesión de SDD Studio: 'Always' por sesión para cualquier herramienta, imágenes en el chat y lista de hilos activos con navegación.",
+      "completed_at": "2026-10-23"
     }
   ],
+  "in_progress_modules": [],
   "pending_modules": [],
   "monorepo": {
     "tool": "none (multi-app repo)",

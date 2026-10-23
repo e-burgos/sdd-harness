@@ -1,6 +1,6 @@
 # SPEC-e-burgos-001: SDD Studio: aprobaciones de sesión, imágenes en el chat y lista de hilos activos
 
-> Estado: **in-progress** — `cycle-01` abierto el 2026-10-23 (flow `full`). Re-scope del
+> Estado: **completed** — 2026-10-23. `cycle-01` y `cycle-02` cerrados (flow `full`). Re-scope del
 > 2026-10-23: la spec se corta en dos ciclos (ver «Corte de ciclos»).
 
 ## Resumen Ejecutivo
@@ -28,7 +28,7 @@ contrato `libs/studio-protocol`), para el desarrollador que opera agentes desde 
 - **cycle-01**: HU-4..HU-10 + los contratos de protocolo de **toda** la spec (incluidos los de
   HU-1..HU-3: adjuntos, búsqueda de archivos, skills/agentes) con un único bump de
   `PROTOCOL_VERSION`, y el paso del puente a prompt streaming del SDK (lo exige HU-10).
-- **cycle-02** (siguiente, aún no abierto): HU-1, HU-2, HU-3 — puente y Composer sobre los
+- **cycle-02** (cerrado el 2026-10-23): HU-1, HU-2, HU-3 — puente y Composer sobre los
   contratos ya publicados en cycle-01, sin otro bump de versión.
 
 ## Contexto de Negocio
