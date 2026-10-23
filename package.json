@@ -12,6 +12,19 @@
     "test:watch": "pnpm --filter @e-burgos/sdd-harness test:watch",
     "typecheck": "pnpm --filter @e-burgos/sdd-harness --filter @sdd-studio/protocol --filter @e-burgos/sdd-studio --filter sdd-studio-web typecheck",
     "dev:studio": "pnpm --filter sdd-studio-web dev",
-    "dev:docs": "cd apps/documentation && pnpm dev"
+    "dev:docs": "cd apps/documentation && pnpm dev",
+    "setup:agents": "node -e \"if(process.platform==='win32'){require('child_process').execSync('powershell -ExecutionPolicy Bypass -File sdd/scripts/setup-agents.ps1',{stdio:'inherit'})}else{require('child_process').execSync('bash sdd/scripts/setup-agents.sh',{stdio:'inherit'})}\"",
+    "sdd:docs": "node sdd/docs/serve.mjs",
+    "sdd:validate": "node sdd/scripts/validate-sdd.mjs",
+    "sdd:rebuild-tasks-index": "node sdd/scripts/rebuild-tasks-index.mjs",
+    "sdd:rebuild-catalog": "node sdd/scripts/rebuild-catalog.mjs",
+    "sdd:gate": "node sdd/scripts/spec-gate.mjs",
+    "sdd:rtk": "node sdd/scripts/setup-rtk.mjs",
+    "sdd:mod": "node sdd/scripts/sdd-mod.mjs",
+    "postinstall": "node -e \"const f='sdd/scripts/setup-rtk.mjs';if(require('fs').existsSync(f)){require('child_process').execFileSync(process.execPath,[f],{stdio:'inherit'})}\""
+  },
+  "devDependencies": {
+    "ajv": "^8.20.0",
+    "ajv-formats": "^3.0.1"
   }
 }
