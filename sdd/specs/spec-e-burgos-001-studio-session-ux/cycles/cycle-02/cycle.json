@@ -23,19 +23,20 @@
   "documents": {
     "brief": "sdd/specs/spec-e-burgos-001-studio-session-ux/cycles/cycle-02/brief.yaml",
     "architect": "sdd/specs/spec-e-burgos-001-studio-session-ux/cycles/cycle-02/architect.md",
-    "tasks": "sdd/specs/spec-e-burgos-001-studio-session-ux/cycles/cycle-02/tasks.json"
+    "tasks": "sdd/specs/spec-e-burgos-001-studio-session-ux/cycles/cycle-02/tasks.json",
+    "planner": "sdd/specs/spec-e-burgos-001-studio-session-ux/cycles/cycle-02/planner.md"
   },
   "artifacts": [],
   "metrics": {
-    "tasks_total": 0,
+    "tasks_total": 25,
     "tasks_completed": 0,
-    "story_points": 0,
+    "story_points": 99,
     "files_created": [],
     "files_modified": [],
     "files_deleted": [],
     "usage": {
-      "tokens_in": 95000,
-      "tokens_out": 22000,
+      "tokens_in": 155000,
+      "tokens_out": 36000,
       "by_agent": [
         {
           "agent": "orchestrator",
@@ -73,6 +74,18 @@
           "recorded_at": "2026-10-23",
           "tokens_total": 142499,
           "tool_uses": 28
+        },
+        {
+          "agent": "planner",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 57753,
+          "tokens_out": 10192,
+          "tokens_total": 67945,
+          "approx": false,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-10-23",
+          "tool_uses": 9
         }
       ]
     }

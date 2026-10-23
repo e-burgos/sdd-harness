@@ -3,11 +3,390 @@
   "spec": "spec-e-burgos-001-studio-session-ux",
   "cycle": 2,
   "module": "studio-session-ux",
-  "apps": ["apps/studio", "apps/studio-bridge", "libs/studio-protocol"],
+  "apps": [
+    "apps/studio",
+    "apps/studio-bridge",
+    "libs/studio-protocol"
+  ],
   "flow": "full",
   "user_stories_generated": true,
   "prerequisites": {
-    "tasks_generated": false
+    "tasks_generated": true
   },
-  "tasks": []
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "Puente: attachment-store (put/read/init, magic bytes, dedupe, escritura atómica)",
+      "user_stories": [
+        "HU-1"
+      ],
+      "estimation_hours": 4,
+      "story_points": 5,
+      "depends_on": [],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-002",
+      "title": "Puente: attachment.get seguro (R-C2-2)",
+      "user_stories": [
+        "HU-1"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-003",
+      "title": "Puente: frontera del engine, buildTurnPrompt y toSdkUserMessage async (X-1, X-2, X-3)",
+      "user_stories": [
+        "HU-1",
+        "HU-3"
+      ],
+      "estimation_hours": 4,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-004",
+      "title": "Puente: ClaudeAgentSdkEngine con resolución async y revert en carrera interrupt",
+      "user_stories": [
+        "HU-1"
+      ],
+      "estimation_hours": 4,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-003"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-005",
+      "title": "Puente: SessionManager con MessageInput, cola de aceptación por hilo y createThread con adjuntos (X-7)",
+      "user_stories": [
+        "HU-1",
+        "HU-3"
+      ],
+      "estimation_hours": 4,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-001",
+        "TASK-003",
+        "TASK-004"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-006",
+      "title": "Puente: file-index y búsqueda segura (R-C2-2)",
+      "user_stories": [
+        "HU-2"
+      ],
+      "estimation_hours": 4,
+      "story_points": 5,
+      "depends_on": [],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-007",
+      "title": "Puente: catálogo de agentes, skills y prompts (X-8, X-9)",
+      "user_stories": [
+        "HU-3"
+      ],
+      "estimation_hours": 4,
+      "story_points": 5,
+      "depends_on": [],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-008",
+      "title": "Puente: watcher de .claude acotado a agents y skills (R-C2-5)",
+      "user_stories": [
+        "HU-3"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-007"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-009",
+      "title": "Puente: FakeEngine con marcadores de adjuntos y refs",
+      "user_stories": [
+        "HU-1",
+        "HU-3"
+      ],
+      "estimation_hours": 2,
+      "story_points": 2,
+      "depends_on": [
+        "TASK-003"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-010",
+      "title": "Puente: activación de capacidades y wiring (router, ws, main)",
+      "user_stories": [
+        "HU-1",
+        "HU-2",
+        "HU-3"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-002",
+        "TASK-005",
+        "TASK-006",
+        "TASK-008"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-011",
+      "title": "Puente: tests de integración ws con FakeEngine (adjuntos, búsqueda, catálogo, refs)",
+      "user_stories": [
+        "HU-1",
+        "HU-2",
+        "HU-3"
+      ],
+      "estimation_hours": 4,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-009",
+        "TASK-010"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-012",
+      "title": "Checkpoint F4: lint, test y build de protocolo y puente en verde",
+      "user_stories": [
+        "HU-1",
+        "HU-2",
+        "HU-3"
+      ],
+      "estimation_hours": 2,
+      "story_points": 2,
+      "depends_on": [
+        "TASK-011"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-013",
+      "title": "Web: classify y encodeImage (re-encode siempre, CA-016.4)",
+      "user_stories": [
+        "HU-1"
+      ],
+      "estimation_hours": 4,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-012"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-014",
+      "title": "Web: commandFrameBytes y escalera de presupuesto (R-C2-1)",
+      "user_stories": [
+        "HU-1"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-013"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-015",
+      "title": "Web: slice drafts con ComposerDraft y store de timeline con adjuntos/refs (X-4)",
+      "user_stories": [
+        "HU-1"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-012"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-016",
+      "title": "Web: useAttachmentDraft y AttachmentTray (COMP-007, COMP-012)",
+      "user_stories": [
+        "HU-1"
+      ],
+      "estimation_hours": 4,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-013",
+        "TASK-014",
+        "TASK-015"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-017",
+      "title": "Web: Composer con elegir, pegar, arrastrar y enviar con adjuntos",
+      "user_stories": [
+        "HU-1"
+      ],
+      "estimation_hours": 4,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-016"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-018",
+      "title": "Web: useAttachmentContent (COMP-013) con LRU, concurrencia y verificación de sha256",
+      "user_stories": [
+        "HU-1"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-012"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-019",
+      "title": "Web: AttachmentView, Timeline y PendingMessages con adjuntos (COMP-008)",
+      "user_stories": [
+        "HU-1"
+      ],
+      "estimation_hours": 4,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-015",
+        "TASK-018"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-020",
+      "title": "Web: composer-refs (extracción de refs @agente y /skill)",
+      "user_stories": [
+        "HU-3"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-012"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-021",
+      "title": "Web: MentionMenu para @ y / (COMP-009)",
+      "user_stories": [
+        "HU-2",
+        "HU-3"
+      ],
+      "estimation_hours": 4,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-012"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-022",
+      "title": "Web: integración de MentionMenu y refs en el Composer",
+      "user_stories": [
+        "HU-2",
+        "HU-3"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-017",
+        "TASK-020",
+        "TASK-021"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-023",
+      "title": "Web: gating por features y test de handshake sin features (R-C2-4)",
+      "user_stories": [
+        "HU-1",
+        "HU-2",
+        "HU-3"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-017",
+        "TASK-022"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-024",
+      "title": "Web: tests del Composer (adjuntos, menús, EXIF, borrador por hilo)",
+      "user_stories": [
+        "HU-1",
+        "HU-2",
+        "HU-3"
+      ],
+      "estimation_hours": 4,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-019",
+        "TASK-023"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-025",
+      "title": "Web: e2e contra FakeEngine, components.json y checkpoint final",
+      "user_stories": [
+        "HU-1",
+        "HU-2",
+        "HU-3"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-024"
+      ],
+      "status": "pending",
+      "files": []
+    }
+  ]
 }
