@@ -63,7 +63,7 @@ describe('WorkspaceSnapshot', () => {
   it('parses a minimal snapshot', () => {
     const snap = {
       project: 'p', profile: 'team', kitVersion: null, specs: [], cycles: [], fixes: [],
-      agents: [], gateMode: 'block', pricing: null, stale: ['specs'],
+      agents: [], skills: [], gateMode: 'block', pricing: null, stale: ['specs'],
     };
     expect(WorkspaceSnapshot.parse(snap)).toEqual(snap);
   });

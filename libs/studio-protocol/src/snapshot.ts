@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { CatalogId } from './attachments';
 
 export const AREAS = ['global', 'specs', 'fixes', 'agents', 'tools', 'pricing', 'kit'] as const;
 export const Area = z.enum(AREAS);
@@ -41,15 +42,31 @@ export const FixSummary = z.object({
   status: z.string(),
   severity: z.string().nullable(),
   specId: z.string().nullable(),
+  createdAt: z.string().nullable(),
+  closedAt: z.string().nullable(),
 });
 export type FixSummary = z.infer<typeof FixSummary>;
+
+export const CatalogSource = z.enum(['claude', 'sdd']);
+export type CatalogSource = z.infer<typeof CatalogSource>;
 
 export const AgentSummary = z.object({
   id: z.string(),
   description: z.string(),
   model: z.string().nullable(),
+  source: CatalogSource,
+  path: z.string(),
 });
 export type AgentSummary = z.infer<typeof AgentSummary>;
+
+export const SkillSummary = z.object({
+  id: CatalogId,
+  kind: z.enum(['skill', 'prompt']),
+  description: z.string().max(300),
+  source: CatalogSource,
+  path: z.string(),
+});
+export type SkillSummary = z.infer<typeof SkillSummary>;
 
 export const GateMode = z.enum(['block', 'warn']);
 export type GateMode = z.infer<typeof GateMode>;
@@ -62,6 +79,7 @@ export const WorkspaceSnapshot = z.object({
   cycles: z.array(CycleSummary),
   fixes: z.array(FixSummary),
   agents: z.array(AgentSummary),
+  skills: z.array(SkillSummary),
   gateMode: GateMode,
   pricing: z.record(z.string(), z.unknown()).nullable(),
   stale: z.array(Area),

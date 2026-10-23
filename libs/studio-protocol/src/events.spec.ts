@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ServerEvent, ThreadEvent } from './index';
+import { ServerEvent, ThreadEvent, decodeServerMessage } from './index';
 
 const author = { agent: 'sdd-planner', parentToolUseId: 'toolu_1' };
 
@@ -36,5 +36,61 @@ describe('ServerEvent', () => {
     expect(ServerEvent.parse({ kind: 'command.exit', runId: 'r', exitCode: 1 })).toEqual({
       kind: 'command.exit', runId: 'r', exitCode: 1,
     });
+  });
+});
+
+const sha = 'c'.repeat(64);
+const ref = { sha256: sha, kind: 'image', mime: 'image/png', name: 'a.png', size: 10, width: 4, height: 4 };
+
+describe('ThreadEvent v2 additions', () => {
+  it('parses extended user.message and every pending event', () => {
+    const events = [
+      {
+        type: 'user.message', text: 'hola', pendingId: 'p1', delivery: 'cut-point',
+        attachments: [ref], refs: { agents: ['sdd-planner'], skills: [] },
+      },
+      { type: 'user.message', text: 'otro', delivery: 'next-turn' },
+      { type: 'pending.added', pendingId: 'p1', text: 'x', attachments: [ref], refs: { agents: [], skills: ['s'] } },
+      { type: 'pending.added', pendingId: 'p2', text: 'solo texto' },
+      { type: 'pending.edited', pendingId: 'p1', text: 'y' },
+      { type: 'pending.removed', pendingId: 'p1' },
+      { type: 'pending.reverted', pendingId: 'p2', reason: 'interrupt' },
+    ];
+    for (const e of events) expect(ThreadEvent.parse(e)).toEqual(e);
+  });
+  it('rejects bad delivery, revert reason and too many attachments', () => {
+    expect(ThreadEvent.safeParse({ type: 'user.message', text: 'x', delivery: 'now' }).success).toBe(false);
+    expect(ThreadEvent.safeParse({ type: 'pending.reverted', pendingId: 'p', reason: 'error' }).success).toBe(false);
+    expect(ThreadEvent.safeParse({ type: 'pending.added', pendingId: 'p', text: '', attachments: Array(6).fill(ref) }).success).toBe(false);
+  });
+  it('parses approval.requested with always offers and approval.resolved with remembered', () => {
+    const requested = { type: 'approval.requested', approvalId: 'a', author, tool: 'Bash', summary: '$ git status' };
+    for (const always of [
+      { kind: 'bash-prefix', prefix: 'git status' },
+      { kind: 'tool', tool: 'Edit' },
+      { kind: 'none', reason: 'gate-warning' },
+    ]) {
+      const event = { ...requested, always };
+      expect(ThreadEvent.parse(event)).toEqual(event);
+    }
+    const resolved = { type: 'approval.resolved', approvalId: 'a', decision: 'allow', remembered: { kind: 'tool', tool: 'Edit' } };
+    expect(ThreadEvent.parse(resolved)).toEqual(resolved);
+  });
+});
+
+describe('v1 JSONL lines stay readable', () => {
+  const v1Lines = [
+    { type: 'user.message', text: 'hola' },
+    { type: 'approval.requested', approvalId: 'p1', author, tool: 'Bash', summary: '$ ls', input: '{}', gateWarning: 'w' },
+    { type: 'approval.resolved', approvalId: 'p1', decision: 'allow' },
+    { type: 'session.status', status: 'idle' },
+  ];
+  it('parses them unchanged, without inventing new fields', () => {
+    for (const line of v1Lines) expect(ThreadEvent.parse(line)).toEqual(line);
+  });
+  it('replays them inside a thread.event server frame', () => {
+    const frame = { kind: 'thread.event', threadId: 't', seq: 3, event: v1Lines[0] };
+    expect(ServerEvent.parse(frame)).toEqual(frame);
+    expect(decodeServerMessage(JSON.stringify(frame)).ok).toBe(true);
   });
 });
