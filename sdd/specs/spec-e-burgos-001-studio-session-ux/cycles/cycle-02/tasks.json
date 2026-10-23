@@ -391,8 +391,22 @@
       "depends_on": [
         "TASK-013"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/studio/src/lib/attachments/bytes.ts",
+        "apps/studio/src/lib/attachments/frame-budget.ts",
+        "apps/studio/src/lib/attachments/frame-budget.spec.ts"
+      ],
+      "usage": {
+        "agent": "implementor-front",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "tokens_in": 30000,
+        "tokens_out": 5000,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
     },
     {
       "id": "TASK-015",
