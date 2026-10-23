@@ -1,6 +1,6 @@
 import type { WorkspaceSnapshot } from '@sdd-studio/protocol';
 import { initialState, setThreads } from './state';
-import { channelsOf, cycleForChannel, dmChannelsOf, groupTimeline, pendingApprovals, threadsInChannel } from './selectors';
+import { activeThreads, channelsOf, cycleForChannel, dmChannelsOf, groupTimeline, pendingApprovals, threadsInChannel } from './selectors';
 import { applyThreadEvent, emptyThread } from './timeline';
 
 const snapshot: WorkspaceSnapshot = {
@@ -52,5 +52,19 @@ describe('selectors', () => {
     const blocks = groupTimeline(t.items);
     expect(blocks.map((bl) => (bl.kind === 'tools' ? `tools:${bl.items.length}` : bl.item.kind))).toEqual(['tools:2', 'tools:1', 'approval']);
     expect(pendingApprovals(t).map((p) => p.id)).toEqual(['p1']);
+  });
+  it('orders active threads by waiting-approval, running, queued and then recency, excluding the rest', () => {
+    const base = { agent: 'a', options: { agent: 'a', model: 'kit' as const, effort: null, permissionMode: 'default' as const }, title: 'x', createdAt: '1', channelId: 'general', link: { target: { kind: 'none' as const }, source: 'legacy' as const }, pendingCount: 0 };
+    const s = setThreads(initialState(), [
+      { ...base, id: 'q', status: 'queued', lastActivity: '2026-05-01' },
+      { ...base, id: 'r-old', status: 'running', lastActivity: '2026-01-01' },
+      { ...base, id: 'r-new', status: 'running', lastActivity: '2026-02-01' },
+      { ...base, id: 'w', status: 'waiting-approval', lastActivity: '2026-01-01' },
+      { ...base, id: 'i', status: 'idle', lastActivity: '2026-06-01' },
+      { ...base, id: 'e', status: 'error', lastActivity: '2026-06-01' },
+      { ...base, id: 'x', status: 'interrupted', lastActivity: '2026-06-01' },
+    ]);
+    expect(activeThreads(s.threads).map((t) => t.id)).toEqual(['w', 'r-new', 'r-old', 'q']);
+    expect(activeThreads({})).toEqual([]);
   });
 });

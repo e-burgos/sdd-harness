@@ -1,4 +1,4 @@
-import { channelForDm, channelForSpec, specIdOfChannel, type Author, type CycleSummary, type ThreadInfo, type WorkspaceSnapshot } from '@sdd-studio/protocol';
+import { channelForDm, channelForSpec, specIdOfChannel, type Author, type CycleSummary, type SessionStatus, type ThreadInfo, type WorkspaceSnapshot } from '@sdd-studio/protocol';
 import type { ThreadState, TimelineItem } from './timeline';
 
 export interface ChannelEntry {
@@ -27,6 +27,14 @@ export function threadsInChannel(threads: Record<string, ThreadState>, channelId
   return Object.values(threads)
     .flatMap((t) => (t.info && t.info.channelId === channelId ? [t.info] : []))
     .sort((a, b) => b.lastActivity.localeCompare(a.lastActivity));
+}
+
+const ACTIVE_RANK: Partial<Record<SessionStatus, number>> = { 'waiting-approval': 0, running: 1, queued: 2 };
+
+export function activeThreads(threads: Record<string, ThreadState>): ThreadInfo[] {
+  return Object.values(threads)
+    .flatMap((t) => (t.info && t.info.status in ACTIVE_RANK ? [t.info] : []))
+    .sort((a, b) => (ACTIVE_RANK[a.status] ?? 0) - (ACTIVE_RANK[b.status] ?? 0) || b.lastActivity.localeCompare(a.lastActivity));
 }
 
 export function pendingApprovals(t: ThreadState): Extract<TimelineItem, { kind: 'approval' }>[] {
