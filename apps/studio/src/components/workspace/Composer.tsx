@@ -1,6 +1,6 @@
 'use client';
 
-import { PaperPlaneRight } from '@phosphor-icons/react';
+import { Clock, PaperPlaneRight } from '@phosphor-icons/react';
 import {
   DEFAULT_AGENT,
   defaultThreadOptions,
@@ -13,7 +13,7 @@ import {
   type PermissionModeChoice,
   type ThreadOptions,
 } from '@sdd-studio/protocol';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { z } from 'zod';
 import { agentMeta } from '@/lib/agents';
 import { bridgeErrorText } from '@/lib/bridge/error-text';
@@ -21,11 +21,13 @@ import { useT } from '@/lib/i18n/i18n';
 import { parseSlash, SAFE_ARG } from '@/lib/slash';
 import { draftKey } from '@/lib/store/state';
 import { useBridge, useStudio } from '../BridgeProvider';
+import { PendingMessages } from './PendingMessages';
 
 const RunResult = z.object({ runId: z.string().min(1) });
 const FileResult = z.object({ path: z.string(), content: z.string() });
 
 const MAX_MESSAGE = 100_000;
+const BUSY_STATUSES = new Set(['running', 'waiting-approval', 'queued']);
 
 const MODELS: ModelChoice[] = ['kit', 'haiku', 'sonnet', 'opus', 'fable'];
 const EFFORTS: Effort[] = ['low', 'medium', 'high', 'xhigh', 'max'];
@@ -41,6 +43,8 @@ export interface ComposerViewProps {
   error: string | null;
   initialText?: string;
   onTextChange?(text: string): void;
+  queueing?: boolean;
+  tray?: ReactNode;
 }
 
 export function ComposerView(p: ComposerViewProps) {
@@ -74,59 +78,69 @@ export function ComposerView(p: ComposerViewProps) {
   };
   const select = 'rounded-md border border-ink-700 bg-ink-950 px-2 py-1 text-xs text-ink-100 disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400';
   return (
-    <div className="border-t border-ink-800 p-3">
-      {p.error && <p role="alert" className="mb-2 text-xs text-roseish">{p.error}</p>}
-      <div className="rounded-xl border border-ink-700 bg-ink-900 focus-within:border-accent-500/60">
-        <textarea
-          className="block max-h-48 min-h-[44px] w-full resize-y bg-transparent px-3 py-2 text-sm outline-none"
-          aria-label={t('composer.placeholder')}
-          placeholder={t('composer.placeholder')}
-          ref={box}
-          value={text}
-          disabled={pending}
-          onChange={(e) => updateText(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
-              e.preventDefault();
-              void submit();
-            }
-          }}
-        />
-        <div className="flex flex-wrap items-center gap-2 border-t border-ink-800 px-2 py-1.5">
-          <label className="sr-only" htmlFor="composer-agent">{t('composer.agent')}</label>
-          <select id="composer-agent" className={select} disabled={p.agentLocked} value={p.options.agent} onChange={(e) => p.onOptionsChange({ agent: e.target.value })}>
-            {p.agents.map((a) => <option key={a} value={a}>{agentMeta(a).name}</option>)}
-          </select>
-          <label className="sr-only" htmlFor="composer-model">{t('composer.model')}</label>
-          <select
-            id="composer-model"
-            className={select}
-            value={p.options.model}
-            onChange={(e) => {
-              const model = e.target.value as ModelChoice;
-              p.onOptionsChange(model === 'kit' ? { model, effort: null } : { model, effort: p.options.effort ?? 'medium' });
+    <div className="border-t border-ink-800">
+      {p.tray}
+      <div className="p-3">
+        {p.error && <p role="alert" className="mb-2 text-xs text-roseish">{p.error}</p>}
+        <div className="rounded-xl border border-ink-700 bg-ink-900 focus-within:border-accent-500/60">
+          <textarea
+            className="block max-h-48 min-h-[44px] w-full resize-y bg-transparent px-3 py-2 text-sm outline-none"
+            aria-label={t('composer.placeholder')}
+            placeholder={t('composer.placeholder')}
+            ref={box}
+            value={text}
+            disabled={pending}
+            onChange={(e) => updateText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
+                e.preventDefault();
+                void submit();
+              }
             }}
-          >
-            {MODELS.map((m) => <option key={m} value={m}>{m === 'kit' ? t('model.kit') : m}</option>)}
-          </select>
-          <label className="sr-only" htmlFor="composer-effort">{t('composer.effort')}</label>
-          <select
-            id="composer-effort"
-            className={select}
-            disabled={p.options.model === 'kit'}
-            value={p.options.effort ?? ''}
-            onChange={(e) => p.onOptionsChange({ effort: e.target.value as Effort })}
-          >
-            {p.options.model === 'kit' && <option value="">—</option>}
-            {EFFORTS.map((x) => <option key={x} value={x}>{x}</option>)}
-          </select>
-          <label className="sr-only" htmlFor="composer-perm">{t('composer.permission')}</label>
-          <select id="composer-perm" className={select} value={p.options.permissionMode} onChange={(e) => p.onOptionsChange({ permissionMode: e.target.value as PermissionModeChoice })}>
-            {PERMS.map((x) => <option key={x} value={x}>{t(`perm.${x}`)}</option>)}
-          </select>
-          <button aria-label={t('composer.send')} className="ml-auto rounded-md bg-accent-500 p-1.5 text-ink-950 hover:bg-accent-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-50" disabled={pending} onClick={() => void submit()}>
-            <PaperPlaneRight size={16} weight="fill" />
-          </button>
+          />
+          <div className="flex flex-wrap items-center gap-2 border-t border-ink-800 px-2 py-1.5">
+            <label className="sr-only" htmlFor="composer-agent">{t('composer.agent')}</label>
+            <select id="composer-agent" className={select} disabled={p.agentLocked} value={p.options.agent} onChange={(e) => p.onOptionsChange({ agent: e.target.value })}>
+              {p.agents.map((a) => <option key={a} value={a}>{agentMeta(a).name}</option>)}
+            </select>
+            <label className="sr-only" htmlFor="composer-model">{t('composer.model')}</label>
+            <select
+              id="composer-model"
+              className={select}
+              value={p.options.model}
+              onChange={(e) => {
+                const model = e.target.value as ModelChoice;
+                p.onOptionsChange(model === 'kit' ? { model, effort: null } : { model, effort: p.options.effort ?? 'medium' });
+              }}
+            >
+              {MODELS.map((m) => <option key={m} value={m}>{m === 'kit' ? t('model.kit') : m}</option>)}
+            </select>
+            <label className="sr-only" htmlFor="composer-effort">{t('composer.effort')}</label>
+            <select
+              id="composer-effort"
+              className={select}
+              disabled={p.options.model === 'kit'}
+              value={p.options.effort ?? ''}
+              onChange={(e) => p.onOptionsChange({ effort: e.target.value as Effort })}
+            >
+              {p.options.model === 'kit' && <option value="">—</option>}
+              {EFFORTS.map((x) => <option key={x} value={x}>{x}</option>)}
+            </select>
+            <label className="sr-only" htmlFor="composer-perm">{t('composer.permission')}</label>
+            <select id="composer-perm" className={select} value={p.options.permissionMode} onChange={(e) => p.onOptionsChange({ permissionMode: e.target.value as PermissionModeChoice })}>
+              {PERMS.map((x) => <option key={x} value={x}>{t(`perm.${x}`)}</option>)}
+            </select>
+            <button
+              aria-label={p.queueing ? t('composer.queue') : t('composer.send')}
+              title={p.queueing ? t('composer.queueHint') : undefined}
+              className="ml-auto inline-flex items-center gap-1 rounded-md bg-accent-500 p-1.5 text-ink-950 hover:bg-accent-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-50"
+              disabled={pending}
+              onClick={() => void submit()}
+            >
+              {p.queueing ? <Clock size={16} weight="fill" /> : <PaperPlaneRight size={16} weight="fill" />}
+              {p.queueing && <span className="pr-1 text-xs font-medium">{t('composer.queue')}</span>}
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -211,6 +225,8 @@ export function Composer({ channelId, threadId, onThreadCreated }: { channelId: 
       error={error}
       initialText={initialText}
       onTextChange={(text) => store.getState().setDraft(key, text)}
+      queueing={threadInfo ? BUSY_STATUSES.has(threadInfo.status) : false}
+      tray={threadId ? <PendingMessages threadId={threadId} /> : null}
     />
   );
 }

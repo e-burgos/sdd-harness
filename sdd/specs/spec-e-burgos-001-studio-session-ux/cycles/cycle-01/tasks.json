@@ -891,8 +891,25 @@
       "depends_on": [
         "TASK-031"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/workspace/PendingMessages.tsx",
+        "apps/studio/src/components/workspace/pending.spec.tsx",
+        "apps/studio/src/components/workspace/Composer.tsx",
+        "apps/studio/src/components/workspace/Timeline.tsx",
+        "apps/studio/src/lib/bridge/error-text.ts",
+        "apps/studio/src/lib/i18n/es.ts",
+        "apps/studio/src/lib/i18n/en.ts"
+      ],
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "tokens_in": 45000,
+        "tokens_out": 7000,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
     },
     {
       "id": "TASK-033",

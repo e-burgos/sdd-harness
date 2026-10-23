@@ -51,7 +51,14 @@ export function Timeline({ items, status, onRespond }: { items: TimelineItem[]; 
             return (
               <li key={item.id} className="flex gap-3">
                 <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-ink-700 text-xs">{t('timeline.you')}</span>
-                <p className="min-w-0 whitespace-pre-wrap break-words pt-1 text-sm">{item.text}</p>
+                <div className="min-w-0 pt-1">
+                  <p className="whitespace-pre-wrap break-words text-sm">{item.text}</p>
+                  {item.pendingId && (
+                    <p className={`mt-0.5 text-[11px] ${item.notDelivered ? 'text-amberish' : 'text-ink-300'}`}>
+                      {item.notDelivered ? t('pending.notDelivered') : item.delivery === 'next-turn' ? t('pending.deliveredNextTurn') : t('pending.delivered')}
+                    </p>
+                  )}
+                </div>
               </li>
             );
           case 'message': {
