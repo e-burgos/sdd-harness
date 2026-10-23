@@ -183,6 +183,14 @@ describe('mergeSnapshot / changedAreas', () => {
     expect(snapshot.skills).toEqual([]);
   });
 
+  it('fills snapshot.skills from the catalog and still validates against the protocol schema', async () => {
+    await mkdir(path.join(root, 'sdd/skills/sdd-planner'), { recursive: true });
+    await writeFile(path.join(root, 'sdd/skills/sdd-planner/SKILL.md'), '---\nname: sdd-planner\ndescription: Plans\n---\n');
+    const { snapshot } = await loadWorkspaceSnapshot(root);
+    expect(snapshot.skills).toEqual([{ id: 'sdd-planner', kind: 'skill', description: 'Plans', source: 'sdd', path: 'sdd/skills/sdd-planner/SKILL.md' }]);
+    expect(WorkspaceSnapshot.safeParse(snapshot).success).toBe(true);
+  });
+
   it('agents area covers the skills field', async () => {
     const prev = mergeSnapshot(null, await loadWorkspaceSnapshot(root));
     const withSkill = {
