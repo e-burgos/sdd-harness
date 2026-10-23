@@ -1034,8 +1034,22 @@
         "TASK-032",
         "TASK-033"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/studio/src/lib/pending-sync.spec.ts",
+        "apps/studio/src/components/workspace/pending.spec.tsx",
+        "apps/studio/src/lib/bridge/client.spec.ts",
+        "apps/studio/src/components/workspace/drafts.spec.tsx"
+      ],
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "tokens_in": 34000,
+        "tokens_out": 5500,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
     }
   ]
 }

@@ -20,7 +20,9 @@
       "created_in_cycle": "número de ciclo donde se definió por primera vez",
       "updated_in_cycle": "número del último ciclo que lo modificó (null si nunca se actualizó)",
       "description": "qué hace el componente",
-      "consumes": ["EP-001"],
+      "consumes": [
+        "EP-001"
+      ],
       "created_at": "YYYY-MM-DD",
       "changelog": [
         {
@@ -100,7 +102,7 @@
         "module": "studio-session-ux",
         "spec": "sdd/specs/spec-e-burgos-001-studio-session-ux",
         "path": "src/components/workspace/ThreadLinkPicker.tsx",
-        "status": "defined",
+        "status": "implemented",
         "created_in_cycle": 1,
         "updated_in_cycle": null,
         "description": "Reasigna el hilo a un ciclo, fix o sin vínculo vía thread.setLink; muestra error y conserva el vínculo previo si falla.",
@@ -234,8 +236,8 @@
         "type": "component",
         "module": "studio-session-ux",
         "spec": "sdd/specs/spec-e-burgos-001-studio-session-ux",
-        "path": "src/components/workspace/composer/PendingMessages.tsx",
-        "status": "defined",
+        "path": "src/components/workspace/PendingMessages.tsx",
+        "status": "implemented",
         "created_in_cycle": 1,
         "updated_in_cycle": null,
         "description": "Bandeja de mensajes pendientes del hilo (HU-10): lista en orden, edición inline y quitar mientras estén pendientes; desaparecen al entregarse (user.message con pendingId).",
