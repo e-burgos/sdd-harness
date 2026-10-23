@@ -306,3 +306,10 @@ Escala de SP: ≤1h→1 · 2h→2 · 3h→3 · 4h→5. Ninguna task supera 4h. I
 - **Criterio de done:**
   - [ ] run-many en verde
   - [ ] components.json actualizado y pnpm sdd:validate en verde
+
+## Pendiente de documentar en contexto
+
+- apps/studio-bridge: `sessions/attachment-store.ts` (layout `.sdd-studio/attachments/<sha>.<ext>`, `AttachmentError`), `workspace/file-index.ts` (`createFileIndex`, `listGit` inyectable), `workspace/catalog.ts` (`loadCatalog`, reemplaza `loadAgents`), `engine/prompt-content.ts` async (`buildTurnPrompt`), `Live.acceptTail` en SessionManager y `SessionManagerDeps.attachments` requerido.
+- `MessageInput.attachments` y `refs` son opcionales en `SessionManager` (el router siempre los completa con los defaults de zod); `send(threadId, MessageInput)` ya no recibe string.
+- Watcher: segundo `chokidar.watch` sobre `.claude` solo si existe, con `isClaudeCatalogPath` (agents/skills, depth 3).
+- FakeEngine: marcadores ` [attachments: …]`, ` [refs: …]` y `#bad-attachment`.
