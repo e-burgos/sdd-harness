@@ -210,8 +210,8 @@
         "sdd/specs/spec-e-burgos-001-studio-session-ux/cycles/cycle-01/artifacts/spike-posttoolbatch.md"
       ],
       "usage": {
-        "tokens_in": 30000,
-        "tokens_out": 6000,
+        "tokens_in": 37513,
+        "tokens_out": 7503,
         "provider_model": "claude/sonnet",
         "effort": "medium",
         "agent": "implementor-back",
@@ -240,8 +240,8 @@
         "apps/studio-bridge/src/engine/prompt-content.spec.ts"
       ],
       "usage": {
-        "tokens_in": 25000,
-        "tokens_out": 5000,
+        "tokens_in": 31260,
+        "tokens_out": 6252,
         "provider_model": "claude/sonnet",
         "effort": "medium",
         "agent": "implementor-back",
@@ -274,8 +274,8 @@
         "apps/studio-bridge/src/sessions/session-manager.spec.ts"
       ],
       "usage": {
-        "tokens_in": 45000,
-        "tokens_out": 9000,
+        "tokens_in": 56269,
+        "tokens_out": 11254,
         "provider_model": "claude/sonnet",
         "effort": "medium",
         "agent": "implementor-back",
@@ -302,8 +302,8 @@
         "apps/studio-bridge/src/engine/claude-sdk-engine.spec.ts"
       ],
       "usage": {
-        "tokens_in": 25000,
-        "tokens_out": 5000,
+        "tokens_in": 31260,
+        "tokens_out": 6252,
         "provider_model": "claude/sonnet",
         "effort": "medium",
         "agent": "implementor-back",
@@ -330,8 +330,8 @@
         "apps/studio-bridge/src/engine/fake-engine.spec.ts"
       ],
       "usage": {
-        "tokens_in": 30000,
-        "tokens_out": 7000,
+        "tokens_in": 37513,
+        "tokens_out": 8753,
         "provider_model": "claude/sonnet",
         "effort": "medium",
         "agent": "implementor-back",
@@ -359,8 +359,8 @@
         "apps/studio-bridge/src/sessions/session-manager.ts"
       ],
       "usage": {
-        "tokens_in": 18000,
-        "tokens_out": 4000,
+        "tokens_in": 22508,
+        "tokens_out": 5002,
         "provider_model": "claude/sonnet",
         "effort": "medium",
         "agent": "implementor-back",
@@ -389,8 +389,8 @@
         "apps/studio-bridge/src/sessions/store.ts"
       ],
       "usage": {
-        "tokens_in": 50000,
-        "tokens_out": 11000,
+        "tokens_in": 62521,
+        "tokens_out": 13755,
         "provider_model": "claude/sonnet",
         "effort": "medium",
         "agent": "implementor-back",
@@ -420,8 +420,8 @@
         "apps/studio-bridge/src/server/ws-server.spec.ts"
       ],
       "usage": {
-        "tokens_in": 28000,
-        "tokens_out": 6000,
+        "tokens_in": 35012,
+        "tokens_out": 7503,
         "provider_model": "claude/sonnet",
         "effort": "medium",
         "agent": "implementor-back",
@@ -447,8 +447,8 @@
         "apps/studio-bridge/src/sessions/always-rule.spec.ts"
       ],
       "usage": {
-        "tokens_in": 20000,
-        "tokens_out": 5000,
+        "tokens_in": 25008,
+        "tokens_out": 6252,
         "provider_model": "claude/sonnet",
         "effort": "medium",
         "agent": "implementor-back",
@@ -475,8 +475,8 @@
         "apps/studio-bridge/src/sessions/session-manager.spec.ts"
       ],
       "usage": {
-        "tokens_in": 30000,
-        "tokens_out": 7000,
+        "tokens_in": 37513,
+        "tokens_out": 8753,
         "provider_model": "claude/sonnet",
         "effort": "medium",
         "agent": "implementor-back",
@@ -508,8 +508,8 @@
         "apps/studio-bridge/src/test-utils/fixture.ts"
       ],
       "usage": {
-        "tokens_in": 28000,
-        "tokens_out": 6000,
+        "tokens_in": 35012,
+        "tokens_out": 7503,
         "provider_model": "claude/sonnet",
         "effort": "medium",
         "agent": "implementor-back",
@@ -536,8 +536,8 @@
         "apps/studio-bridge/src/workspace/snapshot.spec.ts"
       ],
       "usage": {
-        "tokens_in": 12000,
-        "tokens_out": 2500,
+        "tokens_in": 15005,
+        "tokens_out": 3126,
         "provider_model": "claude/sonnet",
         "effort": "medium",
         "agent": "implementor-back",
@@ -563,8 +563,8 @@
         "apps/studio-bridge/src/sessions/session-manager.spec.ts"
       ],
       "usage": {
-        "tokens_in": 30000,
-        "tokens_out": 7000,
+        "tokens_in": 37513,
+        "tokens_out": 8753,
         "provider_model": "claude/sonnet",
         "effort": "medium",
         "agent": "implementor-back",
@@ -592,8 +592,8 @@
         "apps/studio-bridge/src/sessions/session-manager.spec.ts"
       ],
       "usage": {
-        "tokens_in": 15000,
-        "tokens_out": 3000,
+        "tokens_in": 18756,
+        "tokens_out": 3751,
         "provider_model": "claude/sonnet",
         "effort": "medium",
         "agent": "implementor-back",
@@ -628,8 +628,17 @@
       "depends_on": [
         "TASK-018"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [],
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "tokens_in": 41684,
+        "tokens_out": 7503,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
     },
     {
       "id": "TASK-023",
@@ -642,8 +651,17 @@
       "depends_on": [
         "TASK-022"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [],
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "tokens_in": 25011,
+        "tokens_out": 1667,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
     },
     {
       "id": "TASK-024",
@@ -656,8 +674,17 @@
       "depends_on": [
         "TASK-022"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [],
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "tokens_in": 16674,
+        "tokens_out": 3335,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
     },
     {
       "id": "TASK-025",
@@ -672,8 +699,17 @@
         "TASK-022",
         "TASK-024"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [],
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "tokens_in": 50021,
+        "tokens_out": 13339,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
     },
     {
       "id": "TASK-026",
@@ -687,8 +723,17 @@
         "TASK-023",
         "TASK-025"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [],
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "tokens_in": 29179,
+        "tokens_out": 5002,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
     },
     {
       "id": "TASK-027",
@@ -716,8 +761,17 @@
       "depends_on": [
         "TASK-023"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [],
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "tokens_in": 33348,
+        "tokens_out": 6670,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
     },
     {
       "id": "TASK-029",
@@ -728,8 +782,17 @@
       "estimation_hours": 4,
       "story_points": 5,
       "depends_on": [],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [],
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "tokens_in": 41684,
+        "tokens_out": 7503,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
     },
     {
       "id": "TASK-030",
@@ -743,8 +806,17 @@
         "TASK-025",
         "TASK-026"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [],
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "tokens_in": 25011,
+        "tokens_out": 5002,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
     },
     {
       "id": "TASK-031",
@@ -784,8 +856,17 @@
       "estimation_hours": 3,
       "story_points": 3,
       "depends_on": [],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [],
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "tokens_in": 37516,
+        "tokens_out": 5002,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
     },
     {
       "id": "TASK-034",
@@ -815,8 +896,17 @@
         "TASK-026",
         "TASK-027"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [],
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "tokens_in": 25011,
+        "tokens_out": 5002,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
     },
     {
       "id": "TASK-036",
