@@ -25,11 +25,11 @@
       "file": "sdd/specs/spec-e-burgos-002-studio-ui-polish/spec-e-burgos-002-studio-ui-polish.spec.md",
       "module": "studio-ui-polish",
       "app": "apps/studio",
-      "status": "in-progress",
+      "status": "completed",
       "title": "SDD Studio: pulido de UI (viewport, eventos del bot, menú @, paneles)",
       "created_at": "2026-10-23",
       "depends_on": [],
-      "completed_at": null
+      "completed_at": "2026-10-23"
     }
   ]
 }

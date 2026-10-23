@@ -1,6 +1,6 @@
 # SPEC-e-burgos-002: SDD Studio: pulido de UI (viewport, eventos del bot, menú @, paneles)
 
-> Estado: **in-progress** — 2026-10-23. Flow `lite` (un solo actor), un ciclo.
+> Estado: **completed** — 2026-10-23. Flow `lite` (un solo actor), un ciclo.
 
 ## Resumen Ejecutivo
 

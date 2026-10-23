@@ -15,9 +15,7 @@
       "cycles_completed": 2,
       "description": "UX de sesión de SDD Studio: 'Always' por sesión para cualquier herramienta, imágenes en el chat y lista de hilos activos con navegación.",
       "completed_at": "2026-10-23"
-    }
-  ],
-  "in_progress_modules": [
+    },
     {
       "module": "studio-ui-polish",
       "spec": "spec-e-burgos-002-studio-ui-polish",
@@ -25,10 +23,12 @@
         "apps/studio",
         "apps/studio-bridge"
       ],
+      "cycles_completed": 1,
       "description": "Pulido de UI de SDD Studio: viewport anclado, eventos del bot sin duplicar, menú @ y paneles colapsables.",
-      "cycles_completed": 0
+      "completed_at": "2026-10-23"
     }
   ],
+  "in_progress_modules": [],
   "pending_modules": [],
   "monorepo": {
     "tool": "none (multi-app repo)",

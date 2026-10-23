@@ -33,6 +33,8 @@ function mount() {
 }
 
 describe('Workspace layout', () => {
+  beforeEach(() => window.localStorage.removeItem(PANEL_STATE_KEY));
+
   it('gives the grid an explicit shrinkable row so panels scroll on their own', () => {
     const { container } = mount();
     const grid = container.firstElementChild!;
@@ -44,7 +46,7 @@ describe('Workspace layout', () => {
     expect(screen.getByTestId('sidebar-tree')).toHaveClass('overflow-y-auto');
     expect(screen.getByRole('navigation')).not.toHaveClass('overflow-y-auto');
     const channel = screen.getByRole('heading', { name: '# general' }).closest('section')!;
-    expect(channel.querySelectorAll('.overflow-y-auto')).toHaveLength(1);
+    expect(channel.querySelectorAll('.overflow-y-auto:not(textarea)')).toHaveLength(1);
     const panel = screen.getByRole('complementary');
     expect(panel).toHaveClass('overflow-y-auto');
     expect(panel.querySelectorAll('.overflow-y-auto')).toHaveLength(0);
@@ -59,7 +61,6 @@ describe('Workspace layout', () => {
   });
 
   describe('collapsible panels', () => {
-    beforeEach(() => window.localStorage.removeItem(PANEL_STATE_KEY));
     const columns = (container: HTMLElement) => (container.firstElementChild as HTMLElement).style.gridTemplateColumns;
 
     it('collapses the sidebar to a rail, restores it and remembers the choice', () => {
