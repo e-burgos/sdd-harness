@@ -22,6 +22,7 @@
   "completed_at": null,
   "documents": {
     "brief": "sdd/specs/spec-e-burgos-001-studio-session-ux/cycles/cycle-02/brief.yaml",
+    "architect": "sdd/specs/spec-e-burgos-001-studio-session-ux/cycles/cycle-02/architect.md",
     "tasks": "sdd/specs/spec-e-burgos-001-studio-session-ux/cycles/cycle-02/tasks.json"
   },
   "artifacts": [],
@@ -48,6 +49,30 @@
           "source": "agent-usage-notification",
           "recorded_at": "2026-10-23",
           "tool_uses": 26
+        },
+        {
+          "agent": "functional",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 53531,
+          "tokens_out": 9447,
+          "approx": false,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-10-23",
+          "tokens_total": 62978,
+          "tool_uses": 10
+        },
+        {
+          "agent": "architect",
+          "provider_model": "claude/opus",
+          "effort": "high",
+          "tokens_in": 121124,
+          "tokens_out": 21375,
+          "approx": false,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-10-23",
+          "tokens_total": 142499,
+          "tool_uses": 28
         }
       ]
     }

@@ -161,14 +161,20 @@
         "type": "component",
         "module": "studio-session-ux",
         "spec": "sdd/specs/spec-e-burgos-001-studio-session-ux",
-        "path": "src/components/workspace/composer/AttachmentTray.tsx",
+        "path": "src/components/workspace/AttachmentTray.tsx",
         "status": "defined",
         "created_in_cycle": 1,
-        "updated_in_cycle": null,
+        "updated_in_cycle": 2,
         "description": "[cycle-02] Preview de adjuntos del Composer (miniatura o tarjeta, tamaño, quitar, contador n/5) y errores por archivo.",
         "consumes": [],
         "created_at": "2026-10-23",
-        "changelog": []
+        "changelog": [
+          {
+            "cycle": 2,
+            "date": "2026-10-23",
+            "change": "path src/components/workspace/composer/AttachmentTray.tsx -> src/components/workspace/AttachmentTray.tsx (repo convention: flat components/workspace, hooks in src/lib/use-*.ts; architect cycle-02 X-5)"
+          }
+        ]
       },
       {
         "id": "COMP-008",
@@ -191,14 +197,20 @@
         "type": "component",
         "module": "studio-session-ux",
         "spec": "sdd/specs/spec-e-burgos-001-studio-session-ux",
-        "path": "src/components/workspace/composer/MentionMenu.tsx",
+        "path": "src/components/workspace/MentionMenu.tsx",
         "status": "defined",
         "created_in_cycle": 1,
-        "updated_in_cycle": null,
+        "updated_in_cycle": 2,
         "description": "[cycle-02] Menú @ (archivos del repo vía workspace.searchFiles + agentes del catálogo) y / (comandos fijos + skills y prompts) con teclado y estados vacío/carga/error.",
         "consumes": [],
         "created_at": "2026-10-23",
-        "changelog": []
+        "changelog": [
+          {
+            "cycle": 2,
+            "date": "2026-10-23",
+            "change": "path src/components/workspace/composer/MentionMenu.tsx -> src/components/workspace/MentionMenu.tsx (repo convention: flat components/workspace, hooks in src/lib/use-*.ts; architect cycle-02 X-5)"
+          }
+        ]
       },
       {
         "id": "COMP-010",
@@ -248,14 +260,20 @@
         "type": "hook",
         "module": "studio-session-ux",
         "spec": "sdd/specs/spec-e-burgos-001-studio-session-ux",
-        "path": "src/hooks/useAttachmentDraft.ts",
+        "path": "src/lib/use-attachment-draft.ts",
         "status": "defined",
         "created_in_cycle": 1,
-        "updated_in_cycle": null,
+        "updated_in_cycle": 2,
         "description": "[cycle-02] Validación de tipos, recompresión de imágenes (≤1568 px), sha256 y presupuesto del frame sobre el comando serializado con escalera de reducción.",
         "consumes": [],
         "created_at": "2026-10-23",
-        "changelog": []
+        "changelog": [
+          {
+            "cycle": 2,
+            "date": "2026-10-23",
+            "change": "path src/hooks/useAttachmentDraft.ts -> src/lib/use-attachment-draft.ts (repo convention: flat components/workspace, hooks in src/lib/use-*.ts; architect cycle-02 X-5)"
+          }
+        ]
       },
       {
         "id": "COMP-013",
@@ -263,14 +281,20 @@
         "type": "hook",
         "module": "studio-session-ux",
         "spec": "sdd/specs/spec-e-burgos-001-studio-session-ux",
-        "path": "src/hooks/useAttachmentContent.ts",
+        "path": "src/lib/use-attachment-content.ts",
         "status": "defined",
         "created_in_cycle": 1,
-        "updated_in_cycle": null,
+        "updated_in_cycle": 2,
         "description": "[cycle-02] Obtiene adjuntos persistidos vía attachment.get con caché LRU de objectURL y concurrencia acotada.",
         "consumes": [],
         "created_at": "2026-10-23",
-        "changelog": []
+        "changelog": [
+          {
+            "cycle": 2,
+            "date": "2026-10-23",
+            "change": "path src/hooks/useAttachmentContent.ts -> src/lib/use-attachment-content.ts (repo convention: flat components/workspace, hooks in src/lib/use-*.ts; architect cycle-02 X-5)"
+          }
+        ]
       },
       {
         "id": "COMP-014",

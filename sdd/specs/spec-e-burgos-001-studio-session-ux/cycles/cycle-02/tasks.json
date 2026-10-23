@@ -5,7 +5,7 @@
   "module": "studio-session-ux",
   "apps": ["apps/studio", "apps/studio-bridge", "libs/studio-protocol"],
   "flow": "full",
-  "user_stories_generated": false,
+  "user_stories_generated": true,
   "prerequisites": {
     "tasks_generated": false
   },
