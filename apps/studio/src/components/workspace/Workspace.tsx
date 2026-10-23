@@ -29,7 +29,7 @@ export function Workspace() {
     </>
   );
   return (
-    <div className="grid min-h-0 flex-1 grid-cols-[260px_minmax(0,1fr)_320px]">
+    <div className="grid min-h-0 flex-1 grid-cols-[260px_minmax(0,1fr)_320px] grid-rows-[minmax(0,1fr)]">
       <Sidebar
         view={view}
         onSelectChannel={(channelId) => setView({ channelId, threadId: null })}

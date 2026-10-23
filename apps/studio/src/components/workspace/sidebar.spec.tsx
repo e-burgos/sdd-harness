@@ -270,3 +270,30 @@ describe('Sidebar indicators', () => {
     expect(dot).toHaveClass('motion-safe:animate-pulse');
   });
 });
+
+describe('Sidebar layout', () => {
+  const manyThreads = Array.from({ length: 20 }, (_, i) => thread({ id: `t${i}`, title: `Thread ${i}`, status: 'running' }));
+
+  it('scrolls only the tree while the header and footer stay fixed', () => {
+    renderSidebar({ threads: manyThreads });
+    const nav = screen.getByRole('navigation');
+    const tree = screen.getByTestId('sidebar-tree');
+    expect(nav).not.toHaveClass('overflow-y-auto');
+    expect(nav).toHaveClass('flex', 'h-full', 'min-h-0', 'flex-col');
+    expect(tree).toHaveClass('min-h-0', 'flex-1', 'overflow-y-auto');
+    const header = nav.querySelector('header')!;
+    const footer = nav.querySelector('footer')!;
+    expect(header).toHaveClass('shrink-0');
+    expect(footer).toHaveClass('shrink-0');
+    expect(tree.contains(header)).toBe(false);
+    expect(tree.contains(footer)).toBe(false);
+  });
+
+  it('keeps every section reachable inside the scrolling tree', () => {
+    renderSidebar({ threads: manyThreads });
+    const tree = screen.getByTestId('sidebar-tree');
+    for (const name of [/^Hilos activos/, /^Canales/, /^Specs/, /^Fixes/, /^Agentes/]) {
+      expect(within(tree).getByRole('button', { name })).toBeInTheDocument();
+    }
+  });
+});
