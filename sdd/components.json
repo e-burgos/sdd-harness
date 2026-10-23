@@ -37,33 +37,45 @@
     "components": [
       {
         "id": "COMP-001",
-        "name": "SidebarTree",
+        "name": "NavTree",
         "type": "component",
         "module": "studio-session-ux",
         "spec": "sdd/specs/spec-e-burgos-001-studio-session-ux",
-        "path": "src/components/workspace/sidebar/SidebarTree.tsx",
-        "status": "defined",
+        "path": "src/components/workspace/NavTree.tsx",
+        "status": "implemented",
         "created_in_cycle": 1,
-        "updated_in_cycle": null,
+        "updated_in_cycle": 1,
         "description": "Árbol del Sidebar: HILOS ACTIVOS, CANALES, SPECS (spec → ciclo → hilos), FIXES (abiertos + 5 cerrados + anteriores con hilos) y AGENTES, construido con buildNavTree.",
         "consumes": [],
         "created_at": "2026-10-23",
-        "changelog": []
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-10-23",
+            "change": "implemented as NavTree.tsx (SectionView) rendered by SidebarView in Sidebar.tsx; tree data from src/lib/store/nav-tree.ts (buildNavTree)"
+          }
+        ]
       },
       {
         "id": "COMP-002",
-        "name": "NavSection",
+        "name": "NavNodeView",
         "type": "component",
         "module": "studio-session-ux",
         "spec": "sdd/specs/spec-e-burgos-001-studio-session-ux",
-        "path": "src/components/workspace/sidebar/NavSection.tsx",
-        "status": "defined",
+        "path": "src/components/workspace/NavTree.tsx",
+        "status": "implemented",
         "created_in_cycle": 1,
-        "updated_in_cycle": null,
+        "updated_in_cycle": 1,
         "description": "Sección/nodo colapsable con aria-expanded, señal de selección contenida y de atención (waiting-approval) cuando está colapsado.",
         "consumes": [],
         "created_at": "2026-10-23",
-        "changelog": []
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-10-23",
+            "change": "implemented as NavNodeView inside NavTree.tsx (caret toggle separated from the channel name, NodeMarks for contained selection / attention)"
+          }
+        ]
       },
       {
         "id": "COMP-003",
@@ -71,14 +83,20 @@
         "type": "component",
         "module": "studio-session-ux",
         "spec": "sdd/specs/spec-e-burgos-001-studio-session-ux",
-        "path": "src/components/workspace/sidebar/ActiveThreads.tsx",
-        "status": "defined",
+        "path": "src/components/workspace/NavTree.tsx",
+        "status": "implemented",
         "created_in_cycle": 1,
-        "updated_in_cycle": null,
+        "updated_in_cycle": 1,
         "description": "Lista en vivo de hilos waiting-approval, running y queued con navegación y aviso de estado desactualizado sin conexión.",
         "consumes": [],
         "created_at": "2026-10-23",
-        "changelog": []
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-10-23",
+            "change": "implemented as ActiveThreads/ActiveThreadRow inside NavTree.tsx, with pending-count badge"
+          }
+        ]
       },
       {
         "id": "COMP-004",
@@ -87,13 +105,19 @@
         "module": "studio-session-ux",
         "spec": "sdd/specs/spec-e-burgos-001-studio-session-ux",
         "path": "src/components/workspace/ActivityIndicator.tsx",
-        "status": "defined",
+        "status": "implemented",
         "created_in_cycle": 1,
-        "updated_in_cycle": null,
+        "updated_in_cycle": 1,
         "description": "Indicador running/waiting-approval/queued para fila, avatar e hilo; formas distintas, sin layout shift, respeta prefers-reduced-motion.",
         "consumes": [],
         "created_at": "2026-10-23",
-        "changelog": []
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-10-23",
+            "change": "implemented; AgentAvatar consumes it for the avatar placement"
+          }
+        ]
       },
       {
         "id": "COMP-005",
@@ -116,14 +140,20 @@
         "type": "component",
         "module": "studio-session-ux",
         "spec": "sdd/specs/spec-e-burgos-001-studio-session-ux",
-        "path": "src/components/workspace/JumpToLatest.tsx",
-        "status": "defined",
+        "path": "src/components/workspace/ThreadView.tsx",
+        "status": "implemented",
         "created_in_cycle": 1,
-        "updated_in_cycle": null,
+        "updated_in_cycle": 1,
         "description": "Botón para volver al final del hilo cuando el dev scrolleó hacia arriba.",
         "consumes": [],
         "created_at": "2026-10-23",
-        "changelog": []
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-10-23",
+            "change": "implemented inline in ThreadView.tsx (thread.jumpToLatest button) driven by useStickToBottom"
+          }
+        ]
       },
       {
         "id": "COMP-007",
@@ -176,14 +206,20 @@
         "type": "hook",
         "module": "studio-session-ux",
         "spec": "sdd/specs/spec-e-burgos-001-studio-session-ux",
-        "path": "src/hooks/useCollapsedState.ts",
-        "status": "defined",
+        "path": "src/lib/use-collapsed-state.ts",
+        "status": "implemented",
         "created_in_cycle": 1,
-        "updated_in_cycle": null,
+        "updated_in_cycle": 1,
         "description": "Estado de colapso del Sidebar persistido en localStorage (solo overrides, validado con zod, sync entre pestañas).",
         "consumes": [],
         "created_at": "2026-10-23",
-        "changelog": []
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-10-23",
+            "change": "implemented at src/lib/use-collapsed-state.ts (localStorage key sdd-studio.sidebar.v1:<project>, pruned overrides)"
+          }
+        ]
       },
       {
         "id": "COMP-011",
@@ -191,14 +227,20 @@
         "type": "hook",
         "module": "studio-session-ux",
         "spec": "sdd/specs/spec-e-burgos-001-studio-session-ux",
-        "path": "src/hooks/useStickToBottom.ts",
-        "status": "defined",
+        "path": "src/lib/use-stick-to-bottom.ts",
+        "status": "implemented",
         "created_in_cycle": 1,
-        "updated_in_cycle": null,
+        "updated_in_cycle": 1,
         "description": "Autoscroll respetuoso del hilo con ResizeObserver sobre contenido y scroller; expone atBottom y scrollToBottom.",
         "consumes": [],
         "created_at": "2026-10-23",
-        "changelog": []
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-10-23",
+            "change": "implemented at src/lib/use-stick-to-bottom.ts (ResizeObserver, 48 px threshold)"
+          }
+        ]
       },
       {
         "id": "COMP-012",
@@ -251,14 +293,20 @@
         "type": "hook",
         "module": "studio-session-ux",
         "spec": "sdd/specs/spec-e-burgos-001-studio-session-ux",
-        "path": "src/hooks/useComposerDraft.ts",
-        "status": "defined",
+        "path": "src/lib/store/state.ts",
+        "status": "deprecated",
         "created_in_cycle": 1,
-        "updated_in_cycle": null,
+        "updated_in_cycle": 1,
         "description": "Borrador del Composer por hilo (threadId o new:<channelId>) en memoria del store; texto en cycle-01, adjuntos en cycle-02; se pierde al recargar.",
         "consumes": [],
         "created_at": "2026-10-23",
-        "changelog": []
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-10-23",
+            "change": "deprecated — no separate hook: per-thread drafts live in the store slice drafts (draftKey/setDraft in src/lib/store/state.ts) consumed by Composer.tsx"
+          }
+        ]
       }
     ]
   }

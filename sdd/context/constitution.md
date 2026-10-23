@@ -77,9 +77,9 @@ Para el detalle técnico de cada subproyecto, ver su constitución específica:
 | ----------- | ---------- | -------------------- |
 | `apps/cli` | Node, TypeScript, citty, @clack/prompts, zod, Vitest | 2026-10-23 |
 | `apps/documentation` | React, Vite, Tailwind v4 | 2026-10-23 |
-| `apps/studio` | Next.js, React, zustand, Playwright | 2026-10-23 |
-| `apps/studio-bridge` | Node, TypeScript, claude-agent-sdk, ws | 2026-10-23 |
-| `libs/studio-protocol` | TypeScript, zod 4, Vitest | 2026-10-23 |
+| `apps/studio` | Next.js 16, React 19, zustand, Playwright | 2026-10-23 |
+| `apps/studio-bridge` | Node, TypeScript, claude-agent-sdk 0.3.292 (prompt streaming), ws | 2026-10-23 |
+| `libs/studio-protocol` | TypeScript, zod 4, Vitest (PROTOCOL_VERSION 2) | 2026-10-23 |
 
 ---
 

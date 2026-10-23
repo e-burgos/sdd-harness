@@ -53,7 +53,7 @@
       "severity": "medium",
       "created_at": "2026-10-23",
       "resolved_at": "2026-10-23",
-      "validated_at": null,
+      "validated_at": "2026-10-23",
       "title": "SDD Studio: add bypassPermissions (auto) permission mode",
       "estimation_hours": 0.5,
       "description": "Studio only offers default/acceptEdits/plan, so every Bash/MCP call and every SPEC GATE warn asks for approval. Add bypassPermissions to the protocol enum, pass allowDangerouslySkipPermissions to the SDK and let gate warns through in that mode (gate denies still apply).",
@@ -73,7 +73,7 @@
         "libs/studio-protocol/src/domain.spec.ts"
       ],
       "test_reference": "apps/studio-bridge/src/engine/claude-sdk-engine.spec.ts",
-      "status": "implemented",
+      "status": "validated",
       "cycle": null,
       "usage": {
         "provider_model": "claude/opus",
