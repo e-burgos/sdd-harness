@@ -1,10 +1,12 @@
-import { query as sdkQuery, type HookInput, type Options, type PreToolUseHookInput, type Query, type SDKUserMessage } from '@anthropic-ai/claude-agent-sdk';
+import { query as sdkQuery, type HookInput, type HookJSONOutput, type Options, type PreToolUseHookInput, type Query, type SDKUserMessage } from '@anthropic-ai/claude-agent-sdk';
 import { DEFAULT_AGENT, type ThreadOptions } from '@sdd-studio/protocol';
 import { InputChannel } from './input-channel';
-import { toSdkUserMessage } from './prompt-content';
+import { toHookContext, toSdkUserMessage } from './prompt-content';
 import type { JudgeContext, ToolVerdict } from './types';
 import { SdkEventMapper, type SdkMessageLike } from './sdk-mapper';
 import type { AgentEngine, EngineCallbacks, EngineTurn, EngineTurnInput } from './types';
+
+export type DeliveryMode = 'stream' | 'hook-context';
 
 export type QueryFn = (params: { prompt: AsyncIterable<SDKUserMessage>; options?: Options }) => Query;
 
@@ -24,6 +26,7 @@ export function buildQueryOptions(
     canUseTool: NonNullable<Options['canUseTool']>;
     onHook: (input: unknown) => void;
     judgeTool: (toolName: string, input: Record<string, unknown>, hookInput: PreToolUseHookInput) => ToolVerdict;
+    deliverAtCutPoint?: () => Promise<HookJSONOutput>;
     env?: Record<string, string | undefined>;
   },
 ): Options {
@@ -63,6 +66,15 @@ export function buildQueryOptions(
       ],
     },
   };
+  if (h.deliverAtCutPoint) {
+    const deliver = h.deliverAtCutPoint;
+    options.hooks = {
+      ...options.hooks,
+      PostToolBatch: [
+        { hooks: [async (hookInput: HookInput) => (hookInput.hook_event_name === 'PostToolBatch' && !hookInput.agent_id ? deliver() : {})] },
+      ],
+    };
+  }
   if (bypass) options.allowDangerouslySkipPermissions = true;
   if (h.env) options.env = h.env;
   if (agent !== DEFAULT_AGENT) options.agent = agent;
@@ -80,6 +92,7 @@ export class ClaudeAgentSdkEngine implements AgentEngine {
   constructor(
     private readonly queryFn: QueryFn = sdkQuery as QueryFn,
     private readonly getEnv?: () => Record<string, string | undefined>,
+    private readonly deliveryMode: DeliveryMode = 'stream',
   ) {}
 
   startTurn(input: EngineTurnInput, cb: EngineCallbacks): EngineTurn {
@@ -88,6 +101,7 @@ export class ClaudeAgentSdkEngine implements AgentEngine {
     const emitAll = (events: ReturnType<SdkEventMapper['mapMessage']>) => {
       for (const event of events) cb.emit(event);
     };
+    let interrupted = false;
     const channel = new InputChannel<SDKUserMessage>();
     channel.push(input.prompts.map(toSdkUserMessage));
     const q = this.queryFn({
@@ -100,6 +114,16 @@ export class ClaudeAgentSdkEngine implements AgentEngine {
             author: mapper.authorForAgentId(hookInput.agent_id),
             toolUseId: hookInput.tool_use_id || null,
           } satisfies JudgeContext),
+        deliverAtCutPoint: async () => {
+          if (interrupted) return {};
+          const messages = cb.collectPending('cut-point');
+          if (messages.length === 0) return {};
+          if (this.deliveryMode === 'stream') {
+            await channel.pushAndFlush(messages.map(toSdkUserMessage));
+            return {};
+          }
+          return { hookSpecificOutput: { hookEventName: 'PostToolBatch' as const, additionalContext: toHookContext(messages) } };
+        },
         onHook: (hookInput) => emitAll(mapper.mapHook(hookInput as Parameters<SdkEventMapper['mapHook']>[0])),
         canUseTool: async (toolName, toolInput, opts) => {
           const decision = await cb.requestApproval(
@@ -112,7 +136,6 @@ export class ClaudeAgentSdkEngine implements AgentEngine {
         },
       }),
     });
-    let interrupted = false;
     const deliverOrClose = (result: SdkMessageLike): void => {
       if (interrupted || mapper.sawError) {
         channel.end();

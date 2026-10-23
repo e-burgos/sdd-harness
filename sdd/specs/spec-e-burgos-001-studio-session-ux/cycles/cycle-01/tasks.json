@@ -296,8 +296,21 @@
         "TASK-007",
         "TASK-009"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/studio-bridge/src/engine/claude-sdk-engine.ts",
+        "apps/studio-bridge/src/engine/claude-sdk-engine.spec.ts"
+      ],
+      "usage": {
+        "tokens_in": 25000,
+        "tokens_out": 5000,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
     },
     {
       "id": "TASK-011",

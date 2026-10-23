@@ -334,3 +334,61 @@ describe('ClaudeAgentSdkEngine prompt streaming', () => {
     });
   });
 });
+
+describe('PostToolBatch delivery', () => {
+  const batchInput = (agentId?: string) => ({ hook_event_name: 'PostToolBatch', tool_calls: [], ...(agentId ? { agent_id: agentId } : {}) }) as never;
+  const message = { id: 'p-1', prompt: plainPrompt('also check the tests') };
+
+  async function startAndFire(mode: 'stream' | 'hook-context', batch: ReturnType<typeof batchInput>, collect = vi.fn((_at: 'cut-point' | 'turn-end') => [message])) {
+    const consumed: string[] = [];
+    let output: unknown;
+    const fn: QueryFn = ({ prompt, options }) => {
+      void (async () => {
+        for await (const sdkMessage of prompt) consumed.push(String(sdkMessage.uuid));
+      })();
+      async function* run() {
+        output = await options?.hooks?.PostToolBatch?.[0]?.hooks[0]?.(batch, undefined, { signal: new AbortController().signal });
+      }
+      return Object.assign(run(), { interrupt: async () => undefined }) as unknown as Query;
+    };
+    const turn = new ClaudeAgentSdkEngine(fn, undefined, mode).startTurn(input(), {
+      emit: () => {}, onSessionId: () => {}, judgeTool: () => ({ kind: 'allow' }), requestApproval: async () => ({ behavior: 'allow' }),
+      collectPending: collect, revertPending: () => {},
+    });
+    await turn.done;
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    return { consumed, output, collect };
+  }
+
+  it('registers the hook only when the engine delivers at cut points', () => {
+    const h = { abort: new AbortController(), canUseTool: vi.fn(), onHook: vi.fn(), judgeTool: vi.fn(), deliverAtCutPoint: async () => ({}) };
+    expect(Object.keys(buildQueryOptions(input(), h).hooks ?? {})).toContain('PostToolBatch');
+  });
+
+  it('stream mode writes the collected messages to the input stream and returns an empty output', async () => {
+    const { consumed, output, collect } = await startAndFire('stream', batchInput());
+    expect(collect).toHaveBeenCalledWith('cut-point');
+    expect(consumed).toEqual(['u-1', 'p-1']);
+    expect(output).toEqual({});
+  });
+
+  it('hook-context mode hands the text to the model as additionalContext without touching the stream', async () => {
+    const { consumed, output } = await startAndFire('hook-context', batchInput());
+    expect(consumed).toEqual(['u-1']);
+    expect(output).toEqual({
+      hookSpecificOutput: { hookEventName: 'PostToolBatch', additionalContext: 'Message from the user, sent while you were working:\nalso check the tests' },
+    });
+  });
+
+  it('does nothing when no message is pending', async () => {
+    const { consumed, output } = await startAndFire('stream', batchInput(), vi.fn(() => []));
+    expect(consumed).toEqual(['u-1']);
+    expect(output).toEqual({});
+  });
+
+  it('ignores batches that belong to a subagent', async () => {
+    const { output, collect } = await startAndFire('stream', batchInput('sub-1'));
+    expect(collect).not.toHaveBeenCalled();
+    expect(output).toEqual({});
+  });
+});
