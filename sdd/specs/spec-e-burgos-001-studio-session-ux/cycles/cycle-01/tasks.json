@@ -627,8 +627,8 @@
       "usage": {
         "provider_model": "claude/sonnet",
         "effort": "medium",
-        "tokens_in": 35000,
-        "tokens_out": 5000,
+        "tokens_in": 25548,
+        "tokens_out": 3650,
         "approx": true,
         "source": "declared-estimate",
         "recorded_at": "2026-10-23"
@@ -776,8 +776,8 @@
       "usage": {
         "provider_model": "claude/sonnet",
         "effort": "medium",
-        "tokens_in": 30000,
-        "tokens_out": 4500,
+        "tokens_in": 21898,
+        "tokens_out": 3285,
         "approx": true,
         "source": "declared-estimate",
         "recorded_at": "2026-10-23"
@@ -873,8 +873,8 @@
       "usage": {
         "provider_model": "claude/sonnet",
         "effort": "medium",
-        "tokens_in": 32000,
-        "tokens_out": 4500,
+        "tokens_in": 23358,
+        "tokens_out": 3285,
         "approx": true,
         "source": "declared-estimate",
         "recorded_at": "2026-10-23"
@@ -904,8 +904,8 @@
       "usage": {
         "provider_model": "claude/sonnet",
         "effort": "medium",
-        "tokens_in": 45000,
-        "tokens_out": 7000,
+        "tokens_in": 32847,
+        "tokens_out": 5110,
         "approx": true,
         "source": "declared-estimate",
         "recorded_at": "2026-10-23"
@@ -955,8 +955,8 @@
       "usage": {
         "provider_model": "claude/sonnet",
         "effort": "medium",
-        "tokens_in": 30000,
-        "tokens_out": 4500,
+        "tokens_in": 21898,
+        "tokens_out": 3285,
         "approx": true,
         "source": "declared-estimate",
         "recorded_at": "2026-10-23"
@@ -1013,8 +1013,8 @@
       "usage": {
         "provider_model": "claude/sonnet",
         "effort": "medium",
-        "tokens_in": 22000,
-        "tokens_out": 4000,
+        "tokens_in": 16059,
+        "tokens_out": 2920,
         "approx": true,
         "source": "declared-estimate",
         "recorded_at": "2026-10-23"
@@ -1044,8 +1044,8 @@
       "usage": {
         "provider_model": "claude/sonnet",
         "effort": "medium",
-        "tokens_in": 34000,
-        "tokens_out": 5500,
+        "tokens_in": 24818,
+        "tokens_out": 4015,
         "approx": true,
         "source": "declared-estimate",
         "recorded_at": "2026-10-23"
