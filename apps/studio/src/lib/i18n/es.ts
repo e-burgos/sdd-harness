@@ -74,6 +74,7 @@ export const es = {
   'channel.dmWith': 'Mensaje directo con {name}',
   'thread.back': 'Volver al canal',
   'thread.interrupt': 'Interrumpir',
+  'thread.jumpToLatest': 'Ir al final',
   'composer.placeholder': 'Escribí un mensaje… (/ para comandos)',
   'composer.send': 'Enviar',
   'composer.agent': 'Agente',

@@ -37,7 +37,7 @@ export function Workspace() {
       />
       <main className="min-h-0 min-w-0 overflow-hidden">
         {view.threadId ? (
-          <ThreadView threadId={view.threadId} onBack={() => setView({ ...view, threadId: null })} composer={composer} />
+          <ThreadView key={view.threadId} threadId={view.threadId} onBack={() => setView({ ...view, threadId: null })} composer={composer} />
         ) : (
           <ChannelView channelId={view.channelId} onOpenThread={(threadId) => setView({ ...view, threadId })} composer={composer} />
         )}
