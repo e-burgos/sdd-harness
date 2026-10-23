@@ -1,0 +1,214 @@
+{
+  "$schema": "../../../../schemas/cycle-tasks.schema.json",
+  "spec": "spec-e-burgos-003-studio-mission-control",
+  "cycle": 1,
+  "module": "studio-mission-control",
+  "apps": [
+    "apps/studio",
+    "apps/studio-bridge"
+  ],
+  "flow": "lite",
+  "user_stories_generated": true,
+  "prerequisites": {
+    "tasks_generated": true
+  },
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "Catálogo enriquecido de agentes (Clara, Sophia, Chronos, etc.), avatares SVG estilizados, badges y tonos en lib/agents y AgentAvatar",
+      "user_stories": [
+        "US-1"
+      ],
+      "estimation_hours": 2,
+      "story_points": 3,
+      "depends_on": [],
+      "status": "done",
+      "files": [
+        "apps/studio/src/lib/agents.ts",
+        "apps/studio/src/lib/agents.spec.ts",
+        "apps/studio/src/components/workspace/AgentAvatar.tsx",
+        "apps/studio/src/components/workspace/agentavatar.spec.tsx"
+      ],
+      "usage": {
+        "tokens_in": 35000,
+        "tokens_out": 4000,
+        "provider_model": "gemini/flash",
+        "effort": "high",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
+    },
+    {
+      "id": "TASK-002",
+      "title": "Navegación multi-vista en AppShell y WorkspaceApp con selector de pestañas (Workspace, Agent Map, Ecosystem, Telemetry) y persistencia en localStorage",
+      "user_stories": [
+        "US-2"
+      ],
+      "estimation_hours": 2,
+      "story_points": 3,
+      "depends_on": [],
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/AppShell.tsx",
+        "apps/studio/src/components/appshell.spec.tsx",
+        "apps/studio/src/components/WorkspaceApp.tsx",
+        "apps/studio/src/components/StudioHeader.tsx",
+        "apps/studio/src/lib/use-studio-view.ts",
+        "apps/studio/src/lib/i18n/es.ts",
+        "apps/studio/src/lib/i18n/en.ts"
+      ],
+      "usage": {
+        "tokens_in": 28000,
+        "tokens_out": 3500,
+        "provider_model": "gemini/flash",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
+    },
+    {
+      "id": "TASK-003",
+      "title": "Componente AgentMapCanvas: grafo 2D de topología con nodos de agentes, estados pulsantes en tiempo real (Presence) y partículas animadas de handoff de tareas",
+      "user_stories": [
+        "US-3"
+      ],
+      "estimation_hours": 3,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/mission-control/AgentMapCanvas.tsx",
+        "apps/studio/src/components/mission-control/agentmap.spec.tsx",
+        "apps/studio/src/components/mission-control/AgentNode.tsx"
+      ],
+      "usage": {
+        "tokens_in": 42000,
+        "tokens_out": 5500,
+        "provider_model": "gemini/flash",
+        "effort": "high",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
+    },
+    {
+      "id": "TASK-004",
+      "title": "Panel de inspección AgentInspectorDrawer: drawer lateral interactivo con ficha de rol, modelo, herramientas recientes y botón de DM directo",
+      "user_stories": [
+        "US-3"
+      ],
+      "estimation_hours": 2,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-003"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/mission-control/AgentInspectorDrawer.tsx",
+        "apps/studio/src/components/mission-control/inspectordrawer.spec.tsx"
+      ],
+      "usage": {
+        "tokens_in": 25000,
+        "tokens_out": 3200,
+        "provider_model": "gemini/flash",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
+    },
+    {
+      "id": "TASK-005",
+      "title": "Componente EcosystemDashboard: tablero interactivo del estado de apps, libs, tools, progreso de specs y semáforo del SPEC GATE",
+      "user_stories": [
+        "US-4"
+      ],
+      "estimation_hours": 2,
+      "story_points": 3,
+      "depends_on": [],
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/mission-control/EcosystemDashboard.tsx",
+        "apps/studio/src/components/mission-control/ecosystem.spec.tsx"
+      ],
+      "usage": {
+        "tokens_in": 31000,
+        "tokens_out": 4200,
+        "provider_model": "gemini/flash",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
+    },
+    {
+      "id": "TASK-006",
+      "title": "Componente LiveTelemetryHUD: métricas en tiempo real con ticker animado de tokens, cálculo financiero en USD según pricing.json y métricas de rtk",
+      "user_stories": [
+        "US-5"
+      ],
+      "estimation_hours": 2,
+      "story_points": 3,
+      "depends_on": [],
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/mission-control/LiveTelemetryHUD.tsx",
+        "apps/studio/src/components/mission-control/telemetry.spec.tsx"
+      ],
+      "usage": {
+        "tokens_in": 33000,
+        "tokens_out": 4100,
+        "provider_model": "gemini/flash",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
+    },
+    {
+      "id": "TASK-007",
+      "title": "Integración general en WorkspaceApp, atajos de teclado y suite de verificación completa",
+      "user_stories": [
+        "US-2",
+        "US-3",
+        "US-4",
+        "US-5"
+      ],
+      "estimation_hours": 2,
+      "story_points": 2,
+      "depends_on": [
+        "TASK-002",
+        "TASK-003",
+        "TASK-004",
+        "TASK-005",
+        "TASK-006"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/WorkspaceApp.tsx",
+        "apps/studio/src/components/workspaceapp.spec.tsx",
+        "apps/studio/src/components/workspace/Workspace.tsx"
+      ],
+      "usage": {
+        "tokens_in": 32000,
+        "tokens_out": 4200,
+        "provider_model": "gemini/pro",
+        "effort": "high",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
+    }
+  ]
+}

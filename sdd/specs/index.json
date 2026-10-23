@@ -30,6 +30,23 @@
       "created_at": "2026-10-23",
       "depends_on": [],
       "completed_at": "2026-10-23"
+    },
+    {
+      "id": "spec-e-burgos-003-studio-mission-control",
+      "author": "e-burgos",
+      "slug": "studio-mission-control",
+      "folder": "sdd/specs/spec-e-burgos-003-studio-mission-control",
+      "file": "sdd/specs/spec-e-burgos-003-studio-mission-control/spec-e-burgos-003-studio-mission-control.spec.md",
+      "module": "studio-mission-control",
+      "app": "apps/studio",
+      "status": "completed",
+      "title": "SDD Studio: Mission Control, topología de agentes en vivo, avatares con personalidad y telemetría en tiempo real",
+      "created_at": "2026-10-23",
+      "depends_on": [
+        "spec-e-burgos-001-studio-session-ux",
+        "spec-e-burgos-002-studio-ui-polish"
+      ],
+      "completed_at": "2026-10-23"
     }
   ]
 }

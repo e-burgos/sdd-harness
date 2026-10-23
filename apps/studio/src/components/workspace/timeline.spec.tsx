@@ -18,9 +18,9 @@ describe('Timeline', () => {
   it('attributes subagent output and groups tools', () => {
     render(<I18nProvider initial="es"><Timeline items={items} onRespond={vi.fn()} /></I18nProvider>);
     expect(screen.getByText('open the cycle')).toBeInTheDocument();
-    expect(screen.getByText('Planner empezó a trabajar')).toBeInTheDocument();
+    expect(screen.getByText('Chronos empezó a trabajar')).toBeInTheDocument();
     expect(screen.getByText('plan')).toBeInTheDocument();
-    expect(screen.getByText('Orchestrator usó 2 herramienta(s)')).toBeInTheDocument();
+    expect(screen.getByText('Clara usó 2 herramienta(s)')).toBeInTheDocument();
     expect(screen.getByText('claude-haiku-4-5-20251001 · low · 121.3k in · 1.2k out · $0.078')).toBeInTheDocument();
   });
 });

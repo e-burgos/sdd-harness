@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useT } from '@/lib/i18n/i18n';
 import { usePanelState } from '@/lib/use-panel-state';
 import { useBridge } from '../BridgeProvider';
@@ -19,11 +19,21 @@ export interface View {
 
 const RAIL_WIDTH = '44px';
 
-export function Workspace() {
+export interface WorkspaceProps {
+  selectedChannelId?: string;
+}
+
+export function Workspace({ selectedChannelId }: WorkspaceProps = {}) {
   const { t } = useT();
   const { store } = useBridge();
   const panels = usePanelState();
-  const [view, setView] = useState<View>({ channelId: 'general', threadId: null });
+  const [view, setView] = useState<View>({ channelId: selectedChannelId ?? 'general', threadId: null });
+
+  useEffect(() => {
+    if (selectedChannelId && selectedChannelId !== view.channelId) {
+      setView({ channelId: selectedChannelId, threadId: null });
+    }
+  }, [selectedChannelId]);
   const composer = (
     <>
       <RunOutput />

@@ -16,7 +16,7 @@ describe('ApprovalCard', () => {
     const onRespond = vi.fn(() => Promise.resolve());
     // after responding the card stays locked until the decision changes: one instance per action
     wrap(<ApprovalCard item={base} onRespond={onRespond} />);
-    expect(screen.getByText('Impl-back quiere usar Bash')).toBeInTheDocument();
+    expect(screen.getByText('Vulcan quiere usar Bash')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Aprobar' }));
     cleanup();
     wrap(<ApprovalCard item={base} onRespond={onRespond} />);

@@ -66,7 +66,7 @@ describe('Sidebar tree', () => {
     expect(screen.getByRole('button', { name: '# general' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /# s1/ })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: '# general' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Planner, trabajando' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Chronos, trabajando' }));
     expect(onSelectChannel.mock.calls).toEqual([['general'], ['dm:sdd-planner']]);
     expect(screen.getByText('conectado', { selector: '.sr-only' })).toBeInTheDocument();
   });
@@ -141,7 +141,7 @@ describe('Sidebar collapsing', () => {
     fireEvent.click(header);
     expect(header).toHaveAttribute('aria-expanded', 'false');
     expect(screen.queryByRole('button', { name: '# general' })).toBeNull();
-    expect(screen.getByRole('button', { name: 'Planner, trabajando' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Chronos, trabajando' })).toBeInTheDocument();
     fireEvent.click(header);
     expect(screen.getByRole('button', { name: '# general' })).toBeInTheDocument();
   });
@@ -225,9 +225,9 @@ describe('Sidebar active threads', () => {
   it('lists only running, waiting-approval and queued threads with attention first, showing title, agent and status', () => {
     renderSidebar({ threads: active });
     expect(rows().map((b) => b.textContent)).toEqual([
-      'Waiting chatPlanner · esperando aprobación',
-      'Running chatArchitect · trabajando2 pendientes',
-      'Queued chatPlanner · en cola',
+      'Waiting chatChronos · esperando aprobación',
+      'Running chatDaedalus · trabajando2 pendientes',
+      'Queued chatChronos · en cola',
     ]);
   });
 
@@ -276,7 +276,7 @@ describe('Sidebar indicators', () => {
 
   it('does not pulse the presence dot without the motion-safe variant', () => {
     renderSidebar();
-    const dot = screen.getByRole('button', { name: 'Planner, trabajando' }).querySelector('span[aria-hidden]')!;
+    const dot = screen.getByRole('button', { name: 'Chronos, trabajando' }).querySelector('span[aria-hidden]')!;
     expect(dot.className.split(/\s+/).filter((c) => /^animate-/.test(c))).toEqual([]);
     expect(dot).toHaveClass('motion-safe:animate-pulse');
   });

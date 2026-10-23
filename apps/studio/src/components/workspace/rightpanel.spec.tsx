@@ -17,7 +17,7 @@ describe('RightPanelView', () => {
         />
       </I18nProvider>,
     );
-    expect(screen.getByText('Impl-back')).toBeInTheDocument();
+    expect(screen.getByText('Vulcan')).toBeInTheDocument();
     expect(screen.getByText('Edit')).toBeInTheDocument();
     expect(screen.getByText('1/2 tasks')).toBeInTheDocument();
     expect(screen.getByText('✓')).toBeInTheDocument();
