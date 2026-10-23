@@ -9,6 +9,7 @@ import {
   type Welcome,
 } from '@sdd-studio/protocol';
 import { WebSocketServer, type WebSocket } from 'ws';
+import { AttachmentError } from '../sessions/attachment-store';
 import { SessionError } from '../sessions/session-manager';
 import { PathError } from '../workspace/paths';
 import { originAllowed, tokensMatch } from './security';
@@ -28,7 +29,7 @@ export interface BridgeServer {
 }
 
 function toError(error: unknown): { code: ErrorCode; message: string } {
-  if (error instanceof SessionError || error instanceof PathError) return { code: error.code, message: error.message };
+  if (error instanceof SessionError || error instanceof PathError || error instanceof AttachmentError) return { code: error.code, message: error.message };
   return { code: 'internal', message: error instanceof Error ? error.message : String(error) };
 }
 

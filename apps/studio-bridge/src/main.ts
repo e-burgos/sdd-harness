@@ -9,6 +9,7 @@ import { FakeEngine } from './engine/fake-engine';
 import { createHandlers } from './server/router';
 import { createToken } from './server/security';
 import { startBridgeServer, type BridgeServer } from './server/ws-server';
+import { createAttachmentStore } from './sessions/attachment-store';
 import { SessionManager } from './sessions/session-manager';
 import { ThreadStore } from './sessions/store';
 import { BRIDGE_VERSION } from './version';
@@ -44,6 +45,8 @@ export async function startBridge(o: {
   const root = await realpath(resolved);
   const store = new ThreadStore(root);
   await store.init();
+  const attachments = createAttachmentStore(root);
+  await attachments.init();
   let server: BridgeServer | null = null;
   const broadcast = (message: ServerMessage) => server?.broadcast(message);
 
@@ -80,7 +83,7 @@ export async function startBridge(o: {
       token,
       allowedOrigins: o.allowedOrigins,
       localUiDir: o.localUiDir,
-      handlers: createHandlers({ root, auth, bridgeVersion: BRIDGE_VERSION, sessions, watcher, runner, store }),
+      handlers: createHandlers({ root, auth, bridgeVersion: BRIDGE_VERSION, sessions, watcher, runner, store, attachments }),
     });
     server = started;
   } catch (error) {

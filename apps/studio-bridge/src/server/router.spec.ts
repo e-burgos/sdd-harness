@@ -5,6 +5,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { CommandRunner } from '../commands/runner';
 import { FakeEngine } from '../engine/fake-engine';
+import { createAttachmentStore } from '../sessions/attachment-store';
 import { SessionManager } from '../sessions/session-manager';
 import { ThreadStore } from '../sessions/store';
 import { copyFixture, waitFor } from '../test-utils/fixture';
@@ -22,8 +23,10 @@ async function handlers(broadcast: (e: ServerEvent) => void = () => {}) {
   await store.init();
   const sessions = new SessionManager({ root, engine: new FakeEngine(1), store, snapshot: () => snapshot, broadcast: () => {} });
   const auth = new AuthState({}, 'sdd-studio/test');
+  const attachments = createAttachmentStore(root);
+  await attachments.init();
   return createHandlers({
-    root, auth, bridgeVersion: '0.1.0', sessions, store,
+    root, auth, bridgeVersion: '0.1.0', sessions, store, attachments,
     watcher: { current: () => snapshot }, runner: new CommandRunner(root, broadcast, () => 'run-1'),
   });
 }
@@ -127,7 +130,6 @@ describe('createHandlers', () => {
       ['thread.create with agent refs', { cmd: 'thread.create', channelId: 'general', options: defaultThreadOptions(), text: 'x', refs: { agents: ['sdd-planner'], skills: [] } }, 'unsupported: catalog'],
       ['thread.send with attachments', { cmd: 'thread.send', threadId: 't', text: 'x', attachments: [{ kind: 'text', name: 'a.txt', mime: 'text/plain', text: 'hi' }] }, 'unsupported: attachments'],
       ['workspace.searchFiles', { cmd: 'workspace.searchFiles', query: 'a', limit: 5 }, 'unsupported: file-search'],
-      ['attachment.get', { cmd: 'attachment.get', sha256: 'a'.repeat(64), mime: 'image/png' }, 'unsupported: attachments'],
     ])('%s answers bad-request %#', async (_name, body, message) => {
       const h = await handlers();
       await expect(h.handle(cmd(body))).rejects.toMatchObject({ code: 'bad-request', message });
@@ -139,6 +141,21 @@ describe('createHandlers', () => {
       expect(features).not.toContain('file-search');
       expect(features).not.toContain('catalog');
     });
+  });
+
+  it('attachment.get returns stored bytes as base64 and hides failures behind a generic not-found', async () => {
+    const h = await handlers();
+    const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 7]);
+    const store = createAttachmentStore(root);
+    const ref = await store.put({ kind: 'image', name: 'a.png', mime: 'image/png', data: png.toString('base64'), width: 1, height: 1 });
+    expect(await h.handle(cmd({ cmd: 'attachment.get', sha256: ref.sha256, mime: 'image/png' }))).toEqual({
+      sha256: ref.sha256, mime: 'image/png', data: png.toString('base64'),
+    });
+    await expect(h.handle(cmd({ cmd: 'attachment.get', sha256: 'a'.repeat(64), mime: 'image/png' }))).rejects.toMatchObject({
+      code: 'not-found', message: 'attachment not available',
+    });
+    expect(decodeClientMessage(JSON.stringify({ kind: 'command', id: 'x', cmd: 'attachment.get', sha256: '../../etc/passwd', mime: 'image/png' })).ok).toBe(false);
+    expect(decodeClientMessage(JSON.stringify({ kind: 'command', id: 'x', cmd: 'attachment.get', sha256: 'A'.repeat(64), mime: 'image/png' })).ok).toBe(false);
   });
 
   it('thread.create accepts a link and thread.setLink answers the updated ThreadInfo', async () => {

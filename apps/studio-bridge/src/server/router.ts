@@ -3,6 +3,7 @@ import { open } from 'node:fs/promises';
 import type { ClientCommand } from '@sdd-studio/protocol';
 import type { AuthState } from '../auth-mode';
 import type { CommandRunner } from '../commands/runner';
+import type { AttachmentStore } from '../sessions/attachment-store';
 import { SessionError, type SessionManager } from '../sessions/session-manager';
 import type { ThreadStore } from '../sessions/store';
 import { resolveSddPath } from '../workspace/paths';
@@ -25,6 +26,7 @@ export function createHandlers(d: {
   watcher: Pick<WorkspaceWatcher, 'current'>;
   runner: Pick<CommandRunner, 'run'>;
   store: Pick<ThreadStore, 'botHistory'>;
+  attachments: Pick<AttachmentStore, 'read'>;
 }): BridgeHandlers {
   return {
     welcome: () => {
@@ -73,8 +75,10 @@ export function createHandlers(d: {
           return d.sessions.flushPending(command.threadId);
         case 'workspace.searchFiles':
           throw new SessionError('bad-request', 'unsupported: file-search');
-        case 'attachment.get':
-          throw new SessionError('bad-request', 'unsupported: attachments');
+        case 'attachment.get': {
+          const bytes = await d.attachments.read(command.sha256, command.mime);
+          return { sha256: command.sha256, mime: command.mime, data: Buffer.from(bytes).toString('base64') };
+        }
         case 'thread.setLink':
           return d.sessions.setLink(command.threadId, command.link);
         case 'thread.interrupt':
