@@ -32,6 +32,24 @@ async function readLines(file: string): Promise<string[]> {
   return raw.split('\n').filter((line) => line.trim() !== '');
 }
 
+const serializeBotEvent = (event: BotEvent): string => JSON.stringify(event);
+
+function collapseConsecutiveDuplicates(lines: string[]): string[] {
+  return lines.filter((line, i) => i === 0 || line !== lines[i - 1]);
+}
+
+async function lastBotLine(file: string): Promise<string | null> {
+  const lines = await readLines(file);
+  for (let i = lines.length - 1; i >= 0; i--) {
+    try {
+      return serializeBotEvent(JSON.parse(lines[i] as string) as BotEvent);
+    } catch {
+      continue;
+    }
+  }
+  return null;
+}
+
 async function nextSeqFromFile(file: string): Promise<number> {
   let maxSeq = -1;
   for (const line of await readLines(file)) {
@@ -55,6 +73,7 @@ export class ThreadStore {
   private readonly seqs = new Map<string, number>();
   private readonly recovered: string[] = [];
   private readonly repairedFiles = new Set<string>();
+  private readonly lastBotLines = new Map<string, string | null>();
   private chain: Promise<void> = Promise.resolve();
 
   constructor(
@@ -158,7 +177,11 @@ export class ThreadStore {
         await ensureTrailingNewline(file);
         this.repairedFiles.add(file);
       }
-      await appendFile(file, `${JSON.stringify(event)}\n`);
+      const line = serializeBotEvent(event);
+      if (!this.lastBotLines.has(file)) this.lastBotLines.set(file, await lastBotLine(file));
+      if (this.lastBotLines.get(file) === line) return;
+      await appendFile(file, `${line}\n`);
+      this.lastBotLines.set(file, line);
     });
   }
 
@@ -168,7 +191,7 @@ export class ThreadStore {
     if (!file) return [];
     const lines = await readLines(file);
     const out: BotEvent[] = [];
-    for (const line of lines.slice(-limit)) {
+    for (const line of collapseConsecutiveDuplicates(lines).slice(-limit)) {
       try {
         out.push(JSON.parse(line) as BotEvent);
       } catch {

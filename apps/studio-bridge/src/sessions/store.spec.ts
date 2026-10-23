@@ -1,4 +1,4 @@
-import { readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { defaultThreadOptions } from '@sdd-studio/protocol';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -47,6 +47,33 @@ describe('ThreadStore', () => {
     const b = new ThreadStore(root);
     await b.init();
     expect(b.list().map((t) => [t.id, t.status])).toEqual([['r', 'interrupted'], ['w', 'interrupted'], ['q', 'interrupted']]);
+  });
+
+  it('does not persist or return identical consecutive bot events, even across instances', async () => {
+    const done = { channelId: 'spec:s1', botKind: 'task.status' as const, payload: { taskId: 'TASK-001', from: 'pending', to: 'done' } };
+    const reopened = { ...done, payload: { ...done.payload, from: 'done', to: 'pending' } };
+    const a = new ThreadStore(root);
+    await a.init();
+    a.appendBot(done);
+    a.appendBot(done);
+    a.appendBot(reopened);
+    a.appendBot(done);
+    await a.flush();
+    const b = new ThreadStore(root);
+    await b.init();
+    b.appendBot(done);
+    await b.flush();
+    expect(await b.botHistory('spec:s1', 10)).toEqual([done, reopened, done]);
+  });
+
+  it('collapses duplicates already on disk when reading the history', async () => {
+    const dir = path.join(root, '.sdd-studio', 'channels');
+    await mkdir(dir, { recursive: true });
+    const line = JSON.stringify({ channelId: 'fixes', botKind: 'fix.created', payload: { fixId: 'F1' } });
+    await writeFile(path.join(dir, 'fixes.jsonl'), `${line}\n${line}\n`);
+    const s = new ThreadStore(root);
+    await s.init();
+    expect(await s.botHistory('fixes', 10)).toHaveLength(1);
   });
 
   it('filters by channel and returns [] for unknown thread history', async () => {
