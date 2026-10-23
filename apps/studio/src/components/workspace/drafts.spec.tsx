@@ -67,7 +67,7 @@ describe('Composer drafts', () => {
 
   it('discards the draft once the message is sent', async () => {
     const store = createStudioStore();
-    const { box, request } = mount(store, 'general', 't1', vi.fn(async () => ({})) as never);
+    const { box, request } = mount(store, 'general', 't1', vi.fn(async () => ({ delivery: 'started' })) as never);
     fireEvent.change(box(), { target: { value: 'hola' } });
     fireEvent.keyDown(box(), { key: 'Enter' });
     await waitFor(() => expect(request).toHaveBeenCalled());

@@ -1,7 +1,15 @@
 import type { Author, SessionStatus, ThreadEvent, ThreadInfo, Usage } from '@sdd-studio/protocol';
 
 export type TimelineItem =
-  | { kind: 'user'; id: string; seq: number; text: string }
+  | {
+      kind: 'user';
+      id: string;
+      seq: number;
+      text: string;
+      pendingId?: string;
+      delivery?: 'cut-point' | 'next-turn';
+      notDelivered?: boolean;
+    }
   | { kind: 'message'; id: string; seq: number; author: Author; text: string; done: boolean }
   | {
       kind: 'tool';
@@ -32,8 +40,14 @@ export type TimelineItem =
   | { kind: 'usage'; id: string; seq: number; usage: Usage }
   | { kind: 'status'; id: string; seq: number; status: SessionStatus; error?: { code: string; message: string } };
 
+export interface PendingItem {
+  id: string;
+  text: string;
+}
+
 export interface ThreadState {
   info: ThreadInfo | null;
+  pending: PendingItem[];
   items: TimelineItem[];
   lastSeq: number;
   /** false until history was applied; live events are buffered meanwhile */
@@ -41,7 +55,7 @@ export interface ThreadState {
   buffer: { seq: number; event: ThreadEvent }[];
 }
 
-export const emptyThread = (): ThreadState => ({ info: null, items: [], lastSeq: -1, synced: false, buffer: [] });
+export const emptyThread = (): ThreadState => ({ info: null, pending: [], items: [], lastSeq: -1, synced: false, buffer: [] });
 
 function update<K extends TimelineItem['kind']>(
   items: TimelineItem[],
@@ -60,10 +74,38 @@ export function applyThreadEvent(thread: ThreadState, seq: number, event: Thread
   if (seq <= thread.lastSeq) return thread;
   let items = thread.items;
   let info = thread.info;
+  let pending = thread.pending;
   switch (event.type) {
     case 'user.message':
-      items = [...items, { kind: 'user', id: `u:${seq}`, seq, text: event.text }];
+      items = [
+        ...items,
+        {
+          kind: 'user',
+          id: `u:${seq}`,
+          seq,
+          text: event.text,
+          ...(event.pendingId ? { pendingId: event.pendingId, delivery: event.delivery } : {}),
+        },
+      ];
+      if (event.pendingId) pending = pending.filter((p) => p.id !== event.pendingId);
       break;
+    case 'pending.added':
+      if (!pending.some((p) => p.id === event.pendingId)) pending = [...pending, { id: event.pendingId, text: event.text }];
+      break;
+    case 'pending.edited':
+      pending = pending.map((p) => (p.id === event.pendingId ? { ...p, text: event.text } : p));
+      break;
+    case 'pending.removed':
+      pending = pending.filter((p) => p.id !== event.pendingId);
+      break;
+    case 'pending.reverted': {
+      const delivered = [...items].reverse().find((i) => i.kind === 'user' && i.pendingId === event.pendingId && !i.notDelivered);
+      if (delivered?.kind === 'user') {
+        items = items.map((i) => (i === delivered ? { ...delivered, notDelivered: true } : i));
+        if (!pending.some((p) => p.id === event.pendingId)) pending = [...pending, { id: event.pendingId, text: delivered.text }];
+      }
+      break;
+    }
     case 'message.start':
       items = [...items, { kind: 'message', id: event.messageId, seq, author: event.author, text: '', done: false }];
       break;
@@ -120,5 +162,5 @@ export function applyThreadEvent(thread: ThreadState, seq: number, event: Thread
       }
       break;
   }
-  return { ...thread, info, items, lastSeq: seq };
+  return { ...thread, info, items, pending, lastSeq: seq };
 }

@@ -50,4 +50,85 @@ describe('applyThreadEvent', () => {
     };
     expect(applyThreadEvent(base, 0, { type: 'session.status', status: 'running' }).info?.status).toBe('running');
   });
+
+  describe('pending messages', () => {
+    const pendingText = (t: ThreadState) => t.pending.map((p) => `${p.id}:${p.text}`);
+
+    it('adds, edits and removes pending messages', () => {
+      const t = run([
+        [0, { type: 'pending.added', pendingId: 'p1', text: 'uno' }],
+        [1, { type: 'pending.added', pendingId: 'p2', text: 'dos' }],
+        [2, { type: 'pending.edited', pendingId: 'p1', text: 'uno!' }],
+        [3, { type: 'pending.removed', pendingId: 'p2' }],
+      ]);
+      expect(pendingText(t)).toEqual(['p1:uno!']);
+      expect(t.items).toEqual([]);
+    });
+
+    it('keeps several pendings in send order and delivers each one independently (CA-013.4)', () => {
+      const t = run([
+        [0, { type: 'pending.added', pendingId: 'p1', text: 'uno' }],
+        [1, { type: 'pending.added', pendingId: 'p2', text: 'dos' }],
+        [2, { type: 'pending.added', pendingId: 'p3', text: 'tres' }],
+        [3, { type: 'user.message', text: 'uno', pendingId: 'p1', delivery: 'cut-point' }],
+        [4, { type: 'user.message', text: 'dos', pendingId: 'p2', delivery: 'cut-point' }],
+      ]);
+      expect(pendingText(t)).toEqual(['p3:tres']);
+      expect(t.items).toEqual([
+        { kind: 'user', id: 'u:3', seq: 3, text: 'uno', pendingId: 'p1', delivery: 'cut-point' },
+        { kind: 'user', id: 'u:4', seq: 4, text: 'dos', pendingId: 'p2', delivery: 'cut-point' },
+      ]);
+    });
+
+    it('rebuilds the same state from a replayed history after a reload (CA-013.6)', () => {
+      const events: [number, ThreadEvent][] = [
+        [0, { type: 'pending.added', pendingId: 'p1', text: 'uno' }],
+        [1, { type: 'pending.added', pendingId: 'p2', text: 'dos' }],
+        [2, { type: 'user.message', text: 'uno', pendingId: 'p1', delivery: 'next-turn' }],
+      ];
+      const live = run(events);
+      const replayed = events.reduce((t, [seq, e]) => applyThreadEvent(t, seq, e), emptyThread());
+      expect(replayed).toEqual(live);
+      expect(pendingText(replayed)).toEqual(['p2:dos']);
+    });
+
+    it('does not duplicate a pending message that is announced twice', () => {
+      const t = run([
+        [0, { type: 'pending.added', pendingId: 'p1', text: 'uno' }],
+        [1, { type: 'pending.added', pendingId: 'p1', text: 'uno' }],
+      ]);
+      expect(t.pending).toHaveLength(1);
+    });
+
+    it('returns a reverted message to pending and flags the delivered copy as not reached (CA-015.2)', () => {
+      const t = run([
+        [0, { type: 'pending.added', pendingId: 'p1', text: 'uno' }],
+        [1, { type: 'user.message', text: 'uno', pendingId: 'p1', delivery: 'cut-point' }],
+        [2, { type: 'pending.reverted', pendingId: 'p1', reason: 'interrupt' }],
+      ]);
+      expect(pendingText(t)).toEqual(['p1:uno']);
+      expect(t.items).toEqual([{ kind: 'user', id: 'u:1', seq: 1, text: 'uno', pendingId: 'p1', delivery: 'cut-point', notDelivered: true }]);
+    });
+
+    it('delivers again after a revert without flagging the new copy (CA-015.4)', () => {
+      const t = run([
+        [0, { type: 'pending.added', pendingId: 'p1', text: 'uno' }],
+        [1, { type: 'user.message', text: 'uno', pendingId: 'p1', delivery: 'cut-point' }],
+        [2, { type: 'pending.reverted', pendingId: 'p1', reason: 'interrupt' }],
+        [3, { type: 'user.message', text: 'uno', pendingId: 'p1', delivery: 'next-turn' }],
+      ]);
+      expect(t.pending).toEqual([]);
+      expect(t.items.map((i) => (i.kind === 'user' ? i.notDelivered ?? false : null))).toEqual([true, false]);
+    });
+
+    it('ignores a revert for a message it never saw delivered', () => {
+      const t = run([[0, { type: 'pending.reverted', pendingId: 'zz', reason: 'interrupt' }]]);
+      expect(t.pending).toEqual([]);
+    });
+
+    it('keeps a plain user message free of pending fields', () => {
+      const t = run([[0, { type: 'user.message', text: 'hola' }]]);
+      expect(Object.keys(t.items[0]!)).toEqual(['kind', 'id', 'seq', 'text']);
+    });
+  });
 });

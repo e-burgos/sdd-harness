@@ -6,6 +6,7 @@ import {
   defaultThreadOptions,
   dmAgentOfChannel,
   specIdOfChannel,
+  SendResult,
   ThreadInfo,
   type Effort,
   type ModelChoice,
@@ -155,7 +156,7 @@ export function Composer({ channelId, threadId, onThreadCreated }: { channelId: 
       return false;
     }
     if (threadId) {
-      await client.request({ cmd: 'thread.send', threadId, text });
+      SendResult.parse(await client.request({ cmd: 'thread.send', threadId, text }));
     } else {
       const created = ThreadInfo.parse(await client.request({ cmd: 'thread.create', channelId, options, text }));
       onThreadCreated(created.id);
