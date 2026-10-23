@@ -164,6 +164,17 @@ describe('Sidebar collapsing', () => {
     expect(screen.queryByText('cycle-01')).toBeNull();
   });
 
+  it('opens a channel from its name without collapsing it', () => {
+    const { onSelectChannel, rerenderView } = renderSidebar({ threads: [thread({ id: 'g1' })], view: { channelId: 'fixes', threadId: null } });
+    const tree = screen.getByTestId('sidebar-tree');
+    const caret = within(tree).getByRole('button', { name: 'Expandir o colapsar # general' });
+    fireEvent.click(within(tree).getByRole('button', { name: '# general' }));
+    expect(onSelectChannel).toHaveBeenCalledWith('general');
+    rerenderView({ channelId: 'general', threadId: null });
+    expect(caret).toHaveAttribute('aria-expanded', 'true');
+    expect(within(tree).getByRole('button', { name: 'g1' })).toBeInTheDocument();
+  });
+
   it('defaults completed specs and closed cycles to collapsed', () => {
     renderSidebar();
     expect(screen.getByRole('button', { name: 'Expandir o colapsar s2' })).toHaveAttribute('aria-expanded', 'false');
