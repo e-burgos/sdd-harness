@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { buildQueryOptions, ClaudeAgentSdkEngine, type QueryFn } from './claude-sdk-engine';
 import { plainPrompt, type ApprovalRequest, type EngineCallbacks, type EngineTurnInput } from './types';
 
-const noPending = { collectPending: () => [], revertPending: () => {} };
+const noPending = { collectPending: () => [], revertPending: () => {}, readAttachment: async () => null };
 type EngineCallbacksApproval = EngineCallbacks['requestApproval'];
 
 const input = (over: Partial<EngineTurnInput['options']> = {}, resume: string | null = null): EngineTurnInput => ({
@@ -296,6 +296,55 @@ describe('ClaudeAgentSdkEngine prompt streaming', () => {
     expect(collect).not.toHaveBeenCalled();
   });
 
+  describe('async attachment resolution', () => {
+    const png = { sha256: 'a'.repeat(64), kind: 'image' as const, mime: 'image/png' as const, name: 'shot.png', size: 3 };
+    const withImage = (id: string, text: string) => ({ id, prompt: { text, preamble: [], blocks: [{ kind: 'attachment' as const, ref: png }] } });
+    const kinds = (message: { message: { content: unknown } }) => (message.message.content as Array<{ type: string }>).map((block) => block.type);
+
+    it('resolves attachments of the initial prompts before the stream starts, keeping order', async () => {
+      const seen: Array<{ uuid?: string; kinds: string[] }> = [];
+      const fn: QueryFn = ({ prompt }) => {
+        void (async () => {
+          for await (const message of prompt) seen.push({ uuid: message.uuid, kinds: kinds(message) });
+        })();
+        return Object.assign((async function* () { await tick(); yield resultMessage(); })(), { interrupt: async () => undefined }) as unknown as Query;
+      };
+      const readAttachment = vi.fn(async () => new Uint8Array([1]));
+      await new ClaudeAgentSdkEngine(fn).startTurn(
+        { ...input(), prompts: [withImage('u-1', 'one'), outgoing('u-2', 'two')] },
+        callbacks({ readAttachment }),
+      ).done;
+      await tick();
+      expect(seen).toEqual([{ uuid: 'u-1', kinds: ['image', 'text'] }, { uuid: 'u-2', kinds: ['text'] }]);
+      expect(readAttachment).toHaveBeenCalledOnce();
+    });
+
+    it('reverts the pending taken at turn end when an interrupt lands while their bytes are read', async () => {
+      let releaseRead!: () => void;
+      const slowRead = new Promise<Uint8Array>((resolve) => (releaseRead = () => resolve(new Uint8Array([1]))));
+      const revert = vi.fn();
+      const consumed: string[] = [];
+      const fn: QueryFn = ({ prompt }) => {
+        void (async () => { for await (const message of prompt) consumed.push(String(message.uuid)); })();
+        return Object.assign((async function* () { await tick(); yield resultMessage(); await tick(); })(), { interrupt: async () => undefined }) as unknown as Query;
+      };
+      const collect = vi.fn((at: 'cut-point' | 'turn-end') => (at === 'turn-end' ? [withImage('p-1', 'later')] : []));
+      const turn = new ClaudeAgentSdkEngine(fn).startTurn(input(), callbacks({
+        collectPending: collect,
+        revertPending: revert,
+        readAttachment: (ref) => (ref.name === 'shot.png' ? slowRead : Promise.resolve(null)),
+      }));
+      await vi.waitFor(() => expect(collect).toHaveBeenCalled());
+      const interrupting = turn.interrupt();
+      releaseRead();
+      await interrupting;
+      await turn.done;
+      await tick();
+      expect(revert).toHaveBeenCalledWith(['p-1']);
+      expect(consumed).toEqual(['u-1']);
+    });
+  });
+
   describe('interrupt receipt', () => {
     const run = async (receipt: Awaited<ReturnType<Query['interrupt']>>) => {
       const revert = vi.fn();
@@ -353,7 +402,7 @@ describe('PostToolBatch delivery', () => {
     };
     const turn = new ClaudeAgentSdkEngine(fn, undefined, mode).startTurn(input(), {
       emit: () => {}, onSessionId: () => {}, judgeTool: () => ({ kind: 'allow' }), requestApproval: async () => ({ behavior: 'allow' }),
-      collectPending: collect, revertPending: () => {},
+      collectPending: collect, revertPending: () => {}, readAttachment: async () => null,
     });
     await turn.done;
     await new Promise((resolve) => setTimeout(resolve, 0));
@@ -370,6 +419,11 @@ describe('PostToolBatch delivery', () => {
     expect(collect).toHaveBeenCalledWith('cut-point');
     expect(consumed).toEqual(['u-1', 'p-1']);
     expect(output).toEqual({});
+  });
+
+  it('hook-context mode only collects text-only messages at the cut point', async () => {
+    const { collect } = await startAndFire('hook-context', batchInput());
+    expect(collect).toHaveBeenCalledWith('cut-point', { textOnly: true });
   });
 
   it('hook-context mode hands the text to the model as additionalContext without touching the stream', async () => {

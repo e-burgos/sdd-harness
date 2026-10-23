@@ -4,7 +4,7 @@ import { InputChannel } from './input-channel';
 import { toHookContext, toSdkUserMessage } from './prompt-content';
 import type { JudgeContext, ToolVerdict } from './types';
 import { SdkEventMapper, type SdkMessageLike } from './sdk-mapper';
-import type { AgentEngine, EngineCallbacks, EngineTurn, EngineTurnInput } from './types';
+import type { AgentEngine, EngineCallbacks, EngineTurn, EngineTurnInput, OutgoingMessage } from './types';
 
 export type DeliveryMode = 'stream' | 'hook-context';
 
@@ -103,7 +103,9 @@ export class ClaudeAgentSdkEngine implements AgentEngine {
     };
     let interrupted = false;
     const channel = new InputChannel<SDKUserMessage>();
-    channel.push(input.prompts.map(toSdkUserMessage));
+    const resolve = (messages: OutgoingMessage[]): Promise<SDKUserMessage[]> =>
+      Promise.all(messages.map((message) => toSdkUserMessage(message, cb.readAttachment)));
+    const revert = (messages: OutgoingMessage[]): void => cb.revertPending(messages.map((message) => message.id));
     const q = this.queryFn({
       prompt: channel,
       options: buildQueryOptions(input, {
@@ -116,12 +118,19 @@ export class ClaudeAgentSdkEngine implements AgentEngine {
           } satisfies JudgeContext),
         deliverAtCutPoint: async () => {
           if (interrupted) return {};
-          const messages = cb.collectPending('cut-point');
-          if (messages.length === 0) return {};
           if (this.deliveryMode === 'stream') {
-            await channel.pushAndFlush(messages.map(toSdkUserMessage));
+            const messages = cb.collectPending('cut-point');
+            if (messages.length === 0) return {};
+            const resolved = await resolve(messages);
+            if (interrupted) {
+              revert(messages);
+              return {};
+            }
+            await channel.pushAndFlush(resolved);
             return {};
           }
+          const messages = cb.collectPending('cut-point', { textOnly: true });
+          if (messages.length === 0) return {};
           return { hookSpecificOutput: { hookEventName: 'PostToolBatch' as const, additionalContext: toHookContext(messages) } };
         },
         onHook: (hookInput) => emitAll(mapper.mapHook(hookInput as Parameters<SdkEventMapper['mapHook']>[0])),
@@ -136,24 +145,32 @@ export class ClaudeAgentSdkEngine implements AgentEngine {
         },
       }),
     });
-    const deliverOrClose = (result: SdkMessageLike): void => {
+    const deliverOrClose = async (result: SdkMessageLike): Promise<void> => {
       if (interrupted || mapper.sawError) {
         channel.end();
         return;
       }
       const next = cb.collectPending('turn-end');
-      if (next.length > 0) channel.push(next.map(toSdkUserMessage));
-      else if (!(Number(result.queued_turn_count) > 0)) channel.end();
+      if (next.length === 0) {
+        if (!(Number(result.queued_turn_count) > 0)) channel.end();
+        return;
+      }
+      const resolved = await resolve(next);
+      if (interrupted) revert(next);
+      else channel.push(resolved);
     };
     const done = (async () => {
       try {
+        const initial = await resolve(input.prompts);
+        if (interrupted) revert(input.prompts);
+        else channel.push(initial);
         for await (const message of q) {
           const msg = message as unknown as SdkMessageLike;
           if (msg.type === 'system' && msg.subtype === 'init' && typeof msg.session_id === 'string') {
             cb.onSessionId(msg.session_id);
           }
           emitAll(mapper.mapMessage(msg));
-          if (msg.type === 'result') deliverOrClose(msg);
+          if (msg.type === 'result') await deliverOrClose(msg);
         }
       } catch (error) {
         // The real iterator throws after an interrupt or an error result; that is already reported as events.
