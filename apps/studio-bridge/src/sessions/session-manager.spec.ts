@@ -6,6 +6,7 @@ import { FakeEngine } from '../engine/fake-engine';
 import type { AgentEngine, EngineCallbacks, EngineTurn, EngineTurnInput } from '../engine/types';
 import { copyFixture, waitFor } from '../test-utils/fixture';
 import { loadWorkspaceSnapshot } from '../workspace/snapshot';
+import { createAttachmentStore, type AttachmentStore } from './attachment-store';
 import { SessionError, SessionManager } from './session-manager';
 import { ThreadStore } from './store';
 
@@ -26,13 +27,16 @@ afterEach(async () => {
   await cleanup();
 });
 
-async function manager(engine: AgentEngine = new FakeEngine(1)) {
+async function manager(engine: AgentEngine = new FakeEngine(1), wrapAttachments: (inner: AttachmentStore) => AttachmentStore = (inner) => inner) {
   const store = new ThreadStore(root);
   await store.init();
   stores.push(store);
   let n = 0;
+  const realAttachments = createAttachmentStore(root);
+  await realAttachments.init();
+  const attachments = wrapAttachments(realAttachments);
   const m = new SessionManager({
-    root, engine, store, snapshot: () => snapshot, broadcast: (e) => sent.push(e), newId: () => `id${++n}`,
+    root, engine, store, attachments, snapshot: () => snapshot, broadcast: (e) => sent.push(e), newId: () => `id${++n}`,
   });
   return { m, store };
 }
@@ -91,7 +95,7 @@ describe('SessionManager', () => {
     m.respondApproval((await waitFor(() => pendingApproval(t.id))).approvalId, 'allow', undefined, 'thread');
     await waitFor(() => statusOf(m, t.id) === 'idle');
     sent.length = 0;
-    await m.send(t.id, '#tool');
+    await m.send(t.id, { text: '#tool' });
     await waitFor(() => statusOf(m, t.id) === 'idle' && eventsOf(t.id).some((e) => e.type === 'tool.start'));
     expect(pendingApproval(t.id)).toBeUndefined();
   });
@@ -175,7 +179,7 @@ describe('SessionManager', () => {
     await waitFor(() => statusOf(first.m, t.id) === 'idle');
     await first.store.flush();
     const second = await manager(spy);
-    await second.m.send(t.id, 'dos');
+    await second.m.send(t.id, { text: 'dos' });
     expect(inputs.map((i) => i.resumeSessionId)).toEqual([null, 'sess-42']);
     await waitFor(() => statusOf(second.m, t.id) === 'idle');
   });
@@ -190,7 +194,7 @@ describe('SessionManager', () => {
 
   it('reports unknown threads and approvals as not-found', async () => {
     const { m } = await manager();
-    await expect(m.send('nope', 'x')).rejects.toBeInstanceOf(SessionError);
+    await expect(m.send('nope', { text: 'x' })).rejects.toBeInstanceOf(SessionError);
     expect(() => m.respondApproval('nope', 'allow', undefined, 'once')).toThrow(SessionError);
   });
 
@@ -304,7 +308,7 @@ describe('SessionManager', () => {
       expect(decision).toEqual({ behavior: 'deny', message: 'turn ended' });
       expect(eventsOf(t.id)).toContainEqual({ type: 'approval.resolved', approvalId: pending.approvalId, decision: 'deny', reason: 'turn ended' });
       expect(() => m.respondApproval(pending.approvalId, 'allow', undefined, 'once')).toThrow(SessionError);
-      await m.send(t.id, 'dos');
+      await m.send(t.id, { text: 'dos' });
       expect(statusOf(m, t.id)).toBe('running');
       runs[1]!.finish();
       await waitFor(() => statusOf(m, t.id) === 'idle');
@@ -330,7 +334,7 @@ describe('SessionManager', () => {
       await waitFor(() => statusOf(m, t.id) === 'idle');
       snapshot = { ...base, cycles: base.cycles.map((c) => ({ ...c, status: 'completed' })), fixes: [] };
       sent.length = 0;
-      await m.send(t.id, '#edit');
+      await m.send(t.id, { text: '#edit' });
       await waitFor(() => statusOf(m, t.id) === 'idle');
       const resolved = eventsOf(t.id).find((e) => e.type === 'approval.resolved');
       expect(resolved).toMatchObject({ decision: 'deny' });
@@ -489,7 +493,7 @@ describe('SessionManager', () => {
         });
         const { engine, runs } = scripted();
         const m = new SessionManager({
-          root, engine, store, snapshot: () => snapshot, broadcast: (e) => sent.push(e), refreshSnapshot: refresh,
+          root, attachments: createAttachmentStore(root), engine, store, snapshot: () => snapshot, broadcast: (e) => sent.push(e), refreshSnapshot: refresh,
         });
         const t = await m.createThread({ channelId: 'general', options: opts, text: 'x' });
         const file = path.join(root, 'apps', 'x.ts');
@@ -512,7 +516,7 @@ describe('SessionManager', () => {
         await store2.init();
         stores.push(store2);
         expect(store2.recoveredThreadIds()).toEqual([t.id]);
-        const m2 = new SessionManager({ root, engine: new FakeEngine(1), store: store2, snapshot: () => snapshot, broadcast: () => {} });
+        const m2 = new SessionManager({ root, attachments: createAttachmentStore(root), engine: new FakeEngine(1), store: store2, snapshot: () => snapshot, broadcast: () => {} });
         await m2.recover();
         const hist = (await m2.history(t.id, 0)).map((h) => h.event);
         const requested = hist.find((e) => e.type === 'approval.requested');
@@ -542,7 +546,7 @@ describe('SessionManager', () => {
     it('adds a pending message while the thread is busy instead of throwing conflict', async () => {
       const { m } = await manager();
       const t = await create(m, '#slow');
-      const result = await m.send(t.id, 'otra');
+      const result = await m.send(t.id, { text: 'otra' });
       expect(result).toEqual({ delivery: 'pending', pendingId: expect.any(String) });
       expect(eventsOf(t.id).filter((e) => e.type === 'pending.added')).toEqual([
         { type: 'pending.added', pendingId: (result as { pendingId: string }).pendingId, text: 'otra' },
@@ -555,15 +559,15 @@ describe('SessionManager', () => {
       const { m } = await manager();
       const t = await m.createThread({ channelId: 'general', options: opts, text: 'hola' });
       await waitFor(() => statusOf(m, t.id) === 'idle');
-      expect(await m.send(t.id, 'otra')).toEqual({ delivery: 'started' });
+      expect(await m.send(t.id, { text: 'otra' })).toEqual({ delivery: 'started' });
       await waitFor(() => echoes(t.id).includes('echo: otra'));
     });
 
     it('delivers every pending message at the next cut point, in order', async () => {
       const { m } = await manager();
       const t = await create(m, '#steps:6');
-      await m.send(t.id, 'first');
-      await m.send(t.id, 'second');
+      await m.send(t.id, { text: 'first' });
+      await m.send(t.id, { text: 'second' });
       await waitFor(() => statusOf(m, t.id) === 'idle');
       const delivered = userMessages(t.id).filter((e) => e.pendingId);
       expect(delivered.map((e) => [e.text, e.delivery])).toEqual([['first', 'cut-point'], ['second', 'cut-point']]);
@@ -575,7 +579,7 @@ describe('SessionManager', () => {
       const { m } = await manager();
       const t = await m.createThread({ channelId: 'general', options: opts, text: '#tool' });
       const request = await waitFor(() => pendingApproval(t.id));
-      await m.send(t.id, 'queued while waiting');
+      await m.send(t.id, { text: 'queued while waiting' });
       m.respondApproval(request.approvalId, 'allow', undefined, 'once');
       await waitFor(() => statusOf(m, t.id) === 'idle');
       const delivered = userMessages(t.id).find((e) => e.pendingId);
@@ -586,8 +590,8 @@ describe('SessionManager', () => {
     it('edits and removes a message only while it is pending', async () => {
       const { m } = await manager();
       const t = await create(m, '#steps:6');
-      const a = (await m.send(t.id, 'a')) as { pendingId: string };
-      const b = (await m.send(t.id, 'b')) as { pendingId: string };
+      const a = (await m.send(t.id, { text: 'a' })) as { pendingId: string };
+      const b = (await m.send(t.id, { text: 'b' })) as { pendingId: string };
       m.editPending(t.id, a.pendingId, 'a2');
       m.removePending(t.id, b.pendingId);
       expect(eventsOf(t.id).map((e) => e.type)).toEqual(expect.arrayContaining(['pending.edited', 'pending.removed']));
@@ -605,17 +609,17 @@ describe('SessionManager', () => {
     it('rejects an empty edit and an 11th pending message', async () => {
       const { m } = await manager();
       const t = await create(m, '#slow');
-      const first = (await m.send(t.id, 'm0')) as { pendingId: string };
+      const first = (await m.send(t.id, { text: 'm0' })) as { pendingId: string };
       expect(() => m.editPending(t.id, first.pendingId, '  ')).toThrowError(expect.objectContaining({ code: 'bad-request' }));
-      for (let i = 1; i < 10; i++) await m.send(t.id, `m${i}`);
-      await expect(m.send(t.id, 'm10')).rejects.toMatchObject({ code: 'conflict', message: 'too many pending messages' });
+      for (let i = 1; i < 10; i++) await m.send(t.id, { text: `m${i}` });
+      await expect(m.send(t.id, { text: 'm10' })).rejects.toMatchObject({ code: 'conflict', message: 'too many pending messages' });
       await m.interrupt(t.id);
     });
 
     it('keeps the pending messages after an interrupt and does not auto-send them', async () => {
       const { m } = await manager();
       const t = await create(m, '#slow');
-      await m.send(t.id, 'kept');
+      await m.send(t.id, { text: 'kept' });
       await m.interrupt(t.id);
       await waitFor(() => statusOf(m, t.id) === 'interrupted');
       await new Promise((r) => setTimeout(r, 30));
@@ -636,7 +640,7 @@ describe('SessionManager', () => {
       };
       const { m } = await manager(engine);
       const t = await m.createThread({ channelId: 'general', options: opts, text: 'first' });
-      await m.send(t.id, 'kept after error');
+      await m.send(t.id, { text: 'kept after error' });
       failTurn(new Error('boom'));
       await waitFor(() => statusOf(m, t.id) === 'error');
       await settled();
@@ -648,12 +652,12 @@ describe('SessionManager', () => {
     it('sending to an interrupted thread delivers the pending ones first, then the new message', async () => {
       const { m } = await manager();
       const t = await create(m, '#slow');
-      await m.send(t.id, 'p1');
-      await m.send(t.id, 'p2');
+      await m.send(t.id, { text: 'p1' });
+      await m.send(t.id, { text: 'p2' });
       await m.interrupt(t.id);
       await waitFor(() => statusOf(m, t.id) === 'interrupted');
       await settled();
-      expect(await m.send(t.id, 'new')).toEqual({ delivery: 'started' });
+      expect(await m.send(t.id, { text: 'new' })).toEqual({ delivery: 'started' });
       await waitFor(() => echoes(t.id).includes('echo: p2'));
       const after = userMessages(t.id).slice(1);
       expect(after.map((e) => [e.text, e.pendingId ? e.delivery : 'direct'])).toEqual([
@@ -665,7 +669,7 @@ describe('SessionManager', () => {
     it('flushPending starts a turn with the pending messages and conflicts when there is nothing to do', async () => {
       const { m } = await manager();
       const t = await create(m, '#slow');
-      await m.send(t.id, 'p1');
+      await m.send(t.id, { text: 'p1' });
       expect(() => m.flushPending(t.id)).toThrowError(expect.objectContaining({ code: 'conflict' }));
       await m.interrupt(t.id);
       await waitFor(() => statusOf(m, t.id) === 'interrupted');
@@ -679,7 +683,7 @@ describe('SessionManager', () => {
     it('reverts the batch the engine reports as undelivered on interrupt', async () => {
       const { m } = await manager();
       const t = await create(m, '#steps:20 #revert');
-      await m.send(t.id, 'late');
+      await m.send(t.id, { text: 'late' });
       await waitFor(() => userMessages(t.id).some((e) => e.pendingId));
       await m.interrupt(t.id);
       const reverted = eventsOf(t.id).find((e) => e.type === 'pending.reverted');
@@ -703,7 +707,7 @@ describe('SessionManager', () => {
       };
       const { m } = await manager(engine);
       const t = await m.createThread({ channelId: 'general', options: opts, text: 'first' });
-      await m.send(t.id, 'raced');
+      await m.send(t.id, { text: 'raced' });
       finishFirst();
       await waitFor(() => prompts.length === 2);
       expect(prompts[1]).toEqual(['raced']);
@@ -714,7 +718,7 @@ describe('SessionManager', () => {
       const { m } = await manager();
       const t = await m.createThread({ channelId: 'general', options: opts, text: '#tool #steps:4' });
       const request = await waitFor(() => pendingApproval(t.id));
-      await m.send(t.id, 'while waiting');
+      await m.send(t.id, { text: 'while waiting' });
       await settled();
       expect(userMessages(t.id).some((e) => e.pendingId)).toBe(false);
       expect(statusOf(m, t.id)).toBe('waiting-approval');
@@ -727,9 +731,9 @@ describe('SessionManager', () => {
     it('delivers each message exactly once and in order across cut points and turn end', async () => {
       const { m } = await manager();
       const t = await create(m, '#steps:3');
-      await m.send(t.id, 'one');
+      await m.send(t.id, { text: 'one' });
       await waitFor(() => userMessages(t.id).some((e) => e.pendingId));
-      await m.send(t.id, 'two');
+      await m.send(t.id, { text: 'two' });
       await waitFor(() => statusOf(m, t.id) === 'idle');
       const delivered = userMessages(t.id).filter((e) => e.pendingId).map((e) => e.text);
       expect(delivered).toEqual(['one', 'two']);
@@ -740,8 +744,8 @@ describe('SessionManager', () => {
     it('lets the dev edit and remove messages that stayed pending after an interrupt', async () => {
       const { m } = await manager();
       const t = await create(m, '#slow');
-      const a = (await m.send(t.id, 'a')) as { pendingId: string };
-      const b = (await m.send(t.id, 'b')) as { pendingId: string };
+      const a = (await m.send(t.id, { text: 'a' })) as { pendingId: string };
+      const b = (await m.send(t.id, { text: 'b' })) as { pendingId: string };
       await m.interrupt(t.id);
       await waitFor(() => statusOf(m, t.id) === 'interrupted');
       m.editPending(t.id, a.pendingId, 'a edited');
@@ -755,7 +759,7 @@ describe('SessionManager', () => {
     it('records pending messages in the history so a reload or another tab sees the real state', async () => {
       const { m } = await manager();
       const t = await create(m, '#steps:5');
-      const { pendingId } = (await m.send(t.id, 'late')) as { pendingId: string };
+      const { pendingId } = (await m.send(t.id, { text: 'late' })) as { pendingId: string };
       await waitFor(() => statusOf(m, t.id) === 'idle');
       const kinds = (await m.history(t.id, 0))
         .map((h) => h.event)
@@ -771,7 +775,7 @@ describe('SessionManager', () => {
       const a = await m.createThread({ channelId: ch, options: opts, text: '#slow' });
       const b = await m.createThread({ channelId: ch, options: opts, text: 'hola' });
       expect(statusOf(m, b.id)).toBe('queued');
-      expect(await m.send(b.id, 'while queued')).toMatchObject({ delivery: 'pending' });
+      expect(await m.send(b.id, { text: 'while queued' })).toMatchObject({ delivery: 'pending' });
       expect(statusOf(m, b.id)).toBe('queued');
       expect(pendingCountOf(m, b.id)).toBe(1);
       await m.interrupt(a.id);
@@ -782,14 +786,14 @@ describe('SessionManager', () => {
     it('reloads pending messages after a restart and does not send them', async () => {
       const first = await manager();
       const t = await create(first.m, '#slow');
-      await first.m.send(t.id, 'survives');
+      await first.m.send(t.id, { text: 'survives' });
       await first.store.flush();
       const started: string[] = [];
       const store = new ThreadStore(root);
       await store.init();
       stores.push(store);
       const m = new SessionManager({
-        root, store, snapshot: () => snapshot, broadcast: (e) => sent.push(e),
+        root, attachments: createAttachmentStore(root), store, snapshot: () => snapshot, broadcast: (e) => sent.push(e),
         engine: { name: 'spy', startTurn: (input) => (started.push(input.threadId), new FakeEngine(1).startTurn(input, null as never)) },
       });
       await m.recover();
@@ -811,14 +815,14 @@ describe('SessionManager', () => {
     const idle = (m: SessionManager, id: string) => waitFor(() => statusOf(m, id) === 'idle');
     const runAndAnswer = async (m: SessionManager, threadId: string, text: string, scope: 'once' | 'thread') => {
       sent.length = 0;
-      await m.send(threadId, text);
+      await m.send(threadId, { text });
       const request = await answer(m, threadId, scope);
       await idle(m, threadId);
       return request;
     };
     const runExpectingNoApproval = async (m: SessionManager, threadId: string, text: string) => {
       sent.length = 0;
-      await m.send(threadId, text);
+      await m.send(threadId, { text });
       await waitFor(() => statusOf(m, threadId) === 'running');
       await idle(m, threadId);
       expect(pendingApproval(threadId)).toBeUndefined();
@@ -845,7 +849,7 @@ describe('SessionManager', () => {
       await idle(m, t.id);
       await runExpectingNoApproval(m, t.id, '#bash-git2');
       sent.length = 0;
-      await m.send(t.id, '#bash-chain');
+      await m.send(t.id, { text: '#bash-chain' });
       const chained = await waitFor(() => pendingApproval(t.id));
       expect(chained.always).toEqual({ kind: 'none', reason: 'not-calculable' });
       await m.interrupt(t.id);
@@ -858,7 +862,7 @@ describe('SessionManager', () => {
       await idle(m, t.id);
       expect(resolutions(t.id)[0]?.remembered).toBeUndefined();
       sent.length = 0;
-      await m.send(t.id, '#bash-chain');
+      await m.send(t.id, { text: '#bash-chain' });
       await waitFor(() => pendingApproval(t.id));
       await m.interrupt(t.id);
     });
@@ -881,7 +885,7 @@ describe('SessionManager', () => {
       await idle(m, t.id);
       expect(resolutions(t.id)[0]?.remembered).toBeUndefined();
       sent.length = 0;
-      await m.send(t.id, '#mcp');
+      await m.send(t.id, { text: '#mcp' });
       const second = await waitFor(() => pendingApproval(t.id));
       m.respondApproval(second.approvalId, 'deny', 'no', 'thread');
       await idle(m, t.id);
@@ -899,10 +903,10 @@ describe('SessionManager', () => {
       const store = new ThreadStore(root);
       await store.init();
       stores.push(store);
-      const restarted = new SessionManager({ root, store, engine: new FakeEngine(1), snapshot: () => snapshot, broadcast: (e) => sent.push(e) });
+      const restarted = new SessionManager({ root, attachments: createAttachmentStore(root), store, engine: new FakeEngine(1), snapshot: () => snapshot, broadcast: (e) => sent.push(e) });
       await restarted.recover();
       sent.length = 0;
-      await restarted.send(t.id, '#mcp');
+      await restarted.send(t.id, { text: '#mcp' });
       await waitFor(() => pendingApproval(t.id));
       await restarted.interrupt(t.id);
     });
@@ -929,7 +933,7 @@ describe('SessionManager', () => {
       expect(request.always).toEqual({ kind: 'none', reason: 'gate-warning' });
       expect(resolutions(t.id)[0]?.remembered).toBeUndefined();
       sent.length = 0;
-      await m.send(t.id, '#edit-tool');
+      await m.send(t.id, { text: '#edit-tool' });
       const again = await waitFor(() => pendingApproval(t.id));
       expect(again.gateWarning).toBeDefined();
       await m.interrupt(t.id);
@@ -943,13 +947,13 @@ describe('SessionManager', () => {
       await idle(m, t.id);
       snapshot = { ...base, cycles: base.cycles.map((c) => ({ ...c, status: 'completed' })), fixes: [] };
       sent.length = 0;
-      await m.send(t.id, '#edit-tool');
+      await m.send(t.id, { text: '#edit-tool' });
       await idle(m, t.id);
       expect(resolutions(t.id)[0]).toMatchObject({ decision: 'deny' });
       expect(eventsOf(t.id).some((e) => e.type === 'tool.start')).toBe(false);
       snapshot = { ...base, gateMode: 'warn', cycles: [], fixes: [] };
       sent.length = 0;
-      await m.send(t.id, '#edit-tool');
+      await m.send(t.id, { text: '#edit-tool' });
       const warned = await waitFor(() => pendingApproval(t.id));
       expect(warned.always).toEqual({ kind: 'none', reason: 'gate-warning' });
       await m.interrupt(t.id);
@@ -1022,7 +1026,7 @@ describe('SessionManager', () => {
       const store = new ThreadStore(root);
       await store.init();
       stores.push(store);
-      const migrated = new SessionManager({ root, store, engine: new FakeEngine(1), snapshot: () => snapshot, broadcast: (e) => sent.push(e) });
+      const migrated = new SessionManager({ root, attachments: createAttachmentStore(root), store, engine: new FakeEngine(1), snapshot: () => snapshot, broadcast: (e) => sent.push(e) });
       expect(migrated.list().find((x) => x.id === t.id)).toMatchObject({ link: { target: { kind: 'none' }, source: 'legacy' }, pendingCount: 0 });
     });
 
@@ -1052,5 +1056,138 @@ describe('SessionManager', () => {
       await m.interrupt(a.id);
       await idleOf(m, b.id);
     });
+  });
+});
+
+describe('SessionManager attachments and refs', () => {
+  const png = (name: string, extra = 0) => ({
+    kind: 'image' as const, name, mime: 'image/png' as const, width: 2, height: 2,
+    data: Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, extra]).toString('base64'),
+  });
+  const userMessages = (threadId: string) =>
+    eventsOf(threadId).filter((e): e is Extract<ThreadEvent, { type: 'user.message' }> => e.type === 'user.message');
+  const withSkills = () => {
+    snapshot = { ...snapshot, skills: [{ id: 'commit', kind: 'skill', description: '', source: 'claude', path: '.claude/skills/commit/SKILL.md' }] };
+  };
+
+  it('keeps arrival order when an upload-heavy send is followed by a quick text send', async () => {
+    const { m } = await manager(new FakeEngine(1), (inner) => ({
+      ...inner,
+      put: async (upload) => {
+        if (upload.name === 'slow.png') await new Promise((r) => setTimeout(r, 80));
+        return inner.put(upload);
+      },
+    }));
+    const t = await m.createThread({ channelId: 'general', options: opts, text: 'first' });
+    await waitFor(() => statusOf(m, t.id) === 'idle');
+    const slow = m.send(t.id, { text: 'with file', attachments: [png('slow.png')] });
+    const fast = m.send(t.id, { text: 'quick' });
+    expect(await slow).toEqual({ delivery: 'started' });
+    expect(await fast).toMatchObject({ delivery: 'pending' });
+    await waitFor(() => userMessages(t.id).length === 3 && statusOf(m, t.id) === 'idle');
+    expect(userMessages(t.id).map((e) => e.text)).toEqual(['first', 'with file', 'quick']);
+  });
+
+  it('a failed upload emits nothing and the acceptance queue keeps serving the next send', async () => {
+    const { m } = await manager();
+    const t = await m.createThread({ channelId: 'general', options: opts, text: 'first' });
+    await waitFor(() => statusOf(m, t.id) === 'idle');
+    const before = eventsOf(t.id).length;
+    const broken = { ...png('x.png'), data: Buffer.from('not a png').toString('base64') };
+    await expect(m.send(t.id, { text: 'bad', attachments: [broken] })).rejects.toMatchObject({ code: 'bad-request' });
+    expect(eventsOf(t.id)).toHaveLength(before);
+    expect(await m.send(t.id, { text: 'next' })).toEqual({ delivery: 'started' });
+    await waitFor(() => statusOf(m, t.id) === 'idle');
+  });
+
+  it('createThread materialises attachments first: a failure leaves no thread behind', async () => {
+    const { m } = await manager();
+    const broken = { ...png('x.png'), data: Buffer.from('nope').toString('base64') };
+    await expect(m.createThread({ channelId: 'general', options: opts, text: 'hi', attachments: [broken] })).rejects.toMatchObject({ code: 'bad-request' });
+    expect(m.list()).toEqual([]);
+  });
+
+  it('createThread titles from the first attachment when the text is empty and stores refs on user.message', async () => {
+    withSkills();
+    const { m } = await manager();
+    const t = await m.createThread({
+      channelId: 'general', options: opts, text: '', attachments: [png('diagram.png'), png('b.png', 1)],
+      refs: { agents: ['sdd-planner', 'ghost', 'sdd-planner'], skills: ['commit', 'nope'] },
+    });
+    expect(t.title).toBe('diagram.png');
+    const [message] = userMessages(t.id);
+    expect(message?.attachments?.map((a) => a.name)).toEqual(['diagram.png', 'b.png']);
+    expect(message?.refs).toEqual({ agents: ['sdd-planner'], skills: ['commit'] });
+    await waitFor(() => statusOf(m, t.id) === 'idle');
+  });
+
+  it('omits attachments and refs keys for plain text messages and drops refs that no longer exist', async () => {
+    const { m } = await manager();
+    const t = await m.createThread({ channelId: 'general', options: opts, text: 'plain', refs: { agents: ['ghost'], skills: ['ghost'] } });
+    const [message] = userMessages(t.id);
+    expect('attachments' in (message ?? {})).toBe(false);
+    expect('refs' in (message ?? {})).toBe(false);
+    await waitFor(() => statusOf(m, t.id) === 'idle');
+  });
+
+  it('pending.added carries attachments and refs and delivery re-emits them with the pendingId', async () => {
+    withSkills();
+    const { m } = await manager();
+    const t = await m.createThread({ channelId: 'general', options: opts, text: '#steps:3' });
+    const result = await m.send(t.id, { text: '/commit now', attachments: [png('p.png')], refs: { agents: [], skills: ['commit'] } });
+    expect(result.delivery).toBe('pending');
+    const added = eventsOf(t.id).find((e) => e.type === 'pending.added');
+    expect(added).toMatchObject({ attachments: [{ name: 'p.png' }], refs: { agents: [], skills: ['commit'] } });
+    await waitFor(() => userMessages(t.id).some((e) => e.pendingId));
+    expect(userMessages(t.id).find((e) => e.pendingId)).toMatchObject({ attachments: [{ name: 'p.png' }], refs: { skills: ['commit'] } });
+    expect(m.list()[0]?.pendingCount).toBe(0);
+    await waitFor(() => statusOf(m, t.id) === 'idle');
+  });
+
+  it('editPending allows empty text only when the pending message has attachments', async () => {
+    const { m } = await manager();
+    const t = await m.createThread({ channelId: 'general', options: opts, text: '#slow' });
+    const withFile = await m.send(t.id, { text: 'a', attachments: [png('p.png')] });
+    const plain = await m.send(t.id, { text: 'b' });
+    if (withFile.delivery !== 'pending' || plain.delivery !== 'pending') throw new Error('expected pending');
+    m.editPending(t.id, withFile.pendingId, '');
+    expect(() => m.editPending(t.id, plain.pendingId, ' ')).toThrow(SessionError);
+    await m.interrupt(t.id);
+  });
+
+  it('hands the engine a preamble, an attachment block and the text without the leading skill token', async () => {
+    withSkills();
+    const seen: EngineTurnInput[] = [];
+    const engine: AgentEngine = { name: 'spy', startTurn: (input, cb) => (seen.push(input), new FakeEngine(1).startTurn(input, cb)) };
+    const { m } = await manager(engine);
+    await m.createThread({ channelId: 'general', options: opts, text: '/commit please', attachments: [png('p.png')], refs: { agents: [], skills: ['commit'] } });
+    const prompt = seen[0]?.prompts[0]?.prompt;
+    expect(prompt?.text).toBe('please');
+    expect(prompt?.preamble).toEqual(['Use the skill "commit" (.claude/skills/commit/SKILL.md) for this task.']);
+    expect(prompt?.blocks).toEqual([{ kind: 'attachment', ref: expect.objectContaining({ name: 'p.png', kind: 'image' }) }]);
+    await waitFor(() => m.list().every((thread) => thread.status === 'idle'));
+  });
+
+  it('collectPending textOnly leaves pending messages with attachments for the turn end', async () => {
+    const collected: Array<{ at: string; ids: string[] }> = [];
+    const engine: AgentEngine = {
+      name: 'spy',
+      startTurn: (_input, cb) => ({
+        done: (async () => {
+          await new Promise((r) => setTimeout(r, 60));
+          collected.push({ at: 'cut-point', ids: cb.collectPending('cut-point', { textOnly: true }).map((x) => x.id) });
+          collected.push({ at: 'turn-end', ids: cb.collectPending('turn-end').map((x) => x.id) });
+        })(),
+        interrupt: async () => undefined,
+      }),
+    };
+    const { m } = await manager(engine);
+    const t = await m.createThread({ channelId: 'general', options: opts, text: 'go' });
+    const text = await m.send(t.id, { text: 'only text' });
+    const file = await m.send(t.id, { text: 'with file', attachments: [png('p.png')] });
+    await waitFor(() => collected.length === 2);
+    expect(collected[0]?.ids).toEqual([text.delivery === 'pending' ? text.pendingId : '']);
+    expect(collected[1]?.ids).toEqual([file.delivery === 'pending' ? file.pendingId : '']);
+    await waitFor(() => statusOf(m, t.id) === 'idle');
   });
 });

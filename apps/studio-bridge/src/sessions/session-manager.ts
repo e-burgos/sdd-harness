@@ -3,7 +3,10 @@ import { dmAgentOfChannel, MAX_PENDING_PER_THREAD } from '@sdd-studio/protocol';
 import type {
   AlwaysOffer,
   AlwaysRule,
+  AttachmentRef,
+  AttachmentUpload,
   Presence,
+  PromptRefs,
   SendResult,
   ServerEvent,
   SessionStatus,
@@ -13,9 +16,9 @@ import type {
   ThreadOptions,
   WorkspaceSnapshot,
 } from '@sdd-studio/protocol';
+import { buildTurnPrompt, type AcceptedMessage } from '../engine/prompt-content';
 import { diffFor, summarizeTool } from '../engine/tool-summary';
 import {
-  plainPrompt,
   type AgentEngine,
   type ApprovalDecision,
   type ApprovalRequest,
@@ -26,6 +29,7 @@ import {
 } from '../engine/types';
 import { editTargetOf, judgeEdit } from '../gate/judge';
 import { alwaysOfferOf, matchesRule, ruleOf } from './always-rule';
+import type { AttachmentStore } from './attachment-store';
 import { assignLink, linkTargetExists } from './thread-link';
 import { PresenceTracker } from './presence';
 import { toThreadInfo as toInfo, type HistoryEntry, type PendingMessage, type StoredThread, type ThreadStore } from './store';
@@ -39,8 +43,15 @@ export class SessionError extends Error {
   }
 }
 
+export interface MessageInput {
+  text: string;
+  attachments?: AttachmentUpload[];
+  refs?: PromptRefs;
+}
+
 export interface SessionManagerDeps {
   root: string;
+  attachments: Pick<AttachmentStore, 'put' | 'read'>;
   engine: AgentEngine;
   store: ThreadStore;
   snapshot: () => WorkspaceSnapshot;
@@ -82,6 +93,8 @@ interface Live {
   gen: number;
   /** Write mode frozen when queued/started; setOptions only affects the next turn. */
   writes: boolean;
+  /** FIFO of acceptance decisions: a slow upload never lets a later message overtake an earlier one. */
+  acceptTail: Promise<void>;
 }
 
 interface PendingApproval {
@@ -94,6 +107,14 @@ interface PendingApproval {
 const writeScopeOf = (channelId: string): string => (channelId.startsWith('dm:') ? 'dm' : channelId);
 
 const reportError = (error: unknown): void => console.error('[sdd-studio] session manager:', error);
+
+const titleOf = ({ text, attachments }: AcceptedMessage): string =>
+  ((text.split('\n')[0] ?? '').trim() || attachments[0]?.name || '').slice(0, 80);
+
+const extrasOf = ({ attachments, refs }: AcceptedMessage) => ({
+  ...(attachments.length > 0 ? { attachments } : {}),
+  ...(refs.agents.length > 0 || refs.skills.length > 0 ? { refs } : {}),
+});
 
 export class SessionManager {
   private readonly live = new Map<string, Live>();
@@ -124,18 +145,19 @@ export class SessionManager {
     return this.tracker.compute();
   }
 
-  async createThread(args: { channelId: string; options: ThreadOptions; text: string; link?: ThreadLinkTarget }): Promise<ThreadInfo> {
+  async createThread(args: { channelId: string; options: ThreadOptions; link?: ThreadLinkTarget } & MessageInput): Promise<ThreadInfo> {
     const dmAgent = dmAgentOfChannel(args.channelId);
     if (dmAgent !== null && args.options.agent !== dmAgent) {
       throw new SessionError('bad-request', `a DM with ${dmAgent} only accepts that agent`);
     }
     const link = assignLink({ channelId: args.channelId, snapshot: this.deps.snapshot(), explicit: args.link });
     if (!link) throw new SessionError('not-found', 'the link target does not exist');
+    const accepted = await this.accept(args);
     const now = this.now();
     const thread: StoredThread = {
       id: this.newId(),
       channelId: args.channelId,
-      title: (args.text.split('\n')[0] ?? '').slice(0, 80),
+      title: titleOf(accepted),
       agent: args.options.agent,
       options: args.options,
       status: 'idle',
@@ -148,22 +170,27 @@ export class SessionManager {
     this.persist(thread);
     this.tracker.onThread(toInfo(thread));
     this.deps.broadcast({ kind: 'thread.updated', thread: toInfo(thread) });
-    await this.send(thread.id, args.text);
+    this.decide(thread, accepted);
     return toInfo(this.require(thread.id));
   }
 
-  async send(threadId: string, text: string): Promise<SendResult> {
-    const thread = this.require(threadId);
+  async send(threadId: string, message: MessageInput): Promise<SendResult> {
+    this.require(threadId);
     const live = this.liveOf(threadId);
-    if (live.turn || live.queued !== null) return this.addPending(thread, text);
-    this.launchTurn(thread, text);
-    return { delivery: 'started' };
+    const prepared = this.accept(message);
+    prepared.catch(() => undefined);
+    const decision = live.acceptTail.then(async () => this.decide(this.require(threadId), await prepared));
+    live.acceptTail = decision.then(
+      () => undefined,
+      () => undefined,
+    );
+    return decision;
   }
 
   editPending(threadId: string, pendingId: string, text: string): void {
     const thread = this.require(threadId);
     const message = this.findPending(thread, pendingId);
-    if (text.trim().length === 0) throw new SessionError('bad-request', 'text required');
+    if (text.trim().length === 0 && !message.attachments?.length) throw new SessionError('bad-request', 'text required');
     message.text = text;
     this.emit(thread, { type: 'pending.edited', pendingId, text });
     this.persist(thread);
@@ -270,7 +297,7 @@ export class SessionManager {
   private liveOf(threadId: string): Live {
     let live = this.live.get(threadId);
     if (!live) {
-      live = { turn: null, queued: null, delivered: new Map(), deliveredIds: new Set(), queuedAt: 0, alwaysAllow: [], hookDenied: new Map(), interrupted: false, gen: 0, writes: false };
+      live = { turn: null, queued: null, delivered: new Map(), deliveredIds: new Set(), queuedAt: 0, alwaysAllow: [], hookDenied: new Map(), interrupted: false, gen: 0, writes: false, acceptTail: Promise.resolve() };
       this.live.set(threadId, live);
     }
     return live;
@@ -301,11 +328,34 @@ export class SessionManager {
     });
   }
 
-  private launchTurn(thread: StoredThread, newText?: string): void {
+  private async accept(input: MessageInput): Promise<AcceptedMessage> {
+    const attachments = await Promise.all((input.attachments ?? []).map((upload) => this.deps.attachments.put(upload)));
+    return { text: input.text, attachments, refs: this.vettedRefs(input.refs) };
+  }
+
+  private vettedRefs(refs: PromptRefs | undefined): PromptRefs {
+    const snapshot = this.deps.snapshot();
+    const known = (ids: string[], catalog: { id: string }[]) => [...new Set(ids)].filter((id) => catalog.some((entry) => entry.id === id));
+    return { agents: known(refs?.agents ?? [], snapshot.agents), skills: known(refs?.skills ?? [], snapshot.skills) };
+  }
+
+  private decide(thread: StoredThread, accepted: AcceptedMessage): SendResult {
+    const live = this.liveOf(thread.id);
+    if (live.turn || live.queued !== null) return this.addPending(thread, accepted);
+    this.launchTurn(thread, accepted);
+    return { delivery: 'started' };
+  }
+
+  private catalogView() {
+    const { agents, skills } = this.deps.snapshot();
+    return { agents, skills };
+  }
+
+  private launchTurn(thread: StoredThread, newMessage?: AcceptedMessage): void {
     const live = this.liveOf(thread.id);
     live.delivered.clear();
     const prompts = this.deliverAll(thread, 'next-turn');
-    if (newText !== undefined) prompts.push(this.deliverNew(thread, newText));
+    if (newMessage !== undefined) prompts.push(this.deliverNew(thread, newMessage));
     live.writes = this.writes(thread);
     live.interrupted = false;
     if (this.blocked(thread)) {
@@ -317,11 +367,11 @@ export class SessionManager {
     this.start(thread, prompts);
   }
 
-  private addPending(thread: StoredThread, text: string): SendResult {
+  private addPending(thread: StoredThread, accepted: AcceptedMessage): SendResult {
     if (thread.pending.length >= MAX_PENDING_PER_THREAD) throw new SessionError('conflict', 'too many pending messages');
-    const message: PendingMessage = { id: this.newId(), text, createdAt: this.now() };
+    const message: PendingMessage = { id: this.newId(), text: accepted.text, createdAt: this.now(), ...extrasOf(accepted) };
     thread.pending.push(message);
-    this.emit(thread, { type: 'pending.added', pendingId: message.id, text });
+    this.emit(thread, { type: 'pending.added', pendingId: message.id, text: message.text, ...extrasOf(accepted) });
     this.publishThread(thread);
     return { delivery: 'pending', pendingId: message.id };
   }
@@ -333,29 +383,30 @@ export class SessionManager {
     throw new SessionError('not-found', `no pending message ${pendingId}`);
   }
 
-  private deliverNew(thread: StoredThread, text: string): OutgoingMessage {
-    this.emit(thread, { type: 'user.message', text });
-    return { id: this.newId(), prompt: plainPrompt(text) };
+  private deliverNew(thread: StoredThread, accepted: AcceptedMessage): OutgoingMessage {
+    this.emit(thread, { type: 'user.message', text: accepted.text, ...extrasOf(accepted) });
+    return { id: this.newId(), prompt: buildTurnPrompt(accepted, this.catalogView()) };
   }
 
-  private deliverAll(thread: StoredThread, delivery: 'cut-point' | 'next-turn'): OutgoingMessage[] {
+  private deliverAll(thread: StoredThread, delivery: 'cut-point' | 'next-turn', textOnly = false): OutgoingMessage[] {
     const live = this.liveOf(thread.id);
-    const taken = [...thread.pending];
+    const taken = thread.pending.filter((message) => !textOnly || !message.attachments?.length);
     const delivered = taken.map((message) => {
       thread.pending = thread.pending.filter((candidate) => candidate.id !== message.id);
       live.delivered.set(message.id, message);
       live.deliveredIds.add(message.id);
-      this.emit(thread, { type: 'user.message', text: message.text, pendingId: message.id, delivery });
-      return { id: message.id, prompt: plainPrompt(message.text) };
+      const accepted = { text: message.text, attachments: message.attachments ?? [], refs: message.refs ?? { agents: [], skills: [] } };
+      this.emit(thread, { type: 'user.message', text: message.text, pendingId: message.id, delivery, ...extrasOf(accepted) });
+      return { id: message.id, prompt: buildTurnPrompt(accepted, this.catalogView()) };
     });
     if (taken.length > 0) this.publishThread(thread);
     return delivered;
   }
 
-  private collectPending(thread: StoredThread, gen: number, at: 'cut-point' | 'turn-end'): OutgoingMessage[] {
+  private collectPending(thread: StoredThread, gen: number, at: 'cut-point' | 'turn-end', textOnly = false): OutgoingMessage[] {
     const live = this.liveOf(thread.id);
     if (live.interrupted || live.gen !== gen) return [];
-    return this.deliverAll(thread, at === 'cut-point' ? 'cut-point' : 'next-turn');
+    return this.deliverAll(thread, at === 'cut-point' ? 'cut-point' : 'next-turn', textOnly);
   }
 
   private revertPending(thread: StoredThread, gen: number, ids: string[]): void {
@@ -403,7 +454,8 @@ export class SessionManager {
           },
           requestApproval: (request, signal) => this.requestApproval(thread, gen, request, signal),
           judgeTool: (toolName, input, ctx) => this.judgeTool(thread, gen, toolName, input, ctx),
-          collectPending: (at) => this.collectPending(thread, gen, at),
+          readAttachment: (ref: AttachmentRef) => this.deps.attachments.read(ref.sha256, ref.mime).catch(() => null),
+          collectPending: (at, opts) => this.collectPending(thread, gen, at, opts?.textOnly === true),
           revertPending: (ids) => this.revertPending(thread, gen, ids),
         },
       );

@@ -21,10 +21,10 @@ async function handlers(broadcast: (e: ServerEvent) => void = () => {}) {
   const snapshot = (await loadWorkspaceSnapshot(root)).snapshot;
   const store = new ThreadStore(root);
   await store.init();
-  const sessions = new SessionManager({ root, engine: new FakeEngine(1), store, snapshot: () => snapshot, broadcast: () => {} });
-  const auth = new AuthState({}, 'sdd-studio/test');
   const attachments = createAttachmentStore(root);
   await attachments.init();
+  const sessions = new SessionManager({ root, engine: new FakeEngine(1), store, attachments, snapshot: () => snapshot, broadcast: () => {} });
+  const auth = new AuthState({}, 'sdd-studio/test');
   return createHandlers({
     root, auth, bridgeVersion: '0.1.0', sessions, store, attachments,
     watcher: { current: () => snapshot }, runner: new CommandRunner(root, broadcast, () => 'run-1'),

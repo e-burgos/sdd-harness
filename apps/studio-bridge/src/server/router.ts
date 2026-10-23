@@ -64,7 +64,7 @@ export function createHandlers(d: {
           return d.sessions.createThread(command);
         case 'thread.send':
           rejectUnsupportedBody(command);
-          return d.sessions.send(command.threadId, command.text);
+          return d.sessions.send(command.threadId, command);
         case 'thread.pending.edit':
           d.sessions.editPending(command.threadId, command.pendingId, command.text);
           return null;

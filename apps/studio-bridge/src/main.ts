@@ -68,6 +68,7 @@ export async function startBridge(o: {
     const engine = o.engine === 'fake' ? new FakeEngine() : new ClaudeAgentSdkEngine(undefined, () => auth.env());
     const sessions = new SessionManager({
       root,
+      attachments,
       engine,
       store,
       snapshot: () => watcher.current(),
