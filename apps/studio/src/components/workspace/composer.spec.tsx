@@ -209,4 +209,118 @@ describe('Composer (connected)', () => {
       await screen.findByText('2/5 adjuntos');
     });
   });
+
+  describe('mentions and refs', () => {
+    const FEATURES = ['file-search', 'catalog'];
+    const snapshot = {
+      agents: [{ id: 'sdd-planner', description: 'Planner' }, { id: 'sdd-reviewer', description: 'Reviewer' }],
+      skills: [{ id: 'checklist', description: 'Lista', kind: 'skill', path: '.claude/skills/checklist/SKILL.md' }],
+    };
+    function withMentions(request: (cmd: { cmd: string }) => Promise<unknown>, threadId: string | null = 't1') {
+      const ctx = connected('general', threadId, request, FEATURES);
+      act(() => ctx.store.getState().setSnapshot(snapshot as never));
+      return ctx;
+    }
+    const type = (box: HTMLElement, value: string) => fireEvent.change(box, { target: { value, selectionStart: value.length } });
+
+    it('opens the agent menu on @, inserts @id and Enter does not send', async () => {
+      const { client, box } = withMentions(async () => ({ query: '', files: [], truncated: false, source: 'git' }));
+      type(box, '@sdd-pl');
+      expect(await screen.findByRole('option', { name: /@sdd-planner/ })).toBeInTheDocument();
+      expect(box).toHaveAttribute('aria-expanded', 'true');
+      fireEvent.keyDown(box, { key: 'Enter' });
+      expect(box).toHaveValue('@sdd-planner ');
+      expect(client.request).not.toHaveBeenCalledWith(expect.objectContaining({ cmd: 'thread.send' }));
+    });
+
+    it('searches files and inserts the path without the @', async () => {
+      const { client, box } = withMentions(async (c) => (c.cmd === 'workspace.searchFiles' ? { query: 'comp', files: [{ path: 'src/Composer.tsx' }], truncated: false, source: 'git' } : {}));
+      type(box, 'mirá @comp');
+      const option = await screen.findByRole('option', { name: 'src/Composer.tsx' });
+      expect(client.request).toHaveBeenCalledWith({ cmd: 'workspace.searchFiles', query: 'comp', limit: 30 });
+      fireEvent.mouseDown(option);
+      expect(box).toHaveValue('mirá src/Composer.tsx ');
+    });
+
+    it('opens the slash menu with commands and skills and inserts /id', async () => {
+      const { box } = withMentions(async () => ({}));
+      type(box, '/checkl');
+      expect(await screen.findByRole('option', { name: /^\/checklist/ })).toBeInTheDocument();
+      fireEvent.keyDown(box, { key: 'Tab' });
+      expect(box).toHaveValue('/checklist ');
+    });
+
+    it('closes the menu with Escape', async () => {
+      const { box } = withMentions(async () => ({}));
+      type(box, '@sdd');
+      await screen.findByRole('listbox');
+      fireEvent.keyDown(box, { key: 'Escape' });
+      expect(screen.queryByRole('listbox')).toBeNull();
+    });
+
+    it('sends refs for known agents and treats unknown mentions as plain text', async () => {
+      const { client, box } = withMentions(async () => ({ delivery: 'started' }));
+      type(box, 'hola @sdd-planner y @nadie, gracias');
+      fireEvent.keyDown(box, { key: 'Escape' });
+      fireEvent.keyDown(box, { key: 'Enter' });
+      await waitFor(() => expect(client.request).toHaveBeenCalledWith(expect.objectContaining({ cmd: 'thread.send' })));
+      expect(client.request.mock.calls.at(-1)![0]).toMatchObject({
+        text: 'hola @sdd-planner y @nadie, gracias',
+        refs: { agents: ['sdd-planner'], skills: [] },
+      });
+    });
+
+    it('sends a leading catalog skill as text with its ref instead of failing as unknown command', async () => {
+      const { client, box } = withMentions(async () => ({ delivery: 'started' }));
+      type(box, '/checklist el último cambio');
+      fireEvent.keyDown(box, { key: 'Enter' });
+      await waitFor(() => expect(client.request).toHaveBeenCalled());
+      expect(client.request.mock.calls[0]![0]).toMatchObject({ cmd: 'thread.send', text: '/checklist el último cambio', refs: { agents: [], skills: ['checklist'] } });
+    });
+
+    it('keeps reporting unknown slash commands that are not in the catalog', async () => {
+      const { client, box } = withMentions(async () => ({}));
+      type(box, '/nope arg');
+      fireEvent.keyDown(box, { key: 'Enter' });
+      expect(await screen.findByRole('alert')).toHaveTextContent('Comando desconocido: nope');
+      expect(client.request).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('capability gating', () => {
+    const snapshot = { agents: [{ id: 'sdd-planner', description: '' }], skills: [{ id: 'checklist', description: '', kind: 'skill', path: 'p' }] };
+    const mountWith = (features: string[]) => {
+      const ctx = connected('general', 't1', async () => ({ delivery: 'started' }), features);
+      act(() => ctx.store.getState().setSnapshot(snapshot as never));
+      return ctx;
+    };
+
+    it('shows no attach button, drop zone, menus or refs against a bridge without features', async () => {
+      const { client, box } = mountWith([]);
+      expect(screen.queryByRole('button', { name: 'Adjuntar archivo' })).toBeNull();
+      expect(screen.queryByTestId('attachment-input')).toBeNull();
+      fireEvent.change(box, { target: { value: '@sdd-pl', selectionStart: 7 } });
+      expect(screen.queryByRole('listbox')).toBeNull();
+      expect(box).not.toHaveAttribute('role', 'combobox');
+      fireEvent.change(box, { target: { value: '@sdd-planner hola', selectionStart: 17 } });
+      fireEvent.keyDown(box, { key: 'Enter' });
+      await waitFor(() => expect(client.request).toHaveBeenCalled());
+      expect(client.request.mock.calls[0]![0]).toMatchObject({ cmd: 'thread.send', attachments: [], refs: { agents: [], skills: [] } });
+    });
+
+    it('only the announced capabilities appear', () => {
+      const { box } = mountWith(['attachments']);
+      expect(screen.getByRole('button', { name: 'Adjuntar archivo' })).toBeInTheDocument();
+      fireEvent.change(box, { target: { value: '@sdd', selectionStart: 4 } });
+      expect(screen.queryByRole('listbox')).toBeNull();
+    });
+
+    it('hides the agents group without catalog and the files group without file-search', async () => {
+      const { box } = mountWith(['file-search']);
+      fireEvent.change(box, { target: { value: '@sdd', selectionStart: 4 } });
+      expect(screen.queryByText('Agentes')).toBeNull();
+      fireEvent.change(box, { target: { value: '/re', selectionStart: 3 } });
+      expect(screen.queryByText('Skills y prompts')).toBeNull();
+    });
+  });
 });

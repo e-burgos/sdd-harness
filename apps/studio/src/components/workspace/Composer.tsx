@@ -6,28 +6,37 @@ import {
   defaultThreadOptions,
   dmAgentOfChannel,
   specIdOfChannel,
+  FileSearchResult as FileSearchResultSchema,
   SendResult,
+  type SkillSummary,
   TEXT_ATTACHMENT_EXTENSIONS,
   ThreadInfo,
+  type AgentSummary,
   type AttachmentUpload,
   type Effort,
+  type FileSearchResult,
+  type PromptRefs,
   type ModelChoice,
   type PermissionModeChoice,
   type ThreadOptions,
 } from '@sdd-studio/protocol';
-import { useEffect, useMemo, useRef, useState, type ClipboardEvent, type DragEvent, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ClipboardEvent, type DragEvent, type ReactNode } from 'react';
 import { z } from 'zod';
 import { agentMeta } from '@/lib/agents';
 import { blobOfUpload } from '@/lib/attachments/build-draft';
 import { FrameBudgetError } from '@/lib/attachments/frame-budget';
 import { bridgeErrorText } from '@/lib/bridge/error-text';
+import { extractRefs, resolveSlash } from '@/lib/composer-refs';
 import { useT } from '@/lib/i18n/i18n';
+import { applyMention, detectMention, type ActiveMention, type MentionItem } from '@/lib/mention';
 import { parseSlash, SAFE_ARG } from '@/lib/slash';
 import { draftKey } from '@/lib/store/state';
 import { primeAttachmentContent } from '@/lib/use-attachment-content';
 import { useAttachmentDraft } from '@/lib/use-attachment-draft';
+import { useMentionMenu } from '@/lib/use-mention-menu';
 import { useBridge, useStudio } from '../BridgeProvider';
 import { AttachmentTray } from './AttachmentTray';
+import { MentionMenu } from './MentionMenu';
 import { PendingMessages } from './PendingMessages';
 
 const RunResult = z.object({ runId: z.string().min(1) });
@@ -56,7 +65,19 @@ export interface ComposerViewProps {
   hasAttachments?: boolean;
   onFiles?(files: File[]): void;
   attachmentTray?(dragging: boolean): ReactNode;
+  mentions?: MentionConfig;
 }
+
+export interface MentionConfig {
+  agents: readonly AgentSummary[];
+  skills: readonly SkillSummary[];
+  catalogEnabled: boolean;
+  searchFiles: ((query: string, limit: number) => Promise<FileSearchResult>) | null;
+}
+
+const NO_AGENTS: readonly AgentSummary[] = [];
+const NO_SKILLS: readonly SkillSummary[] = [];
+const mentionKey = (m: ActiveMention): string => `${m.trigger}:${m.start}`;
 
 export function ComposerView(p: ComposerViewProps) {
   const { t } = useT();
@@ -68,6 +89,36 @@ export function ComposerView(p: ComposerViewProps) {
   const [pending, setPending] = useState(false);
   const busy = useRef(false);
   const box = useRef<HTMLTextAreaElement>(null);
+  const [cursor, setCursor] = useState(text.length);
+  const [dismissed, setDismissed] = useState<string | null>(null);
+  const nextCursor = useRef<number | null>(null);
+  const mentionsOn = !!p.mentions && (p.mentions.catalogEnabled || p.mentions.searchFiles !== null);
+  const detected = mentionsOn ? detectMention(text, cursor) : null;
+  const mention = detected && mentionKey(detected) !== dismissed ? detected : null;
+  useEffect(() => {
+    if (!detected && dismissed !== null) setDismissed(null);
+  }, [detected, dismissed]);
+  const insertMention = (item: MentionItem) => {
+    if (!mention) return;
+    const next = applyMention(text, mention, cursor, item);
+    nextCursor.current = next.cursor;
+    setCursor(next.cursor);
+    updateText(next.text);
+  };
+  const menu = useMentionMenu({
+    mention,
+    agents: p.mentions?.agents ?? NO_AGENTS,
+    skills: p.mentions?.skills ?? NO_SKILLS,
+    catalogEnabled: p.mentions?.catalogEnabled ?? false,
+    searchFiles: p.mentions?.searchFiles ?? null,
+    onSelect: insertMention,
+    onClose: () => setDismissed(detected ? mentionKey(detected) : null),
+  });
+  useLayoutEffect(() => {
+    if (nextCursor.current === null || !box.current) return;
+    box.current.setSelectionRange(nextCursor.current, nextCursor.current);
+    nextCursor.current = null;
+  }, [text]);
   const wasPending = useRef(false);
   useEffect(() => {
     if (wasPending.current && !pending) box.current?.focus();
@@ -128,17 +179,24 @@ export function ComposerView(p: ComposerViewProps) {
       {p.attachmentTray?.(dragging)}
       <div className="p-3">
         {p.error && <p role="alert" className="mb-2 text-xs text-roseish">{p.error}</p>}
-        <div className="rounded-xl border border-ink-700 bg-ink-900 focus-within:border-accent-500/60">
+        <div className="relative rounded-xl border border-ink-700 bg-ink-900 focus-within:border-accent-500/60">
+          {mentionsOn && <MentionMenu menu={menu} />}
           <textarea
+            {...(mentionsOn ? menu.comboboxProps : {})}
             className="block max-h-48 min-h-[44px] w-full resize-y bg-transparent px-3 py-2 text-sm outline-none"
             aria-label={t('composer.placeholder')}
             placeholder={t('composer.placeholder')}
             ref={box}
             value={text}
             disabled={pending}
-            onChange={(e) => updateText(e.target.value)}
+            onChange={(e) => {
+              setCursor(e.target.selectionStart);
+              updateText(e.target.value);
+            }}
+            onSelect={(e) => setCursor(e.currentTarget.selectionStart)}
             onPaste={onPaste}
             onKeyDown={(e) => {
+              if (mentionsOn && menu.onKeyDown(e)) return;
               if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
                 e.preventDefault();
                 void submit();
@@ -233,6 +291,15 @@ export function Composer({ channelId, threadId, onThreadCreated }: { channelId: 
   const key = draftKey(channelId, threadId);
   const [initialText] = useState(() => store.getState().drafts[key]?.text ?? '');
   const attachmentsEnabled = client.supports('attachments');
+  const catalogEnabled = client.supports('catalog');
+  const fileSearchEnabled = client.supports('file-search');
+  const searchFiles = useMemo(
+    () =>
+      fileSearchEnabled
+        ? async (query: string, limit: number) => FileSearchResultSchema.parse(await client.request({ cmd: 'workspace.searchFiles', query, limit }))
+        : null,
+    [client, fileSearchEnabled],
+  );
   const attachmentDraft = useAttachmentDraft(key);
   const options = threadInfo?.options ?? { ...draft, agent: dmAgent ?? draft.agent };
   const agents = useMemo(() => {
@@ -240,12 +307,11 @@ export function Composer({ channelId, threadId, onThreadCreated }: { channelId: 
     return ids.includes(options.agent) ? ids : [options.agent, ...ids];
   }, [snapshot, options.agent]);
 
-  const send = async (text: string): Promise<boolean> => {
+  const send = async (text: string, refs: PromptRefs = { agents: [], skills: [] }): Promise<boolean> => {
     if (text.length > MAX_MESSAGE) {
       setError(t('composer.tooLong'));
       return false;
     }
-    const refs = { agents: [], skills: [] };
     const command = (attachments: AttachmentUpload[]) =>
       threadId ? { cmd: 'thread.send' as const, threadId, text, attachments, refs } : { cmd: 'thread.create' as const, channelId, options, text, attachments, refs };
     const encoded = attachmentsEnabled ? await attachmentDraft.buildUploads(command) : [];
@@ -264,8 +330,11 @@ export function Composer({ channelId, threadId, onThreadCreated }: { channelId: 
     busy.current = true;
     setError(null);
     try {
-      const action = text === '' ? null : parseSlash(text);
-      if (!action) return await send(text);
+      const catalog = catalogEnabled
+        ? { agentIds: snapshot?.agents.map((a) => a.id) ?? [], skillIds: snapshot?.skills?.map((k) => k.id) ?? [] }
+        : { agentIds: [], skillIds: [] };
+      const action = text === '' || resolveSlash(text, catalog.skillIds) === 'skill' ? null : parseSlash(text);
+      if (!action) return await send(text, extractRefs(text, catalog));
       if (action.kind === 'error') {
         setError(action.reason === 'unknown' ? t('composer.unknownCommand', { name: action.name }) : t('composer.badArgs', { name: action.name }));
         return false;
@@ -311,6 +380,7 @@ export function Composer({ channelId, threadId, onThreadCreated }: { channelId: 
       onTextChange={(text) => store.getState().setDraftText(key, text)}
       queueing={threadInfo ? BUSY_STATUSES.has(threadInfo.status) : false}
       tray={threadId ? <PendingMessages threadId={threadId} /> : null}
+      mentions={{ agents: snapshot?.agents ?? NO_AGENTS, skills: snapshot?.skills ?? NO_SKILLS, catalogEnabled, searchFiles }}
       hasAttachments={attachmentsEnabled && attachmentDraft.attachments.length > 0}
       onFiles={attachmentsEnabled ? (files) => void attachmentDraft.add(files) : undefined}
       attachmentTray={
