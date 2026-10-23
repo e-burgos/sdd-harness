@@ -72,13 +72,17 @@ export function useMentionMenu(o: MentionMenuOptions) {
 
   const groups = useMemo<MentionGroup[]>(() => {
     if (trigger === '@') {
-      const result: MentionGroup[] = [];
-      if (o.searchFiles) result.push({ id: 'files', items: files.files.map((path) => ({ kind: 'file', id: path, path })), undiscovered: false });
-      if (o.catalogEnabled) {
-        const agents = rank(o.agents.map((a) => ({ ...a })), query);
-        result.push({ id: 'agents', items: agents.map((a) => ({ kind: 'agent', id: a.id, description: a.description })), undiscovered: o.agents.length === 0 });
-      }
-      return result;
+      const fileGroup: MentionGroup[] = o.searchFiles
+        ? [{ id: 'files', items: files.files.map((path) => ({ kind: 'file', id: path, path })), undiscovered: false }]
+        : [];
+      if (!o.catalogEnabled) return fileGroup;
+      const agents = rank(o.agents.map((a) => ({ ...a })), query);
+      const agentGroup: MentionGroup = {
+        id: 'agents',
+        items: agents.map((a) => ({ kind: 'agent', id: a.id, description: a.description })),
+        undiscovered: o.agents.length === 0,
+      };
+      return query !== '' && agents.length > 0 ? [agentGroup, ...fileGroup] : [...fileGroup, agentGroup];
     }
     if (trigger === '/') {
       const commands = rank(FIXED_COMMANDS.map((id) => ({ id })), query);

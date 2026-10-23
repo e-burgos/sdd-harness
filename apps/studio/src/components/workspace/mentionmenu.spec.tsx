@@ -64,6 +64,21 @@ describe('MentionMenu @', () => {
     expect(options()).toEqual(['@sdd-reviewerdesc sdd-reviewer']);
   });
 
+  it('puts the agents group above files when the query matches an agent', async () => {
+    const searchFiles = vi.fn(async () => files(['docs/reviewer-notes.md']));
+    render(ui(base({ mention: { trigger: '@', query: 'rev', start: 0 }, searchFiles })));
+    await screen.findByRole('group', { name: 'Archivos' });
+    expect(screen.getAllByRole('group').map((g) => g.firstElementChild?.textContent)).toEqual(['Agentes', 'Archivos']);
+    expect(options()).toEqual(['@sdd-reviewerdesc sdd-reviewer', 'docs/reviewer-notes.md']);
+  });
+
+  it('keeps files above the agents hint when the query matches no agent', async () => {
+    const searchFiles = vi.fn(async () => files(['docs/notes.md']));
+    render(ui(base({ mention: { trigger: '@', query: 'notes', start: 0 }, searchFiles, agents: [] })));
+    await screen.findByRole('group', { name: 'Archivos' });
+    expect(screen.getAllByRole('group').map((g) => g.firstElementChild?.textContent)).toEqual(['Archivos', 'Agentes']);
+  });
+
   it('debounces file search by 120 ms and shows loading then results with the file group', async () => {
     const searchFiles = vi.fn(async () => files(['src/a.ts', 'src/b.ts']));
     render(ui(base({ mention: { trigger: '@', query: 'src', start: 0 }, searchFiles })));

@@ -22,6 +22,7 @@ export interface FileIndexOptions {
   listGit?: (root: string) => Promise<string[] | null>;
 }
 
+const MIN_SUBSEQUENCE_QUERY = 4;
 const GIT_MAX_ENTRIES = 100_000;
 const WALK_MAX_ENTRIES = 50_000;
 const WALK_MAX_DEPTH = 12;
@@ -99,7 +100,7 @@ function tierOf(file: string, query: string): number {
   if (base.startsWith(query)) return 0;
   if (base.includes(query)) return 1;
   if (lower.includes(query)) return 2;
-  return isSubsequence(query, lower) ? 3 : -1;
+  return query.length >= MIN_SUBSEQUENCE_QUERY && isSubsequence(query, lower) ? 3 : -1;
 }
 
 function rank(files: string[], query: string): string[] {

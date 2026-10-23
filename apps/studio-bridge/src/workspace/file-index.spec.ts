@@ -92,11 +92,20 @@ describe('file index ranking and paging', () => {
   const index = () => createFileIndex(root, { listGit: async () => listed });
   beforeEach(() => touchAll(listed));
 
-  it('ranks basename prefix, basename substring, path substring and subsequence, shorter paths first', async () => {
+  it('ranks basename prefix, basename substring and path substring, shorter paths first', async () => {
     const files = ['x/dir-foo/zzz.ts', 'x/foo-bar.ts', 'foobar.ts', 'x/a-foo.ts', 'f/o/o.txt'];
     await touchAll(files);
     const idx = createFileIndex(root, { listGit: async () => files });
-    expect(await pathsOf(idx, 'foo')).toEqual(['foobar.ts', 'x/foo-bar.ts', 'x/a-foo.ts', 'x/dir-foo/zzz.ts', 'f/o/o.txt']);
+    expect(await pathsOf(idx, 'foo')).toEqual(['foobar.ts', 'x/foo-bar.ts', 'x/a-foo.ts', 'x/dir-foo/zzz.ts']);
+  });
+
+  it('matches by subsequence only for queries of four or more characters, after every substring match', async () => {
+    const files = ['src/fobar-x.ts', 'f/o/o/b/a/r.txt', 'src/fo.ts'];
+    await touchAll(files);
+    const idx = createFileIndex(root, { listGit: async () => files });
+    expect(await pathsOf(idx, 'fob')).toEqual(['src/fobar-x.ts']);
+    expect(await pathsOf(idx, 'foba')).toEqual(['src/fobar-x.ts', 'f/o/o/b/a/r.txt']);
+    expect(await pathsOf(idx, 'fbar')).toEqual(['src/fobar-x.ts', 'f/o/o/b/a/r.txt']);
   });
 
   it('is case insensitive and empty queries return nothing', async () => {
