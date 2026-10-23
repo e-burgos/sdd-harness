@@ -1,0 +1,22 @@
+{
+  "$schema": "./schemas/global.schema.json",
+  "project": "sdd-harness-workspace",
+  "description": "Monorepo del CLI @e-burgos/sdd-harness: bootstrapea repos listos para agentes de IA con la metodología SDD e incluye el sitio de documentación y SDD Studio (puente local + web).",
+  "version": "0.1.0",
+  "completed_modules": [],
+  "in_progress_modules": [],
+  "pending_modules": [],
+  "monorepo": {
+    "tool": "none (multi-app repo)",
+    "package_manager": "pnpm",
+    "apps": {
+      "cli": "apps/cli — app",
+      "documentation": "apps/documentation — react",
+      "studio": "apps/studio — nextjs",
+      "studio-bridge": "apps/studio-bridge — app"
+    },
+    "libs": {
+      "studio-protocol": "libs/studio-protocol — lib"
+    }
+  }
+}

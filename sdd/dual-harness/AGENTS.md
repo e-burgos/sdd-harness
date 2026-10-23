@@ -1,0 +1,596 @@
+# Proyecto SDD
+
+> **Nombre y descripción del proyecto:** `sdd/global.json` → `project` / `description`.
+> Es la única fuente de verdad. Este archivo nunca los hardcodea: `sdd/` tiene que poder
+> copiarse a otro repo sin editar nada. `pnpm sdd:validate` falla si el nombre se filtra.
+
+Este proyecto utiliza la metodología Spec-Driven Development (SDD).
+Toda la información del contexto general, stack tecnológico y reglas de desarrollo se encuentra unificada en:
+👉 **[sdd/context/context_prompt.md](sdd/context/context_prompt.md)**
+
+Por favor, lee este archivo antes de realizar cualquier cambio en el repositorio.
+
+---
+
+<!-- regla-cero:start -->
+## ⓪ REGLA CERO — modelo, esfuerzo y contexto (INVIOLABLE, antes de cualquier acción)
+
+> [!IMPORTANT]
+> **Antes de CUALQUIER acción de una tarea nueva —incluida la primera de la sesión, antes de
+> verificar el workspace, leer archivos o editar— escribí UNA línea visible:**
+>
+> `Regla cero → tier: <económico|estándar|alto|máximo> · modelo: <…> · esfuerzo: <…>`
+>
+> Sin esa línea no se empieza. Tabla de tiers y detalle: sección «⚙️ Selección de modelo y
+> esfuerzo» (anexo de esta regla, más abajo).
+
+- **Agentes y subagentes:** los agentes de `.github/agents/*.agent.md` llevan `model:` pinneado por
+  rol; declarales tier + modelo + esfuerzo en la misma línea (Copilot CLI: `--model` / `/model` y
+  `--reasoning-effort`; en chat/coding agent verificá el modelo del picker antes de ejecutar).
+- **Modelo activo:** si es MÁS caro que el tier que pide el trabajo, delegalo a un agente más
+  barato o pedile al usuario cambiar el picker; nunca quemes en silencio el tier caro. Si es MÁS
+  barato que el necesario, avisá y escalá.
+- **Contexto mínimo:** si existe `graphify-out/graph.json`, consultalo antes de grep/lecturas a
+  ciegas; no releas lo ya establecido en la sesión ni narres opciones que no vas a seguir.
+<!-- regla-cero:end -->
+
+---
+
+## 🚀 Estructura del workspace — skill `init-nx-workspace` (AL INICIAR SESIÓN)
+
+> [!IMPORTANT]
+> **Primero la regla cero (⓪, arriba): su línea de declaración va antes que cualquier acción,
+> incluido este chequeo.** Después, antes de la primera acción de trabajo, verificá que el
+> workspace esté montado. Es un solo comando y define si podés trabajar o si primero hay que inicializar:
+>
+> ```bash
+> ls nx.json pnpm-workspace.yaml .npmrc .nxignore 2>&1; ls package-lock.json yarn.lock 2>/dev/null
+> ```
+>
+> **Si falta alguno de los cuatro primeros, o si aparece un lockfile de npm/yarn → invocá la skill
+> `init-nx-workspace` ANTES de cualquier otra cosa** y seguila hasta su checklist de cierre. Un
+> workspace desalineado falla de formas silenciosas y caras: tipos que solo andan después de
+> `build`, libs que pnpm no linkea, `nx run-many` reventando en CI.
+>
+> Si los cuatro están y no hay lockfile rival, el workspace está sano: seguí con la tarea sin
+> leer la skill (no gastes contexto en ella).
+
+Invariantes que la skill garantiza y que **ningún cambio puede romper**:
+
+- **pnpm es el único package manager.** `packageManager` pinneado en `package.json`; jamás
+  `npm install` ni `yarn` en este repo — generan un lockfile rival y Nx infiere el PM del lockfile.
+- **Los proyectos viven en `apps/`, `libs/` y `tools/`** — nunca en `packages/`. Los globs de
+  `pnpm-workspace.yaml` y todo el sistema SDD asumen eso.
+- **Si el repo usa el TS solution setup (`customConditions` en `tsconfig.base.json`), ese valor
+  === `name` del `package.json` raíz.** Nx lo deriva literal de ahí; si divergen, TypeScript
+  resuelve a `dist` en vez de a `src`. El template del kit (`sdd/templates/nx-workspace/`) usa el
+  wiring legacy `paths` y no declara `customConditions`: ahí no aplica. `pnpm sdd:validate` avisa
+  si divergen.
+- **`.nxignore` contiene `sdd/templates`** — son blueprints, no proyectos Nx.
+- **Crear apps/libs es otra skill:** `scaffold-nx`, y siempre dentro de un ciclo SDD.
+
+---
+
+## 🔎 Búsqueda y exploración del repo (graphify — OPCIONAL)
+
+> [!NOTE]
+> graphify indexa el repo como grafo de conocimiento en `graphify-out/` (código vía AST +
+> capa semántica de docs). Es **opt-in por dev**: gitignoreado, no viaja con el repo y
+> **nada del workflow depende de él**.
+
+**Si `graphify-out/graph.json` existe**, consultalo antes de `grep`/`Read` a ciegas o de
+lanzar un agente de exploración — es la opción más barata en tokens: `graphify query
+"<pregunta>"` (`--budget N` acota), `graphify explain "<nodo>"` **antes de tocarlo**,
+`graphify path "<A>" "<B>"`, `graphify affected "<nodo>"`; `graphify-out/GRAPH_REPORT.md`
+tiene God Nodes y comunidades.
+
+**Si no existe**, no lo menciones ni intentes construirlo por tu cuenta (consume cupo de API
+del dev). Instalación, backend gratuito, mantenimiento al cerrar cada unidad de trabajo y sus
+dos trampas silenciosas (`set -a && source .env && set +a`; modelos "lite" que devuelven un
+grafo con 0 edges): `sdd/skills/setup-graphify/SKILL.md`. Si el modelo gratuito falla o se
+agotó el cupo: avisá al dev y dejá la actualización para después — nunca escales a un modelo
+pago sin autorización explícita.
+
+## 🪶 rtk — salida de comandos comprimida (ACTIVO POR DEFECTO)
+
+[rtk](https://github.com/rtk-ai/rtk) comprime la salida de los comandos de shell (`git`,
+`pnpm`, `vitest`, `tsc`, `ls`, `grep`…) **antes de que la leas**: 60–90% menos texto; tus
+herramientas de lectura de archivos quedan intactas. Activo desde el kit v0.12.0 y
+transparente: pedís `git status` y se ejecuta `rtk git status`.
+
+- **Nunca prefijes comandos con `rtk` a mano** — el puente ya lo hace.
+- Si la salida comprimida te esconde algo que necesitás: `rtk proxy <cmd>` da la salida cruda.
+- **Nunca apagues rtk por tu cuenta**: el interruptor es del dev (`sdd/tools.json`;
+  `pnpm sdd:rtk -- --status | --enable | --disable`; el sdd-steward lo opera a pedido).
+- `rtk gain --project` imprime el ahorro acumulado (estimación, no facturación). Es best
+  effort y por máquina: sin binario o con hook roto el comando pasa **sin comprimir** y nunca
+  se bloquea.
+
+## ⚙️ Selección de modelo y esfuerzo — anexo de la REGLA CERO (OBLIGATORIO — optimización de tokens/contexto)
+
+> [!IMPORTANT]
+> **Antes de encarar CUALQUIER tarea nueva —sin importar con qué proveedor o modelo
+> estés corriendo en ese momento— decidí explícitamente qué tier de modelo y qué nivel
+> de esfuerzo/razonamiento conviene, para el trabajo propio y para CADA
+> subagente/workflow que dispares.** El objetivo es gastar el mínimo de tokens y
+> contexto sin bajar la calidad del resultado. No arranques a ejecutar sin haber hecho
+> esta decisión. Esta regla aplica con la misma fuerza a los tres proveedores del
+> arnés: **Claude (Claude Code), Gemini (Antigravity / Gemini CLI) y GitHub Copilot**.
+
+**Regla base:** elegí el tier más barato que aún cumple la tarea con calidad. Escalá
+sólo cuando la tarea lo justifique (ambigüedad, razonamiento cross-cutting, riesgo de
+error alto). Ante la duda entre dos tiers, probá el más barato primero y escalá si el
+resultado no alcanza.
+
+**Tabla canónica de tiers por proveedor** (única fuente de equivalencias — skills y
+agentes SDD referencian estos tiers abstractos, no modelos concretos):
+
+| Tier          | Tipo de tarea                                                                                                    | Claude (`model`/`effort`) | Gemini (modelo/`thinking`)        | Copilot (picker/agents)             |
+| ------------- | ---------------------------------------------------------------------------------------------------------------- | ------------------------- | --------------------------------- | ----------------------------------- |
+| **económico** | Lectura de estado, formateo, edición mecánica, respuestas cortas, grep dirigido, fan-out de lectores             | `haiku` / `low`–`medium`  | Flash-Lite o Flash / `minimal`–`low` | modelo económico (ej. `gpt-5-mini`) |
+| **estándar**  | Implementación de una task acotada, tests, edición multi-archivo simple, la mayoría de subagentes ejecutores     | `sonnet` / `medium`       | Flash / `medium`                  | modelo estándar (ej. `claude-sonnet`) |
+| **alto**      | Arquitectura, decisiones cross-cutting, debugging complejo, orquestación SDD, revisión final del ciclo, síntesis | `opus` / `high`–`xhigh`   | Pro / `low`–`high`                | modelo alto (ej. `claude-opus`)     |
+| **máximo**    | Sólo el paso más difícil (verify adversarial, judge, diseño crítico)                                             | `fable` / `xhigh`–`max`   | Pro / `high`                      | el tier más alto habilitado         |
+
+**Enforcement por proveedor (cómo se cumple la regla en cada arnés):**
+
+- **Claude Code (programático):** pasá `model` y `effort` explícitos en cada subagente
+  (`Agent`) y workflow (`Workflow`), acordes a la tabla. Un fan-out de
+  lectores/mecánicos va en económico; la verificación o síntesis en alto. Nunca
+  dispares todo un fleet en el tier más caro por defecto.
+- **GitHub Copilot (pinning + flags):** los agentes SDD (`.github/agents/*.agent.md`)
+  llevan `model:` pinneado según su rol. El kit lo shippea con alias Claude
+  (`opus`/`sonnet`); si tu equipo trabaja en Copilot, mapealo UNA vez al modelo del
+  MISMO tier disponible en tu org editando `sdd/agents/*.agent.md` (nunca el symlink)
+  — después no lo cambies ad-hoc. En Copilot CLI: `--model` / `/model` y
+  `--reasoning-effort` acordes al tier; en chat/coding agent, verificá el modelo del
+  picker antes de ejecutar.
+- **Antigravity (dropdown del usuario):** el agente no puede cambiar el modelo por su
+  cuenta. ANTES de ejecutar, compará el modelo activo del dropdown con el tier
+  requerido: si una tarea económica está por correr en Pro/`high`, o una de tier alto
+  en Flash, **avisá y pedí al usuario el cambio de modelo o de thinking level** — no
+  ejecutes en silencio con el tier equivocado.
+- **Gemini CLI:** elegí el modelo por sesión/flag acorde al tier; el fan-out de
+  lectores/mecánicos va en subagentes con modelo económico y la síntesis en Pro.
+- **Agentes del ciclo SDD (cualquier proveedor):** implementores → **estándar**;
+  orquestador, arquitecto y reviewer → **alto** (razonamiento y visión global);
+  funcional/planner → **estándar** salvo spec compleja.
+- **Trabajo propio (main loop):** si la tarea es trivial, bajá el esfuerzo; no quemes
+  contexto releyendo lo ya establecido ni narrando opciones que no vas a seguir.
+- **Si el repo tiene grafo de graphify** (regla anterior, opcional), consultalo antes de
+  pagar lecturas a ciegas: es parte de la misma optimización de tokens.
+- **Registro de consumo por agente: obligatorio.** Todo agente que consuma tokens en un
+  flujo SDD o un fix registra `provider_model`, `effort`, `tokens_in`/`tokens_out`, `source` y
+  `approx` al **cerrar su unidad de trabajo** (task → `tasks.json → usage`; documento y ciclo
+  → `cycle.json → metrics.usage.by_agent[]`; fix → `fixes.json → usage`). Sin ese registro
+  la unidad no está cerrada y `pnpm sdd:validate` lo marca.
+
+**Contrato completo de telemetría (capa 2 — se lee al cerrar, no al abrir la sesión):**
+`sdd/dual-harness/rules/sdd-model-budget.md` — quién escribe qué y cuándo, la tabla de
+fuentes por arnés (`agent-usage-notification`, `session-report`, `stats-command`,
+`declared-estimate`) y las reglas del validador. Alimenta la vista **Costos** del visor
+(`pnpm sdd:docs`); tarifas en `sdd/pricing.json`.
+
+## ✍️ Código sin comentarios (OBLIGATORIO — el código se explica solo)
+
+> [!IMPORTANT]
+> **No escribir comentarios en el código de implementación.** Hoy se genera más
+> comentario que código, y es gasto doble: tokens al escribirlos y tokens cada vez que
+> un humano o un agente lee el archivo. En este repo la documentación NO vive en
+> comentarios: vive en los documentos SDD (spec, functional, planner, architect,
+> constitutions) y, si está disponible, en el grafo de graphify. Un comentario que
+> repite lo que el SDD ya documenta es duplicación que además se desactualiza.
+
+**Cómo lograr cero comentarios sin perder claridad:**
+
+- **Nombres declarativos**: cada función/método/variable dice exactamente qué hace, sin
+  margen a segunda interpretación — `propagateAccountStatusToTradingApi()` en vez de
+  `process()` + comentario explicando.
+- **Modularizar**: funciones cortas, de una sola responsabilidad. Una función larga con
+  bloques comentados (`// paso 1: ...`) son en realidad N funciones con nombre propio.
+- **El impulso de comentar es señal de refactor**: si sentís que una línea necesita
+  explicación, extraé una función cuyo nombre sea esa explicación.
+- Prohibido: comentarios narrativos, "qué hace la línea siguiente", código muerto
+  comentado, y `// TODO` — un TODO real es una task o un fix registrado en SDD, no un
+  comentario.
+
+**Únicas excepciones permitidas** (una línea, en inglés):
+
+- Una restricción que el código no puede expresar: workaround con link al issue
+  externo, o regla de negocio contra-intuitiva con referencia a su spec
+  (ej. `// ack 200 only after confirmed propagation so the provider retries (spec-jdoe-001)`).
+- Anotaciones exigidas por framework/tooling (Swagger/OpenAPI, Lombok, decorators) y
+  Javadoc/JSDoc público **solo si el linter del subproyecto lo exige** — eso no es un
+  comentario narrativo.
+
+**Regla espejo en review:** un PR que agrega comentarios fuera de estas excepciones
+recibe request de cambios; el sdd-reviewer lo chequea al cerrar el ciclo.
+
+## 🧩 Contexto de subproyectos: actualizaciones ADITIVAS (anti merge-conflict)
+
+> [!IMPORTANT]
+> `sdd/context/[apps|libs|tools]/[nombre]/constitution.md` y `context_prompt.md` son la
+> fuente de verdad técnica de cada subproyecto y los archivos más disputados del repo. Por
+> eso **durante un ciclo o fix nunca se editan directamente**: se escribe un fragmento
+> aditivo (patrón changesets) y un solo actor los consolida después.
+
+1. **Escribir** (quien cierra el ciclo o fix): `updates/YYYY-MM-DD-[spec-id]-cycle-[XX].md`
+   (fixes: `YYYY-MM-DD-fix-[gh-user]-[seq].md`) — solo el delta, cuatro secciones: Estado ·
+   Estructura · Dependencias · Qué sigue. Único por construcción: dos devs jamás chocan.
+   Template: `sdd/skills/sdd-file-structure/SKILL.md` §3.7.
+2. **Leer** (cualquier agente): contexto vigente = archivos base + `updates/*.md` en orden de
+   nombre. La línea `> Última actualización:` del base **no** es la verdad si hay fragmentos.
+3. **Consolidar** (un solo actor, nunca en paralelo con un ciclo abierto sobre ese subproyecto):
+   el orquestador al abrir el próximo ciclo, o el reviewer si se acumulan ≥5 fragmentos
+   (`pnpm sdd:validate` lo avisa), funde los fragmentos en los base (lo obsoleto se reemplaza,
+   nunca se acumula), actualiza `> Última actualización:`, **borra los fragmentos** y commitea
+   aparte (`chore(sdd): consolidate context updates for [nombre]`).
+4. **Contexto global** (`sdd/context/constitution.md` y `context_prompt.md`): tablas de
+   referencia — tocar **solo la fila del subproyecto propio**, jamás reformatear la tabla.
+
+## 🧠 MEMORIA GATE — autoaprendizaje entre sesiones (lessons + journal)
+
+> [!IMPORTANT]
+> El contexto registra **qué es** el sistema; la memoria registra **qué aprendimos**
+> trabajándolo. `sdd/memory/` viaja con git y sirve a cualquier agente, máquina o CI.
+
+- **Leer** al iniciar toda sesión: `sdd/memory/lessons.md` completo (lecciones destiladas,
+  cap duro 120 líneas — la única memoria que se carga siempre). `sdd/memory/journal/` jamás se
+  lee entero: grep dirigido cuando una lección remite a su detalle.
+- **Escribir** al cerrar un ciclo o fix, **solo si hubo lección real**:
+  `sdd/memory/journal/YYYY-MM-DD-[spec-id]-cycle-[XX].md` (fixes:
+  `YYYY-MM-DD-fix-[gh-user]-[seq].md`) con tres secciones: Qué pasó · Lección (1 línea) ·
+  Costo evitable. **Filtro anti-ruido:** si no cambiaría el comportamiento de un agente
+  futuro (lo obvio, lo ya documentado, el detalle del ciclo), no se escribe.
+- **Destilar** (un solo actor, nunca en paralelo con un ciclo): con ≥5 entradas
+  (`sdd:validate` avisa) el orquestador, al abrir el próximo ciclo, funde cada una en una
+  línea de `lessons.md` (Proceso / Técnica / Costo), actualiza `> Última destilación:`, borra
+  las destiladas y commitea aparte (`chore(sdd): distill memory journal into lessons`).
+  Lección específica de un subproyecto → a su `constitution.md` vía consolidación 🧩. Durante
+  ciclos/fixes `lessons.md` **no se edita**.
+
+---
+
+## ⛔ SPEC GATE — REGLA GLOBAL INVIOLABLE
+
+> [!IMPORTANT]
+> **Fuente canónica del gate: `sdd/dual-harness/rules/sdd-gates.md`.** Este archivo no
+> repite la checklist — la responde un comando. Sin spec no hay ciclo; sin ciclo no hay
+> implementación.
+
+**Invariantes (todo flow, todo perfil):** spec registrada en `specs/index.json` · módulo en
+`global.json` · `cycle.json` con `status: "in-progress"` **antes de la primera línea de
+código** · `tasks.json` con tasks, y ninguna task `done` sin `usage`.
+
+El gate tiene **dos momentos**, y los dos se contestan con un script (determinista, cero
+lecturas a mano):
+
+```bash
+pnpm sdd:gate <spec-id|slug>            # GATE A — ¿se puede abrir un ciclo? (orquestador)
+pnpm sdd:gate <spec-id|slug> cycle-XX   # GATE B — ¿se puede escribir código? (quien implementa)
+```
+
+`BLOCKED` → detener y completar lo que el script señala. `APPROVED` en A → el orquestador
+decide el **flow** del ciclo y lo escribe en `cycle.json`/`tasks.json`; en B → implementar.
+
+**Flow del ciclo (la forma del gate, no su fondo):** `full` (brief + functional + planner +
+architect, un rol por documento) · `reduced` (refactor sin historias) · `lite` (**un solo
+actor**, `plan.md` reemplaza a los cuatro documentos). Lo fija `sdd/global.json → profile`
+(`team` → full, `solo` → lite) o el prefijo `[LITE]`/`[FULL]` del pedido; contratos que otro
+subproyecto consume vuelven a `full`. Detalle, excepciones y reglas de `lite`: rule
+`sdd-gates.md` § Flow. El perfil lo cambia el **sdd-steward** a pedido del dev.
+
+**Raíz del ciclo (whitelist):** `brief.yaml`, `functional.md`, `planner.md`, `architect.md`,
+`plan.md`, `cycle.json`, `tasks.json` y `artifacts/`. Naming (`spec-[gh-user]-[NNN]-[slug]`,
+`cycle-XX` por spec, `TASK-NNN` por ciclo, fixes): `sdd/skills/sdd-file-structure/SKILL.md` §2.
+
+## ⛔ TIPADO ESTRICTO DE REGISTROS SDD (INVIOLABLE)
+
+Todo `*.json` de `sdd/` tiene JSON Schema estricto en `sdd/schemas/` y declara `$schema`.
+**Antes de escribir un registro, leer su schema** (`sdd/skills/sdd-data-schemas/SKILL.md`
+tiene el campo a campo). **Después de escribir:** `pnpm sdd:validate` (todos los registros +
+reglas cruzadas) y `pnpm sdd:rebuild-tasks-index` (regenera el índice `sdd/tasks.json`; las
+tasks canónicas viven en el `tasks.json` de cada ciclo — nunca editar el índice a mano). Un
+commit con `pnpm sdd:validate` en rojo es inválido: el mismo check corre en CI
+(`.github/workflows/sdd-validate.yml`) y es paso obligatorio del sdd-reviewer.
+
+> [!NOTE]
+> Si `NX_WORKSPACE_ROOT_PATH` está definida y no apunta al cwd, cualquier `nx …`
+> (`pnpm sdd:validate`, `nx run-many -t lint test build`, etc.) corre contra OTRO repo sin
+> ningún error visible — desactivá la variable o verificá `echo $NX_WORKSPACE_ROOT_PATH`
+> antes de correr `nx` o los scripts `sdd:*`.
+
+## ⛔ CONTEXTO GATE — REGLA GLOBAL DE CIERRE (INVIOLABLE)
+
+**Al cerrar CUALQUIER ciclo** (o fix que cambió estructura/patrones/dependencias), quien
+cierra deja el contexto actualizado ANTES de escribir `status: "completed"`:
+
+1. Fragmento aditivo del subproyecto en `updates/` (sección 🧩 — los archivos base **no** se
+   editan durante el ciclo).
+2. `sdd/context/constitution.md` → solo la fila del subproyecto en la tabla-snapshot.
+3. `sdd/context/context_prompt.md` → fila nueva solo si se creó una app/lib/tool.
+
+`cycle.json` **no puede quedar `completed`** con el contexto desactualizado; `pnpm sdd:validate`
+exige el fragmento del ciclo. El `cycle.json` se crea al **iniciar** (`status: "in-progress"`,
+orquestador) y solo el reviewer lo pasa a `"completed"`. Reglas completas:
+`sdd/dual-harness/rules/sdd-gates.md` y `sdd/agents/sdd-reviewer.agent.md`.
+
+---
+
+## 🔧 FIX GATE — Bypass controlado del SPEC GATE
+
+Cuando el problema **no puede esperar un ciclo SDD completo**, usar uno de estos prefijos en el mensaje al orquestador:
+
+| Prefijo         | Cuándo usarlo                                               |
+| --------------- | ----------------------------------------------------------- |
+| `[HOTFIX]`      | Producción bloqueada, regresión crítica, dato corrupto      |
+| `[BUGFIX]`      | Error confirmado en desarrollo o testing                    |
+| `[FIX]`         | Alias genérico — el orquestador pedirá clasificar           |
+| `[IMPROVEMENT]` | Mejora menor (UX, wording, performance puntual) out-of-spec |
+
+**El orquestador ejecutará `sdd/prompts/hotfix-bypass-gate.prompt.md`** que reemplaza el SPEC GATE con un proceso ligero:
+
+1. Recolecta justificación y datos del fix
+2. Registra el fix en `sdd/fixes.json` con ID correlativo (FIX-001, FIX-002…)
+3. Crea o actualiza `sdd/specs/{spec-id}/fixes/fix-[gh-user]-[spec-NNN]-[seq].md` (o `sdd/fixes/` si es repo-level)
+4. Autoriza al implementador a proceder
+
+> ⚠️ El FIX GATE **no elimina la trazabilidad** — la simplifica. Todo fix queda registrado y el sdd-reviewer lo evalúa al cerrar el ciclo.
+
+> Con `profile: solo` (rule `sdd-gates.md` § FIX GATE) no hay cuestionario: el actor completa
+> `fixes.json` desde el pedido, el documento del fix usa el template mínimo y la elegibilidad
+> se reduce a "no crea contratos ni entidades nuevas". Registro, `usage` y validación siguen.
+
+- Registry de fixes: `sdd/fixes.json`
+- Prompt FIX GATE: `sdd/prompts/hotfix-bypass-gate.prompt.md`
+
+---
+
+<!-- nx configuration start-->
+<!-- Leave the start & end comments to automatically receive updates. -->
+
+## General Guidelines for working with Nx
+
+- For navigating/exploring the workspace, invoke the `nx-workspace` skill first - it has patterns for querying projects, targets, and dependencies
+- When running tasks (for example build, lint, test, e2e, etc.), always prefer running the task through `nx` (i.e. `nx run`, `nx run-many`, `nx affected`) instead of using the underlying tooling directly
+- Prefix nx commands with the workspace's package manager (e.g., `pnpm nx build`, `npm exec nx test`) - avoids using globally installed CLI
+- You have access to the Nx MCP server and its tools, use them to help the user
+- For Nx plugin best practices, check `node_modules/@nx/<plugin>/PLUGIN.md`. Not all plugins have this file - proceed without it if unavailable.
+- NEVER guess CLI flags - always check nx_docs or `--help` first when unsure
+
+## Scaffolding & Generators
+
+- For scaffolding tasks (creating apps, libs, project structure, setup), ALWAYS invoke the `nx-generate` skill FIRST before exploring or calling MCP tools
+
+## When to use nx_docs
+
+- USE for: advanced config options, unfamiliar flags, migration guides, plugin configuration, edge cases
+- DON'T USE for: basic generator syntax (`nx g @nx/react:app`), standard commands, things you already know
+- The `nx-generate` skill handles generator discovery internally - don't call nx_docs just to look up generator syntax
+
+<!-- nx configuration end-->
+
+
+---
+
+## Instrucciones previas del proyecto (absorbidas al instalar SDD)
+
+# AGENTS.md — @e-burgos/sdd-harness
+
+> Arnés para agentes AI que trabajen en **este repo** (la CLI). Es la herramienta que instala
+> el kit SDD en otros repos y, además, lo usa sobre sí misma (ver «Este repo usa el kit SDD»).
+> Fuente única de las reglas de este proyecto: esta sección; `CLAUDE.md` apunta acá.
+
+## Este repo usa el kit SDD (dogfooding)
+
+El kit está instalado acá (`sdd/`) para trabajar este proyecto con SPEC GATE, FIX GATE, contextos y memoria como en cualquier repo. Vale todo lo de arriba, con estas precisiones:
+
+- **No hay Nx, a propósito.** Es un workspace pnpm multi-app (`apps/*`, `libs/*`). El chequeo de inicio de la skill `init-nx-workspace` no aplica: que falten `nx.json`, `.nxignore` y `.npmrc` es lo esperado. Un workspace sano acá es `pnpm-workspace.yaml` presente y ningún `package-lock.json`/`yarn.lock`. Las tareas corren con `pnpm --filter <paquete> <script>` o `pnpm build|test|typecheck`; jamás `pnpm nx`.
+- **Dos copias del kit, no confundirlas.** `sdd/` es la instalación local que gobierna el trabajo en este repo. `apps/cli/templates/sdd/` es el kit publicado a npm. Para cambiar el producto se edita `apps/cli/templates/sdd/` y se refresca la copia local con `harness update sdd`; nunca se arregla el producto editando `sdd/`.
+- **Todo cambio al código pasa por SDD.** Feature nueva: ciclo (`pnpm sdd:gate`). Cambio puntual: FIX GATE (`sdd/fixes.json`). Cambios en `apps/cli/templates/sdd/` o en generadores afectan a los repos de los usuarios: ciclo con flow `full`.
+- **Contextos por subproyecto** en `sdd/context/{apps,libs}/<nombre>/`: `cli`, `documentation`, `studio`, `studio-bridge` y `studio-protocol`. Leer el global y el del subproyecto antes de trabajar.
+- `pnpm sdd:validate` corre en CI (job `sdd-validate`) y tiene que quedar en verde antes de cada commit.
+
+## Qué es este repo
+
+CLI (`harness`) que genera repos AI-agent-ready con la metodología SDD, en **tres modos**:
+
+| Modo             | Comando                     | Resultado                                                    |
+| ---------------- | --------------------------- | ------------------------------------------------------------ |
+| **Nx monorepo**  | `harness init` (modo nx)    | Workspace Nx (`apps/`, `libs/`, `tools/`) + sistema SDD       |
+| **Standalone**   | `harness init --standalone` | UNA app con el código en la raíz del repo (sin Nx) + SDD      |
+| **SDD harness**  | `harness configure sdd`     | Solo el sistema SDD + arnés dual sobre un proyecto existente  |
+
+Stack: TypeScript ESM, citty (CLI), @clack/prompts, fs-extra, esbuild (build), vitest.
+Package manager: **pnpm**.
+
+## Reglas duras (violarlas rompe el producto)
+
+1. **`apps/cli/templates/sdd/` es el kit SDD portable canónico y se copia VERBATIM.** No renderizar
+   templates sobre él (no EJS — se eliminó a propósito), no hardcodear nombres de proyecto en
+   ningún archivo del kit: `sdd/global.json` es la única fuente del nombre/descripción y
+   `sdd/scripts/validate-sdd.mjs` **falla** si se filtran (regla de portabilidad).
+2. **El kit es su propia fuente de verdad.** No existe "upstream": los SDD de los repos YPF
+   (`inv-trading`, `front-ypf-bo-mfe`) evolucionan por separado — no sincronizar en ninguna
+   dirección. Para actualizar el kit: editar `apps/cli/templates/sdd/` y correr la suite.
+3. **Los schemas del kit son estrictos** (`additionalProperties: false`). Todo JSON que escriba
+   un generador (`global.json`, `specs/index.json`, etc.) debe matchear la forma exacta —
+   verificar contra `apps/cli/templates/sdd/schemas/*.schema.json` antes de cambiar un generador.
+4. **Blueprints y renombre de tokens** (`apps/cli/src/utils/blueprint.ts`): `java-api` usa
+   `example-api` / `exampleapi` / `Exampleapi`; `react-app` usa `example-app`; `ts-lib` usa
+   `shared-lib`. El renombre aplica a paths Y contenidos. Si agregás un blueprint, respetá el
+   patrón y probalo con generación real.
+5. **Ejecutores Nx**: `@nx/vite:test` NO existe en Nx 23 (ya rompió react-app y hono) — para
+   targets de test usar `nx:run-commands` → `vitest run --passWithNoTests`. Spring Boot integra
+   por **Maven** vía `nx:run-commands` (nada de Gradle). El kit usa el wiring legacy `paths` en
+   `tsconfig.base.json` — no mezclar con TS solution setup. **NestJS** buildea por inferencia
+   (`@nx/webpack/plugin` en `nx.json` + `apps/<name>/webpack.config.js` con `NxAppWebpackPlugin`;
+   el executor `@nx/webpack:webpack` está deprecado y sin `webpackConfig` no compila) y testea
+   con `@nx/jest:jest` sobre `jest.config.js` **CommonJS** (un `jest.config.ts` exige `ts-node`,
+   que el workspace no instala) + `jest.preset.js` raíz. Cualquier cambio a una plantilla de app
+   se cierra con una generación real y `nx run-many -t lint test build` en verde.
+6. **Skills en `SKILL.md` MAYÚSCULA** (estándar Agent Skills). Claude Code sólo descubre
+   `.claude/skills/*/SKILL.md`; en Linux el case es exacto y `skill.md` en minúscula deja las
+   skills invisibles para el agente (pasó en instalaciones reales). Todo código que resuelva
+   el archivo (catálogo, visor, scripts) debe usar `SKILL.md` — git es la autoridad del case.
+7. **Convención standalone**: el repo generado se registra como app lógica única `apps/<nombre>`
+   en los registros SDD (los schemas exigen ese patrón; el validador no chequea que exista en
+   disco). No "arreglar" esto cambiando schemas.
+8. **En modo nx, `.nxignore` con `sdd/templates` es obligatorio** — sin él Nx registra los
+   blueprints como proyectos y CI explota.
+9. **`configure sdd` sobre repos existentes nunca destruye**: los `AGENTS.md`/`CLAUDE.md`
+   previos se absorben en `sdd/dual-harness/` antes de symlink-ear; el `package.json` se
+   mergea, no se pisa.
+10. **`update sdd` jamás toca datos del usuario.** El baseline de hashes vive en `sdd/kit.json`
+    (lo escribe cada install — no borrarlo del flujo). La frontera kit/data/generado está en
+    `apps/cli/src/generators/kit-manifest.ts`: si agregás un archivo al kit que acumula datos
+    del usuario, registralo ahí como data o el update lo va a pisar.
+
+## Workflow de desarrollo
+
+```bash
+pnpm install
+npm run build        # esbuild bundle + .d.ts → dist/
+npm run typecheck    # tsc lib + spec
+npm test             # suite completa por paquete (cli con integración real, studio, protocol)
+```
+
+- La suite de integración corre `setup-agents.sh` y `validate-sdd.mjs` **de verdad** sobre
+  workspaces generados en tmpdir — si tocás generadores o el kit, tiene que quedar verde.
+- **Antes de declarar terminado un cambio de generador: generación real.** Las pruebas E2E van
+  en `examples/` (gitignoreado): `test-sdd-nx-workspace`, `test-sdd-standalone`,
+  `test-sdd-harness`. Así se encontraron los 6 bugs de v0.3.0 que los unit tests no veían.
+  Hay además un E2E opt-in que reproduce el uso real (`idea` + `init --config` en un repo ya
+  `git init`-eado, generación en el cwd, gate lint/test/build): `npm run build &&
+  HARNESS_E2E=1 npx vitest run src/__e2e__` desde `apps/cli/` — tarda minutos y usa red, por
+  eso no corre en la suite normal.
+- **`init` ejecuta el gate de FASE 3** (`sdd:validate` + `nx run-many -t lint test build`) y
+  falla si algo está rojo. En tests unitarios `exec` está mockeado, así que el gate pasa solo;
+  la verdad la da la generación real.
+- **`NX_WORKSPACE_ROOT_PATH`**: si está definida y no es el cwd, cualquier `nx …` corre contra
+  OTRO workspace sin error visible (pasó en Claude Code con otro repo como directorio primario).
+  La CLI y los scripts `sdd:*` lo avisan en la primera línea; al probar generaciones en
+  `examples/`, correr con la variable vacía.
+- Versionado: SemVer + `CHANGELOG.md` (Keep a Changelog) + `src/version.ts` sincronizado con
+  `package.json`. Commits convencionales (`feat:`, `fix:`, `chore:` con scope).
+- **Cada release se publica sola en [`e-burgos/sdd-harness-examples`](https://github.com/e-burgos/sdd-harness-examples)**:
+  ese repo regenera sus examples desde el paquete **ya publicado** en npm y commitea el
+  resultado. Es la vidriera del producto y además un smoke test del release — si una versión
+  no puede generar un workspace, ese repo se pone en rojo. No se editan a mano: el arreglo va
+  siempre acá, en la CLI o en el kit.
+
+## Mapa del código
+
+| Path                                  | Rol                                                                |
+| ------------------------------------- | ------------------------------------------------------------------ |
+| `apps/cli/src/cli.ts` + `src/commands/`        | Comandos citty: `init`, `add app|spec|skill|service`, `configure`, `info` |
+| `apps/cli/src/generators/workspace.generator`  | Modo nx: config raíz desde `apps/cli/templates/sdd/templates/nx-workspace/` |
+| `apps/cli/src/generators/standalone.generator` | Modo standalone: 7 tipos de app en la raíz                          |
+| `apps/cli/src/generators/sdd.generator`        | Instalación del kit: copia verbatim + global.json + contexto + setup-agents; `layout` nx/standalone, merge de package.json, absorción de arnés previo |
+| `apps/cli/src/generators/app|lib.generator`    | Apps/libs nx (react/springboot/ts-lib vía blueprints; nestjs/fastify/hono/next/python programáticos, con `apps[].port`) |
+| `apps/cli/src/generators/spec.generator`       | `createSpec`/`seedModules`: spec `draft` + `specs/index.json` + `pending_modules` — única vía para `add spec` y `sdd.modules` |
+| `apps/cli/src/generators/idea.generator`       | `harness idea`: idea file (evidencia + decisiones + protocolo autosuficiente), stub de config y su JSON Schema |
+| `apps/cli/src/utils/blueprint.ts`              | Copia de blueprints con renombre de tokens                          |
+| `apps/cli/templates/sdd/`                      | **Kit SDD portable canónico** (se publica en npm)                   |
+| `apps/cli/templates/sdd/scripts/spec-gate.mjs` | SPEC GATE como comando (`pnpm sdd:gate <spec> [cycle-XX]`): GATE A apertura / GATE B implementación, forma según `flow` (full · reduced · lite). Fuente canónica de los gates: `templates/sdd/dual-harness/rules/sdd-gates.md`; los arneses raíz solo apuntan ahí |
+| `apps/cli/templates/sdd/skills/sdd-mod/`       | Mod de Claude Code del kit (opcional, apagado; interruptor `sdd/tools.json → claude_mod` vía `scripts/sdd-mod.mjs`). Claude lo carga solo desde `.claude/skills/`; `setup-agents` no lo expone a otros agentes. La lógica pura vive en `hooks/.src/sdd.ts` (testeada en `sdd-mod.spec.ts`); `register.tsx` solo cablea eventos. Fuentes y contrato van en carpetas con punto (`hooks/.src/`, `.claude-plugin/contract/`) a propósito: los globs `**/*` de TypeScript no las ven, así que el `tsc`/`next build` del proyecto del usuario no intenta compilar un módulo que importa `claude-code`. Validar con `claude plugin validate` si lo tocás — la API de mods es early access |
+| `apps/cli/templates/sdd/scripts/rtk-*.mjs`     | Integración de rtk en el kit: `setup-rtk.mjs` (instalador + merge de hooks), `rtk-hook.mjs` (puente que llaman los hooks) y `rtk-common.mjs` (versión fijada y resolución del binario) |
+| `apps/cli/templates/workspace/`                | `eslint.config.mjs` del modo nx (la CLI agrega `@nx/eslint-plugin` + `typescript-eslint` a las deps) |
+| `apps/documentation/`                          | Sitio de docs interactivo (React/Vite/Tailwind v4, independiente). Contenido bilingüe en `src/data/content.ts` + `content.en.ts` — si cambia la CLI, actualizar ambos. Deploy automático a Cloudflare Pages vía `.github/workflows/deploy-docs.yml` (el proyecto de Pages es direct upload: no buildea solo) |
+
+## 🔎 Búsqueda y exploración del repo (graphify — OPCIONAL)
+
+> graphify indexa el repo como grafo de conocimiento en `graphify-out/` (código vía AST +
+> capa semántica de docs). Es **opt-in por dev**: `graphify-out/` está gitignoreado, no viaja
+> con el repo y en un clon nuevo no existe. **Nada del workflow de este repo depende de él.**
+
+**Si `graphify-out/graph.json` existe**, consultalo antes de hacer `grep`/`Read` a ciegas o de
+lanzar un agente de exploración: una consulta devuelve una respuesta acotada citando
+`source_file`/`source_location`, en vez de leer archivos completos para reconstruir la misma
+información. Es la opción más barata en tokens.
+
+| Comando                        | Para qué                                                          |
+| ------------------------------ | ----------------------------------------------------------------- |
+| `graphify query "<pregunta>"`  | Arquitectura, dependencias, flujos. `--budget N` acota la salida. |
+| `graphify explain "<nodo>"`    | Un archivo, clase o concepto **antes de tocarlo**.                |
+| `graphify path "<A>" "<B>"`    | Camino más corto entre dos partes lejanas del sistema.            |
+| `graphify affected "<nodo>"`   | Traversal inverso: qué se impacta si cambiás ese nodo.            |
+| `graphify-out/GRAPH_REPORT.md` | God Nodes, hyperedges y comunidades etiquetadas.                  |
+
+**Si no existe**, no lo menciones ni intentes construirlo por tu cuenta (consume cupo de API
+del dev): trabajá con `grep`/`Read`/agentes de exploración con normalidad. Para habilitarlo,
+la guía completa está en `apps/cli/templates/sdd/skills/setup-graphify/skill.md` (instalación, backend
+gratuito Gemini free tier u Ollama local, y protocolo de validación del modelo).
+
+**Mantenimiento — solo si lo tenés instalado.** Un grafo desactualizado **miente** (archivos
+movidos, símbolos nuevos). Actualizalo al cerrar cada unidad de trabajo — feature, fix o antes
+de cerrar un PR — **no** después de cada edición individual:
+
+```bash
+set -a && source .env && set +a   # ⚠️ imprescindible: graphify NO lee el .env
+graphify check-update .           # ¿hay re-extracción semántica pendiente?
+graphify update .                 # solo código (AST): gratis, sin LLM
+graphify cluster-only . --no-viz  # o `graphify label .` → re-etiquetar comunidades
+```
+
+> [!CAUTION]
+> Dos trampas silenciosas: (1) `source .env` a secas no exporta — la key no llega y graphify
+> cae al fan-out de subagentes del harness (se paga el modelo caro creyendo usar el gratuito);
+> (2) varios modelos "lite" devuelven un grafo vacío (0 edges) sin avisar. Si el modelo
+> gratuito falla o se agotó el cupo diario (resetea 00:00 UTC): **avisá al dev y dejá la
+> actualización para después** — no escales a un modelo pago sin autorización explícita.
+
+## 🪶 rtk — salida de comandos comprimida
+
+> En este repo rtk lo gestiona el kit instalado en `sdd/` (interruptor `sdd/tools.json`, puente
+> en `sdd/scripts/`), igual que en cualquier repo con el kit.
+
+Lo que sí vive acá es la **integración que el kit instala en los repos de los usuarios**:
+`apps/cli/templates/sdd/scripts/rtk-common.mjs`, `rtk-hook.mjs` y `setup-rtk.mjs` (más el
+interruptor `sdd/tools.json` y su schema), cableados desde `setup-agents.sh/.ps1`. Sus tests de
+integración están en `apps/cli/src/generators/__tests__/rtk.integration.spec.ts` — si tocás
+cualquiera de esos scripts, tienen que quedar en verde.
+
+## ⚙️ Selección de modelo y esfuerzo (OBLIGATORIO — optimización de tokens/contexto)
+
+> [!IMPORTANT]
+> **Antes de encarar CUALQUIER tarea nueva —sin importar con qué modelo estés corriendo en
+> ese momento— decidí explícitamente qué modelo y qué nivel de esfuerzo conviene, para el
+> trabajo propio y para CADA subagente/workflow que dispares.** El objetivo es gastar el
+> mínimo de tokens y contexto sin bajar la calidad. No arranques a ejecutar sin esta decisión.
+
+**Regla base:** elegí el modelo/esfuerzo más barato que aún cumple la tarea con calidad.
+Escalá de tier sólo cuando la tarea lo justifique (ambigüedad, razonamiento cross-cutting,
+riesgo de error alto). Ante la duda entre dos tiers, probá el más barato primero y escalá si
+el resultado no alcanza.
+
+**Modelos disponibles** (`model`): `haiku` · `sonnet` · `opus` · `fable`.
+**Esfuerzo** (`effort`): `low` · `medium` · `high` · `xhigh` · `max`.
+
+| Tipo de tarea                                                                                                        | Modelo sugerido | Esfuerzo       |
+| -------------------------------------------------------------------------------------------------------------------- | --------------- | -------------- |
+| Lectura de estado, formateo, edición mecánica/puntual, respuestas cortas, grep/glob dirigido                         | `haiku`         | `low`–`medium` |
+| Implementación estándar (una task acotada), tests, edición multi-archivo simple, la mayoría de subagentes ejecutores | `sonnet`        | `medium`       |
+| Arquitectura, decisiones cross-cutting, debugging complejo, cambios en generadores o en el kit, síntesis             | `opus`          | `high`–`xhigh` |
+| Sólo el paso más difícil (verify adversarial, judge, diseño crítico)                                                 | según tarea     | `xhigh`–`max`  |
+
+**Cómo aplicarlo en este repo:**
+
+- **Subagentes (`Agent`) y workflows (`Workflow`):** pasá `model` y `effort` explícitos en
+  cada llamada, acordes a la tabla. Un fan-out de lectores/mecánicos va en `haiku`/`low`;
+  el paso de verificación o síntesis en `opus`/`high`. Nunca dispares todo un fleet en el
+  tier más caro por defecto.
+- **Cambios en `apps/cli/templates/sdd/` o en generadores** son de la fila `opus`/`high`: se publican
+  verbatim a npm y se copian a los repos de los usuarios — el costo de equivocarse es alto.
+- **Trabajo propio (main loop):** si la tarea es trivial, bajá el esfuerzo; no quemes
+  contexto releyendo lo ya establecido ni narrando opciones que no vas a seguir.
+- **Si el repo tiene grafo de graphify** (regla anterior, opcional), consultalo antes de
+  pagar lecturas a ciegas: es parte de la misma optimización de tokens.
+
+## Estilo
+
+- Código, identificadores y commits en inglés; comentarios y docs de usuario pueden ir en
+  español (es el idioma del kit).
+- Comentarios solo para restricciones que el código no puede expresar — este repo sigue la
+  misma filosofía anti-comentarios del kit.
+- Preferir generación programática (`fs.writeJSON`, patch de objetos) sobre templates de texto.

@@ -1,0 +1,48 @@
+{
+  "$schema": "./schemas/fixes.schema.json",
+  "_description": "Global fixes index. Each fix maps to its owning spec via spec_id. Fixes not tied to a spec have spec_id: null and live in sdd/fixes.md. Spec-scoped fixes live in sdd/specs/{spec-id}/fixes.md. Maintained by: sdd-orchestrator.",
+  "_version": "3.0.0",
+  "_convention": "Fix ID format: FIX-[gh-user]-[spec-NNN]-[seq] for spec-scoped fixes. FIX-[gh-user]-[seq] for repo-level fixes.",
+  "_keywords": [
+    "[FIX]",
+    "[BUGFIX]",
+    "[HOTFIX]",
+    "[IMPROVEMENT]"
+  ],
+  "fixes": [
+    {
+      "id": "FIX-e-burgos-001",
+      "author": "e-burgos",
+      "spec_id": null,
+      "fix_document": "sdd/fixes/fix-e-burgos-001.md",
+      "type": "IMPROVEMENT",
+      "severity": "low",
+      "created_at": "2026-10-23",
+      "resolved_at": "2026-10-23",
+      "validated_at": "2026-10-23",
+      "title": "Run pnpm sdd:validate in CI",
+      "estimation_hours": 0.25,
+      "description": "CI never runs pnpm sdd:validate although the kit makes it a mandatory gate for every commit. Add a dedicated job to .github/workflows/ci.yml.",
+      "justification": "Single workflow file, no contract or entity change; the gate must be active as soon as the kit is installed in this repo.",
+      "related_modules": [
+        "repo-ci"
+      ],
+      "affected_files": [
+        ".github/workflows/ci.yml"
+      ],
+      "test_reference": "Validated locally with pnpm sdd:validate; the new CI job runs the same command.",
+      "status": "validated",
+      "cycle": null,
+      "usage": {
+        "provider_model": "claude/sonnet-5.5",
+        "effort": "high",
+        "agent": "steward",
+        "tokens_in": 45000,
+        "tokens_out": 4000,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
+    }
+  ]
+}
