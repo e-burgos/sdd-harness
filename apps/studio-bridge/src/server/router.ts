@@ -18,7 +18,7 @@ export function createHandlers(d: {
   auth: Pick<AuthState, 'mode' | 'set'>;
   bridgeVersion: string;
   sessions: SessionManager;
-  watcher: Pick<WorkspaceWatcher, 'current'>;
+  watcher: Pick<WorkspaceWatcher, 'current' | 'refresh'>;
   runner: Pick<CommandRunner, 'run'>;
   store: Pick<ThreadStore, 'botHistory'>;
   attachments: Pick<AttachmentStore, 'read'>;
@@ -38,6 +38,7 @@ export function createHandlers(d: {
     handle: async (command: ClientCommand) => {
       switch (command.cmd) {
         case 'workspace.snapshot':
+          await d.watcher.refresh().catch(() => null);
           return d.watcher.current();
         case 'presence.get':
           return d.sessions.presence();

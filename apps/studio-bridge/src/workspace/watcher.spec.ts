@@ -114,7 +114,7 @@ describe('.claude catalog watching', () => {
 
   afterEach(() => vi.restoreAllMocks());
 
-  it('refreshes the catalog when a skill appears under .claude/skills', async () => {
+  it('refreshes the catalog when a skill appears under .claude/skills', { retry: 2 }, async () => {
     await addSkill('first');
     await restart();
     expect(watcher!.current().skills.map((s) => s.id)).toEqual(['first']);

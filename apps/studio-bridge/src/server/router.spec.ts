@@ -18,7 +18,7 @@ let cleanup: () => Promise<void>;
 beforeEach(async () => ({ root, cleanup } = await copyFixture()));
 afterEach(() => cleanup());
 
-async function handlers(broadcast: (e: ServerEvent) => void = () => {}) {
+async function handlers(broadcast: (e: ServerEvent) => void = () => {}, refresh: () => Promise<unknown> = async () => null) {
   const snapshot = (await loadWorkspaceSnapshot(root)).snapshot;
   const store = new ThreadStore(root);
   await store.init();
@@ -28,7 +28,7 @@ async function handlers(broadcast: (e: ServerEvent) => void = () => {}) {
   const auth = new AuthState({}, 'sdd-studio/test');
   return createHandlers({
     root, auth, bridgeVersion: '0.1.0', sessions, store, attachments, fileIndex: createFileIndex(root),
-    watcher: { current: () => snapshot }, runner: new CommandRunner(root, broadcast, () => 'run-1'),
+    watcher: { current: () => snapshot, refresh: async () => { await refresh(); return null; } }, runner: new CommandRunner(root, broadcast, () => 'run-1'),
   });
 }
 const cmd = (c: Record<string, unknown>): ClientCommand => {
@@ -77,6 +77,13 @@ describe('createHandlers', () => {
     // the kit script runs with the workspace as cwd: Windows can't remove it until the child exits
     await waitFor(() => events.some((e) => e.kind === 'command.exit' && e.runId === 'run-1'));
     expect(await h.handle(cmd({ cmd: 'channel.botHistory', channelId: 'fixes', limit: 10 }))).toEqual([]);
+  });
+
+  it('workspace.snapshot rescans the workspace before answering, so a reload recovers missed fs events', async () => {
+    let refreshes = 0;
+    const h = await handlers(() => {}, async () => { refreshes += 1; });
+    await h.handle(cmd({ cmd: 'workspace.snapshot' }));
+    expect(refreshes).toBe(1);
   });
 
   it('I4: presence.get returns the current presence', async () => {
