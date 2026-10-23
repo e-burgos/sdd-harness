@@ -1,4 +1,4 @@
-import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdir, mkdtemp, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import chokidar from 'chokidar';
@@ -106,8 +106,10 @@ describe('.claude catalog watching', () => {
     watcher = await startWorkspaceWatcher({ root, debounceMs: 50, onUpdate: (u) => updates.push(u) });
   };
   const addSkill = async (name: string) => {
-    await mkdir(path.join(root, '.claude/skills', name), { recursive: true });
-    await writeFile(path.join(root, '.claude/skills', name, 'SKILL.md'), `---\nname: ${name}\ndescription: d\n---\n`);
+    const staged = await mkdtemp(path.join(root, '.staged-skill-'));
+    await writeFile(path.join(staged, 'SKILL.md'), `---\nname: ${name}\ndescription: d\n---\n`);
+    await mkdir(path.join(root, '.claude/skills'), { recursive: true });
+    await rename(staged, path.join(root, '.claude/skills', name));
   };
 
   afterEach(() => vi.restoreAllMocks());
