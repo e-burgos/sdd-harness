@@ -75,7 +75,14 @@ export function Timeline({ items, status, onRespond }: { items: TimelineItem[]; 
               <li key={item.id} className="flex gap-3">
                 <AgentAvatar agent={item.author.agent} status={item.id === lastMessageId ? status : undefined} />
                 <div className="min-w-0 flex-1">
-                  <div className="mb-0.5 text-sm font-semibold" style={{ color: meta.color }}>{meta.name}</div>
+                  <div className="mb-1 flex flex-col leading-tight">
+                    <span className="text-sm font-semibold tracking-tight" style={{ color: meta.color }}>
+                      {meta.name}
+                    </span>
+                    <span className="text-[11px] font-mono text-ink-400">
+                      {meta.role} · {meta.title}
+                    </span>
+                  </div>
                   <Markdown text={item.text} />
                 </div>
               </li>

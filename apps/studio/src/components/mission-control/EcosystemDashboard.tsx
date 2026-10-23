@@ -1,9 +1,9 @@
 'use client';
 
-import { useBridge } from '../BridgeProvider';
+import { useStudio } from '../BridgeProvider';
 
 export function EcosystemDashboard() {
-  const { snapshot } = useBridge();
+  const snapshot = useStudio((s) => s.snapshot);
 
   const specs = snapshot?.specs ?? [];
   const cycles = snapshot?.cycles ?? [];

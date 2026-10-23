@@ -176,12 +176,21 @@ export function NavNodeView({ node, depth, h, dmState }: { node: NavNode; depth:
           type="button"
           className={rowClass(node.selected)}
           aria-current={node.selected ? 'page' : undefined}
+          aria-label={node.kind === 'dm' ? `${label}, ${t(PRESENCE_KEY[dmState(node.label)])}` : undefined}
           onClick={() => h.onSelectChannel(node.channelId as string)}
         >
           {node.kind === 'dm' && <span aria-hidden className={`h-2 w-2 shrink-0 rounded-full ${DM_DOT[dmState(node.label)]}`} />}
-          <span className="truncate">{label}</span>
+          {node.kind === 'dm' ? (
+            <div className="flex flex-col min-w-0 leading-tight">
+              <span className="truncate">{label}</span>
+              <span className="truncate text-[10px] text-ink-400 font-mono font-normal">
+                {agentMeta(node.label).role}
+              </span>
+            </div>
+          ) : (
+            <span className="truncate">{label}</span>
+          )}
           {statusKey && <span className="sr-only">, {t(statusKey)}</span>}
-          {node.kind === 'dm' && <span className="sr-only">, {t(PRESENCE_KEY[dmState(node.label)])}</span>}
         </button>
         {marks}
       </div>

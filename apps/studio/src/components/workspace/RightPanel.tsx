@@ -35,8 +35,11 @@ export function RightPanelView({ activity, cycle, onOpenThread, onCollapse }: { 
               <ul className="mt-2 space-y-1">
                 {entry.agents.map((a) => (
                   <li key={a.agent} className="flex items-center gap-2 text-xs">
-                    <AgentAvatar agent={a.agent} size={18} status={a.state === 'working' ? 'running' : a.state === 'waiting' ? 'waiting-approval' : null} />
-                    <span>{agentMeta(a.agent).name}</span>
+                    <AgentAvatar agent={a.agent} size={22} status={a.state === 'working' ? 'running' : a.state === 'waiting' ? 'waiting-approval' : null} />
+                    <div className="flex flex-col min-w-0 leading-tight">
+                      <span className="font-medium">{agentMeta(a.agent).name}</span>
+                      <span className="text-[10px] text-ink-400 font-mono">{agentMeta(a.agent).role}</span>
+                    </div>
                     {a.state === 'waiting' && (
                       <span className="text-amberish">
                         <span aria-hidden>⏸</span>

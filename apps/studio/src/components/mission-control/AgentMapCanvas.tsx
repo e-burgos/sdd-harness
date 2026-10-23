@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useBridge } from '../BridgeProvider';
+import { useStudio } from '../BridgeProvider';
 import { AgentNode } from './AgentNode';
 import { AgentInspectorDrawer } from './AgentInspectorDrawer';
 
@@ -38,13 +38,14 @@ const EDGES: { from: string; to: string; label?: string }[] = [
 ];
 
 export function AgentMapCanvas({ onOpenDm }: { onOpenDm: (agentId: string) => void }) {
-  const { presence, snapshot } = useBridge();
+  const presence = useStudio((s) => s.presence ?? []);
+  const snapshot = useStudio((s) => s.snapshot);
   const [selectedAgent, setSelectedAgent] = useState<string | null>('sdd-orchestrator');
 
-  const presenceMap = new Map(presence.map((p) => [p.agent, p]));
+  const presenceMap = new Map((presence ?? []).map((p) => [p.agent, p]));
   const nodeMap = new Map(NODES.map((n) => [n.id, n]));
 
-  const activePresenceCount = presence.filter((p) => p.state === 'working').length;
+  const activePresenceCount = (presence ?? []).filter((p) => p.state === 'working').length;
 
   return (
     <div

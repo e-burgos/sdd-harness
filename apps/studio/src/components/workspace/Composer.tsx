@@ -311,7 +311,7 @@ export function Composer({ channelId, threadId, onThreadCreated }: { channelId: 
   const attachmentDraft = useAttachmentDraft(key);
   const options = threadInfo?.options ?? { ...draft, agent: dmAgent ?? draft.agent };
   const agents = useMemo(() => {
-    const ids = snapshot?.agents.map((a) => a.id) ?? [];
+    const ids = snapshot?.agents?.map((a) => a.id) ?? [];
     return ids.includes(options.agent) ? ids : [options.agent, ...ids];
   }, [snapshot, options.agent]);
 

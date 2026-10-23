@@ -1,10 +1,10 @@
 'use client';
 
-import { useBridge } from '../BridgeProvider';
+import { useStudio } from '../BridgeProvider';
 import { agentMeta } from '@/lib/agents';
 
 export function LiveTelemetryHUD() {
-  const { snapshot } = useBridge();
+  const snapshot = useStudio((s) => s.snapshot);
 
   const pricing = (snapshot?.pricing as Record<string, any>) ?? {
     currency: 'USD',
@@ -141,7 +141,9 @@ export function LiveTelemetryHUD() {
             {agentConsumption.map((a) => (
               <div key={a.id} className="space-y-1">
                 <div className="flex items-center justify-between text-xs font-mono">
-                  <span className="text-white font-medium">{a.name}</span>
+                  <span className="text-white font-medium">
+                    {a.name} <span className="text-white/40 text-[10px]">({agentMeta(a.id).role})</span>
+                  </span>
                   <span className="text-white/60">{a.pct}% del enjambre</span>
                 </div>
                 <div className="h-2 w-full rounded-full bg-white/5 overflow-hidden">

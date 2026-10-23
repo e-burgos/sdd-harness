@@ -1,25 +1,27 @@
 import { render, screen } from '@testing-library/react';
 import { LiveTelemetryHUD } from './LiveTelemetryHUD';
 import { BridgeContext } from '../BridgeProvider';
+import { createStudioStore } from '@/lib/store/store';
+
+const store = createStudioStore();
+store.getState().setSnapshot({
+  project: 'test-monorepo',
+  profile: 'team',
+  kitVersion: '0.16.1',
+  specs: [],
+  cycles: [],
+  fixes: [],
+  agents: [],
+  skills: [],
+  gateMode: 'block',
+  pricing: null,
+  stale: [],
+});
 
 const mockBridgeValue: any = {
   connection: { status: 'open' },
   pairing: { port: 3100, token: 'abc' },
-  presence: [],
-  snapshot: {
-    project: 'test-monorepo',
-    profile: 'team',
-    kitVersion: '0.16.1',
-    specs: [],
-    cycles: [],
-    fixes: [],
-    agents: [],
-    skills: [],
-    gateMode: 'block',
-    pricing: null,
-    stale: [],
-  },
-  store: { getState: () => ({ threads: {} }) },
+  store,
   syncError: null,
   retrySync: () => {},
 };

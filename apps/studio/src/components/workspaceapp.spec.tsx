@@ -35,6 +35,7 @@ const mockSnapshot: WorkspaceSnapshot = {
     },
   ],
   fixes: [],
+  agents: [],
   pricing: {
     models: {
       'gemini/pro': { input: 1.25, output: 5.0 },
@@ -56,6 +57,8 @@ const mockPresence: Presence[] = [
 
 function mountConnected() {
   const store = createStudioStore();
+  store.getState().setSnapshot(mockSnapshot);
+  store.getState().setPresence(mockPresence);
   const value = {
     client: { request: vi.fn().mockResolvedValue({}), supports: () => false },
     store,

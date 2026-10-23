@@ -1,28 +1,31 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { AgentMapCanvas } from './AgentMapCanvas';
 import { BridgeContext } from '../BridgeProvider';
+import { createStudioStore } from '@/lib/store/store';
+
+const store = createStudioStore();
+store.getState().setSnapshot({
+  project: 'test-monorepo',
+  profile: 'team',
+  kitVersion: '0.16.1',
+  specs: [],
+  cycles: [],
+  fixes: [],
+  agents: [],
+  skills: [],
+  gateMode: 'block',
+  pricing: null,
+  stale: [],
+});
+store.getState().setPresence([
+  { agent: 'sdd-orchestrator', state: 'working', threadId: 't-1', specId: 's-1', tool: 'spec-gate' },
+  { agent: 'sdd-implementor-back', state: 'idle', threadId: null, specId: null, tool: null },
+]);
 
 const mockBridgeValue: any = {
   connection: { status: 'open' },
   pairing: { port: 3100, token: 'abc' },
-  presence: [
-    { agent: 'sdd-orchestrator', state: 'working', threadId: 't-1', specId: 's-1', tool: 'spec-gate' },
-    { agent: 'sdd-implementor-back', state: 'idle', threadId: null, specId: null, tool: null },
-  ],
-  snapshot: {
-    project: 'test-monorepo',
-    profile: 'team',
-    kitVersion: '0.16.1',
-    specs: [],
-    cycles: [],
-    fixes: [],
-    agents: [],
-    skills: [],
-    gateMode: 'block',
-    pricing: null,
-    stale: [],
-  },
-  store: { getState: () => ({ threads: {} }) },
+  store,
   syncError: null,
   retrySync: () => {},
 };

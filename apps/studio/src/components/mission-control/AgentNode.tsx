@@ -2,6 +2,7 @@
 
 import type { Presence } from '@sdd-studio/protocol';
 import { agentMeta } from '@/lib/agents';
+import { AgentFace } from '../workspace/AgentFace';
 
 interface AgentNodeProps {
   agentId: string;
@@ -64,18 +65,10 @@ export function AgentNode({ agentId, x, y, presence, isSelected, onSelect }: Age
         style={{ transformOrigin: '0 0' }}
       />
 
-      {/* Avatar Initials / Symbol */}
-      <text
-        textAnchor="middle"
-        dy="0.35em"
-        fill="#ffffff"
-        fontFamily="var(--font-mono, monospace)"
-        fontWeight="bold"
-        fontSize="15"
-        className="pointer-events-none drop-shadow"
-      >
-        {meta.short}
-      </text>
+      {/* Avatar Drawn Face */}
+      <g transform="translate(-24, -24)" className="pointer-events-none drop-shadow">
+        <AgentFace agent={agentId} size={48} />
+      </g>
 
       {/* Crown indicator for Clara */}
       {meta.isLeader && (
@@ -95,7 +88,7 @@ export function AgentNode({ agentId, x, y, presence, isSelected, onSelect }: Age
           fill="#0e1526"
           stroke={meta.color}
           strokeWidth="1"
-          strokeOpacity="0.4"
+          strokeOpacity="0.6"
         />
         <text
           textAnchor="middle"
@@ -110,20 +103,33 @@ export function AgentNode({ agentId, x, y, presence, isSelected, onSelect }: Age
       </g>
 
       {/* Role description below badge */}
-      <text
-        y="78"
-        textAnchor="middle"
-        fill="#94a3b8"
-        fontSize="9.5"
-        fontFamily="var(--font-mono, monospace)"
-        className="pointer-events-none tracking-tight uppercase"
-      >
-        {meta.role}
-      </text>
+      <g transform="translate(0, 75)">
+        <rect
+          x="-55"
+          y="-8"
+          width="110"
+          height="16"
+          rx="8"
+          fill="#1e293b"
+          stroke="#475569"
+          strokeWidth="0.8"
+        />
+        <text
+          textAnchor="middle"
+          dy="0.32em"
+          fill="#38bdf8"
+          fontSize="9"
+          fontFamily="var(--font-mono, monospace)"
+          fontWeight="bold"
+          className="pointer-events-none tracking-tight uppercase"
+        >
+          {meta.role}
+        </text>
+      </g>
 
       {/* Active tool indicator tag if present */}
       {presence?.tool && (
-        <g transform="translate(0, 94)">
+        <g transform="translate(0, 98)">
           <rect
             x="-65"
             y="-9"

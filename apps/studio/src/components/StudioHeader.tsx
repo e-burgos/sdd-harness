@@ -2,7 +2,7 @@
 
 import { useT } from '@/lib/i18n/i18n';
 import type { StudioView } from '@/lib/use-studio-view';
-import { useBridge } from './BridgeProvider';
+import { useStudio } from './BridgeProvider';
 import { AgentAvatar } from './workspace/AgentAvatar';
 
 interface StudioHeaderProps {
@@ -12,10 +12,11 @@ interface StudioHeaderProps {
 
 export function StudioHeader({ activeView, onSelectView }: StudioHeaderProps) {
   const { t, lang, setLang } = useT();
-  const { snapshot, presence } = useBridge();
+  const snapshot = useStudio((s) => s.snapshot);
+  const presence = useStudio((s) => s.presence ?? []);
 
-  const workingAgents = presence.filter((p) => p.state === 'working');
-  const activeCycle = snapshot?.cycles.find((c) => c.status === 'in-progress');
+  const workingAgents = (presence ?? []).filter((p) => p.state === 'working');
+  const activeCycle = snapshot?.cycles?.find((c) => c.status === 'in-progress');
 
   const views: { id: StudioView; label: string; icon: string }[] = [
     { id: 'workspace', label: t('view.workspace'), icon: '💬' },
