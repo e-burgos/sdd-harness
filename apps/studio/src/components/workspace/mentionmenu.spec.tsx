@@ -47,6 +47,17 @@ describe('MentionMenu @', () => {
     expect(screen.getByText('Sin resultados')).toBeInTheDocument();
   });
 
+  it('keeps the agents group with a not-found hint when the repo has no agents', () => {
+    render(ui(base({ agents: [] })));
+    expect(screen.getByRole('group', { name: 'Agentes' })).toHaveTextContent('No se encontraron agentes en el repo.');
+    expect(screen.queryByText('Sin resultados')).toBeNull();
+  });
+
+  it('names the query when nothing matches', async () => {
+    render(ui(base({ mention: { trigger: '@', query: 'zzz', start: 0 }, searchFiles: async () => files([]) })));
+    expect(await screen.findByText('Sin resultados para «zzz»')).toBeInTheDocument();
+  });
+
   it('filters agents locally by query', () => {
     const mention: ActiveMention = { trigger: '@', query: 'rev', start: 0 };
     render(ui(base({ mention })));
@@ -99,6 +110,12 @@ describe('MentionMenu /', () => {
     expect(labels).toContain('/open-cycle');
     expect(labels).toContain('/generate:react');
     expect(labels).not.toContain('sdd-hermes-prompt');
+  });
+
+  it('keeps the commands and a not-found hint when the repo has no skills or prompts', () => {
+    render(ui(base({ mention: slash, skills: [] })));
+    expect(options().join('|')).toContain('/validate');
+    expect(screen.getByRole('group', { name: 'Skills y prompts' })).toHaveTextContent('No se encontraron skills ni prompts en el repo.');
   });
 
   it('hides the skills group without the catalog capability', () => {

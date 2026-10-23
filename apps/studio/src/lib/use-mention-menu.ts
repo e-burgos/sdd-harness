@@ -14,6 +14,7 @@ export type MentionGroupId = 'files' | 'agents' | 'commands' | 'skills';
 export interface MentionGroup {
   id: MentionGroupId;
   items: MentionItem[];
+  undiscovered: boolean;
 }
 
 export type FileSearchStatus = 'idle' | 'loading' | 'ready' | 'error';
@@ -72,19 +73,20 @@ export function useMentionMenu(o: MentionMenuOptions) {
   const groups = useMemo<MentionGroup[]>(() => {
     if (trigger === '@') {
       const result: MentionGroup[] = [];
-      if (o.searchFiles) result.push({ id: 'files', items: files.files.map((path) => ({ kind: 'file', id: path, path })) });
+      if (o.searchFiles) result.push({ id: 'files', items: files.files.map((path) => ({ kind: 'file', id: path, path })), undiscovered: false });
       if (o.catalogEnabled) {
         const agents = rank(o.agents.map((a) => ({ ...a })), query);
-        result.push({ id: 'agents', items: agents.map((a) => ({ kind: 'agent', id: a.id, description: a.description })) });
+        result.push({ id: 'agents', items: agents.map((a) => ({ kind: 'agent', id: a.id, description: a.description })), undiscovered: o.agents.length === 0 });
       }
       return result;
     }
     if (trigger === '/') {
       const commands = rank(FIXED_COMMANDS.map((id) => ({ id })), query);
-      const result: MentionGroup[] = [{ id: 'commands', items: commands.map((c) => ({ kind: 'command', id: c.id, description: '' })) }];
+      const result: MentionGroup[] = [{ id: 'commands', items: commands.map((c) => ({ kind: 'command', id: c.id, description: '' })), undiscovered: false }];
       if (o.catalogEnabled) {
-        const skills = rank(o.skills.filter((s) => !PROMPT_PATHS.has(s.path)).map((s) => ({ ...s })), query);
-        result.push({ id: 'skills', items: skills.map((s) => ({ kind: 'skill', id: s.id, description: s.description, skillKind: s.kind })) });
+        const discovered = o.skills.filter((s) => !PROMPT_PATHS.has(s.path));
+        const skills = rank(discovered.map((s) => ({ ...s })), query);
+        result.push({ id: 'skills', items: skills.map((s) => ({ kind: 'skill', id: s.id, description: s.description, skillKind: s.kind })), undiscovered: discovered.length === 0 });
       }
       return result;
     }
@@ -126,6 +128,7 @@ export function useMentionMenu(o: MentionMenuOptions) {
   return {
     open,
     trigger,
+    query,
     groups,
     flat,
     activeIndex: active,
