@@ -1,10 +1,11 @@
 import { AuthState } from '../auth-mode';
-import { decodeClientMessage, defaultThreadOptions, type ClientCommand, type ServerEvent } from '@sdd-studio/protocol';
+import { BRIDGE_FEATURES, decodeClientMessage, defaultThreadOptions, type ClientCommand, type ServerEvent } from '@sdd-studio/protocol';
 import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { CommandRunner } from '../commands/runner';
 import { FakeEngine } from '../engine/fake-engine';
+import { createFileIndex } from '../workspace/file-index';
 import { createAttachmentStore } from '../sessions/attachment-store';
 import { SessionManager } from '../sessions/session-manager';
 import { ThreadStore } from '../sessions/store';
@@ -26,7 +27,7 @@ async function handlers(broadcast: (e: ServerEvent) => void = () => {}) {
   const sessions = new SessionManager({ root, engine: new FakeEngine(1), store, attachments, snapshot: () => snapshot, broadcast: () => {} });
   const auth = new AuthState({}, 'sdd-studio/test');
   return createHandlers({
-    root, auth, bridgeVersion: '0.1.0', sessions, store, attachments,
+    root, auth, bridgeVersion: '0.1.0', sessions, store, attachments, fileIndex: createFileIndex(root),
     watcher: { current: () => snapshot }, runner: new CommandRunner(root, broadcast, () => 'run-1'),
   });
 }
@@ -40,7 +41,7 @@ describe('createHandlers', () => {
   it('builds the welcome from the snapshot', async () => {
     expect((await handlers()).welcome()).toEqual({
       bridgeVersion: '0.1.0', workspace: { root, project: 'studio fixture' }, kitVersion: '0.16.0', authMode: 'local-claude-login',
-      features: ['pending-messages', 'thread-link', 'always-rules'],
+      features: [...BRIDGE_FEATURES],
     });
   });
 
@@ -125,22 +126,45 @@ describe('createHandlers', () => {
       await waitFor(async () => (await list())?.status === 'idle');
     });
 
-    it.each([
-      ['thread.create with attachments', { cmd: 'thread.create', channelId: 'general', options: defaultThreadOptions(), text: 'x', attachments: [{ kind: 'text', name: 'a.txt', mime: 'text/plain', text: 'hi' }] }, 'unsupported: attachments'],
-      ['thread.create with agent refs', { cmd: 'thread.create', channelId: 'general', options: defaultThreadOptions(), text: 'x', refs: { agents: ['sdd-planner'], skills: [] } }, 'unsupported: catalog'],
-      ['thread.send with attachments', { cmd: 'thread.send', threadId: 't', text: 'x', attachments: [{ kind: 'text', name: 'a.txt', mime: 'text/plain', text: 'hi' }] }, 'unsupported: attachments'],
-      ['workspace.searchFiles', { cmd: 'workspace.searchFiles', query: 'a', limit: 5 }, 'unsupported: file-search'],
-    ])('%s answers bad-request %#', async (_name, body, message) => {
-      const h = await handlers();
-      await expect(h.handle(cmd(body))).rejects.toMatchObject({ code: 'bad-request', message });
+    it('announces the cycle-02 features', async () => {
+      const features = (await handlers()).welcome().features ?? [];
+      expect(features).toEqual(expect.arrayContaining(['attachments', 'file-search', 'catalog']));
     });
 
-    it('does not announce the cycle-02 features', async () => {
-      const features = (await handlers()).welcome().features ?? [];
-      expect(features).not.toContain('attachments');
-      expect(features).not.toContain('file-search');
-      expect(features).not.toContain('catalog');
+    it('thread.create with attachments and refs stores the upload and echoes the markers', async () => {
+      const h = await handlers();
+      const png = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 5]).toString('base64');
+      const created = (await h.handle(cmd({
+        cmd: 'thread.create', channelId: 'general', options: defaultThreadOptions(), text: 'see',
+        attachments: [{ kind: 'image', name: 'a.png', mime: 'image/png', data: png, width: 1, height: 1 }],
+        refs: { agents: ['sdd-planner'], skills: [] },
+      }))) as { id: string };
+      const history = async () => (await h.handle(cmd({ cmd: 'thread.history', threadId: created.id, sinceSeq: 0 }))) as Array<{ event: { type: string; text?: string; attachments?: unknown[]; refs?: unknown } }>;
+      await waitFor(async () => (await history()).some(({ event }) => event.type === 'turn.end'));
+      const events = (await history()).map(({ event }) => event);
+      expect(events.find((e) => e.type === 'user.message')).toMatchObject({ attachments: [{ name: 'a.png' }], refs: { agents: ['sdd-planner'] } });
+      expect(events.find((e) => e.type === 'message.delta')).toMatchObject({ text: 'echo: see [attachments: a.png] [refs: @sdd-planner]' });
     });
+
+    it('thread.send with attachments reaches the session manager', async () => {
+      const h = await handlers();
+      const created = (await h.handle(cmd({ cmd: 'thread.create', channelId: 'general', options: defaultThreadOptions(), text: 'hola' }))) as { id: string };
+      const list = async () => ((await h.handle(cmd({ cmd: 'thread.list' }))) as Array<{ id: string; status: string }>).find((t) => t.id === created.id);
+      await waitFor(async () => (await list())?.status === 'idle');
+      const note = { kind: 'text', name: 'n.txt', mime: 'text/plain', text: 'hi' };
+      expect(await h.handle(cmd({ cmd: 'thread.send', threadId: created.id, text: '', attachments: [note] }))).toEqual({ delivery: 'started' });
+      await waitFor(async () => (await list())?.status === 'idle');
+    });
+  });
+
+  it('workspace.searchFiles answers from the file index without leaking secrets', async () => {
+    const h = await handlers();
+    await writeFile(path.join(root, 'notes.md'), 'x');
+    await writeFile(path.join(root, '.env'), 'SECRET=1');
+    const hit = (await h.handle(cmd({ cmd: 'workspace.searchFiles', query: 'notes' }))) as { files: Array<{ path: string }>; query: string };
+    expect(hit.files).toEqual([{ path: 'notes.md' }]);
+    const env = (await h.handle(cmd({ cmd: 'workspace.searchFiles', query: 'env', limit: 5 }))) as { files: Array<{ path: string }> };
+    expect(env.files.map((f) => f.path)).not.toContain('.env');
   });
 
   it('attachment.get returns stored bytes as base64 and hides failures behind a generic not-found', async () => {

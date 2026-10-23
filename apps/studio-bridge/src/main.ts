@@ -13,6 +13,7 @@ import { createAttachmentStore } from './sessions/attachment-store';
 import { SessionManager } from './sessions/session-manager';
 import { ThreadStore } from './sessions/store';
 import { BRIDGE_VERSION } from './version';
+import { createFileIndex } from './workspace/file-index';
 import { startWorkspaceWatcher } from './workspace/watcher';
 
 export class BridgeStartError extends Error {}
@@ -47,6 +48,7 @@ export async function startBridge(o: {
   await store.init();
   const attachments = createAttachmentStore(root);
   await attachments.init();
+  const fileIndex = createFileIndex(root);
   let server: BridgeServer | null = null;
   const broadcast = (message: ServerMessage) => server?.broadcast(message);
 
@@ -84,7 +86,7 @@ export async function startBridge(o: {
       token,
       allowedOrigins: o.allowedOrigins,
       localUiDir: o.localUiDir,
-      handlers: createHandlers({ root, auth, bridgeVersion: BRIDGE_VERSION, sessions, watcher, runner, store, attachments }),
+      handlers: createHandlers({ root, auth, bridgeVersion: BRIDGE_VERSION, sessions, watcher, runner, store, attachments, fileIndex }),
     });
     server = started;
   } catch (error) {
