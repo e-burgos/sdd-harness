@@ -1,6 +1,6 @@
-import type { Author, ThreadEvent, ThreadOptions } from '@sdd-studio/protocol';
+import type { AttachmentRef, Author, ThreadEvent, ThreadOptions } from '@sdd-studio/protocol';
 
-export type PromptBlock = { kind: 'text'; text: string };
+export type PromptBlock = { kind: 'text'; text: string } | { kind: 'attachment'; ref: AttachmentRef };
 
 export interface TurnPrompt {
   text: string;
@@ -49,7 +49,8 @@ export interface EngineCallbacks {
   judgeTool(toolName: string, input: Record<string, unknown>, ctx?: JudgeContext): ToolVerdict;
   onSessionId(id: string): void;
   requestApproval(request: ApprovalRequest, signal: AbortSignal): Promise<ApprovalDecision>;
-  collectPending(at: 'cut-point' | 'turn-end'): OutgoingMessage[];
+  readAttachment(ref: AttachmentRef): Promise<Uint8Array | null>;
+  collectPending(at: 'cut-point' | 'turn-end', opts?: { textOnly?: boolean }): OutgoingMessage[];
   revertPending(ids: string[]): void;
 }
 

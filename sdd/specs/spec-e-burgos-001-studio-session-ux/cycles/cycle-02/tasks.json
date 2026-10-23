@@ -82,8 +82,22 @@
       "depends_on": [
         "TASK-001"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/studio-bridge/src/engine/types.ts",
+        "apps/studio-bridge/src/engine/prompt-content.ts",
+        "apps/studio-bridge/src/engine/prompt-content.spec.ts"
+      ],
+      "usage": {
+        "tokens_in": 35000,
+        "tokens_out": 7000,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
     },
     {
       "id": "TASK-004",
