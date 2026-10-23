@@ -15,6 +15,7 @@ import {
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { z } from 'zod';
 import { agentMeta } from '@/lib/agents';
+import { bridgeErrorText } from '@/lib/bridge/error-text';
 import { useT } from '@/lib/i18n/i18n';
 import { parseSlash, SAFE_ARG } from '@/lib/slash';
 import { draftKey } from '@/lib/store/state';
@@ -24,7 +25,6 @@ const RunResult = z.object({ runId: z.string().min(1) });
 const FileResult = z.object({ path: z.string(), content: z.string() });
 
 const MAX_MESSAGE = 100_000;
-const errorText = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
 const MODELS: ModelChoice[] = ['kit', 'haiku', 'sonnet', 'opus', 'fable'];
 const EFFORTS: Effort[] = ['low', 'medium', 'high', 'xhigh', 'max'];
@@ -184,7 +184,7 @@ export function Composer({ channelId, threadId, onThreadCreated }: { channelId: 
       const file = FileResult.parse(await client.request({ cmd: 'workspace.readFile', path: action.path }));
       return await send(action.args ? `${file.content}\n\n---\n${action.args}` : file.content);
     } catch (e) {
-      setError(errorText(e));
+      setError(bridgeErrorText(e, t));
       return false;
     } finally {
       busy.current = false;
@@ -194,7 +194,7 @@ export function Composer({ channelId, threadId, onThreadCreated }: { channelId: 
   const onOptionsChange = (patch: Partial<ThreadOptions>) => {
     if (threadId) {
       const { agent: _agent, ...allowed } = patch;
-      void client.request({ cmd: 'thread.setOptions', threadId, options: allowed }).catch((e: unknown) => setError(errorText(e)));
+      void client.request({ cmd: 'thread.setOptions', threadId, options: allowed }).catch((e: unknown) => setError(bridgeErrorText(e, t)));
     } else {
       setDraft((d) => ({ ...d, ...patch }));
     }

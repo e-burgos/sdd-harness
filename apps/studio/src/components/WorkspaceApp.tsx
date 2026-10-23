@@ -12,6 +12,7 @@ export function Connected() {
   const { connection, pairing, syncError, retrySync } = useBridge();
   const { t } = useT();
   const failedReason = connection.status === 'failed' ? connection.reason : null;
+  const mismatchHint = connection.status === 'failed' ? connection.hint : undefined;
   const staleToken = failedReason === 'bad-token' || failedReason === 'bad-message';
 
   // Con un token rechazado, recargar no debe volver a usar el mismo emparejamiento.
@@ -20,7 +21,12 @@ export function Connected() {
   }, [staleToken]);
 
   if (failedReason) {
-    const message = failedReason === 'unreachable' ? t('conn.unreachable', { port: pairing.port }) : t(`conn.${failedReason}`);
+    const message =
+      failedReason === 'unreachable'
+        ? t('conn.unreachable', { port: pairing.port })
+        : failedReason === 'protocol-mismatch' && mismatchHint === 'web-older'
+          ? t('conn.protocol-mismatch.web-older')
+          : t(`conn.${failedReason}`);
     return <ConnectScreen error={message} />;
   }
   return (

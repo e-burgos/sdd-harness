@@ -24,6 +24,8 @@ export const es = {
   'conn.bad-token': 'El token no es válido. Volvé a abrir el enlace que imprime sdd-studio.',
   'conn.bad-message': 'El puente rechazó el mensaje de conexión. Volvé a abrir el enlace que imprime sdd-studio.',
   'conn.protocol-mismatch': 'La versión del puente no es compatible. Actualizalo: npx @e-burgos/sdd-studio@latest',
+  'conn.protocol-mismatch.web-older': 'La web es más vieja que el puente: recargá sin caché (Ctrl/Cmd+Shift+R).',
+  'error.frameTooLarge': 'El mensaje es demasiado grande para enviarlo (máximo 1 MiB). Acortalo e intentá de nuevo.',
   'conn.unreachable': 'No hay un puente escuchando en el puerto {port}. ¿Está corriendo sdd-studio?',
   'conn.dot.open': 'conectado',
   'conn.dot.connecting': 'reconectando',

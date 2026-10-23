@@ -26,6 +26,8 @@ export const en = {
   'conn.bad-token': 'The token is not valid. Open the link printed by sdd-studio again.',
   'conn.bad-message': 'The bridge rejected the connection message. Open the link printed by sdd-studio again.',
   'conn.protocol-mismatch': 'The bridge version is not compatible. Update it: npx @e-burgos/sdd-studio@latest',
+  'conn.protocol-mismatch.web-older': 'The web is older than the bridge: reload without cache (Ctrl/Cmd+Shift+R).',
+  'error.frameTooLarge': 'The message is too large to send (1 MiB maximum). Shorten it and try again.',
   'conn.unreachable': 'No bridge is listening on port {port}. Is sdd-studio running?',
   'conn.dot.open': 'connected',
   'conn.dot.connecting': 'reconnecting',

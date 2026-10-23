@@ -1,4 +1,4 @@
-import { PROTOCOL_VERSION } from '@sdd-studio/protocol';
+import { MAX_FRAME_BYTES, PROTOCOL_VERSION } from '@sdd-studio/protocol';
 import { BridgeClient, type ConnectionState } from './client';
 
 class FakeSocket {
@@ -334,5 +334,75 @@ describe('BridgeClient', () => {
     vi.advanceTimersByTime(500);
     expect(FakeSocket.instances).toHaveLength(2);
     expect(seen).toContain('reconnecting');
+  });
+
+  describe('frame guard', () => {
+    const openClient = () => {
+      const made = make();
+      made.client.connect();
+      made.socket().open();
+      made.socket().receive(welcome);
+      return made;
+    };
+
+    it('rejects locally a command above MAX_FRAME_BYTES without sending anything', async () => {
+      const { client, socket } = openClient();
+      const sentBefore = socket().sent.length;
+      await expect(client.request({ cmd: 'thread.send', threadId: 't', text: 'x'.repeat(MAX_FRAME_BYTES) })).rejects.toMatchObject({
+        code: 'frame-too-large',
+      });
+      expect(socket().sent).toHaveLength(sentBefore);
+    });
+
+    it('measures UTF-8 bytes, not characters', async () => {
+      const { client, socket } = openClient();
+      const sentBefore = socket().sent.length;
+      const text = 'é'.repeat(MAX_FRAME_BYTES / 2);
+      expect(text.length).toBeLessThan(MAX_FRAME_BYTES);
+      await expect(client.request({ cmd: 'thread.send', threadId: 't', text })).rejects.toMatchObject({ code: 'frame-too-large' });
+      expect(socket().sent).toHaveLength(sentBefore);
+    });
+
+    it('sends a command just under the limit', () => {
+      const { client, socket } = openClient();
+      const overhead = new TextEncoder().encode(JSON.stringify({ kind: 'command', id: 'c1', cmd: 'thread.send', threadId: 't', text: '' })).byteLength;
+      void client.request({ cmd: 'thread.send', threadId: 't', text: 'x'.repeat(MAX_FRAME_BYTES - overhead) });
+      expect(socket().sent).toHaveLength(2);
+      expect(new TextEncoder().encode(socket().sent[1]!).byteLength).toBe(MAX_FRAME_BYTES);
+    });
+  });
+
+  describe('protocol mismatch hints', () => {
+    const mismatch = (bridgeProtocolVersion?: number) => {
+      const made = make();
+      made.client.connect();
+      made.socket().open();
+      made.socket().receive({
+        kind: 'handshake.error', code: 'protocol-mismatch', message: 'mismatch',
+        ...(bridgeProtocolVersion === undefined ? {} : { bridgeProtocolVersion }),
+      });
+      made.socket().drop(4002);
+      return made.client.state;
+    };
+
+    it('tells the web is older when the bridge speaks a newer protocol', () => {
+      expect(mismatch(PROTOCOL_VERSION + 1)).toMatchObject({ status: 'failed', reason: 'protocol-mismatch', hint: 'web-older' });
+    });
+
+    it('tells the bridge is older when it speaks an older protocol or does not report one', () => {
+      expect(mismatch(PROTOCOL_VERSION - 1)).toMatchObject({ hint: 'bridge-older' });
+      expect(mismatch()).toMatchObject({ hint: 'bridge-older' });
+    });
+  });
+
+  it('exposes the bridge features from the welcome', () => {
+    const { client, socket } = make();
+    expect(client.supports('pending-messages')).toBe(false);
+    client.connect();
+    socket().open();
+    socket().receive({ ...welcome, features: ['pending-messages', 'thread-link'] });
+    expect(client.features).toEqual(['pending-messages', 'thread-link']);
+    expect(client.supports('thread-link')).toBe(true);
+    expect(client.supports('always-rules')).toBe(false);
   });
 });

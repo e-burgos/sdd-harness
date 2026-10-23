@@ -2,6 +2,7 @@ import type { z } from 'zod';
 import {
   ClientCommand as ClientCommandSchema,
   decodeServerMessage,
+  MAX_FRAME_BYTES,
   PROTOCOL_VERSION,
   type ServerEvent,
   type Welcome,
@@ -10,12 +11,14 @@ import {
 type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never;
 export type CommandInput = DistributiveOmit<z.input<typeof ClientCommandSchema>, 'kind' | 'id'>;
 
+export type ProtocolMismatchHint = 'web-older' | 'bridge-older';
+
 export type ConnectionState =
   | { status: 'idle' }
   | { status: 'connecting'; attempt: number }
   | { status: 'open'; welcome: Welcome }
   | { status: 'reconnecting'; attempt: number; delayMs: number }
-  | { status: 'failed'; reason: 'bad-token' | 'protocol-mismatch' | 'bad-message' | 'unreachable'; message: string };
+  | { status: 'failed'; reason: 'bad-token' | 'protocol-mismatch' | 'bad-message' | 'unreachable'; message: string; hint?: ProtocolMismatchHint };
 
 export class BridgeError extends Error {
   constructor(
@@ -33,6 +36,7 @@ interface Pending {
 }
 
 const HANDSHAKE_TIMEOUT_MS = 10_000;
+const utf8Bytes = (text: string): number => new TextEncoder().encode(text).byteLength;
 
 export interface BridgeClientOptions {
   url: string;
@@ -53,7 +57,7 @@ export class BridgeClient {
   private stopped = true;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private handshakeTimer: ReturnType<typeof setTimeout> | null = null;
-  private lastHandshake: { code: string; message: string } | null = null;
+  private lastHandshake: { code: string; message: string; bridgeProtocolVersion?: number } | null = null;
   private readonly pending = new Map<string, Pending>();
   private readonly eventListeners = new Set<(e: ServerEvent) => void>();
   private readonly stateListeners = new Set<(s: ConnectionState) => void>();
@@ -80,6 +84,14 @@ export class BridgeClient {
     this.setState({ status: 'idle' });
   }
 
+  get features(): readonly string[] {
+    return this.state.status === 'open' ? (this.state.welcome.features ?? []) : [];
+  }
+
+  supports(feature: string): boolean {
+    return this.features.includes(feature);
+  }
+
   onEvent(fn: (e: ServerEvent) => void): () => void {
     this.eventListeners.add(fn);
     return () => this.eventListeners.delete(fn);
@@ -96,13 +108,17 @@ export class BridgeClient {
       return Promise.reject(new BridgeError('not-connected', 'not connected to the bridge'));
     }
     const id = `c${++this.seq}`;
+    const frame = JSON.stringify({ kind: 'command', id, ...cmd });
+    if (utf8Bytes(frame) > MAX_FRAME_BYTES) {
+      return Promise.reject(new BridgeError('frame-too-large', 'frame-too-large'));
+    }
     return new Promise<unknown>((resolve, reject) => {
       const timer = setTimeout(() => {
         this.pending.delete(id);
         reject(new BridgeError('timeout', `the bridge did not respond to ${cmd.cmd}`));
       }, this.o.requestTimeoutMs ?? 15_000);
       this.pending.set(id, { resolve, reject, timer });
-      ws.send(JSON.stringify({ kind: 'command', id, ...cmd }));
+      ws.send(frame);
     });
   }
 
@@ -149,7 +165,7 @@ export class BridgeClient {
         this.setState({ status: 'open', welcome: message });
         return;
       case 'handshake.error':
-        this.lastHandshake = { code: message.code, message: message.message };
+        this.lastHandshake = { code: message.code, message: message.message, bridgeProtocolVersion: message.bridgeProtocolVersion };
         return;
       case 'result': {
         const pending = this.pending.get(message.id);
@@ -182,7 +198,8 @@ export class BridgeClient {
     }
     if (code === 4002) {
       this.stopped = true;
-      return this.setState({ status: 'failed', reason: 'protocol-mismatch', message: this.lastHandshake?.message ?? 'incompatible protocol version' });
+      const hint: ProtocolMismatchHint = (this.lastHandshake?.bridgeProtocolVersion ?? 0) > PROTOCOL_VERSION ? 'web-older' : 'bridge-older';
+      return this.setState({ status: 'failed', reason: 'protocol-mismatch', message: this.lastHandshake?.message ?? 'incompatible protocol version', hint });
     }
     if (code === 4000 && this.lastHandshake?.code === 'bad-message') {
       this.stopped = true;
