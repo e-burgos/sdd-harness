@@ -315,8 +315,20 @@
         "TASK-009",
         "TASK-010"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/studio-bridge/src/bridge-attachments.e2e.spec.ts"
+      ],
+      "usage": {
+        "tokens_in": 35000,
+        "tokens_out": 7000,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
     },
     {
       "id": "TASK-012",
