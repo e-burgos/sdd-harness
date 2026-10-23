@@ -114,8 +114,21 @@
         "TASK-002",
         "TASK-003"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "libs/studio-protocol/src/commands.ts",
+        "libs/studio-protocol/src/commands.spec.ts"
+      ],
+      "usage": {
+        "tokens_in": 40000,
+        "tokens_out": 8500,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
     },
     {
       "id": "TASK-005",
