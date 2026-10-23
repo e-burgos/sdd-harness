@@ -477,8 +477,29 @@
       "depends_on": [
         "TASK-016"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/workspace/Composer.tsx",
+        "apps/studio/src/components/workspace/composer.spec.tsx",
+        "apps/studio/src/components/workspace/pending.spec.tsx",
+        "apps/studio/src/components/workspace/drafts.spec.tsx",
+        "apps/studio/src/components/workspace/workspace.spec.tsx",
+        "apps/studio/src/components/workspace/channelview.spec.tsx",
+        "apps/studio/src/components/workspace/threadview.spec.tsx",
+        "apps/studio/src/lib/use-attachment-content.ts",
+        "apps/studio/src/lib/attachments/build-draft.ts",
+        "apps/studio/vitest.setup.ts"
+      ],
+      "usage": {
+        "agent": "implementor-front",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "tokens_in": 75000,
+        "tokens_out": 11000,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
     },
     {
       "id": "TASK-018",

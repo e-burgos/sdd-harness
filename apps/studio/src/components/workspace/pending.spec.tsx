@@ -20,7 +20,7 @@ function mount(status: ThreadInfo['status'], events: ThreadEvent[] = [], request
   const store = createStudioStore();
   store.getState().setThreads([info(status)]);
   store.getState().loadHistory('t1', events.map((event, seq) => ({ seq, event })));
-  const client = { request: vi.fn(request) };
+  const client = { request: vi.fn(request), supports: () => false };
   const value = { client, store, connection: { status: 'idle' } } as unknown as BridgeContextValue;
   const ui = (
     <I18nProvider initial="es">
@@ -124,7 +124,7 @@ describe('Composer while the thread is working', () => {
     expect(screen.queryByRole('button', { name: 'Enviar' })).toBeNull();
     fireEvent.change(box(), { target: { value: 'cambio de plan' } });
     fireEvent.click(screen.getByRole('button', { name: 'Encolar' }));
-    await waitFor(() => expect(client.request).toHaveBeenCalledWith({ cmd: 'thread.send', threadId: 't1', text: 'cambio de plan' }));
+    await waitFor(() => expect(client.request).toHaveBeenCalledWith({ cmd: 'thread.send', threadId: 't1', text: 'cambio de plan', attachments: [], refs: { agents: [], skills: [] } }));
     expect(client.request).not.toHaveBeenCalledWith(expect.objectContaining({ cmd: 'thread.interrupt' }));
     await waitFor(() => expect(box()).toHaveValue(''));
     expect(screen.queryByRole('alert')).toBeNull();

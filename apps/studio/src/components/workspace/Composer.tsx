@@ -1,32 +1,40 @@
 'use client';
 
-import { Clock, PaperPlaneRight } from '@phosphor-icons/react';
+import { Clock, PaperPlaneRight, Paperclip } from '@phosphor-icons/react';
 import {
   DEFAULT_AGENT,
   defaultThreadOptions,
   dmAgentOfChannel,
   specIdOfChannel,
   SendResult,
+  TEXT_ATTACHMENT_EXTENSIONS,
   ThreadInfo,
+  type AttachmentUpload,
   type Effort,
   type ModelChoice,
   type PermissionModeChoice,
   type ThreadOptions,
 } from '@sdd-studio/protocol';
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ClipboardEvent, type DragEvent, type ReactNode } from 'react';
 import { z } from 'zod';
 import { agentMeta } from '@/lib/agents';
+import { blobOfUpload } from '@/lib/attachments/build-draft';
+import { FrameBudgetError } from '@/lib/attachments/frame-budget';
 import { bridgeErrorText } from '@/lib/bridge/error-text';
 import { useT } from '@/lib/i18n/i18n';
 import { parseSlash, SAFE_ARG } from '@/lib/slash';
 import { draftKey } from '@/lib/store/state';
+import { primeAttachmentContent } from '@/lib/use-attachment-content';
+import { useAttachmentDraft } from '@/lib/use-attachment-draft';
 import { useBridge, useStudio } from '../BridgeProvider';
+import { AttachmentTray } from './AttachmentTray';
 import { PendingMessages } from './PendingMessages';
 
 const RunResult = z.object({ runId: z.string().min(1) });
 const FileResult = z.object({ path: z.string(), content: z.string() });
 
 const MAX_MESSAGE = 100_000;
+const ATTACH_ACCEPT = ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'application/pdf', ...TEXT_ATTACHMENT_EXTENSIONS.map((e) => `.${e}`)].join(',');
 const BUSY_STATUSES = new Set(['running', 'waiting-approval', 'queued']);
 
 const MODELS: ModelChoice[] = ['kit', 'haiku', 'sonnet', 'opus', 'fable'];
@@ -45,6 +53,9 @@ export interface ComposerViewProps {
   onTextChange?(text: string): void;
   queueing?: boolean;
   tray?: ReactNode;
+  hasAttachments?: boolean;
+  onFiles?(files: File[]): void;
+  attachmentTray?(dragging: boolean): ReactNode;
 }
 
 export function ComposerView(p: ComposerViewProps) {
@@ -64,7 +75,7 @@ export function ComposerView(p: ComposerViewProps) {
   }, [pending]);
   const submit = async () => {
     const value = text.trim();
-    if (!value || busy.current) return;
+    if ((!value && !p.hasAttachments) || busy.current) return;
     busy.current = true;
     setPending(true);
     try {
@@ -76,10 +87,45 @@ export function ComposerView(p: ComposerViewProps) {
       setPending(false);
     }
   };
+  const [dragging, setDragging] = useState(false);
+  const dragDepth = useRef(0);
+  const fileInput = useRef<HTMLInputElement>(null);
+  const hasFiles = (e: DragEvent) => e.dataTransfer.types.includes('Files');
+  const dropHandlers = p.onFiles
+    ? {
+        onDragEnter: (e: DragEvent) => {
+          if (!hasFiles(e)) return;
+          dragDepth.current += 1;
+          setDragging(true);
+        },
+        onDragOver: (e: DragEvent) => {
+          if (hasFiles(e)) e.preventDefault();
+        },
+        onDragLeave: (e: DragEvent) => {
+          if (!hasFiles(e)) return;
+          dragDepth.current = Math.max(0, dragDepth.current - 1);
+          if (dragDepth.current === 0) setDragging(false);
+        },
+        onDrop: (e: DragEvent) => {
+          if (!hasFiles(e)) return;
+          e.preventDefault();
+          dragDepth.current = 0;
+          setDragging(false);
+          p.onFiles?.(Array.from(e.dataTransfer.files));
+        },
+      }
+    : {};
+  const onPaste = (e: ClipboardEvent) => {
+    const files = Array.from(e.clipboardData.files);
+    if (!p.onFiles || files.length === 0) return;
+    e.preventDefault();
+    p.onFiles(files);
+  };
   const select = 'rounded-md border border-ink-700 bg-ink-950 px-2 py-1 text-xs text-ink-100 disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400';
   return (
-    <div className="border-t border-ink-800">
+    <div className="border-t border-ink-800" {...dropHandlers}>
       {p.tray}
+      {p.attachmentTray?.(dragging)}
       <div className="p-3">
         {p.error && <p role="alert" className="mb-2 text-xs text-roseish">{p.error}</p>}
         <div className="rounded-xl border border-ink-700 bg-ink-900 focus-within:border-accent-500/60">
@@ -91,6 +137,7 @@ export function ComposerView(p: ComposerViewProps) {
             value={text}
             disabled={pending}
             onChange={(e) => updateText(e.target.value)}
+            onPaste={onPaste}
             onKeyDown={(e) => {
               if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
                 e.preventDefault();
@@ -130,6 +177,33 @@ export function ComposerView(p: ComposerViewProps) {
             <select id="composer-perm" className={select} value={p.options.permissionMode} onChange={(e) => p.onOptionsChange({ permissionMode: e.target.value as PermissionModeChoice })}>
               {PERMS.map((x) => <option key={x} value={x}>{t(`perm.${x}`)}</option>)}
             </select>
+            {p.onFiles && (
+              <>
+                <input
+                  ref={fileInput}
+                  type="file"
+                  multiple
+                  hidden
+                  accept={ATTACH_ACCEPT}
+                  data-testid="attachment-input"
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files ?? []);
+                    e.target.value = '';
+                    if (files.length > 0) p.onFiles?.(files);
+                  }}
+                />
+                <button
+                  type="button"
+                  aria-label={t('attach.add')}
+                  title={t('attach.add')}
+                  className="rounded-md p-1.5 text-ink-300 hover:bg-ink-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-40"
+                  disabled={pending}
+                  onClick={() => fileInput.current?.click()}
+                >
+                  <Paperclip size={16} />
+                </button>
+              </>
+            )}
             <button
               aria-label={p.queueing ? t('composer.queue') : t('composer.send')}
               title={p.queueing ? t('composer.queueHint') : undefined}
@@ -158,6 +232,8 @@ export function Composer({ channelId, threadId, onThreadCreated }: { channelId: 
   const busy = useRef(false);
   const key = draftKey(channelId, threadId);
   const [initialText] = useState(() => store.getState().drafts[key]?.text ?? '');
+  const attachmentsEnabled = client.supports('attachments');
+  const attachmentDraft = useAttachmentDraft(key);
   const options = threadInfo?.options ?? { ...draft, agent: dmAgent ?? draft.agent };
   const agents = useMemo(() => {
     const ids = snapshot?.agents.map((a) => a.id) ?? [];
@@ -169,12 +245,17 @@ export function Composer({ channelId, threadId, onThreadCreated }: { channelId: 
       setError(t('composer.tooLong'));
       return false;
     }
-    if (threadId) {
-      SendResult.parse(await client.request({ cmd: 'thread.send', threadId, text }));
-    } else {
-      const created = ThreadInfo.parse(await client.request({ cmd: 'thread.create', channelId, options, text }));
-      onThreadCreated(created.id);
-    }
+    const refs = { agents: [], skills: [] };
+    const command = (attachments: AttachmentUpload[]) =>
+      threadId ? { cmd: 'thread.send' as const, threadId, text, attachments, refs } : { cmd: 'thread.create' as const, channelId, options, text, attachments, refs };
+    const encoded = attachmentsEnabled ? await attachmentDraft.buildUploads(command) : [];
+    const sent = command(encoded.map((e) => e.upload));
+    let createdId: string | null = null;
+    if (threadId) SendResult.parse(await client.request(sent));
+    else createdId = ThreadInfo.parse(await client.request(sent)).id;
+    store.getState().clearDraft(key);
+    encoded.forEach((e) => primeAttachmentContent(client, { sha256: e.sha256, mime: e.upload.mime }, blobOfUpload(e.upload)));
+    if (createdId) onThreadCreated(createdId);
     return true;
   };
 
@@ -183,7 +264,7 @@ export function Composer({ channelId, threadId, onThreadCreated }: { channelId: 
     busy.current = true;
     setError(null);
     try {
-      const action = parseSlash(text);
+      const action = text === '' ? null : parseSlash(text);
       if (!action) return await send(text);
       if (action.kind === 'error') {
         setError(action.reason === 'unknown' ? t('composer.unknownCommand', { name: action.name }) : t('composer.badArgs', { name: action.name }));
@@ -199,12 +280,15 @@ export function Composer({ channelId, threadId, onThreadCreated }: { channelId: 
       const file = FileResult.parse(await client.request({ cmd: 'workspace.readFile', path: action.path }));
       return await send(action.args ? `${file.content}\n\n---\n${action.args}` : file.content);
     } catch (e) {
-      setError(bridgeErrorText(e, t));
+      setError(e instanceof FrameBudgetError ? budgetErrorText(e) : bridgeErrorText(e, t));
       return false;
     } finally {
       busy.current = false;
     }
   };
+
+  const budgetErrorText = (e: FrameBudgetError) =>
+    t('attach.error.budget', { excess: Math.ceil(e.excessBytes / 1024), names: e.heaviest.join(', ') });
 
   const onOptionsChange = (patch: Partial<ThreadOptions>) => {
     if (threadId) {
@@ -227,6 +311,21 @@ export function Composer({ channelId, threadId, onThreadCreated }: { channelId: 
       onTextChange={(text) => store.getState().setDraftText(key, text)}
       queueing={threadInfo ? BUSY_STATUSES.has(threadInfo.status) : false}
       tray={threadId ? <PendingMessages threadId={threadId} /> : null}
+      hasAttachments={attachmentsEnabled && attachmentDraft.attachments.length > 0}
+      onFiles={attachmentsEnabled ? (files) => void attachmentDraft.add(files) : undefined}
+      attachmentTray={
+        attachmentsEnabled
+          ? (dragging) => (
+              <AttachmentTray
+                attachments={attachmentDraft.attachments}
+                failures={attachmentDraft.failures}
+                dragging={dragging}
+                onRemove={attachmentDraft.remove}
+                onDismissFailures={attachmentDraft.dismissFailures}
+              />
+            )
+          : undefined
+      }
     />
   );
 }

@@ -62,9 +62,9 @@ describe('ComposerView', () => {
 });
 
 describe('Composer (connected)', () => {
-  function connected(channelId: string, threadId: string | null, request: (cmd: { cmd: string }) => Promise<unknown>) {
+  function connected(channelId: string, threadId: string | null, request: (cmd: { cmd: string }) => Promise<unknown>, features: string[] = []) {
     const store = createStudioStore();
-    const client = { request: vi.fn(request) };
+    const client = { request: vi.fn(request), supports: (f: string) => features.includes(f) };
     const value = { client, store } as unknown as BridgeContextValue;
     const onThreadCreated = vi.fn();
     render(
@@ -138,5 +138,75 @@ describe('Composer (connected)', () => {
     fireEvent.change(screen.getByLabelText('Modelo'), { target: { value: 'opus' } });
     const call = client.request.mock.calls.find((c) => c[0].cmd === 'thread.setOptions')![0] as unknown as { options: object };
     expect(call.options).toEqual({ model: 'opus', effort: 'medium' });
+  });
+
+  describe('attachments', () => {
+    const ALL = ['attachments'];
+    const pick = (files: File[]) => fireEvent.change(screen.getByTestId('attachment-input'), { target: { files } });
+    const note = (name = 'nota.txt', text = 'contenido') => new File([text], name, { type: 'text/plain' });
+
+    it('sends only attachments without text through thread.send', async () => {
+      const { client, store, box } = connected('general', 't1', async () => ({ delivery: 'started' }), ALL);
+      pick([note()]);
+      await screen.findByText('1/5 adjuntos');
+      fireEvent.keyDown(box, { key: 'Enter' });
+      await waitFor(() => expect(client.request).toHaveBeenCalled());
+      expect(client.request.mock.calls[0]![0]).toMatchObject({
+        cmd: 'thread.send', threadId: 't1', text: '',
+        attachments: [{ kind: 'text', name: 'nota.txt', mime: 'text/plain', text: 'contenido' }],
+      });
+      await waitFor(() => expect(store.getState().drafts['t1']).toBeUndefined());
+      expect(screen.queryByText('1/5 adjuntos')).toBeNull();
+    });
+
+    it('sends attachments in thread.create for a new thread', async () => {
+      const { client, onThreadCreated, box } = connected('general', null, async () => info('t7'), ALL);
+      fireEvent.change(box, { target: { value: 'mirá' } });
+      pick([note()]);
+      await screen.findByText('1/5 adjuntos');
+      fireEvent.keyDown(box, { key: 'Enter' });
+      await waitFor(() => expect(onThreadCreated).toHaveBeenCalledWith('t7'));
+      expect(client.request.mock.calls[0]![0]).toMatchObject({ cmd: 'thread.create', text: 'mirá', attachments: [{ name: 'nota.txt' }] });
+    });
+
+    it('does not send without text and without attachments', () => {
+      const { client, box } = connected('general', 't1', async () => ({}), ALL);
+      fireEvent.keyDown(box, { key: 'Enter' });
+      expect(client.request).not.toHaveBeenCalled();
+    });
+
+    it('keeps text and attachments when the send fails', async () => {
+      const { box } = connected('general', 't1', async () => { throw new Error('bridge down'); }, ALL);
+      fireEvent.change(box, { target: { value: 'hola' } });
+      pick([note()]);
+      await screen.findByText('1/5 adjuntos');
+      fireEvent.keyDown(box, { key: 'Enter' });
+      await waitFor(() => expect(screen.getByText('bridge down')).toBeInTheDocument());
+      expect(box).toHaveValue('hola');
+      expect(screen.getByText('1/5 adjuntos')).toBeInTheDocument();
+    });
+
+    it('shows the budget error with the heaviest names and keeps the draft', async () => {
+      const { client, box } = connected('general', 't1', async () => ({}), ALL);
+      fireEvent.change(box, { target: { value: 'hola' } });
+      const big = (name: string) => note(name, 'x'.repeat(450_000));
+      pick([big('a.txt'), big('b.txt'), big('c.txt')]);
+      await screen.findByText('3/5 adjuntos');
+      fireEvent.keyDown(box, { key: 'Enter' });
+      expect(await screen.findByText(/excede el tamaño máximo por \d+ KB/)).toHaveTextContent('a.txt, b.txt');
+      expect(client.request).not.toHaveBeenCalled();
+      expect(screen.getByText('3/5 adjuntos')).toBeInTheDocument();
+    });
+
+    it('attaches files pasted into the textarea and dropped on the composer', async () => {
+      const { box } = connected('general', 't1', async () => ({}), ALL);
+      fireEvent.paste(box, { clipboardData: { files: [note('pegado.txt')], getData: () => '' } });
+      await screen.findByText('1/5 adjuntos');
+      const dropZone = box.closest('.border-t')!;
+      fireEvent.dragEnter(dropZone, { dataTransfer: { types: ['Files'], files: [] } });
+      expect(screen.getByText('Soltá los archivos para adjuntarlos')).toBeInTheDocument();
+      fireEvent.drop(dropZone, { dataTransfer: { types: ['Files'], files: [note('soltado.txt')] } });
+      await screen.findByText('2/5 adjuntos');
+    });
   });
 });

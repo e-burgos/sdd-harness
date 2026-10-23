@@ -14,7 +14,7 @@ const info = (id: string) => ({
 });
 
 function mount(store: StudioStore, channelId: string, threadId: string | null, request = vi.fn(async () => info('t1'))) {
-  const value = { client: { request }, store } as unknown as BridgeContextValue;
+  const value = { client: { request, supports: () => false }, store } as unknown as BridgeContextValue;
   const ui = (cid: string, tid: string | null) => (
     <I18nProvider initial="es">
       <BridgeContext.Provider value={value}>

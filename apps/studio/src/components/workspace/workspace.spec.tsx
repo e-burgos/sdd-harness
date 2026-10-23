@@ -15,7 +15,7 @@ function mount() {
   const store = createStudioStore();
   store.getState().setThreads([info('t1'), info('t2')]);
   const value = {
-    client: { request: vi.fn().mockResolvedValue({}) },
+    client: { request: vi.fn().mockResolvedValue({}), supports: () => false },
     store,
     connection: { status: 'idle' },
     authMode: null,

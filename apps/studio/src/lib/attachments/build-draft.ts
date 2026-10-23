@@ -1,5 +1,5 @@
-import type { Sha256 } from '@sdd-studio/protocol';
-import { blobToBase64, bytesToBase64, sha256Hex } from './bytes';
+import type { AttachmentUpload, Sha256 } from '@sdd-studio/protocol';
+import { base64ToBytes, blobToBase64, bytesToBase64, sha256Hex } from './bytes';
 import type { Classified } from './classify';
 import type { DraftAttachment } from './draft-attachment';
 import { browserImageCodec, encodeImage, type ImageCodec } from './encode-image';
@@ -51,4 +51,8 @@ export async function buildDraftAttachment(
       sha256: (await sha256Hex(new TextEncoder().encode(classified.text))) as Sha256,
     },
   };
+}
+
+export function blobOfUpload(upload: AttachmentUpload): Blob {
+  return upload.kind === 'text' ? new Blob([upload.text], { type: upload.mime }) : new Blob([base64ToBytes(upload.data)], { type: upload.mime });
 }

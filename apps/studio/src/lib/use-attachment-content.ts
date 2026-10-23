@@ -142,7 +142,11 @@ export function attachmentCacheFor(client: BridgeClient): AttachmentContentCache
 }
 
 export function primeAttachmentContent(client: BridgeClient, key: ContentKey, blob: Blob): void {
-  attachmentCacheFor(client).prime(key, blob);
+  try {
+    attachmentCacheFor(client).prime(key, blob);
+  } catch {
+    return;
+  }
 }
 
 export type AttachmentContentState = { status: 'loading' } | { status: 'ready'; url: string } | { status: 'unavailable' };

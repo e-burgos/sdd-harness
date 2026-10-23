@@ -40,7 +40,7 @@ function setup(events: ThreadEvent[] = [{ type: 'user.message', text: 'hola' }],
   const store = createStudioStore();
   store.getState().setThreads([info(threadId)]);
   store.getState().loadHistory(threadId, events.map((event, seq) => ({ seq, event })));
-  const value = { client: { request: vi.fn() }, store, connection: { status: 'idle' } } as unknown as BridgeContextValue;
+  const value = { client: { request: vi.fn(), supports: () => false }, store, connection: { status: 'idle' } } as unknown as BridgeContextValue;
   const ui = (id: string) => (
     <I18nProvider initial="es">
       <BridgeContext.Provider value={value}>
@@ -135,7 +135,7 @@ describe('ThreadView scrolling', () => {
   it('positions an existing thread at the end once its history is synced', () => {
     const store = createStudioStore();
     store.getState().setThreads([info('t1')]);
-    const value = { client: { request: vi.fn() }, store, connection: { status: 'idle' } } as unknown as BridgeContextValue;
+    const value = { client: { request: vi.fn(), supports: () => false }, store, connection: { status: 'idle' } } as unknown as BridgeContextValue;
     render(
       <I18nProvider initial="es">
         <BridgeContext.Provider value={value}>
