@@ -61,8 +61,8 @@ const toFix = (f: Json): FixSummary => ({
   status: str(f.status, 'pending'),
   severity: strOrNull(f.severity),
   specId: strOrNull(f.spec_id),
-  createdAt: null,
-  closedAt: null,
+  createdAt: strOrNull(f.created_at),
+  closedAt: strOrNull(f.resolved_at) ?? strOrNull(f.validated_at),
 });
 
 const SAFE_SPEC_ID = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
@@ -199,7 +199,7 @@ const AREA_FIELDS: Record<Area, (keyof WorkspaceSnapshot)[]> = {
   global: ['project', 'profile'],
   specs: ['specs', 'cycles'],
   fixes: ['fixes'],
-  agents: ['agents'],
+  agents: ['agents', 'skills'],
   tools: ['gateMode'],
   pricing: ['pricing'],
   kit: ['kitVersion'],

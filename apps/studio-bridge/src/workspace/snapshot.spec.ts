@@ -1,5 +1,6 @@
 import { chmod, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { WorkspaceSnapshot } from '@sdd-studio/protocol';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { copyFixture } from '../test-utils/fixture';
 import { diffSnapshots } from './diff';
@@ -174,5 +175,45 @@ describe('mergeSnapshot / changedAreas', () => {
     const { snapshot } = await loadWorkspaceSnapshot(root);
     expect(snapshot.specs.map((sp) => sp.id)).toEqual(['spec-dev-001-pagos', 'spec-dev-002-borrador']);
     expect(snapshot.cycles.every((c) => c.specId !== 'x/../../escaped')).toBe(true);
+  });
+
+  it('validates against the protocol snapshot schema', async () => {
+    const { snapshot } = await loadWorkspaceSnapshot(root);
+    expect(WorkspaceSnapshot.safeParse(snapshot).success).toBe(true);
+    expect(snapshot.skills).toEqual([]);
+  });
+
+  it('agents area covers the skills field', async () => {
+    const prev = mergeSnapshot(null, await loadWorkspaceSnapshot(root));
+    const withSkill = {
+      ...prev,
+      skills: [{ id: 'sdd-planner', kind: 'skill' as const, description: 'd', source: 'sdd' as const, path: 'sdd/skills/sdd-planner/SKILL.md' }],
+    };
+    expect(changedAreas(prev, withSkill)).toEqual(['agents']);
+  });
+
+  describe('fix dates', () => {
+    const writeFixes = (fixes: unknown[]) => writeFile(path.join(root, 'sdd/fixes.json'), JSON.stringify({ fixes }));
+    const loaded = async () => (await loadWorkspaceSnapshot(root)).snapshot.fixes;
+
+    it('reads createdAt and closedAt from created_at and resolved_at', async () => {
+      await writeFixes([{ id: 'FIX-1', title: 't', status: 'resolved', created_at: '2026-10-01', resolved_at: '2026-10-03', validated_at: '2026-10-05' }]);
+      expect(await loaded()).toEqual([
+        { id: 'FIX-1', title: 't', status: 'resolved', severity: null, specId: null, createdAt: '2026-10-01', closedAt: '2026-10-03' },
+      ]);
+    });
+
+    it('falls back to validated_at when resolved_at is missing', async () => {
+      await writeFixes([{ id: 'FIX-1', status: 'validated', created_at: '2026-10-01', validated_at: '2026-10-05' }]);
+      expect((await loaded())[0]).toMatchObject({ createdAt: '2026-10-01', closedAt: '2026-10-05' });
+    });
+
+    it('leaves the dates null when they do not exist or are not strings', async () => {
+      await writeFixes([{ id: 'FIX-1', status: 'pending' }, { id: 'FIX-2', status: 'pending', created_at: 20261001, resolved_at: null }]);
+      expect(await loaded()).toEqual([
+        expect.objectContaining({ id: 'FIX-1', createdAt: null, closedAt: null }),
+        expect.objectContaining({ id: 'FIX-2', createdAt: null, closedAt: null }),
+      ]);
+    });
   });
 });

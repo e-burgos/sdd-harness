@@ -530,8 +530,21 @@
       "depends_on": [
         "TASK-005"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/studio-bridge/src/workspace/snapshot.ts",
+        "apps/studio-bridge/src/workspace/snapshot.spec.ts"
+      ],
+      "usage": {
+        "tokens_in": 12000,
+        "tokens_out": 2500,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
     },
     {
       "id": "TASK-019",
