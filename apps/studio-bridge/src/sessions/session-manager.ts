@@ -1,6 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { dmAgentOfChannel, MAX_PENDING_PER_THREAD } from '@sdd-studio/protocol';
 import type {
+  AlwaysOffer,
+  AlwaysRule,
   Presence,
   SendResult,
   ServerEvent,
@@ -21,7 +23,8 @@ import {
   type OutgoingMessage,
   type ToolVerdict,
 } from '../engine/types';
-import { EDIT_TOOLS, editTargetOf, judgeEdit } from '../gate/judge';
+import { editTargetOf, judgeEdit } from '../gate/judge';
+import { alwaysOfferOf, matchesRule, ruleOf } from './always-rule';
 import { PresenceTracker } from './presence';
 import { toThreadInfo as toInfo, type HistoryEntry, type PendingMessage, type StoredThread, type ThreadStore } from './store';
 
@@ -61,13 +64,6 @@ function serializeInput(input: Record<string, unknown>): { input: string; inputT
   return text.length > INPUT_CAP ? { input: text.slice(0, INPUT_CAP), inputTruncated: true } : { input: text };
 }
 
-/** "Always in this thread" key: null = the 'thread' scope is treated as 'once'. */
-function alwaysKeyOf(toolName: string, input: Record<string, unknown>): string | null {
-  if (EDIT_TOOLS.has(toolName) || toolName.startsWith('mcp__')) return null;
-  if (toolName === 'Bash') return typeof input.command === 'string' ? `Bash:${input.command}` : null;
-  return toolName;
-}
-
 interface Live {
   turn: EngineTurn | null;
   queued: OutgoingMessage[] | null;
@@ -75,7 +71,7 @@ interface Live {
   deliveredIds: Set<string>;
   /** Monotonic FIFO order of the channel queue. */
   queuedAt: number;
-  alwaysAllow: Set<string>;
+  alwaysAllow: AlwaysRule[];
   /** toolUseId → reason of denies already announced by the PreToolUse hook (avoids duplicating the pair). */
   hookDenied: Map<string, string>;
   /** Raised in interrupt(), lowered when a new turn starts. */
@@ -88,8 +84,8 @@ interface Live {
 
 interface PendingApproval {
   threadId: string;
-  alwaysKey: string | null;
-  settle: (decision: ApprovalDecision) => void;
+  always: AlwaysOffer;
+  settle: (decision: ApprovalDecision, remembered?: AlwaysRule) => void;
 }
 
 /** All dm:* channels share a single write scope; the rest use their own channel. */
@@ -220,8 +216,18 @@ export class SessionManager {
   respondApproval(approvalId: string, decision: 'allow' | 'deny', reason: string | undefined, scope: 'once' | 'thread'): void {
     const pending = this.approvals.get(approvalId);
     if (!pending) throw new SessionError('not-found', `no pending approval ${approvalId}`);
-    if (decision === 'allow' && scope === 'thread' && pending.alwaysKey) this.liveOf(pending.threadId).alwaysAllow.add(pending.alwaysKey);
-    pending.settle(decision === 'allow' ? { behavior: 'allow' } : { behavior: 'deny', message: reason ?? 'denied by the user' });
+    const remembered = decision === 'allow' && scope === 'thread' ? ruleOf(pending.always) : null;
+    if (remembered) this.rememberRule(pending.threadId, remembered);
+    pending.settle(
+      decision === 'allow' ? { behavior: 'allow' } : { behavior: 'deny', message: reason ?? 'denied by the user' },
+      remembered ?? undefined,
+    );
+  }
+
+  private rememberRule(threadId: string, rule: AlwaysRule): void {
+    const live = this.liveOf(threadId);
+    const key = JSON.stringify(rule);
+    if (!live.alwaysAllow.some((known) => JSON.stringify(known) === key)) live.alwaysAllow.push(rule);
   }
 
   /** After a restart: announces the lost approvals and the interruption of threads that were busy. */
@@ -252,7 +258,7 @@ export class SessionManager {
   private liveOf(threadId: string): Live {
     let live = this.live.get(threadId);
     if (!live) {
-      live = { turn: null, queued: null, delivered: new Map(), deliveredIds: new Set(), queuedAt: 0, alwaysAllow: new Set(), hookDenied: new Map(), interrupted: false, gen: 0, writes: false };
+      live = { turn: null, queued: null, delivered: new Map(), deliveredIds: new Set(), queuedAt: 0, alwaysAllow: [], hookDenied: new Map(), interrupted: false, gen: 0, writes: false };
       this.live.set(threadId, live);
     }
     return live;
@@ -499,8 +505,8 @@ export class SessionManager {
       }
       if (verdict.kind === 'warn') gateWarning = verdict.reason;
     }
-    const alwaysKey = alwaysKeyOf(request.toolName, request.input);
-    if (!gateWarning && alwaysKey && live.alwaysAllow.has(alwaysKey)) return { behavior: 'allow' };
+    if (!gateWarning && live.alwaysAllow.some((rule) => matchesRule(rule, request.toolName, request.input))) return { behavior: 'allow' };
+    const always = alwaysOfferOf(request.toolName, request.input, gateWarning);
 
     const summary = summarizeTool(request.toolName, request.input);
     const diff = diffFor(request.toolName, request.input);
@@ -509,7 +515,7 @@ export class SessionManager {
     // The pending approval is registered BEFORE announcing it: a client may answer as soon as it sees the event.
     const decision = new Promise<ApprovalDecision>((resolve) => {
       const onAbort = () => settle({ behavior: 'deny', message: 'aborted' });
-      const settle = (result: ApprovalDecision) => {
+      const settle = (result: ApprovalDecision, remembered?: AlwaysRule) => {
         if (!this.approvals.delete(approvalId)) return;
         signal.removeEventListener('abort', onAbort);
         this.emit(thread, {
@@ -517,12 +523,13 @@ export class SessionManager {
           approvalId,
           decision: result.behavior,
           ...(result.behavior === 'deny' ? { reason: result.message } : {}),
+          ...(remembered ? { remembered } : {}),
         });
         const stillWaiting = [...this.approvals.values()].some((p) => p.threadId === thread.id);
         if (thread.status === 'waiting-approval' && !stillWaiting) this.setStatus(thread, 'running');
         resolve(result);
       };
-      this.approvals.set(approvalId, { threadId: thread.id, alwaysKey: alwaysKeyOf(request.toolName, request.input), settle });
+      this.approvals.set(approvalId, { threadId: thread.id, always, settle });
       signal.addEventListener('abort', onAbort, { once: true });
     });
     // State before the broadcast; if it resolves synchronously during the broadcast, settle returns it to running.
@@ -536,6 +543,7 @@ export class SessionManager {
       ...extra,
       ...serializeInput(request.input),
       ...(gateWarning ? { gateWarning } : {}),
+      always,
     });
     return decision;
   }

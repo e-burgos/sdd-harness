@@ -452,16 +452,17 @@ describe('SessionManager', () => {
         await m.interrupt(t.id);
       });
 
-      it('I2: thread scope on an mcp__ tool asks again', async () => {
+      it('I2: thread scope on an mcp__ tool remembers only that tool, not the rest of the server', async () => {
         const { engine, runs } = scripted();
         const { m } = await manager(engine);
         const t = await m.createThread({ channelId: 'general', options: opts, text: 'x' });
-        const ask = () => runs[0]!.cb.requestApproval({ ...req, toolName: 'mcp__srv__do', input: {} }, runs[0]!.ac.signal);
-        const first = ask();
+        const ask = (toolName: string) => runs[0]!.cb.requestApproval({ ...req, toolName, input: {} }, runs[0]!.ac.signal);
+        const first = ask('mcp__srv__do');
         m.respondApproval((await waitFor(() => pendingApproval(t.id))).approvalId, 'allow', undefined, 'thread');
         await first;
+        expect(await ask('mcp__srv__do')).toEqual({ behavior: 'allow' });
         sent.length = 0;
-        void ask();
+        void ask('mcp__srv__other');
         await waitFor(() => pendingApproval(t.id));
         await m.interrupt(t.id);
       });
@@ -711,6 +712,129 @@ describe('SessionManager', () => {
       await new Promise((r) => setTimeout(r, 20));
       expect(started).toEqual([]);
       await first.m.interrupt(t.id);
+    });
+  });
+
+  describe('always rules', () => {
+    const answer = async (m: SessionManager, threadId: string, scope: 'once' | 'thread') => {
+      const request = await waitFor(() => pendingApproval(threadId));
+      m.respondApproval(request.approvalId, 'allow', undefined, scope);
+      return request;
+    };
+    const resolutions = (threadId: string) =>
+      eventsOf(threadId).filter((e): e is Extract<ThreadEvent, { type: 'approval.resolved' }> => e.type === 'approval.resolved');
+    const idle = (m: SessionManager, id: string) => waitFor(() => statusOf(m, id) === 'idle');
+    const runAndAnswer = async (m: SessionManager, threadId: string, text: string, scope: 'once' | 'thread') => {
+      sent.length = 0;
+      await m.send(threadId, text);
+      const request = await answer(m, threadId, scope);
+      await idle(m, threadId);
+      return request;
+    };
+    const runExpectingNoApproval = async (m: SessionManager, threadId: string, text: string) => {
+      sent.length = 0;
+      await m.send(threadId, text);
+      await waitFor(() => statusOf(m, threadId) === 'running');
+      await idle(m, threadId);
+      expect(pendingApproval(threadId)).toBeUndefined();
+      expect(eventsOf(threadId).some((e) => e.type === 'tool.start')).toBe(true);
+    };
+    const start = async (m: SessionManager, text: string) => {
+      const t = await m.createThread({ channelId: 'general', options: opts, text });
+      return t;
+    };
+
+    it('offers the rule in approval.requested and reports it as remembered in approval.resolved', async () => {
+      const { m } = await manager();
+      const t = await start(m, '#bash-git');
+      const request = await answer(m, t.id, 'thread');
+      await idle(m, t.id);
+      expect(request.always).toEqual({ kind: 'bash-prefix', prefix: 'git status' });
+      expect(resolutions(t.id)[0]).toMatchObject({ decision: 'allow', remembered: { kind: 'bash-prefix', prefix: 'git status' } });
+    });
+
+    it('a bash prefix rule auto-allows later commands with that prefix but not compound ones', async () => {
+      const { m } = await manager();
+      const t = await start(m, '#bash-git');
+      await answer(m, t.id, 'thread');
+      await idle(m, t.id);
+      await runExpectingNoApproval(m, t.id, '#bash-git2');
+      sent.length = 0;
+      await m.send(t.id, '#bash-chain');
+      const chained = await waitFor(() => pendingApproval(t.id));
+      expect(chained.always).toEqual({ kind: 'none', reason: 'not-calculable' });
+      await m.interrupt(t.id);
+    });
+
+    it('thread scope on a non-calculable command behaves as once and remembers nothing', async () => {
+      const { m } = await manager();
+      const t = await start(m, '#bash-chain');
+      await answer(m, t.id, 'thread');
+      await idle(m, t.id);
+      expect(resolutions(t.id)[0]?.remembered).toBeUndefined();
+      sent.length = 0;
+      await m.send(t.id, '#bash-chain');
+      await waitFor(() => pendingApproval(t.id));
+      await m.interrupt(t.id);
+    });
+
+    it('remembers a mcp tool and an edit tool as tool rules', async () => {
+      const { m } = await manager();
+      const t = await start(m, '#mcp');
+      await answer(m, t.id, 'thread');
+      await idle(m, t.id);
+      await runExpectingNoApproval(m, t.id, '#mcp');
+      const edit = await runAndAnswer(m, t.id, '#edit-tool', 'thread');
+      expect(edit.always).toEqual({ kind: 'tool', tool: 'Edit' });
+      await runExpectingNoApproval(m, t.id, '#edit-tool');
+    });
+
+    it('the rule lives only with its thread', async () => {
+      const { m } = await manager();
+      const first = await start(m, '#mcp');
+      await answer(m, first.id, 'thread');
+      await idle(m, first.id);
+      const second = await start(m, '#mcp');
+      const request = await waitFor(() => pendingApproval(second.id));
+      expect(request.always).toEqual({ kind: 'mcp', tool: 'mcp__fake__ping' });
+      await m.interrupt(second.id);
+    });
+
+    it('a gate warning offers no Always, ignores scope thread and asks again next time', async () => {
+      const base = snapshot;
+      snapshot = { ...base, gateMode: 'warn', cycles: [], fixes: [] };
+      const { m } = await manager();
+      const t = await start(m, '#edit-tool');
+      const request = await answer(m, t.id, 'thread');
+      await idle(m, t.id);
+      expect(request.gateWarning).toBeDefined();
+      expect(request.always).toEqual({ kind: 'none', reason: 'gate-warning' });
+      expect(resolutions(t.id)[0]?.remembered).toBeUndefined();
+      sent.length = 0;
+      await m.send(t.id, '#edit-tool');
+      const again = await waitFor(() => pendingApproval(t.id));
+      expect(again.gateWarning).toBeDefined();
+      await m.interrupt(t.id);
+    });
+
+    it('a rule never bypasses a SPEC GATE deny or a later warning', async () => {
+      const base = snapshot;
+      const { m } = await manager();
+      const t = await start(m, '#edit-tool');
+      await answer(m, t.id, 'thread');
+      await idle(m, t.id);
+      snapshot = { ...base, cycles: base.cycles.map((c) => ({ ...c, status: 'completed' })), fixes: [] };
+      sent.length = 0;
+      await m.send(t.id, '#edit-tool');
+      await idle(m, t.id);
+      expect(resolutions(t.id)[0]).toMatchObject({ decision: 'deny' });
+      expect(eventsOf(t.id).some((e) => e.type === 'tool.start')).toBe(false);
+      snapshot = { ...base, gateMode: 'warn', cycles: [], fixes: [] };
+      sent.length = 0;
+      await m.send(t.id, '#edit-tool');
+      const warned = await waitFor(() => pendingApproval(t.id));
+      expect(warned.always).toEqual({ kind: 'none', reason: 'gate-warning' });
+      await m.interrupt(t.id);
     });
   });
 });
