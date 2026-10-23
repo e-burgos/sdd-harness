@@ -38,6 +38,8 @@ function sameInfo(a: ThreadInfo | null, b: ThreadInfo): boolean {
     a.title === b.title &&
     a.channelId === b.channelId &&
     a.agent === b.agent &&
+    a.pendingCount === b.pendingCount &&
+    JSON.stringify(a.link) === JSON.stringify(b.link) &&
     JSON.stringify(a.options) === JSON.stringify(b.options)
   );
 }

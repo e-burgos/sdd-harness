@@ -64,6 +64,9 @@ describe('state reducers', () => {
     expect(setThreads(s, [info()])).toBe(s);
     expect(applyServerEvent(s, { kind: 'thread.updated', thread: info() })).toBe(s);
     expect(applyServerEvent(s, { kind: 'thread.updated', thread: info({ status: 'running' }) })).not.toBe(s);
+    const relinked = info({ link: { target: { kind: 'fix', fixId: 'FIX-1' }, source: 'manual' } });
+    expect(applyServerEvent(s, { kind: 'thread.updated', thread: relinked }).threads['t1']?.info?.link).toEqual(relinked.link);
+    expect(applyServerEvent(s, { kind: 'thread.updated', thread: info({ pendingCount: 2 }) }).threads['t1']?.info?.pendingCount).toBe(2);
   });
 
   it('resolves an approval answered in another tab', () => {
