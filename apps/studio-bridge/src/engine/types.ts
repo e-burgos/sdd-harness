@@ -1,5 +1,20 @@
 import type { Author, ThreadEvent, ThreadOptions } from '@sdd-studio/protocol';
 
+export type PromptBlock = { kind: 'text'; text: string };
+
+export interface TurnPrompt {
+  text: string;
+  preamble: string[];
+  blocks: PromptBlock[];
+}
+
+export interface OutgoingMessage {
+  id: string;
+  prompt: TurnPrompt;
+}
+
+export const plainPrompt = (text: string): TurnPrompt => ({ text, preamble: [], blocks: [] });
+
 export interface EngineTurnInput {
   threadId: string;
   text: string;
