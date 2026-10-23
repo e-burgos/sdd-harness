@@ -3,7 +3,11 @@
   "cycle": 2,
   "module": "studio-session-ux",
   "spec": "spec-e-burgos-001-studio-session-ux",
-  "apps": ["apps/studio", "apps/studio-bridge", "libs/studio-protocol"],
+  "apps": [
+    "apps/studio",
+    "apps/studio-bridge",
+    "libs/studio-protocol"
+  ],
   "phase": "attachments-and-references",
   "flow": "full",
   "objectives": [
@@ -37,12 +41,13 @@
           "label": "apertura cycle-02 (consolidación de contexto, GATE A, brief)",
           "provider_model": "claude/opus",
           "effort": "medium",
-          "tokens_in": 95000,
-          "tokens_out": 22000,
-          "tokens_total": 117000,
-          "approx": true,
-          "source": "declared-estimate",
-          "recorded_at": "2026-10-23"
+          "tokens_in": 91364,
+          "tokens_out": 16123,
+          "tokens_total": 107487,
+          "approx": false,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-10-23",
+          "tool_uses": 26
         }
       ]
     }

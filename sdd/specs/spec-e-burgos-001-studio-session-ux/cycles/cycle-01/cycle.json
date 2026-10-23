@@ -136,8 +136,8 @@
     ],
     "files_deleted": [],
     "usage": {
-      "tokens_in": 3208633,
-      "tokens_out": 515523,
+      "tokens_in": 3193469,
+      "tokens_out": 515553,
       "approx": true,
       "source": "declared-estimate",
       "by_agent": [
@@ -643,8 +643,8 @@
           "source": "declared-estimate"
         },
         "claude/opus": {
-          "tokens_in": 1799463,
-          "tokens_out": 246023,
+          "tokens_in": 1784299,
+          "tokens_out": 246053,
           "approx": true,
           "source": "declared-estimate"
         }
