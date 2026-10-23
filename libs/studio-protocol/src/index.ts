@@ -1,6 +1,7 @@
 export * from './version';
 export * from './limits';
 export * from './domain';
+export * from './attachments';
 export * from './snapshot';
 export * from './handshake';
 export * from './events';

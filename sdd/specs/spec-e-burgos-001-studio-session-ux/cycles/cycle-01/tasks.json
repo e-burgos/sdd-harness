@@ -55,8 +55,22 @@
       "depends_on": [
         "TASK-001"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "libs/studio-protocol/src/attachments.ts",
+        "libs/studio-protocol/src/attachments.spec.ts",
+        "libs/studio-protocol/src/index.ts"
+      ],
+      "usage": {
+        "tokens_in": 30000,
+        "tokens_out": 6000,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
     },
     {
       "id": "TASK-003",
