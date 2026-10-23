@@ -765,8 +765,23 @@
         "TASK-017",
         "TASK-025"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/workspace/ThreadLinkPicker.tsx",
+        "apps/studio/src/components/workspace/threadlink.spec.tsx",
+        "apps/studio/src/components/workspace/ThreadView.tsx",
+        "apps/studio/src/lib/i18n/es.ts",
+        "apps/studio/src/lib/i18n/en.ts"
+      ],
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "tokens_in": 30000,
+        "tokens_out": 4500,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
     },
     {
       "id": "TASK-028",

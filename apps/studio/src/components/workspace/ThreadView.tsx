@@ -8,6 +8,7 @@ import { useStickToBottom } from '@/lib/use-stick-to-bottom';
 import { useBridge, useStudio } from '../BridgeProvider';
 import { ActivityIndicator, INDICATED_STATUSES } from './ActivityIndicator';
 import { StatusBadge } from './StatusBadge';
+import { ThreadLinkPicker } from './ThreadLinkPicker';
 import { Timeline } from './Timeline';
 
 const BUSY = new Set(['running', 'waiting-approval', 'queued']);
@@ -55,6 +56,7 @@ export function ThreadView({ threadId, onBack, composer }: { threadId: string; o
           <ArrowLeft size={18} />
         </button>
         <h1 className="min-w-0 flex-1 truncate text-base font-semibold">{info?.title ?? '…'}</h1>
+        <ThreadLinkPicker threadId={threadId} />
         {info && <StatusBadge status={info.status} />}
         {info && BUSY.has(info.status) && (
           <button
