@@ -313,3 +313,6 @@ Escala de SP: ≤1h→1 · 2h→2 · 3h→3 · 4h→5. Ninguna task supera 4h. I
 - `MessageInput.attachments` y `refs` son opcionales en `SessionManager` (el router siempre los completa con los defaults de zod); `send(threadId, MessageInput)` ya no recibe string.
 - Watcher: segundo `chokidar.watch` sobre `.claude` solo si existe, con `isClaudeCatalogPath` (agents/skills, depth 3).
 - FakeEngine: marcadores ` [attachments: …]`, ` [refs: …]` y `#bad-attachment`.
+- apps/studio: `lib/attachments/` (`classify`, `encode-image`, `frame-budget`, `build-draft`, `bytes`), `use-attachment-draft.ts`, `use-attachment-content.ts`, `composer-refs.ts`, `use-mention-menu.ts`; `ComposerView` recibe `mentions`, `onFiles`, `attachmentTray`, `hasAttachments`; `Composer` consulta `client.supports(attachments|file-search|catalog)`; el menú `@`/`/` solo existe si hay `file-search` o `catalog`; con menú abierto Enter inserta (un comando fijo tipeado completo requiere un segundo Enter).
+- apps/studio e2e: `start-bridge.mjs` hace `git init` en el workspace (el walk de `git ls-files` en un directorio ignorado devuelve vacío) y crea `.claude/skills` (el watcher solo se arma si `.claude` existe al arrancar); la web local se compila con `build:local` + `node apps/studio-bridge/build.js`.
+- vitest.setup.ts sustituye `URL.createObjectURL` (el de vitest falla con Blobs de jsdom).

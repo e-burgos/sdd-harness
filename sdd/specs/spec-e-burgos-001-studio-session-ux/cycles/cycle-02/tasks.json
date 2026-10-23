@@ -708,8 +708,24 @@
       "depends_on": [
         "TASK-024"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/studio/e2e/start-bridge.mjs",
+        "apps/studio/e2e/studio.e2e.ts",
+        "apps/studio/src/components/workspace/AttachmentView.tsx",
+        "sdd/components.json",
+        "sdd/specs/spec-e-burgos-001-studio-session-ux/cycles/cycle-02/planner.md"
+      ],
+      "usage": {
+        "agent": "implementor-front",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "tokens_in": 60000,
+        "tokens_out": 9000,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
     }
   ]
 }

@@ -8,6 +8,7 @@ import { useT } from '@/lib/i18n/i18n';
 import { useAttachmentContent } from '@/lib/use-attachment-content';
 
 const IMAGE_BOX_MAX_WIDTH = 320;
+const IMAGE_BOX_MIN_WIDTH = 48;
 const ring = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400';
 const card = 'flex max-w-xs items-center gap-2 rounded-lg border border-ink-700 bg-ink-950 px-2 py-1.5 text-xs';
 
@@ -23,7 +24,7 @@ function Unavailable({ name }: { name: string }) {
 
 function ImageAttachment({ attachment }: { attachment: AttachmentRef }) {
   const content = useAttachmentContent(attachment);
-  const width = Math.min(attachment.width ?? 240, IMAGE_BOX_MAX_WIDTH);
+  const width = Math.max(IMAGE_BOX_MIN_WIDTH, Math.min(attachment.width ?? 240, IMAGE_BOX_MAX_WIDTH));
   const aspectRatio = attachment.width && attachment.height ? `${attachment.width} / ${attachment.height}` : '4 / 3';
   if (content.status === 'unavailable') return <Unavailable name={attachment.name} />;
   return (

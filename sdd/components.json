@@ -162,7 +162,7 @@
         "module": "studio-session-ux",
         "spec": "sdd/specs/spec-e-burgos-001-studio-session-ux",
         "path": "src/components/workspace/AttachmentTray.tsx",
-        "status": "defined",
+        "status": "implemented",
         "created_in_cycle": 1,
         "updated_in_cycle": 2,
         "description": "[cycle-02] Preview de adjuntos del Composer (miniatura o tarjeta, tamaño, quitar, contador n/5) y errores por archivo.",
@@ -173,6 +173,11 @@
             "cycle": 2,
             "date": "2026-10-23",
             "change": "path src/components/workspace/composer/AttachmentTray.tsx -> src/components/workspace/AttachmentTray.tsx (repo convention: flat components/workspace, hooks in src/lib/use-*.ts; architect cycle-02 X-5)"
+          },
+          {
+            "cycle": 2,
+            "date": "2026-10-23",
+            "change": "implemented in cycle-02 (chips with thumbnail/card, n/5 counter, per-file errors, drop hint)"
           }
         ]
       },
@@ -183,13 +188,19 @@
         "module": "studio-session-ux",
         "spec": "sdd/specs/spec-e-burgos-001-studio-session-ux",
         "path": "src/components/workspace/AttachmentView.tsx",
-        "status": "defined",
+        "status": "implemented",
         "created_in_cycle": 1,
-        "updated_in_cycle": null,
+        "updated_in_cycle": 2,
         "description": "[cycle-02] Render de un AttachmentRef en la timeline (imagen, tarjeta PDF/texto) con placeholder de carga y marcador de adjunto no disponible.",
         "consumes": [],
         "created_at": "2026-10-23",
-        "changelog": []
+        "changelog": [
+          {
+            "cycle": 2,
+            "date": "2026-10-23",
+            "change": "implemented in cycle-02 (reserved image box, PDF/text cards, unavailable marker); rendered by Timeline"
+          }
+        ]
       },
       {
         "id": "COMP-009",
@@ -198,7 +209,7 @@
         "module": "studio-session-ux",
         "spec": "sdd/specs/spec-e-burgos-001-studio-session-ux",
         "path": "src/components/workspace/MentionMenu.tsx",
-        "status": "defined",
+        "status": "implemented",
         "created_in_cycle": 1,
         "updated_in_cycle": 2,
         "description": "[cycle-02] Menú @ (archivos del repo vía workspace.searchFiles + agentes del catálogo) y / (comandos fijos + skills y prompts) con teclado y estados vacío/carga/error.",
@@ -209,6 +220,11 @@
             "cycle": 2,
             "date": "2026-10-23",
             "change": "path src/components/workspace/composer/MentionMenu.tsx -> src/components/workspace/MentionMenu.tsx (repo convention: flat components/workspace, hooks in src/lib/use-*.ts; architect cycle-02 X-5)"
+          },
+          {
+            "cycle": 2,
+            "date": "2026-10-23",
+            "change": "implemented in cycle-02 (groups, ARIA combobox/listbox, keyboard); wired into Composer behind file-search/catalog features"
           }
         ]
       },
@@ -261,7 +277,7 @@
         "module": "studio-session-ux",
         "spec": "sdd/specs/spec-e-burgos-001-studio-session-ux",
         "path": "src/lib/use-attachment-draft.ts",
-        "status": "defined",
+        "status": "implemented",
         "created_in_cycle": 1,
         "updated_in_cycle": 2,
         "description": "[cycle-02] Validación de tipos, recompresión de imágenes (≤1568 px), sha256 y presupuesto del frame sobre el comando serializado con escalera de reducción.",
@@ -272,6 +288,11 @@
             "cycle": 2,
             "date": "2026-10-23",
             "change": "path src/hooks/useAttachmentDraft.ts -> src/lib/use-attachment-draft.ts (repo convention: flat components/workspace, hooks in src/lib/use-*.ts; architect cycle-02 X-5)"
+          },
+          {
+            "cycle": 2,
+            "date": "2026-10-23",
+            "change": "implemented in cycle-02 (add/remove/buildUploads over drafts slice, frame budget ladder via attachments/frame-budget)"
           }
         ]
       },
@@ -282,7 +303,7 @@
         "module": "studio-session-ux",
         "spec": "sdd/specs/spec-e-burgos-001-studio-session-ux",
         "path": "src/lib/use-attachment-content.ts",
-        "status": "defined",
+        "status": "implemented",
         "created_in_cycle": 1,
         "updated_in_cycle": 2,
         "description": "[cycle-02] Obtiene adjuntos persistidos vía attachment.get con caché LRU de objectURL y concurrencia acotada.",
@@ -293,6 +314,11 @@
             "cycle": 2,
             "date": "2026-10-23",
             "change": "path src/hooks/useAttachmentContent.ts -> src/lib/use-attachment-content.ts (repo convention: flat components/workspace, hooks in src/lib/use-*.ts; architect cycle-02 X-5)"
+          },
+          {
+            "cycle": 2,
+            "date": "2026-10-23",
+            "change": "implemented in cycle-02 (LRU 64 with refcount, concurrency 2, sha256 verification, primed from sender)"
           }
         ]
       },
@@ -305,11 +331,17 @@
         "path": "src/components/workspace/PendingMessages.tsx",
         "status": "implemented",
         "created_in_cycle": 1,
-        "updated_in_cycle": null,
+        "updated_in_cycle": 2,
         "description": "Bandeja de mensajes pendientes del hilo (HU-10): lista en orden, edición inline y quitar mientras estén pendientes; desaparecen al entregarse (user.message con pendingId).",
         "consumes": [],
         "created_at": "2026-10-23",
-        "changelog": []
+        "changelog": [
+          {
+            "cycle": 2,
+            "date": "2026-10-23",
+            "change": "read-only attachment chips; attachment-only pending can be saved empty"
+          }
+        ]
       },
       {
         "id": "COMP-015",
