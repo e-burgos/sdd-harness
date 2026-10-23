@@ -80,9 +80,9 @@ function draft(init: Pick<NavNode, 'id' | 'kind' | 'label'> & Partial<Omit<NavNo
   };
 }
 
-function finalize(d: Draft, view: NavView): NavNode {
+function finalize(d: Draft, view: NavView, keepOrder = false): NavNode {
   const node = d.node;
-  node.threads = [...d.infos].sort(byRecency).map((i) => ({
+  node.threads = (keepOrder ? d.infos : [...d.infos].sort(byRecency)).map((i) => ({
     id: i.id,
     title: i.title,
     agent: i.agent,
@@ -201,7 +201,7 @@ export function buildNavTree(snapshot: WorkspaceSnapshot | null, threads: Thread
     const d = draft({ id: `section:${key}`, kind: 'section', label: key });
     d.node.children = children;
     d.infos = rows;
-    const node = finalize(d, view) as NavSection;
+    const node = finalize(d, view, key === 'active') as NavSection;
     node.key = key;
     if (key === 'active') node.threadCount = rows.length;
     sections.push(node);

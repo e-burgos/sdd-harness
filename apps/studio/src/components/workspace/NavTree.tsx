@@ -16,6 +16,7 @@ export const rowClass = (active: boolean) =>
 
 export interface NavTreeHandlers {
   collapse: CollapsedState;
+  stale: boolean;
   onSelectChannel(channelId: string): void;
   onOpenThread(thread: NavThread): void;
 }
@@ -100,6 +101,39 @@ function ThreadList({ node, depth, h }: { node: NavNode; depth: number; h: NavTr
         </button>
       )}
     </>
+  );
+}
+
+function ActiveThreadRow({ thread, h }: { thread: NavThread; h: NavTreeHandlers }) {
+  const { t } = useT();
+  return (
+    <button
+      type="button"
+      className={`${rowClass(thread.selected)} ${thread.status === 'waiting-approval' ? 'border-l-2 border-amberish' : ''}`}
+      aria-current={thread.selected ? 'true' : undefined}
+      onClick={() => h.onOpenThread(thread)}
+    >
+      <span className="flex min-w-0 flex-1 flex-col">
+        <span className="truncate">{thread.title}</span>
+        <span className="truncate text-[11px] text-ink-500">
+          {agentMeta(thread.agent).name} · {t(`status.${thread.status}`)}
+        </span>
+      </span>
+      {thread.pendingCount > 0 && <span className="shrink-0 rounded-full bg-ink-800 px-1.5 text-[10px] text-ink-300">{t('sidebar.pending', { count: thread.pendingCount })}</span>}
+    </button>
+  );
+}
+
+function ActiveThreads({ section, h }: { section: NavSection; h: NavTreeHandlers }) {
+  const { t } = useT();
+  return (
+    <div className={h.stale ? 'opacity-60' : undefined}>
+      {h.stale && <p className="px-2 py-1 text-xs text-amberish">{t('sidebar.stale')}</p>}
+      {section.threads.map((thread) => (
+        <ActiveThreadRow key={thread.id} thread={thread} h={h} />
+      ))}
+      {section.threads.length === 0 && <p className="px-2 py-1 text-xs text-ink-500">{t('sidebar.noActive')}</p>}
+    </div>
   );
 }
 
@@ -215,6 +249,7 @@ export function SectionView({ section, h, dmState }: { section: NavSection; h: N
       </button>
       {!collapsed && (
         <div id={regionId}>
+          {section.key === 'active' && <ActiveThreads section={section} h={h} />}
           {section.children.map((node) => (
             <NavNodeView key={node.id} node={node} depth={0} h={h} dmState={dmState} />
           ))}

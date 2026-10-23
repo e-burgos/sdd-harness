@@ -201,3 +201,49 @@ describe('Sidebar collapsing', () => {
     expect(screen.getByRole('button', { name: /^Canales/ })).toHaveAttribute('aria-expanded', 'true');
   });
 });
+
+describe('Sidebar active threads', () => {
+  const active = [
+    thread({ id: 'q', title: 'Queued chat', status: 'queued', lastActivity: '2026-03-01' }),
+    thread({ id: 'r', title: 'Running chat', status: 'running', agent: 'sdd-architect', lastActivity: '2026-02-01', pendingCount: 2 }),
+    thread({ id: 'w', title: 'Waiting chat', status: 'waiting-approval', channelId: 'spec:s1', link: cycleLink('s1', 'cycle-01') }),
+    thread({ id: 'done', title: 'Done chat', status: 'idle' }),
+  ];
+  const rows = () => within(screen.getByRole('button', { name: 'Hilos activos' }).closest('section')!).getAllByRole('button').slice(1);
+
+  it('lists only running, waiting-approval and queued threads with attention first, showing title, agent and status', () => {
+    renderSidebar({ threads: active });
+    expect(rows().map((b) => b.textContent)).toEqual([
+      'Waiting chatPlanner · esperando aprobación',
+      'Running chatArchitect · trabajando2 pendientes',
+      'Queued chatPlanner · en cola',
+    ]);
+  });
+
+  it('opens a thread that belongs to another channel', () => {
+    const { onOpenThread } = renderSidebar({ threads: active });
+    fireEvent.click(rows()[0]!);
+    expect(onOpenThread).toHaveBeenCalledWith(expect.objectContaining({ id: 'w', channelId: 'spec:s1' }));
+  });
+
+  it('shows the empty state without active threads', () => {
+    renderSidebar({ threads: [active[3]!] });
+    expect(screen.getByText('Sin hilos activos')).toBeInTheDocument();
+  });
+
+  it('warns that the list may be stale when the connection is down', () => {
+    renderSidebar({ threads: active, props: { connection: 'reconnecting' } });
+    expect(screen.getByText('Estado posiblemente desactualizado')).toBeInTheDocument();
+  });
+
+  it('does not warn while connected', () => {
+    renderSidebar({ threads: active });
+    expect(screen.queryByText('Estado posiblemente desactualizado')).toBeNull();
+  });
+
+  it('keeps the attention signal on the collapsed section and still lists the thread in the tree section', () => {
+    renderSidebar({ threads: active });
+    fireEvent.click(screen.getByRole('button', { name: 'Hilos activos' }));
+    expect(within(screen.getByRole('button', { name: /^Hilos activos/ })).getByText(/requiere tu aprobación/)).toBeInTheDocument();
+  });
+});

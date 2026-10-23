@@ -34,7 +34,7 @@ export function SidebarView(p: SidebarViewProps) {
   const { t, lang, setLang } = useT();
   const collapse = useCollapsedState(p.project);
   const dmState = (agent: string) => p.presence.find((x) => x.agent === agent)?.state ?? 'idle';
-  const handlers: NavTreeHandlers = { collapse, onSelectChannel: p.onSelectChannel, onOpenThread: p.onOpenThread };
+  const handlers: NavTreeHandlers = { collapse, stale: p.connection !== 'open', onSelectChannel: p.onSelectChannel, onOpenThread: p.onOpenThread };
   return (
     <nav className="flex h-full flex-col gap-5 overflow-y-auto border-r border-ink-800 bg-ink-900 p-3">
       <header>
@@ -48,7 +48,7 @@ export function SidebarView(p: SidebarViewProps) {
         </div>
         {p.authSlot}
       </header>
-      {p.tree.filter((section) => section.key !== 'active').map((section) => (
+      {p.tree.map((section) => (
         <SectionView key={section.id} section={section} h={handlers} dmState={dmState} />
       ))}
       <section>

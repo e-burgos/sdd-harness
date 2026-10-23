@@ -130,7 +130,7 @@ describe('buildNavTree', () => {
   });
 
   it('lists active threads by attention rank and keeps them also in the tree', () => {
-    const threads = [thread({ id: 'q', status: 'queued' }), thread({ id: 'r', status: 'running' }), thread({ id: 'w', status: 'waiting-approval' }), thread({ id: 'i' })];
+    const threads = [thread({ id: 'q', status: 'queued', lastActivity: '2026-03-01' }), thread({ id: 'r', status: 'running', lastActivity: '2026-02-01' }), thread({ id: 'w', status: 'waiting-approval' }), thread({ id: 'i' })];
     const tree = buildNavTree(snapshot, threads, view);
     expect(section(tree, 'active').threads.map((t) => t.id)).toEqual(['w', 'r', 'q']);
     expect(section(tree, 'active').threadCount).toBe(3);
