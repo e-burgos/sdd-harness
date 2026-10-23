@@ -230,7 +230,7 @@ describe('SessionManager', () => {
       const engine: AgentEngine = {
         name: 'throwing',
         startTurn: (input, cb) => {
-          if (input.text.includes('boom')) throw new Error('no se pudo arrancar');
+          if (input.prompts[0]?.prompt.text.includes('boom')) throw new Error('no se pudo arrancar');
           return fake.startTurn(input, cb);
         },
       };

@@ -14,6 +14,7 @@ export class FakeEngine implements AgentEngine {
   constructor(private readonly delayMs = 5) {}
 
   startTurn(input: EngineTurnInput, cb: EngineCallbacks): EngineTurn {
+    const text = input.prompts[0]?.prompt.text ?? '';
     let stopped = false;
     const ac = new AbortController();
     const wait = () => new Promise((r) => setTimeout(r, this.delayMs));
@@ -42,25 +43,25 @@ export class FakeEngine implements AgentEngine {
     const done = (async () => {
       cb.onSessionId(input.resumeSessionId ?? `fake-${input.threadId}`);
       await wait();
-      if (input.text.includes('#fail')) throw new Error('fake failure');
-      if (input.text.includes('#slow')) {
+      if (text.includes('#fail')) throw new Error('fake failure');
+      if (text.includes('#slow')) {
         while (!stopped) await wait();
         return;
       }
-      if (input.text.includes('#sub')) {
+      if (text.includes('#sub')) {
         cb.emit({ type: 'subagent.start', agentId: 'fake-sub', agentType: 'sdd-planner' });
         await wait();
         if (stopped) return;
         say({ agent: 'sdd-planner', parentToolUseId: 'fake-agent-call' }, 'planned');
         cb.emit({ type: 'subagent.stop', agentId: 'fake-sub', agentType: 'sdd-planner' });
       }
-      if (input.text.includes('#tool')) await askAndRun('Bash', { command: 'echo hi' }, '$ echo hi');
-      if (input.text.includes('#edit')) {
+      if (text.includes('#tool')) await askAndRun('Bash', { command: 'echo hi' }, '$ echo hi');
+      if (text.includes('#edit')) {
         const file = path.join(input.cwd, 'apps', 'x.ts');
         await askAndRun('Write', { file_path: file, content: 'export {};' }, file, true);
       }
       if (stopped) return;
-      say(main, `echo: ${input.text}`);
+      say(main, `echo: ${text}`);
       cb.emit({
         type: 'turn.end',
         usage: { model: 'fake', effort: input.options.effort, tokensIn: 10, tokensOut: 5, costUsd: 0 },

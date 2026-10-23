@@ -1,10 +1,12 @@
-import { query as sdkQuery, type HookInput, type Options, type PreToolUseHookInput, type Query } from '@anthropic-ai/claude-agent-sdk';
+import { query as sdkQuery, type HookInput, type Options, type PreToolUseHookInput, type Query, type SDKUserMessage } from '@anthropic-ai/claude-agent-sdk';
 import { DEFAULT_AGENT, type ThreadOptions } from '@sdd-studio/protocol';
+import { InputChannel } from './input-channel';
+import { toSdkUserMessage } from './prompt-content';
 import type { JudgeContext, ToolVerdict } from './types';
 import { SdkEventMapper, type SdkMessageLike } from './sdk-mapper';
 import type { AgentEngine, EngineCallbacks, EngineTurn, EngineTurnInput } from './types';
 
-export type QueryFn = (params: { prompt: string; options?: Options }) => Query;
+export type QueryFn = (params: { prompt: AsyncIterable<SDKUserMessage>; options?: Options }) => Query;
 
 // Full ids, not aliases: a live run with model 'haiku' reported init.model haiku but was billed as
 // claude-sonnet-5-5. Update when the kit's tier table moves to newer models.
@@ -86,8 +88,10 @@ export class ClaudeAgentSdkEngine implements AgentEngine {
     const emitAll = (events: ReturnType<SdkEventMapper['mapMessage']>) => {
       for (const event of events) cb.emit(event);
     };
+    const channel = new InputChannel<SDKUserMessage>();
+    channel.push(input.prompts.map(toSdkUserMessage));
     const q = this.queryFn({
-      prompt: input.text,
+      prompt: channel,
       options: buildQueryOptions(input, {
         abort,
         env: this.getEnv?.(),
@@ -109,6 +113,15 @@ export class ClaudeAgentSdkEngine implements AgentEngine {
       }),
     });
     let interrupted = false;
+    const deliverOrClose = (result: SdkMessageLike): void => {
+      if (interrupted || mapper.sawError) {
+        channel.end();
+        return;
+      }
+      const next = cb.collectPending('turn-end');
+      if (next.length > 0) channel.push(next.map(toSdkUserMessage));
+      else if (!(Number(result.queued_turn_count) > 0)) channel.end();
+    };
     const done = (async () => {
       try {
         for await (const message of q) {
@@ -117,10 +130,13 @@ export class ClaudeAgentSdkEngine implements AgentEngine {
             cb.onSessionId(msg.session_id);
           }
           emitAll(mapper.mapMessage(msg));
+          if (msg.type === 'result') deliverOrClose(msg);
         }
       } catch (error) {
         // The real iterator throws after an interrupt or an error result; that is already reported as events.
         if (!interrupted && !mapper.sawError) throw error;
+      } finally {
+        channel.end();
       }
     })();
     return {
@@ -128,10 +144,16 @@ export class ClaudeAgentSdkEngine implements AgentEngine {
       interrupt: async () => {
         interrupted = true;
         try {
-          await q.interrupt();
+          const receipt = await q.interrupt();
+          const notDelivered = receipt?.still_queued ?? [];
+          if (notDelivered.length > 0) {
+            cb.revertPending(notDelivered);
+            abort.abort();
+          }
         } catch {
           abort.abort();
         }
+        channel.end();
       },
     };
   }

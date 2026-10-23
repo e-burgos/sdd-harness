@@ -3,12 +3,13 @@ import type { Options, Query } from '@anthropic-ai/claude-agent-sdk';
 import { defaultThreadOptions, type ThreadEvent } from '@sdd-studio/protocol';
 import { describe, expect, it, vi } from 'vitest';
 import { buildQueryOptions, ClaudeAgentSdkEngine, type QueryFn } from './claude-sdk-engine';
-import type { ApprovalRequest, EngineCallbacks, EngineTurnInput } from './types';
+import { plainPrompt, type ApprovalRequest, type EngineCallbacks, type EngineTurnInput } from './types';
 
+const noPending = { collectPending: () => [], revertPending: () => {} };
 type EngineCallbacksApproval = EngineCallbacks['requestApproval'];
 
 const input = (over: Partial<EngineTurnInput['options']> = {}, resume: string | null = null): EngineTurnInput => ({
-  threadId: 't', text: 'hola', cwd: '/repo', resumeSessionId: resume, options: { ...defaultThreadOptions(), ...over },
+  threadId: 't', prompts: [{ id: 'u-1', prompt: plainPrompt('hola') }], cwd: '/repo', resumeSessionId: resume, options: { ...defaultThreadOptions(), ...over },
 });
 const handlers = () => ({ abort: new AbortController(), canUseTool: vi.fn(), onHook: vi.fn(), judgeTool: vi.fn() });
 
@@ -118,7 +119,7 @@ describe('ClaudeAgentSdkEngine', () => {
     const turn = new ClaudeAgentSdkEngine(fn).startTurn(input(), {
       emit: (e) => events.push(e),
       onSessionId: (id) => sessions.push(id),
-      judgeTool: () => ({ kind: 'allow' }), requestApproval: async (r) => (asked.push(r), { behavior: 'deny', message: 'no' }),
+      judgeTool: () => ({ kind: 'allow' }), ...noPending, requestApproval: async (r) => (asked.push(r), { behavior: 'deny', message: 'no' }),
     });
     await turn.done;
     expect(sessions).toHaveLength(1);
@@ -130,7 +131,7 @@ describe('ClaudeAgentSdkEngine', () => {
   it('interrupts through the query', async () => {
     const { fn, interrupt } = replayQuery('simple');
     const turn = new ClaudeAgentSdkEngine(fn).startTurn(input(), {
-      emit: () => {}, onSessionId: () => {}, judgeTool: () => ({ kind: 'allow' }), requestApproval: async () => ({ behavior: 'allow' }),
+      emit: () => {}, onSessionId: () => {}, judgeTool: () => ({ kind: 'allow' }), ...noPending, requestApproval: async () => ({ behavior: 'allow' }),
     });
     await turn.interrupt();
     await turn.done;
@@ -139,7 +140,7 @@ describe('ClaudeAgentSdkEngine', () => {
 
   const start = (fn: QueryFn) =>
     new ClaudeAgentSdkEngine(fn).startTurn(input(), {
-      emit: () => {}, onSessionId: () => {}, judgeTool: () => ({ kind: 'allow' }), requestApproval: async () => ({ behavior: 'allow' }),
+      emit: () => {}, onSessionId: () => {}, judgeTool: () => ({ kind: 'allow' }), ...noPending, requestApproval: async () => ({ behavior: 'allow' }),
     });
 
   it('swallows the iterator error after an interrupt', async () => {
@@ -198,7 +199,7 @@ describe('ClaudeAgentSdkEngine', () => {
       };
       await new ClaudeAgentSdkEngine(fn).startTurn(input(), {
         emit: () => {}, onSessionId: () => {},
-        judgeTool: () => ({ kind: 'allow' }), requestApproval: async (req, signal) => (asked.push({ req, signal }), decision),
+        judgeTool: () => ({ kind: 'allow' }), ...noPending, requestApproval: async (req, signal) => (asked.push({ req, signal }), decision),
       }).done;
       return { result, asked, sdkSignal, toolInput };
     };
@@ -216,6 +217,120 @@ describe('ClaudeAgentSdkEngine', () => {
     it('missing toolUseID becomes null', async () => {
       const { asked } = await run({ behavior: 'allow' }, undefined);
       expect(asked[0]?.req.toolUseId).toBeNull();
+    });
+  });
+});
+
+describe('ClaudeAgentSdkEngine prompt streaming', () => {
+  const resultMessage = (extra: Record<string, unknown> = {}) => ({ type: 'result', subtype: 'success', is_error: false, total_cost_usd: 0, usage: {}, ...extra });
+  const outgoing = (id: string, text: string) => ({ id, prompt: plainPrompt(text) });
+
+  function scriptedQuery(script: (ctx: { signal: AbortSignal }) => AsyncGenerator<unknown>, interrupt: Query['interrupt'] = async () => undefined) {
+    const consumed: Array<{ uuid?: string; text: string }> = [];
+    let channelEnded = false;
+    const fn: QueryFn = ({ prompt, options }) => {
+      void (async () => {
+        for await (const message of prompt) {
+          const content = message.message.content as Array<{ text: string }>;
+          consumed.push({ uuid: message.uuid, text: content.map((block) => block.text).join('') });
+        }
+        channelEnded = true;
+      })();
+      return Object.assign(script({ signal: options?.abortController?.signal as AbortSignal }), { interrupt }) as unknown as Query;
+    };
+    return { fn, consumed, channelEnded: () => channelEnded };
+  }
+
+  const callbacks = (over: Partial<EngineCallbacks> = {}): EngineCallbacks => ({
+    emit: () => {}, onSessionId: () => {}, judgeTool: () => ({ kind: 'allow' }), requestApproval: async () => ({ behavior: 'allow' }), ...noPending, ...over,
+  });
+  const tick = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+  it('feeds every initial prompt to the stream stamped with its uuid and closes it after the result', async () => {
+    const { fn, consumed, channelEnded } = scriptedQuery(async function* () {
+      await tick();
+      yield resultMessage();
+    });
+    const turn = new ClaudeAgentSdkEngine(fn).startTurn(
+      { ...input(), prompts: [outgoing('u-1', 'first'), outgoing('u-2', 'second')] },
+      callbacks(),
+    );
+    await turn.done;
+    await tick();
+    expect(consumed).toEqual([{ uuid: 'u-1', text: 'first' }, { uuid: 'u-2', text: 'second' }]);
+    expect(channelEnded()).toBe(true);
+  });
+
+  it('pushes the pending collected at turn end as the next turn of the same query', async () => {
+    const collect = vi.fn((at: 'cut-point' | 'turn-end') => (at === 'turn-end' && collect.mock.calls.length === 1 ? [outgoing('p-1', 'later')] : []));
+    const { fn, consumed } = scriptedQuery(async function* () {
+      await tick();
+      yield resultMessage();
+      await tick();
+      yield resultMessage();
+    });
+    await new ClaudeAgentSdkEngine(fn).startTurn(input(), callbacks({ collectPending: collect })).done;
+    await tick();
+    expect(collect).toHaveBeenCalledTimes(2);
+    expect(collect).toHaveBeenCalledWith('turn-end');
+    expect(consumed.map((c) => c.uuid)).toEqual(['u-1', 'p-1']);
+  });
+
+  it('keeps the stream open while the CLI still has queued turns', async () => {
+    const { fn, channelEnded } = scriptedQuery(async function* () {
+      yield resultMessage({ queued_turn_count: 1 });
+      await tick();
+      await tick();
+      expect(channelEnded()).toBe(false);
+      yield resultMessage();
+    });
+    await new ClaudeAgentSdkEngine(fn).startTurn(input(), callbacks()).done;
+  });
+
+  it('does not collect pending after an error result', async () => {
+    const collect = vi.fn(() => [outgoing('p-1', 'x')]);
+    const { fn } = scriptedQuery(async function* () {
+      yield resultMessage({ subtype: 'error_during_execution', is_error: true, errors: ['boom'] });
+    });
+    await new ClaudeAgentSdkEngine(fn).startTurn(input(), callbacks({ collectPending: collect })).done;
+    expect(collect).not.toHaveBeenCalled();
+  });
+
+  describe('interrupt receipt', () => {
+    const run = async (receipt: Awaited<ReturnType<Query['interrupt']>>) => {
+      const revert = vi.fn();
+      let aborted = false;
+      let release!: () => void;
+      const gate = new Promise<void>((resolve) => (release = resolve));
+      const { fn, channelEnded } = scriptedQuery(
+        async function* ({ signal }) {
+          signal.addEventListener('abort', () => (aborted = true));
+          yield { type: 'system', subtype: 'init', session_id: 's', model: 'm' };
+          await gate;
+        },
+        async () => (release(), receipt),
+      );
+      const turn = new ClaudeAgentSdkEngine(fn).startTurn(input(), callbacks({ revertPending: revert }));
+      await tick();
+      await turn.interrupt();
+      await turn.done;
+      await tick();
+      return { revert, aborted, channelEnded: channelEnded() };
+    };
+
+    it('reverts the messages the CLI did not consume and aborts so they do not run', async () => {
+      const out = await run({ still_queued: ['p-1', 'p-2'] } as never);
+      expect(out.revert).toHaveBeenCalledWith(['p-1', 'p-2']);
+      expect(out.aborted).toBe(true);
+      expect(out.channelEnded).toBe(true);
+    });
+
+    it('reverts nothing when the receipt is empty or missing', async () => {
+      for (const receipt of [undefined, { still_queued: [] }]) {
+        const out = await run(receipt as never);
+        expect(out.revert).not.toHaveBeenCalled();
+        expect(out.aborted).toBe(false);
+      }
     });
   });
 });

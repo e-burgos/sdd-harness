@@ -17,7 +17,7 @@ export const plainPrompt = (text: string): TurnPrompt => ({ text, preamble: [], 
 
 export interface EngineTurnInput {
   threadId: string;
-  text: string;
+  prompts: OutgoingMessage[];
   options: ThreadOptions;
   resumeSessionId: string | null;
   cwd: string;
@@ -49,6 +49,8 @@ export interface EngineCallbacks {
   judgeTool(toolName: string, input: Record<string, unknown>, ctx?: JudgeContext): ToolVerdict;
   onSessionId(id: string): void;
   requestApproval(request: ApprovalRequest, signal: AbortSignal): Promise<ApprovalDecision>;
+  collectPending(at: 'cut-point' | 'turn-end'): OutgoingMessage[];
+  revertPending(ids: string[]): void;
 }
 
 export interface EngineTurn {

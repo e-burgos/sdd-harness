@@ -10,7 +10,7 @@ import type {
   WorkspaceSnapshot,
 } from '@sdd-studio/protocol';
 import { diffFor, summarizeTool } from '../engine/tool-summary';
-import type { AgentEngine, ApprovalDecision, ApprovalRequest, EngineTurn, JudgeContext, ToolVerdict } from '../engine/types';
+import { plainPrompt, type AgentEngine, ApprovalDecision, ApprovalRequest, EngineTurn, JudgeContext, ToolVerdict } from '../engine/types';
 import { EDIT_TOOLS, editTargetOf, judgeEdit } from '../gate/judge';
 import { PresenceTracker } from './presence';
 import type { HistoryEntry, StoredThread, ThreadStore } from './store';
@@ -258,7 +258,7 @@ export class SessionManager {
     let turn: EngineTurn;
     try {
       turn = this.deps.engine.startTurn(
-        { threadId: thread.id, text, options: thread.options, resumeSessionId: thread.engineSessionId, cwd: this.deps.root },
+        { threadId: thread.id, prompts: [{ id: randomUUID(), prompt: plainPrompt(text) }], options: thread.options, resumeSessionId: thread.engineSessionId, cwd: this.deps.root },
         {
           emit: (event) => this.emit(thread, event, true),
           onSessionId: (id) => {
@@ -268,6 +268,8 @@ export class SessionManager {
           },
           requestApproval: (request, signal) => this.requestApproval(thread, gen, request, signal),
           judgeTool: (toolName, input, ctx) => this.judgeTool(thread, gen, toolName, input, ctx),
+          collectPending: () => [],
+          revertPending: () => {},
         },
       );
     } catch (error) {

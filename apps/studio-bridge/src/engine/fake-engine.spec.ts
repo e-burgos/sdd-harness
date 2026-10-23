@@ -2,7 +2,7 @@ import type { ThreadEvent } from '@sdd-studio/protocol';
 import { defaultThreadOptions } from '@sdd-studio/protocol';
 import { describe, expect, it } from 'vitest';
 import { FakeEngine } from './fake-engine';
-import type { ApprovalDecision, EngineCallbacks } from './types';
+import { plainPrompt, type ApprovalDecision, type EngineCallbacks } from './types';
 
 type Judge = EngineCallbacks['judgeTool'];
 
@@ -14,11 +14,13 @@ function harness(decision: ApprovalDecision = { behavior: 'allow' }, requestAppr
     emit: (e) => events.push(e),
     onSessionId: (id) => sessions.push(id),
     judgeTool: judge,
+    collectPending: () => [],
+    revertPending: () => {},
     requestApproval: requestApprovalOverride || (async (r) => (approvals.push(r.toolName), decision)),
   };
   return { events, sessions, approvals, cb };
 }
-const input = (text: string, mode: 'default' | 'acceptEdits' = 'default') => ({ threadId: 't', text, options: { ...defaultThreadOptions(), permissionMode: mode }, resumeSessionId: null, cwd: '/repo' });
+const input = (text: string, mode: 'default' | 'acceptEdits' = 'default') => ({ threadId: 't', prompts: [{ id: 'u-1', prompt: plainPrompt(text) }], options: { ...defaultThreadOptions(), permissionMode: mode }, resumeSessionId: null, cwd: '/repo' });
 
 describe('FakeEngine', () => {
   it('echoes and ends the turn', async () => {
