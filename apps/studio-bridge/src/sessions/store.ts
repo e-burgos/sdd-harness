@@ -1,10 +1,24 @@
 import { appendFile, mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { ChannelId, type BotEvent, ThreadEvent, ThreadInfo } from '@sdd-studio/protocol';
+import { ChannelId, type AttachmentRef, type BotEvent, type PromptRefs, ThreadEvent, type ThreadInfo } from '@sdd-studio/protocol';
 
-export interface StoredThread extends ThreadInfo {
-  engineSessionId: string | null;
+export interface PendingMessage {
+  id: string;
+  text: string;
+  attachments?: AttachmentRef[];
+  refs?: PromptRefs;
+  createdAt: string;
 }
+
+export interface StoredThread extends Omit<ThreadInfo, 'pendingCount'> {
+  engineSessionId: string | null;
+  pending: PendingMessage[];
+}
+
+export const toThreadInfo = ({ engineSessionId: _session, pending, ...info }: StoredThread): ThreadInfo => ({
+  ...info,
+  pendingCount: pending.length,
+});
 
 export interface HistoryEntry {
   seq: number;
@@ -78,7 +92,8 @@ export class ThreadStore {
         t.status = 'interrupted';
       }
       t.link ??= { target: { kind: 'none' }, source: 'legacy' };
-      t.pendingCount ??= 0;
+      t.pending = Array.isArray(t.pending) ? t.pending : [];
+      delete (t as { pendingCount?: number }).pendingCount;
       this.threads.set(t.id, t);
       const threadFile = this.threadFile(t.id);
       const nextSeq = await nextSeqFromFile(threadFile);

@@ -3,7 +3,7 @@ import path from 'node:path';
 import { defaultThreadOptions } from '@sdd-studio/protocol';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { copyFixture } from '../test-utils/fixture';
-import { ThreadStore, type StoredThread } from './store';
+import { ThreadStore, toThreadInfo, type StoredThread } from './store';
 
 let root: string;
 let cleanup: () => Promise<void>;
@@ -13,7 +13,7 @@ afterEach(() => cleanup());
 const thread = (over: Partial<StoredThread> = {}): StoredThread => ({
   id: 't1', channelId: 'general', title: 'hola', agent: 'sdd-orchestrator', options: defaultThreadOptions(),
   status: 'idle', createdAt: '2026-10-07T00:00:00.000Z', lastActivity: '2026-10-07T00:00:00.000Z',
-  engineSessionId: null, link: { target: { kind: 'none' }, source: 'legacy' }, pendingCount: 0, ...over,
+  engineSessionId: null, link: { target: { kind: 'none' }, source: 'legacy' }, pending: [], ...over,
 });
 
 describe('ThreadStore', () => {
@@ -141,5 +141,49 @@ describe('ThreadStore', () => {
     s.appendBot({ channelId: 'fixes', botKind: 'task.status', payload: { i: 1 } });
     s.appendBot({ channelId: 'fixes', botKind: 'task.status', payload: { i: 2 } });
     expect((await s.botHistory('fixes', 10)).map((e) => e.payload.i)).toEqual([0, 1, 2]);
+  });
+
+  describe('migration and pending', () => {
+    const writeThreadsJson = (threads: unknown[]) => writeFile(path.join(root, '.sdd-studio/threads.json'), JSON.stringify(threads));
+    const legacyThread = () => {
+      const { link: _link, pending: _pending, ...legacy } = thread();
+      return legacy;
+    };
+
+    it('completes link as legacy/none and an empty pending list on a v1 threads.json', async () => {
+      await new ThreadStore(root).init();
+      await writeThreadsJson([legacyThread()]);
+      const s = new ThreadStore(root);
+      await s.init();
+      expect(s.get('t1')?.link).toEqual({ target: { kind: 'none' }, source: 'legacy' });
+      expect(s.get('t1')?.pending).toEqual([]);
+    });
+
+    it('drops a stored pendingCount: the count is always derived from pending', async () => {
+      await new ThreadStore(root).init();
+      await writeThreadsJson([{ ...legacyThread(), pendingCount: 7 }]);
+      const s = new ThreadStore(root);
+      await s.init();
+      expect('pendingCount' in (s.get('t1') ?? {})).toBe(false);
+      expect(toThreadInfo(s.get('t1') as StoredThread).pendingCount).toBe(0);
+    });
+
+    it('reloads pending messages after a restart without touching the thread status', async () => {
+      const a = new ThreadStore(root);
+      await a.init();
+      await a.upsert(thread({ pending: [{ id: 'p-1', text: 'later', createdAt: '2026-10-07T00:00:01.000Z' }] }));
+      await a.flush();
+      const b = new ThreadStore(root);
+      await b.init();
+      expect(b.get('t1')?.pending).toEqual([{ id: 'p-1', text: 'later', createdAt: '2026-10-07T00:00:01.000Z' }]);
+      expect(b.get('t1')?.status).toBe('idle');
+    });
+
+    it('toThreadInfo hides pending and the engine session and exposes pendingCount', async () => {
+      const info = toThreadInfo(thread({ engineSessionId: 's', pending: [{ id: 'p-1', text: 'x', createdAt: 'c' }] }));
+      expect(info.pendingCount).toBe(1);
+      expect('pending' in info).toBe(false);
+      expect('engineSessionId' in info).toBe(false);
+    });
   });
 });

@@ -13,7 +13,7 @@ import { diffFor, summarizeTool } from '../engine/tool-summary';
 import { plainPrompt, type AgentEngine, ApprovalDecision, ApprovalRequest, EngineTurn, JudgeContext, ToolVerdict } from '../engine/types';
 import { EDIT_TOOLS, editTargetOf, judgeEdit } from '../gate/judge';
 import { PresenceTracker } from './presence';
-import type { HistoryEntry, StoredThread, ThreadStore } from './store';
+import { toThreadInfo as toInfo, type HistoryEntry, type StoredThread, type ThreadStore } from './store';
 
 export class SessionError extends Error {
   constructor(
@@ -83,7 +83,6 @@ interface PendingApproval {
 /** All dm:* channels share a single write scope; the rest use their own channel. */
 const writeScopeOf = (channelId: string): string => (channelId.startsWith('dm:') ? 'dm' : channelId);
 
-const toInfo = ({ engineSessionId: _ignored, ...info }: StoredThread): ThreadInfo => info;
 const reportError = (error: unknown): void => console.error('[sdd-studio] session manager:', error);
 
 export class SessionManager {
@@ -132,7 +131,7 @@ export class SessionManager {
       lastActivity: now,
       engineSessionId: null,
       link: { target: { kind: 'none' }, source: 'legacy' },
-      pendingCount: 0,
+      pending: [],
     };
     this.persist(thread);
     this.tracker.onThread(toInfo(thread));

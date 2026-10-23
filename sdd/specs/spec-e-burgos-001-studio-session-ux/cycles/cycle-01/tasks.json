@@ -352,8 +352,22 @@
       "depends_on": [
         "TASK-006"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/studio-bridge/src/sessions/store.ts",
+        "apps/studio-bridge/src/sessions/store.spec.ts",
+        "apps/studio-bridge/src/sessions/session-manager.ts"
+      ],
+      "usage": {
+        "tokens_in": 18000,
+        "tokens_out": 4000,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
     },
     {
       "id": "TASK-013",
