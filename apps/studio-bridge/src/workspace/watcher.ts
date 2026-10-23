@@ -1,5 +1,6 @@
+import { existsSync } from 'node:fs';
 import path from 'node:path';
-import chokidar from 'chokidar';
+import chokidar, { type FSWatcher } from 'chokidar';
 import type { Area, BotEvent, WorkspaceSnapshot } from '@sdd-studio/protocol';
 import { diffSnapshots } from './diff';
 import { changedAreas, loadWorkspaceSnapshot, mergeSnapshot } from './snapshot';
@@ -17,6 +18,21 @@ export interface WorkspaceWatcher {
 }
 
 const IGNORED_DIRS = ['docs', 'node_modules', 'documentation'];
+const CLAUDE_CATALOG_DIRS = new Set(['agents', 'skills']);
+const CLAUDE_WATCH_DEPTH = 3;
+
+export function isClaudeCatalogPath(claudeDir: string, candidate: string): boolean {
+  if (candidate === claudeDir) return true;
+  const relative = path.relative(claudeDir, candidate);
+  if (relative.startsWith('..') || path.isAbsolute(relative)) return false;
+  return CLAUDE_CATALOG_DIRS.has(relative.split(path.sep)[0] ?? '');
+}
+
+const untilReady = (watcher: FSWatcher): Promise<void> =>
+  new Promise<void>((resolve, reject) => {
+    watcher.once('ready', () => resolve());
+    watcher.once('error', (error) => reject(error));
+  });
 
 export async function startWorkspaceWatcher(opts: {
   root: string;
@@ -61,17 +77,25 @@ export async function startWorkspaceWatcher(opts: {
   const isIgnored = (p: string): boolean =>
     ignoredRoots.some((r) => p === r || p.startsWith(r + path.sep));
 
-  const watcher = chokidar.watch(sddDir, { ignoreInitial: true, ignored: isIgnored });
-  watcher.on('all', schedule);
-  await new Promise<void>((resolve, reject) => {
-    watcher.once('ready', () => resolve());
-    watcher.once('error', (error) => reject(error));
-  }).catch(async (error) => {
+  const claudeDir = path.join(opts.root, '.claude');
+  const watchers: FSWatcher[] = [chokidar.watch(sddDir, { ignoreInitial: true, ignored: isIgnored })];
+  if (existsSync(claudeDir)) {
+    watchers.push(
+      chokidar.watch(claudeDir, {
+        ignoreInitial: true,
+        depth: CLAUDE_WATCH_DEPTH,
+        ignored: (candidate) => !isClaudeCatalogPath(claudeDir, candidate),
+      }),
+    );
+  }
+  for (const watcher of watchers) watcher.on('all', schedule);
+  const closeAll = () => Promise.all(watchers.map((watcher) => watcher.close()));
+  await Promise.all(watchers.map(untilReady)).catch(async (error) => {
     closed = true;
-    await watcher.close();
+    await closeAll();
     throw error;
   });
-  watcher.on('error', (error) => opts.onError?.(error));
+  for (const watcher of watchers) watcher.on('error', (error) => opts.onError?.(error));
 
   return {
     current: () => current,
@@ -79,7 +103,7 @@ export async function startWorkspaceWatcher(opts: {
     close: async () => {
       closed = true;
       if (timer) clearTimeout(timer);
-      await watcher.close();
+      await closeAll();
       await queue;
     },
   };
