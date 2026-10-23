@@ -202,6 +202,9 @@ export const es = {
   'panel.right.collapse': 'Colapsar panel',
   'panel.right.expand': 'Expandir panel',
   'composer.hints': 'Enter envía · Shift+Enter nueva línea · @ menciona archivos y agentes · / comandos y skills',
+  'error.boundary.title': 'Algo salió mal',
+  'error.boundary.body': 'La interfaz tuvo un error inesperado. Recargá para volver a conectar: tus hilos siguen guardados en el puente.',
+  'error.boundary.reload': 'Recargar',
   'lang.switch': 'English',
 };
 export type Dict = typeof es;

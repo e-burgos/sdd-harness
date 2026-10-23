@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { clearPairing, resolvePairing, type PairingInfo } from '@/lib/bridge/pairing';
 import { I18nProvider, useT } from '@/lib/i18n/i18n';
 import { AppShell } from './AppShell';
+import { ErrorBoundary } from './ErrorBoundary';
 import { BridgeProvider, useBridge } from './BridgeProvider';
 import { ConnectScreen } from './ConnectScreen';
 import { ConnectionBanner } from './ConnectionBanner';
@@ -43,13 +44,15 @@ export function WorkspaceApp() {
   useEffect(() => setPairing(resolvePairing(window)), []);
   return (
     <I18nProvider>
-      {pairing === undefined ? null : pairing === null ? (
-        <ConnectScreen />
-      ) : (
-        <BridgeProvider pairing={pairing}>
-          <Connected />
-        </BridgeProvider>
-      )}
+      <ErrorBoundary>
+        {pairing === undefined ? null : pairing === null ? (
+          <ConnectScreen />
+        ) : (
+          <BridgeProvider pairing={pairing}>
+            <Connected />
+          </BridgeProvider>
+        )}
+      </ErrorBoundary>
     </I18nProvider>
   );
 }

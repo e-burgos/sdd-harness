@@ -204,5 +204,8 @@ export const en = {
   'panel.right.collapse': 'Collapse panel',
   'panel.right.expand': 'Expand panel',
   'composer.hints': 'Enter sends · Shift+Enter new line · @ mentions files and agents · / commands and skills',
+  'error.boundary.title': 'Something went wrong',
+  'error.boundary.body': 'The interface hit an unexpected error. Reload to reconnect: your threads are still stored in the bridge.',
+  'error.boundary.reload': 'Reload',
   'lang.switch': 'Español',
 } satisfies Record<keyof Dict, string>;
