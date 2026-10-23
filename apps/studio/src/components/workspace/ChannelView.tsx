@@ -55,7 +55,7 @@ export function ChannelView({ channelId, onOpenThread, composer }: { channelId: 
                   className="flex w-full items-center gap-3 rounded-lg border border-ink-800 bg-ink-900 px-3 py-2 text-left hover:border-ink-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"
                   onClick={() => onOpenThread(thread.id)}
                 >
-                  <AgentAvatar agent={thread.agent} size={24} />
+                  <AgentAvatar agent={thread.agent} size={24} status={thread.status} />
                   <span className="min-w-0 flex-1 truncate text-sm">{thread.title}</span>
                   <StatusBadge status={thread.status} />
                 </button>

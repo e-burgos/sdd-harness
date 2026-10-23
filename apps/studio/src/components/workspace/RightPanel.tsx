@@ -31,7 +31,7 @@ export function RightPanelView({ activity, cycle, onOpenThread }: { activity: Ac
               <ul className="mt-2 space-y-1">
                 {entry.agents.map((a) => (
                   <li key={a.agent} className="flex items-center gap-2 text-xs">
-                    <AgentAvatar agent={a.agent} size={18} />
+                    <AgentAvatar agent={a.agent} size={18} status={a.state === 'working' ? 'running' : a.state === 'waiting' ? 'waiting-approval' : null} />
                     <span>{agentMeta(a.agent).name}</span>
                     {a.state === 'waiting' && (
                       <span className="text-amberish">
@@ -41,7 +41,7 @@ export function RightPanelView({ activity, cycle, onOpenThread }: { activity: Ac
                     )}
                     {a.state === 'working' && (
                       <span className="text-accent-400">
-                        <span aria-hidden className="inline-block animate-pulse motion-reduce:animate-none">⟳</span>
+                        <span aria-hidden className="inline-block motion-safe:animate-pulse">⟳</span>
                         <span className="sr-only">{t(PRESENCE_KEYS.working)}</span>
                       </span>
                     )}

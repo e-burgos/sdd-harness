@@ -5,6 +5,7 @@ import { useState, type KeyboardEvent } from 'react';
 import type { Presence } from '@sdd-studio/protocol';
 import { agentMeta } from '@/lib/agents';
 import { useT, type TFunction } from '@/lib/i18n/i18n';
+import { ActivityIndicator, INDICATED_STATUSES } from './ActivityIndicator';
 import type { NavNode, NavSection, NavThread } from '@/lib/store/nav-tree';
 import type { CollapsedState } from '@/lib/use-collapsed-state';
 
@@ -72,6 +73,7 @@ export function arrowKeyToggle(toggle: CollapsedState, node: NavNode, collapsed:
 }
 
 function ThreadRow({ thread, depth, h }: { thread: NavThread; depth: number; h: NavTreeHandlers }) {
+  const { t } = useT();
   return (
     <button
       type="button"
@@ -80,7 +82,9 @@ function ThreadRow({ thread, depth, h }: { thread: NavThread; depth: number; h: 
       aria-current={thread.selected ? 'true' : undefined}
       onClick={() => h.onOpenThread(thread)}
     >
+      <ActivityIndicator status={thread.status} placement="row" />
       <span className="truncate">{thread.title}</span>
+      {INDICATED_STATUSES.has(thread.status) && <span className="sr-only">, {t(`status.${thread.status}`)}</span>}
     </button>
   );
 }
@@ -113,6 +117,7 @@ function ActiveThreadRow({ thread, h }: { thread: NavThread; h: NavTreeHandlers 
       aria-current={thread.selected ? 'true' : undefined}
       onClick={() => h.onOpenThread(thread)}
     >
+      <ActivityIndicator status={thread.status} placement="row" />
       <span className="flex min-w-0 flex-1 flex-col">
         <span className="truncate">{thread.title}</span>
         <span className="truncate text-[11px] text-ink-500">
@@ -217,7 +222,7 @@ export function NavNodeView({ node, depth, h, dmState }: { node: NavNode; depth:
 }
 
 const DM_DOT = {
-  working: 'bg-accent-400 animate-pulse',
+  working: 'bg-accent-400 motion-safe:animate-pulse',
   waiting: 'bg-amberish',
   open: 'bg-accent-500/60',
   idle: 'border border-ink-500',

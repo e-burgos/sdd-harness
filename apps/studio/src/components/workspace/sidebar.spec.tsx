@@ -247,3 +247,26 @@ describe('Sidebar active threads', () => {
     expect(within(screen.getByRole('button', { name: /^Hilos activos/ })).getByText(/requiere tu aprobación/)).toBeInTheDocument();
   });
 });
+
+describe('Sidebar indicators', () => {
+  it('shows an indicator in the row of each busy thread and none for idle ones', () => {
+    const threads = [
+      thread({ id: 'r', title: 'Run', status: 'running' }),
+      thread({ id: 'w', title: 'Wait', status: 'waiting-approval' }),
+      thread({ id: 'i', title: 'Idle', status: 'idle' }),
+    ];
+    renderSidebar({ threads });
+    const statusOf = (name: RegExp) => within(screen.getAllByRole('button', { name })[0]!).getByTestId('activity-indicator').getAttribute('data-status');
+    expect(statusOf(/^Run/)).toBe('running');
+    expect(statusOf(/^Wait/)).toBe('waiting-approval');
+    expect(statusOf(/^Idle/)).toBe('none');
+    expect(screen.getAllByRole('button', { name: 'Run, trabajando' }).length).toBeGreaterThan(0);
+  });
+
+  it('does not pulse the presence dot without the motion-safe variant', () => {
+    renderSidebar();
+    const dot = screen.getByRole('button', { name: 'Planner, trabajando' }).querySelector('span[aria-hidden]')!;
+    expect(dot.className.split(/\s+/).filter((c) => /^animate-/.test(c))).toEqual([]);
+    expect(dot).toHaveClass('motion-safe:animate-pulse');
+  });
+});

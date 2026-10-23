@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
+import type { SessionStatus } from '@sdd-studio/protocol';
 import { CaretRight, Wrench } from '@phosphor-icons/react';
 import { agentMeta } from '@/lib/agents';
 import { formatCost, formatTokens } from '@/lib/format';
@@ -11,8 +12,9 @@ import { AgentAvatar } from './AgentAvatar';
 import { ApprovalCard, type RespondFn } from './ApprovalCard';
 import { Markdown } from './Markdown';
 
-export function Timeline({ items, onRespond }: { items: TimelineItem[]; onRespond: (approvalId: string, ...args: Parameters<RespondFn>) => Promise<unknown> }) {
+export function Timeline({ items, status, onRespond }: { items: TimelineItem[]; status?: SessionStatus; onRespond: (approvalId: string, ...args: Parameters<RespondFn>) => Promise<unknown> }) {
   const { t } = useT();
+  const lastMessageId = useMemo(() => items.filter((i) => i.kind === 'message').at(-1)?.id, [items]);
   const blocks = useMemo(() => groupTimeline(items), [items]);
   return (
     <ol className="space-y-4">
@@ -56,7 +58,7 @@ export function Timeline({ items, onRespond }: { items: TimelineItem[]; onRespon
             const meta = agentMeta(item.author.agent);
             return (
               <li key={item.id} className="flex gap-3">
-                <AgentAvatar agent={item.author.agent} />
+                <AgentAvatar agent={item.author.agent} status={item.id === lastMessageId ? status : undefined} />
                 <div className="min-w-0 flex-1">
                   <div className="mb-0.5 text-sm font-semibold" style={{ color: meta.color }}>{meta.name}</div>
                   <Markdown text={item.text} />

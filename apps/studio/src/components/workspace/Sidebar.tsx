@@ -13,8 +13,8 @@ import { SectionView, type NavTreeHandlers } from './NavTree';
 
 const CONN_DOT = {
   open: { cls: 'bg-accent-400', key: 'conn.dot.open' },
-  connecting: { cls: 'bg-amberish animate-pulse motion-reduce:animate-none', key: 'conn.dot.connecting' },
-  reconnecting: { cls: 'bg-amberish animate-pulse motion-reduce:animate-none', key: 'conn.dot.connecting' },
+  connecting: { cls: 'bg-amberish motion-safe:animate-pulse', key: 'conn.dot.connecting' },
+  reconnecting: { cls: 'bg-amberish motion-safe:animate-pulse', key: 'conn.dot.connecting' },
   failed: { cls: 'bg-roseish', key: 'conn.dot.down' },
   idle: { cls: 'bg-roseish', key: 'conn.dot.down' },
 } as const;

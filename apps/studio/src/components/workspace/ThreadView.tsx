@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { openThread } from '@/lib/bootstrap';
 import { useT } from '@/lib/i18n/i18n';
 import { useBridge, useStudio } from '../BridgeProvider';
+import { ActivityIndicator, INDICATED_STATUSES } from './ActivityIndicator';
 import { StatusBadge } from './StatusBadge';
 import { Timeline } from './Timeline';
 
@@ -82,10 +83,15 @@ export function ThreadView({ threadId, onBack, composer }: { threadId: string; o
         )}
         <Timeline
           items={thread?.items ?? []}
+          status={info?.status}
           onRespond={(approvalId, decision, scope, reason) =>
             client.request({ cmd: 'approval.respond', approvalId, decision, scope, ...(reason ? { reason } : {}) })
           }
         />
+        <div className="mt-2 flex h-6 items-center gap-2 pl-11 text-xs text-ink-300" data-testid="thread-activity">
+          <ActivityIndicator status={info?.status ?? null} placement="thread" />
+          {info && INDICATED_STATUSES.has(info.status) && <span>{t(`status.${info.status}`)}</span>}
+        </div>
       </div>
       {composer}
     </section>
