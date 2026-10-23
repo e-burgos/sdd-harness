@@ -32,8 +32,8 @@
         "libs/studio-protocol/src/index.ts"
       ],
       "usage": {
-        "tokens_in": 45000,
-        "tokens_out": 9000,
+        "tokens_in": 20904,
+        "tokens_out": 4181,
         "provider_model": "claude/sonnet",
         "effort": "medium",
         "agent": "implementor-back",
@@ -62,8 +62,8 @@
         "libs/studio-protocol/src/index.ts"
       ],
       "usage": {
-        "tokens_in": 30000,
-        "tokens_out": 6000,
+        "tokens_in": 13936,
+        "tokens_out": 2787,
         "provider_model": "claude/sonnet",
         "effort": "medium",
         "agent": "implementor-back",
@@ -90,8 +90,8 @@
         "libs/studio-protocol/src/domain.spec.ts"
       ],
       "usage": {
-        "tokens_in": 30000,
-        "tokens_out": 6500,
+        "tokens_in": 13936,
+        "tokens_out": 3019,
         "provider_model": "claude/sonnet",
         "effort": "medium",
         "agent": "implementor-back",
@@ -120,8 +120,8 @@
         "libs/studio-protocol/src/commands.spec.ts"
       ],
       "usage": {
-        "tokens_in": 40000,
-        "tokens_out": 8500,
+        "tokens_in": 18581,
+        "tokens_out": 3948,
         "provider_model": "claude/sonnet",
         "effort": "medium",
         "agent": "implementor-back",
@@ -153,8 +153,8 @@
         "libs/studio-protocol/src/domain.spec.ts"
       ],
       "usage": {
-        "tokens_in": 40000,
-        "tokens_out": 9000,
+        "tokens_in": 18581,
+        "tokens_out": 4181,
         "provider_model": "claude/sonnet",
         "effort": "medium",
         "agent": "implementor-back",
@@ -183,8 +183,8 @@
         "libs/studio-protocol/src/index.spec.ts"
       ],
       "usage": {
-        "tokens_in": 25000,
-        "tokens_out": 4000,
+        "tokens_in": 11613,
+        "tokens_out": 1858,
         "provider_model": "claude/sonnet",
         "effort": "medium",
         "agent": "implementor-back",
@@ -204,8 +204,21 @@
       "depends_on": [
         "TASK-006"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/studio-bridge/src/engine/post-tool-batch.e2e.spec.ts",
+        "sdd/specs/spec-e-burgos-001-studio-session-ux/cycles/cycle-01/artifacts/spike-posttoolbatch.md"
+      ],
+      "usage": {
+        "tokens_in": 30000,
+        "tokens_out": 6000,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
     },
     {
       "id": "TASK-008",
