@@ -73,6 +73,8 @@ export function createHandlers(d: {
           return { authMode: d.auth.set(command.apiKey) };
         case 'command.run':
           return { runId: d.runner.run(command.name, command.args) };
+        default:
+          throw new SessionError('bad-request', `unsupported: ${command.cmd}`);
       }
     },
   };

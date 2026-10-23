@@ -4,7 +4,8 @@ import { applyServerEvent, beginSync, initialState, loadHistory, setBotHistory, 
 const info = (over: Partial<ThreadInfo> = {}): ThreadInfo => ({
   id: 't1', channelId: 'general', title: 'hola', agent: 'sdd-orchestrator',
   options: { agent: 'sdd-orchestrator', model: 'kit', effort: null, permissionMode: 'default' },
-  status: 'idle', createdAt: '2026-10-07T10:00:00Z', lastActivity: '2026-10-07T10:00:00Z', ...over,
+  status: 'idle', createdAt: '2026-10-07T10:00:00Z', lastActivity: '2026-10-07T10:00:00Z',
+  link: { target: { kind: 'none' }, source: 'legacy' }, pendingCount: 0, ...over,
 });
 
 describe('state reducers', () => {
@@ -75,7 +76,7 @@ describe('state reducers', () => {
   });
 
   it('keeps workspace snapshot, presence, bot events and command runs', () => {
-    const snapshot = { project: 'p', profile: 'team', kitVersion: null, specs: [], cycles: [], fixes: [], agents: [], gateMode: 'block', pricing: null, stale: [] } satisfies WorkspaceSnapshot;
+    const snapshot = { project: 'p', profile: 'team', kitVersion: null, specs: [], cycles: [], fixes: [], agents: [], skills: [], gateMode: 'block', pricing: null, stale: [] } satisfies WorkspaceSnapshot;
     let s = applyServerEvent(initialState(), { kind: 'workspace.changed', areas: ['specs'], snapshot });
     s = applyServerEvent(s, { kind: 'presence.changed', presence: [{ agent: 'a', state: 'working', threadId: 't1', specId: null, tool: 'Read' }] });
     s = setBotHistory(s, 'fixes', [{ channelId: 'fixes', botKind: 'fix.created', payload: { fixId: 'F1' } }]);

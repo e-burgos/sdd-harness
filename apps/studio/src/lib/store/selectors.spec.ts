@@ -5,7 +5,11 @@ import { applyThreadEvent, emptyThread } from './timeline';
 
 const snapshot: WorkspaceSnapshot = {
   project: 'p', profile: 'team', kitVersion: '0.16.0', gateMode: 'block', pricing: null, stale: [], fixes: [],
-  agents: [{ id: 'sdd-orchestrator', description: '', model: 'opus' }, { id: 'sdd-planner', description: '', model: 'sonnet' }],
+  agents: [
+    { id: 'sdd-orchestrator', description: '', model: 'opus', source: 'sdd', path: 'sdd/agents/sdd-orchestrator.agent.md' },
+    { id: 'sdd-planner', description: '', model: 'sonnet', source: 'sdd', path: 'sdd/agents/sdd-planner.agent.md' },
+  ],
+  skills: [],
   specs: [
     { id: 's2', title: 'Dos', status: 'completed', folder: 'sdd/specs/s2', module: null, app: null, dependsOn: [] },
     { id: 's1', title: 'Uno', status: 'in-progress', folder: 'sdd/specs/s1', module: null, app: null, dependsOn: [] },
@@ -29,7 +33,7 @@ describe('selectors', () => {
     expect(cycleForChannel(snapshot, 'general')).toBeNull();
   });
   it('sorts threads in a channel by last activity', () => {
-    const base = { agent: 'a', options: { agent: 'a', model: 'kit' as const, effort: null, permissionMode: 'default' as const }, status: 'idle' as const, title: 'x', createdAt: '1' };
+    const base = { agent: 'a', options: { agent: 'a', model: 'kit' as const, effort: null, permissionMode: 'default' as const }, status: 'idle' as const, title: 'x', createdAt: '1', link: { target: { kind: 'none' as const }, source: 'legacy' as const }, pendingCount: 0 };
     const s = setThreads(initialState(), [
       { ...base, id: 'old', channelId: 'general', lastActivity: '2026-01-01' },
       { ...base, id: 'new', channelId: 'general', lastActivity: '2026-02-01' },

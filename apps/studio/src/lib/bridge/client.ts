@@ -1,13 +1,14 @@
+import type { z } from 'zod';
 import {
+  ClientCommand as ClientCommandSchema,
   decodeServerMessage,
   PROTOCOL_VERSION,
-  type ClientCommand,
   type ServerEvent,
   type Welcome,
 } from '@sdd-studio/protocol';
 
 type DistributiveOmit<T, K extends PropertyKey> = T extends unknown ? Omit<T, K> : never;
-export type CommandInput = DistributiveOmit<ClientCommand, 'kind' | 'id'>;
+export type CommandInput = DistributiveOmit<z.input<typeof ClientCommandSchema>, 'kind' | 'id'>;
 
 export type ConnectionState =
   | { status: 'idle' }

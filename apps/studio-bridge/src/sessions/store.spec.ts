@@ -13,7 +13,7 @@ afterEach(() => cleanup());
 const thread = (over: Partial<StoredThread> = {}): StoredThread => ({
   id: 't1', channelId: 'general', title: 'hola', agent: 'sdd-orchestrator', options: defaultThreadOptions(),
   status: 'idle', createdAt: '2026-10-07T00:00:00.000Z', lastActivity: '2026-10-07T00:00:00.000Z',
-  engineSessionId: null, ...over,
+  engineSessionId: null, link: { target: { kind: 'none' }, source: 'legacy' }, pendingCount: 0, ...over,
 });
 
 describe('ThreadStore', () => {

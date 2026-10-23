@@ -28,11 +28,11 @@ describe('loadWorkspaceSnapshot', () => {
       apps: ['apps/api'], tasksTotal: 2, tasksDone: 1,
     });
     expect(snapshot.fixes).toEqual([
-      { id: 'FIX-dev-001-001', title: 'Typo en el recibo', status: 'pending', severity: 'low', specId: 'spec-dev-001-pagos' },
+      { id: 'FIX-dev-001-001', title: 'Typo en el recibo', status: 'pending', severity: 'low', specId: 'spec-dev-001-pagos', createdAt: null, closedAt: null },
     ]);
     expect(snapshot.agents).toEqual([
-      { id: 'sdd-orchestrator', description: 'Orquestador SDD.', model: 'opus' },
-      { id: 'sdd-planner', description: 'Planner SDD.', model: 'sonnet' },
+      { id: 'sdd-orchestrator', description: 'Orquestador SDD.', model: 'opus', source: 'sdd', path: 'sdd/agents/sdd-orchestrator.agent.md' },
+      { id: 'sdd-planner', description: 'Planner SDD.', model: 'sonnet', source: 'sdd', path: 'sdd/agents/sdd-planner.agent.md' },
     ]);
   });
 
@@ -58,7 +58,7 @@ describe('loadWorkspaceSnapshot', () => {
     );
     const { snapshot } = await loadWorkspaceSnapshot(root);
     expect(snapshot.agents.find((a) => a.id === 'sdd-reviewer')).toEqual({
-      id: 'sdd-reviewer', description: 'Reviewer.', model: 'opus',
+      id: 'sdd-reviewer', description: 'Reviewer.', model: 'opus', source: 'sdd', path: 'sdd/agents/sdd-reviewer.agent.md',
     });
   });
 });

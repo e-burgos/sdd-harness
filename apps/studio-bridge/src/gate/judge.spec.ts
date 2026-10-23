@@ -3,9 +3,9 @@ import { describe, expect, it } from 'vitest';
 import { editTargetOf, isCodePath, judgeEdit, relativeToRoot } from './judge';
 
 const idle: WorkspaceSnapshot = {
-  project: 'p', profile: 'team', kitVersion: null, specs: [], agents: [], gateMode: 'block', pricing: null, stale: [],
+  project: 'p', profile: 'team', kitVersion: null, specs: [], agents: [], skills: [], gateMode: 'block', pricing: null, stale: [],
   cycles: [{ specId: 's', cycle: 'cycle-01', status: 'completed', flow: 'full', apps: [], tasks: [], tasksTotal: 0, tasksDone: 0 }],
-  fixes: [{ id: 'F', title: 'f', status: 'resolved', severity: null, specId: null }],
+  fixes: [{ id: 'F', title: 'f', status: 'resolved', severity: null, specId: null, createdAt: null, closedAt: null }],
 };
 const ROOT = '/repo with spaces';
 

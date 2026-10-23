@@ -79,6 +79,7 @@ describe('Composer (connected)', () => {
   const info = (id = 't1') => ({
     id, channelId: 'general', title: 'x', agent: 'sdd-orchestrator',
     options: defaultThreadOptions(), status: 'idle', createdAt: 'a', lastActivity: 'a',
+    link: { target: { kind: 'none' }, source: 'legacy' }, pendingCount: 0,
   });
   const enter = (box: HTMLElement, text: string) => {
     fireEvent.change(box, { target: { value: text } });

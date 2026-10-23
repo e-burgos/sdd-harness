@@ -1,8 +1,8 @@
 import { createStudioStore } from './store/store';
 import { bootstrap, loadBotHistory, openThread } from './bootstrap';
 
-const snapshot = { project: 'p', profile: 'team', kitVersion: null, specs: [], cycles: [], fixes: [], agents: [], gateMode: 'block', pricing: null, stale: [] };
-const thread = { id: 't1', channelId: 'general', title: 'x', agent: 'sdd-orchestrator', options: { agent: 'sdd-orchestrator', model: 'kit', effort: null, permissionMode: 'default' }, status: 'idle', createdAt: 'a', lastActivity: 'a' };
+const snapshot = { project: 'p', profile: 'team', kitVersion: null, specs: [], cycles: [], fixes: [], agents: [], skills: [], gateMode: 'block', pricing: null, stale: [] };
+const thread = { id: 't1', channelId: 'general', title: 'x', agent: 'sdd-orchestrator', options: { agent: 'sdd-orchestrator', model: 'kit', effort: null, permissionMode: 'default' }, status: 'idle', createdAt: 'a', lastActivity: 'a', link: { target: { kind: 'none' }, source: 'legacy' }, pendingCount: 0 };
 
 function fakeClient(responses: Record<string, unknown>) {
   const calls: Record<string, unknown>[] = [];

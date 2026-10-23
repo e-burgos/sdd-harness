@@ -61,6 +61,8 @@ const toFix = (f: Json): FixSummary => ({
   status: str(f.status, 'pending'),
   severity: strOrNull(f.severity),
   specId: strOrNull(f.spec_id),
+  createdAt: null,
+  closedAt: null,
 });
 
 const SAFE_SPEC_ID = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
@@ -145,6 +147,8 @@ async function loadAgents(dir: string): Promise<{ ok: boolean; agents: AgentSumm
       id: fm.name ?? name.replace(/\.agent\.md$/, ''),
       description: fm.description ?? '',
       model: fm.model ?? null,
+      source: 'sdd',
+      path: `sdd/agents/${name}`,
     });
   }
   return { ok, agents };
@@ -183,6 +187,7 @@ export async function loadWorkspaceSnapshot(root: string): Promise<LoadResult> {
     cycles: specs.cycles,
     fixes: Array.isArray(fixes?.fixes) ? fixes.fixes.map(toFix) : [],
     agents: agents.agents,
+    skills: [],
     gateMode: tools?.claude_mod?.gate === 'warn' ? 'warn' : 'block',
     pricing: pricing && typeof pricing === 'object' ? pricing : null,
     stale: [],

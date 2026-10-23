@@ -4,7 +4,7 @@ import { PresenceTracker } from './presence';
 
 const thread = (status: ThreadInfo['status']): ThreadInfo => ({
   id: 't1', channelId: 'spec:s1', title: 'x', agent: 'sdd-orchestrator', options: defaultThreadOptions(),
-  status, createdAt: '', lastActivity: '',
+  status, createdAt: '', lastActivity: '', link: { target: { kind: 'none' }, source: 'legacy' }, pendingCount: 0,
 });
 const stateOf = (tracker: PresenceTracker, agent: string) => tracker.compute().find((p) => p.agent === agent);
 

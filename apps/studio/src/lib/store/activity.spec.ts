@@ -5,7 +5,7 @@ import { emptyThread } from './timeline';
 const info = (id: string, status: ThreadInfo['status']): ThreadInfo => ({
   id, channelId: 'general', title: id, agent: 'sdd-orchestrator',
   options: { agent: 'sdd-orchestrator', model: 'kit', effort: null, permissionMode: 'default' },
-  status, createdAt: 'a', lastActivity: 'a',
+  status, createdAt: 'a', lastActivity: 'a', link: { target: { kind: 'none' }, source: 'legacy' }, pendingCount: 0,
 });
 
 describe('activityOf', () => {

@@ -3,13 +3,13 @@ import { describe, expect, it } from 'vitest';
 import { diffSnapshots } from './diff';
 
 const base: WorkspaceSnapshot = {
-  project: 'p', profile: 'team', kitVersion: null, agents: [], gateMode: 'block', pricing: null, stale: [],
+  project: 'p', profile: 'team', kitVersion: null, agents: [], skills: [], gateMode: 'block', pricing: null, stale: [],
   specs: [{ id: 's1', title: 'S1', status: 'in-progress', folder: 'sdd/specs/s1', module: null, app: null, dependsOn: [] }],
   cycles: [{
     specId: 's1', cycle: 'cycle-01', status: 'in-progress', flow: 'full', apps: [], tasksTotal: 1, tasksDone: 0,
     tasks: [{ id: 'T1', title: 'Task 1', status: 'pending', storyPoints: 1 }],
   }],
-  fixes: [{ id: 'F1', title: 'Fix 1', status: 'pending', severity: 'low', specId: 's1' }],
+  fixes: [{ id: 'F1', title: 'Fix 1', status: 'pending', severity: 'low', specId: 's1', createdAt: null, closedAt: null }],
 };
 const clone = (): WorkspaceSnapshot => structuredClone(base);
 
@@ -43,7 +43,7 @@ describe('diffSnapshots', () => {
   it('reports fixes on the fixes channel', () => {
     const next = clone();
     next.fixes[0]!.status = 'resolved';
-    next.fixes.push({ id: 'F2', title: 'Fix 2', status: 'pending', severity: 'high', specId: null });
+    next.fixes.push({ id: 'F2', title: 'Fix 2', status: 'pending', severity: 'high', specId: null, createdAt: null, closedAt: null });
     expect(diffSnapshots(base, next)).toEqual([
       { channelId: 'fixes', botKind: 'fix.status', payload: { fixId: 'F1', from: 'pending', to: 'resolved' } },
       { channelId: 'fixes', botKind: 'fix.created', payload: { fixId: 'F2', title: 'Fix 2', severity: 'high', specId: null } },

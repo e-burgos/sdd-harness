@@ -46,7 +46,7 @@ describe('applyThreadEvent', () => {
   it('updates info.status on session.status when info is known', () => {
     const base: ThreadState = {
       ...emptyThread(),
-      info: { id: 't', channelId: 'general', title: 'x', agent: 'sdd-orchestrator', options: { agent: 'sdd-orchestrator', model: 'kit', effort: null, permissionMode: 'default' }, status: 'idle', createdAt: 'a', lastActivity: 'a' },
+      info: { id: 't', channelId: 'general', title: 'x', agent: 'sdd-orchestrator', options: { agent: 'sdd-orchestrator', model: 'kit', effort: null, permissionMode: 'default' }, status: 'idle', createdAt: 'a', lastActivity: 'a', link: { target: { kind: 'none' }, source: 'legacy' }, pendingCount: 0 },
     };
     expect(applyThreadEvent(base, 0, { type: 'session.status', status: 'running' }).info?.status).toBe('running');
   });

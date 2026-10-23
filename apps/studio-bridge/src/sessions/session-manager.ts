@@ -131,6 +131,8 @@ export class SessionManager {
       createdAt: now,
       lastActivity: now,
       engineSessionId: null,
+      link: { target: { kind: 'none' }, source: 'legacy' },
+      pendingCount: 0,
     };
     this.persist(thread);
     this.tracker.onThread(toInfo(thread));

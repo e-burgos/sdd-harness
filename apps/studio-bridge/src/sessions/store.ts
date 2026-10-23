@@ -77,6 +77,8 @@ export class ThreadStore {
         this.recovered.push(t.id);
         t.status = 'interrupted';
       }
+      t.link ??= { target: { kind: 'none' }, source: 'legacy' };
+      t.pendingCount ??= 0;
       this.threads.set(t.id, t);
       const threadFile = this.threadFile(t.id);
       const nextSeq = await nextSeqFromFile(threadFile);
