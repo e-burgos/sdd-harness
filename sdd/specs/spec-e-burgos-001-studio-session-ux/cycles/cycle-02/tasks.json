@@ -445,8 +445,26 @@
         "TASK-014",
         "TASK-015"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/studio/src/lib/attachments/build-draft.ts",
+        "apps/studio/src/lib/use-attachment-draft.ts",
+        "apps/studio/src/components/workspace/AttachmentTray.tsx",
+        "apps/studio/src/components/workspace/attachmenttray.spec.tsx",
+        "apps/studio/src/lib/format.ts",
+        "apps/studio/src/lib/i18n/es.ts",
+        "apps/studio/src/lib/i18n/en.ts"
+      ],
+      "usage": {
+        "agent": "implementor-front",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "tokens_in": 60000,
+        "tokens_out": 9000,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
     },
     {
       "id": "TASK-017",

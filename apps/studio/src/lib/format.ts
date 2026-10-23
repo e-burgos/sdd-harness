@@ -11,3 +11,6 @@ export function botText(t: TFunction, e: BotEvent): string {
   );
   return t(`bot.${e.botKind}` as Parameters<TFunction>[0], vars);
 }
+
+export const formatBytes = (bytes: number): string =>
+  bytes >= 1_048_576 ? `${(bytes / 1_048_576).toFixed(1)} MB` : bytes >= 1024 ? `${Math.round(bytes / 1024)} KB` : `${bytes} B`;
