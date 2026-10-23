@@ -178,8 +178,20 @@
         "TASK-004",
         "TASK-005"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "libs/studio-protocol/src/index.spec.ts"
+      ],
+      "usage": {
+        "tokens_in": 25000,
+        "tokens_out": 4000,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
     },
     {
       "id": "TASK-007",
