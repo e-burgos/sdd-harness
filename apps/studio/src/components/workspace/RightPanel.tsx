@@ -8,18 +8,22 @@ import { activityOf, type ActivityEntry } from '@/lib/store/activity';
 import { cycleForChannel } from '@/lib/store/selectors';
 import { useStudio } from '../BridgeProvider';
 import { AgentAvatar } from './AgentAvatar';
+import { PanelToggle } from './PanelRail';
 import { StatusBadge } from './StatusBadge';
 
 const MARK: Record<string, string> = { done: '✓', 'in-progress': '▸', skipped: '–' };
 const TASK_KEYS = { done: 'task.done', 'in-progress': 'task.in-progress', skipped: 'task.skipped', pending: 'task.pending' } as const;
 const PRESENCE_KEYS = { working: 'presence.working', waiting: 'presence.waiting', open: 'presence.open', idle: 'presence.idle' } as const;
 
-export function RightPanelView({ activity, cycle, onOpenThread }: { activity: ActivityEntry[]; cycle: CycleSummary | null; onOpenThread(id: string): void }) {
+export function RightPanelView({ activity, cycle, onOpenThread, onCollapse }: { activity: ActivityEntry[]; cycle: CycleSummary | null; onOpenThread(id: string): void; onCollapse?(): void }) {
   const { t } = useT();
   return (
-    <aside aria-label={t('panel.label')} className="flex h-full flex-col gap-6 overflow-y-auto border-l border-ink-800 bg-ink-900 p-4">
+    <aside aria-label={t('panel.label')} className="flex h-full flex-col gap-6 overflow-y-auto overscroll-contain border-l border-ink-800 bg-ink-900 p-4">
       <section>
-        <h2 className="mb-2 text-[11px] uppercase tracking-wider text-ink-500">{t('panel.activity')}</h2>
+        <div className="mb-2 flex items-center justify-between">
+          <h2 className="text-[11px] uppercase tracking-wider text-ink-500">{t('panel.activity')}</h2>
+          {onCollapse && <PanelToggle label={t('panel.right.collapse')} side="right" onClick={onCollapse} />}
+        </div>
         {activity.length === 0 && <p className="text-sm text-ink-300">{t('panel.noActivity')}</p>}
         <ul className="space-y-3">
           {activity.map((entry) => (
@@ -94,10 +98,10 @@ export function RightPanelView({ activity, cycle, onOpenThread }: { activity: Ac
   );
 }
 
-export function RightPanel({ channelId, onOpenThread }: { channelId: string; onOpenThread(id: string): void }) {
+export function RightPanel({ channelId, onOpenThread, onCollapse }: { channelId: string; onOpenThread(id: string): void; onCollapse?(): void }) {
   const threads = useStudio((s) => s.threads);
   const presence = useStudio((s) => s.presence);
   const snapshot = useStudio((s) => s.snapshot);
   const activity = useMemo(() => activityOf(threads, presence), [threads, presence]);
-  return <RightPanelView activity={activity} cycle={cycleForChannel(snapshot, channelId)} onOpenThread={onOpenThread} />;
+  return <RightPanelView activity={activity} cycle={cycleForChannel(snapshot, channelId)} onOpenThread={onOpenThread} onCollapse={onCollapse} />;
 }

@@ -155,8 +155,29 @@
       "estimation_hours": 3,
       "story_points": 3,
       "depends_on": [],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/studio/src/lib/use-panel-state.ts",
+        "apps/studio/src/components/workspace/PanelRail.tsx",
+        "apps/studio/src/components/workspace/Workspace.tsx",
+        "apps/studio/src/components/workspace/Sidebar.tsx",
+        "apps/studio/src/components/workspace/RightPanel.tsx",
+        "apps/studio/src/components/workspace/ThreadView.tsx",
+        "apps/studio/src/components/workspace/ChannelView.tsx",
+        "apps/studio/src/lib/i18n/es.ts",
+        "apps/studio/src/lib/i18n/en.ts",
+        "apps/studio/src/components/workspace/workspace.spec.tsx"
+      ],
+      "usage": {
+        "tokens_in": 38000,
+        "tokens_out": 6000,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
     },
     {
       "id": "TASK-007",

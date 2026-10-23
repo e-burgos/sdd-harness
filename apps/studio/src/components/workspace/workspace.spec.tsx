@@ -3,6 +3,7 @@ import type { ThreadInfo } from '@sdd-studio/protocol';
 import { I18nProvider } from '@/lib/i18n/i18n';
 import { createStudioStore } from '@/lib/store/store';
 import { BridgeContext, type BridgeContextValue } from '../BridgeProvider';
+import { PANEL_STATE_KEY } from '@/lib/use-panel-state';
 import { Workspace } from './Workspace';
 
 const options = { agent: 'sdd-planner', model: 'kit' as const, effort: null, permissionMode: 'default' as const };
@@ -55,5 +56,41 @@ describe('Workspace layout', () => {
     const first = screen.getByTestId('thread-scroller');
     fireEvent.click(screen.getAllByRole('button', { name: 'Chat t2' })[0]!);
     expect(screen.getByTestId('thread-scroller')).not.toBe(first);
+  });
+
+  describe('collapsible panels', () => {
+    beforeEach(() => window.localStorage.removeItem(PANEL_STATE_KEY));
+    const columns = (container: HTMLElement) => (container.firstElementChild as HTMLElement).style.gridTemplateColumns;
+
+    it('collapses the sidebar to a rail, restores it and remembers the choice', () => {
+      const { container, unmount } = mount();
+      expect(columns(container)).toBe('260px minmax(0,1fr) 320px');
+      fireEvent.click(screen.getByRole('button', { name: 'Colapsar menú' }));
+      expect(screen.queryByRole('navigation')).toBeNull();
+      expect(columns(container)).toBe('44px minmax(0,1fr) 320px');
+      expect(JSON.parse(window.localStorage.getItem(PANEL_STATE_KEY)!)).toEqual({ sidebarCollapsed: true, rightCollapsed: false });
+      unmount();
+      const again = mount();
+      expect(screen.queryByRole('navigation')).toBeNull();
+      fireEvent.click(screen.getByRole('button', { name: 'Expandir menú' }));
+      expect(screen.getByRole('navigation')).toBeInTheDocument();
+      expect(columns(again.container)).toBe('260px minmax(0,1fr) 320px');
+    });
+
+    it('collapses and expands the right panel independently', () => {
+      const { container } = mount();
+      fireEvent.click(screen.getByRole('button', { name: 'Colapsar panel' }));
+      expect(screen.queryByRole('complementary')).toBeNull();
+      expect(columns(container)).toBe('260px minmax(0,1fr) 44px');
+      expect(screen.getByRole('navigation')).toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: 'Expandir panel' }));
+      expect(screen.getByRole('complementary')).toBeInTheDocument();
+    });
+
+    it('ignores a corrupt stored state', () => {
+      window.localStorage.setItem(PANEL_STATE_KEY, '{nope');
+      mount();
+      expect(screen.getByRole('navigation')).toBeInTheDocument();
+    });
   });
 });

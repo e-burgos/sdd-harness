@@ -199,5 +199,9 @@ export const en = {
   'attach.kind.pdf': 'PDF',
   'attach.kind.text': 'Text',
   'timeline.refs': 'Mentions',
+  'panel.sidebar.collapse': 'Collapse menu',
+  'panel.sidebar.expand': 'Expand menu',
+  'panel.right.collapse': 'Collapse panel',
+  'panel.right.expand': 'Expand panel',
   'lang.switch': 'Español',
 } satisfies Record<keyof Dict, string>;

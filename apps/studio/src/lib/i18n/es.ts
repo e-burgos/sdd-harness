@@ -197,6 +197,10 @@ export const es = {
   'attach.kind.pdf': 'PDF',
   'attach.kind.text': 'Texto',
   'timeline.refs': 'Menciones',
+  'panel.sidebar.collapse': 'Colapsar menú',
+  'panel.sidebar.expand': 'Expandir menú',
+  'panel.right.collapse': 'Colapsar panel',
+  'panel.right.expand': 'Expandir panel',
   'lang.switch': 'English',
 };
 export type Dict = typeof es;

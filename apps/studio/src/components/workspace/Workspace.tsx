@@ -1,9 +1,12 @@
 'use client';
 
 import { useState } from 'react';
+import { useT } from '@/lib/i18n/i18n';
+import { usePanelState } from '@/lib/use-panel-state';
 import { useBridge } from '../BridgeProvider';
 import { Composer } from './Composer';
 import { ChannelView } from './ChannelView';
+import { PanelRail } from './PanelRail';
 import { RightPanel } from './RightPanel';
 import { RunOutput } from './RunOutput';
 import { Sidebar } from './Sidebar';
@@ -14,8 +17,12 @@ export interface View {
   threadId: string | null;
 }
 
+const RAIL_WIDTH = '44px';
+
 export function Workspace() {
+  const { t } = useT();
   const { store } = useBridge();
+  const panels = usePanelState();
   const [view, setView] = useState<View>({ channelId: 'general', threadId: null });
   const composer = (
     <>
@@ -29,12 +36,20 @@ export function Workspace() {
     </>
   );
   return (
-    <div className="grid min-h-0 flex-1 grid-cols-[260px_minmax(0,1fr)_320px] grid-rows-[minmax(0,1fr)]">
-      <Sidebar
-        view={view}
-        onSelectChannel={(channelId) => setView({ channelId, threadId: null })}
-        onOpenThread={(thread) => setView({ channelId: thread.channelId, threadId: thread.id })}
-      />
+    <div
+      className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)]"
+      style={{ gridTemplateColumns: `${panels.sidebarCollapsed ? RAIL_WIDTH : '260px'} minmax(0,1fr) ${panels.rightCollapsed ? RAIL_WIDTH : '320px'}` }}
+    >
+      {panels.sidebarCollapsed ? (
+        <PanelRail side="left" label={t('panel.sidebar.expand')} onExpand={() => panels.setSidebarCollapsed(false)} />
+      ) : (
+        <Sidebar
+          onCollapse={() => panels.setSidebarCollapsed(true)}
+          view={view}
+          onSelectChannel={(channelId) => setView({ channelId, threadId: null })}
+          onOpenThread={(thread) => setView({ channelId: thread.channelId, threadId: thread.id })}
+        />
+      )}
       <main className="min-h-0 min-w-0 overflow-hidden">
         {view.threadId ? (
           <ThreadView key={view.threadId} threadId={view.threadId} onBack={() => setView({ ...view, threadId: null })} composer={composer} />
@@ -42,13 +57,18 @@ export function Workspace() {
           <ChannelView channelId={view.channelId} onOpenThread={(threadId) => setView({ ...view, threadId })} composer={composer} />
         )}
       </main>
-      <RightPanel
-        channelId={view.channelId}
-        onOpenThread={(threadId) => {
-          const channelId = store.getState().threads[threadId]?.info?.channelId ?? view.channelId;
-          setView({ channelId, threadId });
-        }}
-      />
+      {panels.rightCollapsed ? (
+        <PanelRail side="right" label={t('panel.right.expand')} onExpand={() => panels.setRightCollapsed(false)} />
+      ) : (
+        <RightPanel
+          onCollapse={() => panels.setRightCollapsed(true)}
+          channelId={view.channelId}
+          onOpenThread={(threadId) => {
+            const channelId = store.getState().threads[threadId]?.info?.channelId ?? view.channelId;
+            setView({ channelId, threadId });
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -73,7 +73,7 @@ export function ThreadView({ threadId, onBack, composer }: { threadId: string; o
         )}
       </header>
       <div className="relative min-h-0 flex-1">
-        <div data-testid="thread-scroller" ref={scrollerRef} onScroll={onScroll} className="h-full overflow-y-auto px-5 py-4">
+        <div data-testid="thread-scroller" ref={scrollerRef} onScroll={onScroll} className="h-full overflow-y-auto overscroll-contain px-5 py-4">
           <div ref={contentRef}>
             {loadError && (
               <div role="alert" className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-roseish/40 bg-roseish/10 p-3 text-xs text-roseish">

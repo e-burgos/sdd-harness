@@ -44,7 +44,7 @@ export function ChannelView({ channelId, onOpenThread, composer }: { channelId: 
           </div>
         )}
       </header>
-      <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-5 py-4">
+      <div className="min-h-0 flex-1 space-y-6 overflow-y-auto overscroll-contain px-5 py-4">
         <section>
           <h2 className="mb-2 text-[11px] uppercase tracking-wider text-ink-500">{t('channel.threads')}</h2>
           {list.length === 0 && <p className="text-sm text-ink-300">{t('channel.noThreads')}</p>}

@@ -9,6 +9,7 @@ import { useCollapsedState } from '@/lib/use-collapsed-state';
 import type { ConnectionState } from '@/lib/bridge/client';
 import { useBridge, useStudio } from '../BridgeProvider';
 import { ApiKeyField } from './ApiKeyField';
+import { PanelToggle } from './PanelRail';
 import { SectionView, type NavTreeHandlers } from './NavTree';
 
 const CONN_DOT = {
@@ -28,6 +29,7 @@ export interface SidebarViewProps {
   onSelectChannel(channelId: string): void;
   onOpenThread(thread: NavThread): void;
   authSlot?: ReactNode;
+  onCollapse?(): void;
 }
 
 export function SidebarView(p: SidebarViewProps) {
@@ -38,7 +40,10 @@ export function SidebarView(p: SidebarViewProps) {
   return (
     <nav className="flex h-full min-h-0 flex-col border-r border-ink-800 bg-ink-900">
       <header className="shrink-0 p-3 pb-2">
-        <div className="truncate text-base font-semibold">{p.project}</div>
+        <div className="flex items-center gap-2">
+          <div className="min-w-0 flex-1 truncate text-base font-semibold">{p.project}</div>
+          {p.onCollapse && <PanelToggle label={t('panel.sidebar.collapse')} side="left" onClick={p.onCollapse} />}
+        </div>
         <div className="mt-0.5 flex items-center gap-2 text-[11px] text-ink-300">
           <span data-testid="conn-dot" aria-hidden className={`h-2 w-2 rounded-full ${CONN_DOT[p.connection].cls}`} />
           <span className="sr-only">{t(CONN_DOT[p.connection].key)}</span>
@@ -48,7 +53,7 @@ export function SidebarView(p: SidebarViewProps) {
         </div>
         {p.authSlot}
       </header>
-      <div data-testid="sidebar-tree" className="min-h-0 flex-1 space-y-5 overflow-y-auto px-3 py-2">
+      <div data-testid="sidebar-tree" className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-3 py-2">
         {p.tree.map((section) => (
           <SectionView key={section.id} section={section} h={handlers} dmState={dmState} />
         ))}
@@ -65,7 +70,7 @@ export function SidebarView(p: SidebarViewProps) {
   );
 }
 
-export function Sidebar({ view, onSelectChannel, onOpenThread }: { view: NavView; onSelectChannel(channelId: string): void; onOpenThread(thread: NavThread): void }) {
+export function Sidebar({ view, onSelectChannel, onOpenThread, onCollapse }: { view: NavView; onSelectChannel(channelId: string): void; onOpenThread(thread: NavThread): void; onCollapse?(): void }) {
   const { connection, authMode } = useBridge();
   const snapshot = useStudio((s) => s.snapshot);
   const presence = useStudio((s) => s.presence);
@@ -86,6 +91,7 @@ export function Sidebar({ view, onSelectChannel, onOpenThread }: { view: NavView
       presence={presence}
       onSelectChannel={onSelectChannel}
       onOpenThread={onOpenThread}
+      onCollapse={onCollapse}
     />
   );
 }
