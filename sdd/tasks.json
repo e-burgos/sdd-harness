@@ -16,6 +16,18 @@
           "status": "completed",
           "tasks_total": 37,
           "tasks_done": 37
+        },
+        "cycle-02": {
+          "file": "sdd/specs/spec-e-burgos-001-studio-session-ux/cycles/cycle-02/tasks.json",
+          "module": "studio-session-ux",
+          "apps": [
+            "apps/studio",
+            "apps/studio-bridge",
+            "libs/studio-protocol"
+          ],
+          "status": "in-progress",
+          "tasks_total": 0,
+          "tasks_done": 0
         }
       }
     }

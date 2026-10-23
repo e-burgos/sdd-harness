@@ -1,0 +1,165 @@
+# sdd/specs/spec-e-burgos-001-studio-session-ux/cycles/cycle-02/brief.yaml
+# Generado por: sdd-orchestrator
+# Al: iniciar el ciclo (segundo y último de la spec, según «Corte de ciclos»)
+# Rama: feat/studio-session-ux
+
+cycle: 2
+module: studio-session-ux
+phase: attachments-and-references
+flow: full
+date: 2026-10-23
+estimated_weeks: 1.5
+spec: sdd/specs/spec-e-burgos-001-studio-session-ux/spec-e-burgos-001-studio-session-ux.spec.md
+app_context: sdd/context/apps/studio/context_prompt.md
+subproject_contexts:
+  - sdd/context/apps/studio/context_prompt.md
+  - sdd/context/apps/studio/constitution.md
+  - sdd/context/apps/studio-bridge/context_prompt.md
+  - sdd/context/apps/studio-bridge/constitution.md
+  - sdd/context/libs/studio-protocol/context_prompt.md
+  - sdd/context/libs/studio-protocol/constitution.md
+context_freshness: |
+  Fragmentos de cierre de cycle-01 consolidados en los base al abrir este ciclo (commit dedicado);
+  updates/ vacío en los tres subproyectos. Encabezados en cycle-01. Memoria: 1 entrada en journal,
+  no corresponde destilar.
+
+reuse_policy: |
+  Este ciclo NO rediseña. Historias, RF, contratos y backlog ya existen en cycle-01 y los contratos
+  de protocolo de HU-1..HU-3 están congelados, publicados en PROTOCOL_VERSION = 2 y testeados con zod
+  (F1 de cycle-01). Cada agente de documento parte de la sección indicada en agent_contexts,
+  la revisa contra el código actual (post cycle-01) y solo actualiza lo que haya cambiado.
+  Cambios de protocolo: solo aditivos y opcionales, sin bump (R10 de architect.md cycle-01).
+
+source_sections:
+  spec: "spec-e-burgos-001-studio-session-ux.spec.md § Corte de ciclos; HU-1, HU-2, HU-3; CA-001..CA-005, CA-016.4, CA-016.5"
+  previous_brief: "cycles/cycle-01/brief.yaml → next_cycle_scope"
+  functional: "cycles/cycle-01/functional.md § Alcance del siguiente ciclo (cycle-02): Flujos F-A/F-B, Historias de cycle-02 (HU-1/2/3 con CA-016.4/016.5), Requisitos funcionales de cycle-02 (RF-1..RF-6) y RF-20; § Ambigüedades punto 1"
+  architect: "cycles/cycle-01/architect.md § 0.1 Corte de ciclos, § 0.2 convivencia (features), D-03, D-04, D-05, D-08, D-09, D-10, D-19 [C2]; § 2.3 attachments.ts, § 2.5 commands, § 2.6 events, § 2.7 snapshot; § 4 Persistencia; § 5 Estado de UI (filas C2); § 6 fases F4/F5; § 7 componentes C2; § 8 riesgos R4/R6/R7/R10"
+  planner: "cycles/cycle-01/planner.md § Backlog cycle-02 (13 tasks, ~54h)"
+  components_defined: [COMP-007 AttachmentTray, COMP-008 AttachmentView, COMP-009 MentionMenu, COMP-012 useAttachmentDraft, COMP-013 useAttachmentContent]
+
+objective: |
+  Al cerrar el ciclo, el dev adjunta imágenes (png/jpg/webp/gif, achicadas a ≤1568 px y
+  re-encodeadas siempre para quitar EXIF/GPS), PDF y texto/código/markdown pegando, arrastrando o
+  eligiendo; ve el preview y puede quitar; hasta 5 por mensaje y con el frame ≤ 1 MiB medido sobre el
+  JSON serializado. Los adjuntos llegan al agente como bloques image/document/text, se persisten en
+  .sdd-studio/attachments/<sha256>.<ext> y se vuelven a ver al recargar vía attachment.get. Con `@`
+  busca archivos del repo (búsqueda segura, el agente recibe la ruta) y agentes; con `/` usa skills y
+  prompts descubiertos del repo. El borrador por hilo conserva también los adjuntos. Con esto la spec
+  queda completa.
+
+scope:
+  - "HU-1 Adjuntos (puente, F4): attachment-store (sha256, dedupe, escritura atómica, revalidación por magic bytes/UTF-8), mapeo a bloques image/document/text del SDK en prompt-content.ts, attachment.get con ruta derivada solo del hash, aviso de tamaño >1 GiB al iniciar (D-03, D-05, D-19)"
+  - "HU-1 Adjuntos (web, F5): Composer con elegir/pegar/arrastrar, preview con quitar, máx 5 (MAX_ATTACHMENTS), re-encode siempre (IMAGE_MAX_SIDE 1568) y escalera de presupuesto sobre FRAME_BUDGET_BYTES, render en Timeline, attachment.get al recargar con LRU de objectURL (D-04, D-05)"
+  - "HU-2 @archivo: file-index + workspace.searchFiles en el puente (git ls-files, exclusiones y secretos, no lee contenido, ranking, cache 15 s); MentionMenu en la web inserta la ruta sin @ (D-08)"
+  - "HU-3 @agente y /skill|prompt: catálogo completo (.claude/agents, sdd/agents, .claude/skills, sdd/skills, sdd/prompts; precedencia y dedupe por realpath) + watcher acotado de .claude; refs estructuradas y preámbulo del puente; slash.ts intacto (D-09, D-10)"
+  - "Borrador por hilo con adjuntos (CA-016.5) y re-encode obligatorio sin fallback al original (CA-016.4)"
+  - "Puente anuncia features attachments, file-search, catalog y retira los unsupported de router.ts; la web muestra cada capacidad solo si el puente la anuncia"
+
+out_of_scope:
+  - "Cualquier bump de PROTOCOL_VERSION o cambio no aditivo del protocolo"
+  - "Limpieza de .sdd-studio/attachments (sdd-studio prune): ciclo posterior (D-19)"
+  - "Decodificar imágenes en el puente o sumar dependencias de imagen: 1568 px es política del cliente (D-03)"
+  - "client_composed del SDK (D-10: no se usa)"
+  - "HU-4..HU-10 (cerradas en cycle-01) salvo regresiones"
+  - "Publicar en npm o desplegar la web (release aparte)"
+
+dependencies_required:
+  - "cycle-01 de esta spec (completed): contratos F1, prompt streaming, cola de pendientes, slice drafts, guarda de frame en client.ts"
+
+defaults_applied:
+  - "Adjunto de texto sin límite propio: comparte el presupuesto de 1 MiB del frame (ambigüedad 1 de functional.md cycle-01)"
+  - "GIF ≤1568 px se envía tal cual; mayor → primer cuadro estático (D-04)"
+  - "Imágenes: JPEG → jpeg q0.85; PNG/WebP → webp q0.9 con fallback png; escalera (1568,0.85)→(1568,0.7)→(1280,0.7)→(1024,0.6) (D-04)"
+  - "attachments/ nunca se borra en este ciclo; aviso de log >1 GiB (D-19)"
+
+risks:
+  - id: R-C2-1
+    title: "Tamaño del frame con PDFs"
+    detail: "Los PDF no se recomprimen: la escalera solo actúa sobre imágenes. Un PDF grande o varios adjuntos en base64 superan FRAME_BUDGET_BYTES (base64 infla ~33%)."
+    mitigation: "Medir sobre JSON.stringify del comando completo (no sobre bytes crudos); error explícito con exceso y los dos adjuntos más pesados, Composer conserva todo; maxPayload del puente = MAX_FRAME_BYTES; tests con PDF en el límite y con 5 adjuntos."
+  - id: R-C2-2
+    title: "Seguridad de rutas en búsqueda de archivos y attachment.get"
+    detail: "workspace.searchFiles podría filtrar secretos o rutas fuera del root; attachment.get podría usarse para traversal si la ruta sale del input."
+    mitigation: "searchFiles: solo rutas relativas POSIX normalizadas, exclusiones y patrones de secretos de D-08, nunca lee contenido, symlinks resueltos dentro del root. attachment.get: ruta derivada solo de ^[a-f0-9]{64}$ + EXT_BY_MIME, realpath dentro de .sdd-studio/attachments/, archivo regular ≤ MAX_FRAME_BYTES, sha256 recalculado, si no → not-found. Tests de traversal, symlink y .env obligatorios."
+  - id: R-C2-3
+    title: "Crecimiento de .sdd-studio/attachments/"
+    detail: "Sin borrado (RN-12), la carpeta crece con el uso."
+    mitigation: "Dedupe por hash + re-encode reducen tamaño; suma de tamaños no bloqueante al iniciar con aviso >1 GiB; prune queda registrado como trabajo posterior."
+  - id: R-C2-4
+    title: "Compatibilidad con la web publicada"
+    detail: "La web en Cloudflare y el puente de npm pueden quedar desfasados respecto de esta rama; un puente de cycle-01 responde unsupported y una web vieja no conoce los features nuevos."
+    mitigation: "Sin bump; todo detrás de Welcome.features (attachments, file-search, catalog): la web oculta la UI si el puente no la anuncia y el puente sigue validando campos opcionales. Test de handshake con features ausentes. No usar next dev desde esta rama para el Studio de uso diario (HMR rompe el handshake con el puente publicado)."
+  - id: R-C2-5
+    title: "Watcher de .claude"
+    detail: ".claude/worktrees/ contiene copias del repo; vigilar .claude entero dispara eventos masivos."
+    mitigation: "Segundo chokidar.watch acotado a .claude/agents/** y .claude/skills/** con depth 3 (D-09)."
+
+agent_contexts:
+  functional:
+    goal: "Actualizar (no reescribir) las historias HU-1, HU-2, HU-3, RF-1..RF-6, RF-20 y CA-016.4/016.5 ya redactadas en cycle-01 a un functional.md de cycle-02; confirmar los defaults de ambigüedades y ajustar solo lo que el código post cycle-01 haya cambiado (slice drafts, features, slash.ts)"
+    business_context: "El Composer solo envía texto: no se puede mostrar una captura, un PDF ni un archivo, ni apuntar al agente a un archivo, subagente o skill sin tipearlo. Ciclo final de la spec."
+    relevant_spec_sections: ["Corte de ciclos", "HU-1", "HU-2", "HU-3", "CA-001..CA-005", "CA-016.4", "CA-016.5"]
+    source: "cycles/cycle-01/functional.md § Alcance del siguiente ciclo (cycle-02) y § Ambigüedades"
+    output_file: sdd/specs/spec-e-burgos-001-studio-session-ux/cycles/cycle-02/functional.md
+
+  planner:
+    goal: "Desglosar el «Backlog cycle-02» de planner.md de cycle-01 (13 tasks, ~54h) en tasks.json de cycle-02 con TASK-001.., dependencias y orden F4 (puente) → F5 (web), checkpoint `pnpm nx run-many -t lint test build` entre fases; las tasks de seguridad (searchFiles, attachment.get) llevan sus tests de traversal/secretos en la misma task"
+    note: "Recibe el functional.md de cycle-02; no necesita la spec completa"
+    source: "cycles/cycle-01/planner.md § Backlog cycle-02"
+    output_file: sdd/specs/spec-e-burgos-001-studio-session-ux/cycles/cycle-02/planner.md
+    tasks_file: sdd/specs/spec-e-burgos-001-studio-session-ux/cycles/cycle-02/tasks.json
+
+  architect:
+    goal: "Confirmar contra el código actual las decisiones [C2] de architect.md de cycle-01 y documentar solo deltas: contratos internos del puente (attachment-store, file-index, catálogo, preámbulo en prompt-content.ts), layout de .sdd-studio/attachments, exclusiones de búsqueda, precedencia del catálogo, algoritmo de presupuesto/escalera y formato de inserción. Protocolo: solo aditivo, sin bump"
+    existing_tables: []
+    existing_endpoints: []
+    existing_contracts:
+      - "libs/studio-protocol/src/limits.ts: MAX_FRAME_BYTES, FRAME_BUDGET_BYTES, MAX_ATTACHMENTS, IMAGE_MAX_SIDE, MAX_PROMPT_REFS, FILE_SEARCH_MAX, BRIDGE_FEATURES"
+      - "libs/studio-protocol/src/attachments.ts: mimes y TEXT_ATTACHMENT_EXTENSIONS"
+      - "libs/studio-protocol/src/commands.ts: thread.send/create con MessageBody (attachments, refs), workspace.searchFiles, attachment.get"
+      - "libs/studio-protocol/src/events.ts: user.message y pending.added con AttachmentRef y refs"
+      - "libs/studio-protocol/src/domain.ts y snapshot.ts: AgentSummary.source/path, skills[]"
+      - "libs/studio-protocol/src/handshake.ts: Welcome.features"
+    note: "Sin DB ni REST: sdd/api.json y sdd/schema.json no se tocan (§0.3 de cycle-01). components.json: COMP-007/008/009/012/013 pasan a implemented al cerrar"
+    source: "cycles/cycle-01/architect.md (secciones listadas en source_sections.architect)"
+    output_file: sdd/specs/spec-e-burgos-001-studio-session-ux/cycles/cycle-02/architect.md
+
+  implementor_back:
+    goal: "F4: adjuntos (store, revalidación, bloques SDK), attachment.get, workspace.searchFiles, catálogo + watcher de .claude, preámbulo de refs; features += attachments, file-search, catalog; retirar unsupported"
+    apps: [apps/studio-bridge, libs/studio-protocol]
+    app_context:
+      - sdd/context/apps/studio-bridge/context_prompt.md
+      - sdd/context/libs/studio-protocol/context_prompt.md
+    key_files:
+      - apps/studio-bridge/src/sessions/session-manager.ts
+      - apps/studio-bridge/src/sessions/store.ts
+      - apps/studio-bridge/src/engine/claude-sdk-engine.ts
+      - apps/studio-bridge/src/engine/prompt-content.ts
+      - apps/studio-bridge/src/engine/fake-engine.ts
+      - apps/studio-bridge/src/server/router.ts
+      - apps/studio-bridge/src/server/ws-server.ts
+      - apps/studio-bridge/src/workspace/snapshot.ts
+      - apps/studio-bridge/src/workspace/watcher.ts
+      - apps/studio-bridge/src/workspace/paths.ts
+      - libs/studio-protocol/src/{commands,events,domain,attachments,limits,snapshot}.ts
+    note: "Una task a la vez. `pnpm sdd:gate spec-e-burgos-001-studio-session-ux cycle-02` (GATE B) antes de escribir código"
+
+  implementor_front:
+    goal: "F5: Composer con adjuntos (elegir/pegar/arrastrar, preview, quitar, máx 5, re-encode siempre, escalera de presupuesto), render en Timeline/ThreadView con attachment.get y LRU, MentionMenu @ (archivos y agentes) y / (skills y prompts), borrador por hilo con adjuntos; UI condicionada a Welcome.features"
+    app: apps/studio
+    app_context: sdd/context/apps/studio/context_prompt.md
+    key_files:
+      - apps/studio/src/components/workspace/Composer.tsx
+      - apps/studio/src/components/workspace/ThreadView.tsx
+      - apps/studio/src/components/workspace/Timeline.tsx
+      - apps/studio/src/components/workspace/PendingMessages.tsx
+      - apps/studio/src/lib/bridge/client.ts
+      - apps/studio/src/lib/slash.ts
+      - apps/studio/src/lib/store/{state,timeline,selectors}.ts
+    note: "Una task a la vez, después de F4 (puede correr contra FakeEngine). Next 16.4.3 / React 19.3.0"
+
+  reviewer:
+    goal: "Validar todo el output del ciclo y cerrar la spec (último ciclo): CA-001..CA-005, CA-016.4, CA-016.5; tests de seguridad de rutas; fragmentos de contexto de los tres subproyectos; spec → completed y módulo a completed_modules"
+    checklist: sdd/skills/sdd-reviewer/checklist.md
+    output_file: sdd/specs/spec-e-burgos-001-studio-session-ux/cycles/cycle-02/cycle.json

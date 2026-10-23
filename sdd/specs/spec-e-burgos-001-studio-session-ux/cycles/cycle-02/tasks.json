@@ -1,0 +1,13 @@
+{
+  "$schema": "../../../../schemas/cycle-tasks.schema.json",
+  "spec": "spec-e-burgos-001-studio-session-ux",
+  "cycle": 2,
+  "module": "studio-session-ux",
+  "apps": ["apps/studio", "apps/studio-bridge", "libs/studio-protocol"],
+  "flow": "full",
+  "user_stories_generated": false,
+  "prerequisites": {
+    "tasks_generated": false
+  },
+  "tasks": []
+}

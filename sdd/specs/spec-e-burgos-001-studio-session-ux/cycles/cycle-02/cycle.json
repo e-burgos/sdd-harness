@@ -1,0 +1,55 @@
+{
+  "$schema": "../../../../schemas/cycle.schema.json",
+  "cycle": 2,
+  "module": "studio-session-ux",
+  "spec": "spec-e-burgos-001-studio-session-ux",
+  "apps": ["apps/studio", "apps/studio-bridge", "libs/studio-protocol"],
+  "phase": "attachments-and-references",
+  "flow": "full",
+  "objectives": [
+    "Adjuntos en el Composer: imágenes png/jpg/webp/gif re-encodeadas a ≤1568 px sin EXIF/GPS, PDF y texto/código/markdown; elegir/pegar/arrastrar, preview con quitar, máx 5, frame ≤ 1 MiB medido sobre el JSON serializado",
+    "Persistencia de adjuntos en .sdd-studio/attachments/<sha256>.<ext> y render al recargar vía attachment.get",
+    "@archivo: búsqueda segura de archivos del repo (workspace.searchFiles); el agente recibe la ruta",
+    "@agente y /skill|prompt descubiertos del repo con refs estructuradas y preámbulo del puente",
+    "Borrador por hilo con adjuntos (CA-016.5) y re-encode obligatorio (CA-016.4), sin bump de PROTOCOL_VERSION"
+  ],
+  "status": "in-progress",
+  "started_at": "2026-10-23",
+  "completed_at": null,
+  "documents": {
+    "brief": "sdd/specs/spec-e-burgos-001-studio-session-ux/cycles/cycle-02/brief.yaml",
+    "tasks": "sdd/specs/spec-e-burgos-001-studio-session-ux/cycles/cycle-02/tasks.json"
+  },
+  "artifacts": [],
+  "metrics": {
+    "tasks_total": 0,
+    "tasks_completed": 0,
+    "story_points": 0,
+    "files_created": [],
+    "files_modified": [],
+    "files_deleted": [],
+    "usage": {
+      "tokens_in": 95000,
+      "tokens_out": 22000,
+      "by_agent": [
+        {
+          "agent": "orchestrator",
+          "label": "apertura cycle-02 (consolidación de contexto, GATE A, brief)",
+          "provider_model": "claude/opus",
+          "effort": "medium",
+          "tokens_in": 95000,
+          "tokens_out": 22000,
+          "tokens_total": 117000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-23"
+        }
+      ]
+    }
+  },
+  "tables_created": [],
+  "endpoints_implemented": [],
+  "components_created": [],
+  "issues_found": [],
+  "reviewer_report": null
+}
