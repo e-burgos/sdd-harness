@@ -105,3 +105,87 @@ describe('FakeEngine', () => {
     expect(h.approvals).toEqual(['Write']);
   });
 });
+
+describe('FakeEngine cut points and markers', () => {
+  const message = (id: string, text: string) => ({ id, prompt: plainPrompt(text) });
+  const texts = (events: ThreadEvent[]) => events.flatMap((e) => (e.type === 'message.delta' ? [e.text] : []));
+
+  it('runs #steps:N rounds and hears a message collected at a cut point', async () => {
+    const h = harness();
+    const queue = [message('p-1', 'look at b.ts')];
+    const calls: string[] = [];
+    h.cb.collectPending = (at) => {
+      calls.push(at);
+      return at === 'cut-point' ? queue.splice(0) : [];
+    };
+    await new FakeEngine(1).startTurn(input('#steps:3'), h.cb).done;
+    expect(h.events.filter((e) => e.type === 'tool.start')).toHaveLength(3);
+    expect(calls.filter((c) => c === 'cut-point')).toHaveLength(3);
+    expect(calls.at(-1)).toBe('turn-end');
+    expect(texts(h.events)).toEqual(['heard: look at b.ts', 'echo: #steps:3']);
+  });
+
+  it('runs another echo turn inside the same turn for messages collected at turn end', async () => {
+    const h = harness();
+    const queue = [message('p-1', 'next one')];
+    h.cb.collectPending = (at) => (at === 'turn-end' ? queue.splice(0) : []);
+    await new FakeEngine(1).startTurn(input('hola'), h.cb).done;
+    expect(texts(h.events)).toEqual(['echo: hola', 'echo: next one']);
+    expect(h.events.filter((e) => e.type === 'turn.end')).toHaveLength(2);
+  });
+
+  it('echoes the extra initial prompts after the first turn', async () => {
+    const h = harness();
+    const prompts = [message('a', 'one'), message('b', 'two')];
+    await new FakeEngine(1).startTurn({ ...input('x'), prompts }, h.cb).done;
+    expect(texts(h.events)).toEqual(['echo: one', 'echo: two']);
+  });
+
+  it('#revert reports the last cut-point batch as undelivered on interrupt', async () => {
+    const h = harness();
+    const reverted: string[][] = [];
+    const queue = [message('p-1', 'late')];
+    h.cb.collectPending = (at) => (at === 'cut-point' ? queue.splice(0) : []);
+    h.cb.revertPending = (ids) => reverted.push(ids);
+    const turn = new FakeEngine(1).startTurn(input('#steps:5 #revert'), h.cb);
+    await new Promise((r) => setTimeout(r, 40));
+    await turn.interrupt();
+    await turn.done;
+    expect(reverted).toEqual([['p-1']]);
+  });
+
+  it('does not revert without the #revert marker', async () => {
+    const h = harness();
+    const reverted: string[][] = [];
+    const queue = [message('p-1', 'late')];
+    h.cb.collectPending = (at) => (at === 'cut-point' ? queue.splice(0) : []);
+    h.cb.revertPending = (ids) => reverted.push(ids);
+    const turn = new FakeEngine(1).startTurn(input('#steps:5'), h.cb);
+    await new Promise((r) => setTimeout(r, 40));
+    await turn.interrupt();
+    await turn.done;
+    expect(reverted).toEqual([]);
+  });
+
+  it.each([
+    ['#mcp', 'mcp__fake__ping', {}],
+    ['#edit-tool', 'Edit', undefined],
+    ['#bash-git', 'Bash', { command: 'git status --short' }],
+    ['#bash-git2', 'Bash', { command: 'git status' }],
+    ['#bash-chain', 'Bash', { command: 'git status && rm -rf x' }],
+  ] as const)('%s asks approval for its tool and only for it', async (flag, tool, toolInput) => {
+    const h = harness();
+    const asked: Array<{ toolName: string; input: unknown }> = [];
+    h.cb.requestApproval = async (request) => (asked.push(request), { behavior: 'allow' });
+    await new FakeEngine(1).startTurn(input(flag), h.cb).done;
+    expect(asked).toHaveLength(1);
+    expect(asked[0]?.toolName).toBe(tool);
+    if (toolInput) expect(asked[0]?.input).toEqual(toolInput);
+  });
+
+  it('#edit does not trigger the #edit-tool approval and vice versa', async () => {
+    const h = harness();
+    await new FakeEngine(1).startTurn(input('#edit-tool'), h.cb).done;
+    expect(h.approvals).toEqual(['Edit']);
+  });
+});
