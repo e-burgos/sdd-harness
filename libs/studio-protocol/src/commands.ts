@@ -28,6 +28,8 @@ export const ClientCommand = z.discriminatedUnion('cmd', [
     scope: z.enum(['once', 'thread']),
   }),
   z.object({ ...cmd('command.run'), name: KitCommandName, args: z.array(SafeArg).max(4) }),
+  // Held in bridge memory only (never persisted or logged). null = back to ANTHROPIC_API_KEY / local login.
+  z.object({ ...cmd('auth.set'), apiKey: z.string().regex(/^\S{20,512}$/).nullable() }),
 ]);
 export type ClientCommand = z.infer<typeof ClientCommand>;
 

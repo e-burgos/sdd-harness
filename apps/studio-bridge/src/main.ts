@@ -2,7 +2,7 @@ import { existsSync } from 'node:fs';
 import { realpath } from 'node:fs/promises';
 import path from 'node:path';
 import type { AuthMode, ServerMessage } from '@sdd-studio/protocol';
-import { detectAuthMode } from './auth-mode';
+import { AuthState, CLIENT_APP } from './auth-mode';
 import { CommandRunner } from './commands/runner';
 import { ClaudeAgentSdkEngine } from './engine/claude-sdk-engine';
 import { FakeEngine } from './engine/fake-engine';
@@ -59,10 +59,10 @@ export async function startBridge(o: {
     },
   });
   const token = o.token ?? createToken();
-  const authMode = detectAuthMode();
+  const auth = new AuthState(process.env, CLIENT_APP(BRIDGE_VERSION));
   let started: BridgeServer;
   try {
-    const engine = o.engine === 'fake' ? new FakeEngine() : new ClaudeAgentSdkEngine();
+    const engine = o.engine === 'fake' ? new FakeEngine() : new ClaudeAgentSdkEngine(undefined, () => auth.env());
     const sessions = new SessionManager({
       root,
       engine,
@@ -80,7 +80,7 @@ export async function startBridge(o: {
       token,
       allowedOrigins: o.allowedOrigins,
       localUiDir: o.localUiDir,
-      handlers: createHandlers({ root, authMode, bridgeVersion: BRIDGE_VERSION, sessions, watcher, runner, store }),
+      handlers: createHandlers({ root, auth, bridgeVersion: BRIDGE_VERSION, sessions, watcher, runner, store }),
     });
     server = started;
   } catch (error) {
@@ -95,7 +95,7 @@ export async function startBridge(o: {
     url,
     port: started.port,
     token,
-    authMode,
+    authMode: auth.mode(),
     project: watcher.current().project,
     close: async () => {
       const results = await Promise.allSettled([

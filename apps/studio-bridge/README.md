@@ -81,6 +81,8 @@ Invalid values abort with an error message.
 
 - Without `ANTHROPIC_API_KEY`: the bridge uses your **local Claude Code login**.
 - With `ANTHROPIC_API_KEY`: it uses the API key.
+- From the Studio UI ("Use my API key" in the sidebar): the key stays in your browser (tab `sessionStorage` by default, `localStorage` only if you tick "remember") and is sent only to this local bridge, which keeps it in memory — never on disk, never logged. It takes precedence over the environment.
+- Calls identify themselves as `sdd-studio/<version>` (`CLAUDE_AGENT_SDK_CLIENT_APP`). This is an honest label only; it does not change which credits or plan a key is billed to.
 
 The bridge never reads, stores or sends credentials; the web only learns which mode is active.
 
