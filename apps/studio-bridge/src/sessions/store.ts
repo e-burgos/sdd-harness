@@ -1,6 +1,6 @@
 import { appendFile, mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { ChannelId, type AttachmentRef, type BotEvent, type PromptRefs, ThreadEvent, type ThreadInfo } from '@sdd-studio/protocol';
+import { ChannelId, MAX_PENDING_PER_THREAD, type AttachmentRef, type BotEvent, type PromptRefs, ThreadEvent, type ThreadInfo } from '@sdd-studio/protocol';
 
 export interface PendingMessage {
   id: string;
@@ -17,7 +17,7 @@ export interface StoredThread extends Omit<ThreadInfo, 'pendingCount'> {
 
 export const toThreadInfo = ({ engineSessionId: _session, pending, ...info }: StoredThread): ThreadInfo => ({
   ...info,
-  pendingCount: pending.length,
+  pendingCount: Math.min(pending.length, MAX_PENDING_PER_THREAD),
 });
 
 export interface HistoryEntry {

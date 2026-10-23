@@ -1,7 +1,8 @@
 import { randomUUID } from 'node:crypto';
-import { dmAgentOfChannel } from '@sdd-studio/protocol';
+import { dmAgentOfChannel, MAX_PENDING_PER_THREAD } from '@sdd-studio/protocol';
 import type {
   Presence,
+  SendResult,
   ServerEvent,
   SessionStatus,
   ThreadEvent,
@@ -10,10 +11,19 @@ import type {
   WorkspaceSnapshot,
 } from '@sdd-studio/protocol';
 import { diffFor, summarizeTool } from '../engine/tool-summary';
-import { plainPrompt, type AgentEngine, ApprovalDecision, ApprovalRequest, EngineTurn, JudgeContext, ToolVerdict } from '../engine/types';
+import {
+  plainPrompt,
+  type AgentEngine,
+  type ApprovalDecision,
+  type ApprovalRequest,
+  type EngineTurn,
+  type JudgeContext,
+  type OutgoingMessage,
+  type ToolVerdict,
+} from '../engine/types';
 import { EDIT_TOOLS, editTargetOf, judgeEdit } from '../gate/judge';
 import { PresenceTracker } from './presence';
-import { toThreadInfo as toInfo, type HistoryEntry, type StoredThread, type ThreadStore } from './store';
+import { toThreadInfo as toInfo, type HistoryEntry, type PendingMessage, type StoredThread, type ThreadStore } from './store';
 
 export class SessionError extends Error {
   constructor(
@@ -60,7 +70,9 @@ function alwaysKeyOf(toolName: string, input: Record<string, unknown>): string |
 
 interface Live {
   turn: EngineTurn | null;
-  queued: string | null;
+  queued: OutgoingMessage[] | null;
+  delivered: Map<string, PendingMessage>;
+  deliveredIds: Set<string>;
   /** Monotonic FIFO order of the channel queue. */
   queuedAt: number;
   alwaysAllow: Set<string>;
@@ -140,31 +152,53 @@ export class SessionManager {
     return toInfo(this.require(thread.id));
   }
 
-  async send(threadId: string, text: string): Promise<void> {
+  async send(threadId: string, text: string): Promise<SendResult> {
     const thread = this.require(threadId);
     const live = this.liveOf(threadId);
-    if (live.turn || live.queued !== null) throw new SessionError('conflict', 'the thread is busy: wait or interrupt it');
-    live.writes = this.writes(thread);
-    live.interrupted = false;
-    this.emit(thread, { type: 'user.message', text });
-    if (this.blocked(thread)) {
-      live.queued = text;
-      live.queuedAt = ++this.queueCounter;
-      this.setStatus(thread, 'queued');
-      return;
+    if (live.turn || live.queued !== null) return this.addPending(thread, text);
+    this.launchTurn(thread, text);
+    return { delivery: 'started' };
+  }
+
+  editPending(threadId: string, pendingId: string, text: string): void {
+    const thread = this.require(threadId);
+    const message = this.findPending(thread, pendingId);
+    if (text.trim().length === 0) throw new SessionError('bad-request', 'text required');
+    message.text = text;
+    this.emit(thread, { type: 'pending.edited', pendingId, text });
+    this.persist(thread);
+  }
+
+  removePending(threadId: string, pendingId: string): void {
+    const thread = this.require(threadId);
+    this.findPending(thread, pendingId);
+    thread.pending = thread.pending.filter((message) => message.id !== pendingId);
+    this.emit(thread, { type: 'pending.removed', pendingId });
+    this.publishThread(thread);
+  }
+
+  flushPending(threadId: string): SendResult {
+    const thread = this.require(threadId);
+    const live = this.liveOf(threadId);
+    if (live.turn || live.queued !== null) {
+      throw new SessionError('conflict', 'the thread is working: pending messages are delivered at the next cut point');
     }
-    this.start(thread, text);
+    if (thread.pending.length === 0) throw new SessionError('conflict', 'no pending messages');
+    this.launchTurn(thread);
+    return { delivery: 'started' };
   }
 
   async interrupt(threadId: string): Promise<void> {
     const thread = this.require(threadId);
     const live = this.liveOf(threadId);
-    const wasQueued = live.queued !== null;
+    const queuedMessages = live.queued;
+    const wasQueued = queuedMessages !== null;
     if (!live.turn && !wasQueued) return;
     // All in-memory work first; disk goes last and is not awaited.
     live.queued = null;
     live.interrupted = true;
     this.setStatus(thread, 'interrupted');
+    if (queuedMessages) this.restorePending(thread, queuedMessages.map((message) => message.id));
     this.settleThread(threadId, 'interrupted');
     if (wasQueued) this.drain(thread.channelId);
     try {
@@ -218,7 +252,7 @@ export class SessionManager {
   private liveOf(threadId: string): Live {
     let live = this.live.get(threadId);
     if (!live) {
-      live = { turn: null, queued: null, queuedAt: 0, alwaysAllow: new Set(), hookDenied: new Map(), interrupted: false, gen: 0, writes: false };
+      live = { turn: null, queued: null, delivered: new Map(), deliveredIds: new Set(), queuedAt: 0, alwaysAllow: new Set(), hookDenied: new Map(), interrupted: false, gen: 0, writes: false };
       this.live.set(threadId, live);
     }
     return live;
@@ -249,7 +283,91 @@ export class SessionManager {
     });
   }
 
-  private start(thread: StoredThread, text: string): void {
+  private launchTurn(thread: StoredThread, newText?: string): void {
+    const live = this.liveOf(thread.id);
+    live.delivered.clear();
+    const prompts = this.deliverAll(thread, 'next-turn');
+    if (newText !== undefined) prompts.push(this.deliverNew(thread, newText));
+    live.writes = this.writes(thread);
+    live.interrupted = false;
+    if (this.blocked(thread)) {
+      live.queued = prompts;
+      live.queuedAt = ++this.queueCounter;
+      this.setStatus(thread, 'queued');
+      return;
+    }
+    this.start(thread, prompts);
+  }
+
+  private addPending(thread: StoredThread, text: string): SendResult {
+    if (thread.pending.length >= MAX_PENDING_PER_THREAD) throw new SessionError('conflict', 'too many pending messages');
+    const message: PendingMessage = { id: this.newId(), text, createdAt: this.now() };
+    thread.pending.push(message);
+    this.emit(thread, { type: 'pending.added', pendingId: message.id, text });
+    this.publishThread(thread);
+    return { delivery: 'pending', pendingId: message.id };
+  }
+
+  private findPending(thread: StoredThread, pendingId: string): PendingMessage {
+    const message = thread.pending.find((candidate) => candidate.id === pendingId);
+    if (message) return message;
+    if (this.liveOf(thread.id).deliveredIds.has(pendingId)) throw new SessionError('conflict', 'already delivered');
+    throw new SessionError('not-found', `no pending message ${pendingId}`);
+  }
+
+  private deliverNew(thread: StoredThread, text: string): OutgoingMessage {
+    this.emit(thread, { type: 'user.message', text });
+    return { id: this.newId(), prompt: plainPrompt(text) };
+  }
+
+  private deliverAll(thread: StoredThread, delivery: 'cut-point' | 'next-turn'): OutgoingMessage[] {
+    const live = this.liveOf(thread.id);
+    const taken = [...thread.pending];
+    const delivered = taken.map((message) => {
+      thread.pending = thread.pending.filter((candidate) => candidate.id !== message.id);
+      live.delivered.set(message.id, message);
+      live.deliveredIds.add(message.id);
+      this.emit(thread, { type: 'user.message', text: message.text, pendingId: message.id, delivery });
+      return { id: message.id, prompt: plainPrompt(message.text) };
+    });
+    if (taken.length > 0) this.publishThread(thread);
+    return delivered;
+  }
+
+  private collectPending(thread: StoredThread, gen: number, at: 'cut-point' | 'turn-end'): OutgoingMessage[] {
+    const live = this.liveOf(thread.id);
+    if (live.interrupted || live.gen !== gen) return [];
+    return this.deliverAll(thread, at === 'cut-point' ? 'cut-point' : 'next-turn');
+  }
+
+  private revertPending(thread: StoredThread, gen: number, ids: string[]): void {
+    if (this.liveOf(thread.id).gen !== gen) return;
+    this.restorePending(thread, ids);
+  }
+
+  private restorePending(thread: StoredThread, ids: string[]): void {
+    const live = this.liveOf(thread.id);
+    const restored = ids.flatMap((id) => {
+      const message = live.delivered.get(id);
+      return message ? [message] : [];
+    });
+    if (restored.length === 0) return;
+    for (const message of restored) {
+      live.delivered.delete(message.id);
+      live.deliveredIds.delete(message.id);
+      this.emit(thread, { type: 'pending.reverted', pendingId: message.id, reason: 'interrupt' });
+    }
+    thread.pending = [...restored, ...thread.pending];
+    this.publishThread(thread);
+  }
+
+  private publishThread(thread: StoredThread): void {
+    this.tracker.onThread(toInfo(thread));
+    this.deps.broadcast({ kind: 'thread.updated', thread: toInfo(thread) });
+    this.persist(thread);
+  }
+
+  private start(thread: StoredThread, prompts: OutgoingMessage[]): void {
     const live = this.liveOf(thread.id);
     live.interrupted = false;
     const gen = ++live.gen;
@@ -257,7 +375,7 @@ export class SessionManager {
     let turn: EngineTurn;
     try {
       turn = this.deps.engine.startTurn(
-        { threadId: thread.id, prompts: [{ id: randomUUID(), prompt: plainPrompt(text) }], options: thread.options, resumeSessionId: thread.engineSessionId, cwd: this.deps.root },
+        { threadId: thread.id, prompts, options: thread.options, resumeSessionId: thread.engineSessionId, cwd: this.deps.root },
         {
           emit: (event) => this.emit(thread, event, true),
           onSessionId: (id) => {
@@ -267,8 +385,8 @@ export class SessionManager {
           },
           requestApproval: (request, signal) => this.requestApproval(thread, gen, request, signal),
           judgeTool: (toolName, input, ctx) => this.judgeTool(thread, gen, toolName, input, ctx),
-          collectPending: () => [],
-          revertPending: () => {},
+          collectPending: (at) => this.collectPending(thread, gen, at),
+          revertPending: (ids) => this.revertPending(thread, gen, ids),
         },
       );
     } catch (error) {
@@ -296,6 +414,13 @@ export class SessionManager {
       this.setStatus(thread, 'idle');
     }
     this.drain(thread.channelId);
+    if (!failed && !this.liveOf(thread.id).interrupted && thread.status === 'idle') this.resumeWithPending(thread);
+  }
+
+  private resumeWithPending(thread: StoredThread): void {
+    const live = this.liveOf(thread.id);
+    if (thread.pending.length === 0 || live.turn || live.queued !== null) return;
+    this.launchTurn(thread);
   }
 
   private drain(channelId: string): void {
@@ -309,9 +434,9 @@ export class SessionManager {
       const live = this.liveOf(thread.id);
       if (live.queued === null) continue; // already started by a re-entry
       if (this.blocked(thread)) break;
-      const text = live.queued;
+      const prompts = live.queued;
       live.queued = null;
-      this.start(thread, text);
+      this.start(thread, prompts);
     }
   }
 
@@ -435,9 +560,7 @@ export class SessionManager {
   private applyStatus(thread: StoredThread, status: SessionStatus): void {
     thread.status = status;
     thread.lastActivity = this.now();
-    this.tracker.onThread(toInfo(thread));
-    this.deps.broadcast({ kind: 'thread.updated', thread: toInfo(thread) });
-    this.persist(thread);
+    this.publishThread(thread);
   }
 
   private publishPresence(): void {

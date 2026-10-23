@@ -142,13 +142,6 @@ describe('SessionManager', () => {
     await m.interrupt(d.id);
   });
 
-  it('rejects a send while the thread is busy', async () => {
-    const { m } = await manager();
-    const t = await m.createThread({ channelId: 'general', options: opts, text: '#slow' });
-    await expect(m.send(t.id, 'otra')).rejects.toMatchObject({ code: 'conflict' });
-    await m.interrupt(t.id);
-  });
-
   it('interrupting a thread denies its pending approval', async () => {
     const { m } = await manager();
     const t = await m.createThread({ channelId: 'general', options: opts, text: '#tool' });
@@ -528,6 +521,196 @@ describe('SessionManager', () => {
         expect(last2[1]).toMatchObject({ type: 'session.status', status: 'interrupted' });
         await m.interrupt(t.id);
       });
+    });
+  });
+
+  describe('pending messages', () => {
+    const create = async (m: SessionManager, text: string) => {
+      const t = await m.createThread({ channelId: 'general', options: opts, text });
+      await waitFor(() => statusOf(m, t.id) === 'running' || statusOf(m, t.id) === 'waiting-approval');
+      return t;
+    };
+    const settled = () => new Promise((r) => setTimeout(r, 30));
+    const pendingCountOf = (m: SessionManager, id: string) => m.list().find((t) => t.id === id)?.pendingCount;
+    const userMessages = (threadId: string) =>
+      eventsOf(threadId).filter((e): e is Extract<ThreadEvent, { type: 'user.message' }> => e.type === 'user.message');
+    const echoes = (threadId: string) =>
+      eventsOf(threadId).flatMap((e) => (e.type === 'message.delta' ? [e.text] : []));
+
+    it('adds a pending message while the thread is busy instead of throwing conflict', async () => {
+      const { m } = await manager();
+      const t = await create(m, '#slow');
+      const result = await m.send(t.id, 'otra');
+      expect(result).toEqual({ delivery: 'pending', pendingId: expect.any(String) });
+      expect(eventsOf(t.id).filter((e) => e.type === 'pending.added')).toEqual([
+        { type: 'pending.added', pendingId: (result as { pendingId: string }).pendingId, text: 'otra' },
+      ]);
+      expect(pendingCountOf(m, t.id)).toBe(1);
+      await m.interrupt(t.id);
+    });
+
+    it('starts the turn as before when the thread is idle', async () => {
+      const { m } = await manager();
+      const t = await m.createThread({ channelId: 'general', options: opts, text: 'hola' });
+      await waitFor(() => statusOf(m, t.id) === 'idle');
+      expect(await m.send(t.id, 'otra')).toEqual({ delivery: 'started' });
+      await waitFor(() => echoes(t.id).includes('echo: otra'));
+    });
+
+    it('delivers every pending message at the next cut point, in order', async () => {
+      const { m } = await manager();
+      const t = await create(m, '#steps:6');
+      await m.send(t.id, 'first');
+      await m.send(t.id, 'second');
+      await waitFor(() => statusOf(m, t.id) === 'idle');
+      const delivered = userMessages(t.id).filter((e) => e.pendingId);
+      expect(delivered.map((e) => [e.text, e.delivery])).toEqual([['first', 'cut-point'], ['second', 'cut-point']]);
+      expect(echoes(t.id)).toEqual(expect.arrayContaining(['heard: first', 'heard: second']));
+      expect(pendingCountOf(m, t.id)).toBe(0);
+    });
+
+    it('does not deliver on approval resolution but at the end of the turn as next-turn', async () => {
+      const { m } = await manager();
+      const t = await m.createThread({ channelId: 'general', options: opts, text: '#tool' });
+      const request = await waitFor(() => pendingApproval(t.id));
+      await m.send(t.id, 'queued while waiting');
+      m.respondApproval(request.approvalId, 'allow', undefined, 'once');
+      await waitFor(() => statusOf(m, t.id) === 'idle');
+      const delivered = userMessages(t.id).find((e) => e.pendingId);
+      expect(delivered).toMatchObject({ text: 'queued while waiting', delivery: 'next-turn' });
+      expect(echoes(t.id)).toContain('echo: queued while waiting');
+    });
+
+    it('edits and removes a message only while it is pending', async () => {
+      const { m } = await manager();
+      const t = await create(m, '#steps:6');
+      const a = (await m.send(t.id, 'a')) as { pendingId: string };
+      const b = (await m.send(t.id, 'b')) as { pendingId: string };
+      m.editPending(t.id, a.pendingId, 'a2');
+      m.removePending(t.id, b.pendingId);
+      expect(eventsOf(t.id).map((e) => e.type)).toEqual(expect.arrayContaining(['pending.edited', 'pending.removed']));
+      await waitFor(() => userMessages(t.id).some((e) => e.pendingId === a.pendingId));
+      expect(userMessages(t.id).find((e) => e.pendingId === a.pendingId)?.text).toBe('a2');
+      expect(() => m.editPending(t.id, a.pendingId, 'late')).toThrowError(new SessionError('conflict', 'already delivered'));
+      expect(() => m.removePending(t.id, a.pendingId)).toThrowError(new SessionError('conflict', 'already delivered'));
+      expect(() => m.removePending(t.id, 'nope')).toThrowError(expect.objectContaining({ code: 'not-found' }));
+      await waitFor(() => statusOf(m, t.id) === 'idle');
+    });
+
+    it('rejects an empty edit and an 11th pending message', async () => {
+      const { m } = await manager();
+      const t = await create(m, '#slow');
+      const first = (await m.send(t.id, 'm0')) as { pendingId: string };
+      expect(() => m.editPending(t.id, first.pendingId, '  ')).toThrowError(expect.objectContaining({ code: 'bad-request' }));
+      for (let i = 1; i < 10; i++) await m.send(t.id, `m${i}`);
+      await expect(m.send(t.id, 'm10')).rejects.toMatchObject({ code: 'conflict', message: 'too many pending messages' });
+      await m.interrupt(t.id);
+    });
+
+    it('keeps the pending messages after an interrupt and does not auto-send them', async () => {
+      const { m } = await manager();
+      const t = await create(m, '#slow');
+      await m.send(t.id, 'kept');
+      await m.interrupt(t.id);
+      await waitFor(() => statusOf(m, t.id) === 'interrupted');
+      await new Promise((r) => setTimeout(r, 30));
+      expect(pendingCountOf(m, t.id)).toBe(1);
+      expect(userMessages(t.id).some((e) => e.pendingId)).toBe(false);
+    });
+
+    it('does not auto-send pending messages after an engine failure', async () => {
+      const { m } = await manager(new FakeEngine(1));
+      const t = await m.createThread({ channelId: 'general', options: opts, text: '#fail' });
+      const result = await m.send(t.id, 'after the failure').catch(() => null);
+      await waitFor(() => statusOf(m, t.id) === 'error');
+      await new Promise((r) => setTimeout(r, 30));
+      if (result?.delivery === 'pending') expect(pendingCountOf(m, t.id)).toBe(1);
+      expect(userMessages(t.id).some((e) => e.pendingId)).toBe(false);
+    });
+
+    it('sending to an interrupted thread delivers the pending ones first, then the new message', async () => {
+      const { m } = await manager();
+      const t = await create(m, '#slow');
+      await m.send(t.id, 'p1');
+      await m.send(t.id, 'p2');
+      await m.interrupt(t.id);
+      await waitFor(() => statusOf(m, t.id) === 'interrupted');
+      await settled();
+      expect(await m.send(t.id, 'new')).toEqual({ delivery: 'started' });
+      await waitFor(() => echoes(t.id).includes('echo: p2'));
+      const after = userMessages(t.id).slice(1);
+      expect(after.map((e) => [e.text, e.pendingId ? e.delivery : 'direct'])).toEqual([
+        ['p1', 'next-turn'], ['p2', 'next-turn'], ['new', 'direct'],
+      ]);
+      expect(pendingCountOf(m, t.id)).toBe(0);
+    });
+
+    it('flushPending starts a turn with the pending messages and conflicts when there is nothing to do', async () => {
+      const { m } = await manager();
+      const t = await create(m, '#slow');
+      await m.send(t.id, 'p1');
+      expect(() => m.flushPending(t.id)).toThrowError(expect.objectContaining({ code: 'conflict' }));
+      await m.interrupt(t.id);
+      await waitFor(() => statusOf(m, t.id) === 'interrupted');
+      await settled();
+      expect(m.flushPending(t.id)).toEqual({ delivery: 'started' });
+      await waitFor(() => echoes(t.id).includes('echo: p1'));
+      await waitFor(() => statusOf(m, t.id) === 'idle');
+      expect(() => m.flushPending(t.id)).toThrowError(expect.objectContaining({ code: 'conflict', message: 'no pending messages' }));
+    });
+
+    it('reverts the batch the engine reports as undelivered on interrupt', async () => {
+      const { m } = await manager();
+      const t = await create(m, '#steps:20 #revert');
+      await m.send(t.id, 'late');
+      await waitFor(() => userMessages(t.id).some((e) => e.pendingId));
+      await m.interrupt(t.id);
+      const reverted = eventsOf(t.id).find((e) => e.type === 'pending.reverted');
+      expect(reverted).toMatchObject({ reason: 'interrupt' });
+      expect(pendingCountOf(m, t.id)).toBe(1);
+      await waitFor(() => statusOf(m, t.id) === 'interrupted');
+      expect(userMessages(t.id).filter((e) => e.pendingId)).toHaveLength(1);
+    });
+
+    it('starts a new turn from finish() when a message arrives after the engine ended its stream', async () => {
+      const prompts: string[][] = [];
+      let finishFirst!: () => void;
+      const engine: AgentEngine = {
+        name: 'late-end',
+        startTurn: (input) => {
+          prompts.push(input.prompts.map((p) => p.prompt.text));
+          const first = prompts.length === 1;
+          const done = first ? new Promise<void>((resolve) => (finishFirst = resolve)) : Promise.resolve();
+          return { done, interrupt: async () => {} };
+        },
+      };
+      const { m } = await manager(engine);
+      const t = await m.createThread({ channelId: 'general', options: opts, text: 'first' });
+      await m.send(t.id, 'raced');
+      finishFirst();
+      await waitFor(() => prompts.length === 2);
+      expect(prompts[1]).toEqual(['raced']);
+      expect(userMessages(t.id).find((e) => e.pendingId)).toMatchObject({ delivery: 'next-turn' });
+    });
+
+    it('reloads pending messages after a restart and does not send them', async () => {
+      const first = await manager();
+      const t = await create(first.m, '#slow');
+      await first.m.send(t.id, 'survives');
+      await first.store.flush();
+      const started: string[] = [];
+      const store = new ThreadStore(root);
+      await store.init();
+      stores.push(store);
+      const m = new SessionManager({
+        root, store, snapshot: () => snapshot, broadcast: (e) => sent.push(e),
+        engine: { name: 'spy', startTurn: (input) => (started.push(input.threadId), new FakeEngine(1).startTurn(input, null as never)) },
+      });
+      await m.recover();
+      expect(m.list().find((x) => x.id === t.id)).toMatchObject({ status: 'interrupted', pendingCount: 1 });
+      await new Promise((r) => setTimeout(r, 20));
+      expect(started).toEqual([]);
+      await first.m.interrupt(t.id);
     });
   });
 });
