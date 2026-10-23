@@ -6,6 +6,7 @@ import {
   beginSync,
   loadHistory,
   setBotHistory,
+  setDraft,
   setThreads,
   startRun,
   type StudioState,
@@ -20,6 +21,7 @@ export interface StudioActions {
   setPresence(p: Presence[]): void;
   setBotHistory(channelId: string, events: BotEvent[]): void;
   startRun(run: { runId: string; name: string; args: string[] }): void;
+  setDraft(key: string, text: string): void;
 }
 
 export type StudioStore = StoreApi<StudioState & StudioActions>;
@@ -35,5 +37,6 @@ export function createStudioStore(): StudioStore {
     setPresence: (presence) => set({ presence }),
     setBotHistory: (c, events) => set((s) => setBotHistory(s, c, events)),
     startRun: (run) => set((s) => startRun(s, run)),
+    setDraft: (key, text) => set((s) => setDraft(s, key, text)),
   }));
 }

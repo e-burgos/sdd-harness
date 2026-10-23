@@ -1,53 +1,43 @@
 'use client';
 
-import type { ReactNode } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { SquaresFour } from '@phosphor-icons/react';
-import { dmAgentOfChannel, type AuthMode, type Presence } from '@sdd-studio/protocol';
-import { agentMeta } from '@/lib/agents';
+import type { AuthMode, Presence } from '@sdd-studio/protocol';
 import { useT } from '@/lib/i18n/i18n';
-import { channelsOf, dmChannelsOf, type ChannelEntry } from '@/lib/store/selectors';
+import { buildNavTree, type NavSection, type NavThread, type NavView } from '@/lib/store/nav-tree';
+import { useCollapsedState } from '@/lib/use-collapsed-state';
 import type { ConnectionState } from '@/lib/bridge/client';
 import { useBridge, useStudio } from '../BridgeProvider';
 import { ApiKeyField } from './ApiKeyField';
+import { SectionView, type NavTreeHandlers } from './NavTree';
 
-const DOT: Record<Presence['state'], string> = {
-  working: 'bg-accent-400 animate-pulse',
-  waiting: 'bg-amberish',
-  open: 'bg-accent-500/60',
-  idle: 'border border-ink-500',
-};
 const CONN_DOT = {
   open: { cls: 'bg-accent-400', key: 'conn.dot.open' },
-  connecting: { cls: 'bg-amberish animate-pulse motion-reduce:animate-none', key: 'conn.dot.connecting' },
-  reconnecting: { cls: 'bg-amberish animate-pulse motion-reduce:animate-none', key: 'conn.dot.connecting' },
+  connecting: { cls: 'bg-amberish motion-safe:animate-pulse', key: 'conn.dot.connecting' },
+  reconnecting: { cls: 'bg-amberish motion-safe:animate-pulse', key: 'conn.dot.connecting' },
   failed: { cls: 'bg-roseish', key: 'conn.dot.down' },
   idle: { cls: 'bg-roseish', key: 'conn.dot.down' },
 } as const;
-const PRESENCE_KEY = { working: 'presence.working', waiting: 'presence.waiting', open: 'presence.open', idle: 'presence.idle' } as const;
-
 export interface SidebarViewProps {
   project: string;
   kitVersion: string | null;
   authMode: AuthMode | null;
   connection: ConnectionState['status'];
-  channels: ChannelEntry[];
-  dms: ChannelEntry[];
+  tree: NavSection[];
   presence: Presence[];
-  activeChannel: string;
-  onSelect(channelId: string): void;
-  /** Rendered under the header status line (API key field); omitted in pure view tests. */
+  onSelectChannel(channelId: string): void;
+  onOpenThread(thread: NavThread): void;
   authSlot?: ReactNode;
 }
 
 export function SidebarView(p: SidebarViewProps) {
   const { t, lang, setLang } = useT();
-  const stateOf = (agent: string) => p.presence.find((x) => x.agent === agent)?.state ?? 'idle';
-  const statusText = (status: string) => (status === 'in-progress' || status === 'completed' ? t(`channel.status.${status}`) : status);
-  const item = (active: boolean) =>
-    `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-sm ${active ? 'bg-accent-dim text-accent-300' : 'text-ink-300 hover:bg-ink-800 hover:text-ink-100'}`;
+  const collapse = useCollapsedState(p.project);
+  const dmState = (agent: string) => p.presence.find((x) => x.agent === agent)?.state ?? 'idle';
+  const handlers: NavTreeHandlers = { collapse, stale: p.connection !== 'open', onSelectChannel: p.onSelectChannel, onOpenThread: p.onOpenThread };
   return (
-    <nav className="flex h-full flex-col gap-5 overflow-y-auto border-r border-ink-800 bg-ink-900 p-3">
-      <header>
+    <nav className="flex h-full min-h-0 flex-col border-r border-ink-800 bg-ink-900">
+      <header className="shrink-0 p-3 pb-2">
         <div className="truncate text-base font-semibold">{p.project}</div>
         <div className="mt-0.5 flex items-center gap-2 text-[11px] text-ink-300">
           <span data-testid="conn-dot" aria-hidden className={`h-2 w-2 rounded-full ${CONN_DOT[p.connection].cls}`} />
@@ -58,55 +48,32 @@ export function SidebarView(p: SidebarViewProps) {
         </div>
         {p.authSlot}
       </header>
-      <section>
-        <h2 className="mb-1 px-2 text-[11px] uppercase tracking-wider text-ink-500">{t('sidebar.channels')}</h2>
-        {p.channels.map((c) => (
-          <button key={c.id} className={item(p.activeChannel === c.id)} aria-current={p.activeChannel === c.id ? 'page' : undefined} onClick={() => p.onSelect(c.id)}>
-            <span className="truncate"># {c.label}</span>
-            {c.status === 'in-progress' && (
-              <>
-                <span aria-hidden className="ml-auto h-1.5 w-1.5 rounded-full bg-accent-400" />
-                <span className="sr-only">, {statusText(c.status)}</span>
-              </>
-            )}
-            {c.status === 'completed' && (
-              <>
-                <span aria-hidden className="ml-auto text-[10px] text-ink-500">✓</span>
-                <span className="sr-only">, {statusText(c.status)}</span>
-              </>
-            )}
-          </button>
+      <div data-testid="sidebar-tree" className="min-h-0 flex-1 space-y-5 overflow-y-auto px-3 py-2">
+        {p.tree.map((section) => (
+          <SectionView key={section.id} section={section} h={handlers} dmState={dmState} />
         ))}
-      </section>
-      <section>
-        <h2 className="mb-1 px-2 text-[11px] uppercase tracking-wider text-ink-500">{t('sidebar.agents')}</h2>
-        {p.dms.map((c) => {
-          const agent = dmAgentOfChannel(c.id) ?? c.label;
-          const state = stateOf(agent);
-          const meta = agentMeta(agent);
-          return (
-            <button key={c.id} className={item(p.activeChannel === c.id)} aria-current={p.activeChannel === c.id ? 'page' : undefined} onClick={() => p.onSelect(c.id)}>
-              <span aria-hidden className={`h-2 w-2 rounded-full ${DOT[state]}`} />
-              <span className="truncate">{meta.name}</span>
-              <span className="sr-only">, {t(PRESENCE_KEY[state])}</span>
-            </button>
-          );
-        })}
-      </section>
-      <section>
-        <h2 className="mb-1 px-2 text-[11px] uppercase tracking-wider text-ink-500">{t('sidebar.views')}</h2>
-        <div className="flex items-center gap-2 px-2 text-xs text-ink-500">
-          <SquaresFour size={14} /> {t('sidebar.viewsSoon')}
-        </div>
-      </section>
+      </div>
+      <footer className="shrink-0 border-t border-ink-800 p-3">
+        <section>
+          <h2 className="mb-1 px-2 text-[11px] uppercase tracking-wider text-ink-500">{t('sidebar.views')}</h2>
+          <div className="flex items-center gap-2 px-2 text-xs text-ink-500">
+            <SquaresFour size={14} /> {t('sidebar.viewsSoon')}
+          </div>
+        </section>
+      </footer>
     </nav>
   );
 }
 
-export function Sidebar({ activeChannel, onSelect }: { activeChannel: string; onSelect(channelId: string): void }) {
+export function Sidebar({ view, onSelectChannel, onOpenThread }: { view: NavView; onSelectChannel(channelId: string): void; onOpenThread(thread: NavThread): void }) {
   const { connection, authMode } = useBridge();
   const snapshot = useStudio((s) => s.snapshot);
   const presence = useStudio((s) => s.presence);
+  const threads = useStudio((s) => s.threads);
+  const tree = useMemo(
+    () => buildNavTree(snapshot, Object.values(threads).flatMap((t) => (t.info ? [t.info] : [])), view),
+    [snapshot, threads, view],
+  );
   const welcome = connection.status === 'open' ? connection.welcome : null;
   return (
     <SidebarView
@@ -115,11 +82,10 @@ export function Sidebar({ activeChannel, onSelect }: { activeChannel: string; on
       authMode={authMode ?? welcome?.authMode ?? null}
       authSlot={<ApiKeyField />}
       connection={connection.status}
-      channels={channelsOf(snapshot)}
-      dms={dmChannelsOf(snapshot)}
+      tree={tree}
       presence={presence}
-      activeChannel={activeChannel}
-      onSelect={onSelect}
+      onSelectChannel={onSelectChannel}
+      onOpenThread={onOpenThread}
     />
   );
 }
