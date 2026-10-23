@@ -1,4 +1,5 @@
 import type { BotEvent, Presence, ServerEvent, ThreadEvent, ThreadInfo, WorkspaceSnapshot } from '@sdd-studio/protocol';
+import type { DraftAttachment } from '../attachments/draft-attachment';
 import { applyThreadEvent, emptyThread, type ThreadState } from './timeline';
 
 export interface CommandRun {
@@ -9,13 +10,18 @@ export interface CommandRun {
   exitCode: number | null;
 }
 
+export interface ComposerDraft {
+  text: string;
+  attachments: DraftAttachment[];
+}
+
 export interface StudioState {
   snapshot: WorkspaceSnapshot | null;
   threads: Record<string, ThreadState>;
   presence: Presence[];
   bot: Record<string, BotEvent[]>;
   runs: Record<string, CommandRun>;
-  drafts: Record<string, string>;
+  drafts: Record<string, ComposerDraft>;
 }
 
 const MAX_BOT_EVENTS = 200;
@@ -76,13 +82,39 @@ export function startRun(s: StudioState, run: { runId: string; name: string; arg
 
 export const draftKey = (channelId: string, threadId: string | null): string => threadId ?? `new:${channelId}`;
 
-export function setDraft(s: StudioState, key: string, text: string): StudioState {
-  if (text === '') {
+const revokePreviews = (list: DraftAttachment[]): void => {
+  for (const a of list) if (a.previewUrl) URL.revokeObjectURL(a.previewUrl);
+};
+
+function withDraft(s: StudioState, key: string, draft: ComposerDraft): StudioState {
+  if (draft.text === '' && draft.attachments.length === 0) {
     if (!(key in s.drafts)) return s;
     const { [key]: _removed, ...rest } = s.drafts;
     return { ...s, drafts: rest };
   }
-  return s.drafts[key] === text ? s : { ...s, drafts: { ...s.drafts, [key]: text } };
+  return { ...s, drafts: { ...s.drafts, [key]: draft } };
+}
+
+const draftOf = (s: StudioState, key: string): ComposerDraft => s.drafts[key] ?? { text: '', attachments: [] };
+
+export function setDraftText(s: StudioState, key: string, text: string): StudioState {
+  const current = draftOf(s, key);
+  return current.text === text && key in s.drafts ? s : withDraft(s, key, { ...current, text });
+}
+
+export function setDraftAttachments(s: StudioState, key: string, attachments: DraftAttachment[]): StudioState {
+  const current = draftOf(s, key);
+  if (current.attachments === attachments) return s;
+  const kept = new Set(attachments.map((a) => a.id));
+  revokePreviews(current.attachments.filter((a) => !kept.has(a.id)));
+  return withDraft(s, key, { ...current, attachments });
+}
+
+export function clearDraft(s: StudioState, key: string): StudioState {
+  const current = s.drafts[key];
+  if (!current) return s;
+  revokePreviews(current.attachments);
+  return withDraft(s, key, { text: '', attachments: [] });
 }
 
 export function applyServerEvent(s: StudioState, e: ServerEvent): StudioState {

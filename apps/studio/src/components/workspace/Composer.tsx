@@ -157,7 +157,7 @@ export function Composer({ channelId, threadId, onThreadCreated }: { channelId: 
   const [error, setError] = useState<string | null>(null);
   const busy = useRef(false);
   const key = draftKey(channelId, threadId);
-  const [initialText] = useState(() => store.getState().drafts[key] ?? '');
+  const [initialText] = useState(() => store.getState().drafts[key]?.text ?? '');
   const options = threadInfo?.options ?? { ...draft, agent: dmAgent ?? draft.agent };
   const agents = useMemo(() => {
     const ids = snapshot?.agents.map((a) => a.id) ?? [];
@@ -224,7 +224,7 @@ export function Composer({ channelId, threadId, onThreadCreated }: { channelId: 
       agentLocked={dmAgent !== null || threadId !== null}
       error={error}
       initialText={initialText}
-      onTextChange={(text) => store.getState().setDraft(key, text)}
+      onTextChange={(text) => store.getState().setDraftText(key, text)}
       queueing={threadInfo ? BUSY_STATUSES.has(threadInfo.status) : false}
       tray={threadId ? <PendingMessages threadId={threadId} /> : null}
     />

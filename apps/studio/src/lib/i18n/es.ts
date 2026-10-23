@@ -165,6 +165,15 @@ export const es = {
   'bot.task.status': '{taskId} «{title}»: {from} → {to}',
   'bot.fix.created': 'Fix nuevo: {fixId}',
   'bot.fix.status': '{fixId}: {from} → {to}',
+  'mention.label': 'Sugerencias',
+  'mention.files': 'Archivos',
+  'mention.agents': 'Agentes',
+  'mention.commands': 'Comandos',
+  'mention.skills': 'Skills y prompts',
+  'mention.loading': 'Buscando…',
+  'mention.error': 'No se pudo buscar archivos.',
+  'mention.more': 'Hay más resultados: afiná la búsqueda.',
+  'mention.empty': 'Sin resultados',
   'lang.switch': 'English',
 };
 export type Dict = typeof es;

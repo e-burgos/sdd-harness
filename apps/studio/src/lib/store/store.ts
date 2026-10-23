@@ -1,4 +1,5 @@
 import type { BotEvent, Presence, ServerEvent, ThreadEvent, ThreadInfo, WorkspaceSnapshot } from '@sdd-studio/protocol';
+import type { DraftAttachment } from '../attachments/draft-attachment';
 import { createStore, type StoreApi } from 'zustand/vanilla';
 import {
   applyServerEvent,
@@ -6,7 +7,9 @@ import {
   beginSync,
   loadHistory,
   setBotHistory,
-  setDraft,
+  clearDraft,
+  setDraftAttachments,
+  setDraftText,
   setThreads,
   startRun,
   type StudioState,
@@ -21,7 +24,9 @@ export interface StudioActions {
   setPresence(p: Presence[]): void;
   setBotHistory(channelId: string, events: BotEvent[]): void;
   startRun(run: { runId: string; name: string; args: string[] }): void;
-  setDraft(key: string, text: string): void;
+  setDraftText(key: string, text: string): void;
+  setDraftAttachments(key: string, list: DraftAttachment[]): void;
+  clearDraft(key: string): void;
 }
 
 export type StudioStore = StoreApi<StudioState & StudioActions>;
@@ -37,6 +42,8 @@ export function createStudioStore(): StudioStore {
     setPresence: (presence) => set({ presence }),
     setBotHistory: (c, events) => set((s) => setBotHistory(s, c, events)),
     startRun: (run) => set((s) => startRun(s, run)),
-    setDraft: (key, text) => set((s) => setDraft(s, key, text)),
+    setDraftText: (key, text) => set((s) => setDraftText(s, key, text)),
+    setDraftAttachments: (key, list) => set((s) => setDraftAttachments(s, key, list)),
+    clearDraft: (key) => set((s) => clearDraft(s, key)),
   }));
 }

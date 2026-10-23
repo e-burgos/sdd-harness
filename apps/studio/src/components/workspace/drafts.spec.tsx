@@ -1,7 +1,8 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { defaultThreadOptions } from '@sdd-studio/protocol';
 import { I18nProvider } from '@/lib/i18n/i18n';
-import { draftKey, initialState, setDraft } from '@/lib/store/state';
+import type { DraftAttachment } from '@/lib/attachments/draft-attachment';
+import { clearDraft, draftKey, initialState, setDraftAttachments, setDraftText } from '@/lib/store/state';
 import { createStudioStore, type StudioStore } from '@/lib/store/store';
 import { BridgeContext, type BridgeContextValue } from '../BridgeProvider';
 import { Composer } from './Composer';
@@ -31,13 +32,63 @@ describe('draft state', () => {
     expect(draftKey('general', null)).toBe('new:general');
   });
   it('stores, replaces and removes drafts without touching others', () => {
-    let s = setDraft(initialState(), 'a', 'uno');
-    s = setDraft(s, 'b', 'dos');
-    expect(s.drafts).toEqual({ a: 'uno', b: 'dos' });
-    s = setDraft(s, 'a', '');
-    expect(s.drafts).toEqual({ b: 'dos' });
-    expect(setDraft(s, 'zzz', '')).toBe(s);
-    expect(setDraft(s, 'b', 'dos')).toBe(s);
+    let s = setDraftText(initialState(), 'a', 'uno');
+    s = setDraftText(s, 'b', 'dos');
+    expect(s.drafts).toEqual({ a: { text: 'uno', attachments: [] }, b: { text: 'dos', attachments: [] } });
+    s = setDraftText(s, 'a', '');
+    expect(Object.keys(s.drafts)).toEqual(['b']);
+    expect(setDraftText(s, 'zzz', '')).toBe(s);
+    expect(setDraftText(s, 'b', 'dos')).toBe(s);
+  });
+
+  describe('attachments', () => {
+    const attachment = (id: string, previewUrl?: string): DraftAttachment => ({
+      id, kind: 'image', name: `${id}.png`, mime: 'image/png', size: 1, original: new Blob(['x']),
+      encoded: { upload: { kind: 'image', name: `${id}.png`, mime: 'image/png', data: 'eA==', width: 1, height: 1 }, sha256: 'a'.repeat(64) },
+      ...(previewUrl ? { previewUrl } : {}),
+    });
+    let revoke: ReturnType<typeof vi.fn>;
+    beforeEach(() => {
+      revoke = vi.fn();
+      URL.revokeObjectURL = revoke as never;
+    });
+
+    it('keeps a draft with attachments but no text and drops the key once both are empty', () => {
+      let s = setDraftAttachments(initialState(), 'k', [attachment('a')]);
+      expect(s.drafts['k']).toMatchObject({ text: '' });
+      s = setDraftText(s, 'k', 'hola');
+      s = setDraftAttachments(s, 'k', []);
+      expect(s.drafts['k']).toEqual({ text: 'hola', attachments: [] });
+      s = setDraftText(s, 'k', '');
+      expect(s.drafts).toEqual({});
+    });
+
+    it('revokes only the preview URLs of removed attachments', () => {
+      let s = setDraftAttachments(initialState(), 'k', [attachment('a', 'blob:a'), attachment('b', 'blob:b')]);
+      s = setDraftAttachments(s, 'k', [s.drafts['k']!.attachments[1]!]);
+      expect(revoke).toHaveBeenCalledTimes(1);
+      expect(revoke).toHaveBeenCalledWith('blob:a');
+    });
+
+    it('clearDraft revokes every preview and removes the key', () => {
+      let s = setDraftAttachments(initialState(), 'k', [attachment('a', 'blob:a'), attachment('b')]);
+      s = setDraftText(s, 'k', 'hola');
+      s = clearDraft(s, 'k');
+      expect(s.drafts).toEqual({});
+      expect(revoke).toHaveBeenCalledTimes(1);
+      expect(clearDraft(s, 'k')).toBe(s);
+    });
+
+    it('keeps the attachments of each thread draft in the store when switching threads', () => {
+      const store = createStudioStore();
+      store.getState().setDraftAttachments('t1', [attachment('a')]);
+      const { box, switchTo } = mount(store, 'general', 't1');
+      fireEvent.change(box(), { target: { value: 'texto' } });
+      switchTo('general', 't2');
+      switchTo('general', 't1');
+      expect(box()).toHaveValue('texto');
+      expect(store.getState().drafts['t1']?.attachments).toHaveLength(1);
+    });
   });
 });
 
@@ -81,7 +132,7 @@ describe('Composer drafts', () => {
     fireEvent.change(box(), { target: { value: 'hola' } });
     fireEvent.keyDown(box(), { key: 'Enter' });
     await screen.findByRole('alert');
-    expect(store.getState().drafts['t1']).toBe('hola');
+    expect(store.getState().drafts['t1']?.text).toBe('hola');
   });
 
   it('loses drafts on reload because they live only in memory', () => {
