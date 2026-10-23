@@ -10,6 +10,12 @@ import type { WorkspaceWatcher } from '../workspace/watcher';
 import type { BridgeHandlers } from './ws-server';
 
 const MAX_READ_BYTES = 2 * 1024 * 1024;
+const SUPPORTED_FEATURES = ['pending-messages', 'thread-link', 'always-rules'];
+
+function rejectUnsupportedBody(body: { attachments: unknown[]; refs: { agents: unknown[]; skills: unknown[] } }): void {
+  if (body.attachments.length > 0) throw new SessionError('bad-request', 'unsupported: attachments');
+  if (body.refs.agents.length > 0 || body.refs.skills.length > 0) throw new SessionError('bad-request', 'unsupported: catalog');
+}
 
 export function createHandlers(d: {
   root: string;
@@ -28,6 +34,7 @@ export function createHandlers(d: {
         workspace: { root: d.root, project: snapshot.project },
         kitVersion: snapshot.kitVersion,
         authMode: d.auth.mode(),
+        features: SUPPORTED_FEATURES,
       };
     },
     handle: async (command: ClientCommand) => {
@@ -51,10 +58,23 @@ export function createHandlers(d: {
           }
         }
         case 'thread.create':
+          rejectUnsupportedBody(command);
           return d.sessions.createThread(command);
         case 'thread.send':
-          await d.sessions.send(command.threadId, command.text);
+          rejectUnsupportedBody(command);
+          return d.sessions.send(command.threadId, command.text);
+        case 'thread.pending.edit':
+          d.sessions.editPending(command.threadId, command.pendingId, command.text);
           return null;
+        case 'thread.pending.remove':
+          d.sessions.removePending(command.threadId, command.pendingId);
+          return null;
+        case 'thread.pending.flush':
+          return d.sessions.flushPending(command.threadId);
+        case 'workspace.searchFiles':
+          throw new SessionError('bad-request', 'unsupported: file-search');
+        case 'attachment.get':
+          throw new SessionError('bad-request', 'unsupported: attachments');
         case 'thread.interrupt':
           await d.sessions.interrupt(command.threadId);
           return null;

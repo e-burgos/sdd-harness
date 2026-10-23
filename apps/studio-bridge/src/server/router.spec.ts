@@ -1,5 +1,5 @@
 import { AuthState } from '../auth-mode';
-import { defaultThreadOptions, type ClientCommand, type ServerEvent } from '@sdd-studio/protocol';
+import { decodeClientMessage, defaultThreadOptions, type ClientCommand, type ServerEvent } from '@sdd-studio/protocol';
 import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -27,12 +27,17 @@ async function handlers(broadcast: (e: ServerEvent) => void = () => {}) {
     watcher: { current: () => snapshot }, runner: new CommandRunner(root, broadcast, () => 'run-1'),
   });
 }
-const cmd = (c: Record<string, unknown>) => ({ kind: 'command', id: 'x', ...c }) as ClientCommand;
+const cmd = (c: Record<string, unknown>): ClientCommand => {
+  const parsed = decodeClientMessage(JSON.stringify({ kind: 'command', id: 'x', ...c }));
+  if (!parsed.ok || parsed.value.kind !== 'command') throw new Error(`invalid command in test: ${JSON.stringify(c)}`);
+  return parsed.value;
+};
 
 describe('createHandlers', () => {
   it('builds the welcome from the snapshot', async () => {
     expect((await handlers()).welcome()).toEqual({
       bridgeVersion: '0.1.0', workspace: { root, project: 'studio fixture' }, kitVersion: '0.16.0', authMode: 'local-claude-login',
+      features: ['pending-messages', 'thread-link', 'always-rules'],
     });
   });
 
@@ -84,4 +89,55 @@ describe('createHandlers', () => {
     const h = await handlers();
     await expect(h.handle(cmd({ cmd: 'workspace.readFile', path: 'sdd/pipe.md' }))).rejects.toMatchObject({ code: 'bad-request' });
   }, 5000);
+
+  describe('pending messages and cycle-02 contracts', () => {
+    const create = async (h: Awaited<ReturnType<typeof handlers>>, text: string) => {
+      const thread = (await h.handle(cmd({ cmd: 'thread.create', channelId: 'general', options: defaultThreadOptions(), text }))) as { id: string };
+      const list = async () => ((await h.handle(cmd({ cmd: 'thread.list', channelId: 'general' }))) as { status: string; pendingCount: number }[])[0];
+      await waitFor(async () => (await list())?.status === 'running');
+      return { id: thread.id, list };
+    };
+
+    it('thread.send answers started or pending, and the pending commands work end to end', async () => {
+      const h = await handlers();
+      const { id, list } = await create(h, '#slow');
+      const sent = (await h.handle(cmd({ cmd: 'thread.send', threadId: id, text: 'later' }))) as { delivery: string; pendingId: string };
+      expect(sent).toEqual({ delivery: 'pending', pendingId: expect.any(String) });
+      expect(await h.handle(cmd({ cmd: 'thread.pending.edit', threadId: id, pendingId: sent.pendingId, text: 'edited' }))).toBeNull();
+      await expect(h.handle(cmd({ cmd: 'thread.pending.flush', threadId: id }))).rejects.toMatchObject({ code: 'conflict' });
+      expect(await h.handle(cmd({ cmd: 'thread.pending.remove', threadId: id, pendingId: sent.pendingId }))).toBeNull();
+      expect((await list())?.pendingCount).toBe(0);
+      await expect(h.handle(cmd({ cmd: 'thread.pending.remove', threadId: id, pendingId: sent.pendingId }))).rejects.toMatchObject({ code: 'not-found' });
+      await h.handle(cmd({ cmd: 'thread.interrupt', threadId: id }));
+    });
+
+    it('thread.pending.flush starts a turn with the pending messages of a stopped thread', async () => {
+      const h = await handlers();
+      const { id, list } = await create(h, '#slow');
+      await h.handle(cmd({ cmd: 'thread.send', threadId: id, text: 'p1' }));
+      await h.handle(cmd({ cmd: 'thread.interrupt', threadId: id }));
+      await waitFor(async () => (await list())?.status === 'interrupted');
+      await new Promise((r) => setTimeout(r, 30));
+      expect(await h.handle(cmd({ cmd: 'thread.pending.flush', threadId: id }))).toEqual({ delivery: 'started' });
+      await waitFor(async () => (await list())?.status === 'idle');
+    });
+
+    it.each([
+      ['thread.create with attachments', { cmd: 'thread.create', channelId: 'general', options: defaultThreadOptions(), text: 'x', attachments: [{ kind: 'text', name: 'a.txt', mime: 'text/plain', text: 'hi' }] }, 'unsupported: attachments'],
+      ['thread.create with agent refs', { cmd: 'thread.create', channelId: 'general', options: defaultThreadOptions(), text: 'x', refs: { agents: ['sdd-planner'], skills: [] } }, 'unsupported: catalog'],
+      ['thread.send with attachments', { cmd: 'thread.send', threadId: 't', text: 'x', attachments: [{ kind: 'text', name: 'a.txt', mime: 'text/plain', text: 'hi' }] }, 'unsupported: attachments'],
+      ['workspace.searchFiles', { cmd: 'workspace.searchFiles', query: 'a', limit: 5 }, 'unsupported: file-search'],
+      ['attachment.get', { cmd: 'attachment.get', sha256: 'a'.repeat(64), mime: 'image/png' }, 'unsupported: attachments'],
+    ])('%s answers bad-request %#', async (_name, body, message) => {
+      const h = await handlers();
+      await expect(h.handle(cmd(body))).rejects.toMatchObject({ code: 'bad-request', message });
+    });
+
+    it('does not announce the cycle-02 features', async () => {
+      const features = (await handlers()).welcome().features ?? [];
+      expect(features).not.toContain('attachments');
+      expect(features).not.toContain('file-search');
+      expect(features).not.toContain('catalog');
+    });
+  });
 });

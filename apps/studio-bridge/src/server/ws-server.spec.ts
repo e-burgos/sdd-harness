@@ -1,4 +1,4 @@
-import { PROTOCOL_VERSION, type ServerMessage } from '@sdd-studio/protocol';
+import { MAX_FRAME_BYTES, PROTOCOL_VERSION, type ServerMessage } from '@sdd-studio/protocol';
 import { createServer as createNetServer } from 'node:net';
 import { afterEach, describe, expect, it } from 'vitest';
 import WebSocket from 'ws';
@@ -125,6 +125,34 @@ describe('startBridgeServer', () => {
     await waitFor(() => c.closed());
     expect(c.closed()).toBe(code);
     expect(c.inbox[0]?.kind).toBe('handshake.error');
+  });
+
+  it('a protocol mismatch tells the web which protocol and version the bridge speaks', async () => {
+    const s = await start();
+    const c = connect(s);
+    await opened(c.ws);
+    c.ws.send(hello(TOKEN, 1));
+    await waitFor(() => c.closed());
+    expect(c.inbox[0]).toEqual({
+      kind: 'handshake.error',
+      code: 'protocol-mismatch',
+      message: `protocol mismatch: web speaks 1, bridge speaks ${PROTOCOL_VERSION}`,
+      bridgeProtocolVersion: PROTOCOL_VERSION,
+      bridgeVersion: '0.1.0',
+    });
+  });
+
+  it('a bad token does not reveal the bridge versions', async () => {
+    const s = await start();
+    const c = connect(s);
+    await opened(c.ws);
+    c.ws.send(hello('nope'));
+    await waitFor(() => c.closed());
+    expect(c.inbox[0]).toEqual({ kind: 'handshake.error', code: 'bad-token', message: 'invalid token' });
+  });
+
+  it('uses the protocol frame limit as maxPayload', () => {
+    expect(MAX_PAYLOAD_BYTES).toBe(MAX_FRAME_BYTES);
   });
 
   it('closes when no hello arrives in time', async () => {
