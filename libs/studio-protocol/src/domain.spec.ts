@@ -44,9 +44,11 @@ describe('ThreadOptions', () => {
       permissionMode: 'default',
     });
   });
-  it('rejects bypassPermissions', () => {
-    const r = ThreadOptions.safeParse({ ...defaultThreadOptions(), permissionMode: 'bypassPermissions' });
-    expect(r.success).toBe(false);
+  it('accepts bypassPermissions as an opt-in mode', () => {
+    expect(ThreadOptions.safeParse({ ...defaultThreadOptions(), permissionMode: 'bypassPermissions' }).success).toBe(true);
+  });
+  it('rejects unknown permission modes', () => {
+    expect(ThreadOptions.safeParse({ ...defaultThreadOptions(), permissionMode: 'yolo' }).success).toBe(false);
   });
 });
 

@@ -27,7 +27,7 @@ const errorText = (e: unknown) => (e instanceof Error ? e.message : String(e));
 
 const MODELS: ModelChoice[] = ['kit', 'haiku', 'sonnet', 'opus', 'fable'];
 const EFFORTS: Effort[] = ['low', 'medium', 'high', 'xhigh', 'max'];
-const PERMS: PermissionModeChoice[] = ['default', 'acceptEdits', 'plan'];
+const PERMS: PermissionModeChoice[] = ['default', 'acceptEdits', 'bypassPermissions', 'plan'];
 
 export interface ComposerViewProps {
   options: ThreadOptions;

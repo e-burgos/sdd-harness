@@ -26,6 +26,7 @@ export function buildQueryOptions(
   },
 ): Options {
   const { agent, model, effort, permissionMode } = input.options;
+  const bypass = permissionMode === 'bypassPermissions';
   const hook = [{ hooks: [async (hookInput: HookInput) => (h.onHook(hookInput), {})] }];
   const options: Options = {
     cwd: input.cwd,
@@ -50,7 +51,7 @@ export function buildQueryOptions(
               if (verdict.kind === 'deny') {
                 return { hookSpecificOutput: { hookEventName: 'PreToolUse' as const, permissionDecision: 'deny' as const, permissionDecisionReason: verdict.reason } };
               }
-              if (verdict.kind === 'warn') {
+              if (verdict.kind === 'warn' && !bypass) {
                 return { hookSpecificOutput: { hookEventName: 'PreToolUse' as const, permissionDecision: 'ask' as const, permissionDecisionReason: verdict.reason } };
               }
               return {};
@@ -60,6 +61,7 @@ export function buildQueryOptions(
       ],
     },
   };
+  if (bypass) options.allowDangerouslySkipPermissions = true;
   if (h.env) options.env = h.env;
   if (agent !== DEFAULT_AGENT) options.agent = agent;
   if (model !== 'kit') {

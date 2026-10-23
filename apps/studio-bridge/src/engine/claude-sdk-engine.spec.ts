@@ -49,6 +49,22 @@ describe('buildQueryOptions', () => {
     it('does not decide on allow', async () => {
       expect((await call({ kind: 'allow' })).out).toEqual({});
     });
+    it('lets a warn through in bypassPermissions mode but still denies', async () => {
+      const callBypass = async (verdict: unknown) => {
+        const o = buildQueryOptions(input({ permissionMode: 'bypassPermissions' }), { ...handlers(), judgeTool: vi.fn(() => verdict) } as never);
+        return o.hooks!.PreToolUse![0]!.hooks[0]!(
+          { hook_event_name: 'PreToolUse', tool_name: 'Write', tool_input: {}, tool_use_id: 'tu1', agent_id: undefined } as never,
+          'tu1', { signal: new AbortController().signal });
+      };
+      expect(await callBypass({ kind: 'warn', reason: 'w' })).toEqual({});
+      expect(await callBypass({ kind: 'deny', reason: 'd' })).toMatchObject({ hookSpecificOutput: { permissionDecision: 'deny' } });
+    });
+  });
+  it('opts into skipping permissions only in bypassPermissions mode', () => {
+    expect(buildQueryOptions(input({ permissionMode: 'bypassPermissions' }), handlers())).toMatchObject({
+      permissionMode: 'bypassPermissions', allowDangerouslySkipPermissions: true,
+    });
+    expect(buildQueryOptions(input(), handlers()).allowDangerouslySkipPermissions).toBeUndefined();
   });
   it('pins model and effort, uses the DM agent and resumes', () => {
     const o = buildQueryOptions(input({ agent: 'sdd-planner', model: 'opus', effort: 'high', permissionMode: 'plan' }, 'sess-1'), handlers());

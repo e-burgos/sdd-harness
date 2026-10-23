@@ -77,6 +77,7 @@ export const en = {
   'model.kit': 'kit (per AGENTS.md)',
   'perm.default': 'ask',
   'perm.acceptEdits': 'accept edits',
+  'perm.bypassPermissions': 'auto (never ask)',
   'perm.plan': 'plan only',
   'approval.title': '{name} wants to use {tool}',
   'approval.allow': 'Approve',
