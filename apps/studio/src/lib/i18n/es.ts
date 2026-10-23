@@ -205,6 +205,8 @@ export const es = {
   'error.boundary.title': 'Algo salió mal',
   'error.boundary.body': 'La interfaz tuvo un error inesperado. Recargá para volver a conectar: tus hilos siguen guardados en el puente.',
   'error.boundary.reload': 'Recargar',
+  'approval.summary.more': 'Ver todo',
+  'approval.summary.less': 'Ver menos',
   'lang.switch': 'English',
 };
 export type Dict = typeof es;

@@ -207,5 +207,7 @@ export const en = {
   'error.boundary.title': 'Something went wrong',
   'error.boundary.body': 'The interface hit an unexpected error. Reload to reconnect: your threads are still stored in the bridge.',
   'error.boundary.reload': 'Reload',
+  'approval.summary.more': 'Show all',
+  'approval.summary.less': 'Show less',
   'lang.switch': 'Español',
 } satisfies Record<keyof Dict, string>;

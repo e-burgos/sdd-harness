@@ -1,7 +1,7 @@
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { I18nProvider } from '@/lib/i18n/i18n';
 import type { TimelineItem } from '@/lib/store/timeline';
-import { ApprovalCard } from './ApprovalCard';
+import { ApprovalCard, SUMMARY_CLAMP_CHARS } from './ApprovalCard';
 
 type Approval = Extract<TimelineItem, { kind: 'approval' }>;
 const base: Approval = {
@@ -138,5 +138,18 @@ describe('ApprovalCard', () => {
       always({ decision: 'allow' });
       expect(screen.queryByTestId('always-remembered')).toBeNull();
     });
+  });
+
+  it('clamps a long summary behind a toggle and leaves a short one alone', () => {
+    const { unmount } = wrap(<ApprovalCard item={{ ...base, summary: 'a'.repeat(SUMMARY_CLAMP_CHARS + 1) }} onRespond={vi.fn()} />);
+    const summary = screen.getByTestId('approval-summary');
+    expect(summary).toHaveClass('line-clamp-3');
+    fireEvent.click(screen.getByRole('button', { name: 'Ver todo' }));
+    expect(summary).not.toHaveClass('line-clamp-3');
+    fireEvent.click(screen.getByRole('button', { name: 'Ver menos' }));
+    expect(summary).toHaveClass('line-clamp-3');
+    unmount();
+    wrap(<ApprovalCard item={{ ...base, summary: 'ls -la' }} onRespond={vi.fn()} />);
+    expect(screen.queryByRole('button', { name: 'Ver todo' })).toBeNull();
   });
 });
