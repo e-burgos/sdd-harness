@@ -1,0 +1,111 @@
+{
+  "$schema": "../../../../schemas/cycle.schema.json",
+  "cycle": 1,
+  "module": "studio-session-ux",
+  "spec": "spec-e-burgos-001-studio-session-ux",
+  "apps": [
+    "apps/studio",
+    "apps/studio-bridge",
+    "libs/studio-protocol"
+  ],
+  "phase": "session-ux",
+  "flow": "full",
+  "objectives": [
+    "Sidebar con SPECS/FIXES (spec → ciclo → hilos, fix → hilos), secciones colapsables, spec:* fuera de CANALES e hilos activos",
+    "'Always' por herramienta / tool MCP / prefijo Bash durante la vida del hilo; warn/deny del gate intactos",
+    "Mensajes encolados sin interrumpir la sesión (HU-10) vía prompt streaming del SDK",
+    "Indicadores animados de agentes trabajando y arreglos de scroll",
+    "Contratos de protocolo de toda la spec (incluidos adjuntos, @archivo, skills/agentes de cycle-02) en un único bump de PROTOCOL_VERSION"
+  ],
+  "status": "in-progress",
+  "started_at": "2026-10-23",
+  "completed_at": null,
+  "documents": {
+    "brief": "sdd/specs/spec-e-burgos-001-studio-session-ux/cycles/cycle-01/brief.yaml",
+    "architect": "sdd/specs/spec-e-burgos-001-studio-session-ux/cycles/cycle-01/architect.md",
+    "tasks": "sdd/specs/spec-e-burgos-001-studio-session-ux/cycles/cycle-01/tasks.json"
+  },
+  "artifacts": [],
+  "metrics": {
+    "tasks_total": 0,
+    "tasks_completed": 0,
+    "story_points": 0,
+    "files_created": [],
+    "files_modified": [],
+    "files_deleted": [],
+    "usage": {
+      "tokens_in": 0,
+      "tokens_out": 0,
+      "by_agent": [
+        {
+          "agent": "custom",
+          "label": "explore-codebase (soporte del orquestador: estado actual de aprobaciones, mensajes e hilos)",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 58332,
+          "tokens_out": 10294,
+          "tokens_total": 68626,
+          "approx": false,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-10-23",
+          "tool_uses": 11
+        },
+        {
+          "agent": "orchestrator",
+          "provider_model": "claude/opus",
+          "effort": "high",
+          "tokens_in": 345298,
+          "tokens_out": 60935,
+          "approx": false,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-10-23",
+          "tokens_total": 406233,
+          "tool_uses": 38,
+          "label": "apertura + re-scopes 2026-10-23"
+        },
+        {
+          "agent": "functional",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 131793,
+          "tokens_out": 23257,
+          "approx": false,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-10-23",
+          "tokens_total": 155050,
+          "tool_uses": 12
+        },
+        {
+          "agent": "planner",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 147266,
+          "tokens_out": 25988,
+          "approx": false,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-10-23",
+          "tokens_total": 173254,
+          "tool_uses": 18,
+          "label": "planner.md + tasks.json (corte opcion A + HU-10)"
+        },
+        {
+          "agent": "architect",
+          "provider_model": "claude/opus",
+          "effort": "high",
+          "tokens_in": 414165,
+          "tokens_out": 73088,
+          "tokens_total": 487253,
+          "approx": false,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-10-23",
+          "tool_uses": 62
+        }
+      ]
+    }
+  },
+  "tables_created": [],
+  "endpoints_implemented": [],
+  "components_created": [],
+  "issues_found": [],
+  "reviewer_report": null
+}

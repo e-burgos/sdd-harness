@@ -1,0 +1,575 @@
+{
+  "$schema": "../../../../schemas/cycle-tasks.schema.json",
+  "spec": "spec-e-burgos-001-studio-session-ux",
+  "cycle": 1,
+  "module": "studio-session-ux",
+  "apps": [
+    "apps/studio",
+    "apps/studio-bridge",
+    "libs/studio-protocol"
+  ],
+  "flow": "full",
+  "user_stories_generated": true,
+  "prerequisites": {
+    "tasks_generated": true
+  },
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "limits.ts, handshake con features y PROTOCOL_VERSION = 2",
+      "user_stories": [
+        "HU-10"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-002",
+      "title": "Contrato attachments.ts (solo contrato para cycle-02)",
+      "user_stories": [
+        "HU-1",
+        "HU-2",
+        "HU-3"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-003",
+      "title": "domain.ts: ThreadLink, ThreadInfo.link/pendingCount, AlwaysRule y AlwaysOffer",
+      "user_stories": [
+        "HU-4",
+        "HU-6"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-004",
+      "title": "commands.ts: MessageBody, pending.*, setLink, searchFiles, attachment.get, SendResult, FileSearchResult",
+      "user_stories": [
+        "HU-10",
+        "HU-4",
+        "HU-2"
+      ],
+      "estimation_hours": 4,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-002",
+        "TASK-003"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-005",
+      "title": "events.ts y snapshot.ts: pending.*, user.message extendido, approval always/remembered, catálogo y fechas de fixes",
+      "user_stories": [
+        "HU-10",
+        "HU-6",
+        "HU-4",
+        "HU-3"
+      ],
+      "estimation_hours": 4,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-003"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-006",
+      "title": "Checkpoint de F1: compatibilidad y verificación de la lib",
+      "user_stories": [
+        "HU-10"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002",
+        "TASK-003",
+        "TASK-004",
+        "TASK-005"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-007",
+      "title": "Spike e2e: entrega en punto de corte con PostToolBatch (SDK 0.3.292 real)",
+      "user_stories": [
+        "HU-10"
+      ],
+      "estimation_hours": 6,
+      "story_points": 8,
+      "depends_on": [
+        "TASK-006"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-008",
+      "title": "InputChannel y prompt-content",
+      "user_stories": [
+        "HU-10"
+      ],
+      "estimation_hours": 4,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-006"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-009",
+      "title": "Engine: prompt streaming, resultado, interrupt con recibo",
+      "user_stories": [
+        "HU-10"
+      ],
+      "estimation_hours": 6,
+      "story_points": 8,
+      "depends_on": [
+        "TASK-007",
+        "TASK-008"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-010",
+      "title": "Hook PostToolBatch y modo de entrega según el spike",
+      "user_stories": [
+        "HU-10"
+      ],
+      "estimation_hours": 4,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-007",
+        "TASK-009"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-011",
+      "title": "FakeEngine con puntos de corte y marcadores",
+      "user_stories": [
+        "HU-10",
+        "HU-6"
+      ],
+      "estimation_hours": 4,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-008"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-012",
+      "title": "store.ts: pending persistido y migración de link/pending",
+      "user_stories": [
+        "HU-10",
+        "HU-4"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-006"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-013",
+      "title": "SessionManager: pendientes, send/SendResult, edit/remove/flush",
+      "user_stories": [
+        "HU-10"
+      ],
+      "estimation_hours": 6,
+      "story_points": 8,
+      "depends_on": [
+        "TASK-009",
+        "TASK-011",
+        "TASK-012"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-014",
+      "title": "Router y ws-server: comandos nuevos, unsupported, features, maxPayload",
+      "user_stories": [
+        "HU-10",
+        "HU-4"
+      ],
+      "estimation_hours": 4,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-006",
+        "TASK-013"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-015",
+      "title": "always-rule.ts: alwaysOfferOf, bashPrefixOf, matchesRule",
+      "user_stories": [
+        "HU-6"
+      ],
+      "estimation_hours": 4,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-003"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-016",
+      "title": "Always en SessionManager y aprobaciones",
+      "user_stories": [
+        "HU-6"
+      ],
+      "estimation_hours": 4,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-013",
+        "TASK-015"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-017",
+      "title": "assignLink, thread.setLink y link en createThread",
+      "user_stories": [
+        "HU-4"
+      ],
+      "estimation_hours": 4,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-013"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-018",
+      "title": "Snapshot: source/path de agentes, skills vacío, fechas de fixes",
+      "user_stories": [
+        "HU-4",
+        "HU-3"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-005"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-019",
+      "title": "Tests del puente: pendientes y entrega",
+      "user_stories": [
+        "HU-10"
+      ],
+      "estimation_hours": 4,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-013",
+        "TASK-014"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-020",
+      "title": "Tests del puente: Always, vínculo y snapshot",
+      "user_stories": [
+        "HU-6",
+        "HU-4"
+      ],
+      "estimation_hours": 4,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-016",
+        "TASK-017",
+        "TASK-018"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-021",
+      "title": "client.ts: guarda de frame y mensajes de versión",
+      "user_stories": [
+        "HU-10"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-014"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-022",
+      "title": "nav-tree.ts: buildNavTree puro",
+      "user_stories": [
+        "HU-4",
+        "HU-5"
+      ],
+      "estimation_hours": 4,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-018"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-023",
+      "title": "Selector activeThreads",
+      "user_stories": [
+        "HU-7"
+      ],
+      "estimation_hours": 2,
+      "story_points": 2,
+      "depends_on": [
+        "TASK-022"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-024",
+      "title": "useCollapsedState con localStorage",
+      "user_stories": [
+        "HU-5"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-022"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-025",
+      "title": "Sidebar: árbol SPECS/FIXES colapsable",
+      "user_stories": [
+        "HU-4",
+        "HU-5"
+      ],
+      "estimation_hours": 4,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-022",
+        "TASK-024"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-026",
+      "title": "Sección Hilos activos",
+      "user_stories": [
+        "HU-7"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-023",
+        "TASK-025"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-027",
+      "title": "ThreadLinkPicker en el header del hilo",
+      "user_stories": [
+        "HU-4"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-017",
+        "TASK-025"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-028",
+      "title": "ActivityIndicator y AgentAvatar con estado",
+      "user_stories": [
+        "HU-8"
+      ],
+      "estimation_hours": 4,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-023"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-029",
+      "title": "useStickToBottom y correcciones del hilo (S1-S3)",
+      "user_stories": [
+        "HU-9"
+      ],
+      "estimation_hours": 4,
+      "story_points": 5,
+      "depends_on": [],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-030",
+      "title": "Layout y scroll del Sidebar y Workspace (S4-S6)",
+      "user_stories": [
+        "HU-9"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-025",
+        "TASK-026"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-031",
+      "title": "Estado de pendientes y flujo de envío",
+      "user_stories": [
+        "HU-10"
+      ],
+      "estimation_hours": 4,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-021",
+        "TASK-023"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-032",
+      "title": "Bandeja PendingMessages y Composer \"Encolar\"",
+      "user_stories": [
+        "HU-10"
+      ],
+      "estimation_hours": 4,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-031"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-033",
+      "title": "Borrador de texto por hilo",
+      "user_stories": [
+        "HU-10"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-034",
+      "title": "ApprovalCard con regla Always",
+      "user_stories": [
+        "HU-6"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-016"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-035",
+      "title": "Tests web: navegación",
+      "user_stories": [
+        "HU-4",
+        "HU-5",
+        "HU-7"
+      ],
+      "estimation_hours": 4,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-026",
+        "TASK-027"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-036",
+      "title": "Tests web: indicadores, scroll y aprobación",
+      "user_stories": [
+        "HU-6",
+        "HU-8",
+        "HU-9"
+      ],
+      "estimation_hours": 4,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-028",
+        "TASK-029",
+        "TASK-030",
+        "TASK-034"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-037",
+      "title": "Tests web: pendientes, borrador y guarda de frame; checkpoint final",
+      "user_stories": [
+        "HU-10"
+      ],
+      "estimation_hours": 4,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-021",
+        "TASK-031",
+        "TASK-032",
+        "TASK-033"
+      ],
+      "status": "pending",
+      "files": []
+    }
+  ]
+}
