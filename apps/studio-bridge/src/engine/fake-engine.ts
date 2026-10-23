@@ -1,15 +1,25 @@
 import path from 'node:path';
 import type { Author } from '@sdd-studio/protocol';
-import type { AgentEngine, EngineCallbacks, EngineTurn, EngineTurnInput } from './types';
+import type { AgentEngine, EngineCallbacks, EngineTurn, EngineTurnInput, TurnPrompt } from './types';
 
 const marker = (text: string, name: string): boolean => new RegExp(`(^|\\s)#${name}(?=\\s|$)`).test(text);
+const refMarkerOf = (line: string): string | null => {
+  const agent = /^Delegate this task to the subagent "([^"]+)"/.exec(line);
+  if (agent) return `@${agent[1]}`;
+  const skill = /^Use the skill "([^"]+)"/.exec(line);
+  if (skill) return `/${skill[1]}`;
+  const prompt = /^Follow the instructions in .*?([^/]+)\.prompt\.md\.$/.exec(line);
+  return prompt ? `/${prompt[1]}` : null;
+};
 const stepsOf = (text: string): number => Number(/#steps:(\d+)/.exec(text)?.[1] ?? 0);
 
 /**
  * Scripted engine for tests and `--engine=fake`. Markers in the first prompt:
  * #sub, #tool (Bash approval), #edit (Write approval; skipped in acceptEdits), #slow (waits for interrupt), #fail,
  * #steps:N (N Read rounds with a cut point after each), #revert (interrupt reports the last cut-point batch as undelivered),
- * #mcp, #edit-tool, #bash-git, #bash-git2, #bash-chain (approvals that exercise Always rules).
+ * #mcp, #edit-tool, #bash-git, #bash-git2, #bash-chain (approvals that exercise Always rules),
+ * #bad-attachment (fails like #fail with 'attachment rejected').
+ * Echoes append ' [attachments: a, b (missing)]' and ' [refs: @agent /skill]' when the prompt carries them.
  */
 export class FakeEngine implements AgentEngine {
   readonly name = 'fake';
@@ -18,7 +28,8 @@ export class FakeEngine implements AgentEngine {
   constructor(private readonly delayMs = 5) {}
 
   startTurn(input: EngineTurnInput, cb: EngineCallbacks): EngineTurn {
-    const firstText = input.prompts[0]?.prompt.text ?? '';
+    const firstPrompt = input.prompts[0]?.prompt ?? { text: '', preamble: [], blocks: [] };
+    const firstText = firstPrompt.text;
     let stopped = false;
     let lastCutPointBatch: string[] = [];
     const heard: string[] = [];
@@ -48,6 +59,22 @@ export class FakeEngine implements AgentEngine {
       cb.emit({ type: 'tool.start', toolUseId, author: main, tool: toolName, summary });
       cb.emit({ type: 'tool.end', toolUseId, isError: false, summary: 'ok' });
     };
+    const describeAttachments = async (prompt: TurnPrompt): Promise<string> => {
+      const names = await Promise.all(
+        prompt.blocks.map(async (block) => {
+          if (block.kind !== 'attachment') return null;
+          return (await cb.readAttachment(block.ref)) === null ? `${block.ref.name} (missing)` : block.ref.name;
+        }),
+      );
+      const present = names.filter((name): name is string => name !== null);
+      return present.length > 0 ? ` [attachments: ${present.join(', ')}]` : '';
+    };
+    const describeRefs = (prompt: TurnPrompt): string => {
+      const refs = prompt.preamble.flatMap((line) => refMarkerOf(line) ?? []);
+      return refs.length > 0 ? ` [refs: ${refs.join(' ')}]` : '';
+    };
+    const withMarkers = async (prompt: TurnPrompt): Promise<string> =>
+      `${prompt.text}${await describeAttachments(prompt)}${describeRefs(prompt)}`;
     const sayHeard = () => {
       for (const text of heard.splice(0)) say(main, `heard: ${text}`);
     };
@@ -61,12 +88,12 @@ export class FakeEngine implements AgentEngine {
         const batch = cb.collectPending('cut-point');
         if (batch.length === 0) continue;
         lastCutPointBatch = batch.map((message) => message.id);
-        heard.push(...batch.map((message) => message.prompt.text));
+        heard.push(...(await Promise.all(batch.map((message) => withMarkers(message.prompt)))));
       }
       if (!stopped) sayHeard();
     };
-    const echoTurn = (text: string) => {
-      say(main, `echo: ${text}`);
+    const echoTurn = async (prompt: TurnPrompt) => {
+      say(main, `echo: ${await withMarkers(prompt)}`);
       endTurn();
     };
     const runFirstTurn = async () => {
@@ -96,13 +123,14 @@ export class FakeEngine implements AgentEngine {
       }
       await runSteps(stepsOf(firstText));
       if (stopped) return;
-      echoTurn(firstText);
+      await echoTurn(firstPrompt);
     };
 
     const done = (async () => {
       cb.onSessionId(input.resumeSessionId ?? `fake-${input.threadId}`);
       await wait();
       if (marker(firstText, 'fail')) throw new Error('fake failure');
+      if (marker(firstText, 'bad-attachment')) throw new Error('attachment rejected');
       if (marker(firstText, 'slow')) {
         while (!stopped) await wait();
         return;
@@ -110,12 +138,12 @@ export class FakeEngine implements AgentEngine {
       await runFirstTurn();
       for (const extra of input.prompts.slice(1)) {
         if (stopped) return;
-        echoTurn(extra.prompt.text);
+        await echoTurn(extra.prompt);
       }
       while (!stopped) {
         const next = cb.collectPending('turn-end');
         if (next.length === 0) return;
-        for (const message of next) echoTurn(message.prompt.text);
+        for (const message of next) await echoTurn(message.prompt);
       }
     })();
 

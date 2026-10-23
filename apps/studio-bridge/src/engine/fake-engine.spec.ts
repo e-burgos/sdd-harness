@@ -16,6 +16,7 @@ function harness(decision: ApprovalDecision = { behavior: 'allow' }, requestAppr
     judgeTool: judge,
     collectPending: () => [],
     revertPending: () => {},
+    readAttachment: async () => new Uint8Array([1]),
     requestApproval: requestApprovalOverride || (async (r) => (approvals.push(r.toolName), decision)),
   };
   return { events, sessions, approvals, cb };
@@ -187,5 +188,53 @@ describe('FakeEngine cut points and markers', () => {
     const h = harness();
     await new FakeEngine(1).startTurn(input('#edit-tool'), h.cb).done;
     expect(h.approvals).toEqual(['Edit']);
+  });
+
+  describe('attachment and ref markers', () => {
+    const attachmentRef = (name: string) => ({ sha256: 'a'.repeat(64), kind: 'image' as const, mime: 'image/png' as const, name, size: 1 });
+    const promptWith = (text: string, names: string[], preamble: string[] = []) => ({
+      text, preamble, blocks: names.map((name) => ({ kind: 'attachment' as const, ref: attachmentRef(name) })),
+    });
+    const inputOf = (prompt: ReturnType<typeof promptWith>) => ({ ...input(prompt.text), prompts: [{ id: 'u-1', prompt }] });
+    const lastEcho = (events: ThreadEvent[]) => events.filter((e) => e.type === 'message.delta').map((e) => (e as { text: string }).text).at(-1);
+
+    it('lists attachment names in order and marks the unreadable ones as missing', async () => {
+      const h = harness();
+      h.cb.readAttachment = async (ref) => (ref.name === 'gone.png' ? null : new Uint8Array([1]));
+      await new FakeEngine(1).startTurn(inputOf(promptWith('look', ['a.png', 'gone.png'])), h.cb).done;
+      expect(lastEcho(h.events)).toBe('echo: look [attachments: a.png, gone.png (missing)]');
+    });
+
+    it('lists the refs resolved in the preamble', async () => {
+      const h = harness();
+      const preamble = [
+        'Delegate this task to the subagent "sdd-planner" using the Agent tool.',
+        'Use the skill "commit" (.claude/skills/commit/SKILL.md) for this task.',
+        'Follow the instructions in sdd/prompts/review-cycle.prompt.md.',
+      ];
+      await new FakeEngine(1).startTurn(inputOf(promptWith('go', ['a.png'], preamble)), h.cb).done;
+      expect(lastEcho(h.events)).toBe('echo: go [attachments: a.png] [refs: @sdd-planner /commit /review-cycle]');
+    });
+
+    it('keeps the plain echo when nothing is attached or referenced', async () => {
+      const h = harness();
+      await new FakeEngine(1).startTurn(input('plain'), h.cb).done;
+      expect(lastEcho(h.events)).toBe('echo: plain');
+    });
+
+    it('appends the markers to what a cut-point message is heard as', async () => {
+      const h = harness();
+      const queue = [{ id: 'p-1', prompt: promptWith('look', ['b.png'], ['Use the skill "commit" (p) for this task.']) }];
+      h.cb.collectPending = (at) => (at === 'cut-point' ? queue.splice(0) : []);
+      await new FakeEngine(1).startTurn(input('#steps:3'), h.cb).done;
+      const texts = h.events.filter((e) => e.type === 'message.delta').map((e) => (e as { text: string }).text);
+      expect(texts).toContain('heard: look [attachments: b.png] [refs: /commit]');
+    });
+
+    it('fails like #fail with the attachment rejected message', async () => {
+      const h = harness();
+      await expect(new FakeEngine(1).startTurn(inputOf(promptWith('#bad-attachment', ['a.png'])), h.cb).done).rejects.toThrow('attachment rejected');
+      expect(h.events.some((e) => e.type === 'turn.end')).toBe(false);
+    });
   });
 });

@@ -1155,6 +1155,18 @@ describe('SessionManager attachments and refs', () => {
     await m.interrupt(t.id);
   });
 
+  it('#bad-attachment ends in error without retrying or auto-sending the pending messages', async () => {
+    const { m } = await manager(new FakeEngine(40));
+    const t = await m.createThread({ channelId: 'general', options: opts, text: '#bad-attachment', attachments: [png('p.png')] });
+    const queued = await m.send(t.id, { text: 'later', attachments: [png('q.png', 1)] });
+    expect(queued.delivery).toBe('pending');
+    await waitFor(() => statusOf(m, t.id) === 'error');
+    await new Promise((r) => setTimeout(r, 80));
+    expect(statusOf(m, t.id)).toBe('error');
+    expect(m.list()[0]?.pendingCount).toBe(1);
+    expect(userMessages(t.id)).toHaveLength(1);
+  });
+
   it('hands the engine a preamble, an attachment block and the text without the leading skill token', async () => {
     withSkills();
     const seen: EngineTurnInput[] = [];
