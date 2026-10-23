@@ -84,8 +84,21 @@
       "depends_on": [
         "TASK-001"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "libs/studio-protocol/src/domain.ts",
+        "libs/studio-protocol/src/domain.spec.ts"
+      ],
+      "usage": {
+        "tokens_in": 30000,
+        "tokens_out": 6500,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
     },
     {
       "id": "TASK-004",
