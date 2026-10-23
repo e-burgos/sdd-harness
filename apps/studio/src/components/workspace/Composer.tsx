@@ -17,6 +17,7 @@ import { z } from 'zod';
 import { agentMeta } from '@/lib/agents';
 import { useT } from '@/lib/i18n/i18n';
 import { parseSlash, SAFE_ARG } from '@/lib/slash';
+import { draftKey } from '@/lib/store/state';
 import { useBridge, useStudio } from '../BridgeProvider';
 
 const RunResult = z.object({ runId: z.string().min(1) });
@@ -37,11 +38,17 @@ export interface ComposerViewProps {
   agents: string[];
   agentLocked: boolean;
   error: string | null;
+  initialText?: string;
+  onTextChange?(text: string): void;
 }
 
 export function ComposerView(p: ComposerViewProps) {
   const { t } = useT();
-  const [text, setText] = useState('');
+  const [text, setText] = useState(p.initialText ?? '');
+  const updateText = (next: string) => {
+    setText(next);
+    p.onTextChange?.(next);
+  };
   const [pending, setPending] = useState(false);
   const busy = useRef(false);
   const box = useRef<HTMLTextAreaElement>(null);
@@ -56,7 +63,7 @@ export function ComposerView(p: ComposerViewProps) {
     busy.current = true;
     setPending(true);
     try {
-      if (await p.onSubmit(value)) setText('');
+      if (await p.onSubmit(value)) updateText('');
     } catch {
       // el error lo informa el contenedor; el texto se conserva
     } finally {
@@ -76,7 +83,7 @@ export function ComposerView(p: ComposerViewProps) {
           ref={box}
           value={text}
           disabled={pending}
-          onChange={(e) => setText(e.target.value)}
+          onChange={(e) => updateText(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
               e.preventDefault();
@@ -134,6 +141,8 @@ export function Composer({ channelId, threadId, onThreadCreated }: { channelId: 
   const [draft, setDraft] = useState<ThreadOptions>(() => defaultThreadOptions(dmAgent ?? DEFAULT_AGENT));
   const [error, setError] = useState<string | null>(null);
   const busy = useRef(false);
+  const key = draftKey(channelId, threadId);
+  const [initialText] = useState(() => store.getState().drafts[key] ?? '');
   const options = threadInfo?.options ?? { ...draft, agent: dmAgent ?? draft.agent };
   const agents = useMemo(() => {
     const ids = snapshot?.agents.map((a) => a.id) ?? [];
@@ -199,6 +208,8 @@ export function Composer({ channelId, threadId, onThreadCreated }: { channelId: 
       agents={agents}
       agentLocked={dmAgent !== null || threadId !== null}
       error={error}
+      initialText={initialText}
+      onTextChange={(text) => store.getState().setDraft(key, text)}
     />
   );
 }

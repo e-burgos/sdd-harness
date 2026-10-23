@@ -15,13 +15,14 @@ export interface StudioState {
   presence: Presence[];
   bot: Record<string, BotEvent[]>;
   runs: Record<string, CommandRun>;
+  drafts: Record<string, string>;
 }
 
 const MAX_BOT_EVENTS = 200;
 const MAX_THREAD_BUFFER = 1000;
 const MAX_RUN_OUTPUT = 200_000;
 
-export const initialState = (): StudioState => ({ snapshot: null, threads: {}, presence: [], bot: {}, runs: {} });
+export const initialState = (): StudioState => ({ snapshot: null, threads: {}, presence: [], bot: {}, runs: {}, drafts: {} });
 
 const threadOf = (s: StudioState, id: string): ThreadState => s.threads[id] ?? emptyThread();
 
@@ -69,6 +70,17 @@ export function setBotHistory(s: StudioState, channelId: string, events: BotEven
 
 export function startRun(s: StudioState, run: { runId: string; name: string; args: string[] }): StudioState {
   return { ...s, runs: { ...s.runs, [run.runId]: { ...run, output: s.runs[run.runId]?.output ?? '', exitCode: s.runs[run.runId]?.exitCode ?? null } } };
+}
+
+export const draftKey = (channelId: string, threadId: string | null): string => threadId ?? `new:${channelId}`;
+
+export function setDraft(s: StudioState, key: string, text: string): StudioState {
+  if (text === '') {
+    if (!(key in s.drafts)) return s;
+    const { [key]: _removed, ...rest } = s.drafts;
+    return { ...s, drafts: rest };
+  }
+  return s.drafts[key] === text ? s : { ...s, drafts: { ...s.drafts, [key]: text } };
 }
 
 export function applyServerEvent(s: StudioState, e: ServerEvent): StudioState {
