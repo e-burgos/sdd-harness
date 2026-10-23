@@ -168,8 +168,21 @@
       "estimation_hours": 4,
       "story_points": 5,
       "depends_on": [],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/studio-bridge/src/workspace/file-index.ts",
+        "apps/studio-bridge/src/workspace/file-index.spec.ts"
+      ],
+      "usage": {
+        "tokens_in": 35000,
+        "tokens_out": 7000,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
     },
     {
       "id": "TASK-007",
