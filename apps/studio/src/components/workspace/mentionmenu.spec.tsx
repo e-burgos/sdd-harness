@@ -168,6 +168,23 @@ describe('MentionMenu keyboard and ARIA', () => {
     expect(box.dataset['sent']).toBeUndefined();
   });
 
+  it('lets Enter through on a / command typed in full and still completes partial ones', () => {
+    const { rerender } = render(ui(base({ mention: { trigger: '/', query: 'ga', start: 0 } })));
+    const box = screen.getByLabelText('box');
+    fireEvent.keyDown(box, { key: 'Enter' });
+    expect(box.dataset['sent']).toBeUndefined();
+    rerender(ui(base({ mention: { trigger: '/', query: 'gate', start: 0 } })));
+    fireEvent.keyDown(box, { key: 'Enter' });
+    expect(box.dataset['sent']).toBe('yes');
+  });
+
+  it('puts the exact match first so a command that prefixes others is still sent directly', () => {
+    render(ui(base({ mention: { trigger: '/', query: 'generate:react', start: 0 }, skills: [skill('generate:react-extra'), skill('generate:react')] })));
+    const box = screen.getByLabelText('box');
+    fireEvent.keyDown(box, { key: 'Enter' });
+    expect(box.dataset['sent']).toBe('yes');
+  });
+
   it('closes on Escape and treats Enter on an empty menu as close, not send', () => {
     const onClose = vi.fn();
     render(ui(base({ onClose, catalogEnabled: false })));

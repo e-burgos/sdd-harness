@@ -34,8 +34,11 @@ const PROMPT_PATHS: ReadonlySet<string> = new Set(Object.values(PROMPT_COMMANDS)
 function rank<T extends { id: string }>(items: T[], query: string): T[] {
   const needle = query.toLowerCase();
   const matches = items.filter((i) => i.id.toLowerCase().includes(needle));
-  const starts = (i: T) => (i.id.toLowerCase().startsWith(needle) ? 0 : 1);
-  return matches.sort((a, b) => starts(a) - starts(b));
+  const tier = (i: T) => {
+    const id = i.id.toLowerCase();
+    return id === needle ? 0 : id.startsWith(needle) ? 1 : 2;
+  };
+  return matches.sort((a, b) => tier(a) - tier(b));
 }
 
 function useFileSearch(query: string, active: boolean, search: MentionMenuOptions['searchFiles']) {
@@ -116,6 +119,7 @@ export function useMentionMenu(o: MentionMenuOptions) {
     if (e.key === 'Enter' || e.key === 'Tab') {
       const item = flat[active];
       if (!item && e.key === 'Tab') return false;
+      if (e.key === 'Enter' && trigger === '/' && item?.id === query) return false;
       e.preventDefault();
       if (item) o.onSelect(item);
       else o.onClose();

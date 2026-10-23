@@ -105,8 +105,21 @@
       "estimation_hours": 1,
       "story_points": 1,
       "depends_on": [],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/studio/src/lib/use-mention-menu.ts",
+        "apps/studio/src/components/workspace/mentionmenu.spec.tsx"
+      ],
+      "usage": {
+        "tokens_in": 38000,
+        "tokens_out": 6000,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
     },
     {
       "id": "TASK-005",
