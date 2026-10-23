@@ -11,10 +11,10 @@ export async function copyFixture(): Promise<{ root: string; cleanup: () => Prom
   return { root, cleanup: () => rm(root, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 }) };
 }
 
-export async function waitFor<T>(fn: () => T | undefined | null | false, timeoutMs = 5000): Promise<T> {
+export async function waitFor<T>(fn: () => T | undefined | null | false | Promise<T | undefined | null | false>, timeoutMs = 5000): Promise<T> {
   const start = Date.now();
   for (;;) {
-    const value = fn();
+    const value = await fn();
     if (value) return value;
     if (Date.now() - start > timeoutMs) throw new Error('waitFor: timed out');
     await new Promise((r) => setTimeout(r, 20));

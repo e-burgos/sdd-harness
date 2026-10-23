@@ -9,6 +9,7 @@ import type {
   SessionStatus,
   ThreadEvent,
   ThreadInfo,
+  ThreadLinkTarget,
   ThreadOptions,
   WorkspaceSnapshot,
 } from '@sdd-studio/protocol';
@@ -25,6 +26,7 @@ import {
 } from '../engine/types';
 import { editTargetOf, judgeEdit } from '../gate/judge';
 import { alwaysOfferOf, matchesRule, ruleOf } from './always-rule';
+import { assignLink, linkTargetExists } from './thread-link';
 import { PresenceTracker } from './presence';
 import { toThreadInfo as toInfo, type HistoryEntry, type PendingMessage, type StoredThread, type ThreadStore } from './store';
 
@@ -122,11 +124,13 @@ export class SessionManager {
     return this.tracker.compute();
   }
 
-  async createThread(args: { channelId: string; options: ThreadOptions; text: string }): Promise<ThreadInfo> {
+  async createThread(args: { channelId: string; options: ThreadOptions; text: string; link?: ThreadLinkTarget }): Promise<ThreadInfo> {
     const dmAgent = dmAgentOfChannel(args.channelId);
     if (dmAgent !== null && args.options.agent !== dmAgent) {
       throw new SessionError('bad-request', `a DM with ${dmAgent} only accepts that agent`);
     }
+    const link = assignLink({ channelId: args.channelId, snapshot: this.deps.snapshot(), explicit: args.link });
+    if (!link) throw new SessionError('not-found', 'the link target does not exist');
     const now = this.now();
     const thread: StoredThread = {
       id: this.newId(),
@@ -138,7 +142,7 @@ export class SessionManager {
       createdAt: now,
       lastActivity: now,
       engineSessionId: null,
-      link: { target: { kind: 'none' }, source: 'legacy' },
+      link,
       pending: [],
     };
     this.persist(thread);
@@ -202,6 +206,14 @@ export class SessionManager {
     } catch (error) {
       reportError(error);
     }
+  }
+
+  setLink(threadId: string, target: ThreadLinkTarget): ThreadInfo {
+    const thread = this.require(threadId);
+    if (!linkTargetExists(this.deps.snapshot(), target)) throw new SessionError('not-found', 'the link target does not exist');
+    thread.link = { target, source: 'manual' };
+    this.publishThread(thread);
+    return toInfo(thread);
   }
 
   async setOptions(threadId: string, patch: Partial<Omit<ThreadOptions, 'agent'>>): Promise<ThreadInfo> {

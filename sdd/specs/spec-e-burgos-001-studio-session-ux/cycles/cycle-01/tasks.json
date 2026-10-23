@@ -496,8 +496,27 @@
       "depends_on": [
         "TASK-013"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/studio-bridge/src/sessions/thread-link.ts",
+        "apps/studio-bridge/src/sessions/thread-link.spec.ts",
+        "apps/studio-bridge/src/sessions/session-manager.ts",
+        "apps/studio-bridge/src/sessions/session-manager.spec.ts",
+        "apps/studio-bridge/src/server/router.ts",
+        "apps/studio-bridge/src/server/router.spec.ts",
+        "apps/studio-bridge/src/gate/judge.ts",
+        "apps/studio-bridge/src/test-utils/fixture.ts"
+      ],
+      "usage": {
+        "tokens_in": 28000,
+        "tokens_out": 6000,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
     },
     {
       "id": "TASK-018",

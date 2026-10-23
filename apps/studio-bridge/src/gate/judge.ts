@@ -5,7 +5,7 @@ export type Verdict = { kind: 'allow' } | { kind: 'warn'; reason: string } | { k
 // Same rule as sdd-mod (templates/sdd/skills/sdd-mod/hooks/.src/sdd.ts): keep in sync.
 const EXEMPT_DIRS = new Set(['sdd', '.claude', '.github', '.gemini', '.agents', '.agent', '.vscode', '.idea']);
 const CLOSED_SPEC = new Set(['completed', 'cancelled']);
-const OPEN_FIX = new Set(['pending', 'in-progress']);
+export const OPEN_FIX = new Set(['pending', 'in-progress']);
 export const EDIT_TOOLS = new Set(['Edit', 'Write', 'MultiEdit', 'NotebookEdit']);
 
 export function editTargetOf(toolName: string, input: Record<string, unknown>): string | null {

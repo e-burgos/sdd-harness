@@ -75,6 +75,8 @@ export function createHandlers(d: {
           throw new SessionError('bad-request', 'unsupported: file-search');
         case 'attachment.get':
           throw new SessionError('bad-request', 'unsupported: attachments');
+        case 'thread.setLink':
+          return d.sessions.setLink(command.threadId, command.link);
         case 'thread.interrupt':
           await d.sessions.interrupt(command.threadId);
           return null;
@@ -94,7 +96,7 @@ export function createHandlers(d: {
         case 'command.run':
           return { runId: d.runner.run(command.name, command.args) };
         default:
-          throw new SessionError('bad-request', `unsupported: ${command.cmd}`);
+          throw new SessionError('bad-request', `unsupported: ${(command as { cmd: string }).cmd}`);
       }
     },
   };

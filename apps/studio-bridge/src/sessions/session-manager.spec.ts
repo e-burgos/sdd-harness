@@ -837,4 +837,65 @@ describe('SessionManager', () => {
       await m.interrupt(t.id);
     });
   });
+
+  describe('thread links', () => {
+    const idleOf = (m: SessionManager, id: string) => waitFor(() => statusOf(m, id) === 'idle');
+    const updates = (threadId: string) => sent.filter((e) => e.kind === 'thread.updated' && e.thread.id === threadId);
+
+    it('auto-links a thread created in a spec channel to the in-progress cycle', async () => {
+      const { m } = await manager();
+      const t = await m.createThread({ channelId: 'spec:spec-dev-001-pagos', options: opts, text: 'hola' });
+      expect(t.link).toEqual({ target: { kind: 'cycle', specId: 'spec-dev-001-pagos', cycle: 'cycle-01' }, source: 'auto' });
+      await idleOf(m, t.id);
+    });
+
+    it('auto-links general threads to none and keeps the link in the listing', async () => {
+      const { m } = await manager();
+      const t = await m.createThread({ channelId: 'general', options: opts, text: 'hola' });
+      expect(m.list().find((x) => x.id === t.id)?.link).toEqual({ target: { kind: 'none' }, source: 'auto' });
+      await idleOf(m, t.id);
+    });
+
+    it('honors an explicit link as manual and rejects a missing destination without creating the thread', async () => {
+      const { m } = await manager();
+      const t = await m.createThread({ channelId: 'general', options: opts, text: 'hola', link: { kind: 'fix', fixId: 'FIX-dev-001-001' } });
+      expect(t.link).toEqual({ target: { kind: 'fix', fixId: 'FIX-dev-001-001' }, source: 'manual' });
+      await idleOf(m, t.id);
+      const before = m.list().length;
+      await expect(m.createThread({ channelId: 'general', options: opts, text: 'x', link: { kind: 'fix', fixId: 'FIX-nope' } })).rejects.toMatchObject({ code: 'not-found' });
+      expect(m.list()).toHaveLength(before);
+    });
+
+    it('setLink reassigns manually, broadcasts thread.updated and persists', async () => {
+      const { m, store } = await manager();
+      const t = await m.createThread({ channelId: 'general', options: opts, text: 'hola' });
+      await idleOf(m, t.id);
+      sent.length = 0;
+      const info = m.setLink(t.id, { kind: 'cycle', specId: 'spec-dev-001-pagos', cycle: 'cycle-01' });
+      expect(info.link).toEqual({ target: { kind: 'cycle', specId: 'spec-dev-001-pagos', cycle: 'cycle-01' }, source: 'manual' });
+      expect(updates(t.id)).toHaveLength(1);
+      await store.flush();
+      expect(store.get(t.id)?.link.source).toBe('manual');
+      expect(m.setLink(t.id, { kind: 'none' }).link).toEqual({ target: { kind: 'none' }, source: 'manual' });
+    });
+
+    it('setLink keeps the previous link when the destination or the thread does not exist', async () => {
+      const { m } = await manager();
+      const t = await m.createThread({ channelId: 'general', options: opts, text: 'hola' });
+      await idleOf(m, t.id);
+      expect(() => m.setLink(t.id, { kind: 'fix', fixId: 'FIX-nope' })).toThrowError(expect.objectContaining({ code: 'not-found' }));
+      expect(() => m.setLink('missing', { kind: 'none' })).toThrowError(expect.objectContaining({ code: 'not-found' }));
+      expect(m.list().find((x) => x.id === t.id)?.link).toEqual({ target: { kind: 'none' }, source: 'auto' });
+    });
+
+    it('the link does not change the queue or the gate: a linked thread still shares the channel write scope', async () => {
+      const { m } = await manager();
+      const ch = 'spec:spec-dev-001-pagos';
+      const a = await m.createThread({ channelId: ch, options: opts, text: '#slow' });
+      const b = await m.createThread({ channelId: ch, options: opts, text: 'hola' });
+      expect(statusOf(m, b.id)).toBe('queued');
+      await m.interrupt(a.id);
+      await idleOf(m, b.id);
+    });
+  });
 });
