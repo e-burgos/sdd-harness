@@ -195,5 +195,6 @@ export const en = {
   'attach.collapse': 'Hide content',
   'attach.kind.pdf': 'PDF',
   'attach.kind.text': 'Text',
+  'timeline.refs': 'Mentions',
   'lang.switch': 'Español',
 } satisfies Record<keyof Dict, string>;

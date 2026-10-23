@@ -193,6 +193,7 @@ export const es = {
   'attach.collapse': 'Ocultar contenido',
   'attach.kind.pdf': 'PDF',
   'attach.kind.text': 'Texto',
+  'timeline.refs': 'Menciones',
   'lang.switch': 'English',
 };
 export type Dict = typeof es;

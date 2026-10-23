@@ -37,8 +37,11 @@ export function PendingMessages({ threadId }: { threadId: string }) {
     }
   };
 
+  const editingItem = pending?.find((i) => i.id === editing?.id);
+  const emptyBlocked = editing !== null && editing.text.trim() === '' && !(editingItem?.attachments?.length);
+
   const save = async () => {
-    if (!editing || editing.text.trim() === '') return;
+    if (!editing || emptyBlocked) return;
     const { id, text } = editing;
     if (await run(id, () => client.request({ cmd: 'thread.pending.edit', threadId, pendingId: id, text }))) setEditing(null);
   };
@@ -75,9 +78,9 @@ export function PendingMessages({ threadId }: { threadId: string }) {
                     autoFocus
                     onChange={(e) => setEditing({ id: item.id, text: e.target.value })}
                   />
-                  {editing.text.trim() === '' && <p className="text-xs text-amberish">{t('pending.emptyHint')}</p>}
+                  {emptyBlocked && <p className="text-xs text-amberish">{t('pending.emptyHint')}</p>}
                   <div className="flex gap-2">
-                    <button className={ghost} disabled={editing.text.trim() === '' || busyId !== null} onClick={() => void save()}>
+                    <button className={ghost} disabled={emptyBlocked || busyId !== null} onClick={() => void save()}>
                       {t('pending.save')}
                     </button>
                     <button className={ghost} disabled={busyId !== null} onClick={() => setEditing(null)}>
@@ -87,7 +90,16 @@ export function PendingMessages({ threadId }: { threadId: string }) {
                 </div>
               ) : (
                 <>
-                  <p className="min-w-0 flex-1 whitespace-pre-wrap break-words">{item.text}</p>
+                  <div className="min-w-0 flex-1">
+                    {item.text !== '' && <p className="whitespace-pre-wrap break-words">{item.text}</p>}
+                    {item.attachments && item.attachments.length > 0 && (
+                      <ul aria-label={t('attach.tray')} className="mt-0.5 flex flex-wrap gap-1">
+                        {item.attachments.map((a) => (
+                          <li key={a.sha256} className="max-w-[10rem] truncate rounded bg-ink-800 px-1.5 text-[11px] text-ink-300">{a.name}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
                   <button aria-label={t('pending.edit')} className={`rounded-md p-1 text-ink-300 hover:bg-ink-800 ${ring}`} disabled={busyId !== null} onClick={() => setEditing({ id: item.id, text: item.text })}>
                     <PencilSimple size={14} />
                   </button>

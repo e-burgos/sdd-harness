@@ -9,6 +9,7 @@ import { useT } from '@/lib/i18n/i18n';
 import { groupTimeline } from '@/lib/store/selectors';
 import type { TimelineItem } from '@/lib/store/timeline';
 import { AgentAvatar } from './AgentAvatar';
+import { AttachmentList } from './AttachmentView';
 import { ApprovalCard, type RespondFn } from './ApprovalCard';
 import { Markdown } from './Markdown';
 
@@ -52,7 +53,14 @@ export function Timeline({ items, status, onRespond }: { items: TimelineItem[]; 
               <li key={item.id} className="flex gap-3">
                 <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-ink-700 text-xs">{t('timeline.you')}</span>
                 <div className="min-w-0 pt-1">
-                  <p className="whitespace-pre-wrap break-words text-sm">{item.text}</p>
+                  {item.text !== '' && <p className="whitespace-pre-wrap break-words text-sm">{item.text}</p>}
+                  {item.attachments && item.attachments.length > 0 && <AttachmentList attachments={item.attachments} />}
+                  {item.refs && item.refs.agents.length + item.refs.skills.length > 0 && (
+                    <ul className="mt-1 flex flex-wrap gap-1" aria-label={t('timeline.refs')}>
+                      {item.refs.agents.map((id) => <li key={`a:${id}`} className="rounded bg-ink-800 px-1.5 font-mono text-[11px] text-ink-300">@{id}</li>)}
+                      {item.refs.skills.map((id) => <li key={`s:${id}`} className="rounded bg-ink-800 px-1.5 font-mono text-[11px] text-ink-300">/{id}</li>)}
+                    </ul>
+                  )}
                   {item.pendingId && (
                     <p className={`mt-0.5 text-[11px] ${item.notDelivered ? 'text-amberish' : 'text-ink-300'}`}>
                       {item.notDelivered ? t('pending.notDelivered') : item.delivery === 'next-turn' ? t('pending.deliveredNextTurn') : t('pending.delivered')}

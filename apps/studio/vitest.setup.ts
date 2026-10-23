@@ -7,8 +7,6 @@ class ResizeObserverStub implements ResizeObserver {
 }
 if (typeof globalThis.ResizeObserver === 'undefined') globalThis.ResizeObserver = ResizeObserverStub;
 
-if (typeof URL.createObjectURL !== 'function') {
-  let counter = 0;
-  URL.createObjectURL = () => `blob:test/${++counter}`;
-  URL.revokeObjectURL = () => undefined;
-}
+let objectUrlCounter = 0;
+URL.createObjectURL = () => `blob:test/${++objectUrlCounter}`;
+URL.revokeObjectURL = () => undefined;
