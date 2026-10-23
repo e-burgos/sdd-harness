@@ -1,5 +1,6 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import { SquaresFour } from '@phosphor-icons/react';
 import { dmAgentOfChannel, type AuthMode, type Presence } from '@sdd-studio/protocol';
 import { agentMeta } from '@/lib/agents';
@@ -7,6 +8,7 @@ import { useT } from '@/lib/i18n/i18n';
 import { channelsOf, dmChannelsOf, type ChannelEntry } from '@/lib/store/selectors';
 import type { ConnectionState } from '@/lib/bridge/client';
 import { useBridge, useStudio } from '../BridgeProvider';
+import { ApiKeyField } from './ApiKeyField';
 
 const DOT: Record<Presence['state'], string> = {
   working: 'bg-accent-400 animate-pulse',
@@ -33,6 +35,8 @@ export interface SidebarViewProps {
   presence: Presence[];
   activeChannel: string;
   onSelect(channelId: string): void;
+  /** Rendered under the header status line (API key field); omitted in pure view tests. */
+  authSlot?: ReactNode;
 }
 
 export function SidebarView(p: SidebarViewProps) {
@@ -52,6 +56,7 @@ export function SidebarView(p: SidebarViewProps) {
           {p.kitVersion && <span>· kit {p.kitVersion}</span>}
           <button className="ml-auto rounded hover:text-ink-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" onClick={() => setLang(lang === 'es' ? 'en' : 'es')}>{t('lang.switch')}</button>
         </div>
+        {p.authSlot}
       </header>
       <section>
         <h2 className="mb-1 px-2 text-[11px] uppercase tracking-wider text-ink-500">{t('sidebar.channels')}</h2>
@@ -99,7 +104,7 @@ export function SidebarView(p: SidebarViewProps) {
 }
 
 export function Sidebar({ activeChannel, onSelect }: { activeChannel: string; onSelect(channelId: string): void }) {
-  const { connection } = useBridge();
+  const { connection, authMode } = useBridge();
   const snapshot = useStudio((s) => s.snapshot);
   const presence = useStudio((s) => s.presence);
   const welcome = connection.status === 'open' ? connection.welcome : null;
@@ -107,7 +112,8 @@ export function Sidebar({ activeChannel, onSelect }: { activeChannel: string; on
     <SidebarView
       project={snapshot?.project ?? welcome?.workspace.project ?? '…'}
       kitVersion={snapshot?.kitVersion ?? null}
-      authMode={welcome?.authMode ?? null}
+      authMode={authMode ?? welcome?.authMode ?? null}
+      authSlot={<ApiKeyField />}
       connection={connection.status}
       channels={channelsOf(snapshot)}
       dms={dmChannelsOf(snapshot)}

@@ -6,7 +6,7 @@ import path from 'node:path';
 import { PROTOCOL_VERSION, defaultThreadOptions, type ServerMessage } from '@sdd-studio/protocol';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import WebSocket from 'ws';
-import { detectAuthMode } from './auth-mode';
+import { AuthState, detectAuthMode } from './auth-mode';
 import { BridgeStartError, DEFAULT_ORIGINS, startBridge } from './main';
 import { copyFixture, waitFor } from './test-utils/fixture';
 import { BRIDGE_VERSION } from './version';
@@ -124,6 +124,22 @@ describe('detectAuthMode', () => {
   it('uses the API key when present, the local login otherwise', () => {
     expect(detectAuthMode({ ANTHROPIC_API_KEY: 'k' })).toBe('api-key');
     expect(detectAuthMode({})).toBe('local-claude-login');
+  });
+});
+
+describe('AuthState', () => {
+  it('a browser-supplied key switches to api-key and goes into the SDK env, with the client app label', () => {
+    const auth = new AuthState({ PATH: '/bin' }, 'sdd-studio/1.2.3');
+    expect(auth.mode()).toBe('local-claude-login');
+    expect(auth.set('sk-ant-' + 'x'.repeat(30))).toBe('api-key');
+    expect(auth.env()).toMatchObject({ PATH: '/bin', ANTHROPIC_API_KEY: 'sk-ant-' + 'x'.repeat(30), CLAUDE_AGENT_SDK_CLIENT_APP: 'sdd-studio/1.2.3' });
+    expect(auth.set(null)).toBe('local-claude-login');
+    expect(auth.env().ANTHROPIC_API_KEY).toBeUndefined();
+  });
+  it('falls back to the process ANTHROPIC_API_KEY when no browser key is set', () => {
+    const auth = new AuthState({ ANTHROPIC_API_KEY: 'env-key' });
+    expect(auth.mode()).toBe('api-key');
+    expect(auth.env().ANTHROPIC_API_KEY).toBe('env-key');
   });
 });
 

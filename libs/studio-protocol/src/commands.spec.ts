@@ -18,6 +18,13 @@ describe('ClientCommand', () => {
     const cmd = { ...base, cmd: 'presence.get' };
     expect(ClientCommand.parse(cmd)).toEqual(cmd);
   });
+  it('auth.set accepts a key or null and rejects malformed keys', () => {
+    expect(ClientCommand.safeParse({ ...base, cmd: 'auth.set', apiKey: 'sk-ant-' + 'a'.repeat(30) }).success).toBe(true);
+    expect(ClientCommand.safeParse({ ...base, cmd: 'auth.set', apiKey: null }).success).toBe(true);
+    for (const apiKey of ['short', 'has space ' + 'a'.repeat(30), 'a'.repeat(513)]) {
+      expect(ClientCommand.safeParse({ ...base, cmd: 'auth.set', apiKey }).success).toBe(false);
+    }
+  });
   it('rejects commands outside the allowlist', () => {
     expect(ClientCommand.safeParse({ ...base, cmd: 'command.run', name: 'rm', args: [] }).success).toBe(false);
   });

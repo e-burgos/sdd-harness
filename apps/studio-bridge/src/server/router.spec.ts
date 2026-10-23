@@ -1,3 +1,4 @@
+import { AuthState } from '../auth-mode';
 import { defaultThreadOptions, type ClientCommand, type ServerEvent } from '@sdd-studio/protocol';
 import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -20,8 +21,9 @@ async function handlers(broadcast: (e: ServerEvent) => void = () => {}) {
   const store = new ThreadStore(root);
   await store.init();
   const sessions = new SessionManager({ root, engine: new FakeEngine(1), store, snapshot: () => snapshot, broadcast: () => {} });
+  const auth = new AuthState({}, 'sdd-studio/test');
   return createHandlers({
-    root, authMode: 'api-key', bridgeVersion: '0.1.0', sessions, store,
+    root, auth, bridgeVersion: '0.1.0', sessions, store,
     watcher: { current: () => snapshot }, runner: new CommandRunner(root, broadcast, () => 'run-1'),
   });
 }
@@ -30,8 +32,15 @@ const cmd = (c: Record<string, unknown>) => ({ kind: 'command', id: 'x', ...c })
 describe('createHandlers', () => {
   it('builds the welcome from the snapshot', async () => {
     expect((await handlers()).welcome()).toEqual({
-      bridgeVersion: '0.1.0', workspace: { root, project: 'studio fixture' }, kitVersion: '0.16.0', authMode: 'api-key',
+      bridgeVersion: '0.1.0', workspace: { root, project: 'studio fixture' }, kitVersion: '0.16.0', authMode: 'local-claude-login',
     });
+  });
+
+  it('auth.set switches the welcome to api-key and null goes back', async () => {
+    const h = await handlers();
+    expect(await h.handle(cmd({ cmd: 'auth.set', apiKey: 'sk-ant-' + 'x'.repeat(30) }))).toEqual({ authMode: 'api-key' });
+    expect(h.welcome().authMode).toBe('api-key');
+    expect(await h.handle(cmd({ cmd: 'auth.set', apiKey: null }))).toEqual({ authMode: 'local-claude-login' });
   });
 
   it('reads files under sdd/ and refuses the rest', async () => {

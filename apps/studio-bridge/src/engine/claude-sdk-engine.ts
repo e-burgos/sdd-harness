@@ -22,6 +22,7 @@ export function buildQueryOptions(
     canUseTool: NonNullable<Options['canUseTool']>;
     onHook: (input: unknown) => void;
     judgeTool: (toolName: string, input: Record<string, unknown>, hookInput: PreToolUseHookInput) => ToolVerdict;
+    env?: Record<string, string | undefined>;
   },
 ): Options {
   const { agent, model, effort, permissionMode } = input.options;
@@ -59,6 +60,7 @@ export function buildQueryOptions(
       ],
     },
   };
+  if (h.env) options.env = h.env;
   if (agent !== DEFAULT_AGENT) options.agent = agent;
   if (model !== 'kit') {
     options.model = MODEL_IDS[model];
@@ -71,7 +73,10 @@ export function buildQueryOptions(
 export class ClaudeAgentSdkEngine implements AgentEngine {
   readonly name = 'claude-agent-sdk';
 
-  constructor(private readonly queryFn: QueryFn = sdkQuery as QueryFn) {}
+  constructor(
+    private readonly queryFn: QueryFn = sdkQuery as QueryFn,
+    private readonly getEnv?: () => Record<string, string | undefined>,
+  ) {}
 
   startTurn(input: EngineTurnInput, cb: EngineCallbacks): EngineTurn {
     const abort = new AbortController();
@@ -83,6 +88,7 @@ export class ClaudeAgentSdkEngine implements AgentEngine {
       prompt: input.text,
       options: buildQueryOptions(input, {
         abort,
+        env: this.getEnv?.(),
         judgeTool: (toolName, toolInput, hookInput) =>
           cb.judgeTool(toolName, toolInput, {
             author: mapper.authorForAgentId(hookInput.agent_id),

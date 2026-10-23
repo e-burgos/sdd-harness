@@ -1,6 +1,6 @@
 {
   "name": "@e-burgos/sdd-studio",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Local bridge for SDD Studio: run the SDD kit agents on your repo from a Slack-like web app, with Claude on your own machine",
   "keywords": ["sdd", "spec-driven-development", "claude", "claude-agent-sdk", "ai-agents", "studio", "cli"],
   "type": "module",

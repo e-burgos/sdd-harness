@@ -22,6 +22,11 @@ describe('buildQueryOptions', () => {
     expect(o.resume).toBeUndefined();
     expect(Object.keys(o.hooks ?? {})).toEqual(['SubagentStart', 'SubagentStop', 'PreToolUse']);
   });
+  it('passes the env through (it replaces the subprocess environment) and omits it when absent', () => {
+    const env = { PATH: '/bin', ANTHROPIC_API_KEY: 'k', CLAUDE_AGENT_SDK_CLIENT_APP: 'sdd-studio/1.0.0' };
+    expect(buildQueryOptions(input(), { ...handlers(), env }).env).toEqual(env);
+    expect('env' in buildQueryOptions(input(), handlers())).toBe(false);
+  });
   describe('PreToolUse hook', () => {
     const call = async (verdict: unknown) => {
       const h = { ...handlers(), judgeTool: vi.fn(() => verdict) };

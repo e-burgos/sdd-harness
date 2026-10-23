@@ -33,7 +33,7 @@ function Probe() {
   const { syncError } = useBridge();
   return <p data-testid="err">{syncError ?? 'none'}</p>;
 }
-const open = () => act(() => h.listeners.state?.({ status: 'open' }));
+const open = () => act(() => h.listeners.state?.({ status: 'open', welcome: { authMode: 'local-claude-login' } as never }));
 
 describe('BridgeProvider sync', () => {
   beforeEach(() => {

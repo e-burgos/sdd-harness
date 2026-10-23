@@ -1,6 +1,7 @@
 import { constants } from 'node:fs';
 import { open } from 'node:fs/promises';
-import type { AuthMode, ClientCommand } from '@sdd-studio/protocol';
+import type { ClientCommand } from '@sdd-studio/protocol';
+import type { AuthState } from '../auth-mode';
 import type { CommandRunner } from '../commands/runner';
 import { SessionError, type SessionManager } from '../sessions/session-manager';
 import type { ThreadStore } from '../sessions/store';
@@ -12,7 +13,7 @@ const MAX_READ_BYTES = 2 * 1024 * 1024;
 
 export function createHandlers(d: {
   root: string;
-  authMode: AuthMode;
+  auth: Pick<AuthState, 'mode' | 'set'>;
   bridgeVersion: string;
   sessions: SessionManager;
   watcher: Pick<WorkspaceWatcher, 'current'>;
@@ -26,7 +27,7 @@ export function createHandlers(d: {
         bridgeVersion: d.bridgeVersion,
         workspace: { root: d.root, project: snapshot.project },
         kitVersion: snapshot.kitVersion,
-        authMode: d.authMode,
+        authMode: d.auth.mode(),
       };
     },
     handle: async (command: ClientCommand) => {
@@ -68,6 +69,8 @@ export function createHandlers(d: {
         case 'approval.respond':
           d.sessions.respondApproval(command.approvalId, command.decision, command.reason, command.scope);
           return null;
+        case 'auth.set':
+          return { authMode: d.auth.set(command.apiKey) };
         case 'command.run':
           return { runId: d.runner.run(command.name, command.args) };
       }
