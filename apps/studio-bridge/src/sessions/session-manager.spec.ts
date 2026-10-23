@@ -1,4 +1,5 @@
 import { defaultThreadOptions, type ServerEvent, type ThreadEvent, type WorkspaceSnapshot } from '@sdd-studio/protocol';
+import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FakeEngine } from '../engine/fake-engine';
@@ -592,10 +593,13 @@ describe('SessionManager', () => {
       expect(eventsOf(t.id).map((e) => e.type)).toEqual(expect.arrayContaining(['pending.edited', 'pending.removed']));
       await waitFor(() => userMessages(t.id).some((e) => e.pendingId === a.pendingId));
       expect(userMessages(t.id).find((e) => e.pendingId === a.pendingId)?.text).toBe('a2');
+      expect(userMessages(t.id).some((e) => e.pendingId === b.pendingId)).toBe(false);
       expect(() => m.editPending(t.id, a.pendingId, 'late')).toThrowError(new SessionError('conflict', 'already delivered'));
       expect(() => m.removePending(t.id, a.pendingId)).toThrowError(new SessionError('conflict', 'already delivered'));
       expect(() => m.removePending(t.id, 'nope')).toThrowError(expect.objectContaining({ code: 'not-found' }));
       await waitFor(() => statusOf(m, t.id) === 'idle');
+      expect(echoes(t.id)).toContain('heard: a2');
+      expect(echoes(t.id).some((text) => text.includes('b'))).toBe(false);
     });
 
     it('rejects an empty edit and an 11th pending message', async () => {
@@ -619,13 +623,25 @@ describe('SessionManager', () => {
       expect(userMessages(t.id).some((e) => e.pendingId)).toBe(false);
     });
 
-    it('does not auto-send pending messages after an engine failure', async () => {
-      const { m } = await manager(new FakeEngine(1));
-      const t = await m.createThread({ channelId: 'general', options: opts, text: '#fail' });
-      const result = await m.send(t.id, 'after the failure').catch(() => null);
+    it('keeps pending messages untouched when the turn fails and does not send them again', async () => {
+      const started: string[][] = [];
+      let failTurn!: (error: Error) => void;
+      const engine: AgentEngine = {
+        name: 'failing',
+        startTurn: (input) => {
+          started.push(input.prompts.map((p) => p.prompt.text));
+          const done = new Promise<void>((_resolve, reject) => (failTurn = reject));
+          return { done, interrupt: async () => {} };
+        },
+      };
+      const { m } = await manager(engine);
+      const t = await m.createThread({ channelId: 'general', options: opts, text: 'first' });
+      await m.send(t.id, 'kept after error');
+      failTurn(new Error('boom'));
       await waitFor(() => statusOf(m, t.id) === 'error');
-      await new Promise((r) => setTimeout(r, 30));
-      if (result?.delivery === 'pending') expect(pendingCountOf(m, t.id)).toBe(1);
+      await settled();
+      expect(started).toEqual([['first']]);
+      expect(pendingCountOf(m, t.id)).toBe(1);
       expect(userMessages(t.id).some((e) => e.pendingId)).toBe(false);
     });
 
@@ -692,6 +708,75 @@ describe('SessionManager', () => {
       await waitFor(() => prompts.length === 2);
       expect(prompts[1]).toEqual(['raced']);
       expect(userMessages(t.id).find((e) => e.pendingId)).toMatchObject({ delivery: 'next-turn' });
+    });
+
+    it('delivers a message sent while waiting-approval at the first cut point after the decision', async () => {
+      const { m } = await manager();
+      const t = await m.createThread({ channelId: 'general', options: opts, text: '#tool #steps:4' });
+      const request = await waitFor(() => pendingApproval(t.id));
+      await m.send(t.id, 'while waiting');
+      await settled();
+      expect(userMessages(t.id).some((e) => e.pendingId)).toBe(false);
+      expect(statusOf(m, t.id)).toBe('waiting-approval');
+      m.respondApproval(request.approvalId, 'allow', undefined, 'once');
+      await waitFor(() => statusOf(m, t.id) === 'idle');
+      expect(userMessages(t.id).find((e) => e.pendingId)).toMatchObject({ text: 'while waiting', delivery: 'cut-point' });
+      expect(echoes(t.id)).toContain('heard: while waiting');
+    });
+
+    it('delivers each message exactly once and in order across cut points and turn end', async () => {
+      const { m } = await manager();
+      const t = await create(m, '#steps:3');
+      await m.send(t.id, 'one');
+      await waitFor(() => userMessages(t.id).some((e) => e.pendingId));
+      await m.send(t.id, 'two');
+      await waitFor(() => statusOf(m, t.id) === 'idle');
+      const delivered = userMessages(t.id).filter((e) => e.pendingId).map((e) => e.text);
+      expect(delivered).toEqual(['one', 'two']);
+      expect(echoes(t.id).filter((text) => text.endsWith('one')).length).toBeGreaterThan(0);
+      expect(pendingCountOf(m, t.id)).toBe(0);
+    });
+
+    it('lets the dev edit and remove messages that stayed pending after an interrupt', async () => {
+      const { m } = await manager();
+      const t = await create(m, '#slow');
+      const a = (await m.send(t.id, 'a')) as { pendingId: string };
+      const b = (await m.send(t.id, 'b')) as { pendingId: string };
+      await m.interrupt(t.id);
+      await waitFor(() => statusOf(m, t.id) === 'interrupted');
+      m.editPending(t.id, a.pendingId, 'a edited');
+      m.removePending(t.id, b.pendingId);
+      expect(pendingCountOf(m, t.id)).toBe(1);
+      await settled();
+      expect(m.flushPending(t.id)).toEqual({ delivery: 'started' });
+      await waitFor(() => echoes(t.id).includes('echo: a edited'));
+    });
+
+    it('records pending messages in the history so a reload or another tab sees the real state', async () => {
+      const { m } = await manager();
+      const t = await create(m, '#steps:5');
+      const { pendingId } = (await m.send(t.id, 'late')) as { pendingId: string };
+      await waitFor(() => statusOf(m, t.id) === 'idle');
+      const kinds = (await m.history(t.id, 0))
+        .map((h) => h.event)
+        .filter((e) => (e.type === 'pending.added' || e.type === 'user.message') && 'pendingId' in e && e.pendingId === pendingId)
+        .map((e) => e.type);
+      expect(kinds).toEqual(['pending.added', 'user.message']);
+      expect(pendingCountOf(m, t.id)).toBe(0);
+    });
+
+    it('a queued thread (write scope) accepts pending messages without changing its queued status', async () => {
+      const { m } = await manager();
+      const ch = 'spec:spec-dev-001-pagos';
+      const a = await m.createThread({ channelId: ch, options: opts, text: '#slow' });
+      const b = await m.createThread({ channelId: ch, options: opts, text: 'hola' });
+      expect(statusOf(m, b.id)).toBe('queued');
+      expect(await m.send(b.id, 'while queued')).toMatchObject({ delivery: 'pending' });
+      expect(statusOf(m, b.id)).toBe('queued');
+      expect(pendingCountOf(m, b.id)).toBe(1);
+      await m.interrupt(a.id);
+      await waitFor(() => statusOf(m, b.id) === 'idle');
+      expect(userMessages(b.id).find((e) => e.pendingId)).toMatchObject({ text: 'while queued', delivery: 'next-turn' });
     });
 
     it('reloads pending messages after a restart and does not send them', async () => {
@@ -787,6 +872,39 @@ describe('SessionManager', () => {
       const edit = await runAndAnswer(m, t.id, '#edit-tool', 'thread');
       expect(edit.always).toEqual({ kind: 'tool', tool: 'Edit' });
       await runExpectingNoApproval(m, t.id, '#edit-tool');
+    });
+
+    it('Approve once saves no rule and Deny keeps rejecting', async () => {
+      const { m } = await manager();
+      const t = await start(m, '#mcp');
+      await answer(m, t.id, 'once');
+      await idle(m, t.id);
+      expect(resolutions(t.id)[0]?.remembered).toBeUndefined();
+      sent.length = 0;
+      await m.send(t.id, '#mcp');
+      const second = await waitFor(() => pendingApproval(t.id));
+      m.respondApproval(second.approvalId, 'deny', 'no', 'thread');
+      await idle(m, t.id);
+      expect(resolutions(t.id)[0]).toMatchObject({ decision: 'deny', reason: 'no' });
+      expect(resolutions(t.id)[0]?.remembered).toBeUndefined();
+      expect(eventsOf(t.id).some((e) => e.type === 'tool.start')).toBe(false);
+    });
+
+    it('rules do not survive a bridge restart', async () => {
+      const first = await manager();
+      const t = await start(first.m, '#mcp');
+      await answer(first.m, t.id, 'thread');
+      await idle(first.m, t.id);
+      await first.store.flush();
+      const store = new ThreadStore(root);
+      await store.init();
+      stores.push(store);
+      const restarted = new SessionManager({ root, store, engine: new FakeEngine(1), snapshot: () => snapshot, broadcast: (e) => sent.push(e) });
+      await restarted.recover();
+      sent.length = 0;
+      await restarted.send(t.id, '#mcp');
+      await waitFor(() => pendingApproval(t.id));
+      await restarted.interrupt(t.id);
     });
 
     it('the rule lives only with its thread', async () => {
@@ -886,6 +1004,43 @@ describe('SessionManager', () => {
       expect(() => m.setLink(t.id, { kind: 'fix', fixId: 'FIX-nope' })).toThrowError(expect.objectContaining({ code: 'not-found' }));
       expect(() => m.setLink('missing', { kind: 'none' })).toThrowError(expect.objectContaining({ code: 'not-found' }));
       expect(m.list().find((x) => x.id === t.id)?.link).toEqual({ target: { kind: 'none' }, source: 'auto' });
+    });
+
+    it('shows legacy threads from a v1 threads.json with a legacy link', async () => {
+      const first = await manager();
+      const t = await first.m.createThread({ channelId: 'general', options: opts, text: 'hola' });
+      await idleOf(first.m, t.id);
+      await first.store.flush();
+      const file = path.join(root, '.sdd-studio/threads.json');
+      const stored = JSON.parse(await readFile(file, 'utf8')) as Array<Record<string, unknown>>;
+      for (const entry of stored) {
+        delete entry.link;
+        delete entry.pending;
+        entry.pendingCount = 0;
+      }
+      await writeFile(file, JSON.stringify(stored));
+      const store = new ThreadStore(root);
+      await store.init();
+      stores.push(store);
+      const migrated = new SessionManager({ root, store, engine: new FakeEngine(1), snapshot: () => snapshot, broadcast: (e) => sent.push(e) });
+      expect(migrated.list().find((x) => x.id === t.id)).toMatchObject({ link: { target: { kind: 'none' }, source: 'legacy' }, pendingCount: 0 });
+    });
+
+    it('creates the thread unlinked when there is no cycle nor fix to assign', async () => {
+      snapshot = { ...snapshot, cycles: [], fixes: [] };
+      const { m } = await manager();
+      const t = await m.createThread({ channelId: 'spec:spec-dev-001-pagos', options: opts, text: 'hola' });
+      expect(t.link).toEqual({ target: { kind: 'none' }, source: 'auto' });
+      await idleOf(m, t.id);
+    });
+
+    it('assigns against the current workspace state, so a new cycle on disk is used right away', async () => {
+      const base = snapshot;
+      const { m } = await manager();
+      snapshot = { ...base, cycles: [...base.cycles, { ...base.cycles[0]!, cycle: 'cycle-02' }] };
+      const t = await m.createThread({ channelId: 'spec:spec-dev-001-pagos', options: opts, text: 'hola' });
+      expect(t.link.target).toEqual({ kind: 'cycle', specId: 'spec-dev-001-pagos', cycle: 'cycle-02' });
+      await idleOf(m, t.id);
     });
 
     it('the link does not change the queue or the gate: a linked thread still shares the channel write scope', async () => {
