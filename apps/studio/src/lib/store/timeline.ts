@@ -1,4 +1,4 @@
-import type { AlwaysOffer, AlwaysRule, Author, SessionStatus, ThreadEvent, ThreadInfo, Usage } from '@sdd-studio/protocol';
+import type { AlwaysOffer, AlwaysRule, AttachmentRef, Author, PromptRefs, SessionStatus, ThreadEvent, ThreadInfo, Usage } from '@sdd-studio/protocol';
 
 export type TimelineItem =
   | {
@@ -6,6 +6,8 @@ export type TimelineItem =
       id: string;
       seq: number;
       text: string;
+      attachments?: AttachmentRef[];
+      refs?: PromptRefs;
       pendingId?: string;
       delivery?: 'cut-point' | 'next-turn';
       notDelivered?: boolean;
@@ -45,7 +47,14 @@ export type TimelineItem =
 export interface PendingItem {
   id: string;
   text: string;
+  attachments?: AttachmentRef[];
+  refs?: PromptRefs;
 }
+
+const withExtras = (e: { attachments?: AttachmentRef[]; refs?: PromptRefs }) => ({
+  ...(e.attachments?.length ? { attachments: e.attachments } : {}),
+  ...(e.refs ? { refs: e.refs } : {}),
+});
 
 export interface ThreadState {
   info: ThreadInfo | null;
@@ -86,13 +95,14 @@ export function applyThreadEvent(thread: ThreadState, seq: number, event: Thread
           id: `u:${seq}`,
           seq,
           text: event.text,
+          ...withExtras(event),
           ...(event.pendingId ? { pendingId: event.pendingId, delivery: event.delivery } : {}),
         },
       ];
       if (event.pendingId) pending = pending.filter((p) => p.id !== event.pendingId);
       break;
     case 'pending.added':
-      if (!pending.some((p) => p.id === event.pendingId)) pending = [...pending, { id: event.pendingId, text: event.text }];
+      if (!pending.some((p) => p.id === event.pendingId)) pending = [...pending, { id: event.pendingId, text: event.text, ...withExtras(event) }];
       break;
     case 'pending.edited':
       pending = pending.map((p) => (p.id === event.pendingId ? { ...p, text: event.text } : p));
@@ -104,7 +114,7 @@ export function applyThreadEvent(thread: ThreadState, seq: number, event: Thread
       const delivered = [...items].reverse().find((i) => i.kind === 'user' && i.pendingId === event.pendingId && !i.notDelivered);
       if (delivered?.kind === 'user') {
         items = items.map((i) => (i === delivered ? { ...delivered, notDelivered: true } : i));
-        if (!pending.some((p) => p.id === event.pendingId)) pending = [...pending, { id: event.pendingId, text: delivered.text }];
+        if (!pending.some((p) => p.id === event.pendingId)) pending = [...pending, { id: event.pendingId, text: delivered.text, ...withExtras(delivered) }];
       }
       break;
     }

@@ -139,3 +139,26 @@ describe('applyThreadEvent', () => {
     expect(resolved.items[0]).toMatchObject({ decision: 'allow', remembered: { kind: 'bash-prefix', prefix: 'git status' } });
   });
 });
+
+describe('attachments and refs in the timeline', () => {
+  const ref = { sha256: 'a'.repeat(64), kind: 'image' as const, mime: 'image/png' as const, name: 'a.png', size: 3, width: 2, height: 2 };
+  const refs = { agents: ['sdd-planner'], skills: [] };
+
+  it('carries attachments and refs on the user item and omits them when absent', () => {
+    const t = run([
+      [0, { type: 'user.message', text: 'mirá', attachments: [ref], refs }],
+      [1, { type: 'user.message', text: 'plano', attachments: [] }],
+    ]);
+    expect(t.items[0]).toMatchObject({ attachments: [ref], refs });
+    expect(t.items[1]).not.toHaveProperty('attachments');
+  });
+
+  it('carries attachments through pending.added, delivery and revert', () => {
+    let t = run([[0, { type: 'pending.added', pendingId: 'p1', text: 'uno', attachments: [ref], refs }]]);
+    expect(t.pending[0]).toEqual({ id: 'p1', text: 'uno', attachments: [ref], refs });
+    t = applyThreadEvent(t, 1, { type: 'user.message', text: 'uno', attachments: [ref], refs, pendingId: 'p1', delivery: 'cut-point' });
+    expect(t.pending).toEqual([]);
+    t = applyThreadEvent(t, 2, { type: 'pending.reverted', pendingId: 'p1', reason: 'interrupt' });
+    expect(t.pending[0]).toEqual({ id: 'p1', text: 'uno', attachments: [ref], refs });
+  });
+});
