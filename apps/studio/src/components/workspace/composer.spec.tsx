@@ -324,3 +324,16 @@ describe('Composer (connected)', () => {
     });
   });
 });
+
+describe('ComposerView focus', () => {
+  it('refocuses the textarea after sending without scrolling the page', async () => {
+    const focus = vi.spyOn(HTMLElement.prototype, 'focus');
+    const { box, onSubmit } = setup();
+    fireEvent.change(box, { target: { value: 'hola' } });
+    fireEvent.keyDown(box, { key: 'Enter' });
+    await waitFor(() => expect(onSubmit).toHaveBeenCalled());
+    await waitFor(() => expect(focus).toHaveBeenCalledWith({ preventScroll: true }));
+    expect(focus.mock.calls.every(([options]) => options?.preventScroll === true)).toBe(true);
+    focus.mockRestore();
+  });
+});

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { clearPairing, resolvePairing, type PairingInfo } from '@/lib/bridge/pairing';
 import { I18nProvider, useT } from '@/lib/i18n/i18n';
+import { AppShell } from './AppShell';
 import { BridgeProvider, useBridge } from './BridgeProvider';
 import { ConnectScreen } from './ConnectScreen';
 import { ConnectionBanner } from './ConnectionBanner';
@@ -30,10 +31,10 @@ export function Connected() {
     return <ConnectScreen error={message} />;
   }
   return (
-    <div className="flex h-full flex-col">
+    <AppShell>
       <ConnectionBanner connection={connection} syncError={syncError} onRetry={retrySync} />
       <Workspace />
-    </div>
+    </AppShell>
   );
 }
 

@@ -121,7 +121,7 @@ export function ComposerView(p: ComposerViewProps) {
   }, [text]);
   const wasPending = useRef(false);
   useEffect(() => {
-    if (wasPending.current && !pending) box.current?.focus();
+    if (wasPending.current && !pending) box.current?.focus({ preventScroll: true });
     wasPending.current = pending;
   }, [pending]);
   const submit = async () => {
