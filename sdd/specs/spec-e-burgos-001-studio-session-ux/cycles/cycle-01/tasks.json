@@ -1004,8 +1004,21 @@
         "TASK-030",
         "TASK-034"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/workspace/indicators.spec.tsx",
+        "apps/studio/src/components/workspace/approval-flow.spec.tsx",
+        "apps/studio/src/components/workspace/threadview.spec.tsx"
+      ],
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "tokens_in": 22000,
+        "tokens_out": 4000,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
     },
     {
       "id": "TASK-037",

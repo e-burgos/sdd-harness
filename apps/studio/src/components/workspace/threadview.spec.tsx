@@ -94,6 +94,18 @@ describe('ThreadView scrolling', () => {
     expect(screen.queryByRole('button', { name: 'Ir al final' })).toBeNull();
   });
 
+  it('keeps the reading position while new messages and streamed text arrive after scrolling up (CA-012.2)', () => {
+    const { store, scroller, geometry, threadId } = setup();
+    scrollTo(scroller, 100);
+    const receive = (seq: number, event: ThreadEvent) => act(() => store.getState().receive({ kind: 'thread.event', threadId, seq, event }));
+    geometry.scrollHeight = 1400;
+    receive(10, { type: 'message.start', messageId: 'm1', author });
+    receive(11, { type: 'message.delta', messageId: 'm1', text: 'streaming…' });
+    resizeAll();
+    expect(scroller.scrollTop).toBe(100);
+    expect(screen.getByRole('button', { name: 'Ir al final' })).toBeInTheDocument();
+  });
+
   it('hides the jump control while at the bottom', () => {
     const { scroller } = setup();
     scrollTo(scroller, 600);
