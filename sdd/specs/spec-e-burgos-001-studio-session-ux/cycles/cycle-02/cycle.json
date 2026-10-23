@@ -107,8 +107,8 @@
     ],
     "files_deleted": [],
     "usage": {
-      "tokens_in": 1720098,
-      "tokens_out": 241082,
+      "tokens_in": 1697571,
+      "tokens_out": 233812,
       "approx": true,
       "source": "declared-estimate",
       "by_agent": [
@@ -452,17 +452,19 @@
           "label": "revisión y cierre cycle-02 + fix CA-005.6/CA-004.5 (c50cf90)",
           "provider_model": "claude/opus",
           "effort": "medium",
-          "tokens_in": 140000,
-          "tokens_out": 28000,
-          "approx": true,
-          "source": "declared-estimate",
-          "recorded_at": "2026-10-23"
+          "tokens_in": 117473,
+          "tokens_out": 20730,
+          "approx": false,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-10-23",
+          "tokens_total": 138203,
+          "tool_uses": 50
         }
       ],
       "by_tier": {
         "claude/opus": {
-          "tokens_in": 1002488,
-          "tokens_out": 120498,
+          "tokens_in": 979961,
+          "tokens_out": 113228,
           "approx": true,
           "source": "declared-estimate"
         },
