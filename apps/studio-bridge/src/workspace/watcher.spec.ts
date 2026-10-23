@@ -1,6 +1,7 @@
 import { cp, mkdir, mkdtemp, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
+import { EventEmitter } from 'node:events';
 import chokidar from 'chokidar';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { copyFixture, FIXTURE_ROOT, waitFor } from '../test-utils/fixture';
@@ -146,5 +147,34 @@ describe('.claude catalog watching', () => {
     expect(options.depth).toBe(3);
     expect(options.ignored(path.join(root, '.claude/worktrees/wt'))).toBe(true);
     expect(options.ignored(path.join(root, '.claude/skills'))).toBe(false);
+  });
+
+  it('rescans on an interval to recover fs events the OS dropped', async () => {
+    await watcher?.close();
+    const silent = Object.assign(new EventEmitter(), { close: async () => undefined });
+    vi.spyOn(chokidar, 'watch').mockImplementation(() => {
+      setTimeout(() => silent.emit('ready'), 0);
+      return silent as never;
+    });
+    updates.length = 0;
+    watcher = await startWorkspaceWatcher({ root, debounceMs: 50, rescanIntervalMs: 40, onUpdate: (u) => updates.push(u) });
+    const json = JSON.parse(await readFile(tasksFile(), 'utf8'));
+    json.tasks[1].status = 'done';
+    await writeFile(tasksFile(), JSON.stringify(json));
+    const update = await waitFor(() => updates.find((u) => u.events.some((e) => e.botKind === 'task.status')));
+    expect(update.areas).toContain('specs');
+    vi.restoreAllMocks();
+  });
+
+  it('stops rescanning once closed', async () => {
+    await watcher?.close();
+    watcher = await startWorkspaceWatcher({ root, debounceMs: 50, rescanIntervalMs: 30, onUpdate: (u) => updates.push(u) });
+    await watcher.close();
+    updates.length = 0;
+    const json = JSON.parse(await readFile(tasksFile(), 'utf8'));
+    json.tasks[1].status = 'done';
+    await writeFile(tasksFile(), JSON.stringify(json));
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    expect(updates).toEqual([]);
   });
 });

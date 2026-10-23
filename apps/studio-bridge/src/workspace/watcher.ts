@@ -17,6 +17,7 @@ export interface WorkspaceWatcher {
   close(): Promise<void>;
 }
 
+export const DEFAULT_RESCAN_INTERVAL_MS = 30_000;
 const IGNORED_DIRS = ['docs', 'node_modules', 'documentation'];
 const CLAUDE_CATALOG_DIRS = new Set(['agents', 'skills']);
 const CLAUDE_WATCH_DEPTH = 3;
@@ -37,6 +38,7 @@ const untilReady = (watcher: FSWatcher): Promise<void> =>
 export async function startWorkspaceWatcher(opts: {
   root: string;
   debounceMs?: number;
+  rescanIntervalMs?: number;
   onUpdate: (update: WorkspaceUpdate) => void;
   onError?: (error: unknown) => void;
 }): Promise<WorkspaceWatcher> {
@@ -72,6 +74,11 @@ export async function startWorkspaceWatcher(opts: {
     }, opts.debounceMs ?? 200);
   };
 
+  const rescanTimer = setInterval(() => {
+    enqueue().catch((error) => opts.onError?.(error));
+  }, opts.rescanIntervalMs ?? DEFAULT_RESCAN_INTERVAL_MS);
+  rescanTimer.unref();
+
   const sddDir = path.join(opts.root, 'sdd');
   const ignoredRoots = IGNORED_DIRS.map((d) => path.join(sddDir, d));
   const isIgnored = (p: string): boolean =>
@@ -92,6 +99,7 @@ export async function startWorkspaceWatcher(opts: {
   const closeAll = () => Promise.all(watchers.map((watcher) => watcher.close()));
   await Promise.all(watchers.map(untilReady)).catch(async (error) => {
     closed = true;
+    clearInterval(rescanTimer);
     await closeAll();
     throw error;
   });
@@ -102,6 +110,7 @@ export async function startWorkspaceWatcher(opts: {
     refresh: () => enqueue(),
     close: async () => {
       closed = true;
+      clearInterval(rescanTimer);
       if (timer) clearTimeout(timer);
       await closeAll();
       await queue;
