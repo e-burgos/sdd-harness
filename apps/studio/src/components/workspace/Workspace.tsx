@@ -30,7 +30,11 @@ export function Workspace() {
   );
   return (
     <div className="grid min-h-0 flex-1 grid-cols-[260px_minmax(0,1fr)_320px]">
-      <Sidebar activeChannel={view.channelId} onSelect={(channelId) => setView({ channelId, threadId: null })} />
+      <Sidebar
+        view={view}
+        onSelectChannel={(channelId) => setView({ channelId, threadId: null })}
+        onOpenThread={(thread) => setView({ channelId: thread.channelId, threadId: thread.id })}
+      />
       <main className="min-h-0 min-w-0 overflow-hidden">
         {view.threadId ? (
           <ThreadView threadId={view.threadId} onBack={() => setView({ ...view, threadId: null })} composer={composer} />

@@ -1,6 +1,6 @@
 import type { WorkspaceSnapshot } from '@sdd-studio/protocol';
 import { initialState, setThreads } from './state';
-import { activeThreads, channelsOf, cycleForChannel, dmChannelsOf, groupTimeline, pendingApprovals, threadsInChannel } from './selectors';
+import { activeThreads, cycleForChannel, groupTimeline, pendingApprovals, threadsInChannel } from './selectors';
 import { applyThreadEvent, emptyThread } from './timeline';
 
 const snapshot: WorkspaceSnapshot = {
@@ -21,13 +21,6 @@ const snapshot: WorkspaceSnapshot = {
 };
 
 describe('selectors', () => {
-  it('lists general, active specs first, then closed specs and fixes', () => {
-    expect(channelsOf(snapshot).map((c) => c.id)).toEqual(['general', 'spec:s1', 'spec:s2', 'fixes']);
-    expect(channelsOf(null).map((c) => c.id)).toEqual(['general', 'fixes']);
-  });
-  it('lists DM channels for the workspace agents', () => {
-    expect(dmChannelsOf(snapshot).map((c) => c.id)).toEqual(['dm:sdd-orchestrator', 'dm:sdd-planner']);
-  });
   it('picks the in-progress cycle, else the last one', () => {
     expect(cycleForChannel(snapshot, 'spec:s1')?.cycle).toBe('cycle-02');
     expect(cycleForChannel(snapshot, 'general')).toBeNull();

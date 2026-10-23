@@ -149,7 +149,7 @@ export function buildNavTree(snapshot: WorkspaceSnapshot | null, threads: Thread
     if (!entry) {
       entry = {
         spec: draft({ id: `spec:${specId}`, kind: 'spec', label: specId, channelId: channelForSpec(specId), defaultCollapsed: true }),
-        none: draft({ id: `spec-none:${specId}`, kind: 'spec-none', label: specId, defaultCollapsed: true }),
+        none: draft({ id: `spec-none:${specId}`, kind: 'spec-none', label: specId }),
         cycles: new Map(),
       };
       specDrafts.set(specId, entry);
