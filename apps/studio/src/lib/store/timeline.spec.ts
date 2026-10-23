@@ -131,4 +131,11 @@ describe('applyThreadEvent', () => {
       expect(Object.keys(t.items[0]!)).toEqual(['kind', 'id', 'seq', 'text']);
     });
   });
+
+  it('carries the Always offer and the remembered rule through the approval lifecycle', () => {
+    const requested = run([[0, { type: 'approval.requested', approvalId: 'p1', author: main, tool: 'Bash', summary: '$ git status', always: { kind: 'bash-prefix', prefix: 'git status' } }]]);
+    expect(requested.items[0]).toMatchObject({ always: { kind: 'bash-prefix', prefix: 'git status' }, decision: 'pending' });
+    const resolved = applyThreadEvent(requested, 1, { type: 'approval.resolved', approvalId: 'p1', decision: 'allow', remembered: { kind: 'bash-prefix', prefix: 'git status' } });
+    expect(resolved.items[0]).toMatchObject({ decision: 'allow', remembered: { kind: 'bash-prefix', prefix: 'git status' } });
+  });
 });

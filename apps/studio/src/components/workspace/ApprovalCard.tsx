@@ -4,10 +4,22 @@ import { ShieldWarning } from '@phosphor-icons/react';
 import { useEffect, useRef, useState } from 'react';
 import { agentMeta } from '@/lib/agents';
 import { useT } from '@/lib/i18n/i18n';
+import type { AlwaysOffer, AlwaysRule } from '@sdd-studio/protocol';
+import type { TFunction } from '@/lib/i18n/i18n';
 import type { TimelineItem } from '@/lib/store/timeline';
 
 type Approval = Extract<TimelineItem, { kind: 'approval' }>;
 const UNLOCK_MS = 20_000;
+export const describeAlwaysRule = (rule: AlwaysRule, t: TFunction): string =>
+  rule.kind === 'tool'
+    ? t('approval.always.tool', { tool: rule.tool })
+    : rule.kind === 'mcp'
+      ? t('approval.always.mcp', { tool: rule.tool })
+      : t('approval.always.bash', { prefix: rule.prefix });
+
+const noRuleReason = (offer: Extract<AlwaysOffer, { kind: 'none' }>) =>
+  offer.reason === 'gate-warning' ? 'approval.always.none.gate' : 'approval.always.none.uncalculable';
+
 export type RespondFn = (decision: 'allow' | 'deny', scope: 'once' | 'thread', reason?: string) => Promise<unknown>;
 
 export function ApprovalCard({ item, onRespond }: { item: Approval; onRespond: RespondFn }) {
@@ -44,6 +56,9 @@ export function ApprovalCard({ item, onRespond }: { item: Approval; onRespond: R
       setError(e instanceof Error ? e.message : String(e));
     }
   };
+  const offer = item.always;
+  const rule = offer && offer.kind !== 'none' ? offer : null;
+  const ruleHintId = `always-${item.id}`;
   const deny = () => void send('deny', 'once', reason.trim() || undefined);
   const ring = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-50';
   return (
@@ -69,14 +84,29 @@ export function ApprovalCard({ item, onRespond }: { item: Approval; onRespond: R
       {error && (
         <p role="alert" className="mt-2 text-xs text-roseish">{error}</p>
       )}
+      {pending && rule && (
+        <p id={ruleHintId} data-testid="always-scope" className="mt-3 text-xs text-ink-300">
+          {t('approval.always.scope', { rule: describeAlwaysRule(rule, t) })}
+        </p>
+      )}
+      {pending && offer?.kind === 'none' && (
+        <p data-testid="always-unavailable" className="mt-3 text-xs text-ink-300">{t(noRuleReason(offer))}</p>
+      )}
       {pending ? (
         <div className="mt-3 flex flex-wrap items-center gap-2">
           <button className={`rounded-md bg-accent-500 ${ring} px-3 py-1.5 text-sm font-medium text-ink-950 hover:bg-accent-400`} disabled={sending} onClick={() => void send('allow', 'once', undefined)}>
             {t('approval.allow')}
           </button>
-          <button className={`rounded-md border border-ink-700 px-3 py-1.5 text-sm hover:bg-ink-800 ${ring}`} disabled={sending} onClick={() => void send('allow', 'thread', undefined)}>
-            {t('approval.always')}
-          </button>
+          {rule && (
+            <button
+              className={`rounded-md border border-ink-700 px-3 py-1.5 text-sm hover:bg-ink-800 ${ring}`}
+              aria-describedby={ruleHintId}
+              disabled={sending}
+              onClick={() => void send('allow', 'thread', undefined)}
+            >
+              {t('approval.always')}
+            </button>
+          )}
           <input
             className={`min-w-0 flex-1 basis-40 rounded-md border border-ink-700 bg-ink-950 px-2 py-1.5 text-sm ${ring}`}
             placeholder={t('approval.reason')}
@@ -100,6 +130,7 @@ export function ApprovalCard({ item, onRespond }: { item: Approval; onRespond: R
         <p className={`mt-3 text-xs ${item.decision === 'allow' ? 'text-accent-300' : 'text-roseish'}`}>
           {item.decision === 'allow' ? t('approval.allowed') : t('approval.denied')}
           {item.reason ? ` — ${item.reason}` : ''}
+          {item.remembered && <span data-testid="always-remembered">{` — ${t('approval.remembered', { rule: describeAlwaysRule(item.remembered, t) })}`}</span>}
         </p>
       )}
     </div>

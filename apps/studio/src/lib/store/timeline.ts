@@ -1,4 +1,4 @@
-import type { Author, SessionStatus, ThreadEvent, ThreadInfo, Usage } from '@sdd-studio/protocol';
+import type { AlwaysOffer, AlwaysRule, Author, SessionStatus, ThreadEvent, ThreadInfo, Usage } from '@sdd-studio/protocol';
 
 export type TimelineItem =
   | {
@@ -33,6 +33,8 @@ export type TimelineItem =
       input?: string;
       inputTruncated?: boolean;
       gateWarning?: string;
+      always?: AlwaysOffer;
+      remembered?: AlwaysRule;
       decision: 'pending' | 'allow' | 'deny';
       reason?: string;
     }
@@ -145,12 +147,13 @@ export function applyThreadEvent(thread: ThreadState, seq: number, event: Thread
           input: event.input,
           inputTruncated: event.inputTruncated,
           gateWarning: event.gateWarning,
+          always: event.always,
           decision: 'pending',
         },
       ];
       break;
     case 'approval.resolved':
-      items = update(items, 'approval', event.approvalId, (a) => ({ ...a, decision: event.decision, reason: event.reason }));
+      items = update(items, 'approval', event.approvalId, (a) => ({ ...a, decision: event.decision, reason: event.reason, remembered: event.remembered }));
       break;
     case 'turn.end':
       items = [...items, { kind: 'usage', id: `usage:${seq}`, seq, usage: event.usage }];
