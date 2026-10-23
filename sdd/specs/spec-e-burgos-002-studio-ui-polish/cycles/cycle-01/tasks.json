@@ -1,0 +1,125 @@
+{
+  "$schema": "../../../../schemas/cycle-tasks.schema.json",
+  "spec": "spec-e-burgos-002-studio-ui-polish",
+  "cycle": 1,
+  "module": "studio-ui-polish",
+  "apps": [
+    "apps/studio",
+    "apps/studio-bridge"
+  ],
+  "flow": "lite",
+  "user_stories_generated": true,
+  "prerequisites": {
+    "tasks_generated": true
+  },
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "Shell anclado al viewport y focus con preventScroll",
+      "user_stories": [
+        "US-1"
+      ],
+      "estimation_hours": 2,
+      "story_points": 2,
+      "depends_on": [],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-002",
+      "title": "Dedupe de eventos bot consecutivos idénticos (puente y web)",
+      "user_stories": [
+        "US-2"
+      ],
+      "estimation_hours": 2,
+      "story_points": 2,
+      "depends_on": [],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-003",
+      "title": "Menú @: agentes primero y sin archivos por subsecuencia débil",
+      "user_stories": [
+        "US-3"
+      ],
+      "estimation_hours": 2,
+      "story_points": 2,
+      "depends_on": [],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-004",
+      "title": "Enter sobre comando o skill ya completo lo envía directo",
+      "user_stories": [
+        "US-3"
+      ],
+      "estimation_hours": 1,
+      "story_points": 1,
+      "depends_on": [],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-005",
+      "title": "Re-escaneo periódico del workspace en el watcher del puente",
+      "user_stories": [
+        "US-4"
+      ],
+      "estimation_hours": 2,
+      "story_points": 2,
+      "depends_on": [],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-006",
+      "title": "Sidebar y panel derecho colapsables con estado en localStorage",
+      "user_stories": [
+        "US-5"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-007",
+      "title": "Composer: altura máxima con scroll interno y atajos visibles",
+      "user_stories": [
+        "US-5"
+      ],
+      "estimation_hours": 2,
+      "story_points": 2,
+      "depends_on": [],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-008",
+      "title": "ErrorBoundary de React con fallback y botón de recargar",
+      "user_stories": [
+        "US-5"
+      ],
+      "estimation_hours": 2,
+      "story_points": 2,
+      "depends_on": [],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-009",
+      "title": "Tarjeta de aprobación: jerarquía visual e input largo colapsado",
+      "user_stories": [
+        "US-5"
+      ],
+      "estimation_hours": 2,
+      "story_points": 2,
+      "depends_on": [],
+      "status": "pending",
+      "files": []
+    }
+  ]
+}

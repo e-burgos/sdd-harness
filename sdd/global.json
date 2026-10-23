@@ -17,7 +17,18 @@
       "completed_at": "2026-10-23"
     }
   ],
-  "in_progress_modules": [],
+  "in_progress_modules": [
+    {
+      "module": "studio-ui-polish",
+      "spec": "spec-e-burgos-002-studio-ui-polish",
+      "apps": [
+        "apps/studio",
+        "apps/studio-bridge"
+      ],
+      "description": "Pulido de UI de SDD Studio: viewport anclado, eventos del bot sin duplicar, menú @ y paneles colapsables.",
+      "cycles_completed": 0
+    }
+  ],
   "pending_modules": [],
   "monorepo": {
     "tool": "none (multi-app repo)",

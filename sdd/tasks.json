@@ -30,6 +30,21 @@
           "tasks_done": 25
         }
       }
+    },
+    "spec-e-burgos-002-studio-ui-polish": {
+      "cycles": {
+        "cycle-01": {
+          "file": "sdd/specs/spec-e-burgos-002-studio-ui-polish/cycles/cycle-01/tasks.json",
+          "module": "studio-ui-polish",
+          "apps": [
+            "apps/studio",
+            "apps/studio-bridge"
+          ],
+          "status": "in-progress",
+          "tasks_total": 9,
+          "tasks_done": 0
+        }
+      }
     }
   }
 }
