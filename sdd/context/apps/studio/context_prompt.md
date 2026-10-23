@@ -1,5 +1,7 @@
 # Context prompt — apps/studio
 
+> Última actualización: cycle-01 (spec-e-burgos-001-studio-session-ux) | Fecha: 2026-10-23
+
 > Entry point para agentes y desarrolladores trabajando en `sdd-studio-web`.
 > Leer este documento antes de realizar cambios en la UI, componentes de workspace o stores de Zustand.
 
@@ -11,11 +13,11 @@ Es la aplicación web frontend de **SDD Studio**: una interfaz tipo Slack que se
 
 - **Página principal y emparejamiento:** `src/app/w/page.tsx` y `src/components/ConnectScreen.tsx`.
 - **Proveedor de WebSocket:** `src/components/BridgeProvider.tsx` y cliente en `src/lib/bridge/client.ts`.
-- **Layout del Workspace:** `src/components/workspace/WorkspaceApp.tsx` y `Sidebar.tsx`.
-- **Hilos y Streaming:** `src/components/workspace/Timeline.tsx` y `ChannelView.tsx`.
+- **Layout del Workspace:** `src/components/workspace/WorkspaceApp.tsx`, `Sidebar.tsx` y el árbol `NavTree.tsx` (modelo puro en `src/lib/store/nav-tree.ts`).
+- **Hilos y Streaming:** `src/components/workspace/Timeline.tsx`, `ChannelView.tsx`, `Composer.tsx`, `PendingMessages.tsx` y `ThreadLinkPicker.tsx`.
 - **Aprobaciones de herramientas:** `src/components/workspace/ApprovalCard.tsx`.
 - **Panel derecho (Snapshot):** `src/components/workspace/RightPanel.tsx`.
-- **Stores de Zustand:** `src/lib/store/` (`timeline.ts`, `state.ts`, `activity.ts`, `selectors.ts`).
+- **Stores de Zustand:** `src/lib/store/` (`timeline.ts`, `state.ts`, `activity.ts`, `selectors.ts`, `nav-tree.ts`); hooks en `src/lib/` (`use-collapsed-state.ts`, `use-stick-to-bottom.ts`).
 
 ## Cómo desarrollar y testear localmente
 
@@ -39,3 +41,4 @@ Comandos de verificación:
 
 - **Modo exportación estática:** Recuerda que la build de producción (`STUDIO_EXPORT=1`) genera HTML/JS puro en `out/` para desplegarse en Cloudflare Pages o servirse mediante el bridge. Evita APIs de Node server en rutas de frontend.
 - **Tipos sincronizados:** Todo cambio en la estructura de mensajes debe coordinarse con `libs/studio-protocol`.
+- **Protocolo en `next dev`:** una rama que cambia el protocolo rompe el handshake con el puente publicado vía HMR; no usarla para el Studio de uso diario.

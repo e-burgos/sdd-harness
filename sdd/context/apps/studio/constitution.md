@@ -1,6 +1,6 @@
 # Constitución — apps/studio
 
-> Versión 1.0 | Última actualización: 2026-10-23 (profundización de contexto)
+> Versión 1.1 | Última actualización: cycle-01 (spec-e-burgos-001-studio-session-ux) | Fecha: 2026-10-23
 
 ## 1. Propósito y Alcance
 
@@ -11,7 +11,7 @@
 
 ## 2. Stack Tecnológico
 
-- **Framework:** Next.js (App Router, versión 15 con static export `STUDIO_EXPORT=1`).
+- **Framework:** Next.js 16 (`next` 16.4.3, App Router, static export con `STUDIO_EXPORT=1`).
 - **Librería UI:** React 19, Tailwind CSS (PostCSS), `@phosphor-icons/react` (iconografía del kit).
 - **Tipografía:** `@fontsource-variable/space-grotesk` y `@fontsource-variable/jetbrains-mono`.
 - **Estado Global:** `zustand` estructurado en slices modulares (`activity`, `timeline`, `state`, `selectors`).
@@ -32,20 +32,26 @@
 
 ### 3.2 Componentes del Workspace (`src/components/workspace/`)
 - `WorkspaceApp.tsx` & `Workspace.tsx`: Contenedor principal con división en columnas (Sidebar, ChannelView / ThreadView, RightPanel).
-- `Sidebar.tsx`: Lista de canales organizados por: canales del sistema (`#general`, `#fixes`), canales de especificaciones activas (`#spec:...`) y DMs con agentes (`Orquestador`, `Funcional`, `Planner`, `Arquitecto`, `Implementadores`, `Reviewer`, `Steward`). Incluye avatares con estados de presencia en vivo.
+- `Sidebar.tsx` (`SidebarView`): header y pie fijos con un único árbol con scroll entre ambos.
+- `NavTree.tsx` (`SectionView`, `NavNodeView`, `ActiveThreads`): árbol colapsable con teclado y estado persistido. Secciones: HILOS ACTIVOS (waiting-approval primero, badge de pendientes, aviso de estado desactualizado sin conexión), CANALES (sistema; sin canales `spec:*`), SPECS (spec → ciclo → hilos, nodo "Sin ciclo"), FIXES (abiertos + 5 cerrados + "anteriores") y AGENTES (DMs con presencia). El caret colapsa; el nombre abre el canal.
 - `ChannelView.tsx`: Vista del canal con flujo de hilos y actividad automatizada de bots.
 - `Timeline.tsx`: Secuencia cronológica de mensajes, ejecuciones de subagentes y llamadas a herramientas (agrupadas con diffs desplegables).
-- `Composer.tsx`: Input de texto para el desarrollador con selector dinámico de modelo (`kit`, `haiku`, `sonnet`, `opus`, `fable`), nivel de pensamiento/effort y modo de permiso (`ask`, `acceptEdits`, `plan`).
-- `ApprovalCard.tsx`: Widget de decisión que aparece cuando un agente solicita ejecutar una herramienta protegida. Muestra el comando o diff de código exacto, advertencias del SPEC GATE y botones para Aprobar / Denegar (con opción de recordar para el hilo).
+- `Composer.tsx`: Input de texto con selector de modelo (`kit`, `haiku`, `sonnet`, `opus`, `fable`), effort y modo de permiso (`ask`, `acceptEdits`, `plan`). Borrador de texto por hilo (se pierde al recargar); botón Queue mientras la sesión trabaja y "Send pending" tras un interrupt.
+- `PendingMessages.tsx`: bandeja "Pending messages" del hilo con editar/quitar; el mensaje entregado se rotula "Delivered as the next turn" cuando no entró en un punto de corte.
+- `ThreadLinkPicker.tsx`: selector "Linked to" para reasignar el hilo a un ciclo o fix.
+- `ActivityIndicator.tsx`: indicadores animados (running / waiting-approval / queued) en hilo, fila y avatar; estáticos con `prefers-reduced-motion`.
+- `ApprovalCard.tsx`: Widget de decisión que aparece cuando un agente solicita ejecutar una herramienta protegida. Muestra el comando o diff exacto, advertencias del SPEC GATE y Aprobar / Denegar. "Always (thread)" muestra la regla que recordaría (herramienta, tool MCP o prefijo Bash) y se oculta cuando no es segura (aviso del gate o comando no calculable).
 - `RightPanel.tsx`: Panel lateral con resumen del repo: estado del kit, specs en vuelo, avance de tareas del ciclo activo, métricas de tokens y costos acumulados en la sesión.
 
 ### 3.3 Gestión de Estado y Red (`src/lib/`)
-- `bridge/client.ts`: Cliente WebSocket reactivo. Maneja reconexión automática, cola de mensajes pendientes, promesas asociadas a comandos de petición-respuesta y despacho de `ServerEvent` hacia el store.
+- `bridge/client.ts`: Cliente WebSocket reactivo. Reconexión automática, cola de mensajes pendientes, promesas de petición-respuesta, despacho de `ServerEvent` al store y guarda de tamaño de frame (`FRAME_BUDGET_BYTES`). `error-text.ts` traduce los errores de versión de protocolo.
+- `use-collapsed-state.ts`: colapso del árbol en `localStorage` (`sdd-studio.sidebar.v1:<project>`, overrides podados). `use-stick-to-bottom.ts`: auto-scroll con ResizeObserver (umbral 48 px). Los hooks viven en `src/lib/`, no en `src/hooks/`.
 - `store/`:
-  - `timeline.ts`: Almacena hilos de mensajes, deltas de streaming, llamadas a herramientas en vuelo y aprobaciones pendientes.
+  - `timeline.ts`: Hilos, deltas de streaming, tool calls en vuelo, aprobaciones pendientes, mensajes pendientes y reglas `remembered`.
   - `activity.ts`: Registra eventos generales del workspace y actividad de bots.
-  - `state.ts`: Estado de conexión, snapshot del workspace (`WorkspaceSnapshot`), presencia y canal activo.
-  - `selectors.ts`: Selectores memoizados para UI limpia.
+  - `state.ts`: Estado de conexión, snapshot (`WorkspaceSnapshot`), presencia, canal activo y slice `drafts` (`draftKey`/`setDraft`).
+  - `selectors.ts`: Selectores memoizados (incluye `activeThreads`).
+  - `nav-tree.ts`: `buildNavTree(snapshot, threads, view)` puro; los ids de nodo son las claves de colapso.
 
 ## 4. Comandos de Trabajo
 
@@ -61,3 +67,8 @@
 1. **Arquitectura Zero-Credentials:** La aplicación web NUNCA debe almacenar ni enviar credenciales de Anthropic o de proveedores LLM. Todas las solicitudes viajan exclusivamente a la IP local `127.0.0.1` del bridge.
 2. **Exportación Estática Obligatoria:** La aplicación web debe mantenerse compatible con `next export` (`output: 'export'`). No utilizar Server Components que dependan de runtime de servidor Node.js dinámico en runtime de producción.
 3. **Consistencia de Protocolo:** Toda interfaz de datos consumida desde el bridge debe provenir de `@sdd-studio/protocol`. Prohibido definir esquemas paralelos ad-hoc en el frontend.
+4. **Protocolo y `next dev`:** no operar el Studio de uso diario con `next dev` desde una rama que cambia el protocolo: el HMR carga el protocolo nuevo y rompe el handshake con el puente publicado.
+
+## 6. Qué sigue
+
+- spec-e-burgos-001 cycle-02: adjuntos en el Composer, menú `@` (archivos y agentes) y `/` (skills/prompts), borrador con adjuntos por hilo.
