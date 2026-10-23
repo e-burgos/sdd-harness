@@ -3,7 +3,7 @@ import { defaultThreadOptions } from '@sdd-studio/protocol';
 import { I18nProvider } from '@/lib/i18n/i18n';
 import { createStudioStore } from '@/lib/store/store';
 import { BridgeContext, type BridgeContextValue } from '../BridgeProvider';
-import { Composer, ComposerView } from './Composer';
+import { Composer, ComposerView, TEXTAREA_MAX_HEIGHT_PX } from './Composer';
 
 function setup(extra: Partial<React.ComponentProps<typeof ComposerView>> = {}) {
   const onSubmit = vi.fn(() => Promise.resolve(true));
@@ -335,5 +335,25 @@ describe('ComposerView focus', () => {
     await waitFor(() => expect(focus).toHaveBeenCalledWith({ preventScroll: true }));
     expect(focus.mock.calls.every(([options]) => options?.preventScroll === true)).toBe(true);
     focus.mockRestore();
+  });
+});
+
+describe('ComposerView sizing and hints', () => {
+  it('grows with its content up to a maximum and scrolls inside beyond it', () => {
+    const scrollHeight = vi.spyOn(HTMLElement.prototype, 'scrollHeight', 'get');
+    const { box } = setup();
+    scrollHeight.mockReturnValue(120);
+    fireEvent.change(box, { target: { value: 'una\ndos\ntres' } });
+    expect((box as HTMLTextAreaElement).style.height).toBe('120px');
+    scrollHeight.mockReturnValue(900);
+    fireEvent.change(box, { target: { value: 'x\n'.repeat(60) } });
+    expect((box as HTMLTextAreaElement).style.height).toBe(`${TEXTAREA_MAX_HEIGHT_PX}px`);
+    expect(box).toHaveClass('overflow-y-auto', 'resize-none');
+    scrollHeight.mockRestore();
+  });
+
+  it('shows the keyboard shortcuts', () => {
+    setup();
+    expect(screen.getByTestId('composer-hints')).toHaveTextContent('Shift+Enter');
   });
 });

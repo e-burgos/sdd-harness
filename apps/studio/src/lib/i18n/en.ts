@@ -203,5 +203,6 @@ export const en = {
   'panel.sidebar.expand': 'Expand menu',
   'panel.right.collapse': 'Collapse panel',
   'panel.right.expand': 'Expand panel',
+  'composer.hints': 'Enter sends · Shift+Enter new line · @ mentions files and agents · / commands and skills',
   'lang.switch': 'Español',
 } satisfies Record<keyof Dict, string>;

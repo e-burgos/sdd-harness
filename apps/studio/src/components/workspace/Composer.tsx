@@ -43,6 +43,7 @@ const RunResult = z.object({ runId: z.string().min(1) });
 const FileResult = z.object({ path: z.string(), content: z.string() });
 
 const MAX_MESSAGE = 100_000;
+export const TEXTAREA_MAX_HEIGHT_PX = 192;
 const ATTACH_ACCEPT = ['image/png', 'image/jpeg', 'image/webp', 'image/gif', 'application/pdf', ...TEXT_ATTACHMENT_EXTENSIONS.map((e) => `.${e}`)].join(',');
 const BUSY_STATUSES = new Set(['running', 'waiting-approval', 'queued']);
 
@@ -119,6 +120,12 @@ export function ComposerView(p: ComposerViewProps) {
     box.current.setSelectionRange(nextCursor.current, nextCursor.current);
     nextCursor.current = null;
   }, [text]);
+  useLayoutEffect(() => {
+    const el = box.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${Math.min(el.scrollHeight, TEXTAREA_MAX_HEIGHT_PX)}px`;
+  }, [text]);
   const wasPending = useRef(false);
   useEffect(() => {
     if (wasPending.current && !pending) box.current?.focus({ preventScroll: true });
@@ -183,7 +190,7 @@ export function ComposerView(p: ComposerViewProps) {
           {mentionsOn && <MentionMenu menu={menu} />}
           <textarea
             {...(mentionsOn ? menu.comboboxProps : {})}
-            className="block max-h-48 min-h-[44px] w-full resize-y bg-transparent px-3 py-2 text-sm outline-none"
+            className="block min-h-[44px] w-full resize-none overflow-y-auto bg-transparent px-3 py-2 text-sm outline-none"
             aria-label={t('composer.placeholder')}
             placeholder={t('composer.placeholder')}
             ref={box}
@@ -274,6 +281,7 @@ export function ComposerView(p: ComposerViewProps) {
             </button>
           </div>
         </div>
+        <p data-testid="composer-hints" className="mt-1.5 px-1 text-[11px] text-ink-500">{t('composer.hints')}</p>
       </div>
     </div>
   );

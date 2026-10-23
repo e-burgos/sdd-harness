@@ -201,6 +201,7 @@ export const es = {
   'panel.sidebar.expand': 'Expandir menú',
   'panel.right.collapse': 'Colapsar panel',
   'panel.right.expand': 'Expandir panel',
+  'composer.hints': 'Enter envía · Shift+Enter nueva línea · @ menciona archivos y agentes · / comandos y skills',
   'lang.switch': 'English',
 };
 export type Dict = typeof es;
