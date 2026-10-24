@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useBridge, useStudio } from '../BridgeProvider';
 import { agentMeta } from '@/lib/agents';
-import { FileResult } from '@sdd-studio/protocol';
 
 interface ModelStat {
   name: string;
@@ -112,7 +111,7 @@ export function LiveTelemetryHUD() {
           const tasksPath = `sdd/specs/${cycle.specId}/cycles/${cycle.cycle}/tasks.json`;
 
           try {
-            const rawCycle = FileResult.parse(await client.request({ cmd: 'workspace.readFile', path: cyclePath }));
+            const rawCycle = (await client.request({ cmd: 'workspace.readFile', path: cyclePath })) as { content: string };
             const cycleData = JSON.parse(rawCycle.content);
             const usage = cycleData.metrics?.usage;
 
@@ -138,7 +137,7 @@ export function LiveTelemetryHUD() {
           }
 
           try {
-            const rawTasks = FileResult.parse(await client.request({ cmd: 'workspace.readFile', path: tasksPath }));
+            const rawTasks = (await client.request({ cmd: 'workspace.readFile', path: tasksPath })) as { content: string };
             const tasksData = JSON.parse(rawTasks.content);
             for (const t of tasksData.tasks ?? []) {
               hours += t.estimation_hours ?? t.story_points ?? 0;
@@ -150,7 +149,7 @@ export function LiveTelemetryHUD() {
 
         // 2. Process fixes
         try {
-          const rawFixes = FileResult.parse(await client.request({ cmd: 'workspace.readFile', path: 'sdd/fixes.json' }));
+          const rawFixes = (await client.request({ cmd: 'workspace.readFile', path: 'sdd/fixes.json' })) as { content: string };
           const fixesData = JSON.parse(rawFixes.content);
 
           for (const f of fixesData.fixes ?? []) {
@@ -204,7 +203,7 @@ export function LiveTelemetryHUD() {
               id: agId,
               name: meta.name,
               pct: Math.max(1, Math.round((toks / grandTokens) * 100)),
-              color: meta.palette.primary,
+              color: meta.color,
             };
           })
           .sort((a, b) => b.pct - a.pct);

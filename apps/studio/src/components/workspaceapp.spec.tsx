@@ -7,21 +7,17 @@ import { Connected } from './WorkspaceApp';
 
 const mockSnapshot: WorkspaceSnapshot = {
   project: 'sdd-harness',
+  profile: 'team',
   kitVersion: '0.16.0',
   specs: [
     {
       id: 'spec-e-burgos-003-studio-mission-control',
       title: 'Studio Mission Control',
       status: 'in-progress',
-      cycles: [
-        {
-          cycle: 'cycle-01',
-          status: 'in-progress',
-          flow: 'lite',
-          tasksCount: 7,
-          tasksCompleted: 1,
-        },
-      ],
+      folder: 'sdd/specs/spec-e-burgos-003-studio-mission-control',
+      module: 'studio-mission-control',
+      app: 'studio',
+      dependsOn: [],
     },
   ],
   cycles: [
@@ -30,29 +26,28 @@ const mockSnapshot: WorkspaceSnapshot = {
       cycle: 'cycle-01',
       status: 'in-progress',
       flow: 'lite',
-      tasksCount: 7,
-      tasksCompleted: 1,
+      apps: ['studio'],
+      tasks: [],
+      tasksTotal: 7,
+      tasksDone: 1,
     },
   ],
   fixes: [],
   agents: [],
+  skills: [],
+  gateMode: 'block',
   pricing: {
-    models: {
-      'gemini/pro': { input: 1.25, output: 5.0 },
+    currency: 'USD',
+    traditional_hourly_rate: 50,
+    model_prices_per_mtok: {
+      'gemini/pro': { input: 2, output: 12 },
     },
   },
-  activeCycle: {
-    specId: 'spec-e-burgos-003-studio-mission-control',
-    cycle: 'cycle-01',
-    status: 'in-progress',
-    flow: 'lite',
-    tasksCount: 7,
-    tasksCompleted: 1,
-  },
+  stale: [],
 };
 
 const mockPresence: Presence[] = [
-  { agent: 'sdd-orchestrator', state: 'working', tool: 'coordinate' },
+  { agent: 'sdd-orchestrator', state: 'working', tool: 'coordinate', threadId: null, specId: null },
 ];
 
 function mountConnected() {
