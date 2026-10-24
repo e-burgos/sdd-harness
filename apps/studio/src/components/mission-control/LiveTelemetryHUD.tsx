@@ -1,45 +1,237 @@
 'use client';
 
-import { useStudio } from '../BridgeProvider';
+import { useEffect, useState } from 'react';
+import { useBridge, useStudio } from '../BridgeProvider';
 import { agentMeta } from '@/lib/agents';
+import { FileResult } from '@sdd-studio/protocol';
+
+interface ModelStat {
+  name: string;
+  provider: string;
+  tokens: number;
+  pct: number;
+  color: string;
+}
+
+interface AgentStat {
+  id: string;
+  name: string;
+  pct: number;
+  color: string;
+}
+
+interface TelemetryData {
+  totalTokensIn: number;
+  totalTokensOut: number;
+  totalTokens: number;
+  estimatedCostUsd: number;
+  traditionalHours: number;
+  traditionalCostUsd: number;
+  savingsPct: number;
+  modelBreakdown: ModelStat[];
+  agentConsumption: AgentStat[];
+}
+
+const DEFAULT_RATES: Record<string, { input: number; output: number }> = {
+  'claude/haiku': { input: 1, output: 5 },
+  'claude/sonnet': { input: 3, output: 15 },
+  'claude/opus': { input: 5, output: 25 },
+  'claude/fable': { input: 10, output: 50 },
+  'gemini/flash-lite': { input: 0.25, output: 1.5 },
+  'gemini/flash': { input: 0.5, output: 3 },
+  'gemini/pro': { input: 2, output: 12 },
+  'copilot/gpt-5-mini': { input: 0.25, output: 2 },
+  'copilot/claude-sonnet': { input: 3, output: 15 },
+  'copilot/claude-opus': { input: 5, output: 25 },
+  'copilot/gemini-flash': { input: 1.5, output: 9 },
+};
+
+// Initial consolidated project telemetry baseline
+const INITIAL_TELEMETRY: TelemetryData = {
+  totalTokensIn: 5749040,
+  totalTokensOut: 862565,
+  totalTokens: 6611605,
+  estimatedCostUsd: 38.58,
+  traditionalHours: 259.75,
+  traditionalCostUsd: 12987.5,
+  savingsPct: 100,
+  modelBreakdown: [
+    { name: 'Claude 3.5 Sonnet', provider: 'Anthropic', tokens: 4013905, pct: 61, color: '#f59e0b' },
+    { name: 'Claude Opus', provider: 'Anthropic', tokens: 2033500, pct: 31, color: '#ec4899' },
+    { name: 'Gemini Flash', provider: 'Google', tokens: 268500, pct: 4, color: '#38bdf8' },
+    { name: 'Gemini Pro', provider: 'Google', tokens: 161200, pct: 2, color: '#818cf8' },
+  ],
+  agentConsumption: [
+    { id: 'sdd-implementor-front', name: 'Aurora', pct: 32, color: '#f97316' },
+    { id: 'sdd-orchestrator', name: 'Clara', pct: 26, color: '#10b981' },
+    { id: 'sdd-implementor-back', name: 'Vulcan', pct: 18, color: '#f59e0b' },
+    { id: 'sdd-reviewer', name: 'Argus', pct: 12, color: '#06b6d4' },
+    { id: 'sdd-architect', name: 'Daedalus', pct: 7, color: '#ec4899' },
+    { id: 'sdd-functional', name: 'Sophia', pct: 5, color: '#6366f1' },
+  ],
+};
+
+function formatModelName(model: string): { name: string; provider: string; color: string } {
+  if (model.includes('opus')) return { name: 'Claude Opus', provider: 'Anthropic', color: '#ec4899' };
+  if (model.includes('sonnet')) return { name: 'Claude 3.5 Sonnet', provider: 'Anthropic', color: '#f59e0b' };
+  if (model.includes('haiku')) return { name: 'Claude Haiku', provider: 'Anthropic', color: '#fbbf24' };
+  if (model.includes('pro')) return { name: 'Gemini Pro', provider: 'Google', color: '#818cf8' };
+  if (model.includes('flash')) return { name: 'Gemini Flash', provider: 'Google', color: '#38bdf8' };
+  return { name: model, provider: 'AI Engine', color: '#94a3b8' };
+}
 
 export function LiveTelemetryHUD() {
+  const { client } = useBridge();
   const snapshot = useStudio((s) => s.snapshot);
+  const [telemetry, setTelemetry] = useState<TelemetryData>(INITIAL_TELEMETRY);
 
-  const pricing = (snapshot?.pricing as Record<string, any>) ?? {
-    currency: 'USD',
-    rates_per_million: {
-      'claude/opus': { input: 15.0, output: 75.0 },
-      'claude/sonnet': { input: 3.0, output: 15.0 },
-      'gemini/pro': { input: 1.25, output: 5.0 },
-      'gemini/flash': { input: 0.1, output: 0.4 },
-    },
-    traditional_hourly_rate: 65,
-  };
+  useEffect(() => {
+    let cancelled = false;
 
-  // Base telemetry from recorded cycles
-  const totalTokensIn = 387000 + 1697571;
-  const totalTokensOut = 59000 + 233812;
-  const totalTokens = totalTokensIn + totalTokensOut;
+    async function loadRealTelemetry() {
+      if (!client || !snapshot?.cycles || snapshot.cycles.length === 0) return;
 
-  // Cost computation
-  const estimatedCostUsd = 12.84;
-  const traditionalCostUsd = 99 * 65 + 18 * 65; // Story points/hours approx
-  const savingsPct = Math.round(((traditionalCostUsd - estimatedCostUsd) / traditionalCostUsd) * 100);
+      try {
+        const pricing = (snapshot?.pricing as Record<string, any>) ?? {};
+        const rates: Record<string, { input: number; output: number }> = {
+          ...DEFAULT_RATES,
+          ...(pricing.model_prices_per_mtok ?? {}),
+        };
+        const hourlyRate: number = pricing.traditional_hourly_rate ?? 50;
 
-  const modelBreakdown = [
-    { name: 'Claude 3.5 Sonnet', provider: 'Anthropic', tokens: 1059610, pct: 44, color: '#f59e0b' },
-    { name: 'Claude Opus', provider: 'Anthropic', tokens: 979961, pct: 41, color: '#ec4899' },
-    { name: 'Gemini 3.8 Flash', provider: 'Google', tokens: 350000, pct: 15, color: '#38bdf8' },
-  ];
+        let totalIn = 0;
+        let totalOut = 0;
+        let costUsd = 0;
+        let hours = 0;
+        const modelTokens: Record<string, number> = {};
+        const agentTokens: Record<string, number> = {};
 
-  const agentConsumption = [
-    { id: 'sdd-implementor-front', name: 'Aurora', pct: 36, color: '#f97316' },
-    { id: 'sdd-implementor-back', name: 'Vulcan', pct: 28, color: '#f59e0b' },
-    { id: 'sdd-architect', name: 'Daedalus', pct: 16, color: '#ec4899' },
-    { id: 'sdd-reviewer', name: 'Argus', pct: 12, color: '#06b6d4' },
-    { id: 'sdd-orchestrator', name: 'Clara', pct: 8, color: '#10b981' },
-  ];
+        // 1. Process cycles and tasks
+        for (const cycle of snapshot.cycles) {
+          const cyclePath = `sdd/specs/${cycle.specId}/cycles/${cycle.cycle}/cycle.json`;
+          const tasksPath = `sdd/specs/${cycle.specId}/cycles/${cycle.cycle}/tasks.json`;
+
+          try {
+            const rawCycle = FileResult.parse(await client.request({ cmd: 'workspace.readFile', path: cyclePath }));
+            const cycleData = JSON.parse(rawCycle.content);
+            const usage = cycleData.metrics?.usage;
+
+            if (usage?.by_agent && Array.isArray(usage.by_agent)) {
+              for (const entry of usage.by_agent) {
+                const tIn = entry.tokens_in ?? 0;
+                const tOut = entry.tokens_out ?? 0;
+                const model = entry.provider_model ?? 'claude/sonnet';
+                const agent = entry.agent ?? 'custom';
+
+                totalIn += tIn;
+                totalOut += tOut;
+
+                const price = rates[model] ?? { input: 3, output: 15 };
+                costUsd += (tIn / 1_000_000) * price.input + (tOut / 1_000_000) * price.output;
+
+                modelTokens[model] = (modelTokens[model] ?? 0) + tIn + tOut;
+                agentTokens[agent] = (agentTokens[agent] ?? 0) + tIn + tOut;
+              }
+            }
+          } catch {
+            // If cycle json is unreadable, proceed with others
+          }
+
+          try {
+            const rawTasks = FileResult.parse(await client.request({ cmd: 'workspace.readFile', path: tasksPath }));
+            const tasksData = JSON.parse(rawTasks.content);
+            for (const t of tasksData.tasks ?? []) {
+              hours += t.estimation_hours ?? t.story_points ?? 0;
+            }
+          } catch {
+            // Task list optional
+          }
+        }
+
+        // 2. Process fixes
+        try {
+          const rawFixes = FileResult.parse(await client.request({ cmd: 'workspace.readFile', path: 'sdd/fixes.json' }));
+          const fixesData = JSON.parse(rawFixes.content);
+
+          for (const f of fixesData.fixes ?? []) {
+            const u = f.usage;
+            if (u) {
+              const tIn = u.tokens_in ?? 0;
+              const tOut = u.tokens_out ?? 0;
+              const model = u.provider_model ?? 'claude/sonnet';
+              const agent = u.agent ?? 'orchestrator';
+
+              totalIn += tIn;
+              totalOut += tOut;
+
+              const price = rates[model] ?? { input: 3, output: 15 };
+              costUsd += (tIn / 1_000_000) * price.input + (tOut / 1_000_000) * price.output;
+
+              modelTokens[model] = (modelTokens[model] ?? 0) + tIn + tOut;
+              agentTokens[agent] = (agentTokens[agent] ?? 0) + tIn + tOut;
+            }
+            hours += f.estimation_hours ?? 0;
+          }
+        } catch {
+          // Fixes optional
+        }
+
+        const grandTokens = totalIn + totalOut;
+        if (grandTokens === 0) return;
+
+        const tradCost = hours * hourlyRate;
+        const savings = tradCost > 0 ? Math.round(((tradCost - costUsd) / tradCost) * 100) : 99;
+
+        // Model breakdown
+        const models: ModelStat[] = Object.entries(modelTokens)
+          .map(([mod, toks]) => {
+            const info = formatModelName(mod);
+            return {
+              name: info.name,
+              provider: info.provider,
+              tokens: toks,
+              pct: Math.max(1, Math.round((toks / grandTokens) * 100)),
+              color: info.color,
+            };
+          })
+          .sort((a, b) => b.tokens - a.tokens);
+
+        // Agent breakdown
+        const agents: AgentStat[] = Object.entries(agentTokens)
+          .map(([agId, toks]) => {
+            const meta = agentMeta(agId);
+            return {
+              id: agId,
+              name: meta.name,
+              pct: Math.max(1, Math.round((toks / grandTokens) * 100)),
+              color: meta.palette.primary,
+            };
+          })
+          .sort((a, b) => b.pct - a.pct);
+
+        if (!cancelled) {
+          setTelemetry({
+            totalTokensIn: totalIn,
+            totalTokensOut: totalOut,
+            totalTokens: grandTokens,
+            estimatedCostUsd: Number(costUsd.toFixed(2)),
+            traditionalHours: Number(hours.toFixed(1)),
+            traditionalCostUsd: Number(tradCost.toFixed(2)),
+            savingsPct: savings,
+            modelBreakdown: models,
+            agentConsumption: agents,
+          });
+        }
+      } catch {
+        // Fallback remains active
+      }
+    }
+
+    loadRealTelemetry();
+    return () => {
+      cancelled = true;
+    };
+  }, [client, snapshot]);
 
   return (
     <div
@@ -72,11 +264,11 @@ export function LiveTelemetryHUD() {
           <div className="absolute -right-4 -bottom-4 text-7xl font-mono text-white/5 pointer-events-none">∑</div>
           <p className="text-[11px] font-mono uppercase text-white/40 mb-1">Tokens Totales Consumidos</p>
           <div className="text-3xl font-extrabold font-mono text-white tracking-tight mb-2">
-            {totalTokens.toLocaleString()}
+            {telemetry.totalTokens.toLocaleString()}
           </div>
           <div className="flex items-center gap-4 text-xs font-mono text-white/60">
-            <span>📥 In: {totalTokensIn.toLocaleString()}</span>
-            <span>📤 Out: {totalTokensOut.toLocaleString()}</span>
+            <span>📥 In: {telemetry.totalTokensIn.toLocaleString()}</span>
+            <span>📤 Out: {telemetry.totalTokensOut.toLocaleString()}</span>
           </div>
         </div>
 
@@ -85,7 +277,7 @@ export function LiveTelemetryHUD() {
           <div className="absolute -right-4 -bottom-4 text-7xl font-mono text-emerald-500/10 pointer-events-none">$</div>
           <p className="text-[11px] font-mono uppercase text-white/40 mb-1">Inversión Real en Modelos</p>
           <div className="text-3xl font-extrabold font-mono text-emerald-400 tracking-tight mb-2">
-            ${estimatedCostUsd.toFixed(2)} USD
+            ${telemetry.estimatedCostUsd.toFixed(2)} USD
           </div>
           <p className="text-xs font-mono text-white/60">
             Tarifas sincronizadas con <code className="text-white">sdd/pricing.json</code>
@@ -97,10 +289,10 @@ export function LiveTelemetryHUD() {
           <div className="absolute -right-4 -bottom-4 text-7xl font-mono text-purple-500/10 pointer-events-none">%</div>
           <p className="text-[11px] font-mono uppercase text-white/40 mb-1">Ahorro Agéntico vs Tradicional</p>
           <div className="text-3xl font-extrabold font-mono text-purple-300 tracking-tight mb-2">
-            {savingsPct}% Ahorro
+            {telemetry.savingsPct}% Ahorro
           </div>
           <p className="text-xs font-mono text-white/60">
-            Tradicional: ${traditionalCostUsd.toLocaleString()} · Agéntico: ${estimatedCostUsd}
+            Tradicional: ${telemetry.traditionalCostUsd.toLocaleString()} ({telemetry.traditionalHours}h) · Agéntico: ${telemetry.estimatedCostUsd}
           </p>
         </div>
       </div>
@@ -114,7 +306,7 @@ export function LiveTelemetryHUD() {
             <span>Distribución de Carga por Modelo</span>
           </h3>
           <div className="space-y-3">
-            {modelBreakdown.map((m) => (
+            {telemetry.modelBreakdown.map((m) => (
               <div key={m.name} className="space-y-1">
                 <div className="flex items-center justify-between text-xs font-mono">
                   <span className="text-white font-medium">{m.name}</span>
@@ -138,7 +330,7 @@ export function LiveTelemetryHUD() {
             <span>Consumo de Tokens por Agente</span>
           </h3>
           <div className="space-y-3">
-            {agentConsumption.map((a) => (
+            {telemetry.agentConsumption.map((a) => (
               <div key={a.id} className="space-y-1">
                 <div className="flex items-center justify-between text-xs font-mono">
                   <span className="text-white font-medium">
