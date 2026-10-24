@@ -58,4 +58,21 @@ describe('AgentMapCanvas', () => {
     fireEvent.click(dmButton);
     expect(onOpenDm).toHaveBeenCalledWith('sdd-orchestrator');
   });
+
+  it('renders live inter-agent dialogue bubble and comms console', () => {
+    const onOpenDm = vi.fn();
+    render(
+      <BridgeContext.Provider value={mockBridgeValue}>
+        <AgentMapCanvas onOpenDm={onOpenDm} />
+      </BridgeContext.Provider>
+    );
+
+    expect(screen.getByTestId('swarm-dialogue-bubble')).toBeInTheDocument();
+    expect(screen.getByText('COMMS EN VIVO')).toBeInTheDocument();
+    expect(screen.getAllByText(/Sophia, iniciamos el ciclo/).length).toBeGreaterThanOrEqual(1);
+
+    const nextBtn = screen.getByText('⏭ Siguiente');
+    fireEvent.click(nextBtn);
+    expect(screen.getAllByText(/Brief procesado/).length).toBeGreaterThanOrEqual(1);
+  });
 });

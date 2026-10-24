@@ -1,9 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useStudio } from '../BridgeProvider';
 import { AgentNode } from './AgentNode';
 import { AgentInspectorDrawer } from './AgentInspectorDrawer';
+import { SDD_SWARM_SCRIPT } from './swarm-dialogue';
+import { SwarmSpeechBubble, SwarmCommsConsole } from './LiveSwarmComms';
 
 interface AgentPosition {
   id: string;
@@ -12,15 +14,15 @@ interface AgentPosition {
 }
 
 const NODES: AgentPosition[] = [
-  { id: 'sdd-orchestrator', x: 500, y: 100 },
-  { id: 'sdd-steward', x: 180, y: 140 },
-  { id: 'sdd-hermes', x: 820, y: 140 },
-  { id: 'sdd-functional', x: 500, y: 220 },
-  { id: 'sdd-planner', x: 330, y: 340 },
-  { id: 'sdd-architect', x: 670, y: 340 },
-  { id: 'sdd-implementor-back', x: 330, y: 460 },
-  { id: 'sdd-implementor-front', x: 670, y: 460 },
-  { id: 'sdd-reviewer', x: 500, y: 550 },
+  { id: 'sdd-orchestrator', x: 500, y: 75 },
+  { id: 'sdd-steward', x: 190, y: 115 },
+  { id: 'sdd-hermes', x: 810, y: 115 },
+  { id: 'sdd-functional', x: 500, y: 200 },
+  { id: 'sdd-planner', x: 330, y: 315 },
+  { id: 'sdd-architect', x: 670, y: 315 },
+  { id: 'sdd-implementor-back', x: 330, y: 430 },
+  { id: 'sdd-implementor-front', x: 670, y: 430 },
+  { id: 'sdd-reviewer', x: 500, y: 540 },
 ];
 
 const EDGES: { from: string; to: string; label?: string }[] = [
@@ -42,10 +44,23 @@ export function AgentMapCanvas({ onOpenDm }: { onOpenDm: (agentId: string) => vo
   const snapshot = useStudio((s) => s.snapshot);
   const [selectedAgent, setSelectedAgent] = useState<string | null>('sdd-orchestrator');
 
+  const [dialogueIdx, setDialogueIdx] = useState(0);
+  const [isPlaying, setIsPlaying] = useState(true);
+
+  useEffect(() => {
+    if (!isPlaying) return;
+    const timer = setInterval(() => {
+      setDialogueIdx((prev) => (prev + 1) % SDD_SWARM_SCRIPT.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [isPlaying]);
+
   const presenceMap = new Map((presence ?? []).map((p) => [p.agent, p]));
   const nodeMap = new Map(NODES.map((n) => [n.id, n]));
 
   const activePresenceCount = (presence ?? []).filter((p) => p.state === 'working').length;
+  const currentDialogue = SDD_SWARM_SCRIPT[dialogueIdx];
+  const fromPos = nodeMap.get(currentDialogue.from) ?? { x: 500, y: 75 };
 
   return (
     <div
@@ -85,10 +100,14 @@ export function AgentMapCanvas({ onOpenDm }: { onOpenDm: (agentId: string) => vo
       </div>
 
       {/* Interactive SVG Canvas */}
-      <div className="relative flex-1 w-full h-full flex items-center justify-center p-4">
+      <div
+        className={`relative flex-1 w-full h-full flex items-center justify-center p-4 transition-all duration-300 ${
+          selectedAgent ? 'pr-0 lg:pr-96' : ''
+        }`}
+      >
         <svg
-          viewBox="0 0 1000 620"
-          className="w-full h-full max-h-[82vh] transition-transform duration-300 drop-shadow-2xl"
+          viewBox="0 0 1000 700"
+          className="w-full h-full max-h-[85vh] transition-transform duration-300 drop-shadow-2xl"
         >
           <defs>
             <linearGradient id="edge-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -107,7 +126,12 @@ export function AgentMapCanvas({ onOpenDm }: { onOpenDm: (agentId: string) => vo
             const to = nodeMap.get(edge.to);
             if (!from || !to) return null;
 
+            const isCommunicating =
+              (edge.from === currentDialogue.from && edge.to === currentDialogue.to) ||
+              (edge.from === currentDialogue.to && edge.to === currentDialogue.from);
+
             const isFlowActive =
+              isCommunicating ||
               presenceMap.get(edge.from)?.state === 'working' ||
               presenceMap.get(edge.to)?.state === 'working';
 
@@ -122,20 +146,20 @@ export function AgentMapCanvas({ onOpenDm }: { onOpenDm: (agentId: string) => vo
                 <path
                   d={pathData}
                   fill="none"
-                  stroke={isFlowActive ? '#38bdf8' : '#ffffff'}
-                  strokeOpacity={isFlowActive ? '0.4' : '0.12'}
-                  strokeWidth={isFlowActive ? '3' : '1.5'}
-                  filter={isFlowActive ? 'url(#glow)' : undefined}
+                  stroke={isCommunicating ? '#10b981' : isFlowActive ? '#38bdf8' : '#ffffff'}
+                  strokeOpacity={isCommunicating ? '0.85' : isFlowActive ? '0.4' : '0.12'}
+                  strokeWidth={isCommunicating ? '3' : isFlowActive ? '2.5' : '1.5'}
+                  filter={isFlowActive || isCommunicating ? 'url(#glow)' : undefined}
                 />
                 {/* Active Flow Animation Line */}
-                {isFlowActive && (
+                {(isFlowActive || isCommunicating) && (
                   <path
                     d={pathData}
                     fill="none"
-                    stroke="#38bdf8"
-                    strokeWidth="2.5"
-                    strokeDasharray="8 6"
-                    className="animate-[dash_1s_linear_infinite]"
+                    stroke={isCommunicating ? '#10b981' : '#38bdf8'}
+                    strokeWidth={isCommunicating ? '3.5' : '2.5'}
+                    strokeDasharray={isCommunicating ? '10 6' : '8 6'}
+                    className="animate-[dash_0.8s_linear_infinite]"
                   />
                 )}
               </g>
@@ -154,7 +178,19 @@ export function AgentMapCanvas({ onOpenDm }: { onOpenDm: (agentId: string) => vo
               onSelect={setSelectedAgent}
             />
           ))}
+
+          {/* Active Swarm Speech Bubble */}
+          <SwarmSpeechBubble dialogue={currentDialogue} fromNodePos={fromPos} />
         </svg>
+
+        {/* Live Swarm Inter-Agent Comms Console */}
+        <SwarmCommsConsole
+          currentDialogue={currentDialogue}
+          isPlaying={isPlaying}
+          onTogglePlay={() => setIsPlaying(!isPlaying)}
+          onNext={() => setDialogueIdx((prev) => (prev + 1) % SDD_SWARM_SCRIPT.length)}
+          dialogueHistory={SDD_SWARM_SCRIPT}
+        />
 
         {/* Selected Agent Inspector Drawer */}
         <AgentInspectorDrawer
