@@ -13,8 +13,8 @@ store.getState().setSnapshot({
     { id: 'spec-002', title: 'Studio UI Polish', status: 'in-progress', folder: '', module: 'polish', app: 'apps/studio', dependsOn: [] },
   ],
   cycles: [
-    { specId: 'spec-001', cycle: 'cycle-01', status: 'completed', flow: 'full', apps: [], tasks: [], tasksTotal: 10, tasksDone: 10 },
-    { specId: 'spec-002', cycle: 'cycle-01', status: 'in-progress', flow: 'lite', apps: [], tasks: [], tasksTotal: 5, tasksDone: 2 },
+    { specId: 'spec-001', cycle: 'cycle-01', status: 'completed', flow: 'full', apps: ['apps/studio', 'apps/studio-bridge', 'libs/studio-protocol'], tasks: [], tasksTotal: 10, tasksDone: 10 },
+    { specId: 'spec-002', cycle: 'cycle-01', status: 'in-progress', flow: 'lite', apps: ['apps/studio'], tasks: [], tasksTotal: 5, tasksDone: 2 },
   ],
   fixes: [
     { id: 'FIX-001', title: 'CI fix', status: 'validated', severity: 'low', specId: null, createdAt: null, closedAt: null },

@@ -1,8 +1,18 @@
 'use client';
 
-import { useStudio } from '../BridgeProvider';
+import { useEffect, useState } from 'react';
+import { useBridge, useStudio } from '../BridgeProvider';
+import { SubprojectIcon, classifySubproject, type SubprojectClassification } from './SubprojectIcon';
+
+export interface DiscoveredSubproject extends SubprojectClassification {
+  name: string;
+  desc: string;
+  specsCount: number;
+  isActive: boolean;
+}
 
 export function EcosystemDashboard() {
+  const { client } = useBridge();
   const snapshot = useStudio((s) => s.snapshot);
 
   const specs = snapshot?.specs ?? [];
@@ -17,14 +27,113 @@ export function EcosystemDashboard() {
   const doneTasks = cycles.reduce((acc, c) => acc + c.tasksDone, 0);
   const taskProgressPct = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 100;
 
-  // Subprojects derived from cycles and catalog
-  const knownApps = [
-    { name: 'apps/studio', type: 'Next.js 16 Web App', icon: '💻', desc: 'SDD Studio Web Interface' },
-    { name: 'apps/studio-bridge', type: 'Node / WebSocket Server', icon: '🔌', desc: 'Puente local de agentes con Claude SDK' },
-    { name: 'libs/studio-protocol', type: 'TypeScript Protocol Lib', icon: '📦', desc: 'Contrato y esquemas Zod compartidos' },
-    { name: 'apps/cli', type: 'Node / CLI', icon: '⌨️', desc: 'CLI harness para instalación y scaffolding' },
-    { name: 'apps/documentation', type: 'React / Vite Pages', icon: '📖', desc: 'Sitio bilingüe de documentación oficial' },
-  ];
+  const [subprojects, setSubprojects] = useState<DiscoveredSubproject[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function discoverSubprojects() {
+      const discoveredMap = new Map<string, { desc: string }>();
+
+      // 1. Try to read sdd/global.json from the active repository
+      if (client) {
+        try {
+          const raw = (await client.request({ cmd: 'workspace.readFile', path: 'sdd/global.json' })) as { content: string };
+          const globalData = JSON.parse(raw.content);
+          const monorepo = globalData.monorepo;
+
+          if (monorepo) {
+            // Apps
+            if (monorepo.apps && typeof monorepo.apps === 'object') {
+              for (const [key, val] of Object.entries(monorepo.apps)) {
+                const descStr = typeof val === 'string' ? val : key;
+                const pathStr = descStr.includes(' — ') ? descStr.split(' — ')[0].trim() : (key.startsWith('apps/') ? key : `apps/${key}`);
+                discoveredMap.set(pathStr, { desc: descStr });
+              }
+            }
+
+            // Libs
+            if (monorepo.libs && typeof monorepo.libs === 'object') {
+              for (const [key, val] of Object.entries(monorepo.libs)) {
+                const descStr = typeof val === 'string' ? val : key;
+                const pathStr = descStr.includes(' — ') ? descStr.split(' — ')[0].trim() : (key.startsWith('libs/') ? key : `libs/${key}`);
+                discoveredMap.set(pathStr, { desc: descStr });
+              }
+            }
+
+            // Tools
+            if (monorepo.tools && typeof monorepo.tools === 'object') {
+              for (const [key, val] of Object.entries(monorepo.tools)) {
+                const descStr = typeof val === 'string' ? val : key;
+                const pathStr = descStr.includes(' — ') ? descStr.split(' — ')[0].trim() : (key.startsWith('tools/') ? key : `tools/${key}`);
+                discoveredMap.set(pathStr, { desc: descStr });
+              }
+            }
+          }
+
+          // Also check completed/in_progress modules for apps
+          const allModules = [
+            ...(globalData.completed_modules ?? []),
+            ...(globalData.in_progress_modules ?? []),
+            ...(globalData.pending_modules ?? []),
+          ];
+          for (const m of allModules) {
+            if (Array.isArray(m.apps)) {
+              for (const a of m.apps) {
+                if (!discoveredMap.has(a)) {
+                  discoveredMap.set(a, { desc: `${m.module} module target` });
+                }
+              }
+            }
+          }
+        } catch {
+          // If global.json is unreadable, fall back to snapshot cycles and specs
+        }
+      }
+
+      // 2. Discover from snapshot cycles
+      for (const c of cycles) {
+        if (Array.isArray(c.apps)) {
+          for (const a of c.apps) {
+            if (!discoveredMap.has(a)) {
+              discoveredMap.set(a, { desc: `Utilizado en ${c.specId}` });
+            }
+          }
+        }
+      }
+
+      // 3. Discover from snapshot specs
+      for (const s of specs) {
+        if (s.app && !discoveredMap.has(s.app)) {
+          discoveredMap.set(s.app, { desc: `Módulo de ${s.title}` });
+        }
+      }
+
+      // 4. Transform into classified subproject models
+      const items: DiscoveredSubproject[] = Array.from(discoveredMap.entries()).map(([name, meta]) => {
+        const classification = classifySubproject(name, meta.desc);
+        const specsCount = specs.filter((s) => s.app === name || s.folder?.includes(name)).length;
+        const isActive = activeCycle?.apps?.includes(name) ?? false;
+
+        return {
+          name,
+          desc: meta.desc,
+          specsCount,
+          isActive,
+          ...classification,
+        };
+      });
+
+      if (!cancelled) {
+        setSubprojects(items);
+      }
+    }
+
+    discoverSubprojects();
+    return () => {
+      cancelled = true;
+    };
+  }, [client, cycles, specs, activeCycle]);
 
   return (
     <div
@@ -98,31 +207,67 @@ export function EcosystemDashboard() {
 
       {/* Subprojects Grid (Apps, Libs, Tools) */}
       <div>
-        <h3 className="text-sm font-semibold tracking-tight text-white mb-3 flex items-center gap-2">
-          <span>📁</span>
-          <span>Subproyectos y Módulos del Workspace</span>
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-          {knownApps.map((app) => (
-            <div
-              key={app.name}
-              className="rounded-xl border border-white/10 bg-ink-900/60 p-4 hover:border-white/20 transition-all hover:bg-ink-900/90 shadow-sm"
-            >
-              <div className="flex items-start justify-between mb-2">
-                <span className="text-2xl">{app.icon}</span>
-                <span className="rounded bg-white/5 px-2 py-0.5 font-mono text-[10px] text-white/60 border border-white/5">
-                  {app.type}
-                </span>
-              </div>
-              <h4 className="font-mono text-xs font-bold text-white mb-1">{app.name}</h4>
-              <p className="text-xs text-white/60 leading-relaxed mb-3">{app.desc}</p>
-              <div className="flex items-center gap-2 text-[10px] font-mono text-emerald-400">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                <span>Contexto activo & verificado</span>
-              </div>
-            </div>
-          ))}
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-semibold tracking-tight text-white flex items-center gap-2">
+            <span>📁</span>
+            <span>Subproyectos y Módulos del Workspace ({subprojects.length})</span>
+          </h3>
+          <span className="text-[11px] font-mono text-white/40">Detección automática de arquitectura</span>
         </div>
+
+        {subprojects.length === 0 ? (
+          <div className="rounded-xl border border-white/10 bg-ink-900/40 p-8 text-center text-white/40 font-mono text-xs">
+            No se detectaron subproyectos registrados en este workspace.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            {subprojects.map((app) => (
+              <div
+                key={app.name}
+                className="rounded-xl border border-white/10 bg-ink-900/60 p-4 hover:border-white/20 transition-all hover:bg-ink-900/90 shadow-sm flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="p-2 rounded-xl bg-white/5 border border-white/10">
+                      <SubprojectIcon category={app.category} size={24} />
+                    </div>
+                    <span
+                      className="rounded px-2 py-0.5 font-mono text-[10px] font-semibold tracking-wide border"
+                      style={{
+                        color: app.color,
+                        backgroundColor: app.badgeBg,
+                        borderColor: `${app.color}40`,
+                      }}
+                    >
+                      {app.typeLabel}
+                    </span>
+                  </div>
+                  <h4 className="font-mono text-xs font-bold text-white mb-1 truncate" title={app.name}>
+                    {app.name}
+                  </h4>
+                  <p className="text-xs text-white/60 leading-relaxed mb-4 line-clamp-2" title={app.desc}>
+                    {app.desc}
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-between pt-2 border-t border-white/5 text-[10px] font-mono">
+                  {app.isActive ? (
+                    <div className="flex items-center gap-1.5 text-emerald-400 font-semibold">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" />
+                      <span>Activo en {activeCycle?.cycle}</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5 text-white/50">
+                      <span className="h-1.5 w-1.5 rounded-full bg-white/30" />
+                      <span>{app.specsCount > 0 ? `${app.specsCount} spec${app.specsCount > 1 ? 's' : ''}` : 'Estable'}</span>
+                    </div>
+                  )}
+                  <span className="text-white/40 uppercase tracking-wider text-[9px]">Monorepo</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Specs Status Table */}
