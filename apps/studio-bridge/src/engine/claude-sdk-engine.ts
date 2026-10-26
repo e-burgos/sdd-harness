@@ -83,6 +83,15 @@ export function buildQueryOptions(
     if (effort) options.effort = effort;
   }
   if (input.resumeSessionId) options.resume = input.resumeSessionId;
+  if (input.systemPrefix) {
+    options.systemPrompt = {
+      type: 'preset',
+      preset: 'claude_code',
+      append: input.systemPrefix,
+      excludeDynamicSections: true,
+      snapshot: true,
+    };
+  }
   return options;
 }
 

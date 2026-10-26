@@ -24,6 +24,13 @@ function harness(decision: ApprovalDecision = { behavior: 'allow' }, requestAppr
 const input = (text: string, mode: 'default' | 'acceptEdits' = 'default') => ({ threadId: 't', prompts: [{ id: 'u-1', prompt: plainPrompt(text) }], options: { ...defaultThreadOptions(), permissionMode: mode }, resumeSessionId: null, cwd: '/repo' });
 
 describe('FakeEngine', () => {
+  it('declares the claude provider and records the system prefix of each turn', async () => {
+    const engine = new FakeEngine(1);
+    expect(engine.provider).toBe('claude');
+    await engine.startTurn({ ...input('hola'), systemPrefix: 'PREFIX' }, harness().cb).done;
+    await engine.startTurn(input('otra'), harness().cb).done;
+    expect(engine.receivedSystemPrefixes).toEqual(['PREFIX', undefined]);
+  });
   it('echoes and ends the turn', async () => {
     const h = harness();
     await new FakeEngine(1).startTurn(input('hola'), h.cb).done;

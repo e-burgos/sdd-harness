@@ -24,11 +24,13 @@ const stepsOf = (text: string): number => Number(/#steps:(\d+)/.exec(text)?.[1] 
 export class FakeEngine implements AgentEngine {
   readonly name = 'fake';
   readonly provider = 'claude' as const;
+  readonly receivedSystemPrefixes: (string | undefined)[] = [];
   private counter = 0;
 
   constructor(private readonly delayMs = 5) {}
 
   startTurn(input: EngineTurnInput, cb: EngineCallbacks): EngineTurn {
+    this.receivedSystemPrefixes.push(input.systemPrefix);
     const firstPrompt = input.prompts[0]?.prompt ?? { text: '', preamble: [], blocks: [] };
     const firstText = firstPrompt.text;
     let stopped = false;

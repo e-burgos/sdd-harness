@@ -23,6 +23,33 @@ describe('buildQueryOptions', () => {
     expect(o.resume).toBeUndefined();
     expect(Object.keys(o.hooks ?? {})).toEqual(['SubagentStart', 'SubagentStop', 'PreToolUse']);
   });
+  describe('systemPrefix', () => {
+    const withPrefix = (systemPrefix: string | undefined, resume: string | null = null): EngineTurnInput => ({
+      ...input({}, resume),
+      systemPrefix,
+    });
+    it('appends the prefix to the claude_code preset with dynamic sections excluded and a snapshot', () => {
+      const o = buildQueryOptions(withPrefix('PREFIX'), handlers());
+      expect(o.systemPrompt).toEqual({
+        type: 'preset',
+        preset: 'claude_code',
+        append: 'PREFIX',
+        excludeDynamicSections: true,
+        snapshot: true,
+      });
+    });
+    it('also applies the prefix when resuming a session', () => {
+      const o = buildQueryOptions(withPrefix('PREFIX', 'sess-1'), handlers());
+      expect(o.resume).toBe('sess-1');
+      expect(o.systemPrompt).toMatchObject({ append: 'PREFIX' });
+    });
+    it.each([undefined, ''])('leaves systemPrompt unset without a prefix (%j)', (prefix) => {
+      expect('systemPrompt' in buildQueryOptions(withPrefix(prefix), handlers())).toBe(false);
+    });
+  });
+  it('declares the claude provider', () => {
+    expect(new ClaudeAgentSdkEngine().provider).toBe('claude');
+  });
   it('passes the env through (it replaces the subprocess environment) and omits it when absent', () => {
     const env = { PATH: '/bin', ANTHROPIC_API_KEY: 'k', CLAUDE_AGENT_SDK_CLIENT_APP: 'sdd-studio/1.0.0' };
     expect(buildQueryOptions(input(), { ...handlers(), env }).env).toEqual(env);

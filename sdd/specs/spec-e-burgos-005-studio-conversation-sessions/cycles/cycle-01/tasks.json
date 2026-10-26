@@ -85,13 +85,23 @@
       "depends_on": [
         "TASK-002"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/studio-bridge/src/engine/claude-sdk-engine.ts",
         "apps/studio-bridge/src/engine/claude-sdk-engine.spec.ts",
         "apps/studio-bridge/src/engine/fake-engine.ts",
         "apps/studio-bridge/src/engine/fake-engine.spec.ts"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 35000,
+        "tokens_out": 7000,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-26"
+      }
     },
     {
       "id": "TASK-004",
