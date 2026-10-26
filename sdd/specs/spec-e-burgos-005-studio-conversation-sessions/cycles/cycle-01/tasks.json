@@ -205,15 +205,20 @@
       "depends_on": [
         "TASK-006"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
-        "apps/studio/src/lib/i18n/es.ts",
-        "apps/studio/src/lib/i18n/en.ts",
-        "apps/studio/src/components/mission-control/ConversationSessionInfo.tsx",
-        "apps/studio/src/components/mission-control/ConversationSessionInfo.spec.tsx",
-        "apps/studio/src/components/mission-control/RelatedDocuments.tsx",
-        "apps/studio/src/components/mission-control/RelatedDocuments.spec.tsx"
-      ]
+        "apps/studio/src/lib/i18n/es.ts apps/studio/src/lib/i18n/en.ts apps/studio/src/lib/conversation.ts apps/studio/src/lib/conversation.spec.ts apps/studio/src/components/mission-control/ConversationSessionInfo.tsx apps/studio/src/components/mission-control/ConversationSessionInfo.spec.tsx apps/studio/src/components/mission-control/RelatedDocuments.tsx apps/studio/src/components/mission-control/RelatedDocuments.spec.tsx"
+      ],
+      "usage": {
+        "tokens_in": 48000,
+        "tokens_out": 10000,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-26"
+      }
     },
     {
       "id": "TASK-008",

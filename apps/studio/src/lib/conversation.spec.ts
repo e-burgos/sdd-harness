@@ -1,5 +1,5 @@
 import type { ThreadInfo, WorkspaceSnapshot } from '@sdd-studio/protocol';
-import { deriveConversation, inferGateFromText, listConversations, referencesInText, resolveSelectedThreadId } from './conversation';
+import { deriveConversation, inferGateFromText, listConversations, providerLabel, referencesInText, resolveSelectedThreadId } from './conversation';
 import { emptyThread, type ThreadState, type TimelineItem } from './store/timeline';
 
 const info = (id: string, patch: Partial<ThreadInfo> = {}): ThreadInfo => ({
@@ -202,5 +202,12 @@ describe('deriveConversation', () => {
       { agentId: 'sdd-planner', events: 1 },
       { agentId: 'sdd-orchestrator', events: 0 },
     ]);
+  });
+});
+
+describe('providerLabel', () => {
+  it('labels known providers and echoes unknown ones', () => {
+    expect(providerLabel('claude')).toBe('Claude Code');
+    expect(providerLabel('gemini')).toBe('gemini');
   });
 });

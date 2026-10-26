@@ -1,4 +1,4 @@
-import { FixIdValue, SpecIdValue, type ThreadInfo, type WorkspaceSnapshot } from '@sdd-studio/protocol';
+import { FixIdValue, SpecIdValue, isKnownProvider, type KnownProvider, type ThreadInfo, type WorkspaceSnapshot } from '@sdd-studio/protocol';
 import type { GateId } from './gates';
 import type { ThreadState, TimelineItem } from './store/timeline';
 
@@ -233,3 +233,7 @@ export function deriveConversation(thread: ThreadState, snapshot: WorkspaceSnaps
     isEmpty: dialogues.length === 0,
   };
 }
+
+const PROVIDER_LABELS: Record<KnownProvider, string> = { claude: 'Claude Code' };
+
+export const providerLabel = (provider: string): string => (isKnownProvider(provider) ? PROVIDER_LABELS[provider] : provider);
