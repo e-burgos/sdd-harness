@@ -78,6 +78,8 @@ export function createHandlers(d: {
         }
         case 'thread.setLink':
           return d.sessions.setLink(command.threadId, command.link);
+        case 'thread.updateLinks':
+          return d.sessions.updateLinks(command.threadId, { add: command.add, remove: command.remove });
         case 'thread.interrupt':
           await d.sessions.interrupt(command.threadId);
           return null;

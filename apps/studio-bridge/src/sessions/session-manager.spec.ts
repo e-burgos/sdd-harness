@@ -1110,6 +1110,100 @@ describe('SessionManager', () => {
       expect(m.list().find((x) => x.id === t.id)?.link).toEqual({ target: { kind: 'none' }, source: 'auto', targets: [] });
     });
 
+    describe('multiple associations', () => {
+      const CYCLE = { kind: 'cycle', specId: 'spec-dev-001-pagos', cycle: 'cycle-01' } as const;
+      const SPEC = { kind: 'spec', specId: 'spec-dev-001-pagos' } as const;
+      const FIX = { kind: 'fix', fixId: 'FIX-dev-001-001' } as const;
+      const idleThread = async () => {
+        const { m, store } = await manager();
+        const t = await m.createThread({ channelId: 'general', options: opts, text: 'hola' });
+        await idleOf(m, t.id);
+        sent.length = 0;
+        return { m, store, id: t.id };
+      };
+      const targetsOf = (m: SessionManager, id: string) => m.list().find((x) => x.id === id)?.link.targets;
+
+      it('updateLinks adds manual associations and publishes thread.updated once', async () => {
+        const { m, id } = await idleThread();
+        const info = m.updateLinks(id, { add: [CYCLE, FIX], remove: [] });
+        expect(info.link.targets).toEqual([{ ...CYCLE, origin: 'manual' }, { ...FIX, origin: 'manual' }]);
+        expect(info.link.target).toEqual(FIX);
+        expect(updates(id)).toHaveLength(1);
+      });
+
+      it('updateLinks removes first and then adds, and a removed association is not shown again', async () => {
+        const { m, id } = await idleThread();
+        m.updateLinks(id, { add: [CYCLE, FIX], remove: [] });
+        const info = m.updateLinks(id, { add: [SPEC], remove: [FIX] });
+        expect(info.link.targets).toEqual([{ ...CYCLE, origin: 'manual' }, { ...SPEC, origin: 'manual' }]);
+        expect(info.link.target).toEqual(CYCLE);
+      });
+
+      it('updateLinks leaves the list intact when an added destination does not exist', async () => {
+        const { m, id } = await idleThread();
+        m.updateLinks(id, { add: [CYCLE], remove: [] });
+        sent.length = 0;
+        expect(() => m.updateLinks(id, { add: [FIX, { kind: 'fix', fixId: 'FIX-nope' }], remove: [CYCLE] })).toThrowError(
+          expect.objectContaining({ code: 'not-found' }),
+        );
+        expect(targetsOf(m, id)).toEqual([{ ...CYCLE, origin: 'manual' }]);
+        expect(updates(id)).toHaveLength(0);
+      });
+
+      it('updateLinks is idempotent and silent when nothing changes', async () => {
+        const { m, id } = await idleThread();
+        m.updateLinks(id, { add: [CYCLE], remove: [] });
+        sent.length = 0;
+        m.updateLinks(id, { add: [CYCLE], remove: [] });
+        m.updateLinks(id, { add: [], remove: [FIX] });
+        expect(targetsOf(m, id)).toEqual([{ ...CYCLE, origin: 'manual' }]);
+        expect(updates(id)).toHaveLength(0);
+      });
+
+      it('updateLinks rejects an unknown thread', async () => {
+        const { m } = await idleThread();
+        expect(() => m.updateLinks('missing', { add: [], remove: [] })).toThrowError(expect.objectContaining({ code: 'not-found' }));
+      });
+
+      it('a dismissed association is not detected again from a later document change', async () => {
+        const { m, id } = await idleThread();
+        m.updateLinks(id, { add: [CYCLE], remove: [] });
+        m.updateLinks(id, { add: [], remove: [CYCLE] });
+        await m.send(id, { text: '#write-doc' });
+        await waitFor(() => eventsOf(id).some((e) => e.type === 'document.touched'));
+        await idleOf(m, id);
+        expect(targetsOf(m, id)).toEqual([]);
+      });
+
+      it('legacy setLink adds only the primary association and keeps the others', async () => {
+        const { m, id } = await idleThread();
+        m.updateLinks(id, { add: [SPEC, FIX], remove: [] });
+        const info = m.setLink(id, CYCLE);
+        expect(info.link.targets).toEqual([{ ...SPEC, origin: 'manual' }, { ...FIX, origin: 'manual' }, { ...CYCLE, origin: 'manual' }]);
+        expect(info.link).toMatchObject({ target: CYCLE, source: 'manual' });
+      });
+
+      it('legacy setLink none removes only the primary association and keeps the others', async () => {
+        const { m, id } = await idleThread();
+        m.updateLinks(id, { add: [SPEC, FIX, CYCLE], remove: [] });
+        const info = m.setLink(id, { kind: 'none' });
+        expect(info.link.targets).toEqual([{ ...SPEC, origin: 'manual' }, { ...FIX, origin: 'manual' }]);
+        expect(info.link.target).toEqual(FIX);
+        expect(m.setLink(id, { kind: 'none' }).link.targets).toEqual([{ ...SPEC, origin: 'manual' }]);
+        expect(m.setLink(id, { kind: 'none' }).link).toMatchObject({ target: { kind: 'none' }, targets: [{ ...SPEC, origin: 'manual' }] });
+      });
+
+      it('persists the associations across a restart', async () => {
+        const { m, store, id } = await idleThread();
+        m.updateLinks(id, { add: [CYCLE, FIX], remove: [] });
+        await store.flush();
+        const reloaded = new ThreadStore(root);
+        await reloaded.init();
+        stores.push(reloaded);
+        expect(reloaded.get(id)?.link.targets).toEqual([{ ...CYCLE, origin: 'manual' }, { ...FIX, origin: 'manual' }]);
+      });
+    });
+
     it('shows legacy threads from a v1 threads.json with a legacy link', async () => {
       const first = await manager();
       const t = await first.m.createThread({ channelId: 'general', options: opts, text: 'hola' });

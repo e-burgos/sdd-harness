@@ -212,4 +212,31 @@ describe('createHandlers', () => {
     await expect(h.handle(cmd({ cmd: 'thread.setLink', threadId: created.id, link: { kind: 'fix', fixId: 'FIX-nope' } }))).rejects.toMatchObject({ code: 'not-found' });
     await waitFor(async () => ((await h.handle(cmd({ cmd: 'thread.list' }))) as { status: string }[])[0]?.status === 'idle');
   });
+
+  it('thread.updateLinks adds and removes associations and keeps the list on a missing destination', async () => {
+    const h = await handlers();
+    const created = (await h.handle(cmd({ cmd: 'thread.create', channelId: 'general', options: defaultThreadOptions(), text: 'hola' }))) as { id: string };
+    await waitFor(async () => ((await h.handle(cmd({ cmd: 'thread.list' }))) as { status: string }[])[0]?.status === 'idle');
+    const cycle = { kind: 'cycle', specId: 'spec-dev-001-pagos', cycle: 'cycle-01' };
+    const added = (await h.handle(cmd({ cmd: 'thread.updateLinks', threadId: created.id, add: [cycle] }))) as { link: { targets: unknown[] } };
+    expect(added.link.targets).toEqual([{ ...cycle, origin: 'manual' }]);
+    await expect(
+      h.handle(cmd({ cmd: 'thread.updateLinks', threadId: created.id, add: [{ kind: 'fix', fixId: 'FIX-nope' }], remove: [cycle] })),
+    ).rejects.toMatchObject({ code: 'not-found' });
+    const kept = (await h.handle(cmd({ cmd: 'thread.list' }))) as Array<{ link: { targets: unknown[] } }>;
+    expect(kept[0]?.link.targets).toEqual([{ ...cycle, origin: 'manual' }]);
+    const removed = (await h.handle(cmd({ cmd: 'thread.updateLinks', threadId: created.id, remove: [cycle] }))) as { link: { targets: unknown[] } };
+    expect(removed.link.targets).toEqual([]);
+  });
+
+  it('thread.history hides document.touched unless includeDocumentTouched is true', async () => {
+    const h = await handlers();
+    const created = (await h.handle(cmd({ cmd: 'thread.create', channelId: 'general', options: defaultThreadOptions(), text: '#write-doc' }))) as { id: string };
+    await waitFor(async () => ((await h.handle(cmd({ cmd: 'thread.list' }))) as { status: string }[])[0]?.status === 'idle');
+    const types = async (extra: Record<string, unknown>) =>
+      ((await h.handle(cmd({ cmd: 'thread.history', threadId: created.id, sinceSeq: 0, ...extra }))) as Array<{ event: { type: string } }>).map((e) => e.event.type);
+    expect(await types({})).not.toContain('document.touched');
+    expect(await types({ includeDocumentTouched: false })).not.toContain('document.touched');
+    expect(await types({ includeDocumentTouched: true })).toContain('document.touched');
+  });
 });

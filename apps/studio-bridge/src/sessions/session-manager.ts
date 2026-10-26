@@ -14,6 +14,8 @@ import type {
   SessionStatus,
   ThreadEvent,
   ThreadInfo,
+  ThreadLink,
+  ThreadLinkRef,
   ThreadLinkTarget,
   ThreadOptions,
   WorkspaceSnapshot,
@@ -36,7 +38,7 @@ import { editTargetOf, judgeEdit } from '../gate/judge';
 import { alwaysOfferOf, matchesRule, ruleOf } from './always-rule';
 import type { AttachmentStore } from './attachment-store';
 import { DocumentChangeTracker, type AttributedTouch } from './document-tracker';
-import { assignLink, detectRef, detectRefs, legacyTargetOf, linkTargetExists } from './thread-link';
+import { addManual, assignLink, detectRef, detectRefs, legacyTargetOf, linkTargetExists, removeRef, type StoredLinkEntry } from './thread-link';
 import { PresenceTracker } from './presence';
 import { storedLinkOf, toThreadInfo as toInfo, type HistoryEntry, type PendingMessage, type StoredThread, type ThreadStore } from './store';
 
@@ -269,8 +271,22 @@ export class SessionManager {
   setLink(threadId: string, target: ThreadLinkTarget): ThreadInfo {
     const thread = this.require(threadId);
     if (!linkTargetExists(this.deps.snapshot(), target)) throw new SessionError('not-found', 'the link target does not exist');
-    thread.link = storedLinkOf({ target, source: 'manual' });
-    this.publishThread(thread);
+    const entries = thread.link.targets;
+    if (target.kind === 'none') {
+      const primary = legacyTargetOf(entries).target;
+      this.replaceLinkEntries(thread, primary.kind === 'none' ? entries : removeRef(entries, primary), 'manual');
+    } else {
+      this.replaceLinkEntries(thread, addManual(entries, target), 'manual');
+    }
+    return toInfo(thread);
+  }
+
+  updateLinks(threadId: string, change: { add: ThreadLinkRef[]; remove: ThreadLinkRef[] }): ThreadInfo {
+    const thread = this.require(threadId);
+    const snapshot = this.deps.snapshot();
+    if (!change.add.every((ref) => linkTargetExists(snapshot, ref))) throw new SessionError('not-found', 'a link target does not exist');
+    const removed = change.remove.reduce(removeRef, thread.link.targets);
+    this.replaceLinkEntries(thread, change.add.reduce(addManual, removed), thread.link.source);
     return toInfo(thread);
   }
 
@@ -532,6 +548,12 @@ export class SessionManager {
     this.detectLinks(thread, touches.map((touch) => touch.path), true);
   }
 
+  private replaceLinkEntries(thread: StoredThread, entries: StoredLinkEntry[], fallbackSource: ThreadLink['source']): void {
+    if (JSON.stringify(entries) === JSON.stringify(thread.link.targets)) return;
+    thread.link = { ...thread.link, ...legacyTargetOf(entries, fallbackSource), targets: entries };
+    this.publishThread(thread);
+  }
+
   private detectLinks(thread: StoredThread, paths: string[], retryUnresolved: boolean): void {
     const snapshot = this.deps.snapshot();
     const live = this.liveOf(thread.id);
@@ -541,9 +563,7 @@ export class SessionManager {
       if (refs.length === 0 && retryUnresolved && SDD_PATH_PREFIXES.some((prefix) => file.startsWith(prefix))) live.unresolvedPaths.add(file);
       for (const ref of refs) entries = detectRef(entries, ref, snapshot);
     }
-    if (entries === thread.link.targets) return;
-    thread.link = { ...thread.link, ...legacyTargetOf(entries, thread.link.source), targets: entries };
-    this.publishThread(thread);
+    if (entries !== thread.link.targets) this.replaceLinkEntries(thread, entries, thread.link.source);
   }
 
   private async retryUnresolvedPaths(thread: StoredThread): Promise<void> {
