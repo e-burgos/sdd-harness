@@ -363,6 +363,81 @@
             "change": "deprecated — no separate hook: per-thread drafts live in the store slice drafts (draftKey/setDraft in src/lib/store/state.ts) consumed by Composer.tsx"
           }
         ]
+      },
+      {
+        "id": "COMP-016",
+        "name": "ConversationSelector",
+        "type": "component",
+        "module": "studio-conversation-sessions",
+        "spec": "sdd/specs/spec-e-burgos-005-studio-conversation-sessions",
+        "path": "src/components/mission-control/ConversationSelector.tsx",
+        "status": "defined",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "description": "Cinta de Mission Control: lista las conversaciones (hilos) por actividad reciente, permite elegir una y ofrece Nueva conversación; estado vacío sin conversaciones.",
+        "consumes": [],
+        "created_at": "2026-10-26",
+        "changelog": []
+      },
+      {
+        "id": "COMP-017",
+        "name": "ConversationSessionInfo",
+        "type": "component",
+        "module": "studio-conversation-sessions",
+        "spec": "sdd/specs/spec-e-burgos-005-studio-conversation-sessions",
+        "path": "src/components/mission-control/ConversationSessionInfo.tsx",
+        "status": "defined",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "description": "Muestra id de sesión y proveedor reales del hilo seleccionado; Sin sesión todavía, sesión no informada o proveedor no informado según el dato.",
+        "consumes": [],
+        "created_at": "2026-10-26",
+        "changelog": []
+      },
+      {
+        "id": "COMP-018",
+        "name": "RelatedDocuments",
+        "type": "component",
+        "module": "studio-conversation-sessions",
+        "spec": "sdd/specs/spec-e-burgos-005-studio-conversation-sessions",
+        "path": "src/components/mission-control/RelatedDocuments.tsx",
+        "status": "defined",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "description": "Lista specs y fixes relacionados derivados de los eventos de la conversación y abre el visor de documentos; los desconocidos se muestran sin enlace.",
+        "consumes": [],
+        "created_at": "2026-10-26",
+        "changelog": []
+      },
+      {
+        "id": "COMP-019",
+        "name": "NewConversationButton",
+        "type": "component",
+        "module": "studio-conversation-sessions",
+        "spec": "sdd/specs/spec-e-burgos-005-studio-conversation-sessions",
+        "path": "src/components/NewConversationButton.tsx",
+        "status": "defined",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "description": "Botón Nueva conversación: deja seleccionado un borrador vacío en el workspace; el hilo nace en el primer envío.",
+        "consumes": [],
+        "created_at": "2026-10-26",
+        "changelog": []
+      },
+      {
+        "id": "COMP-020",
+        "name": "useConversationSelection",
+        "type": "hook",
+        "module": "studio-conversation-sessions",
+        "spec": "sdd/specs/spec-e-burgos-005-studio-conversation-sessions",
+        "path": "src/lib/use-conversation-selection.ts",
+        "status": "defined",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "description": "Elección de conversación de Mission Control: default la de lastActivity más reciente, sincroniza el hilo elegido y expone la vista derivada de sus eventos.",
+        "consumes": [],
+        "created_at": "2026-10-26",
+        "changelog": []
       }
     ]
   }

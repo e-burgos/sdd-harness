@@ -22,19 +22,21 @@
   "completed_at": null,
   "documents": {
     "brief": "sdd/specs/spec-e-burgos-005-studio-conversation-sessions/cycles/cycle-01/brief.yaml",
-    "functional": "sdd/specs/spec-e-burgos-005-studio-conversation-sessions/cycles/cycle-01/functional.md"
+    "functional": "sdd/specs/spec-e-burgos-005-studio-conversation-sessions/cycles/cycle-01/functional.md",
+    "architect": "sdd/specs/spec-e-burgos-005-studio-conversation-sessions/cycles/cycle-01/architect.md",
+    "planner": "sdd/specs/spec-e-burgos-005-studio-conversation-sessions/cycles/cycle-01/planner.md"
   },
   "artifacts": [],
   "metrics": {
-    "tasks_total": 0,
+    "tasks_total": 15,
     "tasks_completed": 0,
-    "story_points": 0,
+    "story_points": 50,
     "files_created": [],
     "files_modified": [],
     "files_deleted": [],
     "usage": {
-      "tokens_in": 115000,
-      "tokens_out": 23000,
+      "tokens_in": 325000,
+      "tokens_out": 53000,
       "by_agent": [
         {
           "agent": "orchestrator",
@@ -57,6 +59,28 @@
           "approx": true,
           "source": "declared-estimate",
           "recorded_at": "2026-10-25"
+        },
+        {
+          "agent": "architect",
+          "label": "architect.md",
+          "provider_model": "claude/sonnet",
+          "effort": "high",
+          "tokens_in": 150000,
+          "tokens_out": 16000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-26"
+        },
+        {
+          "agent": "planner",
+          "label": "planner.md+tasks.json",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 60000,
+          "tokens_out": 14000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-26"
         }
       ],
       "approx": true,

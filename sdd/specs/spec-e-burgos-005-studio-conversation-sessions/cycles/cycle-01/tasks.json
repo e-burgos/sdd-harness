@@ -1,0 +1,311 @@
+{
+  "$schema": "../../../../schemas/cycle-tasks.schema.json",
+  "spec": "spec-e-burgos-005-studio-conversation-sessions",
+  "cycle": 1,
+  "module": "studio-conversation-sessions",
+  "apps": [
+    "apps/studio",
+    "apps/studio-bridge",
+    "libs/studio-protocol"
+  ],
+  "flow": "full",
+  "user_stories_generated": true,
+  "prerequisites": {
+    "tasks_generated": true
+  },
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "Protocolo: ProviderId, EngineSessionId y campos opcionales en ThreadInfo",
+      "user_stories": [
+        "HU-02",
+        "HU-06"
+      ],
+      "estimation_hours": 4,
+      "story_points": 3,
+      "depends_on": [],
+      "status": "pending",
+      "files": [
+        "libs/studio-protocol/src/domain.ts",
+        "libs/studio-protocol/src/limits.ts",
+        "libs/studio-protocol/src/domain.spec.ts",
+        "libs/studio-protocol/src/handshake.spec.ts"
+      ]
+    },
+    {
+      "id": "TASK-002",
+      "title": "Puente: stable-prefix y tipos de engine (systemPrefix, provider)",
+      "user_stories": [
+        "HU-03"
+      ],
+      "estimation_hours": 5,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "status": "pending",
+      "files": [
+        "apps/studio-bridge/src/engine/types.ts",
+        "apps/studio-bridge/src/engine/stable-prefix.ts",
+        "apps/studio-bridge/src/engine/stable-prefix.spec.ts"
+      ]
+    },
+    {
+      "id": "TASK-003",
+      "title": "Puente: engines inyectan prefijo y declaran provider",
+      "user_stories": [
+        "HU-02",
+        "HU-03"
+      ],
+      "estimation_hours": 4,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-002"
+      ],
+      "status": "pending",
+      "files": [
+        "apps/studio-bridge/src/engine/claude-sdk-engine.ts",
+        "apps/studio-bridge/src/engine/claude-sdk-engine.spec.ts",
+        "apps/studio-bridge/src/engine/fake-engine.ts",
+        "apps/studio-bridge/src/engine/fake-engine.spec.ts"
+      ]
+    },
+    {
+      "id": "TASK-004",
+      "title": "Puente: store con provider/engineSessionId visibles y migracion de threads.json",
+      "user_stories": [
+        "HU-02",
+        "HU-06"
+      ],
+      "estimation_hours": 4,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "status": "pending",
+      "files": [
+        "apps/studio-bridge/src/sessions/store.ts",
+        "apps/studio-bridge/src/sessions/store.spec.ts"
+      ]
+    },
+    {
+      "id": "TASK-005",
+      "title": "Puente: session-manager con propiedad exclusiva de sesion, systemPrefix y publishThread",
+      "user_stories": [
+        "HU-01",
+        "HU-03",
+        "HU-02"
+      ],
+      "estimation_hours": 6,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-003",
+        "TASK-004"
+      ],
+      "status": "pending",
+      "files": [
+        "apps/studio-bridge/src/sessions/session-manager.ts",
+        "apps/studio-bridge/src/sessions/session-manager.spec.ts"
+      ]
+    },
+    {
+      "id": "TASK-006",
+      "title": "Web: modulo puro conversation.ts (derivacion, seleccion, referencias)",
+      "user_stories": [
+        "HU-04",
+        "HU-05"
+      ],
+      "estimation_hours": 7,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "status": "pending",
+      "files": [
+        "apps/studio/src/lib/conversation.ts",
+        "apps/studio/src/lib/conversation.spec.ts"
+      ]
+    },
+    {
+      "id": "TASK-007",
+      "title": "Web: i18n mc.* y componentes ConversationSessionInfo y RelatedDocuments",
+      "user_stories": [
+        "HU-02",
+        "HU-04",
+        "HU-05"
+      ],
+      "estimation_hours": 5,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-006"
+      ],
+      "status": "pending",
+      "files": [
+        "apps/studio/src/lib/i18n/es.ts",
+        "apps/studio/src/lib/i18n/en.ts",
+        "apps/studio/src/components/mission-control/ConversationSessionInfo.tsx",
+        "apps/studio/src/components/mission-control/ConversationSessionInfo.spec.tsx",
+        "apps/studio/src/components/mission-control/RelatedDocuments.tsx",
+        "apps/studio/src/components/mission-control/RelatedDocuments.spec.tsx"
+      ]
+    },
+    {
+      "id": "TASK-008",
+      "title": "Web: NewConversationButton, ConversationSelector y hook useConversationSelection",
+      "user_stories": [
+        "HU-01",
+        "HU-04"
+      ],
+      "estimation_hours": 5,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-006",
+        "TASK-007"
+      ],
+      "status": "pending",
+      "files": [
+        "apps/studio/src/components/NewConversationButton.tsx",
+        "apps/studio/src/components/mission-control/ConversationSelector.tsx",
+        "apps/studio/src/components/mission-control/ConversationSelector.spec.tsx",
+        "apps/studio/src/lib/use-conversation-selection.ts"
+      ]
+    },
+    {
+      "id": "TASK-009",
+      "title": "Web: cableado de Nueva conversacion en Sidebar, Workspace y WorkspaceApp",
+      "user_stories": [
+        "HU-01"
+      ],
+      "estimation_hours": 4,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-008"
+      ],
+      "status": "pending",
+      "files": [
+        "apps/studio/src/components/WorkspaceApp.tsx",
+        "apps/studio/src/components/workspace/Workspace.tsx",
+        "apps/studio/src/components/workspace/Sidebar.tsx",
+        "apps/studio/src/components/workspace/workspace.spec.tsx",
+        "apps/studio/src/components/workspace/sidebar.spec.tsx"
+      ]
+    },
+    {
+      "id": "TASK-010",
+      "title": "Web: LiveSwarmComms, ChatDialogueCard y LiveAgentChatFeed sobre ConversationDialogue",
+      "user_stories": [
+        "HU-04",
+        "HU-05",
+        "HU-01"
+      ],
+      "estimation_hours": 6,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-006",
+        "TASK-008"
+      ],
+      "status": "pending",
+      "files": [
+        "apps/studio/src/components/mission-control/LiveSwarmComms.tsx",
+        "apps/studio/src/components/mission-control/ChatDialogueCard.tsx",
+        "apps/studio/src/components/mission-control/LiveAgentChatFeed.tsx",
+        "apps/studio/src/components/mission-control/chatdialoguecard.spec.tsx"
+      ]
+    },
+    {
+      "id": "TASK-011",
+      "title": "Web: reescritura de AgentInspectorDrawer sin datos ficticios",
+      "user_stories": [
+        "HU-04",
+        "HU-05"
+      ],
+      "estimation_hours": 5,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-007"
+      ],
+      "status": "pending",
+      "files": [
+        "apps/studio/src/components/mission-control/AgentInspectorDrawer.tsx",
+        "apps/studio/src/components/mission-control/inspectordrawer.spec.tsx"
+      ]
+    },
+    {
+      "id": "TASK-012",
+      "title": "Web: AgentMapCanvas centrado en la conversacion y borrado de swarm-dialogue.ts",
+      "user_stories": [
+        "HU-04",
+        "HU-05"
+      ],
+      "estimation_hours": 7,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-008",
+        "TASK-010",
+        "TASK-011"
+      ],
+      "status": "pending",
+      "files": [
+        "apps/studio/src/components/mission-control/AgentMapCanvas.tsx",
+        "apps/studio/src/components/mission-control/agentmap.spec.tsx",
+        "apps/studio/src/components/mission-control/swarm-dialogue.ts"
+      ]
+    },
+    {
+      "id": "TASK-013",
+      "title": "Web: LiveTelemetryHUD sin telemetria inventada",
+      "user_stories": [
+        "HU-05"
+      ],
+      "estimation_hours": 3,
+      "story_points": 2,
+      "depends_on": [
+        "TASK-007"
+      ],
+      "status": "pending",
+      "files": [
+        "apps/studio/src/components/mission-control/LiveTelemetryHUD.tsx",
+        "apps/studio/src/components/mission-control/telemetry.spec.tsx"
+      ]
+    },
+    {
+      "id": "TASK-014",
+      "title": "Test de busqueda en fuente y auditoria de creacion de hilos",
+      "user_stories": [
+        "HU-01",
+        "HU-02",
+        "HU-05"
+      ],
+      "estimation_hours": 3,
+      "story_points": 2,
+      "depends_on": [
+        "TASK-005",
+        "TASK-012",
+        "TASK-013"
+      ],
+      "status": "pending",
+      "files": [
+        "apps/studio/src/lib/no-fabricated-data.spec.ts",
+        "sdd/specs/spec-e-burgos-005-studio-conversation-sessions/cycles/cycle-01/artifacts/audit-thread-creation.md"
+      ]
+    },
+    {
+      "id": "TASK-015",
+      "title": "Limpieza y verificacion integral del ciclo",
+      "user_stories": [
+        "HU-06"
+      ],
+      "estimation_hours": 3,
+      "story_points": 2,
+      "depends_on": [
+        "TASK-014"
+      ],
+      "status": "pending",
+      "files": [
+        "libs/studio-protocol",
+        "apps/studio-bridge",
+        "apps/studio"
+      ]
+    }
+  ]
+}
