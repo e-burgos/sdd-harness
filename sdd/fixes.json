@@ -334,7 +334,7 @@
       "severity": "low",
       "created_at": "2026-10-26",
       "resolved_at": "2026-10-26",
-      "validated_at": null,
+      "validated_at": "2026-10-26",
       "title": "Mission Control: selector de conversaciones compacto y envio dirigido desde el panel del agente",
       "estimation_hours": 2,
       "description": "Selector de conversaciones como dropdown en el header de Topologia del Enjambre junto a Nueva conversacion; el input del panel envia con thread.send a la conversacion seleccionada dirigido al agente; boton Abrir nuevo chat con <agente>.",
@@ -350,7 +350,7 @@
         "apps/studio/src/lib/i18n/"
       ],
       "test_reference": "apps/studio/src/components/mission-control/ConversationSelector.spec.tsx",
-      "status": "implemented",
+      "status": "validated",
       "cycle": null,
       "usage": {
         "provider_model": "claude/sonnet",
@@ -391,7 +391,7 @@
           }
         ]
       },
-      "process_note": "Verificacion manual 2026-10-26: verificado por el dev en Studio con bridge reiniciado. Pendiente de validacion por el sdd-reviewer."
+      "process_note": "Verificacion manual 2026-10-26: verificado por el dev en Studio con bridge reiniciado. Validado por el sdd-reviewer el 2026-10-26 (codigo, tests y suite verde del workspace revisados)."
     },
     {
       "id": "FIX-e-burgos-005-002",
@@ -402,7 +402,7 @@
       "severity": "medium",
       "created_at": "2026-10-26",
       "resolved_at": "2026-10-26",
-      "validated_at": null,
+      "validated_at": "2026-10-26",
       "title": "Mission Control: documentos solo de la conversacion, tarjeta persistida y visor modal centrado",
       "estimation_hours": 2,
       "description": "Derivar documentos desde tool calls y FIX-ids reales descartando ids truncados inexistentes en el snapshot; tarjeta contraible persistida en localStorage; DocumentViewerModal centrado siguiendo el visor sdd/docs.",
@@ -418,7 +418,7 @@
         "apps/studio/src/components/mission-control/DocumentViewerModal.tsx"
       ],
       "test_reference": "apps/studio/src/lib/conversation.spec.ts",
-      "status": "implemented",
+      "status": "validated",
       "cycle": null,
       "usage": {
         "provider_model": "claude/sonnet",
@@ -459,7 +459,7 @@
           }
         ]
       },
-      "process_note": "Verificacion manual 2026-10-26: verificado por el dev en Studio con bridge reiniciado. Pendiente de validacion por el sdd-reviewer."
+      "process_note": "Verificacion manual 2026-10-26: verificado por el dev en Studio con bridge reiniciado. Validado por el sdd-reviewer el 2026-10-26 (codigo, tests y suite verde del workspace revisados)."
     },
     {
       "id": "FIX-e-burgos-005-003",
@@ -470,7 +470,7 @@
       "severity": "low",
       "created_at": "2026-10-26",
       "resolved_at": "2026-10-26",
-      "validated_at": null,
+      "validated_at": "2026-10-26",
       "title": "Mission Control: header del DocumentViewerModal con layout limpio",
       "estimation_hours": 1.5,
       "description": "El header del visor mezcla titulo, ruta truncada, 'Copiar ruta' (se superpone y parte en dos lineas), toggle Renderizado/Crudo, Copiar y cerrar. Reorganizar: columna izquierda con titulo+badges y ruta; grupo de acciones alineado a la derecha; cerrar separado.",
@@ -483,7 +483,7 @@
         "apps/studio/src/components/mission-control/documentviewermodal.spec.tsx"
       ],
       "test_reference": "apps/studio/src/components/mission-control/documentviewermodal.spec.tsx",
-      "status": "implemented",
+      "status": "validated",
       "cycle": null,
       "usage": {
         "provider_model": "claude/sonnet",
@@ -524,7 +524,7 @@
           }
         ]
       },
-      "process_note": "Verificacion manual 2026-10-26: verificado por el dev en Studio con bridge reiniciado. Pendiente de validacion por el sdd-reviewer."
+      "process_note": "Verificacion manual 2026-10-26: verificado por el dev en Studio con bridge reiniciado. Validado por el sdd-reviewer el 2026-10-26 (codigo, tests y suite verde del workspace revisados)."
     },
     {
       "id": "FIX-e-burgos-005-004",
@@ -535,7 +535,7 @@
       "severity": "medium",
       "created_at": "2026-10-26",
       "resolved_at": "2026-10-26",
-      "validated_at": null,
+      "validated_at": "2026-10-26",
       "title": "Mission Control: documentos por agente generado y specs/fixes solo con documento",
       "estimation_hours": 1.5,
       "description": "En la pestana de un agente se listan documentos ajenos y en Enjambre entran specs/fixes sin documentos (p. ej. spec-e-burgos-004-studio-gates-topology). Causa: relatedSpecs agrega por tool Read y por link.target auto-asignado, y relatedFixes por mencion textual, sin exigir documento generado. Solucion: documentos = solo Write/Edit/MultiEdit (Read excluido); cada documento lleva los agentes autores (item.author.agent); pestana de agente filtra por agente, Enjambre muestra todos; specs y fixes se derivan de los documentos generados (un fix solo aparece enlazado a su fix doc).",
@@ -556,7 +556,7 @@
         "apps/studio/src/lib/i18n/"
       ],
       "test_reference": "apps/studio/src/lib/conversation.spec.ts",
-      "status": "implemented",
+      "status": "validated",
       "cycle": null,
       "usage": {
         "provider_model": "claude/sonnet",
@@ -597,7 +597,7 @@
           }
         ]
       },
-      "process_note": "Verificacion manual 2026-10-26: verificado por el dev en Studio con bridge reiniciado. Pendiente de validacion por el sdd-reviewer."
+      "process_note": "Verificacion manual 2026-10-26: verificado por el dev en Studio con bridge reiniciado. Validado por el sdd-reviewer el 2026-10-26 (codigo, tests y suite verde del workspace revisados)."
     },
     {
       "id": "FIX-e-burgos-005-005",
@@ -608,7 +608,7 @@
       "severity": "medium",
       "created_at": "2026-10-26",
       "resolved_at": "2026-10-26",
-      "validated_at": null,
+      "validated_at": "2026-10-26",
       "title": "Mission Control: sesion y proveedor visibles, sin falso 'no informado' por bridge desactualizado",
       "estimation_hours": 1.5,
       "description": "'proveedor no informado / sesion no informada' persiste porque el bridge en ejecucion (iniciado 11:26) es anterior al commit 414b1fd (11:42) cuyo toThreadInfo ya no descarta engineSessionId ni inyecta provider; el bridge viejo hace `{engineSessionId: _session, ...}` y lo elimina del ThreadInfo, y nunca emite provider. No son sesiones externas de Claude Code: no existe ingesta de hooks/transcripts. Solucion sin tocar contrato: la UI distingue 'bridge desactualizado, reinicialo' de 'sin sesion todavia' y muestra el id de sesion completo copiable; se reinicia el bridge. El titulo de /resume (SDKSessionInfo.summary/customTitle via getSessionInfo) requiere campo nuevo en ThreadInfo: queda fuera, ver nota de elegibilidad.",
@@ -623,7 +623,7 @@
         "apps/studio/src/lib/i18n/en.ts"
       ],
       "test_reference": "apps/studio/src/components/mission-control/ConversationSessionInfo.spec.tsx",
-      "status": "implemented",
+      "status": "validated",
       "cycle": null,
       "usage": {
         "provider_model": "claude/sonnet",
@@ -664,7 +664,7 @@
           }
         ]
       },
-      "process_note": "Verificacion manual 2026-10-26: verificado por el dev en Studio con bridge reiniciado. Diagnostico (bridge anterior a 414b1fd) confirmado. Pendiente de validacion por el sdd-reviewer."
+      "process_note": "Verificacion manual 2026-10-26: verificado por el dev en Studio con bridge reiniciado. Diagnostico (bridge anterior a 414b1fd) confirmado. Validado por el sdd-reviewer el 2026-10-26 (codigo, tests y suite verde del workspace revisados)."
     },
     {
       "id": "FIX-e-burgos-005-006",
@@ -675,7 +675,7 @@
       "severity": "low",
       "created_at": "2026-10-26",
       "resolved_at": "2026-10-26",
-      "validated_at": null,
+      "validated_at": "2026-10-26",
       "title": "Mission Control: documentos y relaciones de la conversacion derivados tambien de Bash y menciones, agrupados por ciclo",
       "estimation_hours": 2,
       "description": "El panel 'Specs y fixes relacionados' omite casi todos los documentos de la conversacion y colapsa los ciclos en uno solo. Diagnostico con datos reales (hilo bf119c6c, .sdd-studio/threads/bf119c6c-9a6a-4c78-9f83-a99ef37c2cf2.jsonl, 1086 eventos): los eventos de subagentes SI se persisten y llegan (author.agent = sdd-functional/planner/architect/implementor-*/reviewer, parentToolUseId presente). Pero solo 6 tool.start son Write/Edit (5 sobre sdd/: fix-004-001.md, spec-005.spec.md, brief.yaml, architect.md + context update); todo el resto se escribio con Bash (heredocs `cat > $D/cycle.json`, `cat > functional.md` tras `cd`, script /tmp/gen-planner.mjs para planner.md/tasks.json, `sed -i`, `cat >>` a fix-005-004.md, addfix.mjs para fixes.json). conversation.ts documentOf (L127-L130) solo acepta Write/Edit/MultiEdit y exige ruta sdd/specs/<spec>/ literal en item.summary; Bash queda descartado. Ademas el summary de Bash se trunca a 160 chars (apps/studio-bridge/src/engine/tool-summary.ts:8), asi que parte de los destinos es irrecuperable en el front. Ademas relatedFromDocuments (conversation.ts L156-L171) guarda un unico `cycle` por spec (el ultimo gana), sin agrupar por ciclo.",
@@ -690,7 +690,7 @@
         "apps/studio/src/lib/conversation-bash-paths.spec.ts"
       ],
       "test_reference": "conversation.spec.ts con fixtures del hilo real",
-      "status": "implemented",
+      "status": "validated",
       "cycle": null,
       "usage": {
         "provider_model": "claude/sonnet",
@@ -731,7 +731,7 @@
       "severity": "low",
       "created_at": "2026-10-26",
       "resolved_at": "2026-10-26",
-      "validated_at": null,
+      "validated_at": "2026-10-26",
       "title": "Mission Control: Specs y fixes relacionados agrupa spec -> ciclo -> archivo y fix -> documento",
       "estimation_hours": 1.5,
       "description": "RelatedDocuments.tsx (L89-L91) lista los documentos de una spec en plano filtrando `fixId === null` y muestra un solo ciclo; no agrupa por ciclo y los docs de fix quedan separados de su spec. Consume el modelo agrupado de FIX-e-burgos-005-006.",
@@ -746,7 +746,7 @@
         "apps/studio/src/lib/i18n/en.ts"
       ],
       "test_reference": "RelatedDocuments.spec.tsx",
-      "status": "implemented",
+      "status": "validated",
       "cycle": null,
       "usage": {
         "provider_model": "claude/sonnet",
@@ -787,7 +787,7 @@
       "severity": "low",
       "created_at": "2026-10-26",
       "resolved_at": "2026-10-26",
-      "validated_at": null,
+      "validated_at": "2026-10-26",
       "title": "Header: chip de gate refleja el gate real de la conversacion seleccionada",
       "estimation_hours": 1.5,
       "description": "StudioHeader.tsx L85 muestra 'SPEC GATE IDLE' literal cuando no hay ciclo in-progress global (activeCycle del snapshot); ignora la conversacion seleccionada, que puede estar trabajando un FIX GATE (FIX-e-burgos-005-00x).",
@@ -810,7 +810,7 @@
         "apps/studio/src/lib/i18n/en.ts"
       ],
       "test_reference": "conversation-gate.spec.ts",
-      "status": "implemented",
+      "status": "validated",
       "cycle": null,
       "usage": {
         "provider_model": "claude/sonnet",
@@ -851,7 +851,7 @@
       "severity": "low",
       "created_at": "2026-10-26",
       "resolved_at": "2026-10-26",
-      "validated_at": null,
+      "validated_at": "2026-10-26",
       "title": "Header: al tocar el chip de gate se abre un modal con el resumen del estado del enjambre",
       "estimation_hours": 2,
       "description": "El chip del header no es interactivo; el dev no tiene un lugar donde ver gate, spec/ciclo/fix activos, tasks/fixes con estado, agentes participantes y ultimo evento de la conversacion seleccionada.",
@@ -869,7 +869,7 @@
         "apps/studio/src/lib/i18n/en.ts"
       ],
       "test_reference": "GateStatusModal.spec.tsx",
-      "status": "implemented",
+      "status": "validated",
       "cycle": null,
       "usage": {
         "provider_model": "claude/sonnet",
@@ -910,7 +910,7 @@
       "severity": "low",
       "created_at": "2026-10-26",
       "resolved_at": "2026-10-26",
-      "validated_at": null,
+      "validated_at": "2026-10-26",
       "title": "Workspace: panel derecho muestra documentos, actividad y specs/ciclos/fixes de la conversacion",
       "estimation_hours": 2,
       "description": "RightPanel.tsx deriva 'Detalles' solo de cycleForChannel(snapshot, channelId) (L111) -> 'Este canal no tiene un ciclo activo' y 'Actividad' solo de presence (L22-L27) -> 'Nadie esta trabajando ahora'. ThreadLinkPicker muestra 'Sin asociar' porque link.target es kind none (threads.json: link.source auto) y nada deriva la relacion de los eventos.",
@@ -929,7 +929,7 @@
         "apps/studio/src/lib/i18n/en.ts"
       ],
       "test_reference": "RightPanel.spec.tsx",
-      "status": "implemented",
+      "status": "validated",
       "cycle": null,
       "usage": {
         "provider_model": "claude/sonnet",
@@ -970,7 +970,7 @@
       "severity": "low",
       "created_at": "2026-10-26",
       "resolved_at": "2026-10-26",
-      "validated_at": null,
+      "validated_at": "2026-10-26",
       "title": "RelatedDocuments: overflow y truncado en panel angosto (~300px)",
       "estimation_hours": 1.5,
       "description": "En el panel derecho del Workspace (ConversationPanelSections → RelatedDocuments), cuando el ancho es ~300px: textos de la tarjeta 'Specs y fixes relacionados' se escapan del contenedor (ids de spec largos, nombres de archivo, fragmentos, lista de agentes). Deben truncarse con ellipsis + title completo, min-w-0 en flex children, agentes en línea propia o truncados. La fila del documento de un fix muestra solo agentes, no el nombre del archivo. 'Dónde estás' muestra FIX-e-burgos-005-004 aunque se trabajó después FIX-e-burgos-005-006..010; la regla deriveConversationGate debe tomar el fix más reciente realmente trabajado.",
@@ -985,7 +985,7 @@
         "apps/studio/src/components/workspace/RightPanel.tsx"
       ],
       "test_reference": "RelatedDocuments.spec.tsx, conversation-gate.spec.ts",
-      "status": "implemented",
+      "status": "validated",
       "cycle": null,
       "usage": {
         "provider_model": "claude/sonnet",
