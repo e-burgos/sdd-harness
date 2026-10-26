@@ -7,7 +7,7 @@ import { Composer } from './Composer';
 import { PreparedConversations } from './PreparedConversations';
 
 const snapshot = {
-  project: 'p', profile: 'solo', kitVersion: null, gateMode: 'block', pricing: null, stale: [], skills: [], agents: [], specs: [], fixes: [],
+  project: 'p', profile: 'solo', kitVersion: null, gateMode: 'block', pricing: null, stale: [], skills: [], agents: [], specs: [], fixes: [{ id: 'FIX-a-001', title: 'Arreglo', status: 'pending', severity: null, specId: null, createdAt: null, closedAt: null }],
   cycles: [{ specId: 'spec-a', cycle: 'cycle-01', status: 'in-progress', flow: 'lite', apps: ['apps/studio'], tasks: [], tasksTotal: 0, tasksDone: 0 }],
 } as unknown as WorkspaceSnapshot;
 const botEvent = (botKind: string, payload: Record<string, unknown>): ServerEvent => ({ kind: 'bot.event', channelId: 'general', botKind, payload } as ServerEvent);
@@ -44,7 +44,7 @@ describe('PreparedConversations', () => {
   it('announces the new cycle and opens it with the minimal briefing', () => {
     const { store, onOpen, ui } = setup();
     render(ui('general'));
-    act(() => store.getState().receive(botEvent('cycle.opened', { specId: 'spec-a', cycle: 'cycle-01' })));
+    act(() => store.getState().receive(botEvent('cycle.opened', { specId: 'spec-a', cycle: 'cycle-01', status: 'in-progress' })));
     expect(screen.getByText('Conversación nueva lista: spec-a · cycle-01')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Abrir' }));
     expect(onOpen).toHaveBeenCalledTimes(1);
@@ -65,7 +65,7 @@ describe('PreparedConversations', () => {
   it('creates the thread associated to the cycle and clears the prepared one once sent', async () => {
     const { store, client, onThreadCreated, ui } = setup();
     render(ui('spec:spec-a'));
-    act(() => store.getState().receive(botEvent('cycle.opened', { specId: 'spec-a', cycle: 'cycle-01' })));
+    act(() => store.getState().receive(botEvent('cycle.opened', { specId: 'spec-a', cycle: 'cycle-01', status: 'in-progress' })));
     const prepared = store.getState().prepared[0]!;
     const { briefingFor } = await import('@/lib/auto-conversation');
     const briefing = briefingFor(prepared, snapshot);
@@ -81,7 +81,7 @@ describe('PreparedConversations', () => {
   it('does not inherit the association when the dev sends something else', async () => {
     const { store, client, onThreadCreated, ui } = setup();
     render(ui('spec:spec-a'));
-    act(() => store.getState().receive(botEvent('cycle.opened', { specId: 'spec-a', cycle: 'cycle-01' })));
+    act(() => store.getState().receive(botEvent('cycle.opened', { specId: 'spec-a', cycle: 'cycle-01', status: 'in-progress' })));
     act(() => store.getState().openPrepared(store.getState().prepared[0]!.id));
     const box = screen.getByPlaceholderText('Escribí un mensaje… (/ para comandos)');
     fireEvent.change(box, { target: { value: 'otra cosa distinta' } });

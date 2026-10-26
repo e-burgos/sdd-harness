@@ -120,7 +120,7 @@ describe('Workspace prepared conversation', () => {
 
   it('opens the new cycle conversation in its channel with the briefing ready to send', async () => {
     const { store } = mount();
-    act(() => store.getState().receive({ kind: 'bot.event', channelId: 'spec:spec-a', botKind: 'cycle.opened', payload: { specId: 'spec-a', cycle: 'cycle-01' } } as never));
+    act(() => store.getState().receive({ kind: 'bot.event', channelId: 'spec:spec-a', botKind: 'cycle.opened', payload: { specId: 'spec-a', cycle: 'cycle-01', status: 'in-progress' } } as never));
     fireEvent.click(screen.getByRole('button', { name: 'Abrir' }));
     const box = await screen.findByPlaceholderText('Escribí un mensaje… (/ para comandos)');
     expect((box as HTMLTextAreaElement).value).toContain('Conversación nueva para spec-a, cycle-01.');

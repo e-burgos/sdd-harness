@@ -1025,6 +1025,54 @@
           }
         ]
       }
+    },
+    {
+      "id": "FIX-e-burgos-008-001",
+      "author": "e-burgos",
+      "spec_id": "spec-e-burgos-008-studio-session-flow",
+      "fix_document": "sdd/specs/spec-e-burgos-008-studio-session-flow/fixes/fix-e-burgos-008-001.md",
+      "type": "BUGFIX",
+      "severity": "medium",
+      "created_at": "2026-10-26",
+      "resolved_at": "2026-10-26",
+      "validated_at": "2026-10-26",
+      "title": "Conversaciones preparadas en cascada por specs y fixes ya terminados",
+      "estimation_hours": 1,
+      "description": "Studio mostró un aviso de conversación preparada por cada spec y fix existentes, incluidos los completados, al reconstruirse el snapshot del puente. prepareFromBotEvent solo debe preparar objetivos abiertos y con tope.",
+      "justification": "Ajuste de lógica en apps/studio sobre datos ya disponibles; sin contratos, endpoints ni entidades nuevas; menos de 5 archivos.",
+      "related_modules": [
+        "studio"
+      ],
+      "affected_files": [
+        "apps/studio/src/lib/auto-conversation.ts",
+        "apps/studio/src/lib/store/state.ts",
+        "apps/studio/src/lib/auto-conversation.spec.ts",
+        "apps/studio/src/components/workspace/prepared.spec.tsx",
+        "apps/studio/src/components/workspace/workspace.spec.tsx"
+      ],
+      "test_reference": "auto-conversation.spec.ts, prepared.spec.tsx, workspace.spec.tsx",
+      "status": "validated",
+      "cycle": null,
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "tokens_in": 60000,
+        "tokens_out": 9000,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-26",
+        "by_agent": [
+          {
+            "agent": "implementor-front",
+            "provider_model": "claude/sonnet",
+            "effort": "medium",
+            "tokens_in": 60000,
+            "tokens_out": 9000,
+            "approx": true,
+            "source": "declared-estimate"
+          }
+        ]
+      }
     }
   ]
 }
