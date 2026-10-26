@@ -214,4 +214,11 @@ export const en = {
   'approval.summary.more': 'Show all',
   'approval.summary.less': 'Show less',
   'lang.switch': 'Español',
+  'map.gates.title': 'Swarm Topology & SDD Gates',
+  'map.gates.cycle': 'Cycle (4)',
+  'map.gates.transversal': 'Transversal (2)',
+  'map.gates.all': 'All (6)',
+  'map.chat.live': 'Live Conversation',
+  'map.chat.placeholder': 'Message {name}...',
+  'map.chat.send': 'Send',
 } satisfies Record<keyof Dict, string>;

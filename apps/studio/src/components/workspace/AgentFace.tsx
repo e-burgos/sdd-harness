@@ -200,28 +200,30 @@ function renderFace(agent: string) {
         </g>
       );
 
-    case 'sdd-hermes': // Hermes - Mensajero & Incubador (Lime & Winged Pilot Helmet)
+    case 'sdd-hermes':
       return (
         <g>
-          {/* Flight Helmet */}
           <path d="M9 18C9 10 13 6 18 6C23 6 27 10 27 18C27 25 24 28 18 28C12 28 9 25 9 18Z" fill="#3f6212" />
-          {/* Face */}
           <path d="M15 25H21V30H15V25Z" fill="#fed7aa" />
           <path d="M11 17C11 13 14 10 18 10C22 10 25 13 25 17C25 22 22 26 18 26C14 26 11 22 11 17Z" fill="#fed7aa" />
-          {/* Winged earpieces */}
           <path d="M7 16L4 12L7 13L9 15Z" fill="#a3e635" />
           <path d="M29 16L32 12L29 13L27 15Z" fill="#a3e635" />
-          {/* Aviator Visor above eyes */}
           <path d="M10 12C14 10 22 10 26 12L25 15H11L10 12Z" fill="#65a30d" />
-          {/* Adventurous eyes */}
           <ellipse cx="14.5" cy="17.5" rx="1.2" ry="1.5" fill="#1a2e05" />
           <ellipse cx="21.5" cy="17.5" rx="1.2" ry="1.5" fill="#1a2e05" />
-          {/* Enthusiastic smile */}
           <path d="M15 22Q18 25 21 22" stroke="#3f6212" strokeWidth="1.3" strokeLinecap="round" />
         </g>
       );
 
-    default: // Generic AI Face
+    case 'user':
+      return (
+        <g>
+          <circle cx="18" cy="13" r="5.5" fill="#e2e8f0" />
+          <path d="M10 28C10 22.5 13.5 20.5 18 20.5C22.5 20.5 26 22.5 26 28" fill="#94a3b8" />
+        </g>
+      );
+
+    default:
       return (
         <g>
           <circle cx="18" cy="18" r="14" fill="#1e293b" stroke="#475569" strokeWidth="1.5" />

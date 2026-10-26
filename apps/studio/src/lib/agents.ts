@@ -106,6 +106,19 @@ const KNOWN: Record<string, Omit<AgentMeta, 'id'>> = {
 };
 
 export function agentMeta(id: string): AgentMeta {
+  if (id === 'user') {
+    return {
+      id: 'user',
+      name: 'Usuario',
+      codename: 'Dev',
+      title: 'Desarrollador / Usuario',
+      short: 'DEV',
+      role: 'Usuario',
+      color: '#e2e8f0',
+      accentGlow: 'rgba(226, 232, 240, 0.4)',
+      personality: 'Comandante del proyecto.',
+    };
+  }
   const known = KNOWN[id];
   if (known) return { id, ...known };
   const raw = id.replace(/^sdd-/, '');

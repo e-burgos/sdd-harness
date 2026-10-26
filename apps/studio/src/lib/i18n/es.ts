@@ -212,5 +212,12 @@ export const es = {
   'approval.summary.more': 'Ver todo',
   'approval.summary.less': 'Ver menos',
   'lang.switch': 'English',
+  'map.gates.title': 'Topología del Enjambre & Gates SDD',
+  'map.gates.cycle': 'Ciclo (4)',
+  'map.gates.transversal': 'Transversales (2)',
+  'map.gates.all': 'Todas (6)',
+  'map.chat.live': 'Conversación en Vivo',
+  'map.chat.placeholder': 'Escribir a {name}...',
+  'map.chat.send': 'Enviar',
 };
 export type Dict = typeof es;

@@ -1,0 +1,185 @@
+{
+  "$schema": "../../../../schemas/cycle-tasks.schema.json",
+  "spec": "spec-e-burgos-004-studio-gates-topology",
+  "cycle": 1,
+  "module": "studio-gates-topology",
+  "apps": [
+    "apps/studio"
+  ],
+  "flow": "lite",
+  "user_stories_generated": true,
+  "prerequisites": {
+    "tasks_generated": true
+  },
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "Modelado de GATES en lib/gates.ts (las 6 puertas del SDD: Regla Cero, Gate A, Gate B, Contexto, Fix, Memoria), reglas, estados y tests unitarios",
+      "user_stories": [
+        "US-1"
+      ],
+      "estimation_hours": 2,
+      "story_points": 3,
+      "depends_on": [],
+      "status": "done",
+      "files": [
+        "apps/studio/src/lib/gates.ts",
+        "apps/studio/src/lib/gates.spec.ts"
+      ],
+      "usage": {
+        "tokens_in": 25000,
+        "tokens_out": 3200,
+        "provider_model": "claude/sonnet",
+        "effort": "high",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-24"
+      }
+    },
+    {
+      "id": "TASK-002",
+      "title": "Componentes GateNode / GateCard y renderizado de las 4 ranuras visuales + selector para las 6 puertas a la izquierda del lienzo en AgentMapCanvas",
+      "user_stories": [
+        "US-1"
+      ],
+      "estimation_hours": 3,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/mission-control/GateCard.tsx",
+        "apps/studio/src/components/mission-control/AgentMapCanvas.tsx"
+      ],
+      "usage": {
+        "tokens_in": 38000,
+        "tokens_out": 4800,
+        "provider_model": "claude/sonnet",
+        "effort": "high",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-24"
+      }
+    },
+    {
+      "id": "TASK-003",
+      "title": "Conexiones SVG activas (edges) entre agentes del enjambre y las puertas asignadas en el mapa de topología con estados dinámicos y pulsos",
+      "user_stories": [
+        "US-2"
+      ],
+      "estimation_hours": 2,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-002"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/mission-control/AgentMapCanvas.tsx",
+        "apps/studio/src/components/mission-control/swarm-dialogue.ts"
+      ],
+      "usage": {
+        "tokens_in": 31000,
+        "tokens_out": 3900,
+        "provider_model": "claude/sonnet",
+        "effort": "high",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-24"
+      }
+    },
+    {
+      "id": "TASK-004",
+      "title": "Split-View en AgentInspectorDrawer: panel dividido vertical con perfil resumido arriba y feed de conversación en tiempo real (LiveAgentChatFeed) abajo",
+      "user_stories": [
+        "US-3"
+      ],
+      "estimation_hours": 3,
+      "story_points": 5,
+      "depends_on": [],
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/mission-control/AgentInspectorDrawer.tsx",
+        "apps/studio/src/components/mission-control/LiveAgentChatFeed.tsx",
+        "apps/studio/src/components/mission-control/inspectordrawer.spec.tsx"
+      ],
+      "usage": {
+        "tokens_in": 36000,
+        "tokens_out": 4500,
+        "provider_model": "claude/sonnet",
+        "effort": "high",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-24"
+      }
+    },
+    {
+      "id": "TASK-005",
+      "title": "Componente GateInspectorDrawer para inspección detallada de puertas al hacer clic (criterios, reglas, estado y comando sdd:gate)",
+      "user_stories": [
+        "US-4"
+      ],
+      "estimation_hours": 2,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/mission-control/GateInspectorDrawer.tsx",
+        "apps/studio/src/components/mission-control/AgentMapCanvas.tsx"
+      ],
+      "usage": {
+        "tokens_in": 28000,
+        "tokens_out": 3500,
+        "provider_model": "claude/sonnet",
+        "effort": "high",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-24"
+      }
+    },
+    {
+      "id": "TASK-006",
+      "title": "Actualizaciones de i18n (es.ts, en.ts), suite completa de tests vitest y verificación final de integración en AgentMapCanvas",
+      "user_stories": [
+        "US-1",
+        "US-2",
+        "US-3",
+        "US-4",
+        "US-5"
+      ],
+      "estimation_hours": 2,
+      "story_points": 2,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002",
+        "TASK-003",
+        "TASK-004",
+        "TASK-005"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/lib/i18n/es.ts",
+        "apps/studio/src/lib/i18n/en.ts",
+        "apps/studio/src/components/mission-control/agentmap.spec.tsx"
+      ],
+      "usage": {
+        "tokens_in": 24000,
+        "tokens_out": 2900,
+        "provider_model": "claude/sonnet",
+        "effort": "high",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-24"
+      }
+    }
+  ]
+}
