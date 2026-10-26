@@ -7,7 +7,7 @@
 | **Severidad** | low                                       |
 | **Fecha**     | 2026-10-26                                     |
 | **Autor**     | e-burgos                                       |
-| **Estado**    | pending                                        |
+| **Estado**    | implemented                                        |
 | **Spec**      | spec-e-burgos-005-studio-conversation-sessions         |
 
 ## Problema

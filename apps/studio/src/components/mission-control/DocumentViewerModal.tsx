@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Code2, ClipboardList, Zap, FileText, Check, Copy, X } from 'lucide-react';
+import { Code2, ClipboardList, Zap, FileText, Check, Copy, Link2, X } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { AgentGeneratedDocument } from '@/lib/agent-documents';
@@ -98,8 +98,11 @@ export function DocumentViewerModal({ document: doc, onClose }: DocumentViewerMo
       className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-ink-950/80 backdrop-blur-md animate-in fade-in duration-200"
     >
       <div className="relative w-full max-w-4xl max-h-[85vh] rounded-2xl border border-white/15 bg-ink-950/95 shadow-2xl backdrop-blur-2xl flex flex-col overflow-hidden select-text text-white">
-        <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 shrink-0 bg-white/5">
-          <div className="flex items-center gap-3 min-w-0">
+        <div
+          data-testid="document-viewer-header"
+          className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3 px-5 py-4 border-b border-white/10 shrink-0 bg-white/5"
+        >
+          <div className="flex items-start gap-3 min-w-0 flex-1 basis-64">
             <div className="h-10 w-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
               {doc.type === 'code' ? (
                 <Code2 className="w-5 h-5 text-emerald-400" />
@@ -111,9 +114,9 @@ export function DocumentViewerModal({ document: doc, onClose }: DocumentViewerMo
                 <FileText className="w-5 h-5 text-sky-400" />
               )}
             </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-2">
-                <h2 className="text-base font-bold text-white truncate font-sans">{doc.name}</h2>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2 min-w-0">
+                <h2 className="text-base font-bold text-white truncate font-sans min-w-0">{doc.name}</h2>
                 <span
                   className={`px-1.5 py-0.5 rounded text-[9px] font-mono font-extrabold uppercase shrink-0 ${
                     doc.type === 'spec'
@@ -129,43 +132,30 @@ export function DocumentViewerModal({ document: doc, onClose }: DocumentViewerMo
                 >
                   {doc.type}
                 </span>
-                <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20">
+                <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20 shrink-0">
                   {doc.status}
                 </span>
               </div>
-              <div className="flex items-center gap-2 mt-0.5 text-xs text-white/50 font-mono">
-                <span className="truncate max-w-md" title={doc.path}>
-                  {doc.path}
-                </span>
-                <button
-                  type="button"
-                  onClick={handleCopyPath}
-                  className="hover:text-emerald-400 transition-colors text-[10px] flex items-center gap-1"
-                  title="Copiar ruta"
-                >
-                  {pathCopied ? (
-                    <>
-                      <Check className="w-3 h-3 text-emerald-400" />
-                      <span className="text-emerald-400">Copiada</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3 h-3" />
-                      <span>Copiar ruta</span>
-                    </>
-                  )}
-                </button>
-              </div>
+              <p
+                data-testid="document-viewer-path"
+                className="mt-0.5 truncate text-xs text-white/50 font-mono"
+                title={doc.path}
+              >
+                {doc.path}
+              </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
-                {isMarkdown && (
-              <div className="flex items-center bg-white/10 p-0.5 rounded-lg border border-white/10 text-[10px] font-mono">
+          <div
+            data-testid="document-viewer-actions"
+            className="flex flex-wrap items-center justify-end gap-2 shrink-0 ml-auto"
+          >
+            {isMarkdown && (
+              <div className="flex items-center bg-white/10 p-0.5 rounded-lg border border-white/10 text-[10px] font-mono shrink-0 whitespace-nowrap">
                 <button
                   type="button"
                   onClick={() => setViewMode('rendered')}
-                  className={`px-2.5 py-1 rounded transition-all ${
+                  className={`px-2.5 py-1 rounded transition-all whitespace-nowrap ${
                     viewMode === 'rendered'
                       ? 'bg-emerald-500 text-ink-950 font-bold shadow'
                       : 'text-white/60 hover:text-white'
@@ -176,7 +166,7 @@ export function DocumentViewerModal({ document: doc, onClose }: DocumentViewerMo
                 <button
                   type="button"
                   onClick={() => setViewMode('raw')}
-                  className={`px-2.5 py-1 rounded transition-all ${
+                  className={`px-2.5 py-1 rounded transition-all whitespace-nowrap ${
                     viewMode === 'raw'
                       ? 'bg-emerald-500 text-ink-950 font-bold shadow'
                       : 'text-white/60 hover:text-white'
@@ -190,7 +180,7 @@ export function DocumentViewerModal({ document: doc, onClose }: DocumentViewerMo
             <button
               type="button"
               onClick={handleCopyContent}
-              className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white/80 hover:text-white text-xs font-mono font-medium transition-colors flex items-center gap-1.5"
+              className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white/80 hover:text-white text-xs font-mono font-medium transition-colors flex items-center gap-1.5 shrink-0 whitespace-nowrap"
               title="Copiar todo el contenido"
             >
               {copied ? (
@@ -208,10 +198,32 @@ export function DocumentViewerModal({ document: doc, onClose }: DocumentViewerMo
 
             <button
               type="button"
+              onClick={handleCopyPath}
+              data-testid="copy-path-button"
+              className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white/80 hover:text-white text-xs font-mono font-medium transition-colors flex items-center gap-1.5 shrink-0 whitespace-nowrap"
+              title="Copiar ruta"
+            >
+              {pathCopied ? (
+                <>
+                  <Check className="w-3 h-3 text-emerald-400" />
+                  <span className="text-emerald-400">Copiada</span>
+                </>
+              ) : (
+                <>
+                  <Link2 className="w-3 h-3" />
+                  <span>Copiar ruta</span>
+                </>
+              )}
+            </button>
+
+            <span aria-hidden="true" data-testid="document-viewer-divider" className="h-6 w-px bg-white/15 shrink-0" />
+
+            <button
+              type="button"
               onClick={onClose}
               data-testid="modal-close-button"
               aria-label="Cerrar modal de documento"
-              className="h-8 w-8 flex items-center justify-center rounded-lg text-white/50 hover:text-white hover:bg-white/10 transition-colors"
+              className="h-8 w-8 flex items-center justify-center rounded-lg text-white/50 hover:text-white hover:bg-white/10 transition-colors shrink-0"
               title="Cerrar modal (Esc)"
             >
               <X className="w-4 h-4" />

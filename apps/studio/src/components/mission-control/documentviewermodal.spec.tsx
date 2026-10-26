@@ -134,4 +134,31 @@ describe('DocumentViewerModal', () => {
     );
     expect(await screen.findByTestId('document-load-error')).toHaveTextContent(sampleDoc.path);
   });
+
+  it('splits the header into an info zone and an actions zone with the close button after a divider', () => {
+    mockClient.request.mockResolvedValue({ path: sampleDoc.path, content: '# x' });
+    render(
+      <I18nProvider initial="es"><BridgeContext.Provider value={mockBridgeValue}>
+        <DocumentViewerModal document={sampleDoc} onClose={() => {}} />
+      </BridgeContext.Provider></I18nProvider>,
+    );
+    const path = screen.getByTestId('document-viewer-path');
+    expect(path).toHaveAttribute('title', sampleDoc.path);
+    expect(path.className).toContain('truncate');
+    const actions = screen.getByTestId('document-viewer-actions');
+    expect(actions.className).toContain('flex-wrap');
+    expect(actions).not.toContainElement(path);
+    const copyPath = screen.getByTestId('copy-path-button');
+    expect(actions).toContainElement(copyPath);
+    expect(copyPath.className).toContain('whitespace-nowrap');
+    expect(copyPath.className).toContain('shrink-0');
+    expect(copyPath).toHaveTextContent('Copiar ruta');
+    expect(actions).toContainElement(screen.getByText('Renderizado'));
+    expect(actions).toContainElement(screen.getByText('Copiar'));
+    const divider = screen.getByTestId('document-viewer-divider');
+    expect(actions).toContainElement(divider);
+    const close = screen.getByTestId('modal-close-button');
+    expect(divider.nextElementSibling).toBe(close);
+    expect(screen.getByTestId('document-viewer-header').className).toContain('flex-wrap');
+  });
 });

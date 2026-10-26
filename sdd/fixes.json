@@ -447,7 +447,7 @@
       "type": "IMPROVEMENT",
       "severity": "low",
       "created_at": "2026-10-26",
-      "resolved_at": null,
+      "resolved_at": "2026-10-26",
       "validated_at": null,
       "title": "Mission Control: header del DocumentViewerModal con layout limpio",
       "estimation_hours": 1.5,
@@ -461,13 +461,13 @@
         "apps/studio/src/components/mission-control/documentviewermodal.spec.tsx"
       ],
       "test_reference": "apps/studio/src/components/mission-control/documentviewermodal.spec.tsx",
-      "status": "pending",
+      "status": "implemented",
       "cycle": null,
       "usage": {
         "provider_model": "claude/sonnet",
         "effort": "medium",
-        "tokens_in": 40000,
-        "tokens_out": 5000,
+        "tokens_in": 80000,
+        "tokens_out": 11000,
         "approx": true,
         "source": "declared-estimate",
         "recorded_at": "2026-10-26",
@@ -478,6 +478,15 @@
             "effort": "medium",
             "tokens_in": 40000,
             "tokens_out": 5000,
+            "approx": true,
+            "source": "declared-estimate"
+          },
+          {
+            "agent": "implementor-front",
+            "provider_model": "claude/sonnet",
+            "effort": "medium",
+            "tokens_in": 40000,
+            "tokens_out": 6000,
             "approx": true,
             "source": "declared-estimate"
           }
