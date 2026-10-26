@@ -100,6 +100,23 @@ describe('pending, link, search and attachment commands', () => {
     }
     expect(ClientCommand.safeParse({ ...base, cmd: 'thread.setLink', threadId: 't' }).success).toBe(false);
   });
+  it('thread.updateLinks defaults add and remove to empty and bounds them to 8', () => {
+    const ref = { kind: 'spec', specId: 'spec-a' };
+    expect(ClientCommand.parse({ ...base, cmd: 'thread.updateLinks', threadId: 't' })).toMatchObject({ add: [], remove: [] });
+    const cmd = { ...base, cmd: 'thread.updateLinks', threadId: 't', add: [ref, { kind: 'fix', fixId: 'FIX-001' }], remove: [ref] };
+    expect(ClientCommand.parse(cmd)).toEqual(cmd);
+    const nine = Array.from({ length: 9 }, () => ref);
+    expect(ClientCommand.safeParse({ ...cmd, add: nine }).success).toBe(false);
+    expect(ClientCommand.safeParse({ ...cmd, remove: nine }).success).toBe(false);
+    expect(ClientCommand.safeParse({ ...cmd, add: [{ kind: 'none' }] }).success).toBe(false);
+    expect(ClientCommand.safeParse({ ...base, cmd: 'thread.updateLinks' }).success).toBe(false);
+  });
+  it('thread.history parses a missing includeDocumentTouched to false', () => {
+    const cmd = { ...base, cmd: 'thread.history', threadId: 't', sinceSeq: 0 };
+    expect(ClientCommand.parse(cmd)).toEqual({ ...cmd, includeDocumentTouched: false });
+    expect(ClientCommand.parse({ ...cmd, includeDocumentTouched: true })).toMatchObject({ includeDocumentTouched: true });
+    expect(ClientCommand.safeParse({ ...cmd, includeDocumentTouched: 'yes' }).success).toBe(false);
+  });
   it('workspace.searchFiles defaults limit to 30 and caps it at 50', () => {
     expect(ClientCommand.parse({ ...base, cmd: 'workspace.searchFiles', query: 'src' })).toMatchObject({ limit: 30 });
     expect(ClientCommand.safeParse({ ...base, cmd: 'workspace.searchFiles', query: 'x', limit: 51 }).success).toBe(false);

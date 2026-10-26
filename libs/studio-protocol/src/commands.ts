@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { AttachmentMime, AttachmentUpload, PromptRefs, Sha256 } from './attachments';
-import { AuthPreference, ChannelId, ThreadLinkTarget, ThreadOptions } from './domain';
+import { AuthPreference, ChannelId, ThreadLinkRef, ThreadLinkTarget, ThreadOptions } from './domain';
 import { FILE_SEARCH_MAX, MAX_ATTACHMENTS } from './limits';
 
 const Id = z.string().min(1).max(64);
@@ -33,6 +33,12 @@ export const ClientCommand = z.discriminatedUnion('cmd', [
   z.object({ ...cmd('thread.pending.flush'), threadId: Id }),
   z.object({ ...cmd('thread.setLink'), threadId: Id, link: ThreadLinkTarget }),
   z.object({
+    ...cmd('thread.updateLinks'),
+    threadId: Id,
+    add: z.array(ThreadLinkRef).max(8).default([]),
+    remove: z.array(ThreadLinkRef).max(8).default([]),
+  }),
+  z.object({
     ...cmd('workspace.searchFiles'),
     query: z.string().max(200),
     limit: z.number().int().min(1).max(FILE_SEARCH_MAX).default(30),
@@ -41,7 +47,12 @@ export const ClientCommand = z.discriminatedUnion('cmd', [
   z.object({ ...cmd('thread.interrupt'), threadId: Id }),
   z.object({ ...cmd('thread.setOptions'), threadId: Id, options: ThreadOptions.omit({ agent: true }).partial() }),
   z.object({ ...cmd('thread.list'), channelId: ChannelId.optional() }),
-  z.object({ ...cmd('thread.history'), threadId: Id, sinceSeq: z.number().int().nonnegative() }),
+  z.object({
+    ...cmd('thread.history'),
+    threadId: Id,
+    sinceSeq: z.number().int().nonnegative(),
+    includeDocumentTouched: z.boolean().default(false),
+  }),
   z.object({ ...cmd('channel.botHistory'), channelId: ChannelId, limit: z.number().int().min(1).max(200) }),
   z.object({
     ...cmd('approval.respond'),
