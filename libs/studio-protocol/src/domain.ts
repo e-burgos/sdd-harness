@@ -37,6 +37,16 @@ export const AuthAccount = z.object({
 });
 export type AuthAccount = z.infer<typeof AuthAccount>;
 
+export const KNOWN_PROVIDERS = ['claude'] as const;
+export type KnownProvider = (typeof KNOWN_PROVIDERS)[number];
+export const DEFAULT_PROVIDER: KnownProvider = 'claude';
+export const ProviderId = z.string().regex(/^[a-z][a-z0-9-]{0,31}$/);
+export type ProviderId = z.infer<typeof ProviderId>;
+export const isKnownProvider = (value: string): value is KnownProvider =>
+  (KNOWN_PROVIDERS as readonly string[]).includes(value);
+export const EngineSessionId = z.string().min(1).max(128);
+export type EngineSessionId = z.infer<typeof EngineSessionId>;
+
 export const ChannelId = z
   .string()
   .regex(/^(general|fixes|spec:[A-Za-z0-9][A-Za-z0-9._-]{0,127}|dm:[A-Za-z0-9][A-Za-z0-9_-]{0,63})$/);
@@ -84,6 +94,8 @@ export const ThreadInfo = z.object({
   lastActivity: z.string(),
   link: ThreadLink,
   pendingCount: z.number().int().min(0).max(MAX_PENDING_PER_THREAD),
+  engineSessionId: EngineSessionId.nullable().optional(),
+  provider: ProviderId.optional(),
 });
 export type ThreadInfo = z.infer<typeof ThreadInfo>;
 

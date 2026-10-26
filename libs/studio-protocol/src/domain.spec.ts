@@ -3,8 +3,12 @@ import {
   AlwaysOffer,
   AlwaysRule,
   ChannelId,
+  DEFAULT_PROVIDER,
+  EngineSessionId,
+  KNOWN_PROVIDERS,
   MAX_PENDING_PER_THREAD,
   PermissionModeChoice,
+  ProviderId,
   ThreadInfo,
   ThreadLink,
   ThreadLinkTarget,
@@ -14,6 +18,7 @@ import {
   channelForSpec,
   defaultThreadOptions,
   dmAgentOfChannel,
+  isKnownProvider,
   specIdOfChannel,
 } from './index';
 
@@ -121,6 +126,38 @@ describe('ThreadInfo', () => {
     expect(ThreadInfo.safeParse({ ...threadInfo, pendingCount: MAX_PENDING_PER_THREAD }).success).toBe(true);
     expect(ThreadInfo.safeParse({ ...threadInfo, pendingCount: MAX_PENDING_PER_THREAD + 1 }).success).toBe(false);
     expect(ThreadInfo.safeParse({ ...threadInfo, pendingCount: -1 }).success).toBe(false);
+  });
+});
+
+describe('ThreadInfo session and provider', () => {
+  it('accepts the legacy shape without the new fields', () => {
+    const parsed = ThreadInfo.parse(threadInfo);
+    expect(parsed.engineSessionId).toBeUndefined();
+    expect(parsed.provider).toBeUndefined();
+  });
+  it('accepts a null session, a session id and a provider', () => {
+    expect(ThreadInfo.parse({ ...threadInfo, engineSessionId: null }).engineSessionId).toBeNull();
+    expect(ThreadInfo.parse({ ...threadInfo, engineSessionId: 'abc-123', provider: 'claude' })).toMatchObject({
+      engineSessionId: 'abc-123',
+      provider: 'claude',
+    });
+  });
+  it('accepts an unknown but well-formed provider', () => {
+    expect(ThreadInfo.safeParse({ ...threadInfo, provider: 'gemini' }).success).toBe(true);
+    expect(isKnownProvider('gemini')).toBe(false);
+    expect(isKnownProvider('claude')).toBe(true);
+  });
+  it('rejects malformed providers and session ids', () => {
+    for (const provider of ['', 'Claude', '1claude', 'a b', 'x'.repeat(33)]) {
+      expect(ProviderId.safeParse(provider).success).toBe(false);
+    }
+    expect(EngineSessionId.safeParse('').success).toBe(false);
+    expect(EngineSessionId.safeParse('s'.repeat(129)).success).toBe(false);
+    expect(ThreadInfo.safeParse({ ...threadInfo, provider: 'Bad Id' }).success).toBe(false);
+    expect(ThreadInfo.safeParse({ ...threadInfo, engineSessionId: '' }).success).toBe(false);
+  });
+  it('defaults to a known provider', () => {
+    expect(KNOWN_PROVIDERS).toContain(DEFAULT_PROVIDER);
   });
 });
 

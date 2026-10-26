@@ -44,7 +44,7 @@ describe('handshake v2 additions', () => {
     expect(Hello.parse(hello)).toEqual(hello);
   });
   it('BRIDGE_FEATURES lists the bridge spec features', () => {
-    expect(BRIDGE_FEATURES).toEqual(['pending-messages', 'thread-link', 'always-rules', 'attachments', 'file-search', 'catalog', 'auth-subscription']);
+    expect(BRIDGE_FEATURES).toEqual(['pending-messages', 'thread-link', 'always-rules', 'attachments', 'file-search', 'catalog', 'auth-subscription', 'conversation-sessions']);
     expect(FRAME_BUDGET_BYTES).toBe(MAX_FRAME_BYTES - 8_192);
   });
 });
