@@ -1,6 +1,6 @@
 # Constitución — apps/studio-bridge
 
-> Versión 1.2 | Última actualización: cycle-01 (spec-e-burgos-003-studio-mission-control) | Fecha: 2026-10-25
+> Versión 1.3 | Última actualización: cycle-01 (spec-e-burgos-006-studio-auth-connect) | Fecha: 2026-10-26
 
 ## 1. Propósito y Alcance
 
@@ -30,7 +30,9 @@
 - `prompt-content.ts`: `toSdkUserMessage` (uuid = id del pendiente), `toHookContext` (fallback) y `buildTurnPrompt` async: resuelve adjuntos del almacén (texto vacío con adjuntos → bloque `Attachments: …`) y antepone el preámbulo de refs (`Delegate this task to the subagent "…"`, `Use the skill "…"`, `Follow the instructions in ….prompt.md.`).
 - `sdk-mapper.ts` & `tool-summary.ts`: Transforma los deltas de mensajes y tool calls del SDK a eventos estructurados del protocolo (`ThreadEvent`), extrayendo resúmenes y diffs unificados.
 - `fake-engine.ts`: Implementación mock de `AgentEngine` para tests y Playwright sin red; puntos de corte y marcadores (`#slow`, `#steps:N`, `#bash-git`, `#bad-attachment`, …) y ecos ` [attachments: …]` / ` [refs: …]`.
-- Motor único real: Claude (`claude-sdk-engine.ts`). Cada hilo nace con `engineSessionId: null` (`createThread`) y `start` solo retoma la sesión dentro del mismo hilo.
+- `stable-prefix.ts`: `STABLE_PREFIX_SOURCES` (context_prompt, constitution, lessons, en ese orden), `composeStablePrefix`, `createStablePrefixLoader`; límite 256 KiB, CRLF normalizado, archivos faltantes omitidos con un aviso por archivo. `EngineTurnInput.systemPrefix?` lo recibe `ClaudeAgentSdkEngine` como `systemPrompt: { preset: 'claude_code', append, excludeDynamicSections: true, snapshot: true }` (prompt caching; el efecto real no se midió).
+- `AgentEngine.provider` (`KnownProvider`) es obligatorio; `FakeEngine` registra `receivedSystemPrefixes`.
+- Motor único real: Claude (`claude-sdk-engine.ts`). Cada hilo nace con `engineSessionId: null` y `provider` del motor (`createThread`); la sesión nace en el primer turno, `start` solo la retoma dentro del mismo hilo y `sessionOwnedByAnotherThread` rechaza un id ya usado por otro hilo.
 
 ### 3.2 Enforcement del SPEC GATE (`src/gate/`)
 - `judge.ts`: Núcleo de validación de ediciones de código (`judgeEdit`); exporta `OPEN_FIX`.
@@ -40,7 +42,7 @@
 
 ### 3.3 Gestión de Sesiones y Presencia (`src/sessions/`)
 - `session-manager.ts`: Coordina las conversaciones (`threads`), el historial persistido (`store.ts`), las aprobaciones (`approval.respond`) y las notificaciones del bot (`channel.botHistory`). `thread.send` sobre un hilo ocupado devuelve `{ delivery: 'pending' }` (no `conflict`): los pendientes se persisten, se entregan en el punto de corte o como siguiente turno, se editan/quitan hasta su entrega y vuelven a pendientes si el interrupt no llegó a entregarlos. `send(threadId, MessageInput)` acepta `attachments`/`refs` opcionales; `Live.acceptTail` serializa la aceptación por hilo (FIFO); las refs se filtran y deduplican contra el snapshot (una ref inexistente viaja como texto plano).
-- `store.ts`: `pending[]` y `link` persistidos por hilo, con migración de hilos previos (`source: 'legacy'`); descarta eventos de bot consecutivos idénticos antes de escribir el `.jsonl`; exporta `toThreadInfo` (hoy quita `engineSessionId` antes de enviarlo a la web; spec-e-burgos-005 lo expone).
+- `store.ts`: `pending[]`, `link` y `provider` persistidos por hilo, con migración de `threads.json` legado (`source: 'legacy'`, `provider` por defecto `claude`, sesión inválida a `null`); descarta eventos de bot consecutivos idénticos antes de escribir el `.jsonl`; `toThreadInfo` expone `engineSessionId` y `provider`. `onSessionId` usa `publishThread` (difunde `thread.updated` y persiste); `SessionManagerDeps.stablePrefix?`.
 - `attachment-store.ts`: `createAttachmentStore(root)` → `.sdd-studio/attachments/<sha256>.<ext>`; `put` valida magic bytes contra el mime, deduplica por hash y escribe atómico (tmp + rename); `read` valida realpath dentro de `.sdd-studio`, `O_NOFOLLOW`, tamaño ≤ `MAX_FRAME_BYTES` y re-hash; todo fallo → `AttachmentError('not-found', 'attachment not available')` genérico. Aviso si el almacén supera 1 GiB.
 - `always-rule.ts`: "Always" por alcance (herramienta, tool MCP exacta o prefijo Bash), en memoria y por hilo (se pierde al reiniciar). `bashPrefixOf` toma programa + hasta 2 subcomandos y rechaza wrappers, asignaciones de entorno y comandos compuestos. El SPEC GATE se evalúa antes que cualquier regla: `deny` bloquea siempre y una tarjeta con `warn` nunca guarda regla.
 - `thread-link.ts`: `assignLink` puro (al crear: ciclo in-progress del canal de la spec o fix abierto) y `linkTargetExists`; reasignación manual con `thread.setLink`.
@@ -55,9 +57,13 @@
 
 ### 3.5 Servidor y Seguridad (`src/server/`)
 - `ws-server.ts`: Servidor WebSocket en `127.0.0.1` con autenticación estricta en el handshake (`handshake.ts`), `features` en el welcome y `maxPayload` = `MAX_FRAME_BYTES`.
-- `router.ts`: despacho de comandos. `Welcome.features` anuncia `attachments`, `file-search` y `catalog`, los tres implementados.
+- `router.ts`: despacho de comandos. `Welcome.features` anuncia `attachments`, `file-search`, `catalog`, `conversation-sessions` y `auth-subscription`, todos implementados.
 - `security.ts`: Genera tokens criptográficamente seguros para la URL de pairing (`/w#bridge=ws://127.0.0.1:...&token=...`).
 - `static.ts`: Sirve la interfaz web estática si se pasa la bandera `--local-ui`.
+
+### 3.6 Autenticación (`src/auth/`, `auth-mode.ts`)
+- `claude-login.ts`: `ClaudeLogin` lanza `claude auth login --claudeai`, `status --json` y `logout` (spawn sin shell, captura de URL, estado pending, errores redactados). El navegador lo abre el CLI; el puente no abre URLs. Requiere el binario `claude` en PATH para la solapa Suscripción.
+- `auth-mode.ts`: `AuthState` guarda la preferencia de modo; `withoutCredentialEnv`, `cliEnv()`; en suscripción `env()` no lleva `ANTHROPIC_API_KEY` ni `ANTHROPIC_AUTH_TOKEN`; con key explícita se descarta el token heredado.
 
 ## 4. Comandos de Trabajo
 
@@ -77,5 +83,6 @@
 
 ## 6. Qué sigue
 
-- spec-e-burgos-005: exponer `engineSessionId` y `provider` del hilo, motor preparado para varios proveedores (solo Claude implementado) y prefijo de sistema estable para prompt caching.
+- Segundo proveedor: reemplazar `deps.engine` por selección según `thread.provider`.
+- Spike de cache real (`cache_read_input_tokens > 0` en la segunda sesión; `append` con `options.agent`).
 - Monitorear la performance del índice de archivos en workspaces de más de 50k archivos.
