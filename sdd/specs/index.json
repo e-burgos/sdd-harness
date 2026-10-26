@@ -119,10 +119,10 @@
       "file": "sdd/specs/spec-e-burgos-008-studio-session-flow/spec-e-burgos-008-studio-session-flow.spec.md",
       "module": "studio-session-flow",
       "app": "apps/studio",
-      "status": "draft",
+      "status": "completed",
       "title": "SDD Studio: conversación automática por spec/fix, medidor de contexto y formulario de preguntas del proveedor",
       "created_at": "2026-10-26",
-      "completed_at": null,
+      "completed_at": "2026-10-26",
       "depends_on": [
         "spec-e-burgos-007-studio-session-metadata"
       ]

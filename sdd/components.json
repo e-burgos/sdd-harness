@@ -53,6 +53,11 @@
             "cycle": 1,
             "date": "2026-10-23",
             "change": "implemented as NavTree.tsx (SectionView) rendered by SidebarView in Sidebar.tsx; tree data from src/lib/store/nav-tree.ts (buildNavTree)"
+          },
+          {
+            "cycle": 1,
+            "date": "2026-10-26",
+            "change": "buildNavTree cuenta cada hilo una vez por nodo y la fila de actividad muestra el agente en curso y la herramienta (presence)"
           }
         ]
       },
@@ -137,6 +142,11 @@
             "cycle": 1,
             "date": "2026-10-26",
             "change": "spec-e-burgos-007 cycle-01 (architect): de selector único a lista multi-asociación con origen (ThreadLink.targets)"
+          },
+          {
+            "cycle": 1,
+            "date": "2026-10-26",
+            "change": "los dos selectores pasan a HelpSelect con ayuda"
           }
         ]
       },
@@ -379,11 +389,17 @@
         "path": "src/components/mission-control/ConversationSelector.tsx",
         "status": "implemented",
         "created_in_cycle": 1,
-        "updated_in_cycle": null,
+        "updated_in_cycle": 1,
         "description": "Cinta de Mission Control: lista las conversaciones (hilos) por actividad reciente, permite elegir una y ofrece Nueva conversación; estado vacío sin conversaciones.",
         "consumes": [],
         "created_at": "2026-10-26",
-        "changelog": []
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-10-26",
+            "change": "el selector de conversaciones pasa a HelpSelect y pierde el chevron superpuesto"
+          }
+        ]
       },
       {
         "id": "COMP-017",
@@ -486,6 +502,81 @@
         "changelog": [],
         "path": "src/lib/use-bridge-features.ts",
         "description": "Hook que expone supports(feature) sobre las features del Welcome para degradar la UI cuando el puente es más viejo que la web."
+      },
+      {
+        "id": "COMP-023",
+        "name": "HelpSelect",
+        "type": "component",
+        "module": "studio-session-flow",
+        "spec": "sdd/specs/spec-e-burgos-008-studio-session-flow",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "consumes": [],
+        "created_at": "2026-10-26",
+        "changelog": [],
+        "path": "src/components/HelpSelect.tsx",
+        "description": "Selector nativo con icono de ayuda y tooltip en hover y foco de teclado, ligado por aria-describedby; reemplaza a todos los select de Studio."
+      },
+      {
+        "id": "COMP-024",
+        "name": "QuestionForm",
+        "type": "component",
+        "module": "studio-session-flow",
+        "spec": "sdd/specs/spec-e-burgos-008-studio-session-flow",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "consumes": [],
+        "created_at": "2026-10-26",
+        "changelog": [],
+        "path": "src/components/workspace/QuestionForm.tsx",
+        "description": "Formulario inline en el chat para las preguntas del proveedor (AskUserQuestion): selección única, múltiple y respuesta libre."
+      },
+      {
+        "id": "COMP-025",
+        "name": "ContextMeter",
+        "type": "component",
+        "module": "studio-session-flow",
+        "spec": "sdd/specs/spec-e-burgos-008-studio-session-flow",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "consumes": [],
+        "created_at": "2026-10-26",
+        "changelog": [],
+        "path": "src/components/workspace/ContextMeter.tsx",
+        "description": "Medidor del contexto restante de la sesión en la cabecera de la conversación, con aviso por umbral y acción de conversación nueva."
+      },
+      {
+        "id": "COMP-026",
+        "name": "ModeSelectors",
+        "type": "component",
+        "module": "studio-session-flow",
+        "spec": "sdd/specs/spec-e-burgos-008-studio-session-flow",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "consumes": [],
+        "created_at": "2026-10-26",
+        "changelog": [],
+        "path": "src/components/workspace/ModeSelectors.tsx",
+        "description": "Selectores del modo de desarrollo (solo/team) y de implementación (automática/lite/full) antes de arrancar una spec, con aviso de la excepción a full."
+      },
+      {
+        "id": "COMP-027",
+        "name": "PreparedConversations",
+        "type": "component",
+        "module": "studio-session-flow",
+        "spec": "sdd/specs/spec-e-burgos-008-studio-session-flow",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "consumes": [],
+        "created_at": "2026-10-26",
+        "changelog": [],
+        "path": "src/components/workspace/PreparedConversations.tsx",
+        "description": "Aviso de conversación nueva preparada y asociada a una spec, ciclo o fix recién creado, con el briefing mínimo listo para abrir."
       }
     ]
   }

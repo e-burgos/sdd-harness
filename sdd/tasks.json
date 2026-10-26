@@ -122,6 +122,22 @@
           "tasks_done": 21
         }
       }
+    },
+    "spec-e-burgos-008-studio-session-flow": {
+      "cycles": {
+        "cycle-01": {
+          "file": "sdd/specs/spec-e-burgos-008-studio-session-flow/cycles/cycle-01/tasks.json",
+          "module": "studio-session-flow",
+          "apps": [
+            "apps/studio",
+            "apps/studio-bridge",
+            "libs/studio-protocol"
+          ],
+          "status": "completed",
+          "tasks_total": 12,
+          "tasks_done": 12
+        }
+      }
     }
   }
 }

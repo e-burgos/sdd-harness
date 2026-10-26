@@ -3,6 +3,7 @@
   "project": "sdd-harness-workspace",
   "description": "Monorepo del CLI @e-burgos/sdd-harness: bootstrapea repos listos para agentes de IA con la metodología SDD e incluye el sitio de documentación y SDD Studio (puente local + web).",
   "version": "0.1.0",
+  "profile": "solo",
   "completed_modules": [
     {
       "module": "studio-session-ux",
@@ -83,10 +84,7 @@
       "cycles_completed": 1,
       "description": "Título real de sesión del proveedor, asociación múltiple y persistente de conversaciones a specs/ciclos/fixes y evento estructurado document.touched (incluye escrituras por Bash).",
       "completed_at": "2026-10-26"
-    }
-  ],
-  "in_progress_modules": [],
-  "pending_modules": [
+    },
     {
       "module": "studio-session-flow",
       "spec": "spec-e-burgos-008-studio-session-flow",
@@ -95,10 +93,13 @@
         "apps/studio-bridge",
         "libs/studio-protocol"
       ],
-      "cycles_completed": 0,
-      "description": "Conversación nueva y asociada por cada spec o fix con briefing mínimo, medidor de contexto restante y formulario de preguntas del proveedor (AskUserQuestion) dentro del chat."
+      "cycles_completed": 1,
+      "description": "Conversación nueva y asociada por cada spec o fix con briefing mínimo, medidor de contexto restante y formulario de preguntas del proveedor (AskUserQuestion) dentro del chat.",
+      "completed_at": "2026-10-26"
     }
   ],
+  "in_progress_modules": [],
+  "pending_modules": [],
   "monorepo": {
     "tool": "none (multi-app repo)",
     "package_manager": "pnpm",
