@@ -310,5 +310,7 @@ export const es = {
   'link.origin.manual': 'manual',
   'mc.related.deletedNoOpen': 'Eliminado: ya no hay contenido para abrir en el visor',
   'mc.related.deletedLabel': 'eliminado',
+  'tool.clipped': 'recortado',
+  'tool.clipped.title': 'El resumen de esta herramienta se recortó',
 };
 export type Dict = typeof es;

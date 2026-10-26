@@ -2,13 +2,13 @@
 
 import { useMemo } from 'react';
 import type { SessionStatus } from '@sdd-studio/protocol';
-import { Check, ChevronRight, Loader2, Wrench, X } from 'lucide-react';
+import { Check, ChevronRight, Loader2, Scissors, Wrench, X } from 'lucide-react';
 import { agentMeta } from '@/lib/agents';
 import { formatCost, formatTokens } from '@/lib/format';
 import { useT } from '@/lib/i18n/i18n';
 import { isUsageLimitError } from '@/lib/usage-limit';
 import { groupTimeline } from '@/lib/store/selectors';
-import type { TimelineItem } from '@/lib/store/timeline';
+import { isToolSummaryClipped, type TimelineItem } from '@/lib/store/timeline';
 import { AgentAvatar } from './AgentAvatar';
 import { AttachmentList } from './AttachmentView';
 import { ApprovalCard, type RespondFn } from './ApprovalCard';
@@ -45,6 +45,12 @@ export function Timeline({ items, status, onRespond }: { items: TimelineItem[]; 
                         <span className="sr-only">{t(`tool.${tool.status}`)}</span>
                       </span>{' '}
                       <span className="text-ink-300">{tool.tool}</span> <span className="break-all">{tool.summary}</span>
+                      {isToolSummaryClipped(tool) && (
+                        <span data-testid="tool-summary-clipped" className="ml-1 inline-flex items-center gap-0.5 text-[10px] text-ink-500" title={t('tool.clipped.title')}>
+                          <Scissors size={10} aria-hidden />
+                          {t('tool.clipped')}
+                        </span>
+                      )}
                       {tool.diff && <pre className="mt-1 max-h-48 overflow-auto rounded bg-ink-950 p-2">{tool.diff}</pre>}
                     </li>
                   ))}

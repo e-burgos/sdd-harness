@@ -20,6 +20,7 @@ export type TimelineItem =
       author: Author;
       tool: string;
       summary: string;
+      summaryTruncated?: boolean;
       diff?: string;
       status: 'running' | 'ok' | 'error';
       result?: string;
@@ -89,6 +90,9 @@ function update<K extends TimelineItem['kind']>(
   return next;
 }
 
+export const isToolSummaryClipped = (tool: { summary: string; summaryTruncated?: boolean }): boolean =>
+  tool.summaryTruncated ?? tool.summary.endsWith('…');
+
 export function applyThreadEvent(thread: ThreadState, seq: number, event: ThreadEvent): ThreadState {
   if (seq <= thread.lastSeq) return thread;
   let items = thread.items;
@@ -139,7 +143,7 @@ export function applyThreadEvent(thread: ThreadState, seq: number, event: Thread
     case 'tool.start':
       items = [
         ...items,
-        { kind: 'tool', id: event.toolUseId, seq, author: event.author, tool: event.tool, summary: event.summary, diff: event.diff, status: 'running' },
+        { kind: 'tool', id: event.toolUseId, seq, author: event.author, tool: event.tool, summary: event.summary, summaryTruncated: event.summaryTruncated, diff: event.diff, status: 'running' },
       ];
       break;
     case 'tool.end':

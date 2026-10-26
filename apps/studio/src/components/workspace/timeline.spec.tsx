@@ -30,4 +30,26 @@ describe('Timeline', () => {
     render(<I18nProvider initial="es"><Timeline items={[limit, other]} onRespond={vi.fn()} /></I18nProvider>);
     expect(screen.getAllByText(/límite de uso/)).toHaveLength(1);
   });
+
+  it('shows the clipped indicator only when the summary was cut', () => {
+    const tool = (id: string, summary: string, summaryTruncated?: boolean): TimelineItem => ({ kind: 'tool', id, seq: 1, author: main, tool: 'Bash', summary, summaryTruncated, status: 'ok' });
+    const render1 = (item: TimelineItem) => {
+      const view = render(<I18nProvider initial="es"><Timeline items={[item]} onRespond={vi.fn()} /></I18nProvider>);
+      return view;
+    };
+    let view = render1(tool('a', 'cat sdd/specs/x/plan.md', false));
+    expect(screen.queryByTestId('tool-summary-clipped')).toBeNull();
+    view.unmount();
+    view = render1(tool('b', 'cat sdd/specs/x/plan.md'));
+    expect(screen.queryByTestId('tool-summary-clipped')).toBeNull();
+    view.unmount();
+    view = render1(tool('c', 'cat sdd/specs/x/pl…', true));
+    expect(screen.getByTestId('tool-summary-clipped')).toHaveTextContent('recortado');
+    view.unmount();
+    view = render1(tool('d', 'cat sdd/specs/x/pl…', false));
+    expect(screen.queryByTestId('tool-summary-clipped')).toBeNull();
+    view.unmount();
+    render1(tool('e', 'cat sdd/specs/x/pl…'));
+    expect(screen.getByTestId('tool-summary-clipped')).toBeInTheDocument();
+  });
 });

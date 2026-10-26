@@ -312,4 +312,6 @@ export const en = {
   'link.origin.manual': 'manual',
   'mc.related.deletedNoOpen': 'Deleted: there is no content left to open in the viewer',
   'mc.related.deletedLabel': 'deleted',
+  'tool.clipped': 'clipped',
+  'tool.clipped.title': 'This tool summary was clipped',
 } satisfies Record<keyof Dict, string>;

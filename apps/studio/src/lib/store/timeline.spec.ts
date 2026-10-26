@@ -180,4 +180,9 @@ describe('document.touched', () => {
     expect(applyThreadEvent(t, 3, touch)).toBe(t);
     expect(applyThreadEvent(t, 2, touch).touched).toHaveLength(1);
   });
+
+  it('carries summaryTruncated from tool.start to the tool item', () => {
+    const t = run([[0, { type: 'tool.start', toolUseId: 't9', author: main, tool: 'Bash', summary: '$ cat sdd/…', summaryTruncated: true }]]);
+    expect(t.items[0]).toMatchObject({ kind: 'tool', summaryTruncated: true });
+  });
 });

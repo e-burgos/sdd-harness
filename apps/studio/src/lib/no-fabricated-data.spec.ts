@@ -10,6 +10,8 @@ const FABRICATED_PATTERNS: { name: string; pattern: RegExp }[] = [
   { name: 'telemetry baseline figure', pattern: /6611605|6[.,]611[.,]605/ },
   { name: 'fixed Gemini model row', pattern: /Gemini Flash/ },
   { name: 'fixed provider display name', pattern: /Google Gemini|GitHub Copilot/ },
+  { name: 'literal session title', pattern: /sessionTitle:\s*["'`][^"'`]/ },
+  { name: 'literal touched document', pattern: /type:\s*['"]document\.touched['"][^}]*path:\s*['"`]sdd\// },
   { name: 'fixed default spec', pattern: /spec-e-burgos-004-studio-gates-topology/ },
 ];
 
@@ -42,7 +44,7 @@ describe('no fabricated data in the web source', () => {
   });
 
   it('flags each pattern when it appears', () => {
-    const samples = ["const id = 'session-spec-003';", 'SWARM_SCRIPTS_BY_SPEC', 'totalTokens: 6611605', '"Gemini Flash"', 'Google Gemini', 'GitHub Copilot'];
+    const samples = ["const id = 'session-spec-003';", 'SWARM_SCRIPTS_BY_SPEC', 'totalTokens: 6611605', '"Gemini Flash"', 'Google Gemini', 'GitHub Copilot', "sessionTitle: 'Mi sesion'", "{ type: 'document.touched', path: 'sdd/specs/x.md' }"];
     for (const sample of samples) {
       expect(FABRICATED_PATTERNS.some(({ pattern }) => pattern.test(sample))).toBe(true);
     }
