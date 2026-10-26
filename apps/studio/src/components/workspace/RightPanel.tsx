@@ -29,12 +29,11 @@ export function RightPanelView({ activity, cycle, conversation, onOpenThread, on
   const { t } = useT();
   return (
     <aside aria-label={t('panel.label')} className="flex h-full flex-col gap-6 overflow-y-auto overscroll-contain border-l border-ink-800 bg-ink-900 p-4">
-      {conversation && <ConversationPanelSections view={conversation.view} gate={conversation.gate} />}
-      <section>
-        <div className="mb-2 flex items-center justify-between">
-          <h2 className="text-[11px] uppercase tracking-wider text-ink-500">{t('panel.activity')}</h2>
-          {onCollapse && <PanelToggle label={t('panel.right.collapse')} side="right" onClick={onCollapse} />}
-        </div>
+      <header data-testid="panel-header" className="sticky -top-4 z-10 -mx-4 -mt-4 flex items-center justify-between bg-ink-900 px-4 pb-2 pt-4">
+        <h2 className="text-[11px] uppercase tracking-wider text-ink-500">{t('panel.activity')}</h2>
+        {onCollapse && <PanelToggle label={t('panel.right.collapse')} side="right" onClick={onCollapse} />}
+      </header>
+      <section data-testid="panel-activity" className="-mt-4">
         {activity.length === 0 && <p className="text-sm text-ink-300">{t('panel.noActivity')}</p>}
         <ul className="space-y-3">
           {activity.map((entry) => (
@@ -71,6 +70,7 @@ export function RightPanelView({ activity, cycle, conversation, onOpenThread, on
           ))}
         </ul>
       </section>
+      {conversation && <ConversationPanelSections view={conversation.view} gate={conversation.gate} />}
       <section>
         <h2 className="mb-2 text-[11px] uppercase tracking-wider text-ink-500">{t('panel.details')}</h2>
         {!cycle ? (

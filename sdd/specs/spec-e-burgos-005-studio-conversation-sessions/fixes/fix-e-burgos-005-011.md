@@ -46,3 +46,13 @@ En el panel derecho del Workspace (ConversationPanelSections → RelatedDocument
 - RelatedDocuments.spec.tsx: hilo ancho vs ~300px, tarjetas truncan sin desbordar, title visibles
 - conversation-gate.spec.ts: el fix más reciente registrado en fix.json es detectado como gate actual
 
+
+## Ampliación 2026-10-26
+
+Pedido del dev: la sección "ACTIVIDAD" del panel derecho pasa a la parte superior.
+
+- Header del panel (`RightPanel.tsx`): título "ACTIVIDAD" y botón expandir/contraer en la misma fila, sticky, siempre en la esquina superior derecha.
+- La tarjeta de actividad queda inmediatamente debajo del header.
+- Orden final: Actividad, Dónde estás, Documentos generados, Últimas acciones, Detalles.
+- Con el panel contraído se renderiza solo `PanelRail` (sin cambios), por lo que no hay impacto.
+- Tests: `rightpanel.spec.tsx` (Actividad primero, botón dentro del header, orden de secciones).

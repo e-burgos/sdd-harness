@@ -32,6 +32,19 @@ describe('RightPanelView', () => {
     fireEvent.click(screen.getByRole('button', { name: /pagos v2/ }));
     expect(onOpenThread).toHaveBeenCalledWith('t');
   });
+  it('puts the activity first with the collapse button in the header', () => {
+    const onCollapse = vi.fn();
+    render(<I18nProvider initial="es"><RightPanelView activity={[]} cycle={null} onOpenThread={vi.fn()} onCollapse={onCollapse} /></I18nProvider>);
+    const header = screen.getByTestId('panel-header');
+    expect(header).toHaveTextContent(/actividad/i);
+    const toggle = screen.getByRole('button', { name: 'Colapsar panel' });
+    expect(header).toContainElement(toggle);
+    fireEvent.click(toggle);
+    expect(onCollapse).toHaveBeenCalled();
+    const aside = screen.getByRole('complementary');
+    expect(aside.firstElementChild).toBe(header);
+    expect(header.nextElementSibling).toBe(screen.getByTestId('panel-activity'));
+  });
   it('shows empty states', () => {
     render(<I18nProvider initial="es"><RightPanelView activity={[]} cycle={null} onOpenThread={vi.fn()} /></I18nProvider>);
     expect(screen.getByText('Nadie está trabajando ahora.')).toBeInTheDocument();
@@ -75,6 +88,16 @@ describe('RightPanel with a selected conversation', () => {
     expect(screen.getByTestId('related-spec-' + SPEC)).toBeInTheDocument();
     expect(screen.getByTestId('related-fix-FIX-a-001')).toBeInTheDocument();
     expect(screen.getByTestId('panel-recent')).toHaveTextContent('fix-a-001.md');
+  });
+
+  it('orders sections as activity, where, documents, recent, details', () => {
+    mount('t1', [write(0, `sdd/specs/${SPEC}/cycles/cycle-02/plan.md`)]);
+    const order = ['panel-activity', 'panel-where', 'panel-documents', 'panel-recent'].map((id) => screen.getByTestId(id));
+    order.forEach((el, i) => {
+      if (i > 0) expect(order[i - 1].compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+    const details = screen.getByText('Detalles');
+    expect(order[3].compareDocumentPosition(details) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it('prefers the derived cycle in Detalles over the channel fallback', () => {

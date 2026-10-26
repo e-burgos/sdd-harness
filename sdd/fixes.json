@@ -981,7 +981,8 @@
       "affected_files": [
         "apps/studio/src/components/mission-control/RelatedDocuments.tsx",
         "apps/studio/src/lib/conversation-gate.ts",
-        "apps/studio/src/lib/conversation.ts"
+        "apps/studio/src/lib/conversation.ts",
+        "apps/studio/src/components/workspace/RightPanel.tsx"
       ],
       "test_reference": "RelatedDocuments.spec.tsx, conversation-gate.spec.ts",
       "status": "implemented",
@@ -989,8 +990,8 @@
       "usage": {
         "provider_model": "claude/sonnet",
         "effort": "medium",
-        "tokens_in": 135000,
-        "tokens_out": 21000,
+        "tokens_in": 175000,
+        "tokens_out": 27000,
         "approx": true,
         "source": "declared-estimate",
         "recorded_at": "2026-10-26",
@@ -1010,6 +1011,15 @@
             "effort": "medium",
             "tokens_in": 110000,
             "tokens_out": 18000,
+            "approx": true,
+            "source": "declared-estimate"
+          },
+          {
+            "agent": "implementor-front",
+            "provider_model": "claude/sonnet",
+            "effort": "medium",
+            "tokens_in": 40000,
+            "tokens_out": 6000,
             "approx": true,
             "source": "declared-estimate"
           }
