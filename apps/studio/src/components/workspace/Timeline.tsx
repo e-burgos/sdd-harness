@@ -6,6 +6,7 @@ import { Check, ChevronRight, Loader2, Wrench, X } from 'lucide-react';
 import { agentMeta } from '@/lib/agents';
 import { formatCost, formatTokens } from '@/lib/format';
 import { useT } from '@/lib/i18n/i18n';
+import { isUsageLimitError } from '@/lib/usage-limit';
 import { groupTimeline } from '@/lib/store/selectors';
 import type { TimelineItem } from '@/lib/store/timeline';
 import { AgentAvatar } from './AgentAvatar';
@@ -123,6 +124,7 @@ export function Timeline({ items, status, onRespond }: { items: TimelineItem[]; 
               <li key={item.id} className="pl-11 text-xs text-roseish">
                 {t(`status.${item.status}`)}
                 {item.error ? ` — ${item.error.message}` : ''}
+                {isUsageLimitError(item.error?.message) && <span className="mt-0.5 block text-ink-300">{t('status.usageLimitHint')}</span>}
               </li>
             );
           default:

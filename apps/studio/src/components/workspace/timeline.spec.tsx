@@ -23,4 +23,11 @@ describe('Timeline', () => {
     expect(screen.getByText('Clara usó 2 herramienta(s)')).toBeInTheDocument();
     expect(screen.getByText('claude-haiku-4-5-20251001 · low · 121.3k in · 1.2k out · $0.078')).toBeInTheDocument();
   });
+
+  it('suggests switching tab or account only on the usage-limit error', () => {
+    const limit: TimelineItem = { kind: 'status', id: 'e1', seq: 9, status: 'error', error: { code: 'x', message: 'API Error: 400 You have reached your specified API usage limits.' } };
+    const other: TimelineItem = { kind: 'status', id: 'e2', seq: 10, status: 'error', error: { code: 'x', message: 'boom' } };
+    render(<I18nProvider initial="es"><Timeline items={[limit, other]} onRespond={vi.fn()} /></I18nProvider>);
+    expect(screen.getAllByText(/límite de uso/)).toHaveLength(1);
+  });
 });

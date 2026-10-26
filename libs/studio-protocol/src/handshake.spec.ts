@@ -43,8 +43,8 @@ describe('handshake v2 additions', () => {
     const hello = { kind: 'hello', token: 't', protocolVersion: 1, clientVersion: '0.1.0' };
     expect(Hello.parse(hello)).toEqual(hello);
   });
-  it('BRIDGE_FEATURES lists the six spec features', () => {
-    expect(BRIDGE_FEATURES).toEqual(['pending-messages', 'thread-link', 'always-rules', 'attachments', 'file-search', 'catalog']);
+  it('BRIDGE_FEATURES lists the bridge spec features', () => {
+    expect(BRIDGE_FEATURES).toEqual(['pending-messages', 'thread-link', 'always-rules', 'attachments', 'file-search', 'catalog', 'auth-subscription']);
     expect(FRAME_BUDGET_BYTES).toBe(MAX_FRAME_BYTES - 8_192);
   });
 });

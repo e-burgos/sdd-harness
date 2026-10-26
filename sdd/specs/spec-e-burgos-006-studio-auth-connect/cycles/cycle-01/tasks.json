@@ -1,0 +1,148 @@
+{
+  "$schema": "../../../../schemas/cycle-tasks.schema.json",
+  "spec": "spec-e-burgos-006-studio-auth-connect",
+  "cycle": 1,
+  "module": "studio-auth-connect",
+  "apps": [
+    "apps/studio",
+    "apps/studio-bridge",
+    "libs/studio-protocol"
+  ],
+  "flow": "lite",
+  "user_stories_generated": true,
+  "prerequisites": {
+    "tasks_generated": true
+  },
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "Protocolo: auth.status/login/logout, mode opcional en auth.set, AuthAccount, feature auth-subscription y tests",
+      "user_stories": [
+        "US-1",
+        "US-2",
+        "US-3"
+      ],
+      "estimation_hours": 2,
+      "story_points": 3,
+      "depends_on": [],
+      "status": "done",
+      "files": [
+        "libs/studio-protocol/src/commands.ts",
+        "libs/studio-protocol/src/commands.spec.ts",
+        "libs/studio-protocol/src/domain.ts",
+        "libs/studio-protocol/src/limits.ts",
+        "libs/studio-protocol/src/handshake.spec.ts"
+      ],
+      "usage": {
+        "tokens_in": 12000,
+        "tokens_out": 3500,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-26"
+      }
+    },
+    {
+      "id": "TASK-002",
+      "title": "Puente: ClaudeLogin, AuthState con preferencia de modo y env limpio, handlers del router y tests",
+      "user_stories": [
+        "US-1",
+        "US-2",
+        "US-3"
+      ],
+      "estimation_hours": 2,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio-bridge/src/auth/claude-login.ts",
+        "apps/studio-bridge/src/auth/claude-login.spec.ts",
+        "apps/studio-bridge/src/auth-mode.ts",
+        "apps/studio-bridge/src/server/router.ts",
+        "apps/studio-bridge/src/server/router.spec.ts",
+        "apps/studio-bridge/src/main.ts",
+        "apps/studio-bridge/src/main.spec.ts"
+      ],
+      "usage": {
+        "tokens_in": 20000,
+        "tokens_out": 6000,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-26"
+      }
+    },
+    {
+      "id": "TASK-003",
+      "title": "Web: acciones de auth en BridgeProvider, AuthPanel con solapas, i18n es/en, Sidebar y tests",
+      "user_stories": [
+        "US-1",
+        "US-2",
+        "US-3"
+      ],
+      "estimation_hours": 2,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/workspace/AuthPanel.tsx",
+        "apps/studio/src/components/workspace/authpanel.spec.tsx",
+        "apps/studio/src/components/workspace/ApiKeyField.tsx",
+        "apps/studio/src/components/workspace/Sidebar.tsx",
+        "apps/studio/src/components/BridgeProvider.tsx",
+        "apps/studio/src/lib/use-subscription.ts",
+        "apps/studio/src/lib/auth-preference.ts",
+        "apps/studio/src/lib/auth-preference.spec.ts",
+        "apps/studio/src/lib/i18n/es.ts",
+        "apps/studio/src/lib/i18n/en.ts"
+      ],
+      "usage": {
+        "tokens_in": 30000,
+        "tokens_out": 9000,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-26"
+      }
+    },
+    {
+      "id": "TASK-004",
+      "title": "Pista de límite de uso en la UI ante el 400 de límite y tests",
+      "user_stories": [
+        "US-4"
+      ],
+      "estimation_hours": 2,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-003"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/lib/usage-limit.ts",
+        "apps/studio/src/lib/usage-limit.spec.ts",
+        "apps/studio/src/components/workspace/Timeline.tsx",
+        "apps/studio/src/components/workspace/timeline.spec.tsx"
+      ],
+      "usage": {
+        "tokens_in": 8000,
+        "tokens_out": 1500,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-26"
+      }
+    }
+  ]
+}

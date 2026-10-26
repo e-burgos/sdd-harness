@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ClientCommand, FileSearchResult, SendResult, defaultThreadOptions } from './index';
+import { AuthAccount, ClientCommand, FileSearchResult, SendResult, defaultThreadOptions } from './index';
 
 const base = { kind: 'command', id: 'c1' } as const;
 
@@ -24,6 +24,21 @@ describe('ClientCommand', () => {
     for (const apiKey of ['short', 'has space ' + 'a'.repeat(30), 'a'.repeat(513)]) {
       expect(ClientCommand.safeParse({ ...base, cmd: 'auth.set', apiKey }).success).toBe(false);
     }
+  });
+  it('auth.set mode is optional and restricted to subscription or api-key', () => {
+    expect(ClientCommand.safeParse({ ...base, cmd: 'auth.set', apiKey: null, mode: 'subscription' }).success).toBe(true);
+    expect(ClientCommand.safeParse({ ...base, cmd: 'auth.set', apiKey: null, mode: 'oauth' }).success).toBe(false);
+  });
+  it('parses auth.status, auth.login and auth.logout without arguments', () => {
+    for (const name of ['auth.status', 'auth.login', 'auth.logout']) {
+      expect(ClientCommand.parse({ ...base, cmd: name })).toEqual({ ...base, cmd: name });
+    }
+  });
+  it('AuthAccount requires every field and rejects unknown states', () => {
+    const account = { state: 'connected', email: 'a@b.co', method: 'claude.ai', plan: null, loginUrl: null, error: null };
+    expect(AuthAccount.parse(account)).toEqual(account);
+    expect(AuthAccount.safeParse({ ...account, state: 'weird' }).success).toBe(false);
+    expect(AuthAccount.safeParse({ ...account, loginUrl: 'not a url' }).success).toBe(false);
   });
   it('rejects commands outside the allowlist', () => {
     expect(ClientCommand.safeParse({ ...base, cmd: 'command.run', name: 'rm', args: [] }).success).toBe(false);

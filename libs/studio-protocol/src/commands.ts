@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { AttachmentMime, AttachmentUpload, PromptRefs, Sha256 } from './attachments';
-import { ChannelId, ThreadLinkTarget, ThreadOptions } from './domain';
+import { AuthPreference, ChannelId, ThreadLinkTarget, ThreadOptions } from './domain';
 import { FILE_SEARCH_MAX, MAX_ATTACHMENTS } from './limits';
 
 const Id = z.string().min(1).max(64);
@@ -52,7 +52,10 @@ export const ClientCommand = z.discriminatedUnion('cmd', [
   }),
   z.object({ ...cmd('command.run'), name: KitCommandName, args: z.array(SafeArg).max(4) }),
   // Held in bridge memory only (never persisted or logged). null = back to ANTHROPIC_API_KEY / local login.
-  z.object({ ...cmd('auth.set'), apiKey: z.string().regex(/^\S{20,512}$/).nullable() }),
+  z.object({ ...cmd('auth.set'), apiKey: z.string().regex(/^\S{20,512}$/).nullable(), mode: AuthPreference.optional() }),
+  z.object({ ...cmd('auth.status') }),
+  z.object({ ...cmd('auth.login') }),
+  z.object({ ...cmd('auth.logout') }),
 ]);
 export type ClientCommand = z.infer<typeof ClientCommand>;
 

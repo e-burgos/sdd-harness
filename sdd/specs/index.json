@@ -80,6 +80,20 @@
         "spec-e-burgos-001-studio-session-ux",
         "spec-e-burgos-004-studio-gates-topology"
       ]
+    },
+    {
+      "id": "spec-e-burgos-006-studio-auth-connect",
+      "author": "e-burgos",
+      "slug": "studio-auth-connect",
+      "folder": "sdd/specs/spec-e-burgos-006-studio-auth-connect",
+      "file": "sdd/specs/spec-e-burgos-006-studio-auth-connect/spec-e-burgos-006-studio-auth-connect.spec.md",
+      "module": "studio-auth-connect",
+      "app": "apps/studio",
+      "status": "completed",
+      "title": "SDD Studio: conectar suscripción de Claude o API key desde la sidebar",
+      "created_at": "2026-10-26",
+      "completed_at": "2026-10-26",
+      "depends_on": []
     }
   ]
 }

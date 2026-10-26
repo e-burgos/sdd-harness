@@ -26,8 +26,10 @@ async function handlers(broadcast: (e: ServerEvent) => void = () => {}, refresh:
   await attachments.init();
   const sessions = new SessionManager({ root, engine: new FakeEngine(1), store, attachments, snapshot: () => snapshot, broadcast: () => {} });
   const auth = new AuthState({}, 'sdd-studio/test');
+  const account = { state: 'disconnected', email: null, method: null, plan: null, loginUrl: null, error: null } as const;
+  const login = { status: async () => account, login: async () => ({ ...account, state: 'pending' as const }), logout: async () => account };
   return createHandlers({
-    root, auth, bridgeVersion: '0.1.0', sessions, store, attachments, fileIndex: createFileIndex(root),
+    root, auth, login, bridgeVersion: '0.1.0', sessions, store, attachments, fileIndex: createFileIndex(root),
     watcher: { current: () => snapshot, refresh: async () => { await refresh(); return null; } }, runner: new CommandRunner(root, broadcast, () => 'run-1'),
   });
 }
@@ -50,6 +52,18 @@ describe('createHandlers', () => {
     expect(await h.handle(cmd({ cmd: 'auth.set', apiKey: 'sk-ant-' + 'x'.repeat(30) }))).toEqual({ authMode: 'api-key' });
     expect(h.welcome().authMode).toBe('api-key');
     expect(await h.handle(cmd({ cmd: 'auth.set', apiKey: null }))).toEqual({ authMode: 'local-claude-login' });
+  });
+
+  it('auth.set with mode subscription keeps the local login and ignores a key', async () => {
+    const h = await handlers();
+    expect(await h.handle(cmd({ cmd: 'auth.set', apiKey: 'sk-ant-' + 'x'.repeat(30), mode: 'subscription' }))).toEqual({ authMode: 'local-claude-login' });
+  });
+
+  it('routes auth.status, auth.login and auth.logout to the login service', async () => {
+    const h = await handlers();
+    expect(await h.handle(cmd({ cmd: 'auth.status' }))).toMatchObject({ state: 'disconnected' });
+    expect(await h.handle(cmd({ cmd: 'auth.login' }))).toMatchObject({ state: 'pending' });
+    expect(await h.handle(cmd({ cmd: 'auth.logout' }))).toMatchObject({ state: 'disconnected' });
   });
 
   it('reads files under sdd/ and refuses the rest', async () => {

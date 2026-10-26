@@ -23,6 +23,19 @@ export const PermissionModeChoice = z.enum(['default', 'acceptEdits', 'bypassPer
 export type PermissionModeChoice = z.infer<typeof PermissionModeChoice>;
 export const AuthMode = z.enum(['local-claude-login', 'api-key']);
 export type AuthMode = z.infer<typeof AuthMode>;
+export const AuthPreference = z.enum(['subscription', 'api-key']);
+export type AuthPreference = z.infer<typeof AuthPreference>;
+export const AuthAccountState = z.enum(['connected', 'disconnected', 'pending', 'error']);
+export type AuthAccountState = z.infer<typeof AuthAccountState>;
+export const AuthAccount = z.object({
+  state: AuthAccountState,
+  email: z.string().max(320).nullable(),
+  method: z.string().max(64).nullable(),
+  plan: z.string().max(64).nullable(),
+  loginUrl: z.string().url().max(2048).nullable(),
+  error: z.string().max(500).nullable(),
+});
+export type AuthAccount = z.infer<typeof AuthAccount>;
 
 export const ChannelId = z
   .string()

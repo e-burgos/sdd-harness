@@ -8,7 +8,7 @@ import { buildNavTree, type NavSection, type NavThread, type NavView } from '@/l
 import { useCollapsedState } from '@/lib/use-collapsed-state';
 import type { ConnectionState } from '@/lib/bridge/client';
 import { useBridge, useStudio } from '../BridgeProvider';
-import { ApiKeyField } from './ApiKeyField';
+import { AuthPanel } from './AuthPanel';
 import { PanelToggle } from './PanelRail';
 import { SectionView, type NavTreeHandlers } from './NavTree';
 
@@ -85,7 +85,7 @@ export function Sidebar({ view, onSelectChannel, onOpenThread, onCollapse }: { v
       project={snapshot?.project ?? welcome?.workspace.project ?? '…'}
       kitVersion={snapshot?.kitVersion ?? null}
       authMode={authMode ?? welcome?.authMode ?? null}
-      authSlot={<ApiKeyField />}
+      authSlot={<AuthPanel />}
       connection={connection.status}
       tree={tree}
       presence={presence}

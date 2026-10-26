@@ -2,6 +2,7 @@ import { constants } from 'node:fs';
 import { open } from 'node:fs/promises';
 import { BRIDGE_FEATURES, type ClientCommand } from '@sdd-studio/protocol';
 import type { AuthState } from '../auth-mode';
+import type { ClaudeLogin } from '../auth/claude-login';
 import type { CommandRunner } from '../commands/runner';
 import type { AttachmentStore } from '../sessions/attachment-store';
 import { SessionError, type SessionManager } from '../sessions/session-manager';
@@ -16,6 +17,7 @@ const MAX_READ_BYTES = 2 * 1024 * 1024;
 export function createHandlers(d: {
   root: string;
   auth: Pick<AuthState, 'mode' | 'set'>;
+  login: Pick<ClaudeLogin, 'status' | 'login' | 'logout'>;
   bridgeVersion: string;
   sessions: SessionManager;
   watcher: Pick<WorkspaceWatcher, 'current' | 'refresh'>;
@@ -91,7 +93,13 @@ export function createHandlers(d: {
           d.sessions.respondApproval(command.approvalId, command.decision, command.reason, command.scope);
           return null;
         case 'auth.set':
-          return { authMode: d.auth.set(command.apiKey) };
+          return { authMode: d.auth.set(command.apiKey, command.mode) };
+        case 'auth.status':
+          return d.login.status();
+        case 'auth.login':
+          return d.login.login();
+        case 'auth.logout':
+          return d.login.logout();
         case 'command.run':
           return { runId: d.runner.run(command.name, command.args) };
         default:

@@ -74,6 +74,22 @@
           "tasks_done": 6
         }
       }
+    },
+    "spec-e-burgos-006-studio-auth-connect": {
+      "cycles": {
+        "cycle-01": {
+          "file": "sdd/specs/spec-e-burgos-006-studio-auth-connect/cycles/cycle-01/tasks.json",
+          "module": "studio-auth-connect",
+          "apps": [
+            "apps/studio",
+            "apps/studio-bridge",
+            "libs/studio-protocol"
+          ],
+          "status": "completed",
+          "tasks_total": 4,
+          "tasks_done": 4
+        }
+      }
     }
   }
 }

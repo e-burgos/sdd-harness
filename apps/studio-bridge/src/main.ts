@@ -3,6 +3,7 @@ import { realpath } from 'node:fs/promises';
 import path from 'node:path';
 import type { AuthMode, ServerMessage } from '@sdd-studio/protocol';
 import { AuthState, CLIENT_APP } from './auth-mode';
+import { ClaudeLogin } from './auth/claude-login';
 import { CommandRunner } from './commands/runner';
 import { ClaudeAgentSdkEngine } from './engine/claude-sdk-engine';
 import { FakeEngine } from './engine/fake-engine';
@@ -86,7 +87,7 @@ export async function startBridge(o: {
       token,
       allowedOrigins: o.allowedOrigins,
       localUiDir: o.localUiDir,
-      handlers: createHandlers({ root, auth, bridgeVersion: BRIDGE_VERSION, sessions, watcher, runner, store, attachments, fileIndex }),
+      handlers: createHandlers({ root, auth, login: new ClaudeLogin(() => auth.cliEnv()), bridgeVersion: BRIDGE_VERSION, sessions, watcher, runner, store, attachments, fileIndex }),
     });
     server = started;
   } catch (error) {

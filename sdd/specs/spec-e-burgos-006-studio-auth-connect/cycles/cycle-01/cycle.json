@@ -1,0 +1,146 @@
+{
+  "$schema": "../../../../schemas/cycle.schema.json",
+  "cycle": 1,
+  "module": "studio-auth-connect",
+  "spec": "spec-e-burgos-006-studio-auth-connect",
+  "apps": [
+    "apps/studio",
+    "apps/studio-bridge",
+    "libs/studio-protocol"
+  ],
+  "phase": "auth-connect",
+  "flow": "lite",
+  "objectives": [
+    "Conectar la suscripción de Claude desde la sidebar con un botón",
+    "Solapas Suscripción / API key con modo efectivo",
+    "Pista ante el límite de uso"
+  ],
+  "status": "completed",
+  "started_at": "2026-10-26",
+  "completed_at": "2026-10-26",
+  "documents": {
+    "plan": "sdd/specs/spec-e-burgos-006-studio-auth-connect/cycles/cycle-01/plan.md",
+    "tasks": "sdd/specs/spec-e-burgos-006-studio-auth-connect/cycles/cycle-01/tasks.json"
+  },
+  "artifacts": [],
+  "metrics": {
+    "tasks_total": 4,
+    "tasks_completed": 4,
+    "tasks_skipped": 0,
+    "story_points": 12,
+    "files_created": [
+      "apps/studio-bridge/src/auth/claude-login.ts",
+      "apps/studio-bridge/src/auth/claude-login.spec.ts",
+      "apps/studio/src/components/workspace/AuthPanel.tsx",
+      "apps/studio/src/components/workspace/authpanel.spec.tsx",
+      "apps/studio/src/lib/use-subscription.ts",
+      "apps/studio/src/lib/auth-preference.ts",
+      "apps/studio/src/lib/auth-preference.spec.ts",
+      "apps/studio/src/lib/usage-limit.ts",
+      "apps/studio/src/lib/usage-limit.spec.ts"
+    ],
+    "files_modified": [
+      "libs/studio-protocol/src/commands.ts",
+      "libs/studio-protocol/src/commands.spec.ts",
+      "libs/studio-protocol/src/domain.ts",
+      "libs/studio-protocol/src/limits.ts",
+      "libs/studio-protocol/src/handshake.spec.ts",
+      "apps/studio-bridge/src/auth-mode.ts",
+      "apps/studio-bridge/src/server/router.ts",
+      "apps/studio-bridge/src/server/router.spec.ts",
+      "apps/studio-bridge/src/main.ts",
+      "apps/studio-bridge/src/main.spec.ts",
+      "apps/studio/src/components/workspace/ApiKeyField.tsx",
+      "apps/studio/src/components/workspace/Sidebar.tsx",
+      "apps/studio/src/components/BridgeProvider.tsx",
+      "apps/studio/src/lib/i18n/es.ts",
+      "apps/studio/src/lib/i18n/en.ts",
+      "apps/studio/src/components/workspace/Timeline.tsx",
+      "apps/studio/src/components/workspace/timeline.spec.tsx"
+    ],
+    "files_deleted": [],
+    "usage": {
+      "tokens_in": 95000,
+      "tokens_out": 25000,
+      "approx": true,
+      "source": "declared-estimate",
+      "by_tier": {
+        "claude/sonnet": {
+          "tokens_in": 95000,
+          "tokens_out": 25000,
+          "approx": true,
+          "source": "declared-estimate"
+        }
+      },
+      "by_agent": [
+        {
+          "agent": "orchestrator",
+          "label": "solo-gates-docs",
+          "provider_model": "claude/sonnet",
+          "tokens_in": 25000,
+          "tokens_out": 5000,
+          "approx": true,
+          "source": "declared-estimate"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-001",
+          "provider_model": "claude/sonnet",
+          "tokens_in": 12000,
+          "tokens_out": 3500,
+          "approx": true,
+          "source": "declared-estimate"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-002",
+          "provider_model": "claude/sonnet",
+          "tokens_in": 20000,
+          "tokens_out": 6000,
+          "approx": true,
+          "source": "declared-estimate"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-003",
+          "provider_model": "claude/sonnet",
+          "tokens_in": 30000,
+          "tokens_out": 9000,
+          "approx": true,
+          "source": "declared-estimate"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-004",
+          "provider_model": "claude/sonnet",
+          "tokens_in": 8000,
+          "tokens_out": 1500,
+          "approx": true,
+          "source": "declared-estimate"
+        }
+      ]
+    }
+  },
+  "tables_created": [],
+  "endpoints_implemented": [],
+  "components_created": [],
+  "issues_found": [],
+  "reviewer_report": {
+    "approved": true,
+    "date": "2026-10-26",
+    "ca_results": {
+      "CA-1": "passed - auth.login lanza claude auth login --claudeai, captura URL y expone estado pending/connected",
+      "CA-2": "passed - auth.status/auth.logout con confirmacion en la UI",
+      "CA-3": "passed - env del SDK sin ANTHROPIC_API_KEY/AUTH_TOKEN en modo suscripcion; mode opcional retrocompatible",
+      "CA-4": "passed - pista de limite de uso solo ante ese error"
+    },
+    "tests": {
+      "protocol": "passed - 75 tests",
+      "bridge": "passed - 488 tests",
+      "studio": "passed - 451 tests",
+      "typecheck": "passed",
+      "build": "passed"
+    },
+    "notes": "Login real contra claude.ai no automatizable; verificacion manual pendiente. Revision en lite hecha por el mismo actor."
+  }
+}
