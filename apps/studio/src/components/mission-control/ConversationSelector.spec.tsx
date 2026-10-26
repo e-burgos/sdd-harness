@@ -28,17 +28,16 @@ const renderSelector = (props: Partial<Parameters<typeof ConversationSelector>[0
 };
 
 describe('ConversationSelector', () => {
-  it('lists the conversations and marks the selected one', () => {
+  it('lists the conversations in a dropdown and marks the selected one', () => {
     renderSelector({ conversations: [thread('a', 'Primera'), thread('b', 'Segunda')], selectedThreadId: 'b' });
-    expect(screen.getByTestId('conversation-option-a')).toHaveAttribute('aria-pressed', 'false');
-    expect(screen.getByTestId('conversation-option-b')).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByText('Primera')).toBeInTheDocument();
+    expect(screen.getByTestId('conversation-select')).toHaveValue('b');
+    expect(screen.getByRole('option', { name: 'Primera' })).toBeInTheDocument();
   });
 
   it('reports the picked conversation', () => {
-    const { onPick } = renderSelector({ conversations: [thread('a', 'Primera')], selectedThreadId: null });
-    fireEvent.click(screen.getByTestId('conversation-option-a'));
-    expect(onPick).toHaveBeenCalledWith('a');
+    const { onPick } = renderSelector({ conversations: [thread('a', 'Primera'), thread('b', 'Segunda')], selectedThreadId: 'a' });
+    fireEvent.change(screen.getByTestId('conversation-select'), { target: { value: 'b' } });
+    expect(onPick).toHaveBeenCalledWith('b');
   });
 
   it('shows the empty state with the new conversation button', () => {
@@ -56,6 +55,6 @@ describe('ConversationSelector', () => {
 
   it('falls back to the id for an untitled conversation', () => {
     renderSelector({ conversations: [thread('abc', '')] });
-    expect(screen.getByTestId('conversation-option-abc')).toHaveTextContent('abc');
+    expect(screen.getByRole('option', { name: 'abc' })).toBeInTheDocument();
   });
 });

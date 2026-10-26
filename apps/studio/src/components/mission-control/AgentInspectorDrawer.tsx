@@ -199,7 +199,7 @@ export function AgentInspectorDrawer({
                 className="w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-ink-950 py-2 px-3 font-semibold text-xs tracking-wide shadow-lg shadow-emerald-500/20 transition-all active:scale-[0.98]"
               >
                 <MessageSquare className="w-3.5 h-3.5" />
-                <span>Abrir chat directo con {meta.name}</span>
+                <span>{t('map.openNewChat', { name: meta.name })}</span>
               </button>
             </div>
           </>

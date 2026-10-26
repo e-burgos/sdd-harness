@@ -252,6 +252,15 @@ export function AgentMapCanvas({ onOpenDm, onNewConversation }: { onOpenDm: (age
         </div>
 
         <div className="flex items-center gap-3">
+          <ConversationSelector
+            conversations={conversations}
+            selectedThreadId={selectedThreadId}
+            onPick={pick}
+            onNewConversation={onNewConversation}
+          />
+
+          <div className="h-4 w-[1px] bg-white/10" />
+
           <div className="flex items-center bg-white/5 p-0.5 rounded-lg border border-white/10 text-[10px] font-mono">
             <button
               type="button"
@@ -301,15 +310,6 @@ export function AgentMapCanvas({ onOpenDm, onNewConversation }: { onOpenDm: (age
             </span>
           </div>
         </div>
-      </div>
-
-      <div className="relative z-10 px-6 py-2">
-        <ConversationSelector
-          conversations={conversations}
-          selectedThreadId={selectedThreadId}
-          onPick={pick}
-          onNewConversation={onNewConversation}
-        />
       </div>
 
       <div

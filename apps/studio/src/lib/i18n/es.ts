@@ -235,6 +235,7 @@ export const es = {
   'map.gates.all': 'Todas (6)',
   'map.chat.live': 'Conversación en Vivo',
   'map.chat.placeholder': 'Escribir a {name}...',
+  'map.openNewChat': 'Abrir nuevo chat con {name}',
   'map.chat.send': 'Enviar',
   'mc.newConversation': 'Nueva conversación',
   'mc.noActivity': 'Sin actividad todavía',

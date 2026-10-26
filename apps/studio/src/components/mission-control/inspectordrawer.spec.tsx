@@ -90,7 +90,7 @@ describe('AgentInspectorDrawer', () => {
     expect(screen.getByText(/git status/)).toBeInTheDocument();
     expect(screen.getByTestId('live-agent-chat-feed')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByText(/Abrir chat directo con Clara/));
+    fireEvent.click(screen.getByText(/Abrir nuevo chat con Clara/));
     expect(onOpenDm).toHaveBeenCalledWith('sdd-orchestrator');
     expect(onClose).toHaveBeenCalled();
   });

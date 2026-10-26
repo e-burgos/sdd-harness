@@ -118,9 +118,17 @@ describe('AgentMapCanvas', () => {
     expect(onNewConversation).toHaveBeenCalledTimes(1);
   });
 
+  it('places the conversation selector in the topology header beside the new conversation button', () => {
+    renderCanvas(twoConversations);
+    const header = screen.getByText('Topología del Enjambre').closest('div.flex.items-center.justify-between')!;
+    expect(within(header as HTMLElement).getByTestId('conversation-select')).toBeInTheDocument();
+    expect(within(header as HTMLElement).getByTestId('new-conversation-button')).toBeInTheDocument();
+    expect(screen.queryByRole('navigation')).toBeNull();
+  });
+
   it('follows the most recent conversation and shows its real session', () => {
     renderCanvas(twoConversations);
-    expect(screen.getByTestId('conversation-option-t-a')).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByTestId('conversation-select')).toHaveValue('t-a');
     expect(screen.getByTestId('conversation-session')).toHaveTextContent('session-a-real');
     expect(screen.getByTestId('swarm-comms-console')).toHaveTextContent('plan de alfa');
   });
@@ -132,9 +140,9 @@ describe('AgentMapCanvas', () => {
     expect(dimmedInA).toBeGreaterThan(0);
     expect(container.querySelector('[data-participating="true"]')).not.toBeNull();
 
-    fireEvent.click(screen.getByTestId('conversation-option-t-b'));
+    fireEvent.change(screen.getByTestId('conversation-select'), { target: { value: 't-b' } });
 
-    expect(screen.getByTestId('conversation-option-t-b')).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByTestId('conversation-select')).toHaveValue('t-b');
     expect(screen.getByTestId('conversation-session')).toHaveTextContent('session-b-real');
     expect(screen.getByTestId('swarm-comms-console')).toHaveTextContent('diseño de beta');
     expect(screen.getByTestId('swarm-comms-console')).not.toHaveTextContent('plan de alfa');
@@ -216,7 +224,7 @@ describe('AgentMapCanvas', () => {
     );
 
     expect(screen.getByTestId('agent-inspector-drawer')).toBeInTheDocument();
-    const dmButton = screen.getByText(/Abrir chat directo con Clara/);
+    const dmButton = screen.getByText(/Abrir nuevo chat con Clara/);
     fireEvent.click(dmButton);
     expect(onOpenDm).toHaveBeenCalledWith('sdd-orchestrator');
   });

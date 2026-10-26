@@ -79,6 +79,19 @@ describe('LiveAgentChatFeed', () => {
     expect(onPickConversation).not.toHaveBeenCalled();
   });
 
+  it('sends to the selected conversation addressed to the agent even when the agent has no dialogue in it', async () => {
+    const { request, onPickConversation } = mount(view([dialogue(1, 'sdd-planner', 'user', 'plan ajeno')]));
+    fireEvent.change(screen.getByPlaceholderText(/Escribir a Daedalus/), { target: { value: 'tomá esto' } });
+    fireEvent.submit(screen.getByTestId('live-agent-chat-feed').querySelector('form')!);
+    await waitFor(() =>
+      expect(request).toHaveBeenCalledWith(
+        expect.objectContaining({ cmd: 'thread.send', threadId: 't-1', text: 'tomá esto', refs: { agents: ['sdd-architect'], skills: [] } }),
+      ),
+    );
+    expect(request).not.toHaveBeenCalledWith(expect.objectContaining({ cmd: 'thread.create' }));
+    expect(onPickConversation).not.toHaveBeenCalled();
+  });
+
   it('creates a direct conversation when none is selected and picks it', async () => {
     const { request, onPickConversation } = mount(null);
     fireEvent.change(screen.getByPlaceholderText(/Escribir a Daedalus/), { target: { value: 'hola' } });
