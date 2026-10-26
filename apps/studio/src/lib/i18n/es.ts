@@ -256,7 +256,9 @@ export const es = {
   'mc.related.agentEmpty': 'Este agente no generó documentos en esta conversación',
   'mc.related.specs': 'Specs',
   'mc.related.fixes': 'Fixes',
-  'mc.related.cycle': 'ciclo {cycle}',
+  'mc.related.cycle': 'Ciclo {cycle}',
+  'mc.related.root': 'Raíz de la spec',
+  'mc.related.inSpec': 'en {spec}',
   'mc.related.noDocuments': 'Sin documentos para abrir',
 };
 export type Dict = typeof es;

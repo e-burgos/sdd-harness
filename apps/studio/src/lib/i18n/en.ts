@@ -258,6 +258,8 @@ export const en = {
   'mc.related.agentEmpty': 'This agent did not generate documents in this conversation',
   'mc.related.specs': 'Specs',
   'mc.related.fixes': 'Fixes',
-  'mc.related.cycle': 'cycle {cycle}',
+  'mc.related.cycle': 'Cycle {cycle}',
+  'mc.related.root': 'Spec root',
+  'mc.related.inSpec': 'in {spec}',
   'mc.related.noDocuments': 'No documents to open',
 } satisfies Record<keyof Dict, string>;
