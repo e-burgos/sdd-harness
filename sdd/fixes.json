@@ -909,7 +909,7 @@
       "type": "IMPROVEMENT",
       "severity": "low",
       "created_at": "2026-10-26",
-      "resolved_at": null,
+      "resolved_at": "2026-10-26",
       "validated_at": null,
       "title": "Workspace: panel derecho muestra documentos, actividad y specs/ciclos/fixes de la conversacion",
       "estimation_hours": 2,
@@ -920,19 +920,22 @@
       ],
       "affected_files": [
         "apps/studio/src/components/workspace/RightPanel.tsx",
-        "apps/studio/src/components/workspace/RightPanel.spec.tsx",
+        "apps/studio/src/components/workspace/rightpanel.spec.tsx",
+        "apps/studio/src/components/workspace/ConversationPanelSections.tsx",
         "apps/studio/src/components/workspace/ThreadLinkPicker.tsx",
+        "apps/studio/src/components/workspace/threadlink.spec.tsx",
+        "apps/studio/src/components/workspace/Workspace.tsx",
         "apps/studio/src/lib/i18n/es.ts",
         "apps/studio/src/lib/i18n/en.ts"
       ],
       "test_reference": "RightPanel.spec.tsx",
-      "status": "pending",
+      "status": "implemented",
       "cycle": null,
       "usage": {
         "provider_model": "claude/sonnet",
         "effort": "medium",
-        "tokens_in": 9000,
-        "tokens_out": 1500,
+        "tokens_in": 79000,
+        "tokens_out": 15500,
         "approx": true,
         "source": "declared-estimate",
         "recorded_at": "2026-10-26",
@@ -943,6 +946,15 @@
             "effort": "medium",
             "tokens_in": 9000,
             "tokens_out": 1500,
+            "approx": true,
+            "source": "declared-estimate"
+          },
+          {
+            "agent": "implementor-front",
+            "provider_model": "claude/sonnet",
+            "effort": "medium",
+            "tokens_in": 70000,
+            "tokens_out": 14000,
             "approx": true,
             "source": "declared-estimate"
           }

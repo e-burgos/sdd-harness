@@ -82,3 +82,44 @@ describe('ThreadLinkPicker', () => {
     expect(select.value).toBe('fix:FIX-old-009');
   });
 });
+
+describe('ThreadLinkPicker detected target', () => {
+  const detectedSnapshot: WorkspaceSnapshot = {
+    ...snapshot,
+    specs: [{ id: 's1', title: 'S', status: 'in-progress', folder: 'f', module: null, app: null, dependsOn: [] }],
+  };
+
+  function mountDetected(link: ThreadInfo['link'], events: { seq: number; event: never }[] = []) {
+    const store = createStudioStore();
+    store.getState().setSnapshot(detectedSnapshot);
+    store.getState().setThreads([thread(link)]);
+    store.getState().loadHistory('t1', events);
+    const value = { client: { request: vi.fn() }, store, connection: { status: 'idle' } } as unknown as BridgeContextValue;
+    render(
+      <I18nProvider initial="es">
+        <BridgeContext.Provider value={value}>
+          <ThreadLinkPicker threadId="t1" />
+        </BridgeContext.Provider>
+      </I18nProvider>,
+    );
+  }
+
+  const fixWrite = { seq: 0, event: { type: 'tool.start', toolUseId: 'w', author: { agent: 'sdd-planner', parentToolUseId: null }, tool: 'Write', summary: 'sdd/specs/s1/fixes/fix-a-001.md' } as never };
+
+  it('shows the detected fix as read-only text when the thread has no link', () => {
+    mountDetected({ target: { kind: 'none' }, source: 'auto' }, [fixWrite]);
+    expect(screen.getByTestId('link-detected')).toHaveTextContent('Detectado: FIX-a-001');
+    expect(screen.getByLabelText('Asociado a')).toHaveValue('none');
+  });
+
+  it('shows nothing detected without events or when a link already exists', () => {
+    mountDetected({ target: { kind: 'none' }, source: 'auto' });
+    expect(screen.queryByTestId('link-detected')).toBeNull();
+  });
+
+  it('does not repeat the detection when the link is already set', () => {
+    mountDetected({ target: { kind: 'fix', fixId: 'FIX-a-001' }, source: 'manual' }, [fixWrite]);
+    expect(screen.queryByTestId('link-detected')).toBeNull();
+  });
+});
+

@@ -1,6 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { I18nProvider } from '@/lib/i18n/i18n';
-import { RightPanelView } from './RightPanel';
+import type { ThreadInfo, WorkspaceSnapshot } from '@sdd-studio/protocol';
+import { createStudioStore } from '@/lib/store/store';
+import { BridgeContext, type BridgeContextValue } from '../BridgeProvider';
+import { RightPanel, RightPanelView } from './RightPanel';
 
 describe('RightPanelView', () => {
   it('shows activity and the cycle checklist', () => {
@@ -35,3 +38,65 @@ describe('RightPanelView', () => {
     expect(screen.getByText('Este canal no tiene un ciclo activo.')).toBeInTheDocument();
   });
 });
+
+describe('RightPanel with a selected conversation', () => {
+  const SPEC = 'spec-a-001-demo';
+  const snapshot: WorkspaceSnapshot = {
+    project: 'p', profile: 'team', kitVersion: null, gateMode: 'block', pricing: null, stale: [], skills: [], agents: [],
+    specs: [{ id: SPEC, title: 'S', status: 'in-progress', folder: 'f', module: null, app: null, dependsOn: [] }],
+    cycles: [{ specId: SPEC, cycle: 'cycle-02', status: 'in-progress', flow: 'full', apps: [], tasks: [{ id: 'T-1', title: 'Hacer', status: 'pending', storyPoints: null }], tasksTotal: 1, tasksDone: 0 }],
+    fixes: [{ id: 'FIX-a-001', title: 'x', status: 'pending', severity: null, specId: SPEC, createdAt: null, closedAt: null }],
+  };
+  const info: ThreadInfo = {
+    id: 't1', channelId: 'general', title: 'hilo', agent: 'sdd-orchestrator',
+    options: { agent: 'sdd-orchestrator', model: 'kit', effort: null, permissionMode: 'default' },
+    status: 'idle', createdAt: '1', lastActivity: '1', link: { target: { kind: 'none' }, source: 'auto' }, pendingCount: 0,
+  };
+  const write = (seq: number, summary: string) => ({ seq, event: { type: 'tool.start', toolUseId: `w${seq}`, author: { agent: 'sdd-planner', parentToolUseId: null }, tool: 'Write', summary } as never });
+
+  function mount(threadId: string | null, events: { seq: number; event: never }[]) {
+    const store = createStudioStore();
+    store.getState().setSnapshot(snapshot);
+    store.getState().setThreads([info]);
+    store.getState().loadHistory('t1', events);
+    const value = { client: { request: vi.fn() }, store, connection: { status: 'idle' } } as unknown as BridgeContextValue;
+    render(
+      <I18nProvider initial="es">
+        <BridgeContext.Provider value={value}>
+          <RightPanel channelId="general" threadId={threadId} onOpenThread={vi.fn()} />
+        </BridgeContext.Provider>
+      </I18nProvider>,
+    );
+  }
+
+  it('derives where you are, documents, recent actions and the cycle from the conversation without a manual link', () => {
+    mount('t1', [write(0, `sdd/specs/${SPEC}/cycles/cycle-02/plan.md`), write(1, `sdd/specs/${SPEC}/fixes/fix-a-001.md`)]);
+    expect(screen.getByTestId('panel-gate')).toHaveTextContent('FIX GATE FIX-a-001');
+    expect(screen.getByTestId('related-spec-' + SPEC)).toBeInTheDocument();
+    expect(screen.getByTestId('related-fix-FIX-a-001')).toBeInTheDocument();
+    expect(screen.getByTestId('panel-recent')).toHaveTextContent('fix-a-001.md');
+  });
+
+  it('prefers the derived cycle in Detalles over the channel fallback', () => {
+    mount('t1', [write(0, `sdd/specs/${SPEC}/cycles/cycle-02/plan.md`)]);
+    expect(screen.getByTestId('panel-gate')).toHaveTextContent(`SPEC GATE ${SPEC} cycle-02`);
+    expect(screen.getByText('T-1')).toBeInTheDocument();
+    expect(screen.queryByText('Este canal no tiene un ciclo activo.')).toBeNull();
+  });
+
+  it('keeps the current empty states for an empty thread or no selected thread', () => {
+    mount('t1', []);
+    expect(screen.getByTestId('panel-gate')).toHaveTextContent('Sin gate activo en esta conversación');
+    expect(screen.getByTestId('related-documents-toggle')).toBeInTheDocument();
+    expect(screen.queryByTestId('panel-recent')).toBeNull();
+    expect(screen.getByText('Nadie está trabajando ahora.')).toBeInTheDocument();
+    expect(screen.getByText('Este canal no tiene un ciclo activo.')).toBeInTheDocument();
+  });
+
+  it('does not render conversation sections without a selected thread', () => {
+    mount(null, []);
+    expect(screen.queryByTestId('panel-where')).toBeNull();
+    expect(screen.getByText('Nadie está trabajando ahora.')).toBeInTheDocument();
+  });
+});
+

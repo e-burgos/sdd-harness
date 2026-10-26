@@ -87,6 +87,7 @@ export function Workspace({ selectedChannelId, newConversationSignal = 0 }: Work
         <RightPanel
           onCollapse={() => panels.setRightCollapsed(true)}
           channelId={view.channelId}
+          threadId={view.threadId}
           onOpenThread={(threadId) => {
             const channelId = store.getState().threads[threadId]?.info?.channelId ?? view.channelId;
             setView({ channelId, threadId });

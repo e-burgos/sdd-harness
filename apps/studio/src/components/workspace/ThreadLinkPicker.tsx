@@ -4,6 +4,8 @@ import { ThreadInfo, type ThreadLinkTarget } from '@sdd-studio/protocol';
 import { useMemo, useState } from 'react';
 import { bridgeErrorText } from '@/lib/bridge/error-text';
 import { useT } from '@/lib/i18n/i18n';
+import { deriveConversation } from '@/lib/conversation';
+import { deriveConversationGate } from '@/lib/conversation-gate';
 import { useBridge, useStudio } from '../BridgeProvider';
 
 const NONE = 'none';
@@ -22,13 +24,14 @@ export function decodeLinkTarget(value: string): ThreadLinkTarget {
 }
 
 const labelOf = (target: ThreadLinkTarget): string =>
-  target.kind === 'cycle' ? `${target.specId} · ${target.cycle}` : target.kind === 'fix' ? target.fixId : '';
+  target.kind === 'cycle' ? (target.cycle ? `${target.specId} · ${target.cycle}` : target.specId) : target.kind === 'fix' ? target.fixId : '';
 
 export function ThreadLinkPicker({ threadId }: { threadId: string }) {
   const { t } = useT();
   const { client, store } = useBridge();
   const snapshot = useStudio((s) => s.snapshot);
   const link = useStudio((s) => s.threads[threadId]?.info?.link ?? null);
+  const thread = useStudio((s) => s.threads[threadId]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -39,6 +42,13 @@ export function ThreadLinkPicker({ threadId }: { threadId: string }) {
     const fixes = (snapshot?.fixes ?? []).map((f) => ({ value: encodeLinkTarget({ kind: 'fix', fixId: f.id }), label: `${f.id} (${f.status})` }));
     return { cycles, fixes };
   }, [snapshot]);
+
+  const detected = useMemo(() => {
+    if (!thread?.info || thread.info.link.target.kind !== 'none') return null;
+    const gate = deriveConversationGate(deriveConversation(thread, snapshot), snapshot);
+    if (gate.kind === 'fix') return gate.fixId;
+    return gate.kind === 'spec' ? labelOf({ kind: 'cycle', specId: gate.specId, cycle: gate.cycle ?? '' }) : null;
+  }, [thread, snapshot]);
 
   if (!link) return null;
   const current = encodeLinkTarget(link.target);
@@ -80,6 +90,11 @@ export function ThreadLinkPicker({ threadId }: { threadId: string }) {
           </optgroup>
         )}
       </select>
+      {detected && (
+        <span data-testid="link-detected" className="truncate font-mono text-[11px] text-ink-400" title={detected}>
+          {t('link.detected', { target: detected })}
+        </span>
+      )}
       {error && <p role="alert" className="basis-full text-roseish">{error}</p>}
     </div>
   );

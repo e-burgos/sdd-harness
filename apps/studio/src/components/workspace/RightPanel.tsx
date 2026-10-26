@@ -5,10 +5,13 @@ import { useMemo } from 'react';
 import { agentMeta } from '@/lib/agents';
 import { useT } from '@/lib/i18n/i18n';
 import { activityOf, type ActivityEntry } from '@/lib/store/activity';
+import { deriveConversation } from '@/lib/conversation';
+import { deriveConversationGate } from '@/lib/conversation-gate';
 import { cycleForChannel } from '@/lib/store/selectors';
 import { useStudio } from '../BridgeProvider';
 import { Check, Loader2, Minus, Pause, Play } from 'lucide-react';
 import { AgentAvatar } from './AgentAvatar';
+import { ConversationPanelSections, type ConversationPanelData } from './ConversationPanelSections';
 import { PanelToggle } from './PanelRail';
 import { StatusBadge } from './StatusBadge';
 
@@ -22,10 +25,11 @@ function TaskStatusIcon({ status }: { status: string }) {
 const TASK_KEYS = { done: 'task.done', 'in-progress': 'task.in-progress', skipped: 'task.skipped', pending: 'task.pending' } as const;
 const PRESENCE_KEYS = { working: 'presence.working', waiting: 'presence.waiting', open: 'presence.open', idle: 'presence.idle' } as const;
 
-export function RightPanelView({ activity, cycle, onOpenThread, onCollapse }: { activity: ActivityEntry[]; cycle: CycleSummary | null; onOpenThread(id: string): void; onCollapse?(): void }) {
+export function RightPanelView({ activity, cycle, conversation, onOpenThread, onCollapse }: { activity: ActivityEntry[]; cycle: CycleSummary | null; conversation?: ConversationPanelData | null; onOpenThread(id: string): void; onCollapse?(): void }) {
   const { t } = useT();
   return (
     <aside aria-label={t('panel.label')} className="flex h-full flex-col gap-6 overflow-y-auto overscroll-contain border-l border-ink-800 bg-ink-900 p-4">
+      {conversation && <ConversationPanelSections view={conversation.view} gate={conversation.gate} />}
       <section>
         <div className="mb-2 flex items-center justify-between">
           <h2 className="text-[11px] uppercase tracking-wider text-ink-500">{t('panel.activity')}</h2>
@@ -108,10 +112,27 @@ export function RightPanelView({ activity, cycle, onOpenThread, onCollapse }: { 
   );
 }
 
-export function RightPanel({ channelId, onOpenThread, onCollapse }: { channelId: string; onOpenThread(id: string): void; onCollapse?(): void }) {
+export function RightPanel({ channelId, threadId = null, onOpenThread, onCollapse }: { channelId: string; threadId?: string | null; onOpenThread(id: string): void; onCollapse?(): void }) {
   const threads = useStudio((s) => s.threads);
   const presence = useStudio((s) => s.presence);
   const snapshot = useStudio((s) => s.snapshot);
   const activity = useMemo(() => activityOf(threads, presence), [threads, presence]);
-  return <RightPanelView activity={activity} cycle={cycleForChannel(snapshot, channelId)} onOpenThread={onOpenThread} onCollapse={onCollapse} />;
+  const selected = threadId ? threads[threadId] : undefined;
+  const conversation = useMemo<ConversationPanelData | null>(() => {
+    if (!selected?.info) return null;
+    const view = deriveConversation(selected, snapshot);
+    return { view, gate: deriveConversationGate(view, snapshot) };
+  }, [selected, snapshot]);
+  const gate = conversation?.gate;
+  const derivedCycle =
+    gate?.kind === 'spec' && gate.cycle ? (snapshot?.cycles.find((c) => c.specId === gate.specId && c.cycle === gate.cycle) ?? null) : null;
+  return (
+    <RightPanelView
+      activity={activity}
+      cycle={derivedCycle ?? cycleForChannel(snapshot, channelId)}
+      conversation={conversation}
+      onOpenThread={onOpenThread}
+      onCollapse={onCollapse}
+    />
+  );
 }
