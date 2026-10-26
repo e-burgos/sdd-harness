@@ -1067,21 +1067,21 @@ describe('SessionManager', () => {
     it('auto-links a thread created in a spec channel to the in-progress cycle', async () => {
       const { m } = await manager();
       const t = await m.createThread({ channelId: 'spec:spec-dev-001-pagos', options: opts, text: 'hola' });
-      expect(t.link).toEqual({ target: { kind: 'cycle', specId: 'spec-dev-001-pagos', cycle: 'cycle-01' }, source: 'auto' });
+      expect(t.link).toEqual({ target: { kind: 'cycle', specId: 'spec-dev-001-pagos', cycle: 'cycle-01' }, source: 'auto', targets: [{ ...{ kind: 'cycle', specId: 'spec-dev-001-pagos', cycle: 'cycle-01' }, origin: 'detected' }] });
       await idleOf(m, t.id);
     });
 
     it('auto-links general threads to none and keeps the link in the listing', async () => {
       const { m } = await manager();
       const t = await m.createThread({ channelId: 'general', options: opts, text: 'hola' });
-      expect(m.list().find((x) => x.id === t.id)?.link).toEqual({ target: { kind: 'none' }, source: 'auto' });
+      expect(m.list().find((x) => x.id === t.id)?.link).toEqual({ target: { kind: 'none' }, source: 'auto', targets: [] });
       await idleOf(m, t.id);
     });
 
     it('honors an explicit link as manual and rejects a missing destination without creating the thread', async () => {
       const { m } = await manager();
       const t = await m.createThread({ channelId: 'general', options: opts, text: 'hola', link: { kind: 'fix', fixId: 'FIX-dev-001-001' } });
-      expect(t.link).toEqual({ target: { kind: 'fix', fixId: 'FIX-dev-001-001' }, source: 'manual' });
+      expect(t.link).toEqual({ target: { kind: 'fix', fixId: 'FIX-dev-001-001' }, source: 'manual', targets: [{ kind: 'fix', fixId: 'FIX-dev-001-001', origin: 'manual' }] });
       await idleOf(m, t.id);
       const before = m.list().length;
       await expect(m.createThread({ channelId: 'general', options: opts, text: 'x', link: { kind: 'fix', fixId: 'FIX-nope' } })).rejects.toMatchObject({ code: 'not-found' });
@@ -1094,11 +1094,11 @@ describe('SessionManager', () => {
       await idleOf(m, t.id);
       sent.length = 0;
       const info = m.setLink(t.id, { kind: 'cycle', specId: 'spec-dev-001-pagos', cycle: 'cycle-01' });
-      expect(info.link).toEqual({ target: { kind: 'cycle', specId: 'spec-dev-001-pagos', cycle: 'cycle-01' }, source: 'manual' });
+      expect(info.link).toEqual({ target: { kind: 'cycle', specId: 'spec-dev-001-pagos', cycle: 'cycle-01' }, source: 'manual', targets: [{ ...{ kind: 'cycle', specId: 'spec-dev-001-pagos', cycle: 'cycle-01' }, origin: 'manual' }] });
       expect(updates(t.id)).toHaveLength(1);
       await store.flush();
       expect(store.get(t.id)?.link.source).toBe('manual');
-      expect(m.setLink(t.id, { kind: 'none' }).link).toEqual({ target: { kind: 'none' }, source: 'manual' });
+      expect(m.setLink(t.id, { kind: 'none' }).link).toEqual({ target: { kind: 'none' }, source: 'manual', targets: [] });
     });
 
     it('setLink keeps the previous link when the destination or the thread does not exist', async () => {
@@ -1107,7 +1107,7 @@ describe('SessionManager', () => {
       await idleOf(m, t.id);
       expect(() => m.setLink(t.id, { kind: 'fix', fixId: 'FIX-nope' })).toThrowError(expect.objectContaining({ code: 'not-found' }));
       expect(() => m.setLink('missing', { kind: 'none' })).toThrowError(expect.objectContaining({ code: 'not-found' }));
-      expect(m.list().find((x) => x.id === t.id)?.link).toEqual({ target: { kind: 'none' }, source: 'auto' });
+      expect(m.list().find((x) => x.id === t.id)?.link).toEqual({ target: { kind: 'none' }, source: 'auto', targets: [] });
     });
 
     it('shows legacy threads from a v1 threads.json with a legacy link', async () => {
@@ -1134,7 +1134,7 @@ describe('SessionManager', () => {
       snapshot = { ...snapshot, cycles: [], fixes: [] };
       const { m } = await manager();
       const t = await m.createThread({ channelId: 'spec:spec-dev-001-pagos', options: opts, text: 'hola' });
-      expect(t.link).toEqual({ target: { kind: 'none' }, source: 'auto' });
+      expect(t.link).toEqual({ target: { kind: 'none' }, source: 'auto', targets: [] });
       await idleOf(m, t.id);
     });
 

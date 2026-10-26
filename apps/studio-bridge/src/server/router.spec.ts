@@ -206,9 +206,9 @@ describe('createHandlers', () => {
   it('thread.create accepts a link and thread.setLink answers the updated ThreadInfo', async () => {
     const h = await handlers();
     const created = (await h.handle(cmd({ cmd: 'thread.create', channelId: 'general', options: defaultThreadOptions(), text: 'hola', link: { kind: 'none' } }))) as { id: string; link: unknown };
-    expect(created.link).toEqual({ target: { kind: 'none' }, source: 'manual' });
+    expect(created.link).toEqual({ target: { kind: 'none' }, source: 'manual', targets: [] });
     const updated = (await h.handle(cmd({ cmd: 'thread.setLink', threadId: created.id, link: { kind: 'fix', fixId: 'FIX-dev-001-001' } }))) as { link: unknown };
-    expect(updated.link).toEqual({ target: { kind: 'fix', fixId: 'FIX-dev-001-001' }, source: 'manual' });
+    expect(updated.link).toEqual({ target: { kind: 'fix', fixId: 'FIX-dev-001-001' }, source: 'manual', targets: [{ kind: 'fix', fixId: 'FIX-dev-001-001', origin: 'manual' }] });
     await expect(h.handle(cmd({ cmd: 'thread.setLink', threadId: created.id, link: { kind: 'fix', fixId: 'FIX-nope' } }))).rejects.toMatchObject({ code: 'not-found' });
     await waitFor(async () => ((await h.handle(cmd({ cmd: 'thread.list' }))) as { status: string }[])[0]?.status === 'idle');
   });

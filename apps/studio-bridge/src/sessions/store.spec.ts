@@ -1,9 +1,9 @@
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { defaultThreadOptions } from '@sdd-studio/protocol';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { copyFixture } from '../test-utils/fixture';
-import { ThreadStore, toThreadInfo, type StoredThread } from './store';
+import { ThreadStore, migrateStoredLink, storedLinkOf, toThreadInfo, type StoredThread } from './store';
 
 let root: string;
 let cleanup: () => Promise<void>;
@@ -13,7 +13,7 @@ afterEach(() => cleanup());
 const thread = (over: Partial<StoredThread> = {}): StoredThread => ({
   id: 't1', channelId: 'general', title: 'hola', agent: 'sdd-orchestrator', options: defaultThreadOptions(),
   status: 'idle', createdAt: '2026-10-07T00:00:00.000Z', lastActivity: '2026-10-07T00:00:00.000Z',
-  engineSessionId: null, provider: 'claude', link: { target: { kind: 'none' }, source: 'legacy' }, pending: [], ...over,
+  engineSessionId: null, provider: 'claude', link: { target: { kind: 'none' }, source: 'legacy', targets: [] }, sessionTitle: null, pending: [], ...over,
 });
 
 describe('ThreadStore', () => {
@@ -173,7 +173,7 @@ describe('ThreadStore', () => {
   describe('migration and pending', () => {
     const writeThreadsJson = (threads: unknown[]) => writeFile(path.join(root, '.sdd-studio/threads.json'), JSON.stringify(threads));
     const legacyThread = () => {
-      const { link: _link, pending: _pending, ...legacy } = thread();
+      const { link: _link, sessionTitle: _title, pending: _pending, ...legacy } = thread();
       return legacy;
     };
 
@@ -182,7 +182,7 @@ describe('ThreadStore', () => {
       await writeThreadsJson([legacyThread()]);
       const s = new ThreadStore(root);
       await s.init();
-      expect(s.get('t1')?.link).toEqual({ target: { kind: 'none' }, source: 'legacy' });
+      expect(s.get('t1')?.link).toEqual({ target: { kind: 'none' }, source: 'legacy', targets: [] });
       expect(s.get('t1')?.pending).toEqual([]);
     });
 
@@ -248,6 +248,113 @@ describe('ThreadStore', () => {
       const s = new ThreadStore(root);
       await s.init();
       expect(s.get('t1')).toMatchObject({ provider: 'claude', engineSessionId: null });
+    });
+  });
+
+  describe('links and session title', () => {
+    const threadsFile = () => path.join(root, '.sdd-studio/threads.json');
+    const writeRaw = async (content: string) => {
+      await new ThreadStore(root).init();
+      await writeFile(threadsFile(), content);
+    };
+    const cycle = { kind: 'cycle', specId: 'spec-a', cycle: 'cycle-01' } as const;
+    const fix = { kind: 'fix', fixId: 'FIX-001' } as const;
+
+    it('derives targets from a legacy single link, manual or detected', async () => {
+      expect(migrateStoredLink({ target: cycle, source: 'auto' }).targets).toEqual([{ ...cycle, origin: 'detected' }]);
+      expect(migrateStoredLink({ target: fix, source: 'legacy' }).targets).toEqual([{ ...fix, origin: 'detected' }]);
+      expect(migrateStoredLink({ target: fix, source: 'manual' }).targets).toEqual([{ ...fix, origin: 'manual' }]);
+      expect(migrateStoredLink({ target: { kind: 'none' }, source: 'auto' }).targets).toEqual([]);
+    });
+
+    it('migrates a v2 threads.json idempotently without losing previous fields', async () => {
+      const legacy = { ...thread({ engineSessionId: 'sess-1', title: 'keep me' }), link: { target: cycle, source: 'manual' } };
+      await writeRaw(JSON.stringify([legacy]));
+      const first = new ThreadStore(root);
+      await first.init();
+      await first.flush();
+      const afterFirst = await readFile(threadsFile(), 'utf8');
+      const second = new ThreadStore(root);
+      await second.init();
+      await second.flush();
+      expect(await readFile(threadsFile(), 'utf8')).toBe(afterFirst);
+      expect(second.get('t1')).toMatchObject({
+        title: 'keep me',
+        engineSessionId: 'sess-1',
+        sessionTitle: null,
+        link: { target: cycle, source: 'manual', targets: [{ ...cycle, origin: 'manual' }] },
+      });
+    });
+
+    it('migrates a target pointing to something that no longer exists', async () => {
+      await writeRaw(JSON.stringify([{ ...thread(), link: { target: { kind: 'fix', fixId: 'FIX-gone' }, source: 'auto' } }]));
+      const s = new ThreadStore(root);
+      await s.init();
+      expect(s.get('t1')?.link.targets).toEqual([{ kind: 'fix', fixId: 'FIX-gone', origin: 'detected' }]);
+    });
+
+    it('keeps valid entries and dismissals, dropping only the malformed ones', async () => {
+      const targets = [
+        { ...cycle, origin: 'manual' },
+        { kind: 'spec' },
+        { ...fix, origin: 'detected', dismissed: true },
+        { kind: 'cycle', specId: 'spec-a', cycle: 'oops', origin: 'manual' },
+        null,
+      ];
+      await writeRaw(JSON.stringify([{ ...thread(), link: { target: cycle, source: 'manual', targets } }]));
+      const s = new ThreadStore(root);
+      await s.init();
+      expect(s.get('t1')?.link.targets).toEqual([{ ...cycle, origin: 'manual' }, { ...fix, origin: 'detected', dismissed: true }]);
+    });
+
+    it('does not send dismissed entries in ThreadInfo', async () => {
+      const stored = thread({
+        link: { target: cycle, source: 'manual', targets: [{ ...cycle, origin: 'manual' }, { ...fix, origin: 'detected', dismissed: true }] },
+      });
+      expect(toThreadInfo(stored).link).toEqual({ target: cycle, source: 'manual', targets: [{ ...cycle, origin: 'manual' }] });
+      expect(storedLinkOf({ target: { kind: 'none' }, source: 'auto' }).targets).toEqual([]);
+    });
+
+    it('exposes sessionTitle in ThreadInfo, null when unknown', async () => {
+      expect(toThreadInfo(thread()).sessionTitle).toBeNull();
+      expect(toThreadInfo(thread({ sessionTitle: 'Refactor billing' })).sessionTitle).toBe('Refactor billing');
+    });
+
+    it('preserves a stored sessionTitle and normalizes an empty or missing one to null', async () => {
+      await writeRaw(JSON.stringify([thread({ sessionTitle: 'Refactor billing' }), { ...thread({ id: 't2', sessionTitle: '' }) }, { ...thread({ id: 't3' }), sessionTitle: undefined }]));
+      const s = new ThreadStore(root);
+      await s.init();
+      expect(s.get('t1')?.sessionTitle).toBe('Refactor billing');
+      expect(s.get('t2')?.sessionTitle).toBeNull();
+      expect(s.get('t3')?.sessionTitle).toBeNull();
+    });
+
+    it('renames a corrupt threads.json instead of overwriting it and reports it', async () => {
+      await writeRaw('{"id": "t1", broken');
+      const errors: unknown[] = [];
+      const s = new ThreadStore(root, (error) => errors.push(error));
+      await s.init();
+      await s.flush();
+      const quarantined = (await readdir(path.join(root, '.sdd-studio'))).filter((name) => name.startsWith('threads.json.corrupt-'));
+      expect(quarantined).toHaveLength(1);
+      expect(await readFile(path.join(root, '.sdd-studio', quarantined[0] as string), 'utf8')).toBe('{"id": "t1", broken');
+      expect(errors).toHaveLength(1);
+      expect(s.list()).toEqual([]);
+      expect(JSON.parse(await readFile(threadsFile(), 'utf8'))).toEqual([]);
+    });
+
+    it('renames a threads.json that is not an array', async () => {
+      await writeRaw('{"threads": []}');
+      const s = new ThreadStore(root, () => undefined);
+      await s.init();
+      expect((await readdir(path.join(root, '.sdd-studio'))).some((name) => name.startsWith('threads.json.corrupt-'))).toBe(true);
+    });
+
+    it('keeps the threads that have an id when others in the array are garbage', async () => {
+      await writeRaw(JSON.stringify([null, 7, { title: 'no id' }, thread({ id: 'ok' })]));
+      const s = new ThreadStore(root);
+      await s.init();
+      expect(s.list().map((t) => t.id)).toEqual(['ok']);
     });
   });
 });

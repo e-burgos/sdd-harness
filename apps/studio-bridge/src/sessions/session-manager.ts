@@ -33,7 +33,7 @@ import { alwaysOfferOf, matchesRule, ruleOf } from './always-rule';
 import type { AttachmentStore } from './attachment-store';
 import { assignLink, linkTargetExists } from './thread-link';
 import { PresenceTracker } from './presence';
-import { toThreadInfo as toInfo, type HistoryEntry, type PendingMessage, type StoredThread, type ThreadStore } from './store';
+import { storedLinkOf, toThreadInfo as toInfo, type HistoryEntry, type PendingMessage, type StoredThread, type ThreadStore } from './store';
 
 export class SessionError extends Error {
   constructor(
@@ -169,7 +169,8 @@ export class SessionManager {
       lastActivity: now,
       engineSessionId: null,
       provider: this.deps.engine.provider,
-      link,
+      link: storedLinkOf(link),
+      sessionTitle: null,
       pending: [],
     };
     this.persist(thread);
@@ -243,7 +244,7 @@ export class SessionManager {
   setLink(threadId: string, target: ThreadLinkTarget): ThreadInfo {
     const thread = this.require(threadId);
     if (!linkTargetExists(this.deps.snapshot(), target)) throw new SessionError('not-found', 'the link target does not exist');
-    thread.link = { target, source: 'manual' };
+    thread.link = storedLinkOf({ target, source: 'manual' });
     this.publishThread(thread);
     return toInfo(thread);
   }
