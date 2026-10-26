@@ -233,13 +233,20 @@
         "TASK-006",
         "TASK-007"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
-        "apps/studio/src/components/NewConversationButton.tsx",
-        "apps/studio/src/components/mission-control/ConversationSelector.tsx",
-        "apps/studio/src/components/mission-control/ConversationSelector.spec.tsx",
-        "apps/studio/src/lib/use-conversation-selection.ts"
-      ]
+        "apps/studio/src/components/NewConversationButton.tsx apps/studio/src/components/mission-control/ConversationSelector.tsx apps/studio/src/components/mission-control/ConversationSelector.spec.tsx apps/studio/src/lib/use-conversation-selection.ts apps/studio/src/lib/use-conversation-selection.spec.tsx"
+      ],
+      "usage": {
+        "tokens_in": 40000,
+        "tokens_out": 8000,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-26"
+      }
     },
     {
       "id": "TASK-009",
