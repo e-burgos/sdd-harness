@@ -1,6 +1,6 @@
 # Constitución — libs/studio-protocol
 
-> Versión 1.1 | Última actualización: cycle-01 (spec-e-burgos-001-studio-session-ux) | Fecha: 2026-10-23
+> Versión 1.2 | Última actualización: cycle-02 (spec-e-burgos-001-studio-session-ux) | Fecha: 2026-10-25
 
 ## 1. Propósito y Alcance
 
@@ -17,7 +17,7 @@
 
 ## 3. Estructura y Módulos del Contrato
 
-- `version.ts`: Constante `PROTOCOL_VERSION = 2`. El handshake valida coincidencia exacta. El bump a 2 cubre los contratos de toda spec-e-burgos-001, incluidos los de cycle-02 (adjuntos, `@archivo`, skills/agentes), ya definidos.
+- `version.ts`: Constante `PROTOCOL_VERSION = 2`. El handshake valida coincidencia exacta. El bump a 2 cubre los contratos de toda spec-e-burgos-001; cycle-02 los implementó del lado puente/web sin nuevo bump.
 - `limits.ts`: `MAX_FRAME_BYTES` (1 MiB), `FRAME_BUDGET_BYTES`, `MAX_ATTACHMENTS`, `IMAGE_MAX_SIDE`, `MAX_PROMPT_REFS`, `FILE_SEARCH_MAX`, `MAX_PENDING_PER_THREAD` (10), `BRIDGE_FEATURES`.
 - `attachments.ts`: mimes de imagen/PDF/texto y `TEXT_ATTACHMENT_EXTENSIONS`.
 - `domain.ts`: Tipos base y entidades de dominio:
@@ -33,7 +33,7 @@
   - `workspace.snapshot`: Pide estado completo del repo.
   - `thread.create` (con `link` opcional), `thread.send` (acepta `MessageBody`), `thread.interrupt`, `thread.setOptions`, `thread.list`, `thread.history`.
   - `thread.pending.edit|remove|flush`, `thread.setLink`.
-  - `workspace.searchFiles`, `attachment.get` (contratos de cycle-02).
+  - `workspace.searchFiles`, `attachment.get` (implementados por el puente; anunciados en `Welcome.features`).
   - `approval.respond`: Aprobación o rechazo (`allow` | `deny`) de un tool call con alcance `once` o `thread`.
   - `command.run`: Ejecución segura de comandos del kit (`gate`, `validate`, `rebuild-tasks-index`, `rebuild-catalog`).
   - `auth.set`: Configuración en memoria de API key de Anthropic (nunca persistida en disco).
@@ -57,4 +57,4 @@
 
 ## 6. Qué sigue
 
-- spec-e-burgos-001 cycle-02 implementa del lado puente/web los contratos ya publicados (adjuntos, `workspace.searchFiles`, skills/agentes) sin nuevo bump de versión.
+- Nada pendiente de spec-e-burgos-001 en el contrato. Próximo cambio previsto: spec-e-burgos-005 (`engineSessionId` y `provider` en `ThreadInfo`).

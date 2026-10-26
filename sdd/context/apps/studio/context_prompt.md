@@ -1,6 +1,6 @@
 # Context prompt — apps/studio
 
-> Última actualización: cycle-01 (spec-e-burgos-001-studio-session-ux) | Fecha: 2026-10-23
+> Última actualización: cycle-01 (spec-e-burgos-004-studio-gates-topology) + FIX-e-burgos-004-001 | Fecha: 2026-10-25
 
 > Entry point para agentes y desarrolladores trabajando en `sdd-studio-web`.
 > Leer este documento antes de realizar cambios en la UI, componentes de workspace o stores de Zustand.
@@ -17,7 +17,9 @@ Es la aplicación web frontend de **SDD Studio**: una interfaz tipo Slack que se
 - **Hilos y Streaming:** `src/components/workspace/Timeline.tsx`, `ChannelView.tsx`, `Composer.tsx`, `PendingMessages.tsx` y `ThreadLinkPicker.tsx`.
 - **Aprobaciones de herramientas:** `src/components/workspace/ApprovalCard.tsx`.
 - **Panel derecho (Snapshot):** `src/components/workspace/RightPanel.tsx`.
-- **Stores de Zustand:** `src/lib/store/` (`timeline.ts`, `state.ts`, `activity.ts`, `selectors.ts`, `nav-tree.ts`); hooks en `src/lib/` (`use-collapsed-state.ts`, `use-stick-to-bottom.ts`).
+- **Adjuntos y menú `@`/`/`:** `src/lib/attachments/`, `use-attachment-*.ts`, `use-mention-menu.ts`, `AttachmentTray`, `AttachmentView`, `MentionMenu`.
+- **Mission Control:** `src/components/StudioHeader.tsx` (vistas) y `src/components/mission-control/` (mapa del enjambre, Gates, inspector, visor de documentos, ecosistema, telemetría); modelos en `src/lib/agents.ts`, `gates.ts`, `agent-documents.ts`. Los diálogos de `swarm-dialogue.ts` son guiones ficticios hasta spec-e-burgos-005.
+- **Stores de Zustand:** `src/lib/store/` (`timeline.ts`, `state.ts`, `activity.ts`, `selectors.ts`, `nav-tree.ts`); hooks en `src/lib/` (`use-collapsed-state.ts`, `use-stick-to-bottom.ts`, `use-panel-state.ts`).
 
 ## Cómo desarrollar y testear localmente
 

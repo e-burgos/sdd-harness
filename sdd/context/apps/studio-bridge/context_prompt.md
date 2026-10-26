@@ -1,6 +1,6 @@
 # Context prompt — apps/studio-bridge
 
-> Última actualización: cycle-01 (spec-e-burgos-001-studio-session-ux) | Fecha: 2026-10-23
+> Última actualización: cycle-01 (spec-e-burgos-003-studio-mission-control) | Fecha: 2026-10-25
 
 > Entry point para agentes y desarrolladores trabajando en `@e-burgos/sdd-studio`.
 > Leer este documento antes de tocar el motor de agentes, el WebSocket o la validación del SPEC GATE.
@@ -18,9 +18,9 @@ Es el daemon/puente que corre localmente en la máquina del usuario (`sdd-studio
   - `src/engine/sdk-mapper.ts`: Conversión de streaming del SDK a eventos del protocolo.
   - `src/engine/input-channel.ts` y `src/engine/prompt-content.ts`: prompt streaming y armado de `SDKUserMessage`.
 - **Enforcement del SPEC GATE:** `src/gate/judge.ts` (función `judgeEdit`).
-- **Gestión de hilos y aprobaciones:** `src/sessions/session-manager.ts`, `store.ts`, `always-rule.ts` y `thread-link.ts`.
+- **Gestión de hilos y aprobaciones:** `src/sessions/session-manager.ts`, `store.ts`, `always-rule.ts`, `thread-link.ts` y `attachment-store.ts`.
 - **Servidor y WebSocket:** `src/server/ws-server.ts` y `src/server/router.ts`.
-- **Observador del workspace:** `src/workspace/watcher.ts` y `src/workspace/snapshot.ts`.
+- **Observador del workspace:** `src/workspace/watcher.ts`, `snapshot.ts`, `file-index.ts` (menú `@`) y `catalog.ts` (agentes, skills, prompts).
 
 ## Comandos para desarrollo y verificación
 

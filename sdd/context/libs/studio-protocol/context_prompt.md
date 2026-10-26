@@ -1,6 +1,6 @@
 # Context prompt — libs/studio-protocol
 
-> Última actualización: cycle-01 (spec-e-burgos-001-studio-session-ux) | Fecha: 2026-10-23
+> Última actualización: cycle-02 (spec-e-burgos-001-studio-session-ux) | Fecha: 2026-10-25
 
 > Entry point para agentes y desarrolladores trabajando en `@sdd-studio/protocol`.
 > Leer este documento antes de tocar tipos, esquemas o mensajes del protocolo.
