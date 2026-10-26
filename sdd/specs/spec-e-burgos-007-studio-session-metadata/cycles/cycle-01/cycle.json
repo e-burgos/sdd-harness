@@ -20,7 +20,8 @@
   "completed_at": null,
   "documents": {
     "brief": "sdd/specs/spec-e-burgos-007-studio-session-metadata/cycles/cycle-01/brief.yaml",
-    "functional": "sdd/specs/spec-e-burgos-007-studio-session-metadata/cycles/cycle-01/functional.md"
+    "functional": "sdd/specs/spec-e-burgos-007-studio-session-metadata/cycles/cycle-01/functional.md",
+    "architect": "sdd/specs/spec-e-burgos-007-studio-session-metadata/cycles/cycle-01/architect.md"
   },
   "artifacts": [],
   "metrics": {
@@ -31,8 +32,8 @@
     "files_modified": [],
     "files_deleted": [],
     "usage": {
-      "tokens_in": 195000,
-      "tokens_out": 31000,
+      "tokens_in": 615000,
+      "tokens_out": 57000,
       "by_agent": [
         {
           "agent": "orchestrator",
@@ -52,6 +53,17 @@
           "effort": "medium",
           "tokens_in": 45000,
           "tokens_out": 9000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-26"
+        },
+        {
+          "agent": "architect",
+          "label": "architect.md (D-01..D-08; sonnet/high en lugar de opus: sin cupo hasta 2026-11-01, autorizado por el dev)",
+          "provider_model": "claude/sonnet",
+          "effort": "high",
+          "tokens_in": 420000,
+          "tokens_out": 26000,
           "approx": true,
           "source": "declared-estimate",
           "recorded_at": "2026-10-26"
