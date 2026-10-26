@@ -251,11 +251,11 @@ export const es = {
   'mc.conversations': 'Conversaciones',
   'mc.doc.loadFailed': 'No se pudo leer {path} desde el workspace.',
   'mc.related.title': 'Specs y fixes relacionados',
-  'mc.related.empty': 'Sin specs ni fixes relacionados',
+  'mc.related.empty': 'Sin documentos generados en esta conversación',
+  'mc.related.agentEmpty': 'Este agente no generó documentos en esta conversación',
   'mc.related.specs': 'Specs',
   'mc.related.fixes': 'Fixes',
   'mc.related.cycle': 'ciclo {cycle}',
-  'mc.related.notInWorkspace': 'no está en el workspace',
   'mc.related.noDocuments': 'Sin documentos para abrir',
 };
 export type Dict = typeof es;

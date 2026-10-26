@@ -1,6 +1,6 @@
 import { toViewerDocument } from './agent-documents';
 
-const doc = (path: string, modified = false) => ({ path, name: path.split('/').at(-1) ?? path, specId: 'spec-a', fixId: null, modified });
+const doc = (path: string) => ({ path, name: path.split('/').at(-1) ?? path, specId: 'spec-a', fixId: null, agents: ['sdd-planner'] });
 
 describe('toViewerDocument', () => {
   it('keeps the real path and name and maps well-known files to their type', () => {
@@ -16,7 +16,7 @@ describe('toViewerDocument', () => {
     expect(toViewerDocument(doc('sdd/specs/spec-a/spec-a.spec.md')).type).toBe('spec');
   });
 
-  it('marks documents written or edited by a tool as modified', () => {
-    expect(toViewerDocument(doc('sdd/specs/spec-a/cycles/cycle-01/plan.md', true)).status).toBe('modified');
+  it('always presents the document as generated', () => {
+    expect(toViewerDocument(doc('sdd/specs/spec-a/cycles/cycle-01/plan.md')).status).toBe('generated');
   });
 });

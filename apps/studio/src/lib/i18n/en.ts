@@ -253,10 +253,10 @@ export const en = {
   'mc.conversations': 'Conversations',
   'mc.doc.loadFailed': 'Could not read {path} from the workspace.',
   'mc.related.title': 'Related specs and fixes',
-  'mc.related.empty': 'No related specs or fixes',
+  'mc.related.empty': 'No documents generated in this conversation',
+  'mc.related.agentEmpty': 'This agent did not generate documents in this conversation',
   'mc.related.specs': 'Specs',
   'mc.related.fixes': 'Fixes',
   'mc.related.cycle': 'cycle {cycle}',
-  'mc.related.notInWorkspace': 'not in the workspace',
   'mc.related.noDocuments': 'No documents to open',
 } satisfies Record<keyof Dict, string>;

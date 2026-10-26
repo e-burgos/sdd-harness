@@ -7,7 +7,7 @@
 | **Severidad** | medium                                       |
 | **Fecha**     | 2026-10-26                                     |
 | **Autor**     | e-burgos                                       |
-| **Estado**    | pending                                        |
+| **Estado**    | implemented                                        |
 | **Spec**      | spec-e-burgos-005-studio-conversation-sessions         |
 
 ## Problema
@@ -29,3 +29,18 @@
 - `apps/studio/src/components/mission-control/RelatedDocuments.tsx`
 - `apps/studio/src/components/mission-control/RelatedDocuments.spec.tsx`
 - `apps/studio/src/components/mission-control/AgentInspectorDrawer.tsx`
+
+## Hallazgo: autoría de los tool calls de subagentes
+
+Verificado en `apps/studio-bridge/src/engine/sdk-mapper.ts`:
+
+- Los mensajes `assistant` del SDK traen `parent_tool_use_id`. Al ver un `tool_use` de `Agent`/`Task`, el mapper registra `toolUseId -> subagent_type` (`subagentByToolUse`); cada `tool_use` hijo se emite como `tool.start` con `author = { agent: <subagent_type>, parentToolUseId }` (`authorFor`, L77-L82).
+- Resultado: un Write/Edit hecho dentro de un subagente llega con **autor = el subagente** (p. ej. `sdd-implementor-front`), no el padre. Los del hilo principal llevan `author.agent = mainAgent` (el agente del hilo).
+- Matices: si el `parent_tool_use_id` no fue registrado, el autor cae al genérico `subagent`; dos subagentes simultáneos del mismo `subagent_type` se confunden en un único autor. La ruta por hooks (`authorForAgentId`) resuelve por `agent_id` con el mismo fallback.
+- Decisión: `ConversationDocument.agents` guarda `item.author.agent` tal cual llega; la pestaña de un agente lista solo los documentos que él (o su tipo de subagente) escribió, y Enjambre lista todos.
+
+## Implementación
+
+- `conversation.ts`: `DOCUMENT_TOOLS` sin `Read`; `modified` reemplazado por `agents`; `specs`/`fixes` se derivan de los documentos con `relatedFromDocuments` (sin `link.target` ni menciones textuales; se eliminan `referencesInText` y las fuentes `event`/`link`); `documentsOfAgent` filtra por autor.
+- `AgentInspectorDrawer.tsx`: pestaña de agente filtra por `agentId`, Enjambre muestra todo; estado vacío `mc.related.agentEmpty`.
+- Archivos adicionales tocados: `agent-documents.ts` (+ spec), `agentmap.spec.tsx`, `inspectordrawer.spec.tsx`, `lib/i18n/{es,en}.ts`.

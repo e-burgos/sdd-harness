@@ -14,19 +14,19 @@ const bridge: any = {
   retrySync: () => {},
 };
 
-const planDoc: ConversationDocument = { path: 'sdd/specs/spec-a/cycles/cycle-01/plan.md', name: 'plan.md', specId: 'spec-a', fixId: null, modified: true };
-const fixDoc: ConversationDocument = { path: 'sdd/specs/spec-a/fixes/fix-1.md', name: 'fix-1.md', specId: 'spec-a', fixId: 'FIX-1', modified: false };
+const planDoc: ConversationDocument = { path: 'sdd/specs/spec-a/cycles/cycle-01/plan.md', name: 'plan.md', specId: 'spec-a', fixId: null, agents: ['sdd-planner'] };
+const fixDoc: ConversationDocument = { path: 'sdd/specs/spec-a/fixes/fix-1.md', name: 'fix-1.md', specId: 'spec-a', fixId: 'FIX-1', agents: ['sdd-reviewer'] };
 
 const renderDocs = (
   specs: RelatedSpec[],
   fixes: RelatedFix[],
   documents: ConversationDocument[] = [],
-  { open = true, onToggle = () => {} }: { open?: boolean; onToggle?: () => void } = {},
+  { open = true, onToggle = () => {}, emptyMessage }: { open?: boolean; onToggle?: () => void; emptyMessage?: string } = {},
 ) =>
   render(
     <I18nProvider initial="es">
       <BridgeContext.Provider value={bridge}>
-        <RelatedDocuments specs={specs} fixes={fixes} documents={documents} open={open} onToggle={onToggle} />
+        <RelatedDocuments specs={specs} fixes={fixes} documents={documents} emptyMessage={emptyMessage} open={open} onToggle={onToggle} />
       </BridgeContext.Provider>
     </I18nProvider>,
   );
@@ -34,12 +34,12 @@ const renderDocs = (
 describe('RelatedDocuments', () => {
   it('shows the empty state without specs or fixes', () => {
     renderDocs([], []);
-    expect(screen.getByTestId('related-documents-empty')).toHaveTextContent('Sin specs ni fixes relacionados');
+    expect(screen.getByTestId('related-documents-empty')).toHaveTextContent('Sin documentos generados en esta conversación');
   });
 
   it('hides the body when collapsed and reports the toggle', () => {
     const onToggle = vi.fn();
-    renderDocs([{ specId: 'spec-a', cycle: null, source: 'event', known: true }], [], [planDoc], { open: false, onToggle });
+    renderDocs([{ specId: 'spec-a', cycle: null }], [], [planDoc], { open: false, onToggle });
     expect(screen.queryByTestId('related-documents-body')).toBeNull();
     expect(screen.getByTestId('related-documents-toggle')).toHaveAttribute('aria-expanded', 'false');
     fireEvent.click(screen.getByTestId('related-documents-toggle'));
@@ -47,27 +47,24 @@ describe('RelatedDocuments', () => {
   });
 
   it('lists only the conversation documents under their spec and shows the cycle of the event', () => {
-    renderDocs([{ specId: 'spec-a', cycle: 'cycle-01', source: 'event', known: true }], [], [planDoc, fixDoc]);
+    renderDocs([{ specId: 'spec-a', cycle: 'cycle-01' }], [], [planDoc, fixDoc]);
     expect(screen.getByText('ciclo cycle-01')).toBeInTheDocument();
     const buttons = [...screen.getByTestId('related-spec-spec-a').querySelectorAll('button')].map((b) => b.getAttribute('title'));
     expect(buttons).toEqual([planDoc.path]);
   });
 
-  it('lists a link-only spec that is not in the workspace without documents', () => {
-    renderDocs([{ specId: 'spec-zzz', cycle: 'cycle-01', source: 'link', known: false }], []);
-    const row = screen.getByTestId('related-spec-spec-zzz');
-    expect(row).toHaveTextContent('no está en el workspace');
-    expect(row.querySelectorAll('button')).toHaveLength(0);
+  it('shows the custom empty message for an agent that generated nothing', () => {
+    renderDocs([], [], [], { emptyMessage: 'Este agente no generó documentos en esta conversación' });
+    expect(screen.getByTestId('related-documents-empty')).toHaveTextContent('Este agente no generó documentos en esta conversación');
   });
 
   it('lists fix documents under their fix', () => {
-    renderDocs([], [{ fixId: 'FIX-1', specId: 'spec-a', source: 'event', known: true }, { fixId: 'FIX-2', specId: null, source: 'event', known: true }], [fixDoc]);
+    renderDocs([], [{ fixId: 'FIX-1', specId: 'spec-a' }], [fixDoc]);
     expect(screen.getByTestId('related-fix-FIX-1').querySelectorAll('button')).toHaveLength(1);
-    expect(screen.getByTestId('related-fix-FIX-2').querySelectorAll('button')).toHaveLength(0);
   });
 
   it('opens the document viewer when a document is clicked', () => {
-    renderDocs([{ specId: 'spec-a', cycle: 'cycle-01', source: 'event', known: true }], [], [planDoc]);
+    renderDocs([{ specId: 'spec-a', cycle: 'cycle-01' }], [], [planDoc]);
     fireEvent.click(screen.getByTestId('related-spec-spec-a').querySelector('button') as HTMLElement);
     expect(screen.getByTestId('document-viewer-modal')).toBeInTheDocument();
   });

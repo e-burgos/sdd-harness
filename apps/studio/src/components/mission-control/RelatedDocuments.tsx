@@ -11,11 +11,12 @@ export interface RelatedDocumentsProps {
   specs: RelatedSpec[];
   fixes: RelatedFix[];
   documents: ConversationDocument[];
+  emptyMessage?: string;
   open: boolean;
   onToggle: () => void;
 }
 
-export function RelatedDocuments({ specs, fixes, documents, open, onToggle }: RelatedDocumentsProps) {
+export function RelatedDocuments({ specs, fixes, documents, emptyMessage, open, onToggle }: RelatedDocumentsProps) {
   const { t } = useT();
   const [viewing, setViewing] = useState<AgentGeneratedDocument | null>(null);
 
@@ -62,7 +63,7 @@ export function RelatedDocuments({ specs, fixes, documents, open, onToggle }: Re
         <div data-testid="related-documents-body" className="space-y-2 border-t border-white/10 px-2 py-2">
           {isEmpty && (
             <p data-testid="related-documents-empty" className="text-white/50">
-              {t('mc.related.empty')}
+              {emptyMessage ?? t('mc.related.empty')}
             </p>
           )}
           {specs.length > 0 && (
@@ -78,9 +79,7 @@ export function RelatedDocuments({ specs, fixes, documents, open, onToggle }: Re
                       <span className="truncate" title={spec.specId}>
                         {spec.specId}
                       </span>
-                      <span className="shrink-0 text-white/50">
-                        {spec.known ? (spec.cycle ? t('mc.related.cycle', { cycle: spec.cycle }) : null) : t('mc.related.notInWorkspace')}
-                      </span>
+                      {spec.cycle && <span className="shrink-0 text-white/50">{t('mc.related.cycle', { cycle: spec.cycle })}</span>}
                     </div>
                     {renderDocuments(documents.filter((item) => item.specId === spec.specId && item.fixId === null))}
                   </li>
@@ -101,7 +100,6 @@ export function RelatedDocuments({ specs, fixes, documents, open, onToggle }: Re
                       <span className="truncate" title={fix.fixId}>
                         {fix.fixId}
                       </span>
-                      {!fix.known && <span className="shrink-0 text-white/50">{t('mc.related.notInWorkspace')}</span>}
                     </div>
                     {renderDocuments(documents.filter((item) => item.fixId === fix.fixId))}
                   </li>

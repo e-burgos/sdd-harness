@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Bot, MessageSquare, Moon, User, Users, X, Zap } from 'lucide-react';
 import type { Presence } from '@sdd-studio/protocol';
 import { agentMeta } from '@/lib/agents';
-import type { ConversationDialogue, ConversationView } from '@/lib/conversation';
+import { documentsOfAgent, relatedFromDocuments, type ConversationDialogue, type ConversationView } from '@/lib/conversation';
 import { useT } from '@/lib/i18n/i18n';
 import { useCollapsedState } from '@/lib/use-collapsed-state';
 import { AgentAvatar } from '../workspace/AgentAvatar';
@@ -67,13 +67,21 @@ export function AgentInspectorDrawer({
   const state = presence?.state ?? 'idle';
   const displayedDialogues = useMemo(() => (conversation?.dialogues ?? []).slice(-swarmLimit), [conversation, swarmLimit]);
 
+  const scopedToAgent = activeTab === 'agent' && agentId !== null;
+  const shownDocuments = useMemo(
+    () => (!conversation ? [] : scopedToAgent ? documentsOfAgent(conversation.documents, agentId) : conversation.documents),
+    [conversation, scopedToAgent, agentId],
+  );
+  const shownRelated = useMemo(() => relatedFromDocuments(shownDocuments), [shownDocuments]);
+
   const sessionAndDocuments = conversation && (
     <div className="space-y-2">
       <ConversationSessionInfo engineSessionId={conversation.engineSessionId} provider={conversation.provider} />
       <RelatedDocuments
-        specs={conversation.specs}
-        fixes={conversation.fixes}
-        documents={conversation.documents}
+        specs={shownRelated.specs}
+        fixes={shownRelated.fixes}
+        documents={shownDocuments}
+        emptyMessage={scopedToAgent ? t('mc.related.agentEmpty') : undefined}
         open={showFullProfile}
         onToggle={toggleAgentInfo}
       />

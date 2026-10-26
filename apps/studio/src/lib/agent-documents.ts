@@ -25,5 +25,5 @@ export const toViewerDocument = (document: ConversationDocument): AgentGenerated
   name: document.name,
   path: document.path,
   type: documentTypeOf(document.path, document.name),
-  status: document.modified ? 'modified' : 'generated',
+  status: 'generated',
 });

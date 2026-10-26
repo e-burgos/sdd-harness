@@ -23,7 +23,7 @@ const author = (agent: string) => ({ agent, parentToolUseId: null });
 
 const conversationEvents = (agent: string, userText: string, replyText: string, readPath: string): { seq: number; event: ThreadEvent }[] => [
   { seq: 0, event: { type: 'user.message', text: userText } },
-  { seq: 1, event: { type: 'tool.start', toolUseId: `tool-${agent}`, author: author(agent), tool: 'Read', summary: readPath } },
+  { seq: 1, event: { type: 'tool.start', toolUseId: `tool-${agent}`, author: author(agent), tool: 'Write', summary: readPath } },
   { seq: 2, event: { type: 'message.start', messageId: `m-${agent}`, author: author(agent) } },
   { seq: 3, event: { type: 'message.delta', messageId: `m-${agent}`, text: replyText } },
   { seq: 4, event: { type: 'message.end', messageId: `m-${agent}` } },
@@ -138,6 +138,7 @@ describe('AgentMapCanvas', () => {
   it('switches between two conversations and changes dialogues, participants, session and related specs', () => {
     const { container } = renderCanvas(twoConversations);
     fireEvent.click(screen.getByText('Ver info'));
+    fireEvent.click(within(screen.getByTestId('agent-inspector-drawer')).getByText('Enjambre'));
     expect(within(screen.getByTestId('agent-inspector-drawer')).getByTestId('related-spec-spec-alpha-1')).toBeInTheDocument();
     const dimmedInA = dimmedNodes(container);
     expect(dimmedInA).toBeGreaterThan(0);

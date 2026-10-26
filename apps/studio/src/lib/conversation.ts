@@ -1,4 +1,4 @@
-import { FixIdValue, SpecIdValue, isKnownProvider, type KnownProvider, type ThreadInfo, type WorkspaceSnapshot } from '@sdd-studio/protocol';
+import { isKnownProvider, type KnownProvider, type ThreadInfo, type WorkspaceSnapshot } from '@sdd-studio/protocol';
 import type { GateId } from './gates';
 import type { ThreadState, TimelineItem } from './store/timeline';
 
@@ -17,15 +17,11 @@ export interface ConversationDialogue {
 export interface RelatedSpec {
   specId: string;
   cycle: string | null;
-  source: 'event' | 'link';
-  known: boolean;
 }
 
 export interface RelatedFix {
   fixId: string;
-  specId: string | null;
-  source: 'event' | 'link';
-  known: boolean;
+  specId: string;
 }
 
 export interface ConversationDocument {
@@ -33,7 +29,7 @@ export interface ConversationDocument {
   name: string;
   specId: string;
   fixId: string | null;
-  modified: boolean;
+  agents: string[];
 }
 
 export interface ConversationParticipant {
@@ -52,16 +48,6 @@ export interface ConversationView {
   provider: string | undefined;
   isEmpty: boolean;
 }
-
-export interface TextReferences {
-  specs: { specId: string; cycle: string | null }[];
-  fixes: string[];
-}
-
-const SPEC_PATH = /sdd\/specs\/(spec-[A-Za-z0-9._-]{1,123})(?:\/cycles\/(cycle-\d{2}))?/g;
-const FIX_ID = /\bFIX-[A-Za-z0-9][A-Za-z0-9._-]{0,95}/g;
-const FIX_PATH = /\/fixes\/fix-([A-Za-z0-9][A-Za-z0-9._-]{0,94}?)\.md\b/g;
-const TRAILING_SIGNS = /[._-]+$/;
 
 const recency = (a: ThreadInfo, b: ThreadInfo): number => {
   const byActivity = (Date.parse(b.lastActivity) || 0) - (Date.parse(a.lastActivity) || 0);
@@ -92,38 +78,6 @@ export function inferGateFromText(text?: string): GateId | undefined {
   if (lower.includes('fix gate') || lower.includes('fix-gate') || lower.includes('hotfix') || lower.includes('bugfix') || lower.includes('bypass')) return 'fix-gate';
   if (lower.includes('memoria') || lower.includes('lessons') || lower.includes('journal')) return 'memoria-gate';
   return undefined;
-}
-
-export function referencesInText(text: string): TextReferences {
-  const specs: TextReferences['specs'] = [];
-  for (const match of text.matchAll(SPEC_PATH)) {
-    const specId = (match[1] ?? '').replace(TRAILING_SIGNS, '');
-    if (SpecIdValue.safeParse(specId).success) specs.push({ specId, cycle: match[2] ?? null });
-  }
-  const fixes: string[] = [];
-  for (const match of text.matchAll(FIX_ID)) {
-    const fixId = match[0].replace(TRAILING_SIGNS, '');
-    if (FixIdValue.safeParse(fixId).success) fixes.push(fixId);
-  }
-  for (const match of text.matchAll(FIX_PATH)) {
-    const fixId = `FIX-${(match[1] ?? '').replace(TRAILING_SIGNS, '')}`;
-    if (FixIdValue.safeParse(fixId).success) fixes.push(fixId);
-  }
-  return { specs, fixes };
-}
-
-function scannedTexts(item: TimelineItem): string[] {
-  switch (item.kind) {
-    case 'user':
-    case 'message':
-      return [item.text];
-    case 'tool':
-      return [item.summary];
-    case 'approval':
-      return item.input === undefined ? [item.summary] : [item.summary, item.input];
-    default:
-      return [];
-  }
 }
 
 function dialogueOf(item: TimelineItem, threadAgent: string | null): ConversationDialogue | null {
@@ -188,7 +142,7 @@ function participantsOf(items: TimelineItem[], threadAgent: string | null, hasEv
   return [...counts].map(([agentId, events]) => ({ agentId, events }));
 }
 
-const DOCUMENT_TOOLS = new Set(['Read', 'Write', 'Edit', 'MultiEdit']);
+const DOCUMENT_TOOLS = new Set(['Write', 'Edit', 'MultiEdit']);
 const SPEC_DOCUMENT_PATH = /(?:^|\/)(sdd\/specs\/(spec-[A-Za-z0-9._-]{1,123})\/[^\s]+)$/;
 const FIX_DOCUMENT_PATH = /\/fixes\/fix-([A-Za-z0-9][A-Za-z0-9._-]{0,94}?)\.md$/;
 
@@ -211,7 +165,7 @@ function documentOf(item: TimelineItem, snapshot: WorkspaceSnapshot | null): Con
     name: path.split('/').at(-1) ?? path,
     specId,
     fixId: knownFix?.id ?? null,
-    modified: item.tool !== 'Read',
+    agents: [item.author.agent],
   };
 }
 
@@ -221,64 +175,46 @@ function relatedDocuments(thread: ThreadState, snapshot: WorkspaceSnapshot | nul
     const document = documentOf(item, snapshot);
     if (!document) continue;
     const previous = byPath.get(document.path);
-    byPath.set(document.path, previous ? { ...previous, modified: previous.modified || document.modified } : document);
+    byPath.set(document.path, previous ? { ...previous, agents: [...new Set([...previous.agents, ...document.agents])] } : document);
   }
   return [...byPath.values()];
 }
 
-function relatedSpecs(thread: ThreadState, snapshot: WorkspaceSnapshot | null): RelatedSpec[] {
-  const known = specIdsOf(snapshot);
-  const found = new Map<string, RelatedSpec>();
-  const add = (specId: string, cycle: string | null, source: RelatedSpec['source']): void => {
-    const key = specId.toLowerCase();
-    const current = found.get(key);
+const CYCLE_IN_PATH = /\/cycles\/(cycle-\d{2})\//;
+
+export function relatedFromDocuments(documents: ConversationDocument[]): { specs: RelatedSpec[]; fixes: RelatedFix[] } {
+  const specs = new Map<string, RelatedSpec>();
+  const fixes = new Map<string, RelatedFix>();
+  for (const document of documents) {
+    const cycle = CYCLE_IN_PATH.exec(document.path)?.[1] ?? null;
+    const current = specs.get(document.specId);
     if (current) {
       if (cycle) current.cycle = cycle;
-      return;
+    } else {
+      specs.set(document.specId, { specId: document.specId, cycle });
     }
-    const canonical = known.get(key);
-    if (source === 'event' && canonical === undefined) return;
-    found.set(key, { specId: canonical ?? specId, cycle, source, known: canonical !== undefined });
-  };
-  for (const item of thread.items) {
-    if (item.kind !== 'tool' || !DOCUMENT_TOOLS.has(item.tool)) continue;
-    for (const ref of referencesInText(item.summary).specs) add(ref.specId, ref.cycle, 'event');
+    if (document.fixId && !fixes.has(document.fixId)) fixes.set(document.fixId, { fixId: document.fixId, specId: document.specId });
   }
-  const target = thread.info?.link.target;
-  if (target?.kind === 'cycle') add(target.specId, target.cycle, 'link');
-  return [...found.values()];
+  return { specs: [...specs.values()], fixes: [...fixes.values()] };
 }
 
-function relatedFixes(thread: ThreadState, snapshot: WorkspaceSnapshot | null): RelatedFix[] {
-  const known = fixesOf(snapshot);
-  const found = new Map<string, RelatedFix>();
-  const add = (fixId: string, source: RelatedFix['source']): void => {
-    const key = fixId.toLowerCase();
-    if (found.has(key)) return;
-    const summary = known.get(key);
-    if (source === 'event' && !summary) return;
-    found.set(key, { fixId: summary?.id ?? fixId, specId: summary?.specId ?? null, source, known: summary !== undefined });
-  };
-  for (const item of thread.items) {
-    for (const text of scannedTexts(item)) for (const fixId of referencesInText(text).fixes) add(fixId, 'event');
-  }
-  const target = thread.info?.link.target;
-  if (target?.kind === 'fix') add(target.fixId, 'link');
-  return [...found.values()];
-}
+export const documentsOfAgent = (documents: ConversationDocument[], agentId: string): ConversationDocument[] =>
+  documents.filter((document) => document.agents.includes(agentId));
 
 export function deriveConversation(thread: ThreadState, snapshot: WorkspaceSnapshot | null): ConversationView {
   const threadAgent = thread.info?.agent ?? null;
   const dialogues = thread.items
     .flatMap((item) => dialogueOf(item, threadAgent) ?? [])
     .sort((a, b) => a.seq - b.seq);
+  const documents = relatedDocuments(thread, snapshot);
+  const { specs, fixes } = relatedFromDocuments(documents);
   return {
     threadId: thread.info?.id ?? '',
     participants: participantsOf(thread.items, threadAgent, dialogues.length > 0),
     dialogues,
-    specs: relatedSpecs(thread, snapshot),
-    fixes: relatedFixes(thread, snapshot),
-    documents: relatedDocuments(thread, snapshot),
+    specs,
+    fixes,
+    documents,
     engineSessionId: thread.info?.engineSessionId,
     provider: thread.info?.provider,
     isEmpty: dialogues.length === 0,

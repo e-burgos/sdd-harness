@@ -57,9 +57,9 @@ const conversation = (patch: Partial<ConversationView> = {}): ConversationView =
   threadId: 't-1',
   participants: [{ agentId: 'sdd-orchestrator', events: 2 }],
   dialogues: [dialogue(1, 'sdd-orchestrator', 'user', 'Primer mensaje'), dialogue(2, 'sdd-reviewer', 'user', 'Último mensaje', { gateId: 'contexto-gate' })],
-  specs: [{ specId: 'spec-real-1', cycle: 'cycle-01', source: 'event', known: true }],
+  specs: [{ specId: 'spec-real-1', cycle: 'cycle-01' }],
   fixes: [],
-  documents: [{ path: 'sdd/specs/spec-real-1/cycles/cycle-01/plan.md', name: 'plan.md', specId: 'spec-real-1', fixId: null, modified: true }],
+  documents: [{ path: 'sdd/specs/spec-real-1/cycles/cycle-01/plan.md', name: 'plan.md', specId: 'spec-real-1', fixId: null, agents: ['sdd-orchestrator'] }],
   engineSessionId: 'real-session-0001',
   provider: 'claude',
   isEmpty: false,
@@ -144,6 +144,25 @@ describe('AgentInspectorDrawer', () => {
     renderDrawer({ conversation: conversation({ specs: [], fixes: [], documents: [] }) });
     fireEvent.click(screen.getByText('Ver info'));
     expect(screen.getByTestId('related-documents-empty')).toBeInTheDocument();
+  });
+
+  it('scopes the agent tab to the documents that agent wrote and the swarm tab to all of them', () => {
+    const planner = { path: 'sdd/specs/spec-real-1/cycles/cycle-01/architect.md', name: 'architect.md', specId: 'spec-real-1', fixId: null, agents: ['sdd-architect'] };
+    const base = conversation();
+    renderDrawer({ conversation: conversation({ documents: [...base.documents, planner] }) });
+    fireEvent.click(screen.getByText('Ver info'));
+    expect(screen.getByTestId('related-spec-spec-real-1')).toHaveTextContent('plan.md');
+    expect(screen.getByTestId('related-spec-spec-real-1')).not.toHaveTextContent('architect.md');
+    fireEvent.click(screen.getByText('Enjambre'));
+    expect(screen.getByTestId('related-spec-spec-real-1')).toHaveTextContent('plan.md');
+    expect(screen.getByTestId('related-spec-spec-real-1')).toHaveTextContent('architect.md');
+  });
+
+  it('says honestly that an agent generated no documents in this conversation', () => {
+    renderDrawer({ agentId: 'sdd-architect', conversation: conversation() });
+    fireEvent.click(screen.getByText('Ver info'));
+    expect(screen.getByTestId('related-documents-empty')).toHaveTextContent('Este agente no generó documentos en esta conversación');
+    expect(screen.queryByTestId('related-spec-spec-real-1')).toBeNull();
   });
 
   it('opens the document viewer when a related document is clicked and closes it', async () => {
