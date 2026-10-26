@@ -617,10 +617,20 @@
         "TASK-018",
         "TASK-019"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
-        "apps/studio/e2e/session-metadata.spec.ts"
-      ]
+        "apps/studio/e2e/session-metadata.e2e.ts"
+      ],
+      "usage": {
+        "tokens_in": 30000,
+        "tokens_out": 5000,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-26"
+      }
     },
     {
       "id": "TASK-021",
