@@ -1,5 +1,8 @@
 import type { ThreadEvent } from '@sdd-studio/protocol';
 import { defaultThreadOptions } from '@sdd-studio/protocol';
+import { mkdtemp, readFile, rm } from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { FakeEngine } from './fake-engine';
 import { plainPrompt, type ApprovalDecision, type EngineCallbacks } from './types';
@@ -265,5 +268,40 @@ describe('FakeEngine session title', () => {
     expect(await engine.readSessionTitle('s1')).toBe('Renamed');
     engine.setSessionTitle('s1', null);
     expect(await engine.readSessionTitle('s1')).toBeNull();
+  });
+
+  describe('document markers', () => {
+    const withHooks = async (text: string, judge: Judge = () => ({ kind: 'allow' })) => {
+      const cwd = await mkdtemp(path.join(os.tmpdir(), 'fake-doc-'));
+      const h = harness(undefined, undefined, judge);
+      const calls: string[] = [];
+      const cb: EngineCallbacks = {
+        ...h.cb,
+        beforeTool: async (ctx) => void calls.push(`before:${ctx.toolName}`),
+        afterTool: async (ctx, outcome) => void calls.push(`after:${ctx.toolName}:${outcome}`),
+      };
+      await new FakeEngine(1).startTurn({ ...input(text), cwd }, cb).done;
+      return { cwd, calls, events: h.events };
+    };
+    const docIn = (cwd: string, name: string) => path.join(cwd, 'sdd/specs/spec-dev-001-pagos/cycles/cycle-01', name);
+
+    it('#write-doc writes a real file between beforeTool and afterTool', async () => {
+      const { cwd, calls, events } = await withHooks('#write-doc');
+      expect(calls).toEqual(['before:Write', 'after:Write:ok']);
+      expect(await readFile(docIn(cwd, 'fake-write-doc.md'), 'utf8')).toContain('fake');
+      expect(events.find((e) => e.type === 'tool.start')).toMatchObject({ tool: 'Write' });
+      await rm(cwd, { recursive: true, force: true });
+    });
+    it('#bash-doc runs a Bash tool that writes a real file', async () => {
+      const { cwd, calls } = await withHooks('#bash-doc');
+      expect(calls).toEqual(['before:Bash', 'after:Bash:ok']);
+      expect(await readFile(docIn(cwd, 'fake-bash-doc.md'), 'utf8')).toContain('fake');
+      await rm(cwd, { recursive: true, force: true });
+    });
+    it('does nothing when the gate denies the tool', async () => {
+      const { cwd, calls } = await withHooks('#write-doc', () => ({ kind: 'deny', reason: 'no' }));
+      expect(calls).toEqual([]);
+      await rm(cwd, { recursive: true, force: true });
+    });
   });
 });

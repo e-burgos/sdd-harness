@@ -4,6 +4,8 @@ import {
   type HookInput,
   type HookJSONOutput,
   type Options,
+  type PostToolUseFailureHookInput,
+  type PostToolUseHookInput,
   type PreToolUseHookInput,
   type Query,
   type SDKSessionInfo,
@@ -12,7 +14,7 @@ import {
 import { DEFAULT_AGENT, type ThreadOptions } from '@sdd-studio/protocol';
 import { InputChannel } from './input-channel';
 import { toHookContext, toSdkUserMessage } from './prompt-content';
-import type { JudgeContext, ToolVerdict } from './types';
+import type { JudgeContext, ToolOutcome, ToolRunContext, ToolVerdict } from './types';
 import { SdkEventMapper, type SdkMessageLike } from './sdk-mapper';
 import { truncate } from './tool-summary';
 import type { AgentEngine, EngineCallbacks, EngineTurn, EngineTurnInput, OutgoingMessage } from './types';
@@ -49,6 +51,8 @@ export function pickSessionTitle(
   return summary && summary !== first ? summary : null;
 }
 
+export const TRACKED_TOOLS: ReadonlySet<string> = new Set(['Bash', 'Write', 'Edit', 'MultiEdit', 'NotebookEdit']);
+
 export function buildQueryOptions(
   input: EngineTurnInput,
   h: {
@@ -57,6 +61,8 @@ export function buildQueryOptions(
     onHook: (input: unknown) => void;
     judgeTool: (toolName: string, input: Record<string, unknown>, hookInput: PreToolUseHookInput) => ToolVerdict;
     deliverAtCutPoint?: () => Promise<HookJSONOutput>;
+    beforeTool?: (hookInput: PreToolUseHookInput) => Promise<void>;
+    afterTool?: (hookInput: PostToolUseHookInput | PostToolUseFailureHookInput, outcome: ToolOutcome) => Promise<void>;
     env?: Record<string, string | undefined>;
   },
 ): Options {
@@ -86,6 +92,7 @@ export function buildQueryOptions(
               if (verdict.kind === 'deny') {
                 return { hookSpecificOutput: { hookEventName: 'PreToolUse' as const, permissionDecision: 'deny' as const, permissionDecisionReason: verdict.reason } };
               }
+              if (h.beforeTool && TRACKED_TOOLS.has(hookInput.tool_name)) await h.beforeTool(hookInput);
               if (verdict.kind === 'warn' && !bypass) {
                 return { hookSpecificOutput: { hookEventName: 'PreToolUse' as const, permissionDecision: 'ask' as const, permissionDecisionReason: verdict.reason } };
               }
@@ -102,6 +109,30 @@ export function buildQueryOptions(
       ...options.hooks,
       PostToolBatch: [
         { hooks: [async (hookInput: HookInput) => (hookInput.hook_event_name === 'PostToolBatch' && !hookInput.agent_id ? deliver() : {})] },
+      ],
+    };
+  }
+  if (h.afterTool) {
+    const after = h.afterTool;
+    options.hooks = {
+      ...options.hooks,
+      PostToolUse: [
+        {
+          hooks: [
+            async (hookInput: HookInput) =>
+              hookInput.hook_event_name === 'PostToolUse' && TRACKED_TOOLS.has(hookInput.tool_name) ? (await after(hookInput, 'ok'), {}) : {},
+          ],
+        },
+      ],
+      PostToolUseFailure: [
+        {
+          hooks: [
+            async (hookInput: HookInput) =>
+              hookInput.hook_event_name === 'PostToolUseFailure' && TRACKED_TOOLS.has(hookInput.tool_name)
+                ? (await after(hookInput, hookInput.is_interrupt ? 'interrupted' : 'failed'), {})
+                : {},
+          ],
+        },
       ],
     };
   }
@@ -123,6 +154,18 @@ export function buildQueryOptions(
     };
   }
   return options;
+}
+
+function toolRunContext(
+  hookInput: PreToolUseHookInput | PostToolUseHookInput | PostToolUseFailureHookInput,
+  mapper: SdkEventMapper,
+): ToolRunContext {
+  return {
+    toolName: hookInput.tool_name,
+    input: hookInput.tool_input && typeof hookInput.tool_input === 'object' ? (hookInput.tool_input as Record<string, unknown>) : {},
+    toolUseId: hookInput.tool_use_id,
+    author: mapper.authorForAgentId(hookInput.agent_id),
+  };
 }
 
 export class ClaudeAgentSdkEngine implements AgentEngine {
@@ -165,6 +208,12 @@ export class ClaudeAgentSdkEngine implements AgentEngine {
             author: mapper.authorForAgentId(hookInput.agent_id),
             toolUseId: hookInput.tool_use_id || null,
           } satisfies JudgeContext),
+        beforeTool: cb.beforeTool
+          ? (hookInput) => cb.beforeTool!(toolRunContext(hookInput, mapper))
+          : undefined,
+        afterTool: cb.afterTool
+          ? (hookInput, outcome) => cb.afterTool!(toolRunContext(hookInput, mapper), outcome)
+          : undefined,
         deliverAtCutPoint: async () => {
           if (interrupted) return {};
           if (this.deliveryMode === 'stream') {
@@ -188,6 +237,11 @@ export class ClaudeAgentSdkEngine implements AgentEngine {
             { toolName, input: toolInput, author: mapper.authorForAgentId(opts.agentID), toolUseId: opts.toolUseID ?? null },
             opts.signal,
           );
+          const toolUseId = opts.toolUseID;
+          if (toolUseId) {
+            if (decision.behavior === 'allow') cb.rebaseTool?.(toolUseId);
+            else cb.cancelTool?.(toolUseId);
+          }
           return decision.behavior === 'allow'
             ? { behavior: 'allow', updatedInput: toolInput }
             : { behavior: 'deny', message: decision.message };

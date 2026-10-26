@@ -533,3 +533,90 @@ describe('ClaudeAgentSdkEngine.readSessionTitle', () => {
     expect(await engineWith(failing).readSessionTitle('s1', '/repo')).toBeNull();
   });
 });
+
+describe('tool lifecycle hooks', () => {
+  const preInput = (tool: string, id = 'tu-1', agentId?: string) =>
+    ({ hook_event_name: 'PreToolUse', tool_name: tool, tool_input: { command: 'ls' }, tool_use_id: id, agent_id: agentId }) as never;
+  const post = (name: 'PostToolUse' | 'PostToolUseFailure', tool: string, extra: object = {}) =>
+    ({ hook_event_name: name, tool_name: tool, tool_input: { command: 'ls' }, tool_use_id: 'tu-1', ...extra }) as never;
+  const hooksOf = (over: Partial<Parameters<typeof buildQueryOptions>[1]>) =>
+    buildQueryOptions(input(), { ...handlers(), judgeTool: vi.fn(() => ({ kind: 'allow' as const })), ...over }).hooks!;
+  const run = (hooks: NonNullable<Options['hooks']>, event: 'PreToolUse' | 'PostToolUse' | 'PostToolUseFailure', hookInput: never) =>
+    hooks[event]![0]!.hooks[0]!(hookInput, undefined, { signal: new AbortController().signal });
+
+  it('registers the post hooks only when afterTool is provided', () => {
+    expect(Object.keys(hooksOf({}))).not.toContain('PostToolUse');
+    expect(Object.keys(hooksOf({ afterTool: vi.fn() }))).toEqual(expect.arrayContaining(['PostToolUse', 'PostToolUseFailure']));
+  });
+  it.each(['Bash', 'Write', 'Edit', 'MultiEdit', 'NotebookEdit'])('calls beforeTool and afterTool for %s', async (tool) => {
+    const beforeTool = vi.fn(async () => {});
+    const afterTool = vi.fn(async () => {});
+    const hooks = hooksOf({ beforeTool, afterTool });
+    await run(hooks, 'PreToolUse', preInput(tool));
+    await run(hooks, 'PostToolUse', post('PostToolUse', tool));
+    expect(beforeTool).toHaveBeenCalledOnce();
+    expect(afterTool).toHaveBeenCalledWith(expect.objectContaining({ tool_name: tool }), 'ok');
+  });
+  it('ignores tools that cannot touch documents', async () => {
+    const beforeTool = vi.fn(async () => {});
+    const afterTool = vi.fn(async () => {});
+    const hooks = hooksOf({ beforeTool, afterTool });
+    await run(hooks, 'PreToolUse', preInput('Read'));
+    await run(hooks, 'PostToolUse', post('PostToolUse', 'Read'));
+    expect(beforeTool).not.toHaveBeenCalled();
+    expect(afterTool).not.toHaveBeenCalled();
+  });
+  it('does not open a window when the gate denies', async () => {
+    const beforeTool = vi.fn(async () => {});
+    const hooks = hooksOf({ beforeTool, judgeTool: vi.fn(() => ({ kind: 'deny' as const, reason: 'no' })) });
+    await run(hooks, 'PreToolUse', preInput('Write'));
+    expect(beforeTool).not.toHaveBeenCalled();
+  });
+  it('opens the window for a warn that becomes ask', async () => {
+    const beforeTool = vi.fn(async () => {});
+    const hooks = hooksOf({ beforeTool, judgeTool: vi.fn(() => ({ kind: 'warn' as const, reason: 'w' })) });
+    const out = await run(hooks, 'PreToolUse', preInput('Write'));
+    expect(beforeTool).toHaveBeenCalledOnce();
+    expect(out).toMatchObject({ hookSpecificOutput: { permissionDecision: 'ask' } });
+  });
+  it('reports failed and interrupted outcomes', async () => {
+    const afterTool = vi.fn(async (_hookInput: unknown, _outcome: string) => {});
+    const hooks = hooksOf({ afterTool });
+    await run(hooks, 'PostToolUseFailure', post('PostToolUseFailure', 'Bash', { error: 'x' }));
+    await run(hooks, 'PostToolUseFailure', post('PostToolUseFailure', 'Bash', { error: 'x', is_interrupt: true }));
+    expect(afterTool.mock.calls.map((c) => c[1])).toEqual(['failed', 'interrupted']);
+  });
+
+  describe('through the engine', () => {
+    const runEngine = async (decision: 'allow' | 'deny') => {
+      const calls: string[] = [];
+      const fn: QueryFn = ({ options }) => {
+        async function* gen() {
+          const signal = new AbortController().signal;
+          const hooks = options!.hooks!;
+          await hooks.PreToolUse![0]!.hooks[0]!(preInput('Write', 'tu-9', undefined), undefined, { signal });
+          await options!.canUseTool!('Write', { file_path: '/r/a.md' }, { signal, toolUseID: 'tu-9' } as never);
+          await hooks.PostToolUse![0]!.hooks[0]!(post('PostToolUse', 'Write', { tool_use_id: 'tu-9' }), undefined, { signal });
+        }
+        return Object.assign(gen(), { interrupt: async () => undefined }) as unknown as Query;
+      };
+      await new ClaudeAgentSdkEngine(fn).startTurn(input(), {
+        emit: () => {}, onSessionId: () => {}, judgeTool: () => ({ kind: 'allow' }), ...noPending,
+        requestApproval: async () => (decision === 'allow' ? { behavior: 'allow' } : { behavior: 'deny', message: 'no' }),
+        beforeTool: async (ctx) => void calls.push(`before:${ctx.toolUseId}:${ctx.author.agent}`),
+        afterTool: async (ctx, outcome) => void calls.push(`after:${ctx.toolName}:${outcome}`),
+        rebaseTool: (id) => void calls.push(`rebase:${id}`),
+        cancelTool: (id) => void calls.push(`cancel:${id}`),
+      }).done;
+      return calls;
+    };
+    it('rebases the window once the approval is allowed', async () => {
+      expect(await runEngine('allow')).toEqual(['before:tu-9:' + defaultThreadOptions().agent, 'rebase:tu-9', 'after:Write:ok']);
+    });
+    it('cancels the window when the approval is denied', async () => {
+      const calls = await runEngine('deny');
+      expect(calls).toContain('cancel:tu-9');
+      expect(calls).not.toContain('rebase:tu-9');
+    });
+  });
+});

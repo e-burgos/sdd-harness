@@ -1,3 +1,4 @@
+import { mkdir, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import type { Author } from '@sdd-studio/protocol';
 import type { AgentEngine, EngineCallbacks, EngineTurn, EngineTurnInput, TurnPrompt } from './types';
@@ -19,6 +20,7 @@ const stepsOf = (text: string): number => Number(/#steps:(\d+)/.exec(text)?.[1] 
  * #sub, #tool (Bash approval), #edit (Write approval; skipped in acceptEdits), #slow (waits for interrupt), #fail,
  * #steps:N (N Read rounds with a cut point after each), #revert (interrupt reports the last cut-point batch as undelivered),
  * #mcp, #edit-tool, #bash-git, #bash-git2, #bash-chain (approvals that exercise Always rules),
+ * #write-doc (Write that creates or rewrites sdd/specs/spec-dev-001-pagos/cycles/cycle-01/fake-write-doc.md), #bash-doc (Bash that writes fake-bash-doc.md there),
  * #bad-attachment (fails like #fail with 'attachment rejected'),
  * #title:Some_title (readSessionTitle answers 'Some title' for that session; setSessionTitle changes it later).
  * Echoes append ' [attachments: a, b (missing)]' and ' [refs: @agent /skill]' when the prompt carries them.
@@ -74,6 +76,19 @@ export class FakeEngine implements AgentEngine {
       cb.emit({ type: 'tool.start', toolUseId, author: main, tool: toolName, summary });
       cb.emit({ type: 'tool.end', toolUseId, isError: false, summary: 'ok' });
     };
+    const runDocTool = async (toolName: 'Write' | 'Bash', fileName: string) => {
+      const file = path.join(input.cwd, 'sdd', 'specs', 'spec-dev-001-pagos', 'cycles', 'cycle-01', fileName);
+      const toolInput: Record<string, unknown> = toolName === 'Write' ? { file_path: file, content: 'fake' } : { command: `echo fake > ${file}` };
+      const toolUseId = `fake-tool-${++this.counter}`;
+      const ctx = { toolName, input: toolInput, toolUseId, author: main };
+      if (cb.judgeTool(toolName, toolInput, { author: main, toolUseId }).kind === 'deny') return;
+      await cb.beforeTool?.(ctx);
+      cb.emit({ type: 'tool.start', toolUseId, author: main, tool: toolName, summary: toolName === 'Write' ? file : `$ ${String(toolInput.command)}` });
+      await mkdir(path.dirname(file), { recursive: true });
+      await writeFile(file, `fake ${this.counter}\n`);
+      cb.emit({ type: 'tool.end', toolUseId, isError: false, summary: 'ok' });
+      await cb.afterTool?.(ctx, 'ok');
+    };
     const describeAttachments = async (prompt: TurnPrompt): Promise<string> => {
       const names = await Promise.all(
         prompt.blocks.map(async (block) => {
@@ -128,6 +143,8 @@ export class FakeEngine implements AgentEngine {
         const file = path.join(input.cwd, 'apps', 'y.ts');
         await askAndRun('Edit', { file_path: file, old_string: 'a', new_string: 'b' }, file, true);
       }
+      if (marker(firstText, 'write-doc')) await runDocTool('Write', 'fake-write-doc.md');
+      if (marker(firstText, 'bash-doc')) await runDocTool('Bash', 'fake-bash-doc.md');
       if (marker(firstText, 'mcp')) await askAndRun('mcp__fake__ping', {}, 'mcp__fake__ping');
       for (const [name, command] of [
         ['bash-git', 'git status --short'],

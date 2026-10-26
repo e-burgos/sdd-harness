@@ -40,6 +40,15 @@ export interface JudgeContext {
   toolUseId: string | null;
 }
 
+export interface ToolRunContext {
+  toolName: string;
+  input: Record<string, unknown>;
+  toolUseId: string;
+  author: Author;
+}
+
+export type ToolOutcome = 'ok' | 'failed' | 'interrupted';
+
 export interface EngineCallbacks {
   emit(event: ThreadEvent): void;
   /**
@@ -53,6 +62,10 @@ export interface EngineCallbacks {
   readAttachment(ref: AttachmentRef): Promise<Uint8Array | null>;
   collectPending(at: 'cut-point' | 'turn-end', opts?: { textOnly?: boolean }): OutgoingMessage[];
   revertPending(ids: string[]): void;
+  beforeTool?(ctx: ToolRunContext): Promise<void>;
+  afterTool?(ctx: ToolRunContext, outcome: ToolOutcome): Promise<void>;
+  rebaseTool?(toolUseId: string): void;
+  cancelTool?(toolUseId: string): void;
 }
 
 export interface EngineTurn {
