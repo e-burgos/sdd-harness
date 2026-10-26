@@ -1,0 +1,57 @@
+{
+  "$schema": "../../../../schemas/cycle.schema.json",
+  "cycle": 1,
+  "module": "studio-session-metadata",
+  "spec": "spec-e-burgos-007-studio-session-metadata",
+  "apps": [
+    "apps/studio",
+    "apps/studio-bridge",
+    "libs/studio-protocol"
+  ],
+  "phase": "session-metadata",
+  "flow": "full",
+  "objectives": [
+    "Mostrar el título real de la sesión del proveedor (sessionTitle) en la conversación (US-1)",
+    "Asociación múltiple y persistente de un hilo a specs, ciclos y fixes con ThreadLink.targets[] compatible con link.target (US-2)",
+    "Evento estructurado document.touched, incluidas las escrituras por Bash, con la web prefiriéndolo sobre la heurística y cayendo a ella en hilos viejos (US-3)"
+  ],
+  "status": "in-progress",
+  "started_at": "2026-10-26",
+  "completed_at": null,
+  "documents": {
+    "brief": "sdd/specs/spec-e-burgos-007-studio-session-metadata/cycles/cycle-01/brief.yaml"
+  },
+  "artifacts": [],
+  "metrics": {
+    "tasks_total": 0,
+    "tasks_completed": 0,
+    "story_points": 0,
+    "files_created": [],
+    "files_modified": [],
+    "files_deleted": [],
+    "usage": {
+      "tokens_in": 150000,
+      "tokens_out": 22000,
+      "by_agent": [
+        {
+          "agent": "orchestrator",
+          "label": "cycle-open+context-consolidation (sonnet/high en lugar de opus: sin cupo hasta 2026-11-01, autorizado por el dev)",
+          "provider_model": "claude/sonnet",
+          "effort": "high",
+          "tokens_in": 150000,
+          "tokens_out": 22000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-26"
+        }
+      ],
+      "approx": true,
+      "source": "declared-estimate"
+    }
+  },
+  "tables_created": [],
+  "endpoints_implemented": [],
+  "components_created": [],
+  "issues_found": [],
+  "reviewer_report": null
+}

@@ -73,7 +73,19 @@
       "completed_at": "2026-10-26"
     }
   ],
-  "in_progress_modules": [],
+  "in_progress_modules": [
+    {
+      "module": "studio-session-metadata",
+      "spec": "spec-e-burgos-007-studio-session-metadata",
+      "apps": [
+        "apps/studio",
+        "apps/studio-bridge",
+        "libs/studio-protocol"
+      ],
+      "cycles_completed": 0,
+      "description": "Título real de sesión del proveedor, asociación múltiple y persistente de conversaciones a specs/ciclos/fixes y evento estructurado document.touched (incluye escrituras por Bash)."
+    }
+  ],
   "pending_modules": [],
   "monorepo": {
     "tool": "none (multi-app repo)",

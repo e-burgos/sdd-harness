@@ -1,0 +1,105 @@
+# sdd/specs/spec-e-burgos-007-studio-session-metadata/cycles/cycle-01/brief.yaml
+# Generado por: sdd-orchestrator
+# Al: iniciar el ciclo
+
+cycle: 1
+module: studio-session-metadata
+phase: session-metadata
+flow: full
+date: 2026-10-26
+estimated_weeks: 1
+app_context: sdd/context/apps/studio/context_prompt.md
+
+objective: |
+  Que Studio muestre el título real de la sesión del proveedor, conserve todas las asociaciones
+  (spec, ciclo, fix) de una conversación de forma persistente y vea todos los documentos que
+  generó, incluidos los escritos por Bash o scripts, gracias a un evento estructurado
+  document.touched emitido por el puente. Los hilos viejos siguen funcionando por heurística.
+
+scope:
+  - US-1 sessionTitle opcional en ThreadInfo (libs/studio-protocol); el puente lo lee con getSessionInfo(sessionId) del SDK (customTitle, si no summary) y lo publica; ConversationSessionInfo lo muestra
+  - US-2 ThreadLink.targets[] aditivo y persistido, compatible con link.target; el puente persiste detectadas y manuales; migración de threads.json viejos
+  - US-3 Evento ThreadEvent document.touched {path, op, author, seq} emitido para Write/Edit/MultiEdit y para cambios en sdd/ durante tools Bash; revisión del recorte de 160 caracteres de summaries Bash (apps/studio-bridge/src/engine/tool-summary.ts:8)
+  - US-3 La web prefiere document.touched y cae a la heurística de FIX-e-burgos-005-006 (lib/conversation.ts) para hilos sin el evento
+
+out_of_scope:
+  - Renombrar sesiones desde la web
+  - Motores de otros proveedores
+  - FIX-e-burgos-005-001..011 (quedan para el reviewer; no se reabren)
+  - Vigilar escrituras fuera de sdd/ durante Bash
+
+dependencies_required:
+  - spec-e-burgos-005-studio-conversation-sessions (completed)
+
+agent_contexts:
+  functional:
+    goal: Convertir US-1..US-3 en historias con criterios verificables y reglas de negocio (de dónde sale el título, cuándo una asociación es detectada o manual, qué cuenta como documento tocado y cuándo se prefiere el evento sobre la heurística)
+    business_context: |
+      SDD Studio es la UI web (apps/studio) que habla por WebSocket con un puente local
+      (apps/studio-bridge) que corre agentes con Claude Agent SDK; cada hilo es una conversación y
+      tiene una sesión real del proveedor. Hoy la web muestra el id de sesión pero no su título,
+      un hilo solo admite una asociación (link.target) y los documentos de la conversación se
+      infieren de los tool calls Write/Edit/MultiEdit, por lo que lo escrito por scripts de Bash
+      (caso real: planner.md y tasks.json generados por /tmp/gen-planner.mjs) no aparece.
+    relevant_spec_sections:
+      - Historias de usuario
+      - Criterios de aceptación
+      - Fuera de alcance
+    output_file: sdd/specs/spec-e-burgos-007-studio-session-metadata/cycles/cycle-01/functional.md
+
+  planner:
+    goal: Tasks ordenadas por subproyecto (protocolo, puente, web) de no más de 1 día cada una; tasks.json del ciclo con flow full
+    note: Recibe el output del Funcional; no necesita la spec completa
+    output_file: sdd/specs/spec-e-burgos-007-studio-session-metadata/cycles/cycle-01/planner.md
+
+  architect:
+    goal: |
+      Definir el delta de contrato en libs/studio-protocol y su compatibilidad: sessionTitle opcional
+      en ThreadInfo; ThreadLink.targets[] aditivo (cómo conviven target y targets, quién es la
+      fuente de verdad, source por elemento); evento document.touched en ThreadEvent {path, op,
+      author, seq} (op: created|modified|deleted a confirmar, author como en ToolCall, seq
+      monótono por hilo) y feature en BRIDGE_FEATURES; decidir si hace falta bump de
+      PROTOCOL_VERSION (hoy 2) o alcanza con opcionales. Decidir el mecanismo de detección de
+      cambios en sdd/ durante tools Bash (diff de mtimes/hash de sdd/ antes/después del tool, o
+      watcher correlacionado por ventana temporal), su costo en repos grandes, la atribución al
+      agente que corre el tool y el comportamiento con subagentes concurrentes. Decidir cómo y
+      cuándo el puente lee getSessionInfo (dir del proyecto, cuándo refrescar, errores si no hay
+      archivo de sesión) y la persistencia/migración de targets en StoredThread. Definir el
+      criterio de truncado de summaries Bash (160 hoy) sin romper el límite de frame. Definir en
+      la web la precedencia document.touched sobre la heurística de lib/conversation.ts.
+      Registrar componentes nuevos en sdd/components.json.
+    existing_tables: []
+    existing_endpoints: []
+    existing_contracts:
+      - libs/studio-protocol/src/domain.ts (ThreadInfo, ThreadLink, ThreadLinkTarget, EngineSessionId)
+      - libs/studio-protocol/src/events.ts (ThreadEvent)
+      - libs/studio-protocol/src/limits.ts (BRIDGE_FEATURES)
+      - libs/studio-protocol/src/version.ts (PROTOCOL_VERSION = 2)
+      - apps/studio-bridge/src/sessions/store.ts (StoredThread, toThreadInfo, migración de threads.json)
+      - apps/studio-bridge/src/sessions/thread-link.ts (assignLink, linkTargetExists)
+      - apps/studio-bridge/src/sessions/session-manager.ts (onSessionId, publishThread)
+      - apps/studio-bridge/src/engine/sdk-mapper.ts y tool-summary.ts (eventos de tool call)
+      - apps/studio-bridge/src/workspace/watcher.ts
+      - apps/studio/src/lib/conversation.ts (DOCUMENT_TOOLS, relatedFromDocuments)
+    existing_components:
+      - sdd/components.json apps/studio (ConversationSessionInfo, RelatedDocuments, ThreadLinkPicker)
+    output_file: sdd/specs/spec-e-burgos-007-studio-session-metadata/cycles/cycle-01/architect.md
+
+  implementor_back:
+    goal: Protocolo (sessionTitle, targets[], document.touched, feature) y puente (lectura de getSessionInfo, persistencia y migración de targets, emisión de document.touched incluyendo Bash, recorte de summaries) con tests
+    app: apps/studio-bridge
+    also: libs/studio-protocol
+    app_context: sdd/context/apps/studio-bridge/context_prompt.md
+    protocol_context: sdd/context/libs/studio-protocol/context_prompt.md
+    note: Recibe una task a la vez del Planner
+
+  implementor_front:
+    goal: ConversationSessionInfo con el título, asociaciones múltiples en ThreadLinkPicker y vistas relacionadas, y documentos de la conversación preferentemente desde document.touched con caída a la heurística para hilos viejos
+    app: apps/studio
+    app_context: sdd/context/apps/studio/context_prompt.md
+    note: Recibe una task a la vez del Planner; solo después de que el contrato del protocolo esté implementado
+
+  reviewer:
+    goal: Validar todo el output del ciclo (CA-1..CA-6), telemetría por unidad, fragmentos de contexto en los tres subproyectos; revisar además FIX-e-burgos-005-001..011 (implemented, pendientes de reviewer)
+    checklist: sdd/skills/sdd-reviewer/checklist.md
+    output_file: sdd/specs/spec-e-burgos-007-studio-session-metadata/cycles/cycle-01/cycle.json
