@@ -19,7 +19,8 @@
   "started_at": "2026-10-26",
   "completed_at": null,
   "documents": {
-    "brief": "sdd/specs/spec-e-burgos-007-studio-session-metadata/cycles/cycle-01/brief.yaml"
+    "brief": "sdd/specs/spec-e-burgos-007-studio-session-metadata/cycles/cycle-01/brief.yaml",
+    "functional": "sdd/specs/spec-e-burgos-007-studio-session-metadata/cycles/cycle-01/functional.md"
   },
   "artifacts": [],
   "metrics": {
@@ -30,8 +31,8 @@
     "files_modified": [],
     "files_deleted": [],
     "usage": {
-      "tokens_in": 150000,
-      "tokens_out": 22000,
+      "tokens_in": 195000,
+      "tokens_out": 31000,
       "by_agent": [
         {
           "agent": "orchestrator",
@@ -40,6 +41,17 @@
           "effort": "high",
           "tokens_in": 150000,
           "tokens_out": 22000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-26"
+        },
+        {
+          "agent": "functional",
+          "label": "functional.md (US-1..3, 26 CA)",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 45000,
+          "tokens_out": 9000,
           "approx": true,
           "source": "declared-estimate",
           "recorded_at": "2026-10-26"
