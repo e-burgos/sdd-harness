@@ -1,3 +1,4 @@
+import { Crown } from 'lucide-react';
 import type { SessionStatus } from '@sdd-studio/protocol';
 import { agentMeta } from '@/lib/agents';
 import { ActivityIndicator } from './ActivityIndicator';
@@ -38,10 +39,11 @@ export function AgentAvatar({
         {isLeader && size >= 24 && (
           <span
             aria-hidden
-            className="absolute -top-1.5 -right-1 text-[10px] leading-none select-none drop-shadow-md z-10"
+            data-testid="agent-leader-crown"
+            className="absolute -top-1 -right-0.5 p-0.5 rounded-full bg-ink-950/90 text-amber-400 select-none drop-shadow-md z-10 border border-amber-400/30"
             title="Líder del enjambre"
           >
-            👑
+            <Crown className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
           </span>
         )}
       </span>

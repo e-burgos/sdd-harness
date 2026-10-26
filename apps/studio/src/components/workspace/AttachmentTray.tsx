@@ -1,6 +1,6 @@
 'use client';
 
-import { FilePdf, FileText, X } from '@phosphor-icons/react';
+import { FileText, X } from 'lucide-react';
 import { MAX_ATTACHMENTS } from '@sdd-studio/protocol';
 import { PDF_MAX_BYTES, TEXT_MAX_BYTES } from '@/lib/attachments/classify';
 import type { DraftAttachment } from '@/lib/attachments/draft-attachment';
@@ -38,7 +38,7 @@ export function AttachmentTray({ attachments, failures, dragging = false, onRemo
                   <img src={a.previewUrl} alt={a.name} className="h-10 w-10 shrink-0 rounded object-cover" />
                 ) : (
                   <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded bg-ink-800 text-ink-300" aria-hidden>
-                    {a.kind === 'pdf' ? <FilePdf size={20} /> : <FileText size={20} />}
+                    <FileText size={20} />
                   </span>
                 )}
                 <span className="min-w-0 flex-1">

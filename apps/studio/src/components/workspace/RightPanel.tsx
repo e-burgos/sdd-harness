@@ -7,11 +7,18 @@ import { useT } from '@/lib/i18n/i18n';
 import { activityOf, type ActivityEntry } from '@/lib/store/activity';
 import { cycleForChannel } from '@/lib/store/selectors';
 import { useStudio } from '../BridgeProvider';
+import { Check, Loader2, Minus, Pause, Play } from 'lucide-react';
 import { AgentAvatar } from './AgentAvatar';
 import { PanelToggle } from './PanelRail';
 import { StatusBadge } from './StatusBadge';
 
-const MARK: Record<string, string> = { done: '✓', 'in-progress': '▸', skipped: '–' };
+function TaskStatusIcon({ status }: { status: string }) {
+  if (status === 'done') return <Check size={12} className="shrink-0" data-testid="task-icon-done" aria-hidden />;
+  if (status === 'in-progress') return <Play size={10} className="shrink-0 fill-current" data-testid="task-icon-in-progress" aria-hidden />;
+  if (status === 'skipped') return <Minus size={12} className="shrink-0" data-testid="task-icon-skipped" aria-hidden />;
+  return <span aria-hidden>·</span>;
+}
+
 const TASK_KEYS = { done: 'task.done', 'in-progress': 'task.in-progress', skipped: 'task.skipped', pending: 'task.pending' } as const;
 const PRESENCE_KEYS = { working: 'presence.working', waiting: 'presence.waiting', open: 'presence.open', idle: 'presence.idle' } as const;
 
@@ -42,13 +49,13 @@ export function RightPanelView({ activity, cycle, onOpenThread, onCollapse }: { 
                     </div>
                     {a.state === 'waiting' && (
                       <span className="text-amberish">
-                        <span aria-hidden>⏸</span>
+                        <Pause size={12} className="inline-block" aria-hidden />
                         <span className="sr-only">{t(PRESENCE_KEYS.waiting)}</span>
                       </span>
                     )}
                     {a.state === 'working' && (
                       <span className="text-accent-400">
-                        <span aria-hidden className="inline-block motion-safe:animate-pulse">⟳</span>
+                        <Loader2 size={12} className="inline-block motion-safe:animate-spin" aria-hidden />
                         <span className="sr-only">{t(PRESENCE_KEYS.working)}</span>
                       </span>
                     )}
@@ -86,7 +93,7 @@ export function RightPanelView({ activity, cycle, onOpenThread, onCollapse }: { 
               {cycle.tasks.map((task) => (
                 <li key={task.id} className="flex gap-2 text-xs">
                   <span className={task.status === 'done' ? 'text-accent-300' : task.status === 'in-progress' ? 'text-amberish' : 'text-ink-500'}>
-                    <span aria-hidden>{MARK[task.status] ?? '·'}</span>
+                    <TaskStatusIcon status={task.status} />
                     <span className="sr-only">{task.status in TASK_KEYS ? t(TASK_KEYS[task.status as keyof typeof TASK_KEYS]) : task.status}</span>
                   </span>
                   <span className="font-mono text-ink-300">{task.id}</span>

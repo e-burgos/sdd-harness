@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, type ReactNode } from 'react';
-import { SquaresFour } from '@phosphor-icons/react';
+import { LayoutGrid } from 'lucide-react';
 import type { AuthMode, Presence } from '@sdd-studio/protocol';
 import { useT } from '@/lib/i18n/i18n';
 import { buildNavTree, type NavSection, type NavThread, type NavView } from '@/lib/store/nav-tree';
@@ -62,7 +62,7 @@ export function SidebarView(p: SidebarViewProps) {
         <section>
           <h2 className="mb-1 px-2 text-[11px] uppercase tracking-wider text-ink-500">{t('sidebar.views')}</h2>
           <div className="flex items-center gap-2 px-2 text-xs text-ink-500">
-            <SquaresFour size={14} /> {t('sidebar.viewsSoon')}
+            <LayoutGrid size={14} /> {t('sidebar.viewsSoon')}
           </div>
         </section>
       </footer>

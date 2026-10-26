@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { Bot } from 'lucide-react';
 import { agentMeta } from '@/lib/agents';
 import { useStudio, useBridge } from '../BridgeProvider';
 import { openThread } from '@/lib/bootstrap';
@@ -569,7 +570,7 @@ export function AgentMapCanvas({ onOpenDm }: { onOpenDm: (agentId: string) => vo
             className="absolute top-4 right-4 z-20 flex items-center gap-2 rounded-xl border border-white/15 bg-ink-950/90 px-3.5 py-2 font-mono text-xs text-emerald-400 shadow-2xl backdrop-blur-md hover:bg-ink-900 hover:border-emerald-500/50 transition-all hover:scale-105 active:scale-95"
             title="Expandir panel lateral"
           >
-            <span>🐝</span>
+            <Bot className="w-4 h-4 text-emerald-400" />
             <span className="font-semibold text-white">Panel</span>
             <span className="rounded bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/30">
               {selectedAgent ? agentMeta(selectedAgent).name : 'Enjambre'}

@@ -1,6 +1,6 @@
 'use client';
 
-import { Clock, PaperPlaneRight, Paperclip } from '@phosphor-icons/react';
+import { Clock, Paperclip, Send } from 'lucide-react';
 import {
   DEFAULT_AGENT,
   defaultThreadOptions,
@@ -276,7 +276,7 @@ export function ComposerView(p: ComposerViewProps) {
               disabled={pending}
               onClick={() => void submit()}
             >
-              {p.queueing ? <Clock size={16} weight="fill" /> : <PaperPlaneRight size={16} weight="fill" />}
+              {p.queueing ? <Clock size={16} /> : <Send size={16} />}
               {p.queueing && <span className="pr-1 text-xs font-medium">{t('composer.queue')}</span>}
             </button>
           </div>

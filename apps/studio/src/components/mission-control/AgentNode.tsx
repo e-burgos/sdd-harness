@@ -72,9 +72,17 @@ export function AgentNode({ agentId, x, y, presence, isSelected, onSelect }: Age
 
       {/* Crown indicator for Clara */}
       {meta.isLeader && (
-        <text textAnchor="middle" y="-38" fontSize="18" className="pointer-events-none drop-shadow">
-          👑
-        </text>
+        <g transform="translate(-8, -50)" className="pointer-events-none drop-shadow" data-testid="agent-node-crown">
+          <path
+            d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"
+            fill="#facc15"
+            stroke="#eab308"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            transform="scale(0.68)"
+          />
+        </g>
       )}
 
       {/* Codename Pill Badge Below */}
@@ -140,8 +148,19 @@ export function AgentNode({ agentId, x, y, presence, isSelected, onSelect }: Age
             stroke="#38bdf8"
             strokeWidth="1"
           />
+          <g transform="translate(-52, -5.5) scale(0.48)">
+            <path
+              d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"
+              fill="#facc15"
+              stroke="#facc15"
+              strokeWidth="1"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </g>
           <text
             textAnchor="middle"
+            x="4"
             dy="0.32em"
             fill="#ffffff"
             fontSize="9"
@@ -149,7 +168,7 @@ export function AgentNode({ agentId, x, y, presence, isSelected, onSelect }: Age
             fontWeight="bold"
             className="pointer-events-none truncate"
           >
-            ⚡ {presence.tool.length > 18 ? `${presence.tool.slice(0, 16)}…` : presence.tool}
+            {presence.tool.length > 18 ? `${presence.tool.slice(0, 16)}…` : presence.tool}
           </text>
         </g>
       )}

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { Code2, ClipboardList, Zap, FileText, Check, Copy, X } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { AgentGeneratedDocument } from '@/lib/agent-documents';
@@ -115,9 +116,17 @@ export function DocumentViewerModal({ document: doc, onClose }: DocumentViewerMo
         {/* Modal Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 shrink-0 bg-white/5">
           <div className="flex items-center gap-3 min-w-0">
-            <span className="text-2xl select-none">
-              {doc.type === 'code' ? '⚛️' : doc.type === 'plan' || doc.type === 'wbs' ? '📋' : doc.type === 'fix' ? '⚡' : '📄'}
-            </span>
+            <div className="h-10 w-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+              {doc.type === 'code' ? (
+                <Code2 className="w-5 h-5 text-emerald-400" />
+              ) : doc.type === 'plan' || doc.type === 'wbs' ? (
+                <ClipboardList className="w-5 h-5 text-purple-400" />
+              ) : doc.type === 'fix' ? (
+                <Zap className="w-5 h-5 text-amber-400" />
+              ) : (
+                <FileText className="w-5 h-5 text-sky-400" />
+              )}
+            </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2">
                 <h2 className="text-base font-bold text-white truncate font-sans">{doc.name}</h2>
@@ -147,10 +156,20 @@ export function DocumentViewerModal({ document: doc, onClose }: DocumentViewerMo
                 <button
                   type="button"
                   onClick={handleCopyPath}
-                  className="hover:text-emerald-400 transition-colors text-[10px]"
+                  className="hover:text-emerald-400 transition-colors text-[10px] flex items-center gap-1"
                   title="Copiar ruta"
                 >
-                  {pathCopied ? '✓ Copiada' : '📋 Copiar ruta'}
+                  {pathCopied ? (
+                    <>
+                      <Check className="w-3 h-3 text-emerald-400" />
+                      <span className="text-emerald-400">Copiada</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3 h-3" />
+                      <span>Copiar ruta</span>
+                    </>
+                  )}
                 </button>
               </div>
             </div>
@@ -188,10 +207,20 @@ export function DocumentViewerModal({ document: doc, onClose }: DocumentViewerMo
             <button
               type="button"
               onClick={handleCopyContent}
-              className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white/80 hover:text-white text-xs font-mono font-medium transition-colors"
+              className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white/80 hover:text-white text-xs font-mono font-medium transition-colors flex items-center gap-1.5"
               title="Copiar todo el contenido"
             >
-              {copied ? '✓ Copiado' : 'Copiar'}
+              {copied ? (
+                <>
+                  <Check className="w-3 h-3 text-emerald-400" />
+                  <span className="text-emerald-400">Copiado</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-3 h-3" />
+                  <span>Copiar</span>
+                </>
+              )}
             </button>
 
             <button
@@ -199,10 +228,10 @@ export function DocumentViewerModal({ document: doc, onClose }: DocumentViewerMo
               onClick={onClose}
               data-testid="modal-close-button"
               aria-label="Cerrar modal de documento"
-              className="h-8 w-8 flex items-center justify-center rounded-lg text-white/50 hover:text-white hover:bg-white/10 transition-colors text-base"
+              className="h-8 w-8 flex items-center justify-center rounded-lg text-white/50 hover:text-white hover:bg-white/10 transition-colors"
               title="Cerrar modal (Esc)"
             >
-              ✕
+              <X className="w-4 h-4" />
             </button>
           </div>
         </div>

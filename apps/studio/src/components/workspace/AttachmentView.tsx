@@ -1,6 +1,6 @@
 'use client';
 
-import { FilePdf, FileText } from '@phosphor-icons/react';
+import { AlertTriangle, FileText } from 'lucide-react';
 import type { AttachmentRef } from '@sdd-studio/protocol';
 import { useEffect, useState } from 'react';
 import { formatBytes } from '@/lib/format';
@@ -16,7 +16,7 @@ function Unavailable({ name }: { name: string }) {
   const { t } = useT();
   return (
     <span role="img" aria-label={`${t('attach.unavailable')}: ${name}`} className={`${card} text-ink-400`}>
-      <span aria-hidden>⚠</span>
+      <AlertTriangle size={14} className="shrink-0 text-amberish" aria-hidden />
       <span className="truncate">{t('attach.unavailable')}: {name}</span>
     </span>
   );
@@ -46,7 +46,7 @@ function PdfAttachment({ attachment }: { attachment: AttachmentRef }) {
   if (content.status === 'unavailable') return <Unavailable name={attachment.name} />;
   return (
     <div className={card}>
-      <FilePdf size={20} className="shrink-0 text-ink-300" aria-hidden />
+      <FileText size={20} className="shrink-0 text-ink-300" aria-hidden />
       <span className="min-w-0 flex-1">
         <span className="block truncate text-ink-100">{attachment.name}</span>
         <span className="block text-[11px] text-ink-400">{formatBytes(attachment.size)}</span>

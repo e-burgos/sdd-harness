@@ -1,6 +1,6 @@
 'use client';
 
-import { PencilSimple, Trash } from '@phosphor-icons/react';
+import { Pencil, Trash2 } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { bridgeErrorText } from '@/lib/bridge/error-text';
 import { useT } from '@/lib/i18n/i18n';
@@ -101,10 +101,10 @@ export function PendingMessages({ threadId }: { threadId: string }) {
                     )}
                   </div>
                   <button aria-label={t('pending.edit')} className={`rounded-md p-1 text-ink-300 hover:bg-ink-800 ${ring}`} disabled={busyId !== null} onClick={() => setEditing({ id: item.id, text: item.text })}>
-                    <PencilSimple size={14} />
+                    <Pencil size={14} />
                   </button>
                   <button aria-label={t('pending.remove')} className={`rounded-md p-1 text-roseish hover:bg-roseish/10 ${ring}`} disabled={busyId !== null} onClick={() => void remove(item.id)}>
-                    <Trash size={14} />
+                    <Trash2 size={14} />
                   </button>
                 </>
               )}

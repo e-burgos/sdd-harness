@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowSquareOut, CopySimple, Plugs } from '@phosphor-icons/react';
+import { Copy, ExternalLink, PlugZap } from 'lucide-react';
 import { useState } from 'react';
 import { useT } from '@/lib/i18n/i18n';
 
@@ -30,7 +30,7 @@ function CommandBox({ command, label }: { command: string; label?: string }) {
             }
           }}
         >
-          <CopySimple size={16} aria-hidden="true" /> <span aria-live="polite">{state}</span>
+          <Copy size={16} aria-hidden="true" /> <span aria-live="polite">{state}</span>
         </button>
       </div>
     </div>
@@ -60,7 +60,7 @@ export function ConnectScreen({ error }: { error?: string }) {
     <main className="flex min-h-full items-center justify-center p-6">
       <section className="w-full max-w-lg rounded-2xl border border-ink-700 bg-ink-900 p-8 shadow-xl">
         <div className="mb-6 flex items-center gap-3">
-          <Plugs aria-hidden="true" size={28} className="text-accent-400" weight="duotone" />
+          <PlugZap aria-hidden="true" size={28} className="text-accent-400" />
           <h1 className="text-2xl font-semibold">{t('connect.title')}</h1>
           <button className="ml-auto text-xs text-ink-300 hover:text-ink-100" onClick={() => setLang(lang === 'es' ? 'en' : 'es')}>
             {t('lang.switch')}
@@ -78,7 +78,7 @@ export function ConnectScreen({ error }: { error?: string }) {
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1 text-sm text-accent-300 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"
             >
-              {t('connect.step1.docs')} <ArrowSquareOut size={14} aria-hidden="true" />
+              {t('connect.step1.docs')} <ExternalLink size={14} aria-hidden="true" />
             </a>
           </Step>
           <Step n={2} title={t('connect.step2.title')}>

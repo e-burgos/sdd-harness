@@ -1,6 +1,6 @@
 'use client';
 
-import { ShieldWarning } from '@phosphor-icons/react';
+import { ShieldAlert } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { agentMeta } from '@/lib/agents';
 import { useT } from '@/lib/i18n/i18n';
@@ -67,7 +67,7 @@ export function ApprovalCard({ item, onRespond }: { item: Approval; onRespond: R
   return (
     <div className={`min-w-0 rounded-xl border p-4 ${pending ? 'border-amberish/50 bg-amberish/5' : 'border-ink-700 bg-ink-900'}`}>
       <div className="mb-2 flex items-center gap-2 text-sm font-medium">
-        <ShieldWarning size={18} className="text-amberish" />
+        <ShieldAlert size={18} className="text-amberish" />
         {t('approval.title', { name: agentMeta(item.author.agent).name, tool: item.tool })}
       </div>
       <code

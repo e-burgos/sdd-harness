@@ -1,6 +1,6 @@
 'use client';
 
-import { CaretDown, CaretRight, Warning } from '@phosphor-icons/react';
+import { AlertTriangle, ChevronDown, ChevronRight } from 'lucide-react';
 import { useState, type KeyboardEvent } from 'react';
 import type { Presence } from '@sdd-studio/protocol';
 import { agentMeta } from '@/lib/agents';
@@ -45,7 +45,7 @@ export function NodeMarks({ node }: { node: NavNode }) {
     <span className="ml-auto flex shrink-0 items-center gap-1.5">
       {node.needsAttention && (
         <>
-          <Warning aria-hidden size={12} weight="fill" className="text-amberish" />
+          <AlertTriangle aria-hidden size={12} className="text-amberish" />
           <span className="sr-only">, {t('sidebar.needsAttention')}</span>
         </>
       )}
@@ -163,7 +163,7 @@ export function NavNodeView({ node, depth, h, dmState }: { node: NavNode; depth:
       onClick={() => h.collapse.toggle(node.id, node.defaultCollapsed)}
       onKeyDown={onKeyDown}
     >
-      {collapsed ? <CaretRight aria-hidden size={12} /> : <CaretDown aria-hidden size={12} />}
+      {collapsed ? <ChevronRight aria-hidden size={12} /> : <ChevronDown aria-hidden size={12} />}
     </button>
   );
   const statusKey = node.status && node.status in STATUS_KEY ? STATUS_KEY[node.status as keyof typeof STATUS_KEY] : null;
@@ -204,7 +204,7 @@ export function NavNodeView({ node, depth, h, dmState }: { node: NavNode; depth:
         onClick={() => h.collapse.toggle(node.id, node.defaultCollapsed)}
         onKeyDown={onKeyDown}
       >
-        {collapsed ? <CaretRight aria-hidden size={12} /> : <CaretDown aria-hidden size={12} />}
+        {collapsed ? <ChevronRight aria-hidden size={12} /> : <ChevronDown aria-hidden size={12} />}
         <span className="truncate">{label}</span>
         {marks}
       </button>
@@ -257,7 +257,7 @@ export function SectionView({ section, h, dmState }: { section: NavSection; h: N
         onClick={() => h.collapse.toggle(section.id, section.defaultCollapsed)}
         onKeyDown={onKeyDown}
       >
-        {collapsed ? <CaretRight aria-hidden size={10} /> : <CaretDown aria-hidden size={10} />}
+        {collapsed ? <ChevronRight aria-hidden size={10} /> : <ChevronDown aria-hidden size={10} />}
         <span>{t(SECTION_KEY[section.key])}</span>
         {collapsed && <NodeMarks node={section} />}
       </button>

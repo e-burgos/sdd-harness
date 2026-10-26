@@ -1,6 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import {
+  Activity,
+  ArrowDownToLine,
+  ArrowUpFromLine,
+  Cpu,
+  Users,
+  Feather,
+} from 'lucide-react';
 import { useBridge, useStudio } from '../BridgeProvider';
 import { agentMeta } from '@/lib/agents';
 
@@ -241,7 +249,7 @@ export function LiveTelemetryHUD() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-5">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-xl">⚡</span>
+            <Activity className="w-5 h-5 text-emerald-400" />
             <h2 className="text-xl font-bold tracking-tight text-white">Telemetría de Misión & Tokens</h2>
           </div>
           <p className="text-xs text-white/50 font-mono">
@@ -266,8 +274,8 @@ export function LiveTelemetryHUD() {
             {telemetry.totalTokens.toLocaleString()}
           </div>
           <div className="flex items-center gap-4 text-xs font-mono text-white/60">
-            <span>📥 In: {telemetry.totalTokensIn.toLocaleString()}</span>
-            <span>📤 Out: {telemetry.totalTokensOut.toLocaleString()}</span>
+            <span className="flex items-center gap-1.5"><ArrowDownToLine className="w-3.5 h-3.5 text-emerald-400" /> In: {telemetry.totalTokensIn.toLocaleString()}</span>
+            <span className="flex items-center gap-1.5"><ArrowUpFromLine className="w-3.5 h-3.5 text-sky-400" /> Out: {telemetry.totalTokensOut.toLocaleString()}</span>
           </div>
         </div>
 
@@ -301,7 +309,7 @@ export function LiveTelemetryHUD() {
         {/* Model Distribution */}
         <div className="rounded-2xl border border-white/10 bg-ink-900/60 p-5 space-y-4">
           <h3 className="text-sm font-semibold text-white tracking-tight flex items-center gap-2">
-            <span>🤖</span>
+            <Cpu className="w-4 h-4 text-sky-400" />
             <span>Distribución de Carga por Modelo</span>
           </h3>
           <div className="space-y-3">
@@ -325,7 +333,7 @@ export function LiveTelemetryHUD() {
         {/* Agent Share */}
         <div className="rounded-2xl border border-white/10 bg-ink-900/60 p-5 space-y-4">
           <h3 className="text-sm font-semibold text-white tracking-tight flex items-center gap-2">
-            <span>👥</span>
+            <Users className="w-4 h-4 text-purple-400" />
             <span>Consumo de Tokens por Agente</span>
           </h3>
           <div className="space-y-3">
@@ -352,8 +360,8 @@ export function LiveTelemetryHUD() {
       {/* RTK Compression Shield */}
       <div className="rounded-2xl border border-emerald-500/20 bg-emerald-950/20 p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-xl">
-            🪶
+          <div className="h-10 w-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center">
+            <Feather className="w-5 h-5 text-emerald-400" />
           </div>
           <div>
             <h4 className="font-semibold text-sm text-white">Escudo de Compresión RTK Activo</h4>

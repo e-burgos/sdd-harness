@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import type { SessionStatus } from '@sdd-studio/protocol';
-import { CaretRight, Wrench } from '@phosphor-icons/react';
+import { Check, ChevronRight, Loader2, Wrench, X } from 'lucide-react';
 import { agentMeta } from '@/lib/agents';
 import { formatCost, formatTokens } from '@/lib/format';
 import { useT } from '@/lib/i18n/i18n';
@@ -26,7 +26,7 @@ export function Timeline({ items, status, onRespond }: { items: TimelineItem[]; 
             <li key={block.id} className="min-w-0 pl-11">
               <details className="group rounded-lg border border-ink-800 bg-ink-900/60">
                 <summary className="flex cursor-pointer items-center gap-2 px-3 py-2 text-xs text-ink-300">
-                  <CaretRight size={12} className="transition group-open:rotate-90" />
+                  <ChevronRight size={12} className="transition group-open:rotate-90" />
                   <Wrench size={14} />
                   {t('tools.used', { name: meta.name, count: block.items.length })}
                 </summary>
@@ -34,7 +34,13 @@ export function Timeline({ items, status, onRespond }: { items: TimelineItem[]; 
                   {block.items.map((tool) => (
                     <li key={tool.id} className="font-mono text-[11px]">
                       <span className={tool.status === 'error' ? 'text-roseish' : tool.status === 'running' ? 'text-amberish' : 'text-accent-300'}>
-                        <span aria-hidden>{tool.status === 'running' ? '⟳' : tool.status === 'error' ? '✗' : '✓'}</span>
+                        {tool.status === 'running' ? (
+                          <Loader2 size={11} className="inline-block motion-safe:animate-spin" aria-hidden />
+                        ) : tool.status === 'error' ? (
+                          <X size={11} className="inline-block" aria-hidden />
+                        ) : (
+                          <Check size={11} className="inline-block" aria-hidden />
+                        )}
                         <span className="sr-only">{t(`tool.${tool.status}`)}</span>
                       </span>{' '}
                       <span className="text-ink-300">{tool.tool}</span> <span className="break-all">{tool.summary}</span>

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
+import { Moon, ArrowUp } from 'lucide-react';
 import { defaultThreadOptions, channelForDm } from '@sdd-studio/protocol';
 import { agentMeta } from '@/lib/agents';
 import type { GateId } from '@/lib/gates';
@@ -240,7 +241,7 @@ export function LiveAgentChatFeed({ agentId, mode = 'live', onOpenDm }: LiveAgen
       >
         {displayItems.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center p-4 text-center text-white/50 space-y-2">
-            <span className="text-2xl">💤</span>
+            <Moon className="w-8 h-8 text-white/30" />
             <p className="text-xs font-sans leading-relaxed">
               Sin actividad registrada aún para {meta.name}.
             </p>
@@ -257,7 +258,7 @@ export function LiveAgentChatFeed({ agentId, mode = 'live', onOpenDm }: LiveAgen
                   onClick={() => setVisibleLimit((v) => v + 50)}
                   className="rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 px-3 py-1 font-mono text-[10px] text-emerald-400 hover:text-emerald-300 transition-all flex items-center gap-1.5 shadow-sm"
                 >
-                  <span>↑</span>
+                  <ArrowUp className="w-3 h-3" />
                   <span>Cargar más mensajes (+50)</span>
                   <span className="text-white/40">
                     ({displayItems.length - visibleLimit} restantes)

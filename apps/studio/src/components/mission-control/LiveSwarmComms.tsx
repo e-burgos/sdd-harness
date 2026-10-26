@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { ArrowRight, Pause, Play, SkipForward } from 'lucide-react';
 import { agentMeta } from '@/lib/agents';
 import { AgentFace } from '../workspace/AgentFace';
 import type { SwarmDialogue } from './swarm-dialogue';
@@ -53,7 +54,7 @@ export function SwarmSpeechBubble({
         {fromMeta.name}
         <tspan fill="#38bdf8" fontSize="10" fontWeight="normal">
           {' '}
-          ➔ {toMeta.name}
+          → {toMeta.name}
         </tspan>
         {dialogue.gateId && (
           <tspan fill="#eab308" fontSize="9" fontWeight="bold">
@@ -70,7 +71,7 @@ export function SwarmSpeechBubble({
       </text>
 
       <text x="48" y="34" fill="rgba(255,255,255,0.45)" fontSize="9" fontFamily="var(--font-mono, monospace)">
-        {fromMeta.role.toUpperCase()} ➔ {toMeta.role.toUpperCase()}
+        {fromMeta.role.toUpperCase()} → {toMeta.role.toUpperCase()}
       </text>
 
       <foreignObject x="10" y="42" width="220" height="42">
@@ -186,7 +187,7 @@ export function SwarmCommsConsole({
                 <span className="font-bold shrink-0" style={{ color: fromMeta.color }}>
                   {fromMeta.name}
                 </span>
-                <span className="text-white/40 text-[10px]">➔</span>
+                <ArrowRight className="w-2.5 h-2.5 text-white/40 shrink-0" />
                 <span className="font-bold shrink-0" style={{ color: toMeta.color }}>
                   {toMeta.name}
                 </span>
@@ -203,7 +204,11 @@ export function SwarmCommsConsole({
             className="rounded-lg bg-white/10 px-2.5 py-1 text-xs font-mono font-medium hover:bg-white/20 transition-colors"
             title={isPlaying ? 'Pausar diálogo' : 'Reanudar diálogo'}
           >
-            {isPlaying ? '⏸ Pausa' : '▶ Play'}
+            {isPlaying ? (
+              <span className="flex items-center gap-1.5"><Pause className="w-3 h-3" /> Pausa</span>
+            ) : (
+              <span className="flex items-center gap-1.5"><Play className="w-3 h-3" /> Play</span>
+            )}
           </button>
           <button
             type="button"
@@ -211,7 +216,7 @@ export function SwarmCommsConsole({
             className="rounded-lg bg-white/10 px-2.5 py-1 text-xs font-mono font-medium hover:bg-white/20 transition-colors"
             title="Siguiente mensaje"
           >
-            ⏭ Siguiente
+            <span className="flex items-center gap-1.5"><SkipForward className="w-3 h-3" /> Siguiente</span>
           </button>
         </div>
       </div>

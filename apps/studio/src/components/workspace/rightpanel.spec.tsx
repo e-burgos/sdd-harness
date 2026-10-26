@@ -20,7 +20,7 @@ describe('RightPanelView', () => {
     expect(screen.getByText('Vulcan')).toBeInTheDocument();
     expect(screen.getByText('Edit')).toBeInTheDocument();
     expect(screen.getByText('1/2 tasks')).toBeInTheDocument();
-    expect(screen.getByText('✓')).toBeInTheDocument();
+    expect(screen.getByTestId('task-icon-done')).toBeInTheDocument();
     expect(screen.getByRole('complementary', { name: 'Panel de actividad y detalles' })).toBeInTheDocument();
     expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '1');
     expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuemax', '2');

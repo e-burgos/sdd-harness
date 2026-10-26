@@ -1,8 +1,10 @@
 'use client';
 
 import React from 'react';
+import { ArrowRight } from 'lucide-react';
 import type { GateMeta, GateStatus } from '@/lib/gates';
 import { agentMeta } from '@/lib/agents';
+import { GateIcon } from './GateIcon';
 
 interface GateCardProps {
   gate: GateMeta;
@@ -70,9 +72,16 @@ export function GateCard({
 
       <div className="flex items-start justify-between gap-1 z-10">
         <div className="flex items-center gap-1.5 min-w-0">
-          <span className="text-base select-none shrink-0" role="img" aria-label={gate.name}>
-            {gate.icon}
-          </span>
+          <div
+            className="h-6 w-6 rounded-lg flex items-center justify-center shrink-0 border"
+            style={{
+              backgroundColor: `${gate.color}20`,
+              borderColor: `${gate.color}40`,
+              color: gate.color,
+            }}
+          >
+            <GateIcon gateId={gate.id} className="w-3.5 h-3.5" />
+          </div>
           <div className="min-w-0">
             <h4
               className="text-xs font-mono font-bold tracking-tight truncate leading-tight"
@@ -109,8 +118,8 @@ export function GateCard({
             {respMeta.name}
           </span>
         </div>
-        <span className="text-[8px] text-emerald-400/80 group-hover:text-emerald-300 transition-colors">
-          Info ➔
+        <span className="flex items-center gap-1 text-[8px] text-emerald-400/80 group-hover:text-emerald-300 transition-colors">
+          Info <ArrowRight className="w-2.5 h-2.5" />
         </span>
       </div>
     </div>

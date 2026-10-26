@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import { ArrowRight, Clock } from 'lucide-react';
 import type { GateId } from '@/lib/gates';
 import { AgentFace } from '../workspace/AgentFace';
 import ReactMarkdown from 'react-markdown';
@@ -90,7 +91,7 @@ export function ChatDialogueCard({
 
           {receiverName && (
             <>
-              <span className="text-white/30 text-[8px]">➔</span>
+              <ArrowRight className="w-2.5 h-2.5 text-white/30 shrink-0" />
               {receiverId && (
                 <div
                   className="h-4 w-4 rounded-full flex items-center justify-center shrink-0 border border-white/10"
@@ -137,8 +138,9 @@ export function ChatDialogueCard({
             </span>
           )}
           {timestamp && (
-            <span className="text-white/50 text-[9px] font-mono" title={timestamp}>
-              🕒 {formatCardDate(timestamp)}
+            <span className="inline-flex items-center gap-1 text-white/50 text-[9px] font-mono" title={timestamp}>
+              <Clock className="w-2.5 h-2.5 text-white/40" />
+              <span>{formatCardDate(timestamp)}</span>
             </span>
           )}
           {seqNumber !== undefined && (

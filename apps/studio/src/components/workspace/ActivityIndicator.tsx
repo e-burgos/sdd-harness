@@ -1,4 +1,4 @@
-import { Clock, ShieldWarning } from '@phosphor-icons/react';
+import { Clock, ShieldAlert } from 'lucide-react';
 import type { SessionStatus } from '@sdd-studio/protocol';
 
 export type ActivityPlacement = 'row' | 'avatar' | 'thread';
@@ -23,7 +23,7 @@ function SpinnerRing() {
 
 function glyph(status: SessionStatus, placement: ActivityPlacement) {
   if (status === 'running') return placement === 'avatar' ? <SpinnerRing /> : <TypingDots />;
-  if (status === 'waiting-approval') return <ShieldWarning size={placement === 'thread' ? 16 : 14} weight="fill" className="text-amberish" data-indicator="shield" />;
+  if (status === 'waiting-approval') return <ShieldAlert size={placement === 'thread' ? 16 : 14} className="text-amberish" data-indicator="shield" />;
   if (status === 'queued') return <Clock size={placement === 'thread' ? 16 : 14} className="text-ink-300" data-indicator="clock" />;
   return null;
 }

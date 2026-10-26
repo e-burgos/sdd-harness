@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { Globe, Folder, ScrollText } from 'lucide-react';
 import { useBridge, useStudio } from '../BridgeProvider';
 import { SubprojectIcon, classifySubproject, type SubprojectClassification } from './SubprojectIcon';
 
@@ -144,7 +145,7 @@ export function EcosystemDashboard() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-5">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-xl">🌐</span>
+            <Globe className="w-5 h-5 text-emerald-400" />
             <h2 className="text-xl font-bold tracking-tight text-white">Ecosistema del Repositorio</h2>
           </div>
           <p className="text-xs text-white/50 font-mono">
@@ -209,7 +210,7 @@ export function EcosystemDashboard() {
       <div>
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-sm font-semibold tracking-tight text-white flex items-center gap-2">
-            <span>📁</span>
+            <Folder className="w-4 h-4 text-emerald-400" />
             <span>Subproyectos y Módulos del Workspace ({subprojects.length})</span>
           </h3>
           <span className="text-[11px] font-mono text-white/40">Detección automática de arquitectura</span>
@@ -273,7 +274,7 @@ export function EcosystemDashboard() {
       {/* Specs Status Table */}
       <div>
         <h3 className="text-sm font-semibold tracking-tight text-white mb-3 flex items-center gap-2">
-          <span>📜</span>
+          <ScrollText className="w-4 h-4 text-purple-400" />
           <span>Roadmap de Especificaciones SDD</span>
         </h3>
         <div className="rounded-xl border border-white/10 bg-ink-900/70 overflow-hidden">

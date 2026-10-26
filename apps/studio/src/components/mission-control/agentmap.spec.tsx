@@ -131,7 +131,7 @@ describe('AgentMapCanvas', () => {
     expect(screen.getByText('DEMO SDD')).toBeInTheDocument();
     expect(screen.getAllByText(/Regla Cero verificada/).length).toBeGreaterThanOrEqual(1);
 
-    const nextBtn = screen.getByText('⏭ Siguiente');
+    const nextBtn = screen.getByText('Siguiente');
     fireEvent.click(nextBtn);
     expect(screen.getAllByText(/SPEC GATE A evaluado/).length).toBeGreaterThanOrEqual(1);
 

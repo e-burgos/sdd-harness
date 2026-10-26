@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
+import { X, Check, ArrowRight } from 'lucide-react';
 import { getGateMeta, type GateId } from '@/lib/gates';
 import { agentMeta } from '@/lib/agents';
 import { AgentAvatar } from '../workspace/AgentAvatar';
+import { GateIcon } from './GateIcon';
 
 interface GateInspectorDrawerProps {
   gateId: GateId | null;
@@ -36,13 +38,14 @@ export function GateInspectorDrawer({
       <div className="flex items-start justify-between pb-3 border-b border-white/10 shrink-0">
         <div className="flex items-center gap-3">
           <div
-            className="h-11 w-11 rounded-xl flex items-center justify-center text-xl shrink-0 border"
+            className="h-11 w-11 rounded-xl flex items-center justify-center shrink-0 border"
             style={{
               backgroundColor: `${gate.color}20`,
               borderColor: `${gate.color}50`,
+              color: gate.color,
             }}
           >
-            {gate.icon}
+            <GateIcon gateId={gate.id} className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
@@ -59,10 +62,10 @@ export function GateInspectorDrawer({
         <button
           type="button"
           onClick={onClose}
-          className="rounded-lg p-1 text-white/50 hover:bg-white/10 hover:text-white transition-colors text-xs"
+          className="rounded-lg p-1.5 text-white/50 hover:bg-white/10 hover:text-white transition-colors"
           title="Cerrar inspector de gate"
         >
-          ✕
+          <X className="w-4 h-4" />
         </button>
       </div>
 
@@ -93,7 +96,9 @@ export function GateInspectorDrawer({
                 <p className="text-[10px] text-white/40 font-mono uppercase">{respAgent.role}</p>
               </div>
             </div>
-            <span className="text-[10px] font-mono text-emerald-400">Ver en mapa ➔</span>
+            <span className="flex items-center gap-1 text-[10px] font-mono text-emerald-400">
+              Ver en mapa <ArrowRight className="w-3 h-3" />
+            </span>
           </div>
         </div>
 
@@ -129,7 +134,7 @@ export function GateInspectorDrawer({
                 key={idx}
                 className="flex items-start gap-2 text-xs text-white/75 bg-ink-900/60 p-2 rounded-lg border border-white/5"
               >
-                <span className="text-emerald-400 text-xs shrink-0 mt-0.5">✔</span>
+                <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
                 <span className="leading-snug">{rule}</span>
               </li>
             ))}

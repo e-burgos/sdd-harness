@@ -1,5 +1,7 @@
 'use client';
 
+import React from 'react';
+import { MessageSquare, Network, Globe, Activity } from 'lucide-react';
 import { useT } from '@/lib/i18n/i18n';
 import type { StudioView } from '@/lib/use-studio-view';
 import { useStudio } from './BridgeProvider';
@@ -18,11 +20,11 @@ export function StudioHeader({ activeView, onSelectView }: StudioHeaderProps) {
   const workingAgents = (presence ?? []).filter((p) => p.state === 'working');
   const activeCycle = snapshot?.cycles?.find((c) => c.status === 'in-progress');
 
-  const views: { id: StudioView; label: string; icon: string }[] = [
-    { id: 'workspace', label: t('view.workspace'), icon: '💬' },
-    { id: 'agent-map', label: t('view.agentMap'), icon: '🗺️' },
-    { id: 'ecosystem', label: t('view.ecosystem'), icon: '🌐' },
-    { id: 'telemetry', label: t('view.telemetry'), icon: '⚡' },
+  const views: { id: StudioView; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+    { id: 'workspace', label: t('view.workspace'), icon: MessageSquare },
+    { id: 'agent-map', label: t('view.agentMap'), icon: Network },
+    { id: 'ecosystem', label: t('view.ecosystem'), icon: Globe },
+    { id: 'telemetry', label: t('view.telemetry'), icon: Activity },
   ];
 
   return (
@@ -49,6 +51,7 @@ export function StudioHeader({ activeView, onSelectView }: StudioHeaderProps) {
       <nav className="flex items-center rounded-xl bg-ink-900/80 p-1 border border-white/10 shadow-inner">
         {views.map((v) => {
           const isActive = activeView === v.id;
+          const Icon = v.icon;
           return (
             <button
               key={v.id}
@@ -60,7 +63,7 @@ export function StudioHeader({ activeView, onSelectView }: StudioHeaderProps) {
                   : 'text-white/60 hover:text-white hover:bg-white/5'
               }`}
             >
-              <span>{v.icon}</span>
+              <Icon className="w-3.5 h-3.5 shrink-0" />
               <span className="hidden md:inline">{v.label}</span>
             </button>
           );

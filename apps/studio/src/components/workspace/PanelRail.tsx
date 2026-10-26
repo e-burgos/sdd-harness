@@ -1,6 +1,6 @@
 'use client';
 
-import { SidebarSimple } from '@phosphor-icons/react';
+import { PanelLeft, PanelRight } from 'lucide-react';
 
 export function PanelRail({ side, label, onExpand }: { side: 'left' | 'right'; label: string; onExpand(): void }) {
   return (
@@ -19,7 +19,7 @@ export function PanelToggle({ label, side, onClick }: { label: string; side: 'le
       className="rounded-md p-1.5 text-ink-300 hover:bg-ink-800 hover:text-ink-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"
       onClick={onClick}
     >
-      <SidebarSimple size={16} mirrored={side === 'right'} />
+      {side === 'right' ? <PanelRight size={16} /> : <PanelLeft size={16} />}
     </button>
   );
 }

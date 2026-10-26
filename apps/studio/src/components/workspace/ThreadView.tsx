@@ -1,6 +1,6 @@
 'use client';
 
-import { ArrowDown, ArrowLeft, StopCircle } from '@phosphor-icons/react';
+import { ArrowDown, ArrowLeft, StopCircle } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { openThread } from '@/lib/bootstrap';
 import { useT } from '@/lib/i18n/i18n';
