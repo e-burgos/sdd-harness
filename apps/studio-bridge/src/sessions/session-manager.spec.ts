@@ -514,7 +514,7 @@ describe('SessionManager', () => {
         const command = `echo ${'a'.repeat(300)} && rm -rf /tmp/zzz`;
         void runs[0]!.cb.requestApproval({ ...req, input: { command } }, runs[0]!.ac.signal);
         const e = await waitFor(() => pendingApproval(t.id));
-        expect(e.summary.length).toBeLessThanOrEqual(160);
+        expect(e.summary.length).toBeLessThanOrEqual(600);
         expect(JSON.parse(e.input ?? '')).toEqual({ command });
         expect(e.inputTruncated).toBeUndefined();
         await m.interrupt(t.id);

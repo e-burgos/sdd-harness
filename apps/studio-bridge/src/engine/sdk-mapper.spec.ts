@@ -36,6 +36,19 @@ describe('SdkEventMapper (synthetic)', () => {
     ]);
   });
 
+  it('flags summaryTruncated only for a clipped Bash command', () => {
+    const toolStart = (command: string) => {
+      const m = new SdkEventMapper(MAIN, null);
+      const [event] = m.mapMessage({
+        type: 'assistant', parent_tool_use_id: null,
+        message: { id: 'm', content: [{ type: 'tool_use', id: 'toolu_C', name: 'Bash', input: { command } }] },
+      });
+      return event;
+    };
+    expect(toolStart('ls')).not.toHaveProperty('summaryTruncated');
+    expect(toolStart(`echo ${'a '.repeat(500)}sdd/x.md`)).toMatchObject({ type: 'tool.start', summaryTruncated: true });
+  });
+
   it('gives distinct message ids to split assistant messages sharing a message.id', () => {
     const m = new SdkEventMapper(MAIN, null);
     const say = (text: string) => m.mapMessage({ type: 'assistant', parent_tool_use_id: null, message: { id: 'same', content: [{ type: 'text', text }] } });

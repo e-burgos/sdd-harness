@@ -108,12 +108,24 @@
       "depends_on": [
         "TASK-002"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/studio-bridge/src/engine/tool-summary.ts",
         "apps/studio-bridge/src/engine/sdk-mapper.ts",
-        "apps/studio-bridge/src/engine/tool-summary.spec.ts"
-      ]
+        "apps/studio-bridge/src/engine/tool-summary.spec.ts",
+        "apps/studio-bridge/src/engine/sdk-mapper.spec.ts",
+        "apps/studio-bridge/src/sessions/session-manager.spec.ts"
+      ],
+      "usage": {
+        "tokens_in": 40000,
+        "tokens_out": 9000,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-26"
+      }
     },
     {
       "id": "TASK-005",
