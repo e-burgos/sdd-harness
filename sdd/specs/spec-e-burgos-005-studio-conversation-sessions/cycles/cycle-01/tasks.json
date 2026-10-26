@@ -370,11 +370,20 @@
       "depends_on": [
         "TASK-007"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
-        "apps/studio/src/components/mission-control/LiveTelemetryHUD.tsx",
-        "apps/studio/src/components/mission-control/telemetry.spec.tsx"
-      ]
+        "apps/studio/src/components/mission-control/LiveTelemetryHUD.tsx apps/studio/src/components/mission-control/telemetry.spec.tsx"
+      ],
+      "usage": {
+        "tokens_in": 35000,
+        "tokens_out": 8000,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-26"
+      }
     },
     {
       "id": "TASK-014",
