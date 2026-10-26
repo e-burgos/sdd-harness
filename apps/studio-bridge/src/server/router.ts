@@ -86,7 +86,7 @@ export function createHandlers(d: {
         case 'thread.list':
           return d.sessions.list(command.channelId);
         case 'thread.history':
-          return d.sessions.history(command.threadId, command.sinceSeq);
+          return d.sessions.history(command.threadId, command.sinceSeq, command.includeDocumentTouched);
         case 'channel.botHistory':
           return d.store.botHistory(command.channelId, command.limit);
         case 'approval.respond':

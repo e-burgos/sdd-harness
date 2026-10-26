@@ -1430,4 +1430,142 @@ describe('SessionManager attachments and refs', () => {
       expect(engine.reads).toBe(20);
     });
   });
+
+  describe('document.touched', () => {
+    const SPEC_DOC = 'sdd/specs/spec-dev-001-pagos/cycles/cycle-01';
+    const touchedOf = (id: string) => eventsOf(id).filter((e): e is Extract<ThreadEvent, { type: 'document.touched' }> => e.type === 'document.touched');
+    const settle = (m: SessionManager, id: string) => waitFor(() => statusOf(m, id) === 'idle');
+    const targetsOf = (m: SessionManager, id: string) => m.list().find((t) => t.id === id)?.link.targets ?? [];
+
+    const hookedEngine = (run: (cb: EngineCallbacks, cwd: string) => Promise<void>): AgentEngine => ({
+      name: 'hooked',
+      provider: 'claude',
+      startTurn: (input, cb): EngineTurn => ({
+        done: run(cb, input.cwd),
+        interrupt: async () => undefined,
+      }),
+    });
+    const ctx = (toolName: string, toolInput: Record<string, unknown>, toolUseId = 'tu-1') => ({
+      toolName, input: toolInput, toolUseId, author: { agent: 'dm', parentToolUseId: null },
+    });
+
+    it('emits created for a Write of a new document and links the thread to its cycle', async () => {
+      const { m } = await manager();
+      const t = await m.createThread({ channelId: 'general', options: opts, text: '#write-doc' });
+      await settle(m, t.id);
+      expect(touchedOf(t.id)).toMatchObject([{ path: `${SPEC_DOC}/fake-write-doc.md`, op: 'created' }]);
+      expect(targetsOf(m, t.id)).toContainEqual({ kind: 'cycle', specId: 'spec-dev-001-pagos', cycle: 'cycle-01', origin: 'detected' });
+      expect(m.list().find((x) => x.id === t.id)?.link.target).toEqual({ kind: 'cycle', specId: 'spec-dev-001-pagos', cycle: 'cycle-01' });
+    });
+
+    it('emits modified when the Write rewrites an existing document', async () => {
+      const { m } = await manager();
+      const t = await m.createThread({ channelId: 'general', options: opts, text: '#write-doc' });
+      await settle(m, t.id);
+      await m.send(t.id, { text: '#write-doc' });
+      await waitFor(() => touchedOf(t.id).length === 2);
+      expect(touchedOf(t.id).map((e) => e.op)).toEqual(['created', 'modified']);
+    });
+
+    it('emits the files a Bash run changed under sdd/', async () => {
+      const { m } = await manager();
+      const t = await m.createThread({ channelId: 'general', options: opts, text: '#bash-doc' });
+      await settle(m, t.id);
+      expect(touchedOf(t.id)).toMatchObject([{ path: `${SPEC_DOC}/fake-bash-doc.md`, op: 'created', author: { agent: 'sdd-orchestrator', parentToolUseId: null } }]);
+    });
+
+    it('emits nothing for a Bash that does not touch sdd/', async () => {
+      const { m } = await manager(hookedEngine(async (cb) => {
+        await cb.beforeTool?.(ctx('Bash', { command: 'ls' }));
+        await cb.afterTool?.(ctx('Bash', { command: 'ls' }), 'ok');
+        cb.emit({ type: 'turn.end', usage: { model: 'x', effort: null, tokensIn: 1, tokensOut: 1, costUsd: 0 } });
+      }));
+      const t = await m.createThread({ channelId: 'general', options: opts, text: 'go' });
+      await settle(m, t.id);
+      expect(touchedOf(t.id)).toEqual([]);
+      expect(targetsOf(m, t.id)).toEqual([]);
+    });
+
+    it.each(['Edit', 'MultiEdit', 'NotebookEdit'])('emits modified for %s and ignores a failed run', async (toolName) => {
+      const key = toolName === 'NotebookEdit' ? 'notebook_path' : 'file_path';
+      const { m } = await manager(hookedEngine(async (cb, cwd) => {
+        const good = ctx(toolName, { [key]: path.join(cwd, 'apps/a.ts') }, 'ok-1');
+        await cb.beforeTool?.(good);
+        await cb.afterTool?.(good, 'ok');
+        const bad = ctx(toolName, { [key]: path.join(cwd, 'apps/b.ts') }, 'bad-1');
+        await cb.beforeTool?.(bad);
+        await cb.afterTool?.(bad, 'failed');
+      }));
+      const t = await m.createThread({ channelId: 'general', options: opts, text: 'go' });
+      await settle(m, t.id);
+      expect(touchedOf(t.id)).toMatchObject([{ path: 'apps/a.ts', op: 'modified' }]);
+    });
+
+    it('sends a path outside the workspace as absolute with forward slashes', async () => {
+      const outside = path.join(path.dirname(root), 'outside-file.md');
+      const { m } = await manager(hookedEngine(async (cb) => {
+        const write = ctx('Write', { file_path: outside });
+        await cb.beforeTool?.(write);
+        await cb.afterTool?.(write, 'ok');
+      }));
+      const t = await m.createThread({ channelId: 'general', options: opts, text: 'go' });
+      await settle(m, t.id);
+      expect(touchedOf(t.id).map((e) => e.path)).toEqual([outside.replace(/\\/g, '/')]);
+    });
+
+    it('records nothing when the approval is denied', async () => {
+      const { m } = await manager(hookedEngine(async (cb) => {
+        const write = ctx('Write', { file_path: path.join(root, `${SPEC_DOC}/denied.md`) });
+        await cb.beforeTool?.(write);
+        cb.cancelTool?.('tu-1');
+        await cb.afterTool?.(write, 'failed');
+      }));
+      const t = await m.createThread({ channelId: 'general', options: opts, text: 'go' });
+      await settle(m, t.id);
+      expect(touchedOf(t.id)).toEqual([]);
+    });
+
+    it('closes a window left open at the end of the turn with the final diff', async () => {
+      const { m } = await manager(hookedEngine(async (cb, cwd) => {
+        await cb.beforeTool?.(ctx('Bash', { command: 'never reports' }));
+        await writeFile(path.join(cwd, SPEC_DOC, 'left-open.md'), 'x');
+      }));
+      const t = await m.createThread({ channelId: 'general', options: opts, text: 'go' });
+      await settle(m, t.id);
+      expect(touchedOf(t.id)).toMatchObject([{ path: `${SPEC_DOC}/left-open.md`, op: 'created' }]);
+    });
+
+    it('retries paths of a spec the snapshot does not know yet after refreshing it at turn end', async () => {
+      const newSpec = 'spec-dev-009-nueva';
+      let known = false;
+      const refreshSnapshot = vi.fn(async () => {
+        known = true;
+        snapshot = { ...snapshot, specs: [...snapshot.specs, { ...snapshot.specs[0]!, id: newSpec }] };
+      });
+      const { m } = await manager(
+        hookedEngine(async (cb) => {
+          const write = ctx('Write', { file_path: path.join(root, `sdd/specs/${newSpec}/${newSpec}.spec.md`) });
+          await cb.beforeTool?.(write);
+          await cb.afterTool?.(write, 'ok');
+          cb.emit({ type: 'turn.end', usage: { model: 'x', effort: null, tokensIn: 1, tokensOut: 1, costUsd: 0 } });
+        }),
+        undefined,
+        { refreshSnapshot },
+      );
+      const t = await m.createThread({ channelId: 'general', options: opts, text: 'go' });
+      await settle(m, t.id);
+      await waitFor(() => targetsOf(m, t.id).length === 1);
+      expect(known).toBe(true);
+      expect(targetsOf(m, t.id)).toEqual([{ kind: 'spec', specId: newSpec, origin: 'detected' }]);
+    });
+
+    it('serves history without document.touched by default and with it on request', async () => {
+      const { m } = await manager();
+      const t = await m.createThread({ channelId: 'general', options: opts, text: '#write-doc' });
+      await settle(m, t.id);
+      expect((await m.history(t.id, 0)).some((h) => h.event.type === 'document.touched')).toBe(false);
+      expect((await m.history(t.id, 0, false)).some((h) => h.event.type === 'document.touched')).toBe(false);
+      expect((await m.history(t.id, 0, true)).some((h) => h.event.type === 'document.touched')).toBe(true);
+    });
+  });
 });

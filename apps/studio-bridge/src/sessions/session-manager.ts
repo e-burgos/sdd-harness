@@ -1,4 +1,6 @@
 import { randomUUID } from 'node:crypto';
+import { existsSync } from 'node:fs';
+import path from 'node:path';
 import { dmAgentOfChannel, MAX_PENDING_PER_THREAD } from '@sdd-studio/protocol';
 import type {
   AlwaysOffer,
@@ -26,12 +28,15 @@ import {
   type EngineTurn,
   type JudgeContext,
   type OutgoingMessage,
+  type ToolOutcome,
+  type ToolRunContext,
   type ToolVerdict,
 } from '../engine/types';
 import { editTargetOf, judgeEdit } from '../gate/judge';
 import { alwaysOfferOf, matchesRule, ruleOf } from './always-rule';
 import type { AttachmentStore } from './attachment-store';
-import { assignLink, linkTargetExists } from './thread-link';
+import { DocumentChangeTracker, type AttributedTouch } from './document-tracker';
+import { assignLink, detectRef, detectRefs, legacyTargetOf, linkTargetExists } from './thread-link';
 import { PresenceTracker } from './presence';
 import { storedLinkOf, toThreadInfo as toInfo, type HistoryEntry, type PendingMessage, type StoredThread, type ThreadStore } from './store';
 
@@ -66,6 +71,16 @@ export interface SessionManagerDeps {
    */
   refreshSnapshot?: () => Promise<void>;
   titleTimeoutMs?: number;
+  tracker?: DocumentChangeTracker;
+}
+
+const BASH_TOOL = 'Bash';
+const EXACT_PATH_KEYS: Record<string, string> = { Write: 'file_path', Edit: 'file_path', MultiEdit: 'file_path', NotebookEdit: 'notebook_path' };
+const SDD_PATH_PREFIXES = ['sdd/specs/', 'sdd/fixes/'];
+
+interface ExactToolRun {
+  file: string | null;
+  existedBefore: boolean;
 }
 
 const SESSION_TITLE_TIMEOUT_MS = 3_000;
@@ -102,6 +117,8 @@ interface Live {
   /** FIFO of acceptance decisions: a slow upload never lets a later message overtake an earlier one. */
   acceptTail: Promise<void>;
   titleInFlight: boolean;
+  exactRuns: Map<string, ExactToolRun>;
+  unresolvedPaths: Set<string>;
 }
 
 interface PendingApproval {
@@ -127,6 +144,7 @@ export class SessionManager {
   private readonly live = new Map<string, Live>();
   private readonly approvals = new Map<string, PendingApproval>();
   private readonly tracker: PresenceTracker;
+  private readonly documents: DocumentChangeTracker;
   private readonly newId: () => string;
   private readonly now: () => string;
   private readonly stablePrefix: () => string;
@@ -137,6 +155,7 @@ export class SessionManager {
     this.newId = deps.newId ?? randomUUID;
     this.now = deps.now ?? (() => new Date().toISOString());
     this.stablePrefix = deps.stablePrefix ?? createStablePrefixLoader(deps.root);
+    this.documents = deps.tracker ?? new DocumentChangeTracker(deps.root);
     this.tracker = new PresenceTracker(() => deps.snapshot().agents.map((a) => a.id));
     for (const thread of deps.store.list()) this.tracker.onThread(toInfo(thread));
   }
@@ -145,9 +164,10 @@ export class SessionManager {
     return this.deps.store.list(channelId).map(toInfo);
   }
 
-  async history(threadId: string, sinceSeq: number): Promise<HistoryEntry[]> {
+  async history(threadId: string, sinceSeq: number, includeDocumentTouched = false): Promise<HistoryEntry[]> {
     this.require(threadId);
-    return this.deps.store.history(threadId, sinceSeq);
+    const entries = await this.deps.store.history(threadId, sinceSeq);
+    return includeDocumentTouched ? entries : entries.filter(({ event }) => event.type !== 'document.touched');
   }
 
   presence(): Presence[] {
@@ -309,7 +329,7 @@ export class SessionManager {
   private liveOf(threadId: string): Live {
     let live = this.live.get(threadId);
     if (!live) {
-      live = { turn: null, queued: null, delivered: new Map(), deliveredIds: new Set(), queuedAt: 0, alwaysAllow: [], hookDenied: new Map(), interrupted: false, gen: 0, writes: false, acceptTail: Promise.resolve(), titleInFlight: false };
+      live = { turn: null, queued: null, delivered: new Map(), deliveredIds: new Set(), queuedAt: 0, alwaysAllow: [], hookDenied: new Map(), interrupted: false, gen: 0, writes: false, acceptTail: Promise.resolve(), titleInFlight: false, exactRuns: new Map(), unresolvedPaths: new Set() };
       this.live.set(threadId, live);
     }
     return live;
@@ -451,6 +471,90 @@ export class SessionManager {
     return this.deps.store.list().some((other) => other.id !== threadId && other.engineSessionId === sessionId);
   }
 
+  private exactPathOf(input: Record<string, unknown>, toolName: string): string | null {
+    const raw = input[EXACT_PATH_KEYS[toolName] ?? ''];
+    if (typeof raw !== 'string' || raw.length === 0) return null;
+    const relative = path.relative(this.deps.root, path.resolve(this.deps.root, raw));
+    const outside = relative.startsWith('..') || path.isAbsolute(relative);
+    const normalized = (outside ? path.resolve(this.deps.root, raw) : relative).replace(/\\/g, '/');
+    return normalized.length > 0 && normalized.length <= 1024 ? normalized : null;
+  }
+
+  private absoluteOf(file: string): string {
+    return path.resolve(this.deps.root, file);
+  }
+
+  private async beforeTool(thread: StoredThread, ctx: ToolRunContext): Promise<void> {
+    if (ctx.toolName === BASH_TOOL) {
+      await this.documents.open(ctx.toolUseId, { threadId: thread.id, channelId: thread.channelId, threadAgent: thread.agent, author: ctx.author });
+      return;
+    }
+    const file = this.exactPathOf(ctx.input, ctx.toolName);
+    this.liveOf(thread.id).exactRuns.set(ctx.toolUseId, { file, existedBefore: file !== null && existsSync(this.absoluteOf(file)) });
+  }
+
+  private rebaseTool(thread: StoredThread, toolUseId: string): void {
+    void this.documents.rebase(toolUseId);
+    const run = this.liveOf(thread.id).exactRuns.get(toolUseId);
+    if (run?.file) run.existedBefore = existsSync(this.absoluteOf(run.file));
+  }
+
+  private cancelTool(thread: StoredThread, toolUseId: string): void {
+    this.documents.cancel(toolUseId);
+    this.liveOf(thread.id).exactRuns.delete(toolUseId);
+  }
+
+  private async afterTool(thread: StoredThread, ctx: ToolRunContext, outcome: ToolOutcome): Promise<void> {
+    if (ctx.toolName === BASH_TOOL) {
+      this.recordTouches(thread, await this.documents.close(ctx.toolUseId));
+      return;
+    }
+    const live = this.liveOf(thread.id);
+    const run = live.exactRuns.get(ctx.toolUseId);
+    live.exactRuns.delete(ctx.toolUseId);
+    if (!run?.file || outcome !== 'ok') return;
+    this.documents.recordExactTouch(run.file);
+    const op = ctx.toolName === 'Write' && !run.existedBefore ? 'created' : 'modified';
+    this.recordTouches(thread, [{ path: run.file, op, author: ctx.author }]);
+  }
+
+  private async closeOpenWindows(thread: StoredThread): Promise<void> {
+    try {
+      this.recordTouches(thread, await this.documents.closeThread(thread.id));
+    } catch (error) {
+      reportError(error);
+    }
+  }
+
+  private recordTouches(thread: StoredThread, touches: AttributedTouch[]): void {
+    if (touches.length === 0) return;
+    for (const touch of touches) this.emit(thread, { type: 'document.touched', path: touch.path, op: touch.op, author: touch.author });
+    this.detectLinks(thread, touches.map((touch) => touch.path), true);
+  }
+
+  private detectLinks(thread: StoredThread, paths: string[], retryUnresolved: boolean): void {
+    const snapshot = this.deps.snapshot();
+    const live = this.liveOf(thread.id);
+    let entries = thread.link.targets;
+    for (const file of paths) {
+      const refs = detectRefs(snapshot, file);
+      if (refs.length === 0 && retryUnresolved && SDD_PATH_PREFIXES.some((prefix) => file.startsWith(prefix))) live.unresolvedPaths.add(file);
+      for (const ref of refs) entries = detectRef(entries, ref, snapshot);
+    }
+    if (entries === thread.link.targets) return;
+    thread.link = { ...thread.link, ...legacyTargetOf(entries, thread.link.source), targets: entries };
+    this.publishThread(thread);
+  }
+
+  private async retryUnresolvedPaths(thread: StoredThread): Promise<void> {
+    const live = this.liveOf(thread.id);
+    if (live.unresolvedPaths.size === 0) return;
+    const paths = [...live.unresolvedPaths];
+    live.unresolvedPaths.clear();
+    await this.deps.refreshSnapshot?.().catch(reportError);
+    this.detectLinks(thread, paths, false);
+  }
+
   private refreshSessionTitle(thread: StoredThread): Promise<void> {
     const sessionId = thread.engineSessionId;
     const read = this.deps.engine.readSessionTitle?.bind(this.deps.engine);
@@ -523,6 +627,10 @@ export class SessionManager {
           readAttachment: (ref: AttachmentRef) => this.deps.attachments.read(ref.sha256, ref.mime).catch(() => null),
           collectPending: (at, opts) => this.collectPending(thread, gen, at, opts?.textOnly === true),
           revertPending: (ids) => this.revertPending(thread, gen, ids),
+          beforeTool: (ctx) => this.beforeTool(thread, ctx),
+          afterTool: (ctx, outcome) => this.afterTool(thread, ctx, outcome),
+          rebaseTool: (toolUseId) => this.rebaseTool(thread, toolUseId),
+          cancelTool: (toolUseId) => this.cancelTool(thread, toolUseId),
         },
       );
     } catch (error) {
@@ -532,8 +640,14 @@ export class SessionManager {
     live.turn = turn;
     turn.done
       .then(
-        () => this.finish(thread, false, null),
-        (error: unknown) => this.finish(thread, true, error),
+        async () => {
+          await this.closeOpenWindows(thread);
+          this.finish(thread, false, null);
+        },
+        async (error: unknown) => {
+          await this.closeOpenWindows(thread);
+          this.finish(thread, true, error);
+        },
       )
       .catch(reportError);
   }
@@ -688,7 +802,10 @@ export class SessionManager {
     this.deps.broadcast({ kind: 'thread.event', threadId: thread.id, seq, event });
     this.tracker.onEvent(thread.id, event);
     this.publishPresence();
-    if (fromEngine && event.type === 'turn.end') this.refreshSessionTitle(thread);
+    if (fromEngine && event.type === 'turn.end') {
+      this.refreshSessionTitle(thread);
+      void this.retryUnresolvedPaths(thread).catch(reportError);
+    }
   }
 
   private setStatus(thread: StoredThread, status: SessionStatus, error?: { code: string; message: string }): void {
