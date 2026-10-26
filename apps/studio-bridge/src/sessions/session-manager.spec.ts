@@ -168,6 +168,7 @@ describe('SessionManager', () => {
     const inputs: EngineTurnInput[] = [];
     const spy: AgentEngine = {
       name: 'spy',
+      provider: 'claude' as const,
       startTurn: (input, cb) => {
         inputs.push(input);
         cb.onSessionId('sess-42');
@@ -210,6 +211,7 @@ describe('SessionManager', () => {
       const runs: Run[] = [];
       const engine: AgentEngine = {
         name: 'scripted',
+        provider: 'claude' as const,
         startTurn: (input, cb): EngineTurn => {
           onStart?.(input, runs.length);
           const ac = new AbortController();
@@ -227,6 +229,7 @@ describe('SessionManager', () => {
       const fake = new FakeEngine(1);
       const engine: AgentEngine = {
         name: 'throwing',
+        provider: 'claude' as const,
         startTurn: (input, cb) => {
           if (input.prompts[0]?.prompt.text.includes('boom')) throw new Error('no se pudo arrancar');
           return fake.startTurn(input, cb);
@@ -632,6 +635,7 @@ describe('SessionManager', () => {
       let failTurn!: (error: Error) => void;
       const engine: AgentEngine = {
         name: 'failing',
+        provider: 'claude' as const,
         startTurn: (input) => {
           started.push(input.prompts.map((p) => p.prompt.text));
           const done = new Promise<void>((_resolve, reject) => (failTurn = reject));
@@ -698,6 +702,7 @@ describe('SessionManager', () => {
       let finishFirst!: () => void;
       const engine: AgentEngine = {
         name: 'late-end',
+        provider: 'claude' as const,
         startTurn: (input) => {
           prompts.push(input.prompts.map((p) => p.prompt.text));
           const first = prompts.length === 1;
@@ -794,7 +799,7 @@ describe('SessionManager', () => {
       stores.push(store);
       const m = new SessionManager({
         root, attachments: createAttachmentStore(root), store, snapshot: () => snapshot, broadcast: (e) => sent.push(e),
-        engine: { name: 'spy', startTurn: (input) => (started.push(input.threadId), new FakeEngine(1).startTurn(input, null as never)) },
+        engine: { name: 'spy', provider: 'claude', startTurn: (input) => (started.push(input.threadId), new FakeEngine(1).startTurn(input, null as never)) },
       });
       await m.recover();
       expect(m.list().find((x) => x.id === t.id)).toMatchObject({ status: 'interrupted', pendingCount: 1 });
@@ -1170,7 +1175,7 @@ describe('SessionManager attachments and refs', () => {
   it('hands the engine a preamble, an attachment block and the text without the leading skill token', async () => {
     withSkills();
     const seen: EngineTurnInput[] = [];
-    const engine: AgentEngine = { name: 'spy', startTurn: (input, cb) => (seen.push(input), new FakeEngine(1).startTurn(input, cb)) };
+    const engine: AgentEngine = { name: 'spy', provider: 'claude', startTurn: (input, cb) => (seen.push(input), new FakeEngine(1).startTurn(input, cb)) };
     const { m } = await manager(engine);
     await m.createThread({ channelId: 'general', options: opts, text: '/commit please', attachments: [png('p.png')], refs: { agents: [], skills: ['commit'] } });
     const prompt = seen[0]?.prompts[0]?.prompt;
@@ -1184,6 +1189,7 @@ describe('SessionManager attachments and refs', () => {
     const collected: Array<{ at: string; ids: string[] }> = [];
     const engine: AgentEngine = {
       name: 'spy',
+      provider: 'claude' as const,
       startTurn: (_input, cb) => ({
         done: (async () => {
           await new Promise((r) => setTimeout(r, 60));

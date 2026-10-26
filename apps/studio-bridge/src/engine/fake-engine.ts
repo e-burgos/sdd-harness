@@ -23,6 +23,7 @@ const stepsOf = (text: string): number => Number(/#steps:(\d+)/.exec(text)?.[1] 
  */
 export class FakeEngine implements AgentEngine {
   readonly name = 'fake';
+  readonly provider = 'claude' as const;
   private counter = 0;
 
   constructor(private readonly delayMs = 5) {}

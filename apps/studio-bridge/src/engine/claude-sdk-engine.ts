@@ -88,6 +88,7 @@ export function buildQueryOptions(
 
 export class ClaudeAgentSdkEngine implements AgentEngine {
   readonly name = 'claude-agent-sdk';
+  readonly provider = 'claude' as const;
 
   constructor(
     private readonly queryFn: QueryFn = sdkQuery as QueryFn,

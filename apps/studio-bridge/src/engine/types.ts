@@ -1,4 +1,4 @@
-import type { AttachmentRef, Author, ThreadEvent, ThreadOptions } from '@sdd-studio/protocol';
+import type { AttachmentRef, Author, KnownProvider, ThreadEvent, ThreadOptions } from '@sdd-studio/protocol';
 
 export type PromptBlock = { kind: 'text'; text: string } | { kind: 'attachment'; ref: AttachmentRef };
 
@@ -21,6 +21,7 @@ export interface EngineTurnInput {
   options: ThreadOptions;
   resumeSessionId: string | null;
   cwd: string;
+  systemPrefix?: string;
 }
 
 export interface ApprovalRequest {
@@ -62,5 +63,6 @@ export interface EngineTurn {
 /** Engine boundary: the web app and the SessionManager never see SDK types. */
 export interface AgentEngine {
   readonly name: string;
+  readonly provider: KnownProvider;
   startTurn(input: EngineTurnInput, callbacks: EngineCallbacks): EngineTurn;
 }
