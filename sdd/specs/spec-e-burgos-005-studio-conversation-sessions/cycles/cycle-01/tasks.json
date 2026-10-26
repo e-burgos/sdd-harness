@@ -174,11 +174,23 @@
       "depends_on": [
         "TASK-001"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/studio/src/lib/conversation.ts",
-        "apps/studio/src/lib/conversation.spec.ts"
-      ]
+        "apps/studio/src/lib/conversation.spec.ts",
+        "apps/studio/src/lib/store/state.ts",
+        "apps/studio/src/lib/store/state.spec.ts"
+      ],
+      "usage": {
+        "tokens_in": 45000,
+        "tokens_out": 9000,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-26"
+      }
     },
     {
       "id": "TASK-007",

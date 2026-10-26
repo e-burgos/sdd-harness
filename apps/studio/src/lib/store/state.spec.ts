@@ -67,6 +67,8 @@ describe('state reducers', () => {
     const relinked = info({ link: { target: { kind: 'fix', fixId: 'FIX-1' }, source: 'manual' } });
     expect(applyServerEvent(s, { kind: 'thread.updated', thread: relinked }).threads['t1']?.info?.link).toEqual(relinked.link);
     expect(applyServerEvent(s, { kind: 'thread.updated', thread: info({ pendingCount: 2 }) }).threads['t1']?.info?.pendingCount).toBe(2);
+    const withSession = applyServerEvent(s, { kind: 'thread.updated', thread: info({ engineSessionId: 'sess-1', provider: 'claude' }) });
+    expect(withSession.threads['t1']?.info).toMatchObject({ engineSessionId: 'sess-1', provider: 'claude' });
   });
 
   it('resolves an approval answered in another tab', () => {

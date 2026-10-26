@@ -41,6 +41,8 @@ function sameInfo(a: ThreadInfo | null, b: ThreadInfo): boolean {
     !!a &&
     a.status === b.status &&
     a.lastActivity === b.lastActivity &&
+    a.engineSessionId === b.engineSessionId &&
+    a.provider === b.provider &&
     a.title === b.title &&
     a.channelId === b.channelId &&
     a.agent === b.agent &&
