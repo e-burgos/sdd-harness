@@ -254,6 +254,14 @@ export interface StoredThread extends Omit<ThreadInfo, 'pendingCount' | 'engineS
 
 `toThreadInfo` proyecta `link: { target, source, targets: activas }` y `sessionTitle`. El constructor de `SessionManager` recibe el `DocumentChangeTracker` por `deps.tracker?` (por defecto uno real sobre `deps.root`; los tests inyectan uno con directorio temporal). Orden de operaciones por evento `afterTool`: calcular Δ → `emit(document.touched)` por archivo (secuencia garantizada por `ThreadStore.append`) → `detectLinks(thread, paths)` → `publishThread` si cambió. `Live` agrega `titleInFlight`, `unresolvedPaths`. `FakeEngine` gana marcadores `#write-doc` y `#bash-doc` que invocan `beforeTool/afterTool` y escriben un archivo real en el workspace de fixtures, para cubrir e2e sin tokens.
 
+## Enmienda 2026-10-26 (coordinador)
+
+Resuelve R-1 (hilos de época mixta) con autorización de avance del dev: se adopta el **corte por seq**. En un hilo, los eventos con `seq` menor al del primer `document.touched` usan la heurística FIX-e-burgos-005-006; los posteriores usan solo `document.touched`. Nunca se mezclan fuentes para un mismo rango, sin duplicados y sin pérdida. Reemplaza la regla literal de D-07 («`touched.length > 0` → solo estructurado»).
+
+- **Cálculo del corte (web, sin campo de protocolo nuevo):** `cutoffSeq = min(seq)` de `thread.touched`; el hilo sin toques no tiene corte y usa solo la heurística (CA-019). `ThreadInfo.documentTouchedFromSeq` queda **descartado**.
+- **Derivación:** `deriveConversation` arma `documents` = heurística acotada a los items con `seq < cutoffSeq` (parámetro opcional `beforeSeq` de `relatedDocuments`) y `structuredDocuments` sobre todo `touched`; un mismo `path` presente en ambos tramos se fusiona en un solo registro (`agents` unión, `op` y orden del último toque estructurado). `documentSource` pasa a `'structured' | 'heuristic' | 'mixed'`.
+- **Robustez:** si el historial viene recortado y el primer `document.touched` visible no es el real, el corte solo se desplaza hacia un `seq` mayor y la heurística cubre ese tramo: no hay pérdida; sin duplicados por la fusión por ruta. Tests en `conversation.spec.ts`: corte, fusión por ruta, hilo sin toques, hilo solo estructurado.
+
 ## Cambios en schema (sdd/schema.json)
 
 Ninguno: el cambio es de protocolo y de archivos locales del puente (`threads.json`, `threads/<id>.jsonl`), sin tablas.

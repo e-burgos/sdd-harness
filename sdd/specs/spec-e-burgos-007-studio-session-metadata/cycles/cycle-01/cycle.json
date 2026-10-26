@@ -21,19 +21,20 @@
   "documents": {
     "brief": "sdd/specs/spec-e-burgos-007-studio-session-metadata/cycles/cycle-01/brief.yaml",
     "functional": "sdd/specs/spec-e-burgos-007-studio-session-metadata/cycles/cycle-01/functional.md",
-    "architect": "sdd/specs/spec-e-burgos-007-studio-session-metadata/cycles/cycle-01/architect.md"
+    "architect": "sdd/specs/spec-e-burgos-007-studio-session-metadata/cycles/cycle-01/architect.md",
+    "planner": "sdd/specs/spec-e-burgos-007-studio-session-metadata/cycles/cycle-01/planner.md"
   },
   "artifacts": [],
   "metrics": {
-    "tasks_total": 0,
+    "tasks_total": 21,
     "tasks_completed": 0,
-    "story_points": 0,
+    "story_points": 66,
     "files_created": [],
     "files_modified": [],
     "files_deleted": [],
     "usage": {
-      "tokens_in": 615000,
-      "tokens_out": 57000,
+      "tokens_in": 710000,
+      "tokens_out": 73000,
       "by_agent": [
         {
           "agent": "orchestrator",
@@ -64,6 +65,17 @@
           "effort": "high",
           "tokens_in": 420000,
           "tokens_out": 26000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-26"
+        },
+        {
+          "agent": "planner",
+          "label": "planner.md + tasks.json (21 tasks) + enmienda corte por seq",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 95000,
+          "tokens_out": 16000,
           "approx": true,
           "source": "declared-estimate",
           "recorded_at": "2026-10-26"

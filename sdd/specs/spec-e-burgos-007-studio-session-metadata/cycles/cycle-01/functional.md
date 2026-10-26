@@ -72,7 +72,7 @@ Fuera de alcance: renombrar sesiones desde la web, otros proveedores, vigilar es
 - [ ] CA-015: Caso real: tras un script que genera `planner.md` y `tasks.json` de un ciclo, ambos aparecen en los documentos de la conversación con su autor.
 - [ ] CA-016: Un comando de consola que no cambia nada dentro de `sdd/` no produce ningún documento tocado.
 - [ ] CA-017: Un archivo tocado varias veces aparece una sola vez en la lista de documentos, con su última operación; el orden de la actividad se conserva.
-- [ ] CA-018: Para un hilo que tiene al menos un documento tocado estructurado, la web usa esos registros como fuente de la lista de documentos.
+- [ ] CA-018 (enmendado 2026-10-26): Para un hilo con al menos un documento tocado estructurado, la web usa esos registros como fuente de la actividad posterior al primero de ellos y el criterio actual para la anterior; los documentos previos a la actualización no desaparecen y ninguno aparece duplicado.
 - [ ] CA-019: Para un hilo anterior al ciclo (sin ningún documento tocado estructurado), la web sigue deduciendo los documentos con el criterio actual y la lista es la misma que antes de este ciclo.
 - [ ] CA-020: Un documento nunca aparece duplicado por provenir a la vez del registro estructurado y del criterio actual.
 - [ ] CA-021: El resumen de un comando de consola se recorta con un criterio que no corta información identificatoria (rutas de documentos) a la mitad y respeta el límite de tamaño de mensaje del canal; el recorte es visible como tal (indicador de truncado).
@@ -191,7 +191,7 @@ Fuera de alcance: renombrar sesiones desde la web, otros proveedores, vigilar es
 **Descripción:** La web decide de qué fuente obtiene los documentos de cada hilo.
 **Reglas de negocio:**
 
-- RN-28: Si el hilo tiene al menos un documento tocado estructurado, esa es la única fuente de su lista de documentos.
+- RN-28 (enmendado 2026-10-26): En un hilo con documentos tocados estructurados, la lista se parte por orden de actividad en el corte del primer documento tocado estructurado: la actividad anterior al corte usa el criterio actual (RN-29) y la posterior usa solo los registros estructurados. Nunca se mezclan fuentes para un mismo tramo; un documento no se duplica ni se pierde por el cambio de fuente.
 - RN-29: Si el hilo no tiene ninguno (hilos anteriores al ciclo o puente viejo), se usa el criterio actual (deducción desde las herramientas de edición de FIX-e-burgos-005-006).
 - RN-30: Un hilo nuevo que aún no produjo documentos muestra una lista vacía honesta, no una deducción inventada.
 - RN-31: No se mezclan ambas fuentes en una misma lista, para evitar duplicados y autores contradictorios.
