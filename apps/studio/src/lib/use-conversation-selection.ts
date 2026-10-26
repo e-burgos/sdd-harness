@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import type { ThreadInfo } from '@sdd-studio/protocol';
 import { useBridge, useStudio } from '@/components/BridgeProvider';
 import { openThread } from './bootstrap';
@@ -17,7 +17,7 @@ export function useConversationSelection(): ConversationSelection {
   const { client, store } = useBridge();
   const threads = useStudio((s) => s.threads);
   const snapshot = useStudio((s) => s.snapshot);
-  const [picked, setPicked] = useState<string | null>(null);
+  const picked = useStudio((s) => s.selectedThreadId);
   const opening = useRef(new Set<string>());
 
   const conversations = useMemo(() => listConversations(threads), [threads]);
@@ -35,5 +35,5 @@ export function useConversationSelection(): ConversationSelection {
 
   const view = useMemo(() => (selected ? deriveConversation(selected, snapshot) : null), [selected, snapshot]);
 
-  return { conversations, selectedThreadId, pick: setPicked, view };
+  return { conversations, selectedThreadId, pick: store.getState().selectThread, view };
 }

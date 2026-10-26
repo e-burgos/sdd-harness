@@ -22,13 +22,14 @@ export interface StudioState {
   bot: Record<string, BotEvent[]>;
   runs: Record<string, CommandRun>;
   drafts: Record<string, ComposerDraft>;
+  selectedThreadId: string | null;
 }
 
 const MAX_BOT_EVENTS = 200;
 const MAX_THREAD_BUFFER = 1000;
 const MAX_RUN_OUTPUT = 200_000;
 
-export const initialState = (): StudioState => ({ snapshot: null, threads: {}, presence: [], bot: {}, runs: {}, drafts: {} });
+export const initialState = (): StudioState => ({ snapshot: null, threads: {}, presence: [], bot: {}, runs: {}, drafts: {}, selectedThreadId: null });
 
 const threadOf = (s: StudioState, id: string): ThreadState => s.threads[id] ?? emptyThread();
 

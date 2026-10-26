@@ -7,7 +7,7 @@
 | **Severidad** | low |
 | **Fecha**     | 2026-10-26 |
 | **Autor**     | e-burgos |
-| **Estado**    | pending |
+| **Estado**    | implemented |
 | **Spec**      | spec-e-burgos-005-studio-conversation-sessions |
 
 ## Problema
@@ -30,3 +30,9 @@ StudioHeader.tsx L85 muestra 'SPEC GATE IDLE' literal cuando no hay ciclo in-pro
 ## Verificacion
 
 - conversation-gate.spec.ts: hilo solo con fixes -> FIX GATE; con ciclo in-progress -> SPEC GATE; vacio -> idle.
+
+## Implementacion
+
+- La conversacion seleccionada se comparte via un campo de UI `selectedThreadId` en el store del front (`selectThread`), sin tocar el protocolo; Workspace y `useConversationSelection` lo escriben y el header lo lee con `useSelectedConversation`.
+- `relatedDocuments` mueve un documento re-escrito al final, para que 'ultimo documento escrito' sea el ultimo tocado.
+- `inferGateFromText` apoya la derivacion: con un aviso de fix-gate en el ultimo dialogo con gate, se acepta el fix mencionado mas reciente aunque su estado no sea pending/in-progress.

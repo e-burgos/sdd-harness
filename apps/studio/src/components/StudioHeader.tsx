@@ -2,7 +2,9 @@
 
 import React from 'react';
 import { MessageSquare, Network, Globe, Activity } from 'lucide-react';
+import { deriveConversationGate, type ConversationGate } from '@/lib/conversation-gate';
 import { useT } from '@/lib/i18n/i18n';
+import { useSelectedConversation } from '@/lib/use-selected-conversation';
 import type { StudioView } from '@/lib/use-studio-view';
 import { useStudio } from './BridgeProvider';
 import { AgentAvatar } from './workspace/AgentAvatar';
@@ -19,6 +21,20 @@ export function StudioHeader({ activeView, onSelectView }: StudioHeaderProps) {
 
   const workingAgents = (presence ?? []).filter((p) => p.state === 'working');
   const activeCycle = snapshot?.cycles?.find((c) => c.status === 'in-progress');
+  const { view } = useSelectedConversation();
+  const gate: ConversationGate = view
+    ? deriveConversationGate(view, snapshot)
+    : activeCycle
+      ? { kind: 'spec', specId: activeCycle.specId, cycle: activeCycle.cycle }
+      : { kind: 'idle' };
+  const gateLabel =
+    gate.kind === 'fix'
+      ? t('gate.chip.fix', { fix: gate.fixId })
+      : gate.kind === 'spec'
+        ? gate.cycle
+          ? t('gate.chip.spec', { spec: gate.specId, cycle: gate.cycle })
+          : t('gate.chip.specNoCycle', { spec: gate.specId })
+        : t('gate.chip.idle');
 
   const views: { id: StudioView; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
     { id: 'workspace', label: t('view.workspace'), icon: MessageSquare },
@@ -72,19 +88,21 @@ export function StudioHeader({ activeView, onSelectView }: StudioHeaderProps) {
 
       {/* Right Telemetry Pills & Language */}
       <div className="flex items-center gap-2.5">
-        {/* Active Cycle Status Pill */}
-        {activeCycle ? (
-          <div className="hidden lg:flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-1 text-[11px] font-mono text-emerald-300 border border-emerald-500/25">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" />
-            <span>
-              {activeCycle.specId.slice(0, 16)}… ({activeCycle.cycle})
-            </span>
-          </div>
-        ) : (
-          <div className="hidden lg:flex items-center gap-1.5 rounded-full bg-white/5 px-2.5 py-1 text-[11px] font-mono text-white/40 border border-white/10">
-            <span>SPEC GATE IDLE</span>
-          </div>
-        )}
+        <div
+          data-testid="gate-chip"
+          data-gate={gate.kind}
+          title={gateLabel}
+          className={`hidden max-w-[320px] items-center gap-1.5 rounded-full border px-2.5 py-1 font-mono text-[11px] lg:flex ${
+            gate.kind === 'fix'
+              ? 'border-amber-500/25 bg-amber-500/10 text-amber-300'
+              : gate.kind === 'spec'
+                ? 'border-emerald-500/25 bg-emerald-500/10 text-emerald-300'
+                : 'border-white/10 bg-white/5 text-white/40'
+          }`}
+        >
+          {gate.kind !== 'idle' && <span className="h-1.5 w-1.5 shrink-0 animate-ping rounded-full bg-current" />}
+          <span className="truncate">{gateLabel}</span>
+        </div>
 
         {/* Working Swarm Presence Counter */}
         <div

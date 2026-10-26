@@ -193,6 +193,7 @@ function relatedDocuments(thread: ThreadState, snapshot: WorkspaceSnapshot | nul
       const document = documentAt(rawPath, item.author.agent, snapshot);
       if (!document) continue;
       const previous = byPath.get(document.path);
+      byPath.delete(document.path);
       byPath.set(document.path, previous ? { ...previous, agents: [...new Set([...previous.agents, ...document.agents])] } : document);
     }
   }

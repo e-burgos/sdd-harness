@@ -36,6 +36,10 @@ export function Workspace({ selectedChannelId, newConversationSignal = 0 }: Work
     }
   }, [selectedChannelId]);
 
+  useEffect(() => {
+    if (view.threadId) store.getState().selectThread(view.threadId);
+  }, [store, view.threadId]);
+
   const startNewConversation = () => setView((v) => ({ channelId: v.channelId, threadId: null }));
   const lastSignal = useRef(newConversationSignal);
   useEffect(() => {

@@ -786,7 +786,7 @@
       "type": "IMPROVEMENT",
       "severity": "low",
       "created_at": "2026-10-26",
-      "resolved_at": null,
+      "resolved_at": "2026-10-26",
       "validated_at": null,
       "title": "Header: chip de gate refleja el gate real de la conversacion seleccionada",
       "estimation_hours": 1.5,
@@ -798,18 +798,25 @@
       "affected_files": [
         "apps/studio/src/lib/conversation-gate.ts",
         "apps/studio/src/lib/conversation-gate.spec.ts",
+        "apps/studio/src/lib/use-selected-conversation.ts",
         "apps/studio/src/components/StudioHeader.tsx",
+        "apps/studio/src/components/studioheader.spec.tsx",
+        "apps/studio/src/lib/store/state.ts",
+        "apps/studio/src/lib/store/store.ts",
+        "apps/studio/src/lib/use-conversation-selection.ts",
+        "apps/studio/src/components/workspace/Workspace.tsx",
+        "apps/studio/src/lib/conversation.ts",
         "apps/studio/src/lib/i18n/es.ts",
         "apps/studio/src/lib/i18n/en.ts"
       ],
       "test_reference": "conversation-gate.spec.ts",
-      "status": "pending",
+      "status": "implemented",
       "cycle": null,
       "usage": {
         "provider_model": "claude/sonnet",
         "effort": "medium",
-        "tokens_in": 9000,
-        "tokens_out": 1500,
+        "tokens_in": 69000,
+        "tokens_out": 13500,
         "approx": true,
         "source": "declared-estimate",
         "recorded_at": "2026-10-26",
@@ -820,6 +827,15 @@
             "effort": "medium",
             "tokens_in": 9000,
             "tokens_out": 1500,
+            "approx": true,
+            "source": "declared-estimate"
+          },
+          {
+            "agent": "implementor-front",
+            "provider_model": "claude/sonnet",
+            "effort": "medium",
+            "tokens_in": 60000,
+            "tokens_out": 12000,
             "approx": true,
             "source": "declared-estimate"
           }

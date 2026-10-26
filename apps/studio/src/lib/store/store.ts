@@ -27,6 +27,7 @@ export interface StudioActions {
   setDraftText(key: string, text: string): void;
   setDraftAttachments(key: string, list: DraftAttachment[]): void;
   clearDraft(key: string): void;
+  selectThread(threadId: string | null): void;
 }
 
 export type StudioStore = StoreApi<StudioState & StudioActions>;
@@ -45,5 +46,6 @@ export function createStudioStore(): StudioStore {
     setDraftText: (key, text) => set((s) => setDraftText(s, key, text)),
     setDraftAttachments: (key, list) => set((s) => setDraftAttachments(s, key, list)),
     clearDraft: (key) => set((s) => clearDraft(s, key)),
+    selectThread: (selectedThreadId) => set({ selectedThreadId }),
   }));
 }
