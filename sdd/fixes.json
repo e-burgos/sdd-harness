@@ -254,7 +254,7 @@
           }
         ]
       },
-      "process_note": "Retroactive FIX GATE: code was written before registration (FIX GATE violation, documented). Closed as absorbed by the orchestrator at the explicit request of the dev, not by the reviewer; absorbed into spec-e-burgos-005-studio-conversation-sessions (US-4 conversation-centered swarm, US-5 removal of fictional scripts and spec/fix selectors, document viewer kept). Implementation tokens of earlier turns were not metered: order-of-magnitude estimate from diff size."
+      "process_note": "Retroactive FIX GATE: code was written before registration (FIX GATE violation, documented). Closed as absorbed by the orchestrator at the explicit request of the dev, not by the reviewer; absorbed into spec-e-burgos-005-studio-conversation-sessions (US-4 conversation-centered swarm, US-5 removal of fictional scripts and spec/fix selectors, document viewer kept). Implementation tokens of earlier turns were not metered: order-of-magnitude estimate from diff size. Reviewer validation 2026-10-26 (spec-e-burgos-005 cycle-01, claude/sonnet): absorption confirmed against the code - swarm-dialogue.ts deleted, spec/fix selectors and fix filter gone from AgentInspectorDrawer, fabricated telemetry/providers/session ids removed (guarded by no-fabricated-data.spec), document viewer and agent-documents.ts kept with green tests. Remaining out-of-scope item: static RTK card in LiveTelemetryHUD."
     },
     {
       "id": "FIX-e-burgos-003",
@@ -264,7 +264,7 @@
       "type": "IMPROVEMENT",
       "severity": "low",
       "created_at": "2026-10-26",
-      "resolved_at": null,
+      "resolved_at": "2026-10-26",
       "validated_at": null,
       "title": "SDD Studio: erradicar emojis y unificar iconografía con LucideIcons",
       "estimation_hours": 1.5,
@@ -314,7 +314,6 @@
       "test_reference": "pnpm --filter sdd-studio-web test (58 files, 439 tests green) && pnpm --filter sdd-studio-web typecheck",
       "status": "implemented",
       "cycle": null,
-      "resolved_at": "2026-10-26",
       "usage": {
         "provider_model": "gemini/flash",
         "effort": "high",

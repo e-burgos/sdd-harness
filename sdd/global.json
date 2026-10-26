@@ -59,9 +59,7 @@
       "cycles_completed": 1,
       "description": "Panel de autenticación de SDD Studio con solapas Suscripción (login de Claude automático desde el puente) y API key.",
       "completed_at": "2026-10-26"
-    }
-  ],
-  "in_progress_modules": [
+    },
     {
       "module": "studio-conversation-sessions",
       "spec": "spec-e-burgos-005-studio-conversation-sessions",
@@ -70,10 +68,12 @@
         "apps/studio-bridge",
         "libs/studio-protocol"
       ],
-      "cycles_completed": 0,
-      "description": "Una conversación = una sesión del proveedor, sesión real y proveedor visibles en la web, prefijo de sistema estable para prompt caching y enjambre de Mission Control centrado en la conversación real."
+      "cycles_completed": 1,
+      "description": "Una conversación = una sesión del proveedor, sesión real y proveedor visibles en la web, prefijo de sistema estable para prompt caching y enjambre de Mission Control centrado en la conversación real.",
+      "completed_at": "2026-10-26"
     }
   ],
+  "in_progress_modules": [],
   "pending_modules": [],
   "monorepo": {
     "tool": "none (multi-app repo)",

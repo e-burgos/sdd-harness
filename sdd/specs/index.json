@@ -72,10 +72,10 @@
       "file": "sdd/specs/spec-e-burgos-005-studio-conversation-sessions/spec-e-burgos-005-studio-conversation-sessions.spec.md",
       "module": "studio-conversation-sessions",
       "app": "apps/studio",
-      "status": "in-progress",
+      "status": "completed",
       "title": "SDD Studio: una conversación, una sesión — sesión real visible, cache de contexto y enjambre centrado en la conversación",
       "created_at": "2026-10-25",
-      "completed_at": null,
+      "completed_at": "2026-10-26",
       "depends_on": [
         "spec-e-burgos-001-studio-session-ux",
         "spec-e-burgos-004-studio-gates-topology"

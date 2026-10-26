@@ -77,9 +77,9 @@ Para el detalle técnico de cada subproyecto, ver su constitución específica:
 | ----------- | ---------- | -------------------- |
 | `apps/cli` | Node, TypeScript, citty, @clack/prompts, zod, Vitest | 2026-10-23 |
 | `apps/documentation` | React, Vite, Tailwind v4 | 2026-10-23 |
-| `apps/studio` | Next.js 16, React 19, zustand, Playwright; adjuntos re-encodeados en canvas | 2026-10-26 |
-| `apps/studio-bridge` | Node, TypeScript, claude-agent-sdk 0.3.292 (prompt streaming), ws, chokidar; almacén `.sdd-studio/attachments` | 2026-10-26 |
-| `libs/studio-protocol` | TypeScript, zod 4, Vitest (PROTOCOL_VERSION 2) | 2026-10-26 |
+| `apps/studio` | Next.js 16, React 19, zustand, Playwright; adjuntos re-encodeados en canvas; Mission Control derivado de la conversación (`lib/conversation.ts`) | 2026-10-26 |
+| `apps/studio-bridge` | Node, TypeScript, claude-agent-sdk 0.3.292 (prompt streaming), ws, chokidar; almacén `.sdd-studio/attachments`; prefijo de sistema estable (`engine/stable-prefix.ts`) y proveedor por motor | 2026-10-26 |
+| `libs/studio-protocol` | TypeScript, zod 4, Vitest (PROTOCOL_VERSION 2); `ProviderId`/`EngineSessionId` opcionales en `ThreadInfo` | 2026-10-26 |
 
 ---
 
