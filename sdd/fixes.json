@@ -960,6 +960,32 @@
           }
         ]
       }
+    },
+    {
+      "id": "FIX-e-burgos-005-011",
+      "author": "e-burgos",
+      "spec_id": "spec-e-burgos-005-studio-conversation-sessions",
+      "fix_document": "sdd/specs/spec-e-burgos-005-studio-conversation-sessions/fixes/fix-e-burgos-005-011.md",
+      "type": "BUGFIX",
+      "severity": "low",
+      "created_at": "2026-10-26",
+      "resolved_at": null,
+      "validated_at": null,
+      "title": "RelatedDocuments: overflow y truncado en panel angosto (~300px)",
+      "estimation_hours": 1.5,
+      "description": "En el panel derecho del Workspace (ConversationPanelSections → RelatedDocuments), cuando el ancho es ~300px: textos de la tarjeta 'Specs y fixes relacionados' se escapan del contenedor (ids de spec largos, nombres de archivo, fragmentos, lista de agentes). Deben truncarse con ellipsis + title completo, min-w-0 en flex children, agentes en línea propia o truncados. La fila del documento de un fix muestra solo agentes, no el nombre del archivo. 'Dónde estás' muestra FIX-e-burgos-005-004 aunque se trabajó después FIX-e-burgos-005-006..010; la regla deriveConversationGate debe tomar el fix más reciente realmente trabajado.",
+      "justification": "Ajuste de presentación/derivación en apps/studio sobre datos ya disponibles (conversación y snapshot); sin contratos, endpoints ni entidades nuevas; <=5 archivos.",
+      "related_modules": [
+        "studio"
+      ],
+      "affected_files": [
+        "apps/studio/src/components/mission-control/RelatedDocuments.tsx",
+        "apps/studio/src/lib/conversation-gate.ts",
+        "apps/studio/src/components/workspace/ConversationPanelSections.tsx"
+      ],
+      "test_reference": "RelatedDocuments.spec.tsx, conversation-gate.spec.ts",
+      "status": "pending",
+      "cycle": null
     }
   ]
 }
