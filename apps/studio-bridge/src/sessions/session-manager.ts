@@ -65,7 +65,11 @@ export interface SessionManagerDeps {
    * The synchronous PreToolUse path (judgeTool) cannot await it and relies on the debounced watcher snapshot.
    */
   refreshSnapshot?: () => Promise<void>;
+  titleTimeoutMs?: number;
 }
+
+const SESSION_TITLE_TIMEOUT_MS = 3_000;
+const SESSION_TITLE_BACKFILL_LIMIT = 20;
 
 const INPUT_CAP = 16_384;
 
@@ -97,6 +101,7 @@ interface Live {
   writes: boolean;
   /** FIFO of acceptance decisions: a slow upload never lets a later message overtake an earlier one. */
   acceptTail: Promise<void>;
+  titleInFlight: boolean;
 }
 
 interface PendingApproval {
@@ -290,6 +295,7 @@ export class SessionManager {
       }
       this.emit(thread, { type: 'session.status', status: 'interrupted' });
     }
+    void this.backfillSessionTitles();
   }
 
   // ── internos ─────────────────────────────────────────────────────────────
@@ -303,7 +309,7 @@ export class SessionManager {
   private liveOf(threadId: string): Live {
     let live = this.live.get(threadId);
     if (!live) {
-      live = { turn: null, queued: null, delivered: new Map(), deliveredIds: new Set(), queuedAt: 0, alwaysAllow: [], hookDenied: new Map(), interrupted: false, gen: 0, writes: false, acceptTail: Promise.resolve() };
+      live = { turn: null, queued: null, delivered: new Map(), deliveredIds: new Set(), queuedAt: 0, alwaysAllow: [], hookDenied: new Map(), interrupted: false, gen: 0, writes: false, acceptTail: Promise.resolve(), titleInFlight: false };
       this.live.set(threadId, live);
     }
     return live;
@@ -445,6 +451,39 @@ export class SessionManager {
     return this.deps.store.list().some((other) => other.id !== threadId && other.engineSessionId === sessionId);
   }
 
+  private refreshSessionTitle(thread: StoredThread): Promise<void> {
+    const sessionId = thread.engineSessionId;
+    const read = this.deps.engine.readSessionTitle?.bind(this.deps.engine);
+    const live = this.liveOf(thread.id);
+    if (!sessionId || !read || live.titleInFlight) return Promise.resolve();
+    live.titleInFlight = true;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const timeout = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => reject(new Error(`reading the title of session ${sessionId} timed out`)), this.deps.titleTimeoutMs ?? SESSION_TITLE_TIMEOUT_MS);
+    });
+    return Promise.race([read(sessionId, this.deps.root), timeout])
+      .then((title) => this.applySessionTitle(thread, sessionId, title))
+      .catch(reportError)
+      .finally(() => {
+        clearTimeout(timer);
+        live.titleInFlight = false;
+      });
+  }
+
+  private applySessionTitle(thread: StoredThread, sessionId: string, title: string | null): void {
+    if (thread.engineSessionId !== sessionId || thread.sessionTitle === title) return;
+    thread.sessionTitle = title;
+    this.publishThread(thread);
+  }
+
+  private async backfillSessionTitles(): Promise<void> {
+    const candidates = this.deps.store
+      .list()
+      .filter((thread) => thread.engineSessionId !== null && thread.sessionTitle === null)
+      .slice(0, SESSION_TITLE_BACKFILL_LIMIT);
+    for (const thread of candidates) await this.refreshSessionTitle(thread);
+  }
+
   private publishThread(thread: StoredThread): void {
     this.tracker.onThread(toInfo(thread));
     this.deps.broadcast({ kind: 'thread.updated', thread: toInfo(thread) });
@@ -477,6 +516,7 @@ export class SessionManager {
             }
             thread.engineSessionId = id;
             this.publishThread(thread);
+            this.refreshSessionTitle(thread);
           },
           requestApproval: (request, signal) => this.requestApproval(thread, gen, request, signal),
           judgeTool: (toolName, input, ctx) => this.judgeTool(thread, gen, toolName, input, ctx),
@@ -648,6 +688,7 @@ export class SessionManager {
     this.deps.broadcast({ kind: 'thread.event', threadId: thread.id, seq, event });
     this.tracker.onEvent(thread.id, event);
     this.publishPresence();
+    if (fromEngine && event.type === 'turn.end') this.refreshSessionTitle(thread);
   }
 
   private setStatus(thread: StoredThread, status: SessionStatus, error?: { code: string; message: string }): void {

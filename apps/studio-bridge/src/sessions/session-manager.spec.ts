@@ -1303,4 +1303,131 @@ describe('SessionManager attachments and refs', () => {
     expect(collected[1]?.ids).toEqual([file.delivery === 'pending' ? file.pendingId : '']);
     await waitFor(() => statusOf(m, t.id) === 'idle');
   });
+
+  describe('session title', () => {
+    class TitleEngine extends FakeEngine {
+      reads = 0;
+      next: () => Promise<string | null> = async () => null;
+      override async readSessionTitle(): Promise<string | null> {
+        this.reads++;
+        return this.next();
+      }
+    }
+    const titleHistory = (threadId: string) => {
+      const titles = sent.flatMap((e) => (e.kind === 'thread.updated' && e.thread.id === threadId ? [e.thread.sessionTitle] : []));
+      return titles.filter((title, index) => index === 0 || title !== titles[index - 1]);
+    };
+    const titleOf = (m: SessionManager, id: string) => m.list().find((t) => t.id === id)?.sessionTitle;
+    const settle = (m: SessionManager, id: string) => waitFor(() => statusOf(m, id) === 'idle');
+
+    it('publishes the title read at session start and at turn end once per change', async () => {
+      const engine = new TitleEngine(1);
+      engine.next = async () => 'Planning payments';
+      const { m } = await manager(engine);
+      const t = await m.createThread({ channelId: 'general', options: opts, text: 'hola' });
+      await settle(m, t.id);
+      await waitFor(() => titleOf(m, t.id) === 'Planning payments');
+      expect(titleHistory(t.id)).toEqual([null, 'Planning payments']);
+      expect(engine.reads).toBeGreaterThanOrEqual(2);
+    });
+
+    it('picks up a rename that happens after the first turn', async () => {
+      const engine = new TitleEngine(1);
+      engine.next = async () => 'First';
+      const { m } = await manager(engine);
+      const t = await m.createThread({ channelId: 'general', options: opts, text: 'hola' });
+      await settle(m, t.id);
+      await waitFor(() => titleOf(m, t.id) === 'First');
+      engine.next = async () => 'Renamed';
+      await m.send(t.id, { text: 'otra' });
+      await waitFor(() => titleOf(m, t.id) === 'Renamed');
+    });
+
+    it('keeps the last known title and the thread running when the read fails', async () => {
+      const errors = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+      const engine = new TitleEngine(1);
+      engine.next = async () => 'Known';
+      const { m } = await manager(engine);
+      const t = await m.createThread({ channelId: 'general', options: opts, text: 'hola' });
+      await settle(m, t.id);
+      await waitFor(() => titleOf(m, t.id) === 'Known');
+      engine.next = async () => {
+        throw new Error('EACCES');
+      };
+      await m.send(t.id, { text: 'otra' });
+      await waitFor(() => errors.mock.calls.some((call) => String(call[1]).includes('EACCES')));
+      await settle(m, t.id);
+      expect(titleOf(m, t.id)).toBe('Known');
+      expect(statusOf(m, t.id)).toBe('idle');
+      expect(titleHistory(t.id)).toEqual([null, 'Known']);
+      errors.mockRestore();
+    });
+
+    it('keeps the last known title when the read times out', async () => {
+      const errors = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+      const engine = new TitleEngine(1);
+      engine.next = async () => 'Known';
+      const { m } = await manager(engine, undefined, { titleTimeoutMs: 30 });
+      const t = await m.createThread({ channelId: 'general', options: opts, text: 'hola' });
+      await settle(m, t.id);
+      await waitFor(() => titleOf(m, t.id) === 'Known');
+      engine.next = () => new Promise(() => undefined);
+      await m.send(t.id, { text: 'otra' });
+      await waitFor(() => errors.mock.calls.some((call) => String(call[1]).includes('timed out')));
+      await settle(m, t.id);
+      expect(titleOf(m, t.id)).toBe('Known');
+      errors.mockRestore();
+    });
+
+    it('does not publish again when the title did not change', async () => {
+      const engine = new TitleEngine(1);
+      engine.next = async () => 'Same';
+      const { m } = await manager(engine);
+      const t = await m.createThread({ channelId: 'general', options: opts, text: 'hola' });
+      await settle(m, t.id);
+      await waitFor(() => titleOf(m, t.id) === 'Same');
+      const readsBefore = engine.reads;
+      await m.send(t.id, { text: 'otra' });
+      await settle(m, t.id);
+      await waitFor(() => engine.reads > readsBefore);
+      expect(titleHistory(t.id)).toEqual([null, 'Same']);
+    });
+
+    it('runs one read at a time per thread', async () => {
+      const engine = new TitleEngine(1);
+      let running = 0;
+      let peak = 0;
+      engine.next = async () => {
+        peak = Math.max(peak, ++running);
+        await new Promise((r) => setTimeout(r, 30));
+        running--;
+        return 'T';
+      };
+      const { m } = await manager(engine);
+      const t = await m.createThread({ channelId: 'general', options: opts, text: '#steps:2' });
+      await settle(m, t.id);
+      await waitFor(() => titleOf(m, t.id) === 'T');
+      expect(peak).toBe(1);
+    });
+
+    it('backfills threads with a session but no title after a restart, up to 20', async () => {
+      const first = await manager(new TitleEngine(1));
+      const ids: string[] = [];
+      for (let i = 0; i < 22; i++) {
+        const t = await first.m.createThread({ channelId: 'general', options: opts, text: `hilo ${i}` });
+        await settle(first.m, t.id);
+        ids.push(t.id);
+      }
+      await first.store.flush();
+      const store = new ThreadStore(root);
+      await store.init();
+      stores.push(store);
+      const engine = new TitleEngine(1);
+      engine.next = async () => 'Backfilled';
+      const restarted = new SessionManager({ root, attachments: createAttachmentStore(root), store, engine, snapshot: () => snapshot, broadcast: () => {} });
+      await restarted.recover();
+      await waitFor(() => restarted.list().filter((t) => t.sessionTitle === 'Backfilled').length === 20);
+      expect(engine.reads).toBe(20);
+    });
+  });
 });

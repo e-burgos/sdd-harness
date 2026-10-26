@@ -353,3 +353,8 @@ Orden: protocolo, puente, web. Incluye la enmienda 2026-10-26 (corte por seq) de
 
 - [ ] pnpm build && pnpm typecheck && pnpm test en verde
 - [ ] sin apps/studio/next-env.d.ts en el diff
+
+## Notas del implementador
+
+- `threads.json` que no se puede leer por un error distinto de ENOENT (permisos, I/O) sigue haciendo fallar `ThreadStore.init()`: el puente no arranca en lugar de sobrescribir un archivo que no pudo leer. Solo el contenido inválido (JSON roto o no arreglo) se pone en cuarentena como `threads.json.corrupt-<epoch>`.
+- `AgentEngine.readSessionTitle` rechaza ante un fallo de lectura y devuelve `null` solo cuando el SDK confirma que no hay título; `SessionManager` ignora el fallo (a `reportError`) y conserva el último título conocido.

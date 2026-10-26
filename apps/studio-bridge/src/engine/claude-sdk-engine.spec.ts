@@ -526,11 +526,11 @@ describe('ClaudeAgentSdkEngine.readSessionTitle', () => {
     expect(await engineWith(async () => undefined).readSessionTitle('s1', '/repo')).toBeNull();
   });
 
-  it('answers null instead of throwing when the SDK fails', async () => {
+  it('rejects when the SDK fails so a failure is never read as an absent title', async () => {
     const failing: SessionInfoFn = async () => {
       throw new Error('EACCES');
     };
-    expect(await engineWith(failing).readSessionTitle('s1', '/repo')).toBeNull();
+    await expect(engineWith(failing).readSessionTitle('s1', '/repo')).rejects.toThrow('EACCES');
   });
 });
 

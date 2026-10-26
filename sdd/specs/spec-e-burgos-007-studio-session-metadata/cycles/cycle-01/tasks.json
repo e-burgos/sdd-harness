@@ -286,11 +286,23 @@
         "TASK-006",
         "TASK-007"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/studio-bridge/src/sessions/session-manager.ts",
-        "apps/studio-bridge/src/sessions/session-manager.spec.ts"
-      ]
+        "apps/studio-bridge/src/sessions/session-manager.spec.ts",
+        "apps/studio-bridge/src/engine/claude-sdk-engine.ts",
+        "apps/studio-bridge/src/engine/claude-sdk-engine.spec.ts"
+      ],
+      "usage": {
+        "tokens_in": 45000,
+        "tokens_out": 10000,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-26"
+      }
     },
     {
       "id": "TASK-011",

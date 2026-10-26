@@ -180,11 +180,7 @@ export class ClaudeAgentSdkEngine implements AgentEngine {
   ) {}
 
   async readSessionTitle(sessionId: string, cwd: string): Promise<string | null> {
-    try {
-      return pickSessionTitle(await this.sessionInfoFn(sessionId, { dir: cwd }));
-    } catch {
-      return null;
-    }
+    return pickSessionTitle(await this.sessionInfoFn(sessionId, { dir: cwd }));
   }
 
   startTurn(input: EngineTurnInput, cb: EngineCallbacks): EngineTurn {
