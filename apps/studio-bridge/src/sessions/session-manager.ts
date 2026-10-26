@@ -16,6 +16,7 @@ import type {
   ThreadOptions,
   WorkspaceSnapshot,
 } from '@sdd-studio/protocol';
+import { createStablePrefixLoader } from '../engine/stable-prefix';
 import { buildTurnPrompt, type AcceptedMessage } from '../engine/prompt-content';
 import { diffFor, summarizeTool } from '../engine/tool-summary';
 import {
@@ -54,6 +55,7 @@ export interface SessionManagerDeps {
   attachments: Pick<AttachmentStore, 'put' | 'read'>;
   engine: AgentEngine;
   store: ThreadStore;
+  stablePrefix?: () => string;
   snapshot: () => WorkspaceSnapshot;
   broadcast: (message: ServerEvent) => void;
   newId?: () => string;
@@ -122,12 +124,14 @@ export class SessionManager {
   private readonly tracker: PresenceTracker;
   private readonly newId: () => string;
   private readonly now: () => string;
+  private readonly stablePrefix: () => string;
   private lastPresence = '';
   private queueCounter = 0;
 
   constructor(private readonly deps: SessionManagerDeps) {
     this.newId = deps.newId ?? randomUUID;
     this.now = deps.now ?? (() => new Date().toISOString());
+    this.stablePrefix = deps.stablePrefix ?? createStablePrefixLoader(deps.root);
     this.tracker = new PresenceTracker(() => deps.snapshot().agents.map((a) => a.id));
     for (const thread of deps.store.list()) this.tracker.onThread(toInfo(thread));
   }
@@ -431,6 +435,15 @@ export class SessionManager {
     this.publishThread(thread);
   }
 
+  private systemPrefixInput(): { systemPrefix?: string } {
+    const systemPrefix = this.stablePrefix();
+    return systemPrefix.length > 0 ? { systemPrefix } : {};
+  }
+
+  private sessionOwnedByAnotherThread(threadId: string, sessionId: string): boolean {
+    return this.deps.store.list().some((other) => other.id !== threadId && other.engineSessionId === sessionId);
+  }
+
   private publishThread(thread: StoredThread): void {
     this.tracker.onThread(toInfo(thread));
     this.deps.broadcast({ kind: 'thread.updated', thread: toInfo(thread) });
@@ -445,13 +458,24 @@ export class SessionManager {
     let turn: EngineTurn;
     try {
       turn = this.deps.engine.startTurn(
-        { threadId: thread.id, prompts, options: thread.options, resumeSessionId: thread.engineSessionId, cwd: this.deps.root },
+        {
+          threadId: thread.id,
+          prompts,
+          options: thread.options,
+          resumeSessionId: thread.engineSessionId,
+          cwd: this.deps.root,
+          ...this.systemPrefixInput(),
+        },
         {
           emit: (event) => this.emit(thread, event, true),
           onSessionId: (id) => {
             if (thread.engineSessionId === id) return;
+            if (this.sessionOwnedByAnotherThread(thread.id, id)) {
+              reportError(new Error(`session ${id} already belongs to another thread`));
+              return;
+            }
             thread.engineSessionId = id;
-            this.persist(thread);
+            this.publishThread(thread);
           },
           requestApproval: (request, signal) => this.requestApproval(thread, gen, request, signal),
           judgeTool: (toolName, input, ctx) => this.judgeTool(thread, gen, toolName, input, ctx),

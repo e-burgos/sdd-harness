@@ -7,7 +7,7 @@ import type { AgentEngine, EngineCallbacks, EngineTurn, EngineTurnInput } from '
 import { copyFixture, waitFor } from '../test-utils/fixture';
 import { loadWorkspaceSnapshot } from '../workspace/snapshot';
 import { createAttachmentStore, type AttachmentStore } from './attachment-store';
-import { SessionError, SessionManager } from './session-manager';
+import { SessionError, SessionManager, type SessionManagerDeps } from './session-manager';
 import { ThreadStore } from './store';
 
 let root: string;
@@ -27,7 +27,7 @@ afterEach(async () => {
   await cleanup();
 });
 
-async function manager(engine: AgentEngine = new FakeEngine(1), wrapAttachments: (inner: AttachmentStore) => AttachmentStore = (inner) => inner) {
+async function manager(engine: AgentEngine = new FakeEngine(1), wrapAttachments: (inner: AttachmentStore) => AttachmentStore = (inner) => inner, extra: Partial<SessionManagerDeps> = {}) {
   const store = new ThreadStore(root);
   await store.init();
   stores.push(store);
@@ -36,7 +36,7 @@ async function manager(engine: AgentEngine = new FakeEngine(1), wrapAttachments:
   await realAttachments.init();
   const attachments = wrapAttachments(realAttachments);
   const m = new SessionManager({
-    root, engine, store, attachments, snapshot: () => snapshot, broadcast: (e) => sent.push(e), newId: () => `id${++n}`,
+    root, engine, store, attachments, snapshot: () => snapshot, broadcast: (e) => sent.push(e), newId: () => `id${++n}`, ...extra,
   });
   return { m, store };
 }
@@ -183,6 +183,101 @@ describe('SessionManager', () => {
     await second.m.send(t.id, { text: 'dos' });
     expect(inputs.map((i) => i.resumeSessionId)).toEqual([null, 'sess-42']);
     await waitFor(() => statusOf(second.m, t.id) === 'idle');
+  });
+
+  describe('conversation sessions', () => {
+    const idleEngine = (inputs: EngineTurnInput[], sessionFor: (input: EngineTurnInput) => string | null): AgentEngine => ({
+      name: 'scripted',
+      provider: 'claude' as const,
+      startTurn: (input, cb) => {
+        inputs.push(input);
+        const id = sessionFor(input);
+        if (id) cb.onSessionId(id);
+        return { done: Promise.resolve(), interrupt: async () => {} };
+      },
+    });
+    const threadUpdates = (threadId: string) =>
+      sent.flatMap((e) => (e.kind === 'thread.updated' && e.thread.id === threadId ? [e.thread] : []));
+
+    it('creates a thread with the engine provider and no session yet (CA-001, CA-006)', async () => {
+      const { m } = await manager(idleEngine([], () => null));
+      const t = await m.createThread({ channelId: 'general', options: opts, text: 'uno' });
+      expect(t).toMatchObject({ provider: 'claude', engineSessionId: null });
+    });
+
+    it('gives two threads different sessions and resumes each one with its own (CA-002, CA-004)', async () => {
+      const inputs: EngineTurnInput[] = [];
+      const { m } = await manager(idleEngine(inputs, (input) => `sess-of-${input.threadId}`));
+      const a = await m.createThread({ channelId: 'general', options: opts, text: 'a1' });
+      const b = await m.createThread({ channelId: 'general', options: opts, text: 'b1' });
+      await waitFor(() => statusOf(m, a.id) === 'idle' && statusOf(m, b.id) === 'idle');
+      const sessionOf = (id: string) => m.list().find((t) => t.id === id)?.engineSessionId;
+      expect(sessionOf(a.id)).toBe(`sess-of-${a.id}`);
+      expect(sessionOf(b.id)).toBe(`sess-of-${b.id}`);
+      expect(sessionOf(a.id)).not.toBe(sessionOf(b.id));
+      await m.send(a.id, { text: 'a2' });
+      await waitFor(() => inputs.length === 3);
+      expect(inputs[2]).toMatchObject({ threadId: a.id, resumeSessionId: `sess-of-${a.id}` });
+    });
+
+    it('rejects a session id that belongs to another thread (RN-02)', async () => {
+      const errors = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const inputs: EngineTurnInput[] = [];
+      const { m } = await manager(idleEngine(inputs, () => 'shared-session'));
+      const a = await m.createThread({ channelId: 'general', options: opts, text: 'a1' });
+      await waitFor(() => statusOf(m, a.id) === 'idle');
+      const b = await m.createThread({ channelId: 'general', options: opts, text: 'b1' });
+      await waitFor(() => statusOf(m, b.id) === 'idle');
+      expect(m.list().find((t) => t.id === a.id)?.engineSessionId).toBe('shared-session');
+      expect(m.list().find((t) => t.id === b.id)?.engineSessionId).toBeNull();
+      expect(errors).toHaveBeenCalledWith('[sdd-studio] session manager:', expect.objectContaining({ message: expect.stringContaining('already belongs to another thread') }));
+      errors.mockRestore();
+    });
+
+    it('keeps a null session when the engine fails before init and does not resume next turn (CE-01)', async () => {
+      const inputs: EngineTurnInput[] = [];
+      const failing: AgentEngine = {
+        name: 'failing',
+        provider: 'claude' as const,
+        startTurn: (input) => {
+          inputs.push(input);
+          return { done: Promise.reject(new Error('boom')), interrupt: async () => {} };
+        },
+      };
+      const { m } = await manager(failing);
+      const t = await m.createThread({ channelId: 'general', options: opts, text: 'uno' });
+      await waitFor(() => statusOf(m, t.id) === 'error');
+      expect(m.list().find((x) => x.id === t.id)?.engineSessionId).toBeNull();
+      await m.send(t.id, { text: 'dos' });
+      await waitFor(() => inputs.length === 2);
+      expect(inputs.map((i) => i.resumeSessionId)).toEqual([null, null]);
+    });
+
+    it('broadcasts thread.updated carrying the session id once it is known', async () => {
+      const { m } = await manager(idleEngine([], (input) => `sess-of-${input.threadId}`));
+      const t = await m.createThread({ channelId: 'general', options: opts, text: 'uno' });
+      await waitFor(() => threadUpdates(t.id).some((info) => info.engineSessionId === `sess-of-${t.id}`));
+      expect(threadUpdates(t.id)[0]?.engineSessionId).toBeNull();
+    });
+
+    it('passes the stable prefix to the engine on every turn, also when resuming', async () => {
+      const inputs: EngineTurnInput[] = [];
+      const { m } = await manager(idleEngine(inputs, (input) => `sess-of-${input.threadId}`), undefined, { stablePrefix: () => 'PREFIX' });
+      const t = await m.createThread({ channelId: 'general', options: opts, text: 'uno' });
+      await waitFor(() => statusOf(m, t.id) === 'idle');
+      await m.send(t.id, { text: 'dos' });
+      await waitFor(() => inputs.length === 2);
+      expect(inputs.map((i) => i.systemPrefix)).toEqual(['PREFIX', 'PREFIX']);
+      expect(inputs[1]?.resumeSessionId).toBe(`sess-of-${t.id}`);
+    });
+
+    it('omits the system prefix when there is none', async () => {
+      const inputs: EngineTurnInput[] = [];
+      const { m } = await manager(idleEngine(inputs, () => null), undefined, { stablePrefix: () => '' });
+      await m.createThread({ channelId: 'general', options: opts, text: 'uno' });
+      await waitFor(() => inputs.length === 1);
+      expect('systemPrefix' in (inputs[0] as object)).toBe(false);
+    });
   });
 
   it('applies option changes without touching the agent', async () => {
