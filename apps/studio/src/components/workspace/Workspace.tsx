@@ -3,10 +3,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { useT } from '@/lib/i18n/i18n';
 import { usePanelState } from '@/lib/use-panel-state';
+import { draftKey } from '@/lib/store/state';
+import type { PreparedConversation } from '@/lib/auto-conversation';
 import { useBridge } from '../BridgeProvider';
 import { Composer } from './Composer';
 import { ChannelView } from './ChannelView';
 import { PanelRail } from './PanelRail';
+import { PreparedConversations } from './PreparedConversations';
 import { RightPanel } from './RightPanel';
 import { RunOutput } from './RunOutput';
 import { Sidebar } from './Sidebar';
@@ -40,6 +43,11 @@ export function Workspace({ selectedChannelId, newConversationSignal = 0 }: Work
     if (view.threadId) store.getState().selectThread(view.threadId);
   }, [store, view.threadId]);
 
+  const openPrepared = (prepared: PreparedConversation, briefing: string) => {
+    store.getState().openPrepared(prepared.id);
+    store.getState().setDraftText(draftKey(prepared.channelId, null), briefing);
+    setView({ channelId: prepared.channelId, threadId: null });
+  };
   const startNewConversation = () => setView((v) => ({ channelId: v.channelId, threadId: null }));
   const lastSignal = useRef(newConversationSignal);
   useEffect(() => {
@@ -74,9 +82,10 @@ export function Workspace({ selectedChannelId, newConversationSignal = 0 }: Work
           onNewConversation={startNewConversation}
         />
       )}
-      <main className="min-h-0 min-w-0 overflow-hidden">
+      <main className="relative min-h-0 min-w-0 overflow-hidden">
+        <PreparedConversations onOpen={openPrepared} />
         {view.threadId ? (
-          <ThreadView key={view.threadId} threadId={view.threadId} onBack={() => setView({ ...view, threadId: null })} composer={composer} />
+          <ThreadView key={view.threadId} threadId={view.threadId} onBack={() => setView({ ...view, threadId: null })} composer={composer} onNewConversation={startNewConversation} />
         ) : (
           <ChannelView channelId={view.channelId} onOpenThread={(threadId) => setView({ ...view, threadId })} composer={composer} />
         )}

@@ -79,8 +79,8 @@ export function Sidebar({ view, onSelectChannel, onOpenThread, onNewConversation
   const presence = useStudio((s) => s.presence);
   const threads = useStudio((s) => s.threads);
   const tree = useMemo(
-    () => buildNavTree(snapshot, Object.values(threads).flatMap((t) => (t.info ? [t.info] : [])), view),
-    [snapshot, threads, view],
+    () => buildNavTree(snapshot, Object.values(threads).flatMap((t) => (t.info ? [t.info] : [])), view, presence),
+    [snapshot, threads, view, presence],
   );
   const welcome = connection.status === 'open' ? connection.welcome : null;
   return (

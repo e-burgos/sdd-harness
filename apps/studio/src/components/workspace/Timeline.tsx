@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import type { SessionStatus } from '@sdd-studio/protocol';
+import type { QuestionAnswer, SessionStatus } from '@sdd-studio/protocol';
 import { Check, ChevronRight, Loader2, Scissors, Wrench, X } from 'lucide-react';
 import { agentMeta } from '@/lib/agents';
 import { formatCost, formatTokens } from '@/lib/format';
@@ -13,8 +13,16 @@ import { AgentAvatar } from './AgentAvatar';
 import { AttachmentList } from './AttachmentView';
 import { ApprovalCard, type RespondFn } from './ApprovalCard';
 import { Markdown } from './Markdown';
+import { QuestionForm } from './QuestionForm';
 
-export function Timeline({ items, status, onRespond }: { items: TimelineItem[]; status?: SessionStatus; onRespond: (approvalId: string, ...args: Parameters<RespondFn>) => Promise<unknown> }) {
+interface TimelineProps {
+  items: TimelineItem[];
+  status?: SessionStatus;
+  onRespond: (approvalId: string, ...args: Parameters<RespondFn>) => Promise<unknown>;
+  onAnswerQuestion?: (questionId: string, answers: QuestionAnswer[], decline: boolean) => Promise<unknown>;
+}
+
+export function Timeline({ items, status, onRespond, onAnswerQuestion }: TimelineProps) {
   const { t } = useT();
   const lastMessageId = useMemo(() => items.filter((i) => i.kind === 'message').at(-1)?.id, [items]);
   const blocks = useMemo(() => groupTimeline(items), [items]);
@@ -105,6 +113,12 @@ export function Timeline({ items, status, onRespond }: { items: TimelineItem[]; 
             return (
               <li key={item.id} className="min-w-0 pl-11">
                 <ApprovalCard item={item} onRespond={(...args) => onRespond(item.id, ...args)} />
+              </li>
+            );
+          case 'question':
+            return (
+              <li key={item.id} className="min-w-0 pl-11">
+                <QuestionForm item={item} onAnswer={(answers, decline) => onAnswerQuestion?.(item.id, answers, decline) ?? Promise.resolve()} />
               </li>
             );
           case 'subagent':

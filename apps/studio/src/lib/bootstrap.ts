@@ -15,8 +15,9 @@ export async function openThread(client: Requester, store: StudioStore, threadId
   store.getState().beginSync(threadId);
   const sinceSeq = (store.getState().threads[threadId]?.lastSeq ?? -1) + 1;
   const includeDocumentTouched = client.supports?.('document-touched') === true;
+  const includeQuestions = client.supports?.('questions') === true;
   const entries = History.parse(
-    await client.request({ cmd: 'thread.history', threadId, sinceSeq, ...(includeDocumentTouched ? { includeDocumentTouched } : {}) }),
+    await client.request({ cmd: 'thread.history', threadId, sinceSeq, ...(includeDocumentTouched ? { includeDocumentTouched } : {}), ...(includeQuestions ? { includeQuestions } : {}) }),
   );
   store.getState().loadHistory(threadId, entries);
 }

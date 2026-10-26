@@ -7,6 +7,7 @@ import { useT } from '@/lib/i18n/i18n';
 import { useStickToBottom } from '@/lib/use-stick-to-bottom';
 import { useBridge, useStudio } from '../BridgeProvider';
 import { ActivityIndicator, INDICATED_STATUSES } from './ActivityIndicator';
+import { ContextMeter } from './ContextMeter';
 import { StatusBadge } from './StatusBadge';
 import { ThreadLinkPicker } from './ThreadLinkPicker';
 import { Timeline } from './Timeline';
@@ -15,7 +16,7 @@ const BUSY = new Set(['running', 'waiting-approval', 'queued']);
 const msg = (e: unknown) => (e instanceof Error ? e.message : String(e));
 const ring = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400';
 
-export function ThreadView({ threadId, onBack, composer }: { threadId: string; onBack(): void; composer: ReactNode }) {
+export function ThreadView({ threadId, onBack, composer, onNewConversation }: { threadId: string; onBack(): void; composer: ReactNode; onNewConversation?(): void }) {
   const { t } = useT();
   const { client, store, connection } = useBridge();
   const thread = useStudio((s) => s.threads[threadId]);
@@ -57,6 +58,7 @@ export function ThreadView({ threadId, onBack, composer }: { threadId: string; o
         </button>
         <h1 className="min-w-0 flex-1 truncate text-base font-semibold">{info?.title ?? '…'}</h1>
         <ThreadLinkPicker threadId={threadId} />
+        {info && <ContextMeter usage={info.contextUsage} onNewConversation={onNewConversation} />}
         {info && <StatusBadge status={info.status} />}
         {info && BUSY.has(info.status) && (
           <button
@@ -89,6 +91,7 @@ export function ThreadView({ threadId, onBack, composer }: { threadId: string; o
               onRespond={(approvalId, decision, scope, reason) =>
                 client.request({ cmd: 'approval.respond', approvalId, decision, scope, ...(reason ? { reason } : {}) })
               }
+              onAnswerQuestion={(questionId, answers, decline) => client.request({ cmd: 'question.answer', questionId, answers, decline })}
             />
             <div className="mt-2 flex h-6 items-center gap-2 pl-11 text-xs text-ink-300" data-testid="thread-activity">
               <ActivityIndicator status={info?.status ?? null} placement="thread" />

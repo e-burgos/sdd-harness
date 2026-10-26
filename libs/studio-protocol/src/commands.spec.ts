@@ -8,6 +8,25 @@ describe('ClientCommand', () => {
     const cmd = { ...base, cmd: 'thread.create', channelId: 'general', options: defaultThreadOptions(), text: 'hola' };
     expect(ClientCommand.parse(cmd)).toEqual({ ...cmd, attachments: [], refs: { agents: [], skills: [] } });
   });
+  it('parses question.answer with answers or as a decline', () => {
+    const answered = { ...base, cmd: 'question.answer', questionId: 'q1', answers: [{ question: '¿Cuál?', values: ['lite', 'full'] }] };
+    expect(ClientCommand.parse(answered)).toEqual({ ...answered, decline: false });
+    expect(ClientCommand.parse({ ...base, cmd: 'question.answer', questionId: 'q1', decline: true })).toEqual({ ...base, cmd: 'question.answer', questionId: 'q1', answers: [], decline: true });
+  });
+  it('rejects a question.answer with empty values or without questionId', () => {
+    expect(ClientCommand.safeParse({ ...base, cmd: 'question.answer', questionId: 'q1', answers: [{ question: 'a', values: [] }] }).success).toBe(false);
+    expect(ClientCommand.safeParse({ ...base, cmd: 'question.answer', answers: [] }).success).toBe(false);
+  });
+  it('parses profile.set only for team or solo', () => {
+    expect(ClientCommand.parse({ ...base, cmd: 'profile.set', profile: 'solo' })).toEqual({ ...base, cmd: 'profile.set', profile: 'solo' });
+    expect(ClientCommand.safeParse({ ...base, cmd: 'profile.set', profile: 'duo' }).success).toBe(false);
+    expect(ClientCommand.safeParse({ ...base, cmd: 'profile.set' }).success).toBe(false);
+  });
+  it('parses thread.history with questions opt-in defaulting to false', () => {
+    const base2 = { ...base, cmd: 'thread.history', threadId: 't1', sinceSeq: 0 };
+    expect(ClientCommand.parse(base2)).toMatchObject({ includeDocumentTouched: false, includeQuestions: false });
+    expect(ClientCommand.parse({ ...base2, includeQuestions: true })).toMatchObject({ includeQuestions: true });
+  });
   it('rejects unsafe or too many command.run args', () => {
     for (const args of [['a b'], ['a;b'], ['$(x)'], ['../x/..', 'a', 'b', 'c', 'd']]) {
       expect(ClientCommand.safeParse({ ...base, cmd: 'command.run', name: 'gate', args }).success).toBe(false);
@@ -113,7 +132,7 @@ describe('pending, link, search and attachment commands', () => {
   });
   it('thread.history parses a missing includeDocumentTouched to false', () => {
     const cmd = { ...base, cmd: 'thread.history', threadId: 't', sinceSeq: 0 };
-    expect(ClientCommand.parse(cmd)).toEqual({ ...cmd, includeDocumentTouched: false });
+    expect(ClientCommand.parse(cmd)).toEqual({ ...cmd, includeDocumentTouched: false, includeQuestions: false });
     expect(ClientCommand.parse({ ...cmd, includeDocumentTouched: true })).toMatchObject({ includeDocumentTouched: true });
     expect(ClientCommand.safeParse({ ...cmd, includeDocumentTouched: 'yes' }).success).toBe(false);
   });

@@ -101,6 +101,12 @@ export const ThreadLink = z.object({
 });
 export type ThreadLink = z.infer<typeof ThreadLink>;
 
+export const ContextUsage = z.object({
+  usedTokens: z.number().int().nonnegative(),
+  maxTokens: z.number().int().positive(),
+});
+export type ContextUsage = z.infer<typeof ContextUsage>;
+
 export const ThreadInfo = z.object({
   id: z.string().min(1),
   channelId: ChannelId,
@@ -115,6 +121,7 @@ export const ThreadInfo = z.object({
   engineSessionId: EngineSessionId.nullable().optional(),
   provider: ProviderId.optional(),
   sessionTitle: z.string().max(300).nullable().optional().catch(null),
+  contextUsage: ContextUsage.nullable().optional().catch(null),
 });
 export type ThreadInfo = z.infer<typeof ThreadInfo>;
 
@@ -153,3 +160,32 @@ export const dmAgentOfChannel = (channelId: string): string | null =>
 export function defaultThreadOptions(agent: string = DEFAULT_AGENT): ThreadOptions {
   return { agent, model: 'kit', effort: null, permissionMode: 'default' };
 }
+
+export const MAX_QUESTIONS = 4;
+export const MAX_QUESTION_OPTIONS = 8;
+
+export const QuestionOption = z.object({
+  label: z.string().min(1).max(200),
+  description: z.string().max(1000).optional(),
+});
+export type QuestionOption = z.infer<typeof QuestionOption>;
+
+export const Question = z.object({
+  question: z.string().min(1).max(1000),
+  header: z.string().max(60).optional(),
+  options: z.array(QuestionOption).max(MAX_QUESTION_OPTIONS),
+  multiSelect: z.boolean(),
+});
+export type Question = z.infer<typeof Question>;
+
+export const QuestionAnswer = z.object({
+  question: z.string().min(1).max(1000),
+  values: z.array(z.string().min(1).max(2000)).min(1).max(MAX_QUESTION_OPTIONS),
+});
+export type QuestionAnswer = z.infer<typeof QuestionAnswer>;
+
+export const DevProfile = z.enum(['team', 'solo']);
+export type DevProfile = z.infer<typeof DevProfile>;
+
+export const FlowChoice = z.enum(['auto', 'lite', 'full']);
+export type FlowChoice = z.infer<typeof FlowChoice>;

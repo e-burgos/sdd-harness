@@ -51,6 +51,17 @@ export function pickSessionTitle(
   return summary && summary !== first ? summary : null;
 }
 
+const CONTEXT_USAGE_TIMEOUT_MS = 2_000;
+
+const withTimeout = <T,>(work: Promise<T>, ms: number): Promise<T> =>
+  new Promise<T>((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('timeout')), ms);
+    work.then(
+      (value) => (clearTimeout(timer), resolve(value)),
+      (error) => (clearTimeout(timer), reject(error)),
+    );
+  });
+
 export const TRACKED_TOOLS: ReadonlySet<string> = new Set(['Bash', 'Write', 'Edit', 'MultiEdit', 'NotebookEdit']);
 
 export function buildQueryOptions(
@@ -239,11 +250,22 @@ export class ClaudeAgentSdkEngine implements AgentEngine {
             else cb.cancelTool?.(toolUseId);
           }
           return decision.behavior === 'allow'
-            ? { behavior: 'allow', updatedInput: toolInput }
+            ? { behavior: 'allow', updatedInput: decision.updatedInput ?? toolInput }
             : { behavior: 'deny', message: decision.message };
         },
       }),
     });
+    const reportContextUsage = async (): Promise<void> => {
+      if (!cb.onContextUsage) return;
+      try {
+        const usage = await withTimeout(q.getContextUsage({ detail: 'summary' }), CONTEXT_USAGE_TIMEOUT_MS);
+        const usedTokens = Math.round(usage.totalTokens);
+        const maxTokens = Math.round(usage.maxTokens);
+        if (Number.isFinite(usedTokens) && Number.isFinite(maxTokens) && usedTokens >= 0 && maxTokens > 0) cb.onContextUsage({ usedTokens, maxTokens });
+      } catch {
+        // The meter is best effort: a missing reading never fails the turn.
+      }
+    };
     const deliverOrClose = async (result: SdkMessageLike): Promise<void> => {
       if (interrupted || mapper.sawError) {
         channel.end();
@@ -269,7 +291,10 @@ export class ClaudeAgentSdkEngine implements AgentEngine {
             cb.onSessionId(msg.session_id);
           }
           emitAll(mapper.mapMessage(msg));
-          if (msg.type === 'result') await deliverOrClose(msg);
+          if (msg.type === 'result') {
+            await reportContextUsage();
+            await deliverOrClose(msg);
+          }
         }
       } catch (error) {
         // The real iterator throws after an interrupt or an error result; that is already reported as events.

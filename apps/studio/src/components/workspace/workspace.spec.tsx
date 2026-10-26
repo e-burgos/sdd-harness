@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import type { ThreadInfo } from '@sdd-studio/protocol';
 import { I18nProvider } from '@/lib/i18n/i18n';
 import { createStudioStore } from '@/lib/store/store';
@@ -14,6 +14,7 @@ const info = (id: string): ThreadInfo => ({
 
 function mount(newConversationSignal = 0) {
   const store = createStudioStore();
+  store.getState().setSnapshot({ project: 'p', profile: 'team', kitVersion: null, gateMode: 'block', pricing: null, stale: [], skills: [], agents: [], specs: [], fixes: [], cycles: [] } as never);
   store.getState().setThreads([info('t1'), info('t2')]);
   const value = {
     client: { request: vi.fn().mockResolvedValue({}), supports: () => false },
@@ -31,7 +32,7 @@ function mount(newConversationSignal = 0) {
     </I18nProvider>
   );
   const utils = render(ui(newConversationSignal));
-  return { ...utils, signalNewConversation: (signal: number) => utils.rerender(ui(signal)) };
+  return { ...utils, store, signalNewConversation: (signal: number) => utils.rerender(ui(signal)) };
 }
 
 describe('Workspace layout', () => {
@@ -111,5 +112,18 @@ describe('Workspace layout', () => {
       mount();
       expect(screen.getByRole('navigation')).toBeInTheDocument();
     });
+  });
+});
+
+describe('Workspace prepared conversation', () => {
+  beforeEach(() => window.localStorage.removeItem(PANEL_STATE_KEY));
+
+  it('opens the new cycle conversation in its channel with the briefing ready to send', async () => {
+    const { store } = mount();
+    act(() => store.getState().receive({ kind: 'bot.event', channelId: 'spec:spec-a', botKind: 'cycle.opened', payload: { specId: 'spec-a', cycle: 'cycle-01' } } as never));
+    fireEvent.click(screen.getByRole('button', { name: 'Abrir' }));
+    const box = await screen.findByPlaceholderText('Escribí un mensaje… (/ para comandos)');
+    expect((box as HTMLTextAreaElement).value).toContain('Conversación nueva para spec-a, cycle-01.');
+    expect((box as HTMLTextAreaElement).value).toContain('pnpm sdd:gate spec-a cycle-01');
   });
 });

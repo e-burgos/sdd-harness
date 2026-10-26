@@ -19,10 +19,20 @@ describe('ThreadEvent', () => {
       { type: 'approval.requested', approvalId: 'p1', author, tool: 'Bash', summary: '$ ls', gateWarning: 'w' },
       { type: 'approval.requested', approvalId: 'p2', author, tool: 'Bash', summary: '$ ls', input: '{"command":"ls"}', inputTruncated: true },
       { type: 'approval.resolved', approvalId: 'p1', decision: 'deny', reason: 'no' },
+      { type: 'question.requested', questionId: 'q1', author, questions: [{ question: '¿Cuál?', header: 'Modo', options: [{ label: 'lite', description: 'un actor' }, { label: 'full' }], multiSelect: false }] },
+      { type: 'question.resolved', questionId: 'q1', outcome: 'answered', answers: [{ question: '¿Cuál?', values: ['lite'] }] },
+      { type: 'question.resolved', questionId: 'q2', outcome: 'cancelled' },
       { type: 'turn.end', usage: { model: 'claude-haiku', effort: null, tokensIn: 1, tokensOut: 2, costUsd: 0.01 } },
       { type: 'session.status', status: 'error', error: { code: 'x', message: 'y' } },
     ];
     for (const e of events) expect(ThreadEvent.parse(e)).toEqual(e);
+  });
+  it('rejects a question without questions, with too many, or with an unknown outcome', () => {
+    const base = { type: 'question.requested', questionId: 'q', author };
+    const question = { question: 'a', options: [], multiSelect: false };
+    expect(ThreadEvent.safeParse({ ...base, questions: [] }).success).toBe(false);
+    expect(ThreadEvent.safeParse({ ...base, questions: Array(5).fill(question) }).success).toBe(false);
+    expect(ThreadEvent.safeParse({ type: 'question.resolved', questionId: 'q', outcome: 'maybe' }).success).toBe(false);
   });
   it('rejects unknown types and negative tokens', () => {
     expect(ThreadEvent.safeParse({ type: 'nope' }).success).toBe(false);

@@ -4,6 +4,7 @@ import {
   dmAgentOfChannel,
   specIdOfChannel,
   type FixSummary,
+  type Presence,
   type SessionStatus,
   type ThreadInfo,
   type WorkspaceSnapshot,
@@ -29,6 +30,8 @@ export interface NavThread {
   pendingCount: number;
   lastActivity: string;
   selected: boolean;
+  workingAgents: string[];
+  tool: string | null;
 }
 
 export interface NavNode {
@@ -81,7 +84,15 @@ function draft(init: Pick<NavNode, 'id' | 'kind' | 'label'> & Partial<Omit<NavNo
   };
 }
 
-function finalize(d: Draft, view: NavView, keepOrder = false): NavNode {
+const threadIdsByNode = new WeakMap<NavNode, Set<string>>();
+
+function workingOn(threadId: string, owner: string, presence: Presence[]): { workingAgents: string[]; tool: string | null } {
+  const active = presence.filter((p) => p.threadId === threadId && (p.state === 'working' || p.state === 'waiting'));
+  const agents = [...new Set(active.map((p) => p.agent))].sort((a, b) => Number(b === owner) - Number(a === owner));
+  return { workingAgents: agents, tool: active.find((p) => p.tool !== null)?.tool ?? null };
+}
+
+function finalize(d: Draft, view: NavView, presence: Presence[], keepOrder = false): NavNode {
   const node = d.node;
   node.threads = (keepOrder ? d.infos : [...d.infos].sort(byRecency)).map((i) => ({
     id: i.id,
@@ -92,6 +103,7 @@ function finalize(d: Draft, view: NavView, keepOrder = false): NavNode {
     pendingCount: i.pendingCount,
     lastActivity: i.lastActivity,
     selected: view.threadId === i.id,
+    ...workingOn(i.id, i.agent, presence),
   }));
   node.selected = node.channelId !== null && view.threadId === null && view.channelId === node.channelId;
   node.containsSelection =
@@ -99,7 +111,10 @@ function finalize(d: Draft, view: NavView, keepOrder = false): NavNode {
     node.threads.some((t) => t.selected) ||
     node.children.some((c) => c.containsSelection);
   node.needsAttention = node.threads.some((t) => t.status === 'waiting-approval') || node.children.some((c) => c.needsAttention);
-  node.threadCount = node.threads.length + node.children.reduce((n, c) => n + c.threadCount, 0);
+  const ids = new Set(node.threads.map((t) => t.id));
+  for (const child of node.children) for (const id of threadIdsByNode.get(child) ?? []) ids.add(id);
+  threadIdsByNode.set(node, ids);
+  node.threadCount = ids.size;
   return node;
 }
 
@@ -115,7 +130,7 @@ function byClosedRecency(a: FixSummary, b: FixSummary) {
   );
 }
 
-export function buildNavTree(snapshot: WorkspaceSnapshot | null, threads: ThreadInfo[], view: NavView): NavSection[] {
+export function buildNavTree(snapshot: WorkspaceSnapshot | null, threads: ThreadInfo[], view: NavView, presence: Presence[] = []): NavSection[] {
   const channelDrafts = new Map<string, Draft>();
   const dmDrafts = new Map<string, Draft>();
   const specDrafts = new Map<string, { spec: Draft; none: Draft; cycles: Map<string, Draft> }>();
@@ -204,7 +219,7 @@ export function buildNavTree(snapshot: WorkspaceSnapshot | null, threads: Thread
     const d = draft({ id: `section:${key}`, kind: 'section', label: key });
     d.node.children = children;
     d.infos = rows;
-    const node = finalize(d, view, key === 'active') as NavSection;
+    const node = finalize(d, view, presence, key === 'active') as NavSection;
     node.key = key;
     if (key === 'active') node.threadCount = rows.length;
     sections.push(node);
@@ -224,7 +239,7 @@ export function buildNavTree(snapshot: WorkspaceSnapshot | null, threads: Thread
     'channels',
     [...channelDrafts.values()]
       .sort((a, b) => channelOrder(a.node.channelId ?? '') - channelOrder(b.node.channelId ?? '') || a.node.label.localeCompare(b.node.label))
-      .map((d) => finalize(d, view)),
+      .map((d) => finalize(d, view, presence)),
   );
 
   const specChildren = [...specDrafts.entries()]
@@ -232,10 +247,10 @@ export function buildNavTree(snapshot: WorkspaceSnapshot | null, threads: Thread
     .map(([, entry]) => {
       const cycles = [...entry.cycles.values()]
         .sort((a, b) => cycleNumber(b.node.label) - cycleNumber(a.node.label))
-        .map((d) => finalize(d, view));
-      const none = entry.none.infos.length > 0 ? [finalize(entry.none, view)] : [];
+        .map((d) => finalize(d, view, presence));
+      const none = entry.none.infos.length > 0 ? [finalize(entry.none, view, presence)] : [];
       entry.spec.node.children = [...cycles, ...none];
-      return finalize(entry.spec, view);
+      return finalize(entry.spec, view, presence);
     });
   section('specs', specChildren);
 
@@ -254,17 +269,17 @@ export function buildNavTree(snapshot: WorkspaceSnapshot | null, threads: Thread
   const visibleClosed = closed.filter((d) => knownFixes.has(d.node.label)).slice(0, VISIBLE_CLOSED_FIXES);
   const visibleSet = new Set(visibleClosed);
   const older = closed.filter((d) => !visibleSet.has(d) && d.infos.length > 0);
-  const fixChildren = [...open, ...visibleClosed].map((d) => finalize(d, view));
+  const fixChildren = [...open, ...visibleClosed].map((d) => finalize(d, view, presence));
   if (older.length > 0) {
     const olderDraft = draft({ id: 'fixes:older', kind: 'fixes-older', label: 'older', defaultCollapsed: true });
-    olderDraft.node.children = older.map((d) => finalize(d, view));
-    fixChildren.push(finalize(olderDraft, view));
+    olderDraft.node.children = older.map((d) => finalize(d, view, presence));
+    fixChildren.push(finalize(olderDraft, view, presence));
   }
   section('fixes', fixChildren);
 
   section(
     'agents',
-    [...dmDrafts.values()].sort((a, b) => a.node.label.localeCompare(b.node.label)).map((d) => finalize(d, view)),
+    [...dmDrafts.values()].sort((a, b) => a.node.label.localeCompare(b.node.label)).map((d) => finalize(d, view, presence)),
   );
 
   return sections;

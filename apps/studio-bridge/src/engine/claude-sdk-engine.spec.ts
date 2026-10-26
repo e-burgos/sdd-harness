@@ -237,6 +237,11 @@ describe('ClaudeAgentSdkEngine', () => {
       expect(asked[0]?.signal).toBe(sdkSignal);
       expect(asked[0]?.req.toolUseId).toBe('tu1');
     });
+    it('allow with updatedInput hands the answers back to the SDK', async () => {
+      const updatedInput = { questions: [], answers: { 'Which mode?': 'lite' } };
+      const { result } = await run({ behavior: 'allow', updatedInput }, 'tu1');
+      expect(result).toEqual({ behavior: 'allow', updatedInput });
+    });
     it('deny carries the callback message', async () => {
       const { result } = await run({ behavior: 'deny', message: 'nope' }, 'tu1');
       expect(result).toEqual({ behavior: 'deny', message: 'nope' });
@@ -618,5 +623,55 @@ describe('tool lifecycle hooks', () => {
       expect(calls).toContain('cancel:tu-9');
       expect(calls).not.toContain('rebase:tu-9');
     });
+  });
+});
+
+describe('ClaudeAgentSdkEngine context usage', () => {
+  const resultMessage = { type: 'result', subtype: 'success', is_error: false, total_cost_usd: 0, usage: {} };
+  const callbacks = (over: Partial<EngineCallbacks> = {}): EngineCallbacks => ({
+    emit: () => {}, onSessionId: () => {}, judgeTool: () => ({ kind: 'allow' }), requestApproval: async () => ({ behavior: 'allow' }), ...noPending, ...over,
+  });
+  const queryWith = (getContextUsage: unknown): QueryFn => ({ prompt }) => {
+    void (async () => { for await (const message of prompt) void message; })();
+    async function* script() {
+      await new Promise((resolve) => setTimeout(resolve, 0));
+      yield resultMessage;
+    }
+    return Object.assign(script(), { interrupt: async () => undefined, getContextUsage }) as unknown as Query;
+  };
+
+  it('reports the summary reading of the SDK once the turn ends', async () => {
+    const getContextUsage = vi.fn(async () => ({ totalTokens: 41_250.4, maxTokens: 200_000 }));
+    const reported: unknown[] = [];
+    await new ClaudeAgentSdkEngine(queryWith(getContextUsage)).startTurn(input(), callbacks({ onContextUsage: (usage) => reported.push(usage) })).done;
+    expect(getContextUsage).toHaveBeenCalledWith({ detail: 'summary' });
+    expect(reported).toEqual([{ usedTokens: 41_250, maxTokens: 200_000 }]);
+  });
+
+  it('keeps the turn healthy when the reading fails, is missing or is nonsense', async () => {
+    for (const getContextUsage of [vi.fn(async () => { throw new Error('boom'); }), undefined, vi.fn(async () => ({ totalTokens: 10, maxTokens: 0 })), vi.fn(async () => ({ totalTokens: Number.NaN, maxTokens: 1 }))]) {
+      const reported: unknown[] = [];
+      await new ClaudeAgentSdkEngine(queryWith(getContextUsage)).startTurn(input(), callbacks({ onContextUsage: (usage) => reported.push(usage) })).done;
+      expect(reported).toEqual([]);
+    }
+  });
+
+  it('does not wait forever for a reading that never arrives', async () => {
+    vi.useFakeTimers();
+    try {
+      const reported: unknown[] = [];
+      const turn = new ClaudeAgentSdkEngine(queryWith(() => new Promise(() => {}))).startTurn(input(), callbacks({ onContextUsage: (usage) => reported.push(usage) }));
+      await vi.advanceTimersByTimeAsync(2_500);
+      await turn.done;
+      expect(reported).toEqual([]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('does not ask the SDK when nobody listens', async () => {
+    const getContextUsage = vi.fn(async () => ({ totalTokens: 1, maxTokens: 2 }));
+    await new ClaudeAgentSdkEngine(queryWith(getContextUsage)).startTurn(input(), callbacks()).done;
+    expect(getContextUsage).not.toHaveBeenCalled();
   });
 });

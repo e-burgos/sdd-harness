@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { AttachmentMime, AttachmentUpload, PromptRefs, Sha256 } from './attachments';
-import { AuthPreference, ChannelId, ThreadLinkRef, ThreadLinkTarget, ThreadOptions } from './domain';
+import { AuthPreference, ChannelId, DevProfile, MAX_QUESTIONS, QuestionAnswer, ThreadLinkRef, ThreadLinkTarget, ThreadOptions } from './domain';
 import { FILE_SEARCH_MAX, MAX_ATTACHMENTS } from './limits';
 
 const Id = z.string().min(1).max(64);
@@ -52,6 +52,7 @@ export const ClientCommand = z.discriminatedUnion('cmd', [
     threadId: Id,
     sinceSeq: z.number().int().nonnegative(),
     includeDocumentTouched: z.boolean().default(false),
+    includeQuestions: z.boolean().default(false),
   }),
   z.object({ ...cmd('channel.botHistory'), channelId: ChannelId, limit: z.number().int().min(1).max(200) }),
   z.object({
@@ -61,6 +62,13 @@ export const ClientCommand = z.discriminatedUnion('cmd', [
     reason: z.string().max(2000).optional(),
     scope: z.enum(['once', 'thread']),
   }),
+  z.object({
+    ...cmd('question.answer'),
+    questionId: Id,
+    answers: z.array(QuestionAnswer).max(MAX_QUESTIONS).default([]),
+    decline: z.boolean().default(false),
+  }),
+  z.object({ ...cmd('profile.set'), profile: DevProfile }),
   z.object({ ...cmd('command.run'), name: KitCommandName, args: z.array(SafeArg).max(4) }),
   // Held in bridge memory only (never persisted or logged). null = back to ANTHROPIC_API_KEY / local login.
   z.object({ ...cmd('auth.set'), apiKey: z.string().regex(/^\S{20,512}$/).nullable(), mode: AuthPreference.optional() }),

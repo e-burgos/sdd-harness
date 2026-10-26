@@ -5,6 +5,22 @@ const main = { agent: 'sdd-orchestrator', parentToolUseId: null };
 const planner = { agent: 'sdd-planner', parentToolUseId: 't0' };
 const run = (events: [number, ThreadEvent][]): ThreadState => events.reduce((t, [seq, e]) => applyThreadEvent(t, seq, e), emptyThread());
 
+describe('applyThreadEvent questions', () => {
+  const questions = [{ question: '¿Cuál?', options: [{ label: 'lite' }, { label: 'full' }], multiSelect: false }];
+  it('adds a pending question and resolves it with the answers', () => {
+    const asked = run([[0, { type: 'question.requested', questionId: 'q1', author: main, questions }]]);
+    expect(asked.items).toEqual([{ kind: 'question', id: 'q1', seq: 0, author: main, questions, outcome: 'pending' }]);
+    const answers = [{ question: '¿Cuál?', values: ['lite'] }];
+    const done = applyThreadEvent(asked, 1, { type: 'question.resolved', questionId: 'q1', outcome: 'answered', answers });
+    expect(done.items[0]).toMatchObject({ kind: 'question', outcome: 'answered', answers });
+  });
+  it('marks a cancelled question and ignores a resolution for an unknown one', () => {
+    const asked = run([[0, { type: 'question.requested', questionId: 'q1', author: main, questions }]]);
+    expect(applyThreadEvent(asked, 1, { type: 'question.resolved', questionId: 'q1', outcome: 'cancelled' }).items[0]).toMatchObject({ outcome: 'cancelled' });
+    expect(applyThreadEvent(asked, 1, { type: 'question.resolved', questionId: 'zz', outcome: 'cancelled' }).items).toEqual(asked.items);
+  });
+});
+
 describe('applyThreadEvent', () => {
   it('assembles streamed messages', () => {
     const t = run([

@@ -2,6 +2,7 @@ import { appendFile, mkdir, readFile, rename, writeFile } from 'node:fs/promises
 import path from 'node:path';
 import {
   ChannelId,
+  ContextUsage,
   DEFAULT_PROVIDER,
   MAX_PENDING_PER_THREAD,
   ProviderId,
@@ -160,6 +161,9 @@ export class ThreadStore {
       t.link = migrateStoredLink(t.link);
       t.sessionTitle = typeof t.sessionTitle === 'string' && t.sessionTitle.length > 0 ? t.sessionTitle : null;
       t.engineSessionId = typeof t.engineSessionId === 'string' && t.engineSessionId.length > 0 ? t.engineSessionId : null;
+      const context = ContextUsage.safeParse(t.contextUsage);
+      if (context.success) t.contextUsage = context.data;
+      else delete t.contextUsage;
       t.provider = ProviderId.safeParse(t.provider).success ? t.provider : DEFAULT_PROVIDER;
       t.pending = Array.isArray(t.pending) ? t.pending : [];
       delete (t as { pendingCount?: number }).pendingCount;

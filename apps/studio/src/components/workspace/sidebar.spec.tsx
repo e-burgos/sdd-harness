@@ -320,3 +320,29 @@ describe('Sidebar layout', () => {
     }
   });
 });
+
+describe('Sidebar active threads', () => {
+  const renderActive = (threads: ThreadInfo[], presence: SidebarViewProps['presence']) =>
+    render(
+      <I18nProvider initial="es">
+        <SidebarView
+          project="studio fixture" kitVersion="0.16.0" authMode="local-claude-login" connection="open"
+          tree={buildNavTree(snapshot, threads, { channelId: 'general', threadId: null }, presence)}
+          presence={presence} onSelectChannel={vi.fn()} onOpenThread={vi.fn()}
+        />
+      </I18nProvider>,
+    );
+
+  it('names the agent working on an active thread and the tool it runs', () => {
+    renderActive(
+      [thread({ id: 'a1', status: 'running', agent: 'sdd-orchestrator' })],
+      [{ agent: 'sdd-implementor-back', state: 'working', threadId: 'a1', specId: null, tool: 'Edit' }],
+    );
+    expect(screen.getByTestId('active-thread-agents')).toHaveTextContent('Vulcan · trabajando · Edit');
+  });
+
+  it('falls back to the thread owner when presence has nobody on it', () => {
+    renderActive([thread({ id: 'a1', status: 'running', agent: 'sdd-orchestrator' })], []);
+    expect(screen.getByTestId('active-thread-agents')).toHaveTextContent('Clara');
+  });
+});

@@ -120,8 +120,9 @@ function ActiveThreadRow({ thread, h }: { thread: NavThread; h: NavTreeHandlers 
       <ActivityIndicator status={thread.status} placement="row" />
       <span className="flex min-w-0 flex-1 flex-col">
         <span className="truncate">{thread.title}</span>
-        <span className="truncate text-[11px] text-ink-500">
-          {agentMeta(thread.agent).name} · {t(`status.${thread.status}`)}
+        <span className="truncate text-[11px] text-ink-500" data-testid="active-thread-agents">
+          {(thread.workingAgents.length > 0 ? thread.workingAgents : [thread.agent]).map((agent) => agentMeta(agent).name).join(', ')} · {t(`status.${thread.status}`)}
+          {thread.tool && ` · ${thread.tool}`}
         </span>
       </span>
       {thread.pendingCount > 0 && <span className="shrink-0 rounded-full bg-ink-800 px-1.5 text-[10px] text-ink-300">{t('sidebar.pending', { count: thread.pendingCount })}</span>}

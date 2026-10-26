@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { AttachmentRef, PromptRefs } from './attachments';
-import { AlwaysOffer, AlwaysRule, Author, ChannelId, Effort, Presence, SessionStatus, ThreadInfo } from './domain';
+import { AlwaysOffer, AlwaysRule, Author, ChannelId, Effort, MAX_QUESTIONS, Presence, Question, QuestionAnswer, SessionStatus, ThreadInfo } from './domain';
 import { MAX_ATTACHMENTS } from './limits';
 import { Area, WorkspaceSnapshot } from './snapshot';
 
@@ -72,6 +72,18 @@ export const ThreadEvent = z.discriminatedUnion('type', [
     decision: z.enum(['allow', 'deny']),
     reason: z.string().optional(),
     remembered: AlwaysRule.optional(),
+  }),
+  z.object({
+    type: z.literal('question.requested'),
+    questionId: z.string(),
+    author: Author,
+    questions: z.array(Question).min(1).max(MAX_QUESTIONS),
+  }),
+  z.object({
+    type: z.literal('question.resolved'),
+    questionId: z.string(),
+    outcome: z.enum(['answered', 'declined', 'cancelled']),
+    answers: z.array(QuestionAnswer).max(MAX_QUESTIONS).optional(),
   }),
   z.object({ type: z.literal('turn.end'), usage: Usage }),
   z.object({

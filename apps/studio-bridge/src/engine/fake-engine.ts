@@ -13,6 +13,10 @@ const refMarkerOf = (line: string): string | null => {
   return prompt ? `/${prompt[1]}` : null;
 };
 const titleOf = (text: string): string | null => /#title:(\S+)/.exec(text)?.[1]?.replace(/_/g, ' ') ?? null;
+const ctxPercentOf = (text: string): number | null => {
+  const percent = /#ctx:(\d+)/.exec(text)?.[1];
+  return percent === undefined ? null : Math.min(100, Number(percent));
+};
 const stepsOf = (text: string): number => Number(/#steps:(\d+)/.exec(text)?.[1] ?? 0);
 
 /**
@@ -22,6 +26,8 @@ const stepsOf = (text: string): number => Number(/#steps:(\d+)/.exec(text)?.[1] 
  * #mcp, #edit-tool, #bash-git, #bash-git2, #bash-chain (approvals that exercise Always rules),
  * #write-doc (Write that creates or rewrites sdd/specs/spec-dev-001-pagos/cycles/cycle-01/fake-write-doc.md), #bash-doc (Bash that writes fake-bash-doc.md there),
  * #bad-attachment (fails like #fail with 'attachment rejected'),
+ * #ctx:N (reports N percent of a 200000-token context window at the end of every turn),
+ * #ask (AskUserQuestion with one single-select question; echoes the answers it gets back),
  * #title:Some_title (readSessionTitle answers 'Some title' for that session; setSessionTitle changes it later).
  * Echoes append ' [attachments: a, b (missing)]' and ' [refs: @agent /skill]' when the prompt carries them.
  */
@@ -59,11 +65,14 @@ export class FakeEngine implements AgentEngine {
       cb.emit({ type: 'message.delta', messageId, text });
       cb.emit({ type: 'message.end', messageId });
     };
-    const endTurn = () =>
+    const endTurn = () => {
+      const percent = ctxPercentOf(firstText);
+      if (percent !== null) cb.onContextUsage?.({ usedTokens: Math.round((percent / 100) * 200_000), maxTokens: 200_000 });
       cb.emit({
         type: 'turn.end',
         usage: { model: 'fake', effort: input.options.effort, tokensIn: 10, tokensOut: 5, costUsd: 0 },
       });
+    };
     const askAndRun = async (toolName: string, toolInput: Record<string, unknown>, summary: string, isEdit = false) => {
       const toolUseId = `fake-tool-${++this.counter}`;
       const verdict = cb.judgeTool(toolName, toolInput, { author: main, toolUseId });
@@ -142,6 +151,12 @@ export class FakeEngine implements AgentEngine {
       if (marker(firstText, 'edit-tool')) {
         const file = path.join(input.cwd, 'apps', 'y.ts');
         await askAndRun('Edit', { file_path: file, old_string: 'a', new_string: 'b' }, file, true);
+      }
+      if (marker(firstText, 'ask')) {
+        const questions = [{ question: 'Which mode?', header: 'Mode', options: [{ label: 'lite', description: 'one actor' }, { label: 'full', description: 'one role per document' }], multiSelect: false }];
+        const decision = await cb.requestApproval({ toolName: 'AskUserQuestion', input: { questions }, author: main, toolUseId: `fake-tool-${++this.counter}` }, ac.signal);
+        if (stopped) return;
+        say(main, decision.behavior === 'allow' ? `answers: ${JSON.stringify(decision.updatedInput?.answers ?? {})}` : `declined: ${decision.message}`);
       }
       if (marker(firstText, 'write-doc')) await runDocTool('Write', 'fake-write-doc.md');
       if (marker(firstText, 'bash-doc')) await runDocTool('Bash', 'fake-bash-doc.md');

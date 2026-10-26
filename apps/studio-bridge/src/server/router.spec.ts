@@ -1,6 +1,6 @@
 import { AuthState } from '../auth-mode';
 import { BRIDGE_FEATURES, decodeClientMessage, defaultThreadOptions, type ClientCommand, type ServerEvent } from '@sdd-studio/protocol';
-import { writeFile } from 'node:fs/promises';
+import { readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { CommandRunner } from '../commands/runner';
@@ -40,6 +40,27 @@ const cmd = (c: Record<string, unknown>): ClientCommand => {
 };
 
 describe('createHandlers', () => {
+  it('question.answer rejects an unknown question as not-found', async () => {
+    const h = await handlers();
+    await expect(h.handle(cmd({ cmd: 'question.answer', questionId: 'nope', decline: true }))).rejects.toMatchObject({ code: 'not-found' });
+  });
+
+  it('profile.set writes the profile into global.json and returns it', async () => {
+    const h = await handlers();
+    expect(await h.handle(cmd({ cmd: 'profile.set', profile: 'solo' }))).toEqual({ profile: 'solo' });
+    expect(JSON.parse(await readFile(path.join(root, 'sdd', 'global.json'), 'utf8')).profile).toBe('solo');
+  });
+
+  it('profile.set reports a workspace without global.json as not-found', async () => {
+    const h = await handlers();
+    await rm(path.join(root, 'sdd', 'global.json'));
+    await expect(h.handle(cmd({ cmd: 'profile.set', profile: 'team' }))).rejects.toMatchObject({ code: 'not-found' });
+  });
+
+  it('advertises the questions feature in the welcome', async () => {
+    expect((await handlers()).welcome().features).toContain('questions');
+  });
+
   it('builds the welcome from the snapshot', async () => {
     expect((await handlers()).welcome()).toEqual({
       bridgeVersion: '0.1.0', workspace: { root, project: 'studio fixture' }, kitVersion: '0.16.0', authMode: 'local-claude-login',

@@ -4,6 +4,8 @@ import { Clock, Paperclip, Send } from 'lucide-react';
 import {
   DEFAULT_AGENT,
   defaultThreadOptions,
+  type DevProfile,
+  type FlowChoice,
   dmAgentOfChannel,
   specIdOfChannel,
   FileSearchResult as FileSearchResultSchema,
@@ -30,13 +32,17 @@ import { extractRefs, resolveSlash } from '@/lib/composer-refs';
 import { useT } from '@/lib/i18n/i18n';
 import { applyMention, detectMention, type ActiveMention, type MentionItem } from '@/lib/mention';
 import { parseSlash, SAFE_ARG } from '@/lib/slash';
+import { briefingFor } from '@/lib/auto-conversation';
+import { applyFlowChoice, fullExceptionOf, profileOf } from '@/lib/flow-choice';
 import { draftKey } from '@/lib/store/state';
 import { primeAttachmentContent } from '@/lib/use-attachment-content';
 import { useAttachmentDraft } from '@/lib/use-attachment-draft';
 import { useMentionMenu } from '@/lib/use-mention-menu';
 import { useBridge, useStudio } from '../BridgeProvider';
+import { HelpSelect } from '../HelpSelect';
 import { AttachmentTray } from './AttachmentTray';
 import { MentionMenu } from './MentionMenu';
+import { ModeSelectors } from './ModeSelectors';
 import { PendingMessages } from './PendingMessages';
 
 const RunResult = z.object({ runId: z.string().min(1) });
@@ -67,6 +73,7 @@ export interface ComposerViewProps {
   onFiles?(files: File[]): void;
   attachmentTray?(dragging: boolean): ReactNode;
   mentions?: MentionConfig;
+  modes?: ReactNode;
 }
 
 export interface MentionConfig {
@@ -212,11 +219,12 @@ export function ComposerView(p: ComposerViewProps) {
           />
           <div className="flex flex-wrap items-center gap-2 border-t border-ink-800 px-2 py-1.5">
             <label className="sr-only" htmlFor="composer-agent">{t('composer.agent')}</label>
-            <select id="composer-agent" className={select} disabled={p.agentLocked} value={p.options.agent} onChange={(e) => p.onOptionsChange({ agent: e.target.value })}>
+            <HelpSelect help={t('help.composer.agent')} id="composer-agent" className={select} disabled={p.agentLocked} value={p.options.agent} onChange={(e) => p.onOptionsChange({ agent: e.target.value })}>
               {p.agents.map((a) => <option key={a} value={a}>{agentMeta(a).name}</option>)}
-            </select>
+            </HelpSelect>
             <label className="sr-only" htmlFor="composer-model">{t('composer.model')}</label>
-            <select
+            <HelpSelect
+              help={t('help.composer.model')}
               id="composer-model"
               className={select}
               value={p.options.model}
@@ -226,9 +234,10 @@ export function ComposerView(p: ComposerViewProps) {
               }}
             >
               {MODELS.map((m) => <option key={m} value={m}>{m === 'kit' ? t('model.kit') : m}</option>)}
-            </select>
+            </HelpSelect>
             <label className="sr-only" htmlFor="composer-effort">{t('composer.effort')}</label>
-            <select
+            <HelpSelect
+              help={t('help.composer.effort')}
               id="composer-effort"
               className={select}
               disabled={p.options.model === 'kit'}
@@ -237,11 +246,11 @@ export function ComposerView(p: ComposerViewProps) {
             >
               {p.options.model === 'kit' && <option value="">—</option>}
               {EFFORTS.map((x) => <option key={x} value={x}>{x}</option>)}
-            </select>
+            </HelpSelect>
             <label className="sr-only" htmlFor="composer-perm">{t('composer.permission')}</label>
-            <select id="composer-perm" className={select} value={p.options.permissionMode} onChange={(e) => p.onOptionsChange({ permissionMode: e.target.value as PermissionModeChoice })}>
+            <HelpSelect help={t('help.composer.permission')} id="composer-perm" className={select} value={p.options.permissionMode} onChange={(e) => p.onOptionsChange({ permissionMode: e.target.value as PermissionModeChoice })}>
               {PERMS.map((x) => <option key={x} value={x}>{t(`perm.${x}`)}</option>)}
-            </select>
+            </HelpSelect>
             {p.onFiles && (
               <>
                 <input
@@ -281,6 +290,7 @@ export function ComposerView(p: ComposerViewProps) {
             </button>
           </div>
         </div>
+        {p.modes}
         <p data-testid="composer-hints" className="mt-1.5 px-1 text-[11px] text-ink-500">{t('composer.hints')}</p>
       </div>
     </div>
@@ -309,19 +319,30 @@ export function Composer({ channelId, threadId, onThreadCreated }: { channelId: 
     [client, fileSearchEnabled],
   );
   const attachmentDraft = useAttachmentDraft(key);
+  const [flow, setFlow] = useState<FlowChoice>('auto');
+  const [profileError, setProfileError] = useState<string | null>(null);
+  const showModes = threadId === null && dmAgent === null && channelId !== 'fixes';
+  const chosenFlow: FlowChoice = showModes ? flow : 'auto';
+  const changeProfile = (profile: DevProfile) => {
+    setProfileError(null);
+    client.request({ cmd: 'profile.set', profile }).catch((e: unknown) => setProfileError(t('mode.profileError', { message: bridgeErrorText(e, t) })));
+  };
   const options = threadInfo?.options ?? { ...draft, agent: dmAgent ?? draft.agent };
   const agents = useMemo(() => {
     const ids = snapshot?.agents?.map((a) => a.id) ?? [];
     return ids.includes(options.agent) ? ids : [options.agent, ...ids];
   }, [snapshot, options.agent]);
 
+  const opened = useStudio((s) => s.prepared.find((p) => p.id === s.openedPreparedId && p.channelId === channelId) ?? null);
+
   const send = async (text: string, refs: PromptRefs = { agents: [], skills: [] }): Promise<boolean> => {
     if (text.length > MAX_MESSAGE) {
       setError(t('composer.tooLong'));
       return false;
     }
+    const linked = opened && text.startsWith(briefingFor(opened, snapshot).split('\n')[0] ?? '') ? opened : null;
     const command = (attachments: AttachmentUpload[]) =>
-      threadId ? { cmd: 'thread.send' as const, threadId, text, attachments, refs } : { cmd: 'thread.create' as const, channelId, options, text, attachments, refs };
+      threadId ? { cmd: 'thread.send' as const, threadId, text, attachments, refs } : { cmd: 'thread.create' as const, channelId, options, text, attachments, refs, ...(linked && linked.link.kind !== 'none' ? { link: linked.link } : {}) };
     const encoded = attachmentsEnabled ? await attachmentDraft.buildUploads(command) : [];
     const sent = command(encoded.map((e) => e.upload));
     let createdId: string | null = null;
@@ -329,6 +350,7 @@ export function Composer({ channelId, threadId, onThreadCreated }: { channelId: 
     else createdId = ThreadInfo.parse(await client.request(sent)).id;
     store.getState().clearDraft(key);
     encoded.forEach((e) => primeAttachmentContent(client, { sha256: e.sha256, mime: e.upload.mime }, blobOfUpload(e.upload)));
+    if (createdId && linked) store.getState().dismissPrepared(linked.id);
     if (createdId) onThreadCreated(createdId);
     return true;
   };
@@ -342,7 +364,7 @@ export function Composer({ channelId, threadId, onThreadCreated }: { channelId: 
         ? { agentIds: snapshot?.agents.map((a) => a.id) ?? [], skillIds: snapshot?.skills?.map((k) => k.id) ?? [] }
         : { agentIds: [], skillIds: [] };
       const action = text === '' || resolveSlash(text, catalog.skillIds) === 'skill' ? null : parseSlash(text);
-      if (!action) return await send(text, extractRefs(text, catalog));
+      if (!action) return await send(applyFlowChoice(text, chosenFlow), extractRefs(text, catalog));
       if (action.kind === 'error') {
         setError(action.reason === 'unknown' ? t('composer.unknownCommand', { name: action.name }) : t('composer.badArgs', { name: action.name }));
         return false;
@@ -355,7 +377,8 @@ export function Composer({ channelId, threadId, onThreadCreated }: { channelId: 
         return true;
       }
       const file = FileResult.parse(await client.request({ cmd: 'workspace.readFile', path: action.path }));
-      return await send(action.args ? `${file.content}\n\n---\n${action.args}` : file.content);
+      const args = applyFlowChoice(action.args, chosenFlow);
+      return await send(args ? `${file.content}\n\n---\n${args}` : file.content);
     } catch (e) {
       setError(e instanceof FrameBudgetError ? budgetErrorText(e) : bridgeErrorText(e, t));
       return false;
@@ -388,6 +411,19 @@ export function Composer({ channelId, threadId, onThreadCreated }: { channelId: 
       onTextChange={(text) => store.getState().setDraftText(key, text)}
       queueing={threadInfo ? BUSY_STATUSES.has(threadInfo.status) : false}
       tray={threadId ? <PendingMessages threadId={threadId} /> : null}
+      modes={
+        showModes ? (
+          <ModeSelectors
+            profile={profileOf(snapshot)}
+            flow={flow}
+            exception={fullExceptionOf(specIdOfChannel(channelId), snapshot)}
+            canEditProfile={client.supports('profile-set')}
+            profileError={profileError}
+            onProfileChange={changeProfile}
+            onFlowChange={setFlow}
+          />
+        ) : null
+      }
       mentions={{ agents: snapshot?.agents ?? NO_AGENTS, skills: snapshot?.skills ?? NO_SKILLS, catalogEnabled, searchFiles }}
       hasAttachments={attachmentsEnabled && attachmentDraft.attachments.length > 0}
       onFiles={attachmentsEnabled ? (files) => void attachmentDraft.add(files) : undefined}

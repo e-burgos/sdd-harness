@@ -8,6 +8,8 @@ import {
   loadHistory,
   setBotHistory,
   clearDraft,
+  dismissPrepared,
+  openPrepared,
   setDraftAttachments,
   setDraftText,
   setThreads,
@@ -28,6 +30,8 @@ export interface StudioActions {
   setDraftAttachments(key: string, list: DraftAttachment[]): void;
   clearDraft(key: string): void;
   selectThread(threadId: string | null): void;
+  dismissPrepared(id: string): void;
+  openPrepared(id: string): void;
 }
 
 export type StudioStore = StoreApi<StudioState & StudioActions>;
@@ -47,5 +51,7 @@ export function createStudioStore(): StudioStore {
     setDraftAttachments: (key, list) => set((s) => setDraftAttachments(s, key, list)),
     clearDraft: (key) => set((s) => clearDraft(s, key)),
     selectThread: (selectedThreadId) => set({ selectedThreadId }),
+    dismissPrepared: (id) => set((s) => dismissPrepared(s, id)),
+    openPrepared: (id) => set((s) => openPrepared(s, id)),
   }));
 }

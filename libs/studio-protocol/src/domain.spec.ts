@@ -262,3 +262,17 @@ describe('ThreadInfo.sessionTitle', () => {
     expect(parsed.link.targets).toBeUndefined();
   });
 });
+
+describe('ThreadInfo contextUsage', () => {
+  const base = { id: 't', channelId: 'general', title: 'x', agent: 'sdd-planner', options: defaultThreadOptions(), status: 'idle', createdAt: '1', lastActivity: '1', link: { target: { kind: 'none' }, source: 'auto' }, pendingCount: 0 };
+  it('parses a reading, its absence and null', () => {
+    expect(ThreadInfo.parse({ ...base, contextUsage: { usedTokens: 10, maxTokens: 200_000 } }).contextUsage).toEqual({ usedTokens: 10, maxTokens: 200_000 });
+    expect(ThreadInfo.parse(base).contextUsage).toBeUndefined();
+    expect(ThreadInfo.parse({ ...base, contextUsage: null }).contextUsage).toBeNull();
+  });
+  it('degrades an invalid reading to null instead of rejecting the thread', () => {
+    for (const bad of [{ usedTokens: -1, maxTokens: 10 }, { usedTokens: 1, maxTokens: 0 }, { usedTokens: 1 }, 'x']) {
+      expect(ThreadInfo.parse({ ...base, contextUsage: bad }).contextUsage).toBeNull();
+    }
+  });
+});

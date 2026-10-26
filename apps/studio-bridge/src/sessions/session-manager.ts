@@ -1,14 +1,17 @@
 import { randomUUID } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
-import { dmAgentOfChannel, MAX_PENDING_PER_THREAD } from '@sdd-studio/protocol';
+import { z } from 'zod';
+import { dmAgentOfChannel, MAX_PENDING_PER_THREAD, MAX_QUESTIONS, Question } from '@sdd-studio/protocol';
 import type {
   AlwaysOffer,
   AlwaysRule,
   AttachmentRef,
   AttachmentUpload,
+  ContextUsage,
   Presence,
   PromptRefs,
+  QuestionAnswer,
   SendResult,
   ServerEvent,
   SessionStatus,
@@ -123,6 +126,30 @@ interface Live {
   unresolvedPaths: Set<string>;
 }
 
+interface PendingQuestion {
+  threadId: string;
+  questions: Question[];
+  settle: (outcome: QuestionOutcome, answers?: QuestionAnswer[]) => void;
+}
+
+type QuestionOutcome = 'answered' | 'declined' | 'cancelled';
+
+const QUESTIONS_TOOL = 'AskUserQuestion';
+const ParsedQuestions = z.array(Question).min(1).max(MAX_QUESTIONS);
+
+const questionsOf = (input: Record<string, unknown>): Question[] | null => {
+  const parsed = ParsedQuestions.safeParse(input.questions);
+  return parsed.success ? parsed.data : null;
+};
+
+const answerCoversEveryQuestion = (questions: Question[], answers: QuestionAnswer[]): boolean => {
+  if (answers.length !== questions.length) return false;
+  return questions.every((q) => {
+    const matching = answers.filter((a) => a.question === q.question);
+    return matching.length === 1 && (q.multiSelect || matching[0]!.values.length === 1);
+  });
+};
+
 interface PendingApproval {
   threadId: string;
   always: AlwaysOffer;
@@ -145,6 +172,7 @@ const extrasOf = ({ attachments, refs }: AcceptedMessage) => ({
 export class SessionManager {
   private readonly live = new Map<string, Live>();
   private readonly approvals = new Map<string, PendingApproval>();
+  private readonly questions = new Map<string, PendingQuestion>();
   private readonly tracker: PresenceTracker;
   private readonly documents: DocumentChangeTracker;
   private readonly newId: () => string;
@@ -166,10 +194,14 @@ export class SessionManager {
     return this.deps.store.list(channelId).map(toInfo);
   }
 
-  async history(threadId: string, sinceSeq: number, includeDocumentTouched = false): Promise<HistoryEntry[]> {
+  async history(threadId: string, sinceSeq: number, includeDocumentTouched = false, includeQuestions = false): Promise<HistoryEntry[]> {
     this.require(threadId);
     const entries = await this.deps.store.history(threadId, sinceSeq);
-    return includeDocumentTouched ? entries : entries.filter(({ event }) => event.type !== 'document.touched');
+    return entries.filter(({ event }) => {
+      if (event.type === 'document.touched') return includeDocumentTouched;
+      if (event.type === 'question.requested' || event.type === 'question.resolved') return includeQuestions;
+      return true;
+    });
   }
 
   presence(): Presence[] {
@@ -310,6 +342,16 @@ export class SessionManager {
     );
   }
 
+  answerQuestion(questionId: string, answers: QuestionAnswer[], decline: boolean): void {
+    const pending = this.questions.get(questionId);
+    if (!pending) throw new SessionError('not-found', `no pending question ${questionId}`);
+    if (decline) return pending.settle('declined');
+    if (!answerCoversEveryQuestion(pending.questions, answers)) {
+      throw new SessionError('bad-request', 'answers must cover every question exactly once, with one value unless it is multiple choice');
+    }
+    pending.settle('answered', answers);
+  }
+
   private rememberRule(threadId: string, rule: AlwaysRule): void {
     const live = this.liveOf(threadId);
     const key = JSON.stringify(rule);
@@ -327,6 +369,13 @@ export class SessionManager {
       for (const { event } of history) {
         if (event.type === 'approval.requested' && !resolved.has(event.approvalId)) {
           this.emit(thread, { type: 'approval.resolved', approvalId: event.approvalId, decision: 'deny', reason: 'the bridge restarted' });
+        }
+      }
+      const answeredQuestions = new Set<string>();
+      for (const { event } of history) if (event.type === 'question.resolved') answeredQuestions.add(event.questionId);
+      for (const { event } of history) {
+        if (event.type === 'question.requested' && !answeredQuestions.has(event.questionId)) {
+          this.emit(thread, { type: 'question.resolved', questionId: event.questionId, outcome: 'cancelled' });
         }
       }
       this.emit(thread, { type: 'session.status', status: 'interrupted' });
@@ -364,6 +413,13 @@ export class SessionManager {
     for (const pending of [...this.approvals.values()]) {
       if (pending.threadId === threadId) pending.settle({ behavior: 'deny', message });
     }
+    for (const pending of [...this.questions.values()]) {
+      if (pending.threadId === threadId) pending.settle('cancelled');
+    }
+  }
+
+  private hasPendingPrompts(threadId: string): boolean {
+    return [...this.approvals.values(), ...this.questions.values()].some((p) => p.threadId === threadId);
   }
 
   private blocked(thread: StoredThread): boolean {
@@ -594,6 +650,12 @@ export class SessionManager {
       });
   }
 
+  private applyContextUsage(thread: StoredThread, usage: ContextUsage): void {
+    if (thread.contextUsage?.usedTokens === usage.usedTokens && thread.contextUsage.maxTokens === usage.maxTokens) return;
+    thread.contextUsage = usage;
+    this.publishThread(thread);
+  }
+
   private applySessionTitle(thread: StoredThread, sessionId: string, title: string | null): void {
     if (thread.engineSessionId !== sessionId || thread.sessionTitle === title) return;
     thread.sessionTitle = title;
@@ -642,6 +704,7 @@ export class SessionManager {
             this.publishThread(thread);
             this.refreshSessionTitle(thread);
           },
+          onContextUsage: (usage) => this.applyContextUsage(thread, usage),
           requestApproval: (request, signal) => this.requestApproval(thread, gen, request, signal),
           judgeTool: (toolName, input, ctx) => this.judgeTool(thread, gen, toolName, input, ctx),
           readAttachment: (ref: AttachmentRef) => this.deps.attachments.read(ref.sha256, ref.mime).catch(() => null),
@@ -749,6 +812,9 @@ export class SessionManager {
     if (live.interrupted || live.gen !== gen) return { behavior: 'deny', message: 'interrupted' };
     if (signal.aborted) return { behavior: 'deny', message: 'aborted' };
 
+    const questions = request.toolName === QUESTIONS_TOOL ? questionsOf(request.input) : null;
+    if (questions) return this.requestQuestion(thread, request, questions, signal);
+
     const hookReason = request.toolUseId ? live.hookDenied.get(request.toolUseId) : undefined;
     if (hookReason !== undefined) return { behavior: 'deny', message: hookReason };
 
@@ -789,8 +855,7 @@ export class SessionManager {
           ...(result.behavior === 'deny' ? { reason: result.message } : {}),
           ...(remembered ? { remembered } : {}),
         });
-        const stillWaiting = [...this.approvals.values()].some((p) => p.threadId === thread.id);
-        if (thread.status === 'waiting-approval' && !stillWaiting) this.setStatus(thread, 'running');
+        if (thread.status === 'waiting-approval' && !this.hasPendingPrompts(thread.id)) this.setStatus(thread, 'running');
         resolve(result);
       };
       this.approvals.set(approvalId, { threadId: thread.id, always, settle });
@@ -810,6 +875,33 @@ export class SessionManager {
       always,
     });
     return decision;
+  }
+
+  private requestQuestion(thread: StoredThread, request: ApprovalRequest, questions: Question[], signal: AbortSignal): Promise<ApprovalDecision> {
+    const questionId = this.newId();
+    // Registered BEFORE announcing it: a client may answer as soon as it sees the event.
+    const decision = new Promise<ApprovalDecision>((resolve) => {
+      const onAbort = () => settle('cancelled');
+      const settle = (outcome: QuestionOutcome, answers?: QuestionAnswer[]) => {
+        if (!this.questions.delete(questionId)) return;
+        signal.removeEventListener('abort', onAbort);
+        this.emit(thread, { type: 'question.resolved', questionId, outcome, ...(answers ? { answers } : {}) });
+        if (thread.status === 'waiting-approval' && !this.hasPendingPrompts(thread.id)) this.setStatus(thread, 'running');
+        resolve(this.decisionOf(request, outcome, answers));
+      };
+      this.questions.set(questionId, { threadId: thread.id, questions, settle });
+      signal.addEventListener('abort', onAbort, { once: true });
+    });
+    if (thread.status === 'running') this.setStatus(thread, 'waiting-approval');
+    this.emit(thread, { type: 'question.requested', questionId, author: request.author, questions });
+    return decision;
+  }
+
+  private decisionOf(request: ApprovalRequest, outcome: QuestionOutcome, answers: QuestionAnswer[] | undefined): ApprovalDecision {
+    if (outcome === 'cancelled') return { behavior: 'deny', message: 'interrupted' };
+    if (outcome === 'declined' || !answers) return { behavior: 'deny', message: 'The user declined to answer the questions' };
+    const byQuestion = Object.fromEntries(answers.map((a) => [a.question, a.values.join(', ')]));
+    return { behavior: 'allow', updatedInput: { ...request.input, answers: byQuestion } };
   }
 
   /** `fromEngine`: engine session.status events do not override `interrupted`. */

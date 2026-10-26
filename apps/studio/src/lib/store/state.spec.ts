@@ -65,6 +65,14 @@ describe('state reducers', () => {
     expect(next.threads.t1?.info?.sessionTitle).toBe('Revisar spec');
   });
 
+  it('republishes thread info when only the context reading changes', () => {
+    const s = setThreads(initialState(), [info({ contextUsage: { usedTokens: 10, maxTokens: 200_000 } })]);
+    const same = applyServerEvent(s, { kind: 'thread.updated', thread: info({ contextUsage: { usedTokens: 10, maxTokens: 200_000 } }) });
+    expect(same).toBe(s);
+    const next = applyServerEvent(s, { kind: 'thread.updated', thread: info({ contextUsage: { usedTokens: 90_000, maxTokens: 200_000 } }) });
+    expect(next.threads.t1?.info?.contextUsage?.usedTokens).toBe(90_000);
+  });
+
   it('keeps identities when incoming thread info is equal', () => {
     const s = setThreads(initialState(), [info()]);
     expect(setThreads(s, [info()])).toBe(s);

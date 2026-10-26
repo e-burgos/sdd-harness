@@ -176,3 +176,53 @@ describe('buildNavTree', () => {
     expect(section(tree, 'specs').children).toEqual([]);
   });
 });
+
+describe('buildNavTree activity', () => {
+  const multi = (id: string, targets: NonNullable<ThreadInfo['link']['targets']>, status: ThreadInfo['status'] = 'running') =>
+    thread({ id, status, link: { target: { kind: 'none' }, source: 'auto', targets } });
+  const find = (tree: NavSection[], nodeId: string) => {
+    const walk = (n: NavNode): NavNode | null => (n.id === nodeId ? n : n.children.map(walk).find(Boolean) ?? null);
+    return tree.map(walk).find(Boolean) ?? null;
+  };
+  const twoCycles = multi('m', [
+    { kind: 'cycle', specId: 's1', cycle: 'cycle-01', origin: 'detected' },
+    { kind: 'cycle', specId: 's1', cycle: 'cycle-02', origin: 'manual' },
+  ]);
+
+  it('counts a thread once in the activity section even when it has several associations', () => {
+    const tree = buildNavTree(snapshot, [twoCycles], view);
+    expect(section(tree, 'active').threadCount).toBe(1);
+    expect(section(tree, 'active').threads.map((t) => t.id)).toEqual(['m']);
+  });
+
+  it('counts a thread once in the spec that groups its several cycles', () => {
+    const tree = buildNavTree(snapshot, [twoCycles], view);
+    expect(find(tree, 'spec:s1')?.threadCount).toBe(1);
+    expect(section(tree, 'specs').threadCount).toBe(1);
+  });
+
+  it('keeps distinct threads counted separately', () => {
+    const other = multi('n', [{ kind: 'cycle', specId: 's1', cycle: 'cycle-02', origin: 'detected' }], 'idle');
+    const tree = buildNavTree(snapshot, [twoCycles, other], view);
+    expect(find(tree, 'spec:s1')?.threadCount).toBe(2);
+    expect(section(tree, 'active').threadCount).toBe(1);
+  });
+
+  it('shows the agents working in each active thread, the owner first', () => {
+    const presence = [
+      { agent: 'sdd-implementor-back', state: 'working' as const, threadId: 'm', specId: null, tool: 'Edit' },
+      { agent: 'sdd-planner', state: 'waiting' as const, threadId: 'm', specId: null, tool: null },
+      { agent: 'sdd-reviewer', state: 'idle' as const, threadId: 'm', specId: null, tool: null },
+      { agent: 'sdd-architect', state: 'working' as const, threadId: 'other', specId: null, tool: 'Bash' },
+    ];
+    const [row] = section(buildNavTree(snapshot, [twoCycles], view, presence), 'active').threads;
+    expect(row?.workingAgents).toEqual(['sdd-planner', 'sdd-implementor-back']);
+    expect(row?.tool).toBe('Edit');
+  });
+
+  it('has no working agents or tool without presence for the thread', () => {
+    const [row] = section(buildNavTree(snapshot, [twoCycles], view), 'active').threads;
+    expect(row?.workingAgents).toEqual([]);
+    expect(row?.tool).toBeNull();
+  });
+});

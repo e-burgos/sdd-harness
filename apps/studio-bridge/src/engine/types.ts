@@ -1,4 +1,4 @@
-import type { AttachmentRef, Author, KnownProvider, ThreadEvent, ThreadOptions } from '@sdd-studio/protocol';
+import type { AttachmentRef, Author, ContextUsage, KnownProvider, ThreadEvent, ThreadOptions } from '@sdd-studio/protocol';
 
 export type PromptBlock = { kind: 'text'; text: string } | { kind: 'attachment'; ref: AttachmentRef };
 
@@ -31,7 +31,7 @@ export interface ApprovalRequest {
   toolUseId: string | null;
 }
 
-export type ApprovalDecision = { behavior: 'allow' } | { behavior: 'deny'; message: string };
+export type ApprovalDecision = { behavior: 'allow'; updatedInput?: Record<string, unknown> } | { behavior: 'deny'; message: string };
 
 export type ToolVerdict = { kind: 'allow' } | { kind: 'warn'; reason: string } | { kind: 'deny'; reason: string };
 
@@ -58,6 +58,7 @@ export interface EngineCallbacks {
    */
   judgeTool(toolName: string, input: Record<string, unknown>, ctx?: JudgeContext): ToolVerdict;
   onSessionId(id: string): void;
+  onContextUsage?(usage: ContextUsage): void;
   requestApproval(request: ApprovalRequest, signal: AbortSignal): Promise<ApprovalDecision>;
   readAttachment(ref: AttachmentRef): Promise<Uint8Array | null>;
   collectPending(at: 'cut-point' | 'turn-end', opts?: { textOnly?: boolean }): OutgoingMessage[];

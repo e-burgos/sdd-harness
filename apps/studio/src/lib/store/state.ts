@@ -1,5 +1,6 @@
 import type { BotEvent, Presence, ServerEvent, ThreadEvent, ThreadInfo, WorkspaceSnapshot } from '@sdd-studio/protocol';
 import type { DraftAttachment } from '../attachments/draft-attachment';
+import { prepareFromBotEvent, type PreparedConversation } from '../auto-conversation';
 import { applyThreadEvent, emptyThread, type ThreadState } from './timeline';
 
 export interface CommandRun {
@@ -23,13 +24,15 @@ export interface StudioState {
   runs: Record<string, CommandRun>;
   drafts: Record<string, ComposerDraft>;
   selectedThreadId: string | null;
+  prepared: PreparedConversation[];
+  openedPreparedId: string | null;
 }
 
 const MAX_BOT_EVENTS = 200;
 const MAX_THREAD_BUFFER = 1000;
 const MAX_RUN_OUTPUT = 200_000;
 
-export const initialState = (): StudioState => ({ snapshot: null, threads: {}, presence: [], bot: {}, runs: {}, drafts: {}, selectedThreadId: null });
+export const initialState = (): StudioState => ({ snapshot: null, threads: {}, presence: [], bot: {}, runs: {}, drafts: {}, selectedThreadId: null, prepared: [], openedPreparedId: null });
 
 const threadOf = (s: StudioState, id: string): ThreadState => s.threads[id] ?? emptyThread();
 
@@ -46,6 +49,8 @@ function sameInfo(a: ThreadInfo | null, b: ThreadInfo): boolean {
     a.provider === b.provider &&
     a.title === b.title &&
     a.sessionTitle === b.sessionTitle &&
+    a.contextUsage?.usedTokens === b.contextUsage?.usedTokens &&
+    a.contextUsage?.maxTokens === b.contextUsage?.maxTokens &&
     a.channelId === b.channelId &&
     a.agent === b.agent &&
     a.pendingCount === b.pendingCount &&
@@ -139,7 +144,8 @@ export function applyServerEvent(s: StudioState, e: ServerEvent): StudioState {
     case 'bot.event': {
       const { kind: _kind, ...event } = e;
       const list = [...(s.bot[e.channelId] ?? []), event].slice(-MAX_BOT_EVENTS);
-      return { ...s, bot: { ...s.bot, [e.channelId]: list } };
+      const threads = Object.values(s.threads).flatMap((t) => (t.info ? [t.info] : []));
+      return { ...s, bot: { ...s.bot, [e.channelId]: list }, prepared: prepareFromBotEvent(event, threads, s.prepared) };
     }
     case 'command.output': {
       const run = s.runs[e.runId] ?? { runId: e.runId, name: '?', args: [], output: '', exitCode: null };
@@ -151,3 +157,11 @@ export function applyServerEvent(s: StudioState, e: ServerEvent): StudioState {
     }
   }
 }
+
+export const dismissPrepared = (s: StudioState, id: string): StudioState =>
+  s.prepared.some((p) => p.id === id)
+    ? { ...s, prepared: s.prepared.filter((p) => p.id !== id), openedPreparedId: s.openedPreparedId === id ? null : s.openedPreparedId }
+    : s;
+
+export const openPrepared = (s: StudioState, id: string): StudioState =>
+  s.prepared.some((p) => p.id === id) ? { ...s, openedPreparedId: id } : s;

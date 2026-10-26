@@ -44,7 +44,7 @@ describe('handshake v2 additions', () => {
     expect(Hello.parse(hello)).toEqual(hello);
   });
   it('BRIDGE_FEATURES lists the bridge spec features', () => {
-    expect(BRIDGE_FEATURES).toEqual(['pending-messages', 'thread-link', 'always-rules', 'attachments', 'file-search', 'catalog', 'auth-subscription', 'conversation-sessions', 'session-title', 'link-targets', 'document-touched']);
+    expect(BRIDGE_FEATURES).toEqual(['pending-messages', 'thread-link', 'always-rules', 'attachments', 'file-search', 'catalog', 'auth-subscription', 'conversation-sessions', 'session-title', 'link-targets', 'document-touched', 'questions', 'context-usage', 'profile-set']);
     expect(PROTOCOL_VERSION).toBe(2);
     for (const feature of BRIDGE_FEATURES) expect(feature.length).toBeLessThanOrEqual(40);
     expect(BRIDGE_FEATURES.length).toBeLessThanOrEqual(32);

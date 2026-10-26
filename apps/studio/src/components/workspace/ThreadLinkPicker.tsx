@@ -11,6 +11,7 @@ import { isLinkEntryAvailable, linkEntriesOf, linkRefKey, linkRefLabel, toLinkRe
 import { useBridgeFeatures } from '@/lib/use-bridge-features';
 import { useBridge, useStudio } from '../BridgeProvider';
 import { CapabilityNotice } from '../mission-control/CapabilityNotice';
+import { HelpSelect } from '../HelpSelect';
 
 const NONE = 'none';
 const ring = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400';
@@ -106,7 +107,7 @@ export function ThreadLinkPicker({ threadId }: { threadId: string }) {
     return (
       <div className="flex min-w-0 flex-wrap items-center gap-2 text-xs text-ink-300">
         <label htmlFor="thread-link">{t('link.label')}</label>
-        <select id="thread-link" className={selectClass} value={current} disabled={saving} onChange={(e) => void change(e.target.value)}>
+        <HelpSelect help={t('help.link.target')} id="thread-link" className={selectClass} value={current} disabled={saving} onChange={(e) => void change(e.target.value)}>
           <option value={NONE}>{t('link.none')}</option>
           {!known && <option value={current}>{labelOf(link.target)}</option>}
           {options.cycles.length > 0 && (
@@ -119,7 +120,7 @@ export function ThreadLinkPicker({ threadId }: { threadId: string }) {
               {options.fixes.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
             </optgroup>
           )}
-        </select>
+        </HelpSelect>
         {detectedNote}
         <CapabilityNotice capabilities={['link-targets']} />
         {errorNote}
@@ -155,7 +156,8 @@ export function ThreadLinkPicker({ threadId }: { threadId: string }) {
           );
         })}
       </ul>
-      <select
+      <HelpSelect
+        help={t('help.link.add')}
         id="thread-link-add"
         className={selectClass}
         value=""
@@ -178,7 +180,7 @@ export function ThreadLinkPicker({ threadId }: { threadId: string }) {
             {options.freeFixes.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
           </optgroup>
         )}
-      </select>
+      </HelpSelect>
       {detectedNote}
       {errorNote}
     </div>

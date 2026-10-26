@@ -9,6 +9,7 @@ import { SessionError, type SessionManager } from '../sessions/session-manager';
 import type { ThreadStore } from '../sessions/store';
 import type { FileIndex } from '../workspace/file-index';
 import { resolveSddPath } from '../workspace/paths';
+import { ProfileError, writeProfile } from '../workspace/profile';
 import type { WorkspaceWatcher } from '../workspace/watcher';
 import type { BridgeHandlers } from './ws-server';
 
@@ -88,11 +89,24 @@ export function createHandlers(d: {
         case 'thread.list':
           return d.sessions.list(command.channelId);
         case 'thread.history':
-          return d.sessions.history(command.threadId, command.sinceSeq, command.includeDocumentTouched);
+          return d.sessions.history(command.threadId, command.sinceSeq, command.includeDocumentTouched, command.includeQuestions);
         case 'channel.botHistory':
           return d.store.botHistory(command.channelId, command.limit);
         case 'approval.respond':
           d.sessions.respondApproval(command.approvalId, command.decision, command.reason, command.scope);
+          return null;
+        case 'profile.set': {
+          try {
+            await writeProfile(d.root, command.profile);
+          } catch (error) {
+            if (error instanceof ProfileError) throw new SessionError(error.code, error.message);
+            throw error;
+          }
+          await d.watcher.refresh().catch(() => null);
+          return { profile: command.profile };
+        }
+        case 'question.answer':
+          d.sessions.answerQuestion(command.questionId, command.answers, command.decline);
           return null;
         case 'auth.set':
           return { authMode: d.auth.set(command.apiKey, command.mode) };

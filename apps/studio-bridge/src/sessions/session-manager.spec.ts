@@ -605,6 +605,20 @@ describe('SessionManager', () => {
     });
 
     describe('restart recovery (I3)', () => {
+      it('cancels a question that was open when the bridge restarted', async () => {
+        const { m, store } = await manager();
+        const t = await m.createThread({ channelId: 'general', options: opts, text: '#ask' });
+        const asked = await waitFor(() => eventsOf(t.id).find((e) => e.type === 'question.requested'));
+        await store.flush();
+        const store2 = new ThreadStore(root);
+        await store2.init();
+        stores.push(store2);
+        const m2 = new SessionManager({ root, attachments: createAttachmentStore(root), engine: new FakeEngine(1), store: store2, snapshot: () => snapshot, broadcast: () => {} });
+        await m2.recover();
+        const hist = (await m2.history(t.id, 0, false, true)).map((h) => h.event);
+        expect(hist).toContainEqual({ type: 'question.resolved', questionId: (asked as { questionId: string }).questionId, outcome: 'cancelled' });
+      });
+
       it('announces lost approvals and the interruption in the thread history', async () => {
         const { m, store } = await manager();
         const t = await m.createThread({ channelId: 'general', options: opts, text: '#tool' });
@@ -1661,5 +1675,137 @@ describe('SessionManager attachments and refs', () => {
       expect((await m.history(t.id, 0, false)).some((h) => h.event.type === 'document.touched')).toBe(false);
       expect((await m.history(t.id, 0, true)).some((h) => h.event.type === 'document.touched')).toBe(true);
     });
+  });
+});
+
+describe('SessionManager provider questions', () => {
+  const pendingQuestion = (threadId: string) =>
+    eventsOf(threadId).find((e): e is Extract<ThreadEvent, { type: 'question.requested' }> => e.type === 'question.requested');
+  const answer = (question: string, ...values: string[]) => ({ question, values });
+
+  it('publishes the question instead of an approval and waits for the answer', async () => {
+    const { m } = await manager();
+    const t = await m.createThread({ channelId: 'general', options: opts, text: '#ask' });
+    const asked = await waitFor(() => pendingQuestion(t.id));
+    expect(asked.questions[0]).toMatchObject({ question: 'Which mode?', multiSelect: false });
+    expect(pendingApproval(t.id)).toBeUndefined();
+    expect(statusOf(m, t.id)).toBe('waiting-approval');
+  });
+
+  it('returns the chosen answers to the engine and resumes the turn', async () => {
+    const { m } = await manager();
+    const t = await m.createThread({ channelId: 'general', options: opts, text: '#ask' });
+    const asked = await waitFor(() => pendingQuestion(t.id));
+    m.answerQuestion(asked.questionId, [answer('Which mode?', 'lite')], false);
+    await waitFor(() => statusOf(m, t.id) === 'idle');
+    expect(eventsOf(t.id)).toContainEqual({ type: 'question.resolved', questionId: asked.questionId, outcome: 'answered', answers: [answer('Which mode?', 'lite')] });
+    const heard = eventsOf(t.id).filter((e) => e.type === 'message.delta').map((e) => (e.type === 'message.delta' ? e.text : '')).join('');
+    expect(heard).toContain('{"Which mode?":"lite"}');
+  });
+
+  it('accepts a free-text answer that is not one of the options', async () => {
+    const { m } = await manager();
+    const t = await m.createThread({ channelId: 'general', options: opts, text: '#ask' });
+    const asked = await waitFor(() => pendingQuestion(t.id));
+    m.answerQuestion(asked.questionId, [answer('Which mode?', 'otro modo')], false);
+    await waitFor(() => statusOf(m, t.id) === 'idle');
+    expect(eventsOf(t.id)).toContainEqual({ type: 'question.resolved', questionId: asked.questionId, outcome: 'answered', answers: [answer('Which mode?', 'otro modo')] });
+  });
+
+  it('rejects answers that miss a question, repeat it or send several values to a single choice', async () => {
+    const { m } = await manager();
+    const t = await m.createThread({ channelId: 'general', options: opts, text: '#ask' });
+    const asked = await waitFor(() => pendingQuestion(t.id));
+    expect(() => m.answerQuestion(asked.questionId, [], false)).toThrowError(SessionError);
+    expect(() => m.answerQuestion(asked.questionId, [answer('Other?', 'x')], false)).toThrowError(SessionError);
+    expect(() => m.answerQuestion(asked.questionId, [answer('Which mode?', 'lite', 'full')], false)).toThrowError(SessionError);
+    expect(statusOf(m, t.id)).toBe('waiting-approval');
+  });
+
+  it('declining resolves the question and tells the engine the user declined', async () => {
+    const { m } = await manager();
+    const t = await m.createThread({ channelId: 'general', options: opts, text: '#ask' });
+    const asked = await waitFor(() => pendingQuestion(t.id));
+    m.answerQuestion(asked.questionId, [], true);
+    await waitFor(() => statusOf(m, t.id) === 'idle');
+    expect(eventsOf(t.id)).toContainEqual({ type: 'question.resolved', questionId: asked.questionId, outcome: 'declined' });
+  });
+
+  it('cancels a pending question when the turn is interrupted', async () => {
+    const { m } = await manager();
+    const t = await m.createThread({ channelId: 'general', options: opts, text: '#ask' });
+    const asked = await waitFor(() => pendingQuestion(t.id));
+    await m.interrupt(t.id);
+    await waitFor(() => eventsOf(t.id).some((e) => e.type === 'question.resolved'));
+    expect(eventsOf(t.id)).toContainEqual({ type: 'question.resolved', questionId: asked.questionId, outcome: 'cancelled' });
+    expect(statusOf(m, t.id)).toBe('interrupted');
+    expect(() => m.answerQuestion(asked.questionId, [answer('Which mode?', 'lite')], false)).toThrowError(SessionError);
+  });
+
+  it('reports an unknown question as not-found', async () => {
+    const { m } = await manager();
+    expect(() => m.answerQuestion('nope', [], true)).toThrowError(expect.objectContaining({ code: 'not-found' }));
+  });
+
+  it('marks the agent as waiting while the question is open', async () => {
+    const { m } = await manager();
+    const t = await m.createThread({ channelId: 'general', options: opts, text: '#ask' });
+    await waitFor(() => pendingQuestion(t.id));
+    const last = [...sent].reverse().find((e) => e.kind === 'presence.changed');
+    expect(last && last.kind === 'presence.changed' && last.presence.some((p) => p.threadId === t.id && p.state === 'waiting')).toBe(true);
+  });
+});
+
+describe('SessionManager context usage', () => {
+  const infoOf = (m: SessionManager, id: string) => m.list().find((t) => t.id === id);
+
+  it('publishes the context reading of the engine on the thread', async () => {
+    const { m } = await manager();
+    const t = await m.createThread({ channelId: 'general', options: opts, text: '#ctx:25' });
+    await waitFor(() => statusOf(m, t.id) === 'idle');
+    expect(infoOf(m, t.id)?.contextUsage).toEqual({ usedTokens: 50_000, maxTokens: 200_000 });
+    expect(sent.some((e) => e.kind === 'thread.updated' && e.thread.id === t.id && e.thread.contextUsage?.usedTokens === 50_000)).toBe(true);
+  });
+
+  it('leaves the thread without a reading when the engine gives none', async () => {
+    const { m } = await manager();
+    const t = await m.createThread({ channelId: 'general', options: opts, text: 'hola' });
+    await waitFor(() => statusOf(m, t.id) === 'idle');
+    expect(infoOf(m, t.id)?.contextUsage ?? null).toBeNull();
+  });
+
+  it('replaces the reading on the next turn', async () => {
+    const { m } = await manager();
+    const t = await m.createThread({ channelId: 'general', options: opts, text: '#ctx:10' });
+    await waitFor(() => statusOf(m, t.id) === 'idle');
+    expect(infoOf(m, t.id)?.contextUsage?.usedTokens).toBe(20_000);
+    await m.send(t.id, { text: 'otra vez #ctx:30' });
+    await waitFor(() => infoOf(m, t.id)?.contextUsage?.usedTokens === 60_000);
+    await waitFor(() => statusOf(m, t.id) === 'idle');
+  });
+
+  it('keeps the reading after a restart', async () => {
+    const { m, store } = await manager();
+    const t = await m.createThread({ channelId: 'general', options: opts, text: '#ctx:60' });
+    await waitFor(() => statusOf(m, t.id) === 'idle');
+    await store.flush();
+    const store2 = new ThreadStore(root);
+    await store2.init();
+    stores.push(store2);
+    expect(store2.get(t.id)?.contextUsage).toEqual({ usedTokens: 120_000, maxTokens: 200_000 });
+  });
+});
+
+describe('SessionManager history and questions', () => {
+  it('hides question events from history unless the client asks for them', async () => {
+    const { m } = await manager();
+    const t = await m.createThread({ channelId: 'general', options: opts, text: '#ask' });
+    const asked = await waitFor(() => eventsOf(t.id).find((e) => e.type === 'question.requested'));
+    m.answerQuestion((asked as { questionId: string }).questionId, [{ question: 'Which mode?', values: ['lite'] }], false);
+    await waitFor(() => statusOf(m, t.id) === 'idle');
+    const types = (entries: { event: ThreadEvent }[]) => entries.map((e) => e.event.type);
+    expect(types(await m.history(t.id, 0))).not.toContain('question.requested');
+    expect(types(await m.history(t.id, 0))).not.toContain('question.resolved');
+    expect(types(await m.history(t.id, 0, false, true))).toEqual(expect.arrayContaining(['question.requested', 'question.resolved']));
   });
 });

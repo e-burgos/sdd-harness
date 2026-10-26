@@ -1,4 +1,4 @@
-import type { AlwaysOffer, AlwaysRule, AttachmentRef, Author, PromptRefs, SessionStatus, ThreadEvent, ThreadInfo, Usage } from '@sdd-studio/protocol';
+import type { AlwaysOffer, AlwaysRule, AttachmentRef, Author, PromptRefs, Question, QuestionAnswer, SessionStatus, ThreadEvent, ThreadInfo, Usage } from '@sdd-studio/protocol';
 
 export type TimelineItem =
   | {
@@ -40,6 +40,15 @@ export type TimelineItem =
       remembered?: AlwaysRule;
       decision: 'pending' | 'allow' | 'deny';
       reason?: string;
+    }
+  | {
+      kind: 'question';
+      id: string;
+      seq: number;
+      author: Author;
+      questions: Question[];
+      outcome: 'pending' | 'answered' | 'declined' | 'cancelled';
+      answers?: QuestionAnswer[];
     }
   | { kind: 'subagent'; id: string; seq: number; agentType: string; phase: 'start' | 'stop' }
   | { kind: 'usage'; id: string; seq: number; usage: Usage }
@@ -177,6 +186,12 @@ export function applyThreadEvent(thread: ThreadState, seq: number, event: Thread
       break;
     case 'approval.resolved':
       items = update(items, 'approval', event.approvalId, (a) => ({ ...a, decision: event.decision, reason: event.reason, remembered: event.remembered }));
+      break;
+    case 'question.requested':
+      items = [...items, { kind: 'question', id: event.questionId, seq, author: event.author, questions: event.questions, outcome: 'pending' }];
+      break;
+    case 'question.resolved':
+      items = update(items, 'question', event.questionId, (q) => ({ ...q, outcome: event.outcome, answers: event.answers }));
       break;
     case 'document.touched':
       touched = [...touched, { seq, path: event.path, op: event.op, author: event.author }];
