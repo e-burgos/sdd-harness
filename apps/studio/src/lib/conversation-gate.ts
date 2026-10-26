@@ -1,5 +1,6 @@
 import type { WorkspaceSnapshot } from '@sdd-studio/protocol';
 import type { ConversationView } from './conversation';
+import type { TFunction } from './i18n/i18n';
 
 export type ConversationGate =
   | { kind: 'spec'; specId: string; cycle: string | null }
@@ -36,4 +37,10 @@ function activeCycleGate(view: ConversationView, snapshot: WorkspaceSnapshot | n
 
 export function deriveConversationGate(view: ConversationView, snapshot: WorkspaceSnapshot | null): ConversationGate {
   return lastWrittenGate(view, snapshot) ?? openFixGate(view, snapshot) ?? activeCycleGate(view, snapshot) ?? { kind: 'idle' };
+}
+
+export function gateLabel(gate: ConversationGate, t: TFunction): string {
+  if (gate.kind === 'fix') return t('gate.chip.fix', { fix: gate.fixId });
+  if (gate.kind === 'idle') return t('gate.chip.idle');
+  return gate.cycle ? t('gate.chip.spec', { spec: gate.specId, cycle: gate.cycle }) : t('gate.chip.specNoCycle', { spec: gate.specId });
 }

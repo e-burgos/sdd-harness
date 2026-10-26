@@ -850,7 +850,7 @@
       "type": "IMPROVEMENT",
       "severity": "low",
       "created_at": "2026-10-26",
-      "resolved_at": null,
+      "resolved_at": "2026-10-26",
       "validated_at": null,
       "title": "Header: al tocar el chip de gate se abre un modal con el resumen del estado del enjambre",
       "estimation_hours": 2,
@@ -863,17 +863,19 @@
         "apps/studio/src/components/GateStatusModal.tsx",
         "apps/studio/src/components/GateStatusModal.spec.tsx",
         "apps/studio/src/components/StudioHeader.tsx",
+        "apps/studio/src/components/studioheader.spec.tsx",
+        "apps/studio/src/lib/conversation-gate.ts",
         "apps/studio/src/lib/i18n/es.ts",
         "apps/studio/src/lib/i18n/en.ts"
       ],
       "test_reference": "GateStatusModal.spec.tsx",
-      "status": "pending",
+      "status": "implemented",
       "cycle": null,
       "usage": {
         "provider_model": "claude/sonnet",
         "effort": "medium",
-        "tokens_in": 9000,
-        "tokens_out": 1500,
+        "tokens_in": 64000,
+        "tokens_out": 12500,
         "approx": true,
         "source": "declared-estimate",
         "recorded_at": "2026-10-26",
@@ -884,6 +886,15 @@
             "effort": "medium",
             "tokens_in": 9000,
             "tokens_out": 1500,
+            "approx": true,
+            "source": "declared-estimate"
+          },
+          {
+            "agent": "implementor-front",
+            "provider_model": "claude/sonnet",
+            "effort": "medium",
+            "tokens_in": 55000,
+            "tokens_out": 11000,
             "approx": true,
             "source": "declared-estimate"
           }

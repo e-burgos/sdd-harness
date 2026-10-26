@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import type { ThreadInfo, WorkspaceSnapshot } from '@sdd-studio/protocol';
 import { I18nProvider } from '@/lib/i18n/i18n';
 import { createStudioStore } from '@/lib/store/store';
@@ -72,5 +72,24 @@ describe('StudioHeader gate chip', () => {
     expect(screen.getByTestId('gate-chip')).toHaveTextContent('FIX GATE FIX-e-burgos-005-006');
     act(() => store.getState().selectThread('speccing'));
     expect(screen.getByTestId('gate-chip')).toHaveTextContent(`SPEC GATE ${SPEC} cycle-01`);
+  });
+
+  it('opens the swarm status modal from the chip and closes it with Escape', () => {
+    const store = createStudioStore();
+    store.getState().setSnapshot(snapshot);
+    store.getState().setThreads([info('fixing', '2026-02-01T00:00:00Z')]);
+    store.getState().loadHistory('fixing', [{ seq: 0, event: writeEvent(`sdd/specs/${SPEC}/fixes/fix-e-burgos-005-006.md`) }]);
+    mount(store);
+    expect(screen.queryByTestId('gate-status-modal')).toBeNull();
+    fireEvent.click(screen.getByTestId('gate-chip'));
+    expect(screen.getByTestId('gate-status-gate-label')).toHaveTextContent('FIX GATE FIX-e-burgos-005-006');
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(screen.queryByTestId('gate-status-modal')).toBeNull();
+  });
+
+  it('opens the modal without a conversation and reports it', () => {
+    mount();
+    fireEvent.click(screen.getByTestId('gate-chip'));
+    expect(screen.getByTestId('gate-status-no-conversation')).toBeInTheDocument();
   });
 });

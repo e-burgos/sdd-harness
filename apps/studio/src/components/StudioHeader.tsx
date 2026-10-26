@@ -1,12 +1,13 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { MessageSquare, Network, Globe, Activity } from 'lucide-react';
-import { deriveConversationGate, type ConversationGate } from '@/lib/conversation-gate';
+import { deriveConversationGate, gateLabel, type ConversationGate } from '@/lib/conversation-gate';
 import { useT } from '@/lib/i18n/i18n';
 import { useSelectedConversation } from '@/lib/use-selected-conversation';
 import type { StudioView } from '@/lib/use-studio-view';
 import { useStudio } from './BridgeProvider';
+import { GateStatusModal } from './GateStatusModal';
 import { AgentAvatar } from './workspace/AgentAvatar';
 
 interface StudioHeaderProps {
@@ -21,20 +22,15 @@ export function StudioHeader({ activeView, onSelectView }: StudioHeaderProps) {
 
   const workingAgents = (presence ?? []).filter((p) => p.state === 'working');
   const activeCycle = snapshot?.cycles?.find((c) => c.status === 'in-progress');
-  const { view } = useSelectedConversation();
+  const { view, selectedThreadId } = useSelectedConversation();
   const gate: ConversationGate = view
     ? deriveConversationGate(view, snapshot)
     : activeCycle
       ? { kind: 'spec', specId: activeCycle.specId, cycle: activeCycle.cycle }
       : { kind: 'idle' };
-  const gateLabel =
-    gate.kind === 'fix'
-      ? t('gate.chip.fix', { fix: gate.fixId })
-      : gate.kind === 'spec'
-        ? gate.cycle
-          ? t('gate.chip.spec', { spec: gate.specId, cycle: gate.cycle })
-          : t('gate.chip.specNoCycle', { spec: gate.specId })
-        : t('gate.chip.idle');
+  const label = gateLabel(gate, t);
+  const [statusOpen, setStatusOpen] = useState(false);
+  const thread = useStudio((s) => (selectedThreadId ? (s.threads[selectedThreadId]?.info ?? null) : null));
 
   const views: { id: StudioView; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
     { id: 'workspace', label: t('view.workspace'), icon: MessageSquare },
@@ -88,21 +84,25 @@ export function StudioHeader({ activeView, onSelectView }: StudioHeaderProps) {
 
       {/* Right Telemetry Pills & Language */}
       <div className="flex items-center gap-2.5">
-        <div
+        <button
+          type="button"
           data-testid="gate-chip"
           data-gate={gate.kind}
-          title={gateLabel}
-          className={`hidden max-w-[320px] items-center gap-1.5 rounded-full border px-2.5 py-1 font-mono text-[11px] lg:flex ${
+          title={label}
+          aria-label={t('gate.modal.open')}
+          aria-haspopup="dialog"
+          onClick={() => setStatusOpen(true)}
+          className={`hidden max-w-[320px] items-center gap-1.5 rounded-full border px-2.5 py-1 font-mono text-[11px] transition-colors lg:flex ${
             gate.kind === 'fix'
-              ? 'border-amber-500/25 bg-amber-500/10 text-amber-300'
+              ? 'border-amber-500/25 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20'
               : gate.kind === 'spec'
-                ? 'border-emerald-500/25 bg-emerald-500/10 text-emerald-300'
-                : 'border-white/10 bg-white/5 text-white/40'
+                ? 'border-emerald-500/25 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20'
+                : 'border-white/10 bg-white/5 text-white/40 hover:bg-white/10'
           }`}
         >
           {gate.kind !== 'idle' && <span className="h-1.5 w-1.5 shrink-0 animate-ping rounded-full bg-current" />}
-          <span className="truncate">{gateLabel}</span>
-        </div>
+          <span className="truncate">{label}</span>
+        </button>
 
         {/* Working Swarm Presence Counter */}
         <div
@@ -127,6 +127,7 @@ export function StudioHeader({ activeView, onSelectView }: StudioHeaderProps) {
           {lang}
         </button>
       </div>
+      <GateStatusModal open={statusOpen} onClose={() => setStatusOpen(false)} thread={thread} view={view} gate={gate} snapshot={snapshot} />
     </header>
   );
 }
