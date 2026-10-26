@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { MAX_PENDING_PER_THREAD } from './limits';
+import { MAX_LINK_TARGETS, MAX_PENDING_PER_THREAD } from './limits';
 
 export const KNOWN_AGENTS = [
   'sdd-orchestrator',
@@ -80,7 +80,25 @@ export const ThreadLinkTarget = z.discriminatedUnion('kind', [
 ]);
 export type ThreadLinkTarget = z.infer<typeof ThreadLinkTarget>;
 
-export const ThreadLink = z.object({ target: ThreadLinkTarget, source: z.enum(['auto', 'manual', 'legacy']) });
+export const LinkOrigin = z.enum(['detected', 'manual']);
+export type LinkOrigin = z.infer<typeof LinkOrigin>;
+const SpecRef = z.object({ kind: z.literal('spec'), specId: SpecIdValue });
+const CycleRef = z.object({ kind: z.literal('cycle'), specId: SpecIdValue, cycle: CycleIdValue });
+const FixRef = z.object({ kind: z.literal('fix'), fixId: FixIdValue });
+export const ThreadLinkRef = z.discriminatedUnion('kind', [SpecRef, CycleRef, FixRef]);
+export type ThreadLinkRef = z.infer<typeof ThreadLinkRef>;
+export const ThreadLinkEntry = z.discriminatedUnion('kind', [
+  SpecRef.extend({ origin: LinkOrigin }),
+  CycleRef.extend({ origin: LinkOrigin }),
+  FixRef.extend({ origin: LinkOrigin }),
+]);
+export type ThreadLinkEntry = z.infer<typeof ThreadLinkEntry>;
+
+export const ThreadLink = z.object({
+  target: ThreadLinkTarget,
+  source: z.enum(['auto', 'manual', 'legacy']),
+  targets: z.array(ThreadLinkEntry).max(MAX_LINK_TARGETS).optional().catch(undefined),
+});
 export type ThreadLink = z.infer<typeof ThreadLink>;
 
 export const ThreadInfo = z.object({
@@ -96,6 +114,7 @@ export const ThreadInfo = z.object({
   pendingCount: z.number().int().min(0).max(MAX_PENDING_PER_THREAD),
   engineSessionId: EngineSessionId.nullable().optional(),
   provider: ProviderId.optional(),
+  sessionTitle: z.string().max(300).nullable().optional().catch(null),
 });
 export type ThreadInfo = z.infer<typeof ThreadInfo>;
 

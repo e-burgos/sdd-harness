@@ -5,6 +5,7 @@ export const IMAGE_MAX_SIDE = 1568;
 export const MAX_PROMPT_REFS = 5;
 export const FILE_SEARCH_MAX = 50;
 export const MAX_PENDING_PER_THREAD = 10;
+export const MAX_LINK_TARGETS = 32;
 export const BRIDGE_FEATURES = [
   'pending-messages',
   'thread-link',

@@ -25,12 +25,22 @@
       "estimation_hours": 4,
       "story_points": 3,
       "depends_on": [],
-      "status": "pending",
+      "status": "done",
       "files": [
         "libs/studio-protocol/src/domain.ts",
         "libs/studio-protocol/src/limits.ts",
         "libs/studio-protocol/src/domain.spec.ts"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 40000,
+        "tokens_out": 9000,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-26"
+      }
     },
     {
       "id": "TASK-002",

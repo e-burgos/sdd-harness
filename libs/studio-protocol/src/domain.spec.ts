@@ -6,11 +6,14 @@ import {
   DEFAULT_PROVIDER,
   EngineSessionId,
   KNOWN_PROVIDERS,
+  MAX_LINK_TARGETS,
   MAX_PENDING_PER_THREAD,
   PermissionModeChoice,
   ProviderId,
   ThreadInfo,
   ThreadLink,
+  ThreadLinkEntry,
+  ThreadLinkRef,
   ThreadLinkTarget,
   ThreadOptions,
   WorkspaceSnapshot,
@@ -189,5 +192,73 @@ describe('AlwaysRule and AlwaysOffer', () => {
 describe('PermissionModeChoice', () => {
   it('keeps the four modes including bypassPermissions', () => {
     expect(PermissionModeChoice.options).toEqual(['default', 'acceptEdits', 'bypassPermissions', 'plan']);
+  });
+});
+
+describe('ThreadLinkRef and ThreadLinkEntry', () => {
+  const refs = [
+    { kind: 'spec', specId: 'spec-a-001' },
+    { kind: 'cycle', specId: 'spec-a-001', cycle: 'cycle-01' },
+    { kind: 'fix', fixId: 'FIX-a-001' },
+  ];
+
+  it('accepts spec, cycle and fix references', () => {
+    for (const ref of refs) expect(ThreadLinkRef.parse(ref)).toEqual(ref);
+  });
+
+  it('rejects unknown kinds and malformed ids', () => {
+    expect(ThreadLinkRef.safeParse({ kind: 'none' }).success).toBe(false);
+    expect(ThreadLinkRef.safeParse({ kind: 'cycle', specId: 'spec-a-001', cycle: 'c1' }).success).toBe(false);
+    expect(ThreadLinkRef.safeParse({ kind: 'fix', fixId: 'bad' }).success).toBe(false);
+  });
+
+  it('requires an origin on entries', () => {
+    for (const ref of refs) {
+      expect(ThreadLinkEntry.parse({ ...ref, origin: 'detected' })).toEqual({ ...ref, origin: 'detected' });
+      expect(ThreadLinkEntry.safeParse(ref).success).toBe(false);
+      expect(ThreadLinkEntry.safeParse({ ...ref, origin: 'other' }).success).toBe(false);
+    }
+  });
+});
+
+describe('ThreadLink.targets', () => {
+  const base = { target: { kind: 'none' }, source: 'legacy' } as const;
+  const entry = { kind: 'spec', specId: 'spec-a-001', origin: 'manual' } as const;
+
+  it('parses a v2 link without targets', () => {
+    expect(ThreadLink.parse(base)).toEqual(base);
+    expect(ThreadLink.parse(base).targets).toBeUndefined();
+  });
+
+  it('keeps valid targets', () => {
+    expect(ThreadLink.parse({ ...base, targets: [entry] }).targets).toEqual([entry]);
+  });
+
+  it('degrades malformed targets to undefined without failing the link', () => {
+    expect(ThreadLink.parse({ ...base, targets: 'nope' }).targets).toBeUndefined();
+    expect(ThreadLink.parse({ ...base, targets: [{ kind: 'spec' }] }).targets).toBeUndefined();
+    const tooMany = Array.from({ length: MAX_LINK_TARGETS + 1 }, () => entry);
+    expect(ThreadLink.parse({ ...base, targets: tooMany }).targets).toBeUndefined();
+  });
+});
+
+describe('ThreadInfo.sessionTitle', () => {
+  it('stays absent for a v2 payload without the field', () => {
+    expect(ThreadInfo.parse(threadInfo).sessionTitle).toBeUndefined();
+  });
+
+  it('accepts a title and null', () => {
+    expect(ThreadInfo.parse({ ...threadInfo, sessionTitle: 'Refactor' }).sessionTitle).toBe('Refactor');
+    expect(ThreadInfo.parse({ ...threadInfo, sessionTitle: null }).sessionTitle).toBeNull();
+  });
+
+  it('degrades a malformed title to null without failing the frame', () => {
+    expect(ThreadInfo.parse({ ...threadInfo, sessionTitle: 42 }).sessionTitle).toBeNull();
+    expect(ThreadInfo.parse({ ...threadInfo, sessionTitle: 'x'.repeat(301) }).sessionTitle).toBeNull();
+  });
+
+  it('degrades malformed link targets inside ThreadInfo', () => {
+    const parsed = ThreadInfo.parse({ ...threadInfo, link: { ...threadInfo.link, targets: 7 } });
+    expect(parsed.link.targets).toBeUndefined();
   });
 });
