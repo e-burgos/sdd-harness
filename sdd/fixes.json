@@ -563,7 +563,7 @@
       "type": "BUGFIX",
       "severity": "medium",
       "created_at": "2026-10-26",
-      "resolved_at": null,
+      "resolved_at": "2026-10-26",
       "validated_at": null,
       "title": "Mission Control: sesion y proveedor visibles, sin falso 'no informado' por bridge desactualizado",
       "estimation_hours": 1.5,
@@ -579,19 +579,28 @@
         "apps/studio/src/lib/i18n/en.ts"
       ],
       "test_reference": "apps/studio/src/components/mission-control/ConversationSessionInfo.spec.tsx",
-      "status": "pending",
+      "status": "implemented",
       "cycle": null,
       "usage": {
         "provider_model": "claude/sonnet",
         "effort": "medium",
-        "tokens_in": 50000,
-        "tokens_out": 6000,
+        "tokens_in": 100000,
+        "tokens_out": 12000,
         "approx": true,
         "source": "declared-estimate",
         "recorded_at": "2026-10-26",
         "by_agent": [
           {
             "agent": "orchestrator",
+            "provider_model": "claude/sonnet",
+            "effort": "medium",
+            "tokens_in": 50000,
+            "tokens_out": 6000,
+            "approx": true,
+            "source": "declared-estimate"
+          },
+          {
+            "agent": "implementor-front",
             "provider_model": "claude/sonnet",
             "effort": "medium",
             "tokens_in": 50000,

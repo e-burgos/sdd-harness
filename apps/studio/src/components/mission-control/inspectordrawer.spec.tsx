@@ -114,8 +114,8 @@ describe('AgentInspectorDrawer', () => {
     expect(screen.getByTestId('conversation-session')).toHaveTextContent('Sin sesión todavía');
     unmount();
     renderDrawer({ conversation: conversation({ engineSessionId: undefined, provider: undefined }) });
-    expect(screen.getByTestId('conversation-session')).toHaveTextContent('sesión no informada');
-    expect(screen.getByTestId('conversation-provider')).toHaveTextContent('proveedor no informado');
+    expect(screen.getByTestId('conversation-session')).toHaveTextContent('Bridge desactualizado');
+    expect(screen.getByTestId('conversation-provider')).toHaveTextContent('Bridge desactualizado');
   });
 
   it('keeps the related documents card collapsed until Ver info opens it and remembers the choice', () => {
