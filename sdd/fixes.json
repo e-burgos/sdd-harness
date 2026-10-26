@@ -390,7 +390,7 @@
       "type": "BUGFIX",
       "severity": "medium",
       "created_at": "2026-10-26",
-      "resolved_at": null,
+      "resolved_at": "2026-10-26",
       "validated_at": null,
       "title": "Mission Control: documentos solo de la conversacion, tarjeta persistida y visor modal centrado",
       "estimation_hours": 2,
@@ -406,18 +406,37 @@
         "apps/studio/src/components/mission-control/AgentInspectorDrawer.tsx",
         "apps/studio/src/components/mission-control/DocumentViewerModal.tsx"
       ],
-      "test_reference": null,
-      "status": "pending",
+      "test_reference": "apps/studio/src/lib/conversation.spec.ts",
+      "status": "implemented",
       "cycle": null,
       "usage": {
         "provider_model": "claude/sonnet",
         "effort": "medium",
-        "agent": "orchestrator",
-        "tokens_in": 60000,
-        "tokens_out": 6000,
+        "tokens_in": 150000,
+        "tokens_out": 18000,
         "approx": true,
         "source": "declared-estimate",
-        "recorded_at": "2026-10-26"
+        "recorded_at": "2026-10-26",
+        "by_agent": [
+          {
+            "agent": "orchestrator",
+            "provider_model": "claude/sonnet",
+            "effort": "medium",
+            "tokens_in": 60000,
+            "tokens_out": 6000,
+            "approx": true,
+            "source": "declared-estimate"
+          },
+          {
+            "agent": "implementor-front",
+            "provider_model": "claude/sonnet",
+            "effort": "medium",
+            "tokens_in": 90000,
+            "tokens_out": 12000,
+            "approx": true,
+            "source": "declared-estimate"
+          }
+        ]
       }
     }
   ]

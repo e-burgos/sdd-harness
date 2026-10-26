@@ -21,11 +21,12 @@ const info = (id: string, title: string, patch: Partial<ThreadInfo> = {}): Threa
 
 const author = (agent: string) => ({ agent, parentToolUseId: null });
 
-const conversationEvents = (agent: string, userText: string, replyText: string): { seq: number; event: ThreadEvent }[] => [
+const conversationEvents = (agent: string, userText: string, replyText: string, readPath: string): { seq: number; event: ThreadEvent }[] => [
   { seq: 0, event: { type: 'user.message', text: userText } },
-  { seq: 1, event: { type: 'message.start', messageId: `m-${agent}`, author: author(agent) } },
-  { seq: 2, event: { type: 'message.delta', messageId: `m-${agent}`, text: replyText } },
-  { seq: 3, event: { type: 'message.end', messageId: `m-${agent}` } },
+  { seq: 1, event: { type: 'tool.start', toolUseId: `tool-${agent}`, author: author(agent), tool: 'Read', summary: readPath } },
+  { seq: 2, event: { type: 'message.start', messageId: `m-${agent}`, author: author(agent) } },
+  { seq: 3, event: { type: 'message.delta', messageId: `m-${agent}`, text: replyText } },
+  { seq: 4, event: { type: 'message.end', messageId: `m-${agent}` } },
 ];
 
 interface Fixture {
@@ -39,7 +40,7 @@ function bridgeWith({ threads = [], presence = [] }: Fixture = {}) {
     project: 'test-monorepo',
     profile: 'team',
     kitVersion: '0.16.1',
-    specs: [],
+    specs: ['spec-alpha-1', 'spec-beta-2'].map((id) => ({ id, title: id, status: 'in-progress' as const, folder: id, module: null, app: null, dependsOn: [] })),
     cycles: [],
     fixes: [],
     agents: [],
@@ -68,11 +69,11 @@ const twoConversations: Fixture = {
   threads: [
     {
       info: info('t-a', 'Conversación A', { lastActivity: '2026-02-01T00:00:00Z', engineSessionId: 'session-a-real', provider: 'claude' }),
-      events: conversationEvents('sdd-planner', 'planificá sdd/specs/spec-alpha-1/cycles/cycle-01', 'plan de alfa'),
+      events: conversationEvents('sdd-planner', 'planificá la spec alfa', 'plan de alfa', 'sdd/specs/spec-alpha-1/cycles/cycle-01/plan.md'),
     },
     {
       info: info('t-b', 'Conversación B', { agent: 'sdd-architect', lastActivity: '2026-01-15T00:00:00Z', engineSessionId: 'session-b-real', provider: 'claude' }),
-      events: conversationEvents('sdd-architect', 'diseñá sdd/specs/spec-beta-2', 'diseño de beta'),
+      events: conversationEvents('sdd-architect', 'diseñá la spec beta', 'diseño de beta', 'sdd/specs/spec-beta-2/cycles/cycle-01/architect.md'),
     },
   ],
 };
@@ -93,6 +94,7 @@ const dimmedNodes = (container: HTMLElement) => container.querySelectorAll('[dat
 
 describe('AgentMapCanvas', () => {
   beforeEach(() => {
+    window.localStorage.clear();
     window.HTMLElement.prototype.scrollIntoView = vi.fn();
   });
 
@@ -135,6 +137,7 @@ describe('AgentMapCanvas', () => {
 
   it('switches between two conversations and changes dialogues, participants, session and related specs', () => {
     const { container } = renderCanvas(twoConversations);
+    fireEvent.click(screen.getByText('Ver info'));
     expect(within(screen.getByTestId('agent-inspector-drawer')).getByTestId('related-spec-spec-alpha-1')).toBeInTheDocument();
     const dimmedInA = dimmedNodes(container);
     expect(dimmedInA).toBeGreaterThan(0);

@@ -8,7 +8,7 @@
 | **Keyword**   | [BUGFIX]                                               |
 | **Fecha**     | 2026-10-26                                             |
 | **Autor**     | e-burgos                                               |
-| **Estado**    | pending                                                |
+| **Estado**    | implemented                                               |
 | **Spec**      | spec-e-burgos-005-studio-conversation-sessions         |
 | **Hermano**   | FIX-e-burgos-005-001 (selector y panel)                |
 

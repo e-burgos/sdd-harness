@@ -59,6 +59,7 @@ const conversation = (patch: Partial<ConversationView> = {}): ConversationView =
   dialogues: [dialogue(1, 'sdd-orchestrator', 'user', 'Primer mensaje'), dialogue(2, 'sdd-reviewer', 'user', 'Último mensaje', { gateId: 'contexto-gate' })],
   specs: [{ specId: 'spec-real-1', cycle: 'cycle-01', source: 'event', known: true }],
   fixes: [],
+  documents: [{ path: 'sdd/specs/spec-real-1/cycles/cycle-01/plan.md', name: 'plan.md', specId: 'spec-real-1', fixId: null, modified: true }],
   engineSessionId: 'real-session-0001',
   provider: 'claude',
   isEmpty: false,
@@ -77,6 +78,7 @@ const renderDrawer = (props: Partial<Parameters<typeof AgentInspectorDrawer>[0]>
 describe('AgentInspectorDrawer', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    window.localStorage.clear();
     window.HTMLElement.prototype.scrollIntoView = vi.fn();
   });
 
@@ -116,20 +118,37 @@ describe('AgentInspectorDrawer', () => {
     expect(screen.getByTestId('conversation-provider')).toHaveTextContent('proveedor no informado');
   });
 
-  it('lists the related specs of the conversation with their documents', () => {
+  it('keeps the related documents card collapsed until Ver info opens it and remembers the choice', () => {
+    const { unmount } = renderDrawer({ conversation: conversation() });
+    expect(screen.queryByTestId('related-documents-body')).toBeNull();
+    fireEvent.click(screen.getByText('Ver info'));
+    expect(screen.getByTestId('related-documents-body')).toBeInTheDocument();
+    unmount();
     renderDrawer({ conversation: conversation() });
+    expect(screen.getByTestId('related-documents-body')).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('related-documents-toggle'));
+    expect(screen.queryByTestId('related-documents-body')).toBeNull();
+    expect(screen.getByText('Ver info')).toBeInTheDocument();
+  });
+
+  it('lists the related specs of the conversation with their real documents', () => {
+    renderDrawer({ conversation: conversation() });
+    fireEvent.click(screen.getByText('Ver info'));
     const row = screen.getByTestId('related-spec-spec-real-1');
     expect(row).toHaveTextContent('spec-real-1');
-    expect(row.querySelectorAll('button').length).toBeGreaterThan(0);
+    expect(row.querySelectorAll('button')).toHaveLength(1);
+    expect(row).toHaveTextContent('plan.md');
   });
 
   it('shows the empty related state when the conversation references nothing', () => {
-    renderDrawer({ conversation: conversation({ specs: [], fixes: [] }) });
+    renderDrawer({ conversation: conversation({ specs: [], fixes: [], documents: [] }) });
+    fireEvent.click(screen.getByText('Ver info'));
     expect(screen.getByTestId('related-documents-empty')).toBeInTheDocument();
   });
 
   it('opens the document viewer when a related document is clicked and closes it', async () => {
     renderDrawer({ conversation: conversation() });
+    fireEvent.click(screen.getByText('Ver info'));
     const button = screen.getByTestId('related-spec-spec-real-1').querySelector('button') as HTMLElement;
     fireEvent.click(button);
 

@@ -2,6 +2,7 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { DocumentViewerModal } from './DocumentViewerModal';
 import { BridgeContext } from '../BridgeProvider';
 import { createStudioStore } from '@/lib/store/store';
+import { I18nProvider } from '@/lib/i18n/i18n';
 import type { AgentGeneratedDocument } from '@/lib/agent-documents';
 
 const store = createStudioStore();
@@ -30,7 +31,6 @@ describe('DocumentViewerModal', () => {
     path: 'sdd/specs/spec-e-burgos-004-studio-gates-topology/cycles/cycle-01/plan.md',
     type: 'plan',
     status: 'generated',
-    description: 'Plan lite unificado de ejecución',
   };
 
   it('renders modal with document title, path and badges', async () => {
@@ -40,9 +40,9 @@ describe('DocumentViewerModal', () => {
     });
 
     render(
-      <BridgeContext.Provider value={mockBridgeValue}>
+      <I18nProvider initial="es"><BridgeContext.Provider value={mockBridgeValue}>
         <DocumentViewerModal document={sampleDoc} onClose={() => {}} />
-      </BridgeContext.Provider>,
+      </BridgeContext.Provider></I18nProvider>,
     );
 
     expect(screen.getByTestId('document-viewer-modal')).toBeInTheDocument();
@@ -58,9 +58,9 @@ describe('DocumentViewerModal', () => {
   it('calls onClose when close button is clicked', () => {
     const onClose = vi.fn();
     render(
-      <BridgeContext.Provider value={mockBridgeValue}>
+      <I18nProvider initial="es"><BridgeContext.Provider value={mockBridgeValue}>
         <DocumentViewerModal document={sampleDoc} onClose={onClose} />
-      </BridgeContext.Provider>,
+      </BridgeContext.Provider></I18nProvider>,
     );
 
     const closeBtn = screen.getByTestId('modal-close-button');
@@ -75,9 +75,9 @@ describe('DocumentViewerModal', () => {
     });
 
     render(
-      <BridgeContext.Provider value={mockBridgeValue}>
+      <I18nProvider initial="es"><BridgeContext.Provider value={mockBridgeValue}>
         <DocumentViewerModal document={sampleDoc} onClose={() => {}} />
-      </BridgeContext.Provider>,
+      </BridgeContext.Provider></I18nProvider>,
     );
 
     await waitFor(() => {
@@ -88,5 +88,50 @@ describe('DocumentViewerModal', () => {
     fireEvent.click(rawBtn);
 
     expect(screen.getByText(/# Título Markdown/)).toBeInTheDocument();
+  });
+
+  it('renders as a centered portal on the body, outside the container that opens it', () => {
+    mockClient.request.mockResolvedValueOnce({ path: sampleDoc.path, content: '# x' });
+    const { container } = render(
+      <I18nProvider initial="es"><BridgeContext.Provider value={mockBridgeValue}>
+        <DocumentViewerModal document={sampleDoc} onClose={() => {}} />
+      </BridgeContext.Provider></I18nProvider>,
+    );
+    const modal = screen.getByTestId('document-viewer-modal');
+    expect(container.contains(modal)).toBe(false);
+    expect(modal.parentElement).toBe(document.body);
+    expect(modal.className).toContain('fixed');
+    expect(modal.className).toContain('inset-0');
+    expect(modal.className).toContain('items-center');
+    expect(modal.className).toContain('justify-center');
+    expect(modal.firstElementChild?.className).toContain('max-w-4xl');
+    expect(modal.firstElementChild?.className).toContain('max-h-[85vh]');
+  });
+
+  it('closes with Escape and with a click on the backdrop but not on the panel', () => {
+    mockClient.request.mockResolvedValue({ path: sampleDoc.path, content: '# x' });
+    const onClose = vi.fn();
+    render(
+      <I18nProvider initial="es"><BridgeContext.Provider value={mockBridgeValue}>
+        <DocumentViewerModal document={sampleDoc} onClose={onClose} />
+      </BridgeContext.Provider></I18nProvider>,
+    );
+    const modal = screen.getByTestId('document-viewer-modal');
+    fireEvent.click(modal.firstElementChild as HTMLElement);
+    expect(onClose).not.toHaveBeenCalled();
+    fireEvent.click(modal);
+    expect(onClose).toHaveBeenCalledTimes(1);
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(onClose).toHaveBeenCalledTimes(2);
+  });
+
+  it('shows an honest error instead of invented content when the file cannot be read', async () => {
+    mockClient.request.mockRejectedValueOnce(new Error('no such file'));
+    render(
+      <I18nProvider initial="es"><BridgeContext.Provider value={mockBridgeValue}>
+        <DocumentViewerModal document={sampleDoc} onClose={() => {}} />
+      </BridgeContext.Provider></I18nProvider>,
+    );
+    expect(await screen.findByTestId('document-load-error')).toHaveTextContent(sampleDoc.path);
   });
 });

@@ -113,10 +113,13 @@ describe('inferGateFromText', () => {
 describe('deriveConversation', () => {
   it('derives two conversations independently from their own events', () => {
     const a = thread(info('a'), [
-      user(1, 'abrí sdd/specs/spec-e-burgos-005-sessions/cycles/cycle-01/brief.yaml'),
+      tool(1, 'sdd-orchestrator', 'Read', '/repo/sdd/specs/spec-e-burgos-005-sessions/cycles/cycle-01/brief.yaml'),
       message(2, 'sdd-planner', 'listo, ver FIX-e-burgos-003'),
     ]);
-    const b = thread(info('b', { agent: 'sdd-architect' }), [user(1, 'leé sdd/specs/spec-other-9/cycles/cycle-02/x.md'), tool(2, 'sdd-architect', 'Read', 'sdd/specs/spec-other-9')]);
+    const b = thread(info('b', { agent: 'sdd-architect' }), [
+      user(1, 'leé sdd/specs/spec-other-9/cycles/cycle-02/x.md'),
+      tool(2, 'sdd-architect', 'Read', 'sdd/specs/spec-other-9/cycles/cycle-02/x.md'),
+    ]);
     const viewA = deriveConversation(a, snapshot);
     const viewB = deriveConversation(b, snapshot);
     expect(viewA.specs).toEqual([{ specId: 'spec-e-burgos-005-sessions', cycle: 'cycle-01', source: 'event', known: true }]);
@@ -125,7 +128,11 @@ describe('deriveConversation', () => {
       { agentId: 'sdd-orchestrator', events: 1 },
       { agentId: 'sdd-planner', events: 1 },
     ]);
-    expect(viewB.specs).toEqual([{ specId: 'spec-other-9', cycle: 'cycle-02', source: 'event', known: false }]);
+    expect(viewA.documents).toEqual([
+      { path: 'sdd/specs/spec-e-burgos-005-sessions/cycles/cycle-01/brief.yaml', name: 'brief.yaml', specId: 'spec-e-burgos-005-sessions', fixId: null, modified: false },
+    ]);
+    expect(viewB.specs).toEqual([]);
+    expect(viewB.documents).toEqual([]);
     expect(viewB.fixes).toEqual([]);
     expect(viewB.participants.map((p) => p.agentId)).toEqual(['sdd-architect']);
   });
@@ -145,7 +152,7 @@ describe('deriveConversation', () => {
     expect(deriveConversation(linked, snapshot).specs).toEqual([{ specId: 'spec-e-burgos-005-sessions', cycle: 'cycle-01', source: 'link', known: true }]);
 
     const both = thread(info('l', { link: { target: { kind: 'cycle', specId: 'spec-e-burgos-005-sessions', cycle: 'cycle-01' }, source: 'manual' } }), [
-      user(1, 'sdd/specs/spec-e-burgos-005-sessions'),
+      tool(1, 'sdd-orchestrator', 'Read', 'sdd/specs/spec-e-burgos-005-sessions/cycles/cycle-01/plan.md'),
     ]);
     expect(deriveConversation(both, snapshot).specs[0]?.source).toBe('event');
 
@@ -154,7 +161,7 @@ describe('deriveConversation', () => {
   });
 
   it('canonicalizes case against the snapshot', () => {
-    const view = deriveConversation(thread(info('c'), [user(1, 'sdd/specs/spec-E-Burgos-005-Sessions')]), snapshot);
+    const view = deriveConversation(thread(info('c'), [tool(1, 'sdd-orchestrator', 'Edit', 'sdd/specs/spec-E-Burgos-005-Sessions/plan.md')]), snapshot);
     expect(view.specs[0]).toMatchObject({ specId: 'spec-e-burgos-005-sessions', known: true });
   });
 
@@ -165,9 +172,45 @@ describe('deriveConversation', () => {
     expect(view.fixes).toEqual([]);
   });
 
-  it('scans approval input', () => {
-    const approval: TimelineItem = { kind: 'approval', id: 'ap', seq: 1, author: author('a'), tool: 'Write', summary: 'Write', input: 'sdd/specs/spec-in-1/cycles/cycle-03/x', decision: 'pending' };
-    expect(deriveConversation(thread(info('p'), [approval]), null).specs).toEqual([{ specId: 'spec-in-1', cycle: 'cycle-03', source: 'event', known: false }]);
+  it('scans approval input for real fix ids', () => {
+    const approval: TimelineItem = { kind: 'approval', id: 'ap', seq: 1, author: author('a'), tool: 'Write', summary: 'Write', input: 'registrar FIX-e-burgos-003', decision: 'pending' };
+    expect(deriveConversation(thread(info('p'), [approval]), snapshot).fixes).toEqual([
+      { fixId: 'FIX-e-burgos-003', specId: 'spec-e-burgos-005-sessions', source: 'event', known: true },
+    ]);
+  });
+
+  it('discards spec and fix ids truncated or absent from the workspace snapshot', () => {
+    const view = deriveConversation(
+      thread(info('trunc'), [
+        user(1, 'abrí sdd/specs/spec-e-burgos-005-studi'),
+        message(2, 'sdd-orchestrator', 'ver sdd/specs/spec-e-b y sdd/specs/spec-e-burgos y FIX-e-b'),
+        tool(3, 'sdd-orchestrator', 'Read', 'sdd/specs/spec-e-burgos-005-studi'),
+        tool(4, 'sdd-orchestrator', 'Read', 'sdd/specs/spec-e-b/cycles/cycle-01/plan.md'),
+        tool(5, 'sdd-orchestrator', 'Edit', 'sdd/specs/spec-e-burgos/plan.md'),
+        tool(6, 'sdd-orchestrator', 'Bash', '$ cat sdd/specs/spec-e-burgos-005-sessions/plan.md'),
+      ]),
+      snapshot,
+    );
+    expect(view.specs).toEqual([]);
+    expect(view.fixes).toEqual([]);
+    expect(view.documents).toEqual([]);
+  });
+
+  it('derives documents only from file tool calls, marks writes as modified and links fix documents', () => {
+    const view = deriveConversation(
+      thread(info('docs'), [
+        tool(1, 'sdd-reviewer', 'Read', '/w/sdd/specs/spec-e-burgos-005-sessions/fixes/fix-e-burgos-003.md'),
+        tool(2, 'sdd-reviewer', 'Edit', '/w/sdd/specs/spec-e-burgos-005-sessions/fixes/fix-e-burgos-003.md'),
+        tool(3, 'sdd-reviewer', 'Write', '/w/sdd/specs/spec-e-burgos-005-sessions/cycles/cycle-01/plan.md'),
+        tool(4, 'sdd-reviewer', 'Grep', 'Grep sdd/specs/spec-e-burgos-005-sessions'),
+      ]),
+      snapshot,
+    );
+    expect(view.documents).toEqual([
+      { path: 'sdd/specs/spec-e-burgos-005-sessions/fixes/fix-e-burgos-003.md', name: 'fix-e-burgos-003.md', specId: 'spec-e-burgos-005-sessions', fixId: 'FIX-e-burgos-003', modified: true },
+      { path: 'sdd/specs/spec-e-burgos-005-sessions/cycles/cycle-01/plan.md', name: 'plan.md', specId: 'spec-e-burgos-005-sessions', fixId: null, modified: true },
+    ]);
+    expect(view.fixes.map((f) => f.fixId)).toEqual(['FIX-e-burgos-003']);
   });
 
   it('builds ordered dialogues without timestamps and with honest recipients', () => {

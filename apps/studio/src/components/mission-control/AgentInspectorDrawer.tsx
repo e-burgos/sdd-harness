@@ -2,10 +2,11 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Bot, MessageSquare, Moon, User, Users, X, Zap } from 'lucide-react';
-import { DEFAULT_AGENT, type Presence } from '@sdd-studio/protocol';
+import type { Presence } from '@sdd-studio/protocol';
 import { agentMeta } from '@/lib/agents';
 import type { ConversationDialogue, ConversationView } from '@/lib/conversation';
 import { useT } from '@/lib/i18n/i18n';
+import { useCollapsedState } from '@/lib/use-collapsed-state';
 import { AgentAvatar } from '../workspace/AgentAvatar';
 import { useStudio } from '../BridgeProvider';
 import { ChatDialogueCard } from './ChatDialogueCard';
@@ -26,7 +27,7 @@ interface AgentInspectorDrawerProps {
 }
 
 const PAGE_SIZE = 50;
-const NO_CYCLES: never[] = [];
+const AGENT_INFO_NODE = 'mission-control.agent-info';
 
 const displayName = (id: string): string => (id === 'user' ? 'Tú' : agentMeta(id).name);
 
@@ -44,7 +45,9 @@ export function AgentInspectorDrawer({
   const { t } = useT();
   const snapshot = useStudio((s) => s.snapshot);
   const [activeTab, setActiveTab] = useState<'agent' | 'swarm'>(() => (agentId ? 'agent' : 'swarm'));
-  const [showFullProfile, setShowFullProfile] = useState(false);
+  const collapsed = useCollapsedState(snapshot?.project ?? '');
+  const showFullProfile = !collapsed.isCollapsed(AGENT_INFO_NODE, true);
+  const toggleAgentInfo = () => collapsed.toggle(AGENT_INFO_NODE, true);
   const [swarmLimit, setSwarmLimit] = useState(PAGE_SIZE);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -62,14 +65,18 @@ export function AgentInspectorDrawer({
 
   const meta = agentId ? agentMeta(agentId) : null;
   const state = presence?.state ?? 'idle';
-  const cycles = snapshot?.cycles ?? NO_CYCLES;
-  const documentsAgentId = agentId ?? conversation?.participants[0]?.agentId ?? DEFAULT_AGENT;
   const displayedDialogues = useMemo(() => (conversation?.dialogues ?? []).slice(-swarmLimit), [conversation, swarmLimit]);
 
   const sessionAndDocuments = conversation && (
     <div className="space-y-2">
       <ConversationSessionInfo engineSessionId={conversation.engineSessionId} provider={conversation.provider} />
-      <RelatedDocuments agentId={documentsAgentId} specs={conversation.specs} fixes={conversation.fixes} cycles={cycles} />
+      <RelatedDocuments
+        specs={conversation.specs}
+        fixes={conversation.fixes}
+        documents={conversation.documents}
+        open={showFullProfile}
+        onToggle={toggleAgentInfo}
+      />
     </div>
   );
 
@@ -116,11 +123,11 @@ export function AgentInspectorDrawer({
           {activeTab === 'agent' && meta && (
             <button
               type="button"
-              onClick={() => setShowFullProfile(!showFullProfile)}
+              onClick={toggleAgentInfo}
               className="rounded-lg px-2 py-1 text-[10px] font-mono text-white/60 hover:bg-white/10 hover:text-white transition-colors"
               title="Alternar vista de perfil completo"
             >
-              {showFullProfile ? 'Ocultar info' : 'Ver info'}
+              {showFullProfile ? t('map.hideInfo') : t('map.showInfo')}
             </button>
           )}
           <button

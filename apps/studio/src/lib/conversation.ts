@@ -28,6 +28,14 @@ export interface RelatedFix {
   known: boolean;
 }
 
+export interface ConversationDocument {
+  path: string;
+  name: string;
+  specId: string;
+  fixId: string | null;
+  modified: boolean;
+}
+
 export interface ConversationParticipant {
   agentId: string;
   events: number;
@@ -39,6 +47,7 @@ export interface ConversationView {
   dialogues: ConversationDialogue[];
   specs: RelatedSpec[];
   fixes: RelatedFix[];
+  documents: ConversationDocument[];
   engineSessionId: string | null | undefined;
   provider: string | undefined;
   isEmpty: boolean;
@@ -179,8 +188,46 @@ function participantsOf(items: TimelineItem[], threadAgent: string | null, hasEv
   return [...counts].map(([agentId, events]) => ({ agentId, events }));
 }
 
+const DOCUMENT_TOOLS = new Set(['Read', 'Write', 'Edit', 'MultiEdit']);
+const SPEC_DOCUMENT_PATH = /(?:^|\/)(sdd\/specs\/(spec-[A-Za-z0-9._-]{1,123})\/[^\s]+)$/;
+const FIX_DOCUMENT_PATH = /\/fixes\/fix-([A-Za-z0-9][A-Za-z0-9._-]{0,94}?)\.md$/;
+
+const specIdsOf = (snapshot: WorkspaceSnapshot | null): Map<string, string> =>
+  new Map((snapshot?.specs ?? []).map((spec) => [spec.id.toLowerCase(), spec.id]));
+
+const fixesOf = (snapshot: WorkspaceSnapshot | null) => new Map((snapshot?.fixes ?? []).map((fix) => [fix.id.toLowerCase(), fix]));
+
+function documentOf(item: TimelineItem, snapshot: WorkspaceSnapshot | null): ConversationDocument | null {
+  if (item.kind !== 'tool' || !DOCUMENT_TOOLS.has(item.tool)) return null;
+  const match = SPEC_DOCUMENT_PATH.exec(item.summary.trim());
+  if (!match) return null;
+  const specId = specIdsOf(snapshot).get((match[2] ?? '').toLowerCase());
+  if (!specId) return null;
+  const path = (match[1] ?? '').replace(/^sdd\/specs\/[^/]+/, `sdd/specs/${specId}`);
+  const fixMatch = FIX_DOCUMENT_PATH.exec(path);
+  const knownFix = fixMatch ? fixesOf(snapshot).get(`fix-${fixMatch[1]}`.toLowerCase()) : undefined;
+  return {
+    path,
+    name: path.split('/').at(-1) ?? path,
+    specId,
+    fixId: knownFix?.id ?? null,
+    modified: item.tool !== 'Read',
+  };
+}
+
+function relatedDocuments(thread: ThreadState, snapshot: WorkspaceSnapshot | null): ConversationDocument[] {
+  const byPath = new Map<string, ConversationDocument>();
+  for (const item of thread.items) {
+    const document = documentOf(item, snapshot);
+    if (!document) continue;
+    const previous = byPath.get(document.path);
+    byPath.set(document.path, previous ? { ...previous, modified: previous.modified || document.modified } : document);
+  }
+  return [...byPath.values()];
+}
+
 function relatedSpecs(thread: ThreadState, snapshot: WorkspaceSnapshot | null): RelatedSpec[] {
-  const known = new Map((snapshot?.specs ?? []).map((spec) => [spec.id.toLowerCase(), spec.id]));
+  const known = specIdsOf(snapshot);
   const found = new Map<string, RelatedSpec>();
   const add = (specId: string, cycle: string | null, source: RelatedSpec['source']): void => {
     const key = specId.toLowerCase();
@@ -190,10 +237,12 @@ function relatedSpecs(thread: ThreadState, snapshot: WorkspaceSnapshot | null): 
       return;
     }
     const canonical = known.get(key);
+    if (source === 'event' && canonical === undefined) return;
     found.set(key, { specId: canonical ?? specId, cycle, source, known: canonical !== undefined });
   };
   for (const item of thread.items) {
-    for (const text of scannedTexts(item)) for (const ref of referencesInText(text).specs) add(ref.specId, ref.cycle, 'event');
+    if (item.kind !== 'tool' || !DOCUMENT_TOOLS.has(item.tool)) continue;
+    for (const ref of referencesInText(item.summary).specs) add(ref.specId, ref.cycle, 'event');
   }
   const target = thread.info?.link.target;
   if (target?.kind === 'cycle') add(target.specId, target.cycle, 'link');
@@ -201,12 +250,13 @@ function relatedSpecs(thread: ThreadState, snapshot: WorkspaceSnapshot | null): 
 }
 
 function relatedFixes(thread: ThreadState, snapshot: WorkspaceSnapshot | null): RelatedFix[] {
-  const known = new Map((snapshot?.fixes ?? []).map((fix) => [fix.id.toLowerCase(), fix]));
+  const known = fixesOf(snapshot);
   const found = new Map<string, RelatedFix>();
   const add = (fixId: string, source: RelatedFix['source']): void => {
     const key = fixId.toLowerCase();
     if (found.has(key)) return;
     const summary = known.get(key);
+    if (source === 'event' && !summary) return;
     found.set(key, { fixId: summary?.id ?? fixId, specId: summary?.specId ?? null, source, known: summary !== undefined });
   };
   for (const item of thread.items) {
@@ -228,6 +278,7 @@ export function deriveConversation(thread: ThreadState, snapshot: WorkspaceSnaps
     dialogues,
     specs: relatedSpecs(thread, snapshot),
     fixes: relatedFixes(thread, snapshot),
+    documents: relatedDocuments(thread, snapshot),
     engineSessionId: thread.info?.engineSessionId,
     provider: thread.info?.provider,
     isEmpty: dialogues.length === 0,
