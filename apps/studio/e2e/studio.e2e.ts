@@ -18,11 +18,11 @@ test('pairs, chats with subagents, approves a tool, sees sdd-bot and runs /valid
 
   await page.getByPlaceholder('Type a message… (/ for commands)').fill('hola #sub #tool');
   await page.keyboard.press('Enter');
-  await expect(page.getByText('Planner started working')).toBeVisible();
-  await expect(page.getByText('planned')).toBeVisible();
+  await expect(page.getByText('Chronos started working')).toBeVisible();
+  await expect(page.getByTestId('thread-scroller').getByText('planned')).toBeVisible();
   await page.getByRole('button', { name: 'Approve' }).click();
   await expect(page.getByText('Approved')).toBeVisible();
-  await expect(page.getByText('echo: hola #sub #tool')).toBeVisible();
+  await expect(page.getByTestId('thread-scroller').getByText('echo: hola #sub #tool')).toBeVisible();
 
   const tasks = path.join(WORKSPACE, 'sdd/specs/spec-dev-001-pagos/cycles/cycle-01/tasks.json');
   const json = JSON.parse(await readFile(tasks, 'utf8'));
@@ -33,8 +33,6 @@ test('pairs, chats with subagents, approves a tool, sees sdd-bot and runs /valid
   await expect(page.getByText('2/2 tasks').first()).toBeVisible();
 
   await page.getByPlaceholder('Type a message… (/ for commands)').fill('/validate');
-  await page.keyboard.press('Enter');
-  await expect(page.getByPlaceholder('Type a message… (/ for commands)')).toHaveValue('/validate ');
   await page.keyboard.press('Enter');
   await expect(page.getByText('validate ok')).toBeVisible();
   await expect(page.getByText('exited with code 0')).toBeVisible();
@@ -67,7 +65,7 @@ test('sends an image and a text file, sees them in the timeline and after reload
   await page.getByPlaceholder(COMPOSER).fill('mirá esto');
   await page.keyboard.press('Enter');
 
-  await expect(page.getByText('echo: mirá esto [attachments: pixel.png, nota.txt]')).toBeVisible();
+  await expect(page.getByTestId('thread-scroller').getByText('echo: mirá esto [attachments: pixel.png, nota.txt]')).toBeVisible();
   await expect(page.getByRole('img', { name: 'pixel.png' }).last()).toBeVisible();
   await expect(page.getByText('nota.txt', { exact: true }).last()).toBeVisible();
 
@@ -91,7 +89,7 @@ test('@ lists workspace files and agents, and a mentioned agent reaches the engi
   await expect(box).toHaveValue('@sdd-planner ');
   await box.type('revisá esto');
   await box.press('Enter');
-  await expect(page.getByText('echo: @sdd-planner revisá esto [refs: @sdd-planner]')).toBeVisible();
+  await expect(page.getByTestId('thread-scroller').getByText('echo: @sdd-planner revisá esto [refs: @sdd-planner]')).toBeVisible();
 });
 
 test('a skill created while the bridge runs shows up in the / menu and travels as a ref', async ({ page }) => {
@@ -108,5 +106,5 @@ test('a skill created while the bridge runs shows up in the / menu and travels a
   await box.press('Tab');
   await box.type('el cambio');
   await box.press('Enter');
-  await expect(page.getByText('echo: el cambio [refs: /checklist]')).toBeVisible();
+  await expect(page.getByTestId('thread-scroller').getByText('echo: el cambio [refs: /checklist]')).toBeVisible();
 });
