@@ -438,6 +438,146 @@
           }
         ]
       }
+    },
+    {
+      "id": "FIX-e-burgos-005-003",
+      "author": "e-burgos",
+      "spec_id": "spec-e-burgos-005-studio-conversation-sessions",
+      "fix_document": "sdd/specs/spec-e-burgos-005-studio-conversation-sessions/fixes/fix-e-burgos-005-003.md",
+      "type": "IMPROVEMENT",
+      "severity": "low",
+      "created_at": "2026-10-26",
+      "resolved_at": null,
+      "validated_at": null,
+      "title": "Mission Control: header del DocumentViewerModal con layout limpio",
+      "estimation_hours": 1.5,
+      "description": "El header del visor mezcla titulo, ruta truncada, 'Copiar ruta' (se superpone y parte en dos lineas), toggle Renderizado/Crudo, Copiar y cerrar. Reorganizar: columna izquierda con titulo+badges y ruta; grupo de acciones alineado a la derecha; cerrar separado.",
+      "justification": "Ajuste de presentacion/derivacion en apps/studio sobre lo entregado en spec-005; sin contratos ni entidades nuevas. Segunda ronda de Mission Control partida en fixes de <=5 archivos.",
+      "related_modules": [
+        "studio"
+      ],
+      "affected_files": [
+        "apps/studio/src/components/mission-control/DocumentViewerModal.tsx",
+        "apps/studio/src/components/mission-control/documentviewermodal.spec.tsx"
+      ],
+      "test_reference": "apps/studio/src/components/mission-control/documentviewermodal.spec.tsx",
+      "status": "pending",
+      "cycle": null,
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "tokens_in": 40000,
+        "tokens_out": 5000,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-26",
+        "by_agent": [
+          {
+            "agent": "orchestrator",
+            "provider_model": "claude/sonnet",
+            "effort": "medium",
+            "tokens_in": 40000,
+            "tokens_out": 5000,
+            "approx": true,
+            "source": "declared-estimate"
+          }
+        ]
+      }
+    },
+    {
+      "id": "FIX-e-burgos-005-004",
+      "author": "e-burgos",
+      "spec_id": "spec-e-burgos-005-studio-conversation-sessions",
+      "fix_document": "sdd/specs/spec-e-burgos-005-studio-conversation-sessions/fixes/fix-e-burgos-005-004.md",
+      "type": "BUGFIX",
+      "severity": "medium",
+      "created_at": "2026-10-26",
+      "resolved_at": null,
+      "validated_at": null,
+      "title": "Mission Control: documentos por agente generado y specs/fixes solo con documento",
+      "estimation_hours": 1.5,
+      "description": "En la pestana de un agente se listan documentos ajenos y en Enjambre entran specs/fixes sin documentos (p. ej. spec-e-burgos-004-studio-gates-topology). Causa: relatedSpecs agrega por tool Read y por link.target auto-asignado, y relatedFixes por mencion textual, sin exigir documento generado. Solucion: documentos = solo Write/Edit/MultiEdit (Read excluido); cada documento lleva los agentes autores (item.author.agent); pestana de agente filtra por agente, Enjambre muestra todos; specs y fixes se derivan de los documentos generados (un fix solo aparece enlazado a su fix doc).",
+      "justification": "Ajuste de presentacion/derivacion en apps/studio sobre lo entregado en spec-005; sin contratos ni entidades nuevas. Segunda ronda de Mission Control partida en fixes de <=5 archivos.",
+      "related_modules": [
+        "studio"
+      ],
+      "affected_files": [
+        "apps/studio/src/lib/conversation.ts",
+        "apps/studio/src/lib/conversation.spec.ts",
+        "apps/studio/src/components/mission-control/RelatedDocuments.tsx",
+        "apps/studio/src/components/mission-control/RelatedDocuments.spec.tsx",
+        "apps/studio/src/components/mission-control/AgentInspectorDrawer.tsx"
+      ],
+      "test_reference": "apps/studio/src/lib/conversation.spec.ts",
+      "status": "pending",
+      "cycle": null,
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "tokens_in": 70000,
+        "tokens_out": 9000,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-26",
+        "by_agent": [
+          {
+            "agent": "orchestrator",
+            "provider_model": "claude/sonnet",
+            "effort": "medium",
+            "tokens_in": 70000,
+            "tokens_out": 9000,
+            "approx": true,
+            "source": "declared-estimate"
+          }
+        ]
+      }
+    },
+    {
+      "id": "FIX-e-burgos-005-005",
+      "author": "e-burgos",
+      "spec_id": "spec-e-burgos-005-studio-conversation-sessions",
+      "fix_document": "sdd/specs/spec-e-burgos-005-studio-conversation-sessions/fixes/fix-e-burgos-005-005.md",
+      "type": "BUGFIX",
+      "severity": "medium",
+      "created_at": "2026-10-26",
+      "resolved_at": null,
+      "validated_at": null,
+      "title": "Mission Control: sesion y proveedor visibles, sin falso 'no informado' por bridge desactualizado",
+      "estimation_hours": 1.5,
+      "description": "'proveedor no informado / sesion no informada' persiste porque el bridge en ejecucion (iniciado 11:26) es anterior al commit 414b1fd (11:42) cuyo toThreadInfo ya no descarta engineSessionId ni inyecta provider; el bridge viejo hace `{engineSessionId: _session, ...}` y lo elimina del ThreadInfo, y nunca emite provider. No son sesiones externas de Claude Code: no existe ingesta de hooks/transcripts. Solucion sin tocar contrato: la UI distingue 'bridge desactualizado, reinicialo' de 'sin sesion todavia' y muestra el id de sesion completo copiable; se reinicia el bridge. El titulo de /resume (SDKSessionInfo.summary/customTitle via getSessionInfo) requiere campo nuevo en ThreadInfo: queda fuera, ver nota de elegibilidad.",
+      "justification": "Ajuste de presentacion/derivacion en apps/studio sobre lo entregado en spec-005; sin contratos ni entidades nuevas. Segunda ronda de Mission Control partida en fixes de <=5 archivos.",
+      "related_modules": [
+        "studio"
+      ],
+      "affected_files": [
+        "apps/studio/src/components/mission-control/ConversationSessionInfo.tsx",
+        "apps/studio/src/components/mission-control/ConversationSessionInfo.spec.tsx",
+        "apps/studio/src/lib/i18n/es.ts",
+        "apps/studio/src/lib/i18n/en.ts"
+      ],
+      "test_reference": "apps/studio/src/components/mission-control/ConversationSessionInfo.spec.tsx",
+      "status": "pending",
+      "cycle": null,
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "tokens_in": 50000,
+        "tokens_out": 6000,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-26",
+        "by_agent": [
+          {
+            "agent": "orchestrator",
+            "provider_model": "claude/sonnet",
+            "effort": "medium",
+            "tokens_in": 50000,
+            "tokens_out": 6000,
+            "approx": true,
+            "source": "declared-estimate"
+          }
+        ]
+      }
     }
   ]
 }
