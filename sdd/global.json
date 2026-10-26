@@ -86,7 +86,19 @@
     }
   ],
   "in_progress_modules": [],
-  "pending_modules": [],
+  "pending_modules": [
+    {
+      "module": "studio-session-flow",
+      "spec": "spec-e-burgos-008-studio-session-flow",
+      "apps": [
+        "apps/studio",
+        "apps/studio-bridge",
+        "libs/studio-protocol"
+      ],
+      "cycles_completed": 0,
+      "description": "Conversación nueva y asociada por cada spec o fix con briefing mínimo, medidor de contexto restante y formulario de preguntas del proveedor (AskUserQuestion) dentro del chat."
+    }
+  ],
   "monorepo": {
     "tool": "none (multi-app repo)",
     "package_manager": "pnpm",
