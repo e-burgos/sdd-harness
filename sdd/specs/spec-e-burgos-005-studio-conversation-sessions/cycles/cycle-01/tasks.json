@@ -400,11 +400,21 @@
         "TASK-012",
         "TASK-013"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/studio/src/lib/no-fabricated-data.spec.ts",
         "sdd/specs/spec-e-burgos-005-studio-conversation-sessions/cycles/cycle-01/artifacts/audit-thread-creation.md"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 25000,
+        "tokens_out": 6000,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-26"
+      }
     },
     {
       "id": "TASK-015",
