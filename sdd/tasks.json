@@ -60,6 +60,20 @@
           "tasks_done": 7
         }
       }
+    },
+    "spec-e-burgos-004-studio-gates-topology": {
+      "cycles": {
+        "cycle-01": {
+          "file": "sdd/specs/spec-e-burgos-004-studio-gates-topology/cycles/cycle-01/tasks.json",
+          "module": "studio-gates-topology",
+          "apps": [
+            "apps/studio"
+          ],
+          "status": "completed",
+          "tasks_total": 6,
+          "tasks_done": 6
+        }
+      }
     }
   }
 }

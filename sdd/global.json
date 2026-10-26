@@ -37,9 +37,31 @@
       "cycles_completed": 1,
       "description": "Mission Control de SDD Studio: topología de agentes en vivo (Clara, Sophia, Chronos, etc.), avatares con personalidad, dashboard de ecosistema y telemetría en tiempo real.",
       "completed_at": "2026-10-23"
+    },
+    {
+      "module": "studio-gates-topology",
+      "spec": "spec-e-burgos-004-studio-gates-topology",
+      "apps": [
+        "apps/studio"
+      ],
+      "cycles_completed": 1,
+      "description": "Topología interactiva de Gates en SDD Studio: tarjetas/puertas de las 6 Gates en el mapa del enjambre, arcos SVG animados y Split-View con feed de conversación en tiempo real.",
+      "completed_at": "2026-10-24"
     }
   ],
-  "in_progress_modules": [],
+  "in_progress_modules": [
+    {
+      "module": "studio-conversation-sessions",
+      "spec": "spec-e-burgos-005-studio-conversation-sessions",
+      "apps": [
+        "apps/studio",
+        "apps/studio-bridge",
+        "libs/studio-protocol"
+      ],
+      "cycles_completed": 0,
+      "description": "Una conversación = una sesión del proveedor, sesión real y proveedor visibles en la web, prefijo de sistema estable para prompt caching y enjambre de Mission Control centrado en la conversación real."
+    }
+  ],
   "pending_modules": [],
   "monorepo": {
     "tool": "none (multi-app repo)",

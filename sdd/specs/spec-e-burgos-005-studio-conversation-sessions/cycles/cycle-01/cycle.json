@@ -1,0 +1,59 @@
+{
+  "$schema": "../../../../schemas/cycle.schema.json",
+  "cycle": 1,
+  "module": "studio-conversation-sessions",
+  "spec": "spec-e-burgos-005-studio-conversation-sessions",
+  "apps": [
+    "apps/studio",
+    "apps/studio-bridge",
+    "libs/studio-protocol"
+  ],
+  "phase": "conversation-sessions",
+  "flow": "full",
+  "objectives": [
+    "Cada conversación nueva abre una sesión nueva del proveedor; ninguna sesión se reutiliza entre hilos (US-1)",
+    "engineSessionId y provider en ThreadInfo, visibles en la web sin ids fabricados (US-2)",
+    "Prefijo de sistema estable del proyecto para aprovechar el prompt caching de Claude (US-3)",
+    "Mission Control centrado en la conversación seleccionada, con specs/fixes derivados de eventos (US-4)",
+    "Eliminar guiones ficticios y selectores spec/fix conservando el visor de documentos (US-5)"
+  ],
+  "status": "in-progress",
+  "started_at": "2026-10-25",
+  "completed_at": null,
+  "documents": {
+    "brief": "sdd/specs/spec-e-burgos-005-studio-conversation-sessions/cycles/cycle-01/brief.yaml"
+  },
+  "artifacts": [],
+  "metrics": {
+    "tasks_total": 0,
+    "tasks_completed": 0,
+    "story_points": 0,
+    "files_created": [],
+    "files_modified": [],
+    "files_deleted": [],
+    "usage": {
+      "tokens_in": 70000,
+      "tokens_out": 16000,
+      "by_agent": [
+        {
+          "agent": "orchestrator",
+          "label": "cycle-open+context-consolidation",
+          "provider_model": "claude/opus",
+          "effort": "medium",
+          "tokens_in": 70000,
+          "tokens_out": 16000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-25"
+        }
+      ],
+      "approx": true,
+      "source": "declared-estimate"
+    }
+  },
+  "tables_created": [],
+  "endpoints_implemented": [],
+  "components_created": [],
+  "issues_found": [],
+  "reviewer_report": null
+}

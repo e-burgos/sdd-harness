@@ -1,0 +1,97 @@
+# sdd/specs/spec-e-burgos-005-studio-conversation-sessions/cycles/cycle-01/brief.yaml
+# Generado por: sdd-orchestrator
+# Al: iniciar el ciclo
+
+cycle: 1
+module: studio-conversation-sessions
+phase: conversation-sessions
+flow: full
+date: 2026-10-25
+estimated_weeks: 1
+app_context: sdd/context/apps/studio/context_prompt.md
+
+objective: |
+  Que cada conversación de SDD Studio sea una sesión real y propia del proveedor. La web ve esa
+  sesión y su proveedor, el contexto estable del proyecto se cachea y Mission Control muestra
+  solo lo que pasó de verdad en la conversación elegida.
+
+scope:
+  - US-1 Nueva conversación = sesión nueva; auditar Composer y LiveAgentChatFeed; botón "Nueva conversación"; prohibido reutilizar sesión entre hilos
+  - US-2 engineSessionId y provider en ThreadInfo (libs/studio-protocol); toThreadInfo deja de borrarlos (ajustar store.spec.ts)
+  - US-3 Prefijo de sistema estable (context_prompt.md, constitution.md, lessons.md) para prompt caching de Claude
+  - US-4 Selector de conversación en Mission Control; specs/fixes derivados de eventos; default = lastActivity más reciente
+  - US-5 Borrar guiones ficticios de swarm-dialogue.ts y selectores spec/fix; conservar DocumentViewerModal y lib/agent-documents.ts
+  - Campo provider en protocolo e interfaz del motor (arquitectura multi-proveedor)
+
+out_of_scope:
+  - Motores Gemini o Copilot (solo se prepara la arquitectura)
+  - Resumen o compactación por sesión (descartado por el dev)
+  - Fallback de cifras ficticias de LiveTelemetryHUD, salvo que el dev lo incluya (hallazgo de la spec)
+
+dependencies_required:
+  - spec-e-burgos-001-studio-session-ux (completed)
+  - spec-e-burgos-004-studio-gates-topology (completed)
+  - FIX-e-burgos-004-001 (absorbed en esta spec; inventario de falsedades que limpia US-5)
+
+agent_contexts:
+  functional:
+    goal: Convertir US-1..US-5 en historias con criterios verificables y reglas de negocio (qué es una conversación, cuándo nace una sesión, de dónde se derivan las specs/fixes relacionados)
+    business_context: |
+      SDD Studio es la UI web (apps/studio) que habla por WebSocket con un puente local
+      (apps/studio-bridge) que corre agentes con Claude Agent SDK. Cada hilo es una conversación.
+      El puente ya da una sesión por hilo, pero la web no la ve y Mission Control muestra guiones
+      inventados (proveedores Gemini/Copilot y sesiones que nunca existieron). El dev decidió:
+      prefijo de sistema estable para caching (sin resumen) y arquitectura preparada para varios
+      proveedores con solo Claude implementado.
+    relevant_spec_sections:
+      - Diagnóstico
+      - Historias de usuario
+      - Decisiones del dev
+      - Criterios de aceptación
+    output_file: sdd/specs/spec-e-burgos-005-studio-conversation-sessions/cycles/cycle-01/functional.md
+
+  planner:
+    goal: Tasks ordenadas por subproyecto, primero el protocolo, después el puente y al final la web, de no más de 1 día cada una; tasks.json del ciclo con flow full
+    note: Recibe el output del Funcional; no necesita la spec completa
+    output_file: sdd/specs/spec-e-burgos-005-studio-conversation-sessions/cycles/cycle-01/planner.md
+
+  architect:
+    goal: |
+      Definir el delta de contrato en libs/studio-protocol (engineSessionId nullable y provider en
+      ThreadInfo; enum Provider extensible) y su compatibilidad: campos opcionales o bump de
+      PROTOCOL_VERSION (hoy 2). Definir el campo provider en la interfaz AgentEngine y su
+      persistencia en StoredThread (migración de hilos existentes → claude). Decidir el armado y la
+      posición del prefijo de sistema estable en claude-sdk-engine.ts (systemPrompt/append) para que
+      el caching sea efectivo y determinista. Definir la derivación de specs/fixes relacionados desde
+      ThreadEvent (rutas sdd/specs/<id>, FIX-…) y dónde vive: puente o web. Registrar los componentes
+      nuevos o retirados en sdd/components.json.
+    existing_tables: []
+    existing_endpoints: []
+    existing_contracts:
+      - libs/studio-protocol/src/domain.ts (ThreadInfo, ThreadOptions, ThreadLink)
+      - libs/studio-protocol/src/version.ts (PROTOCOL_VERSION = 2)
+      - apps/studio-bridge/src/sessions/store.ts (StoredThread, toThreadInfo)
+      - apps/studio-bridge/src/sessions/session-manager.ts (createThread, resumeSessionId)
+      - apps/studio-bridge/src/engine/claude-sdk-engine.ts (settingSources ['project'])
+    existing_components:
+      - sdd/components.json apps/studio COMP-001..COMP-015 (ninguno de mission-control registrado)
+    output_file: sdd/specs/spec-e-burgos-005-studio-conversation-sessions/cycles/cycle-01/architect.md
+
+  implementor_back:
+    goal: Protocolo (ThreadInfo, provider), puente (toThreadInfo, provider en motor y store, prefijo de sistema estable, garantía de sesión nueva por hilo) con tests
+    app: apps/studio-bridge
+    also: libs/studio-protocol
+    app_context: sdd/context/apps/studio-bridge/context_prompt.md
+    protocol_context: sdd/context/libs/studio-protocol/context_prompt.md
+    note: Recibe una task a la vez del Planner
+
+  implementor_front:
+    goal: Botón "Nueva conversación", auditoría de Composer/LiveAgentChatFeed, sesión y proveedor reales en la web, selector de conversación y enjambre derivado de eventos, limpieza de guiones/selectores
+    app: apps/studio
+    app_context: sdd/context/apps/studio/context_prompt.md
+    note: Recibe una task a la vez del Planner; solo después de que el contrato del protocolo esté implementado
+
+  reviewer:
+    goal: Validar todo el output del ciclo (CA-1..CA-6), sin ids de sesión ni proveedores ficticios, telemetría por unidad, fragmentos de contexto en los tres subproyectos
+    checklist: sdd/skills/sdd-reviewer/checklist.md
+    output_file: sdd/specs/spec-e-burgos-005-studio-conversation-sessions/cycles/cycle-01/cycle.json

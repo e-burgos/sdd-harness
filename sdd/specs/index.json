@@ -47,6 +47,39 @@
         "spec-e-burgos-002-studio-ui-polish"
       ],
       "completed_at": "2026-10-23"
+    },
+    {
+      "id": "spec-e-burgos-004-studio-gates-topology",
+      "author": "e-burgos",
+      "slug": "studio-gates-topology",
+      "folder": "sdd/specs/spec-e-burgos-004-studio-gates-topology",
+      "file": "sdd/specs/spec-e-burgos-004-studio-gates-topology/spec-e-burgos-004-studio-gates-topology.spec.md",
+      "module": "studio-gates-topology",
+      "app": "apps/studio",
+      "status": "completed",
+      "title": "SDD Studio: Topología interactiva de Gates, visualización del enjambre y live chat compartido",
+      "created_at": "2026-10-24",
+      "completed_at": "2026-10-24",
+      "depends_on": [
+        "spec-e-burgos-003-studio-mission-control"
+      ]
+    },
+    {
+      "id": "spec-e-burgos-005-studio-conversation-sessions",
+      "author": "e-burgos",
+      "slug": "studio-conversation-sessions",
+      "folder": "sdd/specs/spec-e-burgos-005-studio-conversation-sessions",
+      "file": "sdd/specs/spec-e-burgos-005-studio-conversation-sessions/spec-e-burgos-005-studio-conversation-sessions.spec.md",
+      "module": "studio-conversation-sessions",
+      "app": "apps/studio",
+      "status": "in-progress",
+      "title": "SDD Studio: una conversación, una sesión — sesión real visible, cache de contexto y enjambre centrado en la conversación",
+      "created_at": "2026-10-25",
+      "completed_at": null,
+      "depends_on": [
+        "spec-e-burgos-001-studio-session-ux",
+        "spec-e-burgos-004-studio-gates-topology"
+      ]
     }
   ]
 }
