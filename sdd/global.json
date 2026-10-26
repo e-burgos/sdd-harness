@@ -71,9 +71,7 @@
       "cycles_completed": 1,
       "description": "Una conversación = una sesión del proveedor, sesión real y proveedor visibles en la web, prefijo de sistema estable para prompt caching y enjambre de Mission Control centrado en la conversación real.",
       "completed_at": "2026-10-26"
-    }
-  ],
-  "in_progress_modules": [
+    },
     {
       "module": "studio-session-metadata",
       "spec": "spec-e-burgos-007-studio-session-metadata",
@@ -82,10 +80,12 @@
         "apps/studio-bridge",
         "libs/studio-protocol"
       ],
-      "cycles_completed": 0,
-      "description": "Título real de sesión del proveedor, asociación múltiple y persistente de conversaciones a specs/ciclos/fixes y evento estructurado document.touched (incluye escrituras por Bash)."
+      "cycles_completed": 1,
+      "description": "Título real de sesión del proveedor, asociación múltiple y persistente de conversaciones a specs/ciclos/fixes y evento estructurado document.touched (incluye escrituras por Bash).",
+      "completed_at": "2026-10-26"
     }
   ],
+  "in_progress_modules": [],
   "pending_modules": [],
   "monorepo": {
     "tool": "none (multi-app repo)",
