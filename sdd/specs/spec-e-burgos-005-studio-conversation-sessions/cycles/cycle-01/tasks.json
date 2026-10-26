@@ -427,12 +427,22 @@
       "depends_on": [
         "TASK-014"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "libs/studio-protocol",
         "apps/studio-bridge",
         "apps/studio"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 20000,
+        "tokens_out": 4000,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-26"
+      }
     }
   ]
 }
