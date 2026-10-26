@@ -291,4 +291,8 @@ export const en = {
   'mc.related.root': 'Spec root',
   'mc.related.inSpec': 'in {spec}',
   'mc.related.noDocuments': 'No documents to open',
+  'caps.notice': 'This bridge does not offer: {features}. Restart it with the latest version to enable it.',
+  'caps.session-title': 'session title',
+  'caps.link-targets': 'multiple associations',
+  'caps.document-touched': 'documents changed from the console',
 } satisfies Record<keyof Dict, string>;

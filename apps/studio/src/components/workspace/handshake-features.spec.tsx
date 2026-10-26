@@ -5,6 +5,8 @@ import { I18nProvider } from '@/lib/i18n/i18n';
 import { createStudioStore } from '@/lib/store/store';
 import { BridgeContext, type BridgeContextValue } from '../BridgeProvider';
 import { Composer } from './Composer';
+import { CapabilityNotice } from '../mission-control/CapabilityNotice';
+import { useBridgeFeatures } from '@/lib/use-bridge-features';
 
 class FakeSocket {
   static last: FakeSocket;
@@ -80,5 +82,48 @@ describe('handshake without features (bridge of cycle-01)', () => {
     expect(screen.getByRole('button', { name: 'Adjuntar archivo' })).toBeInTheDocument();
     expect(box).toHaveAttribute('role', 'combobox');
     client.close();
+  });
+});
+
+describe('session metadata capabilities', () => {
+  function renderNotice(features: string[] | undefined, status: 'open' | 'idle' = 'open') {
+    const client = { supports: (f: string) => (features ?? []).includes(f) };
+    const value = { client, connection: { status } } as unknown as BridgeContextValue;
+    const Probe = () => <span data-testid="probe">{String(useBridgeFeatures().supports('link-targets'))}</span>;
+    render(
+      <I18nProvider initial="es">
+        <BridgeContext.Provider value={value}>
+          <CapabilityNotice capabilities={['session-title', 'link-targets', 'document-touched']} />
+          <Probe />
+        </BridgeContext.Provider>
+      </I18nProvider>,
+    );
+  }
+
+  it('warns without blocking when an old bridge lacks the capabilities', () => {
+    renderNotice(undefined);
+    const notice = screen.getByTestId('capability-notice');
+    expect(notice).toHaveTextContent('título de sesión');
+    expect(notice).toHaveTextContent('asociaciones múltiples');
+    expect(notice).toHaveTextContent('documentos modificados desde la consola');
+    expect(screen.getByTestId('probe')).toHaveTextContent('false');
+  });
+
+  it('lists only the missing capabilities', () => {
+    renderNotice(['session-title', 'document-touched']);
+    const notice = screen.getByTestId('capability-notice');
+    expect(notice).toHaveTextContent('asociaciones múltiples');
+    expect(notice).not.toHaveTextContent('título de sesión');
+  });
+
+  it('shows nothing with a current bridge or before the connection opens', () => {
+    renderNotice(['session-title', 'link-targets', 'document-touched']);
+    expect(screen.queryByTestId('capability-notice')).toBeNull();
+    expect(screen.getByTestId('probe')).toHaveTextContent('true');
+  });
+
+  it('shows nothing while not connected', () => {
+    renderNotice(undefined, 'idle');
+    expect(screen.queryByTestId('capability-notice')).toBeNull();
   });
 });

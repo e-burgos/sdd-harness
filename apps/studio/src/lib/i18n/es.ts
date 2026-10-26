@@ -289,5 +289,9 @@ export const es = {
   'mc.related.root': 'Raíz de la spec',
   'mc.related.inSpec': 'en {spec}',
   'mc.related.noDocuments': 'Sin documentos para abrir',
+  'caps.notice': 'Este puente no ofrece: {features}. Reinicialo con la última versión para habilitarlo.',
+  'caps.session-title': 'título de sesión',
+  'caps.link-targets': 'asociaciones múltiples',
+  'caps.document-touched': 'documentos modificados desde la consola',
 };
 export type Dict = typeof es;

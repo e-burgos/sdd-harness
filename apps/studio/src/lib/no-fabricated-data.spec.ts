@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 const SRC_ROOT = dirname(dirname(fileURLToPath(import.meta.url)));
 
 const FABRICATED_PATTERNS: { name: string; pattern: RegExp }[] = [
-  { name: 'literal session id', pattern: /["'`]session-/ },
+  { name: 'literal session id', pattern: /["'`]session-(?!title["'`])/ },
   { name: 'demo swarm scripts', pattern: /SWARM_SCRIPTS_BY_SPEC/ },
   { name: 'telemetry baseline figure', pattern: /6611605|6[.,]611[.,]605/ },
   { name: 'fixed Gemini model row', pattern: /Gemini Flash/ },

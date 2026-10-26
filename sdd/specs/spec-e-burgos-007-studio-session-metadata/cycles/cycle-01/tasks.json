@@ -444,14 +444,25 @@
       "depends_on": [
         "TASK-003"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/studio/src/lib/use-bridge-features.ts",
         "apps/studio/src/components/mission-control/CapabilityNotice.tsx",
         "apps/studio/src/lib/i18n/en.ts",
         "apps/studio/src/lib/i18n/es.ts",
-        "apps/studio/src/components/handshake-features.spec.tsx"
-      ]
+        "apps/studio/src/components/handshake-features.spec.tsx",
+        "apps/studio/src/lib/no-fabricated-data.spec.ts"
+      ],
+      "usage": {
+        "tokens_in": 40000,
+        "tokens_out": 9000,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-26"
+      }
     },
     {
       "id": "TASK-016",
