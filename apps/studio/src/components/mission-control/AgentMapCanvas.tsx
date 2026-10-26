@@ -583,17 +583,6 @@ export function AgentMapCanvas({ onOpenDm }: { onOpenDm: (agentId: string) => vo
           isPlaying={isPlaying}
           onTogglePlay={() => setIsPlaying(!isPlaying)}
           onNext={() => setDialogueIdx((prev) => (prev + 1) % activeScript.length)}
-          dialogueHistory={activeScript}
-          mode={mode}
-          onToggleMode={() =>
-            setMode((m) => {
-              const next = m === 'live' ? 'demo' : 'live';
-              setIsPlaying(next === 'demo');
-              setInspectedDialogueId(null);
-              return next;
-            })
-          }
-          liveCount={liveDialogues.length}
           activePresenceCount={activePresenceCount}
           isPanelCollapsed={isPanelCollapsed}
         />

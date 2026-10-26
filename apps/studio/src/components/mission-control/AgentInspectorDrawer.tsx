@@ -27,6 +27,7 @@ import {
   type HarnessProvider,
   extractRuntimeDialogues,
 } from './swarm-dialogue';
+import type { ConversationView } from '@/lib/conversation';
 import { useStudio } from '../BridgeProvider';
 import {
   getAgentGeneratedDocuments,
@@ -46,6 +47,8 @@ interface AgentInspectorDrawerProps {
   onSelectFixId?: (fixId: string) => void;
   onSelectAgent?: (agentId: string) => void;
   onSelectDialogue?: (dialogue: SwarmDialogue) => void;
+  conversation?: ConversationView | null;
+  onPickConversation?: (threadId: string) => void;
   onClose: () => void;
   onOpenDm: (agentId: string) => void;
 }
@@ -62,6 +65,8 @@ export function AgentInspectorDrawer({
   onSelectFixId,
   onSelectAgent,
   onSelectDialogue,
+  conversation = null,
+  onPickConversation,
   onClose,
   onOpenDm,
 }: AgentInspectorDrawerProps) {
@@ -443,7 +448,7 @@ export function AgentInspectorDrawer({
 
             {/* Split-View: Feed de conversación en vivo abajo */}
             <div className="flex-1 min-h-0 py-2 flex flex-col">
-              <LiveAgentChatFeed agentId={agentId} mode={mode} onOpenDm={onOpenDm} />
+              <LiveAgentChatFeed agentId={agentId} conversation={conversation} onPickConversation={onPickConversation} />
             </div>
 
             <div className="pt-2 border-t border-white/10 shrink-0">
@@ -696,7 +701,6 @@ export function AgentInspectorDrawer({
                       isLive={item.isLive}
                       isCurrent={isCurrent}
                       seqNumber={seq}
-                      timestamp={item.timestamp}
                       provider={item.provider || currentProvider}
                       onClick={() => {
                         onSelectAgent?.(item.from);

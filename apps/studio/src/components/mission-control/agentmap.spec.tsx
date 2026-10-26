@@ -1,6 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { AgentMapCanvas } from './AgentMapCanvas';
 import { BridgeContext } from '../BridgeProvider';
+import { I18nProvider } from '@/lib/i18n/i18n';
 import { createStudioStore } from '@/lib/store/store';
 
 const store = createStudioStore();
@@ -34,9 +35,9 @@ describe('AgentMapCanvas', () => {
   it('renders the map canvas with Clara, agents and SDD Gate cards', () => {
     const onOpenDm = vi.fn();
     render(
-      <BridgeContext.Provider value={mockBridgeValue}>
+      <I18nProvider initial="es"><BridgeContext.Provider value={mockBridgeValue}>
         <AgentMapCanvas onOpenDm={onOpenDm} />
-      </BridgeContext.Provider>
+      </BridgeContext.Provider></I18nProvider>
     );
 
     expect(screen.getByTestId('agent-map-canvas')).toBeInTheDocument();
@@ -53,9 +54,9 @@ describe('AgentMapCanvas', () => {
   it('switches gate filters between cycle, transversal and all', () => {
     const onOpenDm = vi.fn();
     render(
-      <BridgeContext.Provider value={mockBridgeValue}>
+      <I18nProvider initial="es"><BridgeContext.Provider value={mockBridgeValue}>
         <AgentMapCanvas onOpenDm={onOpenDm} />
-      </BridgeContext.Provider>
+      </BridgeContext.Provider></I18nProvider>
     );
 
     const transversalBtn = screen.getByText('Transversales (2)');
@@ -77,9 +78,9 @@ describe('AgentMapCanvas', () => {
   it('opens gate inspector drawer on gate card click', () => {
     const onOpenDm = vi.fn();
     render(
-      <BridgeContext.Provider value={mockBridgeValue}>
+      <I18nProvider initial="es"><BridgeContext.Provider value={mockBridgeValue}>
         <AgentMapCanvas onOpenDm={onOpenDm} />
-      </BridgeContext.Provider>
+      </BridgeContext.Provider></I18nProvider>
     );
 
     const gateACard = screen.getByTestId('gate-card-gate-a');
@@ -94,9 +95,9 @@ describe('AgentMapCanvas', () => {
   it('opens drawer on node selection and triggers DM callback', () => {
     const onOpenDm = vi.fn();
     render(
-      <BridgeContext.Provider value={mockBridgeValue}>
+      <I18nProvider initial="es"><BridgeContext.Provider value={mockBridgeValue}>
         <AgentMapCanvas onOpenDm={onOpenDm} />
-      </BridgeContext.Provider>
+      </BridgeContext.Provider></I18nProvider>
     );
 
     expect(screen.getByTestId('agent-inspector-drawer')).toBeInTheDocument();
@@ -108,9 +109,9 @@ describe('AgentMapCanvas', () => {
   it('renders live inter-agent dialogue bubble and comms console in real time', () => {
     const onOpenDm = vi.fn();
     render(
-      <BridgeContext.Provider value={mockBridgeValue}>
+      <I18nProvider initial="es"><BridgeContext.Provider value={mockBridgeValue}>
         <AgentMapCanvas onOpenDm={onOpenDm} />
-      </BridgeContext.Provider>
+      </BridgeContext.Provider></I18nProvider>
     );
 
     expect(screen.getByTestId('swarm-dialogue-bubble')).toBeInTheDocument();
@@ -118,33 +119,12 @@ describe('AgentMapCanvas', () => {
     expect(screen.getAllByText(/Ejecutando spec-gate/).length).toBeGreaterThanOrEqual(1);
   });
 
-  it('toggles between real-time execution mode and demo flow', () => {
-    const onOpenDm = vi.fn();
-    render(
-      <BridgeContext.Provider value={mockBridgeValue}>
-        <AgentMapCanvas onOpenDm={onOpenDm} />
-      </BridgeContext.Provider>
-    );
-
-    const toggleBtn = screen.getByText(/TIEMPO REAL \(1\)/);
-    fireEvent.click(toggleBtn);
-    expect(screen.getByText('DEMO SDD')).toBeInTheDocument();
-    expect(screen.getAllByText(/Regla Cero verificada/).length).toBeGreaterThanOrEqual(1);
-
-    const nextBtn = screen.getByText('Siguiente');
-    fireEvent.click(nextBtn);
-    expect(screen.getAllByText(/SPEC GATE A evaluado/).length).toBeGreaterThanOrEqual(1);
-
-    fireEvent.click(screen.getByText('DEMO SDD'));
-    expect(screen.getByText(/TIEMPO REAL \(1\)/)).toBeInTheDocument();
-  });
-
   it('provides zoom in, zoom out, and reset controls in the floating toolbar', () => {
     const onOpenDm = vi.fn();
     render(
-      <BridgeContext.Provider value={mockBridgeValue}>
+      <I18nProvider initial="es"><BridgeContext.Provider value={mockBridgeValue}>
         <AgentMapCanvas onOpenDm={onOpenDm} />
-      </BridgeContext.Provider>
+      </BridgeContext.Provider></I18nProvider>
     );
 
     expect(screen.getByTestId('zoom-toolbar')).toBeInTheDocument();
@@ -169,9 +149,9 @@ describe('AgentMapCanvas', () => {
   it('collapses and expands the side drawer to adjust diagram space', () => {
     const onOpenDm = vi.fn();
     render(
-      <BridgeContext.Provider value={mockBridgeValue}>
+      <I18nProvider initial="es"><BridgeContext.Provider value={mockBridgeValue}>
         <AgentMapCanvas onOpenDm={onOpenDm} />
-      </BridgeContext.Provider>
+      </BridgeContext.Provider></I18nProvider>
     );
 
     expect(screen.getByTestId('agent-inspector-drawer')).toBeInTheDocument();

@@ -288,13 +288,20 @@
         "TASK-006",
         "TASK-008"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
-        "apps/studio/src/components/mission-control/LiveSwarmComms.tsx",
-        "apps/studio/src/components/mission-control/ChatDialogueCard.tsx",
-        "apps/studio/src/components/mission-control/LiveAgentChatFeed.tsx",
-        "apps/studio/src/components/mission-control/chatdialoguecard.spec.tsx"
-      ]
+        "apps/studio/src/components/mission-control/LiveSwarmComms.tsx apps/studio/src/components/mission-control/ChatDialogueCard.tsx apps/studio/src/components/mission-control/LiveAgentChatFeed.tsx apps/studio/src/components/mission-control/chatdialoguecard.spec.tsx apps/studio/src/components/mission-control/liveagentchatfeed.spec.tsx apps/studio/src/components/mission-control/AgentInspectorDrawer.tsx apps/studio/src/components/mission-control/AgentMapCanvas.tsx apps/studio/src/components/mission-control/agentmap.spec.tsx apps/studio/src/components/mission-control/inspectordrawer.spec.tsx"
+      ],
+      "usage": {
+        "tokens_in": 70000,
+        "tokens_out": 16000,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-26"
+      }
     },
     {
       "id": "TASK-011",

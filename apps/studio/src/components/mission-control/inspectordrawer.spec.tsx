@@ -1,11 +1,24 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { AgentInspectorDrawer } from './AgentInspectorDrawer';
 import { BridgeContext } from '../BridgeProvider';
+import { I18nProvider } from '@/lib/i18n/i18n';
 import { createStudioStore } from '@/lib/store/store';
 
 const store = createStudioStore();
+const createdThread = {
+  id: 'thread-1',
+  channelId: 'dm:sdd-orchestrator',
+  title: 'Hola Clara',
+  agent: 'sdd-orchestrator',
+  options: { agent: 'sdd-orchestrator', model: 'kit', effort: null, permissionMode: 'default' },
+  status: 'running',
+  createdAt: '2026-01-01T00:00:00Z',
+  lastActivity: '2026-01-01T00:00:00Z',
+  link: { target: { kind: 'none' }, source: 'legacy' },
+  pendingCount: 0,
+};
 const mockClient = {
-  request: vi.fn().mockResolvedValue({ id: 'thread-1' }),
+  request: vi.fn().mockResolvedValue(createdThread),
   supports: vi.fn().mockReturnValue(true),
 };
 
@@ -28,14 +41,14 @@ describe('AgentInspectorDrawer', () => {
     const onOpenDm = vi.fn();
 
     render(
-      <BridgeContext.Provider value={mockBridgeValue}>
+      <I18nProvider initial="es"><BridgeContext.Provider value={mockBridgeValue}>
         <AgentInspectorDrawer
           agentId="sdd-orchestrator"
           presence={{ agent: 'sdd-orchestrator', state: 'working', threadId: 't-1', specId: 's-1', tool: 'git status' }}
           onClose={onClose}
           onOpenDm={onOpenDm}
         />
-      </BridgeContext.Provider>
+      </BridgeContext.Provider></I18nProvider>
     );
 
     expect(screen.getByTestId('agent-inspector-drawer')).toBeInTheDocument();
@@ -54,14 +67,14 @@ describe('AgentInspectorDrawer', () => {
     const onOpenDm = vi.fn();
 
     render(
-      <BridgeContext.Provider value={mockBridgeValue}>
+      <I18nProvider initial="es"><BridgeContext.Provider value={mockBridgeValue}>
         <AgentInspectorDrawer
           agentId="sdd-orchestrator"
           presence={{ agent: 'sdd-orchestrator', state: 'idle', threadId: null, specId: null, tool: null }}
           onClose={() => {}}
           onOpenDm={onOpenDm}
         />
-      </BridgeContext.Provider>
+      </BridgeContext.Provider></I18nProvider>
     );
 
     const input = screen.getByPlaceholderText(/Escribir a Clara/);
@@ -80,44 +93,27 @@ describe('AgentInspectorDrawer', () => {
       );
     });
 
-    expect(onOpenDm).toHaveBeenCalledWith('sdd-orchestrator');
+    expect(onOpenDm).not.toHaveBeenCalled();
   });
 
   it('displays última actividad when agent is idle and no live dialogue exists', () => {
     render(
-      <BridgeContext.Provider value={mockBridgeValue}>
+      <I18nProvider initial="es"><BridgeContext.Provider value={mockBridgeValue}>
         <AgentInspectorDrawer
           agentId="sdd-architect"
           presence={{ agent: 'sdd-architect', state: 'idle', threadId: null, specId: null, tool: null }}
           onClose={() => {}}
           onOpenDm={() => {}}
         />
-      </BridgeContext.Provider>
+      </BridgeContext.Provider></I18nProvider>
     );
 
-    expect(screen.getByText(/Última Actividad/)).toBeInTheDocument();
-    expect(screen.getByText(/Sin actividad registrada aún para Daedalus/)).toBeInTheDocument();
-  });
-
-  it('displays demo mode simulation when mode is demo', () => {
-    render(
-      <BridgeContext.Provider value={mockBridgeValue}>
-        <AgentInspectorDrawer
-          agentId="sdd-orchestrator"
-          mode="demo"
-          presence={{ agent: 'sdd-orchestrator', state: 'idle', threadId: null, specId: null, tool: null }}
-          onClose={() => {}}
-          onOpenDm={() => {}}
-        />
-      </BridgeContext.Provider>
-    );
-
-    expect(screen.getByText(/Simulación Enjambre/)).toBeInTheDocument();
+    expect(screen.getByTestId('live-agent-chat-feed-empty')).toHaveTextContent('Sin actividad todavía');
   });
 
   it('renders swarm comms tab when agentId is null instead of returning null', () => {
     render(
-      <BridgeContext.Provider value={mockBridgeValue}>
+      <I18nProvider initial="es"><BridgeContext.Provider value={mockBridgeValue}>
         <AgentInspectorDrawer
           agentId={null}
           dialogueHistory={[
@@ -133,7 +129,7 @@ describe('AgentInspectorDrawer', () => {
           onClose={() => {}}
           onOpenDm={() => {}}
         />
-      </BridgeContext.Provider>
+      </BridgeContext.Provider></I18nProvider>
     );
 
     expect(screen.getByTestId('agent-inspector-drawer')).toBeInTheDocument();
@@ -143,7 +139,7 @@ describe('AgentInspectorDrawer', () => {
 
   it('allows toggling between Agente and Enjambre tabs', () => {
     render(
-      <BridgeContext.Provider value={mockBridgeValue}>
+      <I18nProvider initial="es"><BridgeContext.Provider value={mockBridgeValue}>
         <AgentInspectorDrawer
           agentId="sdd-orchestrator"
           dialogueHistory={[
@@ -159,7 +155,7 @@ describe('AgentInspectorDrawer', () => {
           onClose={() => {}}
           onOpenDm={() => {}}
         />
-      </BridgeContext.Provider>
+      </BridgeContext.Provider></I18nProvider>
     );
 
     expect(screen.getByTestId('live-agent-chat-feed')).toBeInTheDocument();
@@ -181,7 +177,7 @@ describe('AgentInspectorDrawer', () => {
     window.HTMLElement.prototype.scrollIntoView = scrollIntoViewMock;
 
     render(
-      <BridgeContext.Provider value={mockBridgeValue}>
+      <I18nProvider initial="es"><BridgeContext.Provider value={mockBridgeValue}>
         <AgentInspectorDrawer
           agentId={null}
           dialogueHistory={[
@@ -212,7 +208,7 @@ describe('AgentInspectorDrawer', () => {
           onClose={() => {}}
           onOpenDm={() => {}}
         />
-      </BridgeContext.Provider>
+      </BridgeContext.Provider></I18nProvider>
     );
 
     // 1. Verificación de ubicación donde está parado el enjambre (Req 6)
@@ -221,9 +217,6 @@ describe('AgentInspectorDrawer', () => {
     // 2. Verificación de proveedor y sesión (Req 4 & 5)
     expect(screen.getByText(/Claude Code/)).toBeInTheDocument();
     expect(screen.getByTitle(/test-session-123456789/)).toBeInTheDocument();
-
-    // 3. Verificación de fecha y hora del mensaje (Req 3)
-    expect(screen.getAllByText(/24\/10/).length).toBe(2);
 
     // 4. Verificación de selectores de Spec Gate y Fix Gate (Req 8 & 9)
     expect(screen.getByText(/Spec Gate/)).toBeInTheDocument();
@@ -235,13 +228,13 @@ describe('AgentInspectorDrawer', () => {
 
   it('displays generated documents for the touched agent (Requirement 7)', () => {
     render(
-      <BridgeContext.Provider value={mockBridgeValue}>
+      <I18nProvider initial="es"><BridgeContext.Provider value={mockBridgeValue}>
         <AgentInspectorDrawer
           agentId="sdd-orchestrator"
           onClose={() => {}}
           onOpenDm={() => {}}
         />
-      </BridgeContext.Provider>
+      </BridgeContext.Provider></I18nProvider>
     );
 
     expect(screen.getByText(/Documentos Generados/)).toBeInTheDocument();
@@ -251,13 +244,13 @@ describe('AgentInspectorDrawer', () => {
 
   it('opens document viewer modal when a generated document is clicked', async () => {
     render(
-      <BridgeContext.Provider value={mockBridgeValue}>
+      <I18nProvider initial="es"><BridgeContext.Provider value={mockBridgeValue}>
         <AgentInspectorDrawer
           agentId="sdd-orchestrator"
           onClose={() => {}}
           onOpenDm={() => {}}
         />
-      </BridgeContext.Provider>
+      </BridgeContext.Provider></I18nProvider>
     );
 
     const docCard = screen.getByText(/plan.md/);
@@ -276,14 +269,14 @@ describe('AgentInspectorDrawer', () => {
   it('changes conversation, session id and provider when switching spec in dropdown', () => {
     const onSelectSpecId = vi.fn();
     render(
-      <BridgeContext.Provider value={mockBridgeValue}>
+      <I18nProvider initial="es"><BridgeContext.Provider value={mockBridgeValue}>
         <AgentInspectorDrawer
           agentId={null}
           onSelectSpecId={onSelectSpecId}
           onClose={() => {}}
           onOpenDm={() => {}}
         />
-      </BridgeContext.Provider>
+      </BridgeContext.Provider></I18nProvider>
     );
 
     // Initial state: Spec 004 (Claude)

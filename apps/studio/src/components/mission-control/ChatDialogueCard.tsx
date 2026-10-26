@@ -1,12 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
-import { ArrowRight, Clock } from 'lucide-react';
+import { useState } from 'react';
+import { ArrowRight } from 'lucide-react';
 import type { GateId } from '@/lib/gates';
 import { AgentFace } from '../workspace/AgentFace';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import type { HarnessProvider } from './swarm-dialogue';
 
 export interface ChatDialogueCardProps {
   id: string;
@@ -22,25 +21,8 @@ export interface ChatDialogueCardProps {
   isLive?: boolean;
   isCurrent?: boolean;
   seqNumber?: number;
-  timestamp?: string;
-  provider?: HarnessProvider;
+  provider?: string;
   onClick?: () => void;
-}
-
-function formatCardDate(iso?: string): string {
-  if (!iso) return '';
-  try {
-    const d = new Date(iso);
-    if (isNaN(d.getTime())) return iso;
-    const day = String(d.getDate()).padStart(2, '0');
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const hours = String(d.getHours()).padStart(2, '0');
-    const mins = String(d.getMinutes()).padStart(2, '0');
-    const secs = String(d.getSeconds()).padStart(2, '0');
-    return `${day}/${month} ${hours}:${mins}:${secs}`;
-  } catch {
-    return iso;
-  }
 }
 
 export function ChatDialogueCard({
@@ -57,7 +39,6 @@ export function ChatDialogueCard({
   isLive,
   isCurrent,
   seqNumber,
-  timestamp,
   provider,
   onClick,
 }: ChatDialogueCardProps) {
@@ -110,13 +91,8 @@ export function ChatDialogueCard({
         <div className="flex items-center gap-1.5 shrink-0">
           {provider && (
             <span
-              className={`text-[8px] font-bold px-1.5 py-0.2 rounded border font-mono ${
-                provider === 'gemini'
-                  ? 'text-sky-300 bg-sky-500/10 border-sky-500/30'
-                  : provider === 'copilot'
-                    ? 'text-emerald-300 bg-emerald-500/10 border-emerald-500/30'
-                    : 'text-purple-300 bg-purple-500/10 border-purple-500/30'
-              }`}
+              data-testid="dialogue-provider"
+              className="text-[8px] font-bold px-1.5 py-0.2 rounded border font-mono text-purple-300 bg-purple-500/10 border-purple-500/30"
             >
               {provider.toUpperCase()}
             </span>
@@ -135,12 +111,6 @@ export function ChatDialogueCard({
               }`}
             >
               {badge}
-            </span>
-          )}
-          {timestamp && (
-            <span className="inline-flex items-center gap-1 text-white/50 text-[9px] font-mono" title={timestamp}>
-              <Clock className="w-2.5 h-2.5 text-white/40" />
-              <span>{formatCardDate(timestamp)}</span>
             </span>
           )}
           {seqNumber !== undefined && (

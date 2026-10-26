@@ -69,4 +69,20 @@ describe('ChatDialogueCard', () => {
     fireEvent.click(screen.getByText('Prueba de clic'));
     expect(onClick).toHaveBeenCalled();
   });
+
+  it('shows the provider badge taken from the real value', () => {
+    render(<ChatDialogueCard id="c-4" senderName="Clara" text="hola" provider="claude" />);
+    expect(screen.getByTestId('dialogue-provider')).toHaveTextContent('CLAUDE');
+  });
+
+  it('shows an unknown provider as received, uppercased', () => {
+    render(<ChatDialogueCard id="c-5" senderName="Clara" text="hola" provider="mistral" />);
+    expect(screen.getByTestId('dialogue-provider')).toHaveTextContent('MISTRAL');
+  });
+
+  it('shows no provider badge and no timestamp when the provider is not reported', () => {
+    const { container } = render(<ChatDialogueCard id="c-6" senderName="Clara" text="hola" />);
+    expect(screen.queryByTestId('dialogue-provider')).not.toBeInTheDocument();
+    expect(container.querySelector('[title*="T"]')).toBeNull();
+  });
 });
