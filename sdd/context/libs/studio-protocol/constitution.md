@@ -1,6 +1,6 @@
 # Constitución — libs/studio-protocol
 
-> Versión 1.2 | Última actualización: cycle-02 (spec-e-burgos-001-studio-session-ux) | Fecha: 2026-10-25
+> Versión 1.3 | Última actualización: cycle-01 (spec-e-burgos-006-studio-auth-connect) | Fecha: 2026-10-26
 
 ## 1. Propósito y Alcance
 
@@ -18,7 +18,7 @@
 ## 3. Estructura y Módulos del Contrato
 
 - `version.ts`: Constante `PROTOCOL_VERSION = 2`. El handshake valida coincidencia exacta. El bump a 2 cubre los contratos de toda spec-e-burgos-001; cycle-02 los implementó del lado puente/web sin nuevo bump.
-- `limits.ts`: `MAX_FRAME_BYTES` (1 MiB), `FRAME_BUDGET_BYTES`, `MAX_ATTACHMENTS`, `IMAGE_MAX_SIDE`, `MAX_PROMPT_REFS`, `FILE_SEARCH_MAX`, `MAX_PENDING_PER_THREAD` (10), `BRIDGE_FEATURES`.
+- `limits.ts`: `MAX_FRAME_BYTES` (1 MiB), `FRAME_BUDGET_BYTES`, `MAX_ATTACHMENTS`, `IMAGE_MAX_SIDE`, `MAX_PROMPT_REFS`, `FILE_SEARCH_MAX`, `MAX_PENDING_PER_THREAD` (10), `BRIDGE_FEATURES` (anuncia `conversation-sessions` y `auth-subscription`).
 - `attachments.ts`: mimes de imagen/PDF/texto y `TEXT_ATTACHMENT_EXTENSIONS`.
 - `domain.ts`: Tipos base y entidades de dominio:
   - `ChannelId`: `general`, `fixes`, `spec:<id>` o `dm:<agentId>`.
@@ -28,6 +28,8 @@
   - `PermissionModeChoice`: `ask` (aprobación en UI para cada herramienta sensible), `acceptEdits` (edición permitida si pasa el SPEC GATE), `plan` (modo solo lectura).
   - `Presence`, `SessionStatus`, `ThreadOptions`, `Author`.
   - `ThreadLink` / `ThreadLinkTarget` (`cycle` | `fix` | `none`, `source` auto/manual/legacy), `ThreadInfo.link` y `ThreadInfo.pendingCount`.
+  - `ThreadInfo.engineSessionId` (`EngineSessionId` nullable, 1..128) y `ThreadInfo.provider` (`ProviderId`, string con regex extensible; `KNOWN_PROVIDERS` = `claude`, `DEFAULT_PROVIDER`, `isKnownProvider`): ambos opcionales, sin bump de versión.
+  - `AuthPreference`, `AuthAccountState`, `AuthAccount` (state, email, method, plan, loginUrl, error).
   - `AlwaysOffer` / `AlwaysRule` (`tool` | `mcp` | `bash-prefix`, `none` con motivo) y `SendResult` (`started` | `pending`).
 - `commands.ts`: Comandos enviados desde la web al puente local (`ClientCommand` - discriminated union por `cmd`):
   - `workspace.snapshot`: Pide estado completo del repo.
@@ -36,7 +38,8 @@
   - `workspace.searchFiles`, `attachment.get` (implementados por el puente; anunciados en `Welcome.features`).
   - `approval.respond`: Aprobación o rechazo (`allow` | `deny`) de un tool call con alcance `once` o `thread`.
   - `command.run`: Ejecución segura de comandos del kit (`gate`, `validate`, `rebuild-tasks-index`, `rebuild-catalog`).
-  - `auth.set`: Configuración en memoria de API key de Anthropic (nunca persistida en disco).
+  - `auth.set`: Configuración en memoria de API key de Anthropic (nunca persistida en disco); acepta `mode` opcional (`subscription` | `api-key`).
+  - `auth.status`, `auth.login`, `auth.logout`: login de la suscripción de Claude lanzado por el puente.
 - `events.ts`: Eventos emitidos desde el puente hacia la web:
   - `ThreadEvent` (mensajes, `message.delta`, tool call start/end con diff y resumen, `subagent.start|stop`, `approval.requested` con warnings del SPEC GATE y `always`, `approval.resolved` con `remembered`, `pending.added|edited|removed|reverted`, `user.message` con `pendingId` y `delivery` `cut-point` | `next-turn`).
   - `ServerEvent` (`thread.event`, `channel.event`, `bot.activity`, `workspace.changed`, `presence.changed`).
@@ -57,4 +60,4 @@
 
 ## 6. Qué sigue
 
-- Nada pendiente de spec-e-burgos-001 en el contrato. Próximo cambio previsto: spec-e-burgos-005 (`engineSessionId` y `provider` en `ThreadInfo`).
+- Todo campo nuevo del protocolo entra opcional; la web detecta bridges viejos por `features`. Volver obligatorio un campo requiere bump de `PROTOCOL_VERSION` (hoy 2).
