@@ -44,3 +44,7 @@ Verificado en `apps/studio-bridge/src/engine/sdk-mapper.ts`:
 - `conversation.ts`: `DOCUMENT_TOOLS` sin `Read`; `modified` reemplazado por `agents`; `specs`/`fixes` se derivan de los documentos con `relatedFromDocuments` (sin `link.target` ni menciones textuales; se eliminan `referencesInText` y las fuentes `event`/`link`); `documentsOfAgent` filtra por autor.
 - `AgentInspectorDrawer.tsx`: pestaña de agente filtra por `agentId`, Enjambre muestra todo; estado vacío `mc.related.agentEmpty`.
 - Archivos adicionales tocados: `agent-documents.ts` (+ spec), `agentmap.spec.tsx`, `inspectordrawer.spec.tsx`, `lib/i18n/{es,en}.ts`.
+
+## Verificacion del dev
+
+- 2026-10-26: verificado por el dev en Studio con bridge reiniciado. Estado se mantiene `implemented`; la validacion corresponde al sdd-reviewer.

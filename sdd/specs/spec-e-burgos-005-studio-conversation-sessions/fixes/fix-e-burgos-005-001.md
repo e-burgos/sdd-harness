@@ -39,3 +39,7 @@ Ajuste de UX sobre lo entregado en spec-005 sin contratos ni entidades nuevas. `
 - `apps/studio/src/components/mission-control/inspectordrawer.spec.tsx`
 - `apps/studio/src/components/mission-control/agentmap.spec.tsx`
 - `apps/studio/src/lib/i18n/` (claves es/en)
+
+## Verificacion del dev
+
+- 2026-10-26: verificado por el dev en Studio con bridge reiniciado. Estado se mantiene `implemented`; la validacion corresponde al sdd-reviewer.

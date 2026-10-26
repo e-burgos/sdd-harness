@@ -45,3 +45,7 @@ Patrón: backdrop fijo `inset: 0` con flex centrado y blur, panel `width: 100%`,
 - `apps/studio/src/components/mission-control/AgentInspectorDrawer.tsx`
 - `apps/studio/src/components/mission-control/DocumentViewerModal.tsx`
 - `apps/studio/src/components/mission-control/documentviewermodal.spec.tsx`
+
+## Verificacion del dev
+
+- 2026-10-26: verificado por el dev en Studio con bridge reiniciado. Estado se mantiene `implemented`; la validacion corresponde al sdd-reviewer.

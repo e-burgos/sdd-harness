@@ -28,3 +28,8 @@ Diagnostico con evidencia: las conversaciones son hilos del bridge (thread.updat
 - `apps/studio/src/components/mission-control/ConversationSessionInfo.spec.tsx`
 - `apps/studio/src/lib/i18n/es.ts`
 - `apps/studio/src/lib/i18n/en.ts`
+
+## Verificacion del dev
+
+- 2026-10-26: verificado por el dev en Studio con bridge reiniciado. Estado se mantiene `implemented`; la validacion corresponde al sdd-reviewer.
+- Diagnostico confirmado: el bridge en ejecucion era anterior a 414b1fd; tras reiniciarlo, proveedor y sesion se muestran correctamente.

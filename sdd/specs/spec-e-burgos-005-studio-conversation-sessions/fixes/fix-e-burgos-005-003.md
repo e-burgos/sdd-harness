@@ -22,3 +22,7 @@ Header en dos zonas: izquierda columna (fila titulo+badges; fila ruta truncada c
 
 - `apps/studio/src/components/mission-control/DocumentViewerModal.tsx`
 - `apps/studio/src/components/mission-control/documentviewermodal.spec.tsx`
+
+## Verificacion del dev
+
+- 2026-10-26: verificado por el dev en Studio con bridge reiniciado. Estado se mantiene `implemented`; la validacion corresponde al sdd-reviewer.

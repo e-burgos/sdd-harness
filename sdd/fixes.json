@@ -355,8 +355,8 @@
       "usage": {
         "provider_model": "claude/sonnet",
         "effort": "medium",
-        "tokens_in": 130000,
-        "tokens_out": 15000,
+        "tokens_in": 146000,
+        "tokens_out": 18000,
         "approx": true,
         "source": "declared-estimate",
         "recorded_at": "2026-10-26",
@@ -378,9 +378,20 @@
             "tokens_out": 9000,
             "approx": true,
             "source": "declared-estimate"
+          },
+          {
+            "agent": "orchestrator",
+            "label": "dev-verification-record",
+            "provider_model": "claude/sonnet",
+            "effort": "medium",
+            "tokens_in": 16000,
+            "tokens_out": 3000,
+            "approx": true,
+            "source": "declared-estimate"
           }
         ]
-      }
+      },
+      "process_note": "Verificacion manual 2026-10-26: verificado por el dev en Studio con bridge reiniciado. Pendiente de validacion por el sdd-reviewer."
     },
     {
       "id": "FIX-e-burgos-005-002",
@@ -412,8 +423,8 @@
       "usage": {
         "provider_model": "claude/sonnet",
         "effort": "medium",
-        "tokens_in": 150000,
-        "tokens_out": 18000,
+        "tokens_in": 166000,
+        "tokens_out": 21000,
         "approx": true,
         "source": "declared-estimate",
         "recorded_at": "2026-10-26",
@@ -435,9 +446,20 @@
             "tokens_out": 12000,
             "approx": true,
             "source": "declared-estimate"
+          },
+          {
+            "agent": "orchestrator",
+            "label": "dev-verification-record",
+            "provider_model": "claude/sonnet",
+            "effort": "medium",
+            "tokens_in": 16000,
+            "tokens_out": 3000,
+            "approx": true,
+            "source": "declared-estimate"
           }
         ]
-      }
+      },
+      "process_note": "Verificacion manual 2026-10-26: verificado por el dev en Studio con bridge reiniciado. Pendiente de validacion por el sdd-reviewer."
     },
     {
       "id": "FIX-e-burgos-005-003",
@@ -466,8 +488,8 @@
       "usage": {
         "provider_model": "claude/sonnet",
         "effort": "medium",
-        "tokens_in": 80000,
-        "tokens_out": 11000,
+        "tokens_in": 96000,
+        "tokens_out": 14000,
         "approx": true,
         "source": "declared-estimate",
         "recorded_at": "2026-10-26",
@@ -489,9 +511,20 @@
             "tokens_out": 6000,
             "approx": true,
             "source": "declared-estimate"
+          },
+          {
+            "agent": "orchestrator",
+            "label": "dev-verification-record",
+            "provider_model": "claude/sonnet",
+            "effort": "medium",
+            "tokens_in": 16000,
+            "tokens_out": 3000,
+            "approx": true,
+            "source": "declared-estimate"
           }
         ]
-      }
+      },
+      "process_note": "Verificacion manual 2026-10-26: verificado por el dev en Studio con bridge reiniciado. Pendiente de validacion por el sdd-reviewer."
     },
     {
       "id": "FIX-e-burgos-005-004",
@@ -528,8 +561,8 @@
       "usage": {
         "provider_model": "claude/sonnet",
         "effort": "medium",
-        "tokens_in": 140000,
-        "tokens_out": 18000,
+        "tokens_in": 156000,
+        "tokens_out": 21000,
         "approx": true,
         "source": "declared-estimate",
         "recorded_at": "2026-10-26",
@@ -551,9 +584,20 @@
             "tokens_out": 9000,
             "approx": true,
             "source": "declared-estimate"
+          },
+          {
+            "agent": "orchestrator",
+            "label": "dev-verification-record",
+            "provider_model": "claude/sonnet",
+            "effort": "medium",
+            "tokens_in": 16000,
+            "tokens_out": 3000,
+            "approx": true,
+            "source": "declared-estimate"
           }
         ]
-      }
+      },
+      "process_note": "Verificacion manual 2026-10-26: verificado por el dev en Studio con bridge reiniciado. Pendiente de validacion por el sdd-reviewer."
     },
     {
       "id": "FIX-e-burgos-005-005",
@@ -584,8 +628,8 @@
       "usage": {
         "provider_model": "claude/sonnet",
         "effort": "medium",
-        "tokens_in": 100000,
-        "tokens_out": 12000,
+        "tokens_in": 116000,
+        "tokens_out": 15000,
         "approx": true,
         "source": "declared-estimate",
         "recorded_at": "2026-10-26",
@@ -607,9 +651,20 @@
             "tokens_out": 6000,
             "approx": true,
             "source": "declared-estimate"
+          },
+          {
+            "agent": "orchestrator",
+            "label": "dev-verification-record",
+            "provider_model": "claude/sonnet",
+            "effort": "medium",
+            "tokens_in": 16000,
+            "tokens_out": 3000,
+            "approx": true,
+            "source": "declared-estimate"
           }
         ]
-      }
+      },
+      "process_note": "Verificacion manual 2026-10-26: verificado por el dev en Studio con bridge reiniciado. Diagnostico (bridge anterior a 414b1fd) confirmado. Pendiente de validacion por el sdd-reviewer."
     }
   ]
 }
