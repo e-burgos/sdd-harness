@@ -1,6 +1,6 @@
 # Constitución — apps/studio
 
-> Versión 1.3 | Última actualización: cycle-01 (spec-e-burgos-004-studio-gates-topology) + FIX-e-burgos-004-001 | Fecha: 2026-10-25
+> Versión 1.4 | Última actualización: cycle-01 (spec-e-burgos-006-studio-auth-connect) + FIX-e-burgos-005-001..005 | Fecha: 2026-10-26
 
 ## 1. Propósito y Alcance
 
@@ -12,7 +12,7 @@
 ## 2. Stack Tecnológico
 
 - **Framework:** Next.js 16 (`next` 16.4.3, App Router, static export con `STUDIO_EXPORT=1`).
-- **Librería UI:** React 19, Tailwind CSS (PostCSS), `@phosphor-icons/react` (iconografía del kit).
+- **Librería UI:** React 19, Tailwind CSS (PostCSS), `lucide-react` (iconografía única: sin emojis ni glifos decorativos; `GateIcon.tsx` mapea `gateId` a icono; los componentes nuevos usan solo lucide).
 - **Tipografía:** `@fontsource-variable/space-grotesk` y `@fontsource-variable/jetbrains-mono`.
 - **Estado Global:** `zustand` estructurado en slices modulares (`activity`, `timeline`, `state`, `selectors`).
 - **Contrato de Red:** `@sdd-studio/protocol` y `zod`.
@@ -35,6 +35,8 @@
 - `PanelRail.tsx` + `lib/use-panel-state.ts`: sidebar y panel derecho colapsables, preferencia en `localStorage`.
 - `ErrorBoundary.tsx`: boundary de nivel superior con fallback i18n y botón de recarga.
 - `Sidebar.tsx` (`SidebarView`): header y pie fijos con un único árbol con scroll entre ambos.
+- `AuthPanel.tsx` + `ApiKeyField.tsx` (cuerpo de la solapa API key): tablist accesible Suscripción / API key; la solapa elegida se aplica al bridge y se recuerda en `localStorage` (`sdd-studio.authPreference`). `lib/use-subscription.ts` (polling de `auth.status` cada 2 s mientras hay login pendiente), `lib/auth-preference.ts`, `lib/usage-limit.ts` (`Timeline` sugiere cambiar de cuenta ante el límite de uso). `BridgeProvider` expone `authPreference` y `setAuthPreference`.
+- `NewConversationButton.tsx` (sidebar y Mission Control): deja un borrador vacío seleccionado; el hilo nace con el primer `thread.create`. `Workspace` acepta `newConversationSignal`.
 - `NavTree.tsx` (`SectionView`, `NavNodeView`, `ActiveThreads`): árbol colapsable con teclado y estado persistido. Secciones: HILOS ACTIVOS (waiting-approval primero, badge de pendientes, aviso de estado desactualizado sin conexión), CANALES (sistema; sin canales `spec:*`), SPECS (spec → ciclo → hilos, nodo "Sin ciclo"), FIXES (abiertos + 5 cerrados + "anteriores") y AGENTES (DMs con presencia). El caret colapsa; el nombre abre el canal.
 - `ChannelView.tsx`: Vista del canal con flujo de hilos y actividad automatizada de bots.
 - `Timeline.tsx`: Secuencia cronológica de mensajes, ejecuciones de subagentes y llamadas a herramientas (agrupadas con diffs desplegables); subtítulo `{role} · {title}` bajo el nombre del agente.
@@ -55,7 +57,7 @@
 - `store/`:
   - `timeline.ts`: Hilos, deltas de streaming, tool calls en vuelo, aprobaciones pendientes, mensajes pendientes y reglas `remembered`.
   - `activity.ts`: Registra eventos generales del workspace y actividad de bots.
-  - `state.ts`: Estado de conexión, snapshot (`WorkspaceSnapshot`), presencia, canal activo, dedupe de eventos de bot consecutivos idénticos y slice `drafts` (`ComposerDraft = { text, attachments }` por `threadId` o `new:<channel>`; revoca las object URLs de adjuntos quitados).
+  - `state.ts`: Estado de conexión, snapshot (`WorkspaceSnapshot`), presencia, canal activo, dedupe de eventos de bot consecutivos idénticos, `sameInfo` (compara `engineSessionId` y `provider`) y slice `drafts` (`ComposerDraft = { text, attachments }` por `threadId` o `new:<channel>`; revoca las object URLs de adjuntos quitados).
   - `selectors.ts`: Selectores memoizados (incluye `activeThreads`).
   - `nav-tree.ts`: `buildNavTree(snapshot, threads, view)` puro; los ids de nodo son las claves de colapso.
 
@@ -64,12 +66,16 @@
 - `AgentMapCanvas.tsx`: Lienzo 2D SVG responsivo que visualiza el enjambre de 9 agentes, arcos SVG animados, ranuras de GATES (Ciclo, Transversales, Todas) y estado reactivo.
 - `GateCard.tsx`: Tarjeta interactiva estilo puerta con iluminación reactiva, responsable y estado (`PASSING`, `ACTIVE`, `BLOCKED`, `IDLE`).
 - `GateInspectorDrawer.tsx`: Panel de inspección técnica de Gates con checklist de reglas inviolables y comandos CLI (`pnpm sdd:gate`).
-- `AgentInspectorDrawer.tsx`: Panel lateral Split-View con perfil resumido del agente arriba y feed de diálogo en vivo abajo; selectores de spec/fix, filtro de fixes, badge de proveedor/sesión y acceso al visor de documentos. Selección sincronizada con el canvas.
-- `DocumentViewerModal.tsx` + `lib/agent-documents.ts`: documentos SDD que produjo cada agente para una spec/fix, en un visor modal.
-- `ChatDialogueCard.tsx`, `LiveSwarmComms.tsx` (burbujas y consola) y `swarm-dialogue.ts`: diálogos del enjambre. **Hoy salen de guiones ficticios por spec/fix con proveedores y sesiones inventados** (FIX-e-burgos-004-001); spec-e-burgos-005 los reemplaza por la conversación real.
+- Mission Control gira alrededor de una conversación (hilo) elegida con `ConversationSelector` (dropdown junto a "Nueva conversación"; por defecto la de `lastActivity` más reciente; el input del panel envía con `thread.send` dirigido al agente). Agentes, diálogos y specs/fixes relacionados se derivan de los eventos de ese hilo; los nodos sin participación se atenúan, no se ocultan. No existen guiones ni datos ficticios (`lib/no-fabricated-data.spec.ts` busca en fuente `session-`, guiones, Gemini/Copilot fijos y spec por defecto fija).
+- `ConversationSessionInfo.tsx`: id de sesión completo con botón copiar (es el de `claude --resume <id>`) y proveedor; `engineSessionId`/`provider` `undefined` = bridge desactualizado (aviso de reinicio), `null` = "Sin sesión todavía".
+- `RelatedDocuments.tsx`: specs y fixes relacionados derivados de los documentos del hilo con `relatedFromDocuments` (sin `link.target` ni menciones textuales).
+- `lib/conversation.ts` (puro): `listConversations`, `resolveSelectedThreadId`, `deriveConversation`, `inferGateFromText`, `providerLabel`, `documentsOfAgent`; `DOCUMENT_TOOLS` = Write/Edit/MultiEdit (sin `Read`); `ConversationDocument.agents: string[]` es el autor del tool call (`item.author.agent`; subagentes con su `subagent_type`). `lib/use-conversation-selection.ts` sincroniza el hilo elegido con `openThread`.
+- `AgentInspectorDrawer.tsx`: Panel lateral Split-View con perfil del agente arriba y feed de diálogo en vivo abajo; la pestaña de agente muestra solo sus documentos (vacío: `mc.related.agentEmpty`) en una tarjeta contraíble persistida con `use-collapsed-state`; badge de proveedor/sesión. Selección sincronizada con el canvas.
+- `DocumentViewerModal.tsx` + `lib/agent-documents.ts`: documentos SDD de la conversación en un modal centrado con header en dos zonas.
+- `ChatDialogueCard.tsx` y `LiveSwarmComms.tsx` (burbujas y consola): diálogos reales sobre `ConversationDialogue`.
 - `LiveAgentChatFeed.tsx`: Feed de conversación en tiempo real con filtrado agéntico, indicador de streaming y entrada para respuestas rápidas.
 - `EcosystemDashboard.tsx` + `SubprojectIcon.tsx`: Tablero de control de apps, libs, tools (genérico para cualquier repo), estado de módulos y semáforo del SPEC GATE.
-- `LiveTelemetryHUD.tsx`: Monitor financiero con ticker de tokens, costos en USD (`sdd/pricing.json`) y métricas de `rtk`. Sin datos cae a un fallback con cifras de ejemplo, no reales.
+- `LiveTelemetryHUD.tsx`: Monitor financiero con ticker de tokens, costos en USD (`sdd/pricing.json`) y métricas de `rtk`. Sin telemetría dice "Sin telemetría todavía" (sin cifras de relleno).
 - `lib/gates.ts` & `lib/agents.ts`: Modelos canónicos para las 6 GATES del kit SDD y los 9 agentes del enjambre con Clara como líder.
 
 ## 4. Comandos de Trabajo
@@ -90,5 +96,7 @@
 
 ## 6. Qué sigue
 
-- spec-e-burgos-005: una conversación = una sesión del proveedor, sesión real visible en la web, enjambre centrado en la conversación, eliminación de guiones ficticios y selectores spec/fix (el visor de documentos se conserva).
+- Título de sesión de `/resume` (`sessionTitle` en `ThreadInfo` vía `getSessionInfo` del SDK): campo aditivo en `libs/studio-protocol`; ciclo nuevo.
+- Hallazgos pendientes del reviewer: la tarjeta RTK de `LiveTelemetryHUD` y los textos fijos "STREAMING TELEMETRY ACTIVE" y "N listos" del mapa no reflejan estado real. Spike de cache real con credenciales sin correr. Probar a mano el login real contra claude.ai.
+- Operativo: tras cambios en `toThreadInfo` del bridge, reiniciar el bridge o la UI muestra el aviso de desactualizado.
 - Disparar comandos del kit (`sdd:gate`, `validate`, `rtk`) desde los drawers vía `command.run`.
