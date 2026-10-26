@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useT } from '@/lib/i18n/i18n';
 import { usePanelState } from '@/lib/use-panel-state';
 import { useBridge } from '../BridgeProvider';
@@ -21,9 +21,10 @@ const RAIL_WIDTH = '44px';
 
 export interface WorkspaceProps {
   selectedChannelId?: string;
+  newConversationSignal?: number;
 }
 
-export function Workspace({ selectedChannelId }: WorkspaceProps = {}) {
+export function Workspace({ selectedChannelId, newConversationSignal = 0 }: WorkspaceProps = {}) {
   const { t } = useT();
   const { store } = useBridge();
   const panels = usePanelState();
@@ -34,6 +35,14 @@ export function Workspace({ selectedChannelId }: WorkspaceProps = {}) {
       setView({ channelId: selectedChannelId, threadId: null });
     }
   }, [selectedChannelId]);
+
+  const startNewConversation = () => setView((v) => ({ channelId: v.channelId, threadId: null }));
+  const lastSignal = useRef(newConversationSignal);
+  useEffect(() => {
+    if (newConversationSignal === lastSignal.current) return;
+    lastSignal.current = newConversationSignal;
+    startNewConversation();
+  }, [newConversationSignal]);
   const composer = (
     <>
       <RunOutput />
@@ -58,6 +67,7 @@ export function Workspace({ selectedChannelId }: WorkspaceProps = {}) {
           view={view}
           onSelectChannel={(channelId) => setView({ channelId, threadId: null })}
           onOpenThread={(thread) => setView({ channelId: thread.channelId, threadId: thread.id })}
+          onNewConversation={startNewConversation}
         />
       )}
       <main className="min-h-0 min-w-0 overflow-hidden">

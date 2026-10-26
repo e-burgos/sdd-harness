@@ -259,14 +259,20 @@
       "depends_on": [
         "TASK-008"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
-        "apps/studio/src/components/WorkspaceApp.tsx",
-        "apps/studio/src/components/workspace/Workspace.tsx",
-        "apps/studio/src/components/workspace/Sidebar.tsx",
-        "apps/studio/src/components/workspace/workspace.spec.tsx",
-        "apps/studio/src/components/workspace/sidebar.spec.tsx"
-      ]
+        "apps/studio/src/components/WorkspaceApp.tsx apps/studio/src/components/workspace/Workspace.tsx apps/studio/src/components/workspace/Sidebar.tsx apps/studio/src/components/workspace/workspace.spec.tsx apps/studio/src/components/workspace/sidebar.spec.tsx apps/studio/src/components/mission-control/AgentMapCanvas.tsx"
+      ],
+      "usage": {
+        "tokens_in": 35000,
+        "tokens_out": 7000,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-26"
+      }
     },
     {
       "id": "TASK-010",

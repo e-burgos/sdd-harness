@@ -12,7 +12,7 @@ const info = (id: string): ThreadInfo => ({
   link: { target: { kind: 'none' }, source: 'legacy' }, pendingCount: 0,
 });
 
-function mount() {
+function mount(newConversationSignal = 0) {
   const store = createStudioStore();
   store.getState().setThreads([info('t1'), info('t2')]);
   const value = {
@@ -23,13 +23,15 @@ function mount() {
     apiKeySource: null,
     setApiKey: vi.fn(),
   } as unknown as BridgeContextValue;
-  return render(
+  const ui = (signal: number) => (
     <I18nProvider initial="es">
       <BridgeContext.Provider value={value}>
-        <Workspace />
+        <Workspace newConversationSignal={signal} />
       </BridgeContext.Provider>
-    </I18nProvider>,
+    </I18nProvider>
   );
+  const utils = render(ui(newConversationSignal));
+  return { ...utils, signalNewConversation: (signal: number) => utils.rerender(ui(signal)) };
 }
 
 describe('Workspace layout', () => {
@@ -58,6 +60,22 @@ describe('Workspace layout', () => {
     const first = screen.getByTestId('thread-scroller');
     fireEvent.click(screen.getAllByRole('button', { name: 'Chat t2' })[0]!);
     expect(screen.getByTestId('thread-scroller')).not.toBe(first);
+  });
+
+  it('leaves an empty draft selected when a new conversation is requested, keeping the channel', () => {
+    const { signalNewConversation } = mount();
+    fireEvent.click(screen.getAllByRole('button', { name: 'Chat t1' })[0]!);
+    expect(screen.getByTestId('thread-scroller')).toBeInTheDocument();
+    signalNewConversation(1);
+    expect(screen.queryByTestId('thread-scroller')).toBeNull();
+    expect(screen.getByRole('heading', { name: '# general' })).toBeInTheDocument();
+  });
+
+  it('starts a new conversation from the sidebar button', () => {
+    mount();
+    fireEvent.click(screen.getAllByRole('button', { name: 'Chat t2' })[0]!);
+    fireEvent.click(screen.getByTestId('new-conversation-button'));
+    expect(screen.queryByTestId('thread-scroller')).toBeNull();
   });
 
   describe('collapsible panels', () => {

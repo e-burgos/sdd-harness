@@ -56,6 +56,18 @@ function renderSidebar({ threads = [], view = { channelId: 'general', threadId: 
 
 beforeEach(() => window.localStorage.clear());
 
+describe('Sidebar new conversation', () => {
+  it('shows the button in the header only when a handler is given', () => {
+    const { unmount } = renderSidebar();
+    expect(screen.queryByTestId('new-conversation-button')).toBeNull();
+    unmount();
+    const onNewConversation = vi.fn();
+    renderSidebar({ props: { onNewConversation } });
+    fireEvent.click(screen.getByRole('button', { name: /Nueva conversación/ }));
+    expect(onNewConversation).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe('Sidebar tree', () => {
   it('lists CHANNELS without spec channels, SPECS, FIXES and AGENTS', () => {
     const { onSelectChannel } = renderSidebar();

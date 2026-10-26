@@ -21,11 +21,11 @@ export function Connected() {
   const { t } = useT();
   const { activeView, setActiveView } = useStudioView();
   const [selectedChannelId, setSelectedChannelId] = useState<string | undefined>(undefined);
+  const [newConversationSignal, setNewConversationSignal] = useState(0);
   const failedReason = connection.status === 'failed' ? connection.reason : null;
   const mismatchHint = connection.status === 'failed' ? connection.hint : undefined;
   const staleToken = failedReason === 'bad-token' || failedReason === 'bad-message';
 
-  // Con un token rechazado, recargar no debe volver a usar el mismo emparejamiento.
   useEffect(() => {
     if (staleToken) clearPairing(window);
   }, [staleToken]);
@@ -45,16 +45,21 @@ export function Connected() {
     setActiveView('workspace');
   };
 
+  const handleNewConversation = () => {
+    setNewConversationSignal((signal) => signal + 1);
+    setActiveView('workspace');
+  };
+
   return (
     <AppShell>
       <StudioHeader activeView={activeView} onSelectView={setActiveView} />
       <ConnectionBanner connection={connection} syncError={syncError} onRetry={retrySync} />
       <div className={`flex flex-1 min-h-0 ${activeView === 'workspace' ? '' : 'hidden'}`}>
-        <Workspace selectedChannelId={selectedChannelId} />
+        <Workspace selectedChannelId={selectedChannelId} newConversationSignal={newConversationSignal} />
       </div>
       {activeView === 'agent-map' && (
         <div className="flex flex-1 min-h-0 overflow-hidden">
-          <AgentMapCanvas onOpenDm={handleOpenDm} />
+          <AgentMapCanvas onOpenDm={handleOpenDm} onNewConversation={handleNewConversation} />
         </div>
       )}
       {activeView === 'ecosystem' && (

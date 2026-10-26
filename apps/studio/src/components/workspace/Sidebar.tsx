@@ -8,6 +8,7 @@ import { buildNavTree, type NavSection, type NavThread, type NavView } from '@/l
 import { useCollapsedState } from '@/lib/use-collapsed-state';
 import type { ConnectionState } from '@/lib/bridge/client';
 import { useBridge, useStudio } from '../BridgeProvider';
+import { NewConversationButton } from '../NewConversationButton';
 import { AuthPanel } from './AuthPanel';
 import { PanelToggle } from './PanelRail';
 import { SectionView, type NavTreeHandlers } from './NavTree';
@@ -28,6 +29,7 @@ export interface SidebarViewProps {
   presence: Presence[];
   onSelectChannel(channelId: string): void;
   onOpenThread(thread: NavThread): void;
+  onNewConversation?(): void;
   authSlot?: ReactNode;
   onCollapse?(): void;
 }
@@ -51,6 +53,7 @@ export function SidebarView(p: SidebarViewProps) {
           {p.kitVersion && <span>· kit {p.kitVersion}</span>}
           <button className="ml-auto rounded hover:text-ink-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" onClick={() => setLang(lang === 'es' ? 'en' : 'es')}>{t('lang.switch')}</button>
         </div>
+        {p.onNewConversation && <NewConversationButton onNewConversation={p.onNewConversation} className="mt-2 w-full justify-center" />}
         {p.authSlot}
       </header>
       <div data-testid="sidebar-tree" className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-3 py-2">
@@ -70,7 +73,7 @@ export function SidebarView(p: SidebarViewProps) {
   );
 }
 
-export function Sidebar({ view, onSelectChannel, onOpenThread, onCollapse }: { view: NavView; onSelectChannel(channelId: string): void; onOpenThread(thread: NavThread): void; onCollapse?(): void }) {
+export function Sidebar({ view, onSelectChannel, onOpenThread, onNewConversation, onCollapse }: { view: NavView; onSelectChannel(channelId: string): void; onOpenThread(thread: NavThread): void; onNewConversation?(): void; onCollapse?(): void }) {
   const { connection, authMode } = useBridge();
   const snapshot = useStudio((s) => s.snapshot);
   const presence = useStudio((s) => s.presence);
@@ -91,6 +94,7 @@ export function Sidebar({ view, onSelectChannel, onOpenThread, onCollapse }: { v
       presence={presence}
       onSelectChannel={onSelectChannel}
       onOpenThread={onOpenThread}
+      onNewConversation={onNewConversation}
       onCollapse={onCollapse}
     />
   );

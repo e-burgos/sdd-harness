@@ -70,7 +70,7 @@ const GATE_CONNECTIONS: { gateId: GateId; agentId: string }[] = [
   { gateId: 'memoria-gate', agentId: 'sdd-orchestrator' },
 ];
 
-export function AgentMapCanvas({ onOpenDm }: { onOpenDm: (agentId: string) => void }) {
+export function AgentMapCanvas({ onOpenDm }: { onOpenDm: (agentId: string) => void; onNewConversation?: () => void }) {
   const { client, store } = useBridge();
   const presence = useStudio((s) => s.presence ?? []);
   const threads = useStudio((s) => s.threads ?? {});
