@@ -315,11 +315,20 @@
       "depends_on": [
         "TASK-007"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
-        "apps/studio/src/components/mission-control/AgentInspectorDrawer.tsx",
-        "apps/studio/src/components/mission-control/inspectordrawer.spec.tsx"
-      ]
+        "apps/studio/src/components/mission-control/AgentInspectorDrawer.tsx apps/studio/src/components/mission-control/inspectordrawer.spec.tsx apps/studio/src/components/mission-control/AgentMapCanvas.tsx"
+      ],
+      "usage": {
+        "tokens_in": 55000,
+        "tokens_out": 12000,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-26"
+      }
     },
     {
       "id": "TASK-012",

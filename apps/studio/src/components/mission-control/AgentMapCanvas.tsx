@@ -591,26 +591,10 @@ export function AgentMapCanvas({ onOpenDm }: { onOpenDm: (agentId: string) => vo
           <AgentInspectorDrawer
             agentId={selectedAgent}
             presence={selectedAgent ? presenceMap.get(selectedAgent) : undefined}
-            mode={mode}
-            dialogueHistory={activeScript}
-            currentDialogue={currentDialogue}
-            selectedSpecId={selectedSpecId}
-            onSelectSpecId={(id) => {
-              setSelectedSpecId(id);
-              setSelectedFixId('');
-            }}
-            selectedFixId={selectedFixId}
-            onSelectFixId={(id) => {
-              setSelectedFixId(id);
-            }}
+            conversation={null}
             onSelectAgent={(id) => {
               setSelectedAgent(id);
               setSelectedGate(null);
-            }}
-            onSelectDialogue={(d) => {
-              setInspectedDialogueId(d.id);
-              const idx = activeScript.findIndex((item) => item.id === d.id);
-              if (idx >= 0) setDialogueIdx(idx);
             }}
             onClose={() => setIsPanelCollapsed(true)}
             onOpenDm={onOpenDm}
