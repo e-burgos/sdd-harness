@@ -12,7 +12,7 @@
 
 ## Problema
 
-1. La pestana de agente muestra documentos que no genero. 2. Entran specs/fixes sin documentos (spec-e-burgos-004-studio-gates-topology): relatedSpecs agrega por Read (conversation.ts DOCUMENT_TOOLS incluye Read, L222) y por link.target auto-asignado (L247); relatedFixes por mencion textual de FIX-id (L265).
+1. La pestana de agente muestra documentos que no genero. 2. Entran specs/fixes sin documentos (spec-e-burgos-004-studio-gates-topology): relatedSpecs agrega por Read (conversation.ts DOCUMENT_TOOLS incluye Read, L191) y por link.target auto-asignado (L247); relatedFixes por mencion textual de FIX-id (L265).
 
 ## Solucion propuesta
 
