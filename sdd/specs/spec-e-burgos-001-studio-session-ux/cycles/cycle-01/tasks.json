@@ -1,0 +1,1055 @@
+{
+  "$schema": "../../../../schemas/cycle-tasks.schema.json",
+  "spec": "spec-e-burgos-001-studio-session-ux",
+  "cycle": 1,
+  "module": "studio-session-ux",
+  "apps": [
+    "apps/studio",
+    "apps/studio-bridge",
+    "libs/studio-protocol"
+  ],
+  "flow": "full",
+  "user_stories_generated": true,
+  "prerequisites": {
+    "tasks_generated": true
+  },
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "limits.ts, handshake con features y PROTOCOL_VERSION = 2",
+      "user_stories": [
+        "HU-10"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [],
+      "status": "done",
+      "files": [
+        "libs/studio-protocol/src/limits.ts",
+        "libs/studio-protocol/src/version.ts",
+        "libs/studio-protocol/src/handshake.ts",
+        "libs/studio-protocol/src/handshake.spec.ts",
+        "libs/studio-protocol/src/index.ts"
+      ],
+      "usage": {
+        "tokens_in": 20904,
+        "tokens_out": 4181,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
+    },
+    {
+      "id": "TASK-002",
+      "title": "Contrato attachments.ts (solo contrato para cycle-02)",
+      "user_stories": [
+        "HU-1",
+        "HU-2",
+        "HU-3"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "status": "done",
+      "files": [
+        "libs/studio-protocol/src/attachments.ts",
+        "libs/studio-protocol/src/attachments.spec.ts",
+        "libs/studio-protocol/src/index.ts"
+      ],
+      "usage": {
+        "tokens_in": 13936,
+        "tokens_out": 2787,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
+    },
+    {
+      "id": "TASK-003",
+      "title": "domain.ts: ThreadLink, ThreadInfo.link/pendingCount, AlwaysRule y AlwaysOffer",
+      "user_stories": [
+        "HU-4",
+        "HU-6"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "status": "done",
+      "files": [
+        "libs/studio-protocol/src/domain.ts",
+        "libs/studio-protocol/src/domain.spec.ts"
+      ],
+      "usage": {
+        "tokens_in": 13936,
+        "tokens_out": 3019,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
+    },
+    {
+      "id": "TASK-004",
+      "title": "commands.ts: MessageBody, pending.*, setLink, searchFiles, attachment.get, SendResult, FileSearchResult",
+      "user_stories": [
+        "HU-10",
+        "HU-4",
+        "HU-2"
+      ],
+      "estimation_hours": 4,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-002",
+        "TASK-003"
+      ],
+      "status": "done",
+      "files": [
+        "libs/studio-protocol/src/commands.ts",
+        "libs/studio-protocol/src/commands.spec.ts"
+      ],
+      "usage": {
+        "tokens_in": 18581,
+        "tokens_out": 3948,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
+    },
+    {
+      "id": "TASK-005",
+      "title": "events.ts y snapshot.ts: pending.*, user.message extendido, approval always/remembered, catálogo y fechas de fixes",
+      "user_stories": [
+        "HU-10",
+        "HU-6",
+        "HU-4",
+        "HU-3"
+      ],
+      "estimation_hours": 4,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-003"
+      ],
+      "status": "done",
+      "files": [
+        "libs/studio-protocol/src/events.ts",
+        "libs/studio-protocol/src/events.spec.ts",
+        "libs/studio-protocol/src/snapshot.ts",
+        "libs/studio-protocol/src/snapshot.spec.ts",
+        "libs/studio-protocol/src/domain.spec.ts"
+      ],
+      "usage": {
+        "tokens_in": 18581,
+        "tokens_out": 4181,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
+    },
+    {
+      "id": "TASK-006",
+      "title": "Checkpoint de F1: compatibilidad y verificación de la lib",
+      "user_stories": [
+        "HU-10"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002",
+        "TASK-003",
+        "TASK-004",
+        "TASK-005"
+      ],
+      "status": "done",
+      "files": [
+        "libs/studio-protocol/src/index.spec.ts"
+      ],
+      "usage": {
+        "tokens_in": 11613,
+        "tokens_out": 1858,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
+    },
+    {
+      "id": "TASK-007",
+      "title": "Spike e2e: entrega en punto de corte con PostToolBatch (SDK 0.3.292 real)",
+      "user_stories": [
+        "HU-10"
+      ],
+      "estimation_hours": 6,
+      "story_points": 8,
+      "depends_on": [
+        "TASK-006"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio-bridge/src/engine/post-tool-batch.e2e.spec.ts",
+        "sdd/specs/spec-e-burgos-001-studio-session-ux/cycles/cycle-01/artifacts/spike-posttoolbatch.md"
+      ],
+      "usage": {
+        "tokens_in": 37513,
+        "tokens_out": 7503,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
+    },
+    {
+      "id": "TASK-008",
+      "title": "InputChannel y prompt-content",
+      "user_stories": [
+        "HU-10"
+      ],
+      "estimation_hours": 4,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-006"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio-bridge/src/engine/types.ts",
+        "apps/studio-bridge/src/engine/input-channel.ts",
+        "apps/studio-bridge/src/engine/input-channel.spec.ts",
+        "apps/studio-bridge/src/engine/prompt-content.ts",
+        "apps/studio-bridge/src/engine/prompt-content.spec.ts"
+      ],
+      "usage": {
+        "tokens_in": 31260,
+        "tokens_out": 6252,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
+    },
+    {
+      "id": "TASK-009",
+      "title": "Engine: prompt streaming, resultado, interrupt con recibo",
+      "user_stories": [
+        "HU-10"
+      ],
+      "estimation_hours": 6,
+      "story_points": 8,
+      "depends_on": [
+        "TASK-007",
+        "TASK-008"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio-bridge/src/engine/types.ts",
+        "apps/studio-bridge/src/engine/claude-sdk-engine.ts",
+        "apps/studio-bridge/src/engine/claude-sdk-engine.spec.ts",
+        "apps/studio-bridge/src/engine/claude-sdk-engine.e2e.spec.ts",
+        "apps/studio-bridge/src/engine/fake-engine.ts",
+        "apps/studio-bridge/src/engine/fake-engine.spec.ts",
+        "apps/studio-bridge/src/sessions/session-manager.ts",
+        "apps/studio-bridge/src/sessions/session-manager.spec.ts"
+      ],
+      "usage": {
+        "tokens_in": 56269,
+        "tokens_out": 11254,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
+    },
+    {
+      "id": "TASK-010",
+      "title": "Hook PostToolBatch y modo de entrega según el spike",
+      "user_stories": [
+        "HU-10"
+      ],
+      "estimation_hours": 4,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-007",
+        "TASK-009"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio-bridge/src/engine/claude-sdk-engine.ts",
+        "apps/studio-bridge/src/engine/claude-sdk-engine.spec.ts"
+      ],
+      "usage": {
+        "tokens_in": 31260,
+        "tokens_out": 6252,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
+    },
+    {
+      "id": "TASK-011",
+      "title": "FakeEngine con puntos de corte y marcadores",
+      "user_stories": [
+        "HU-10",
+        "HU-6"
+      ],
+      "estimation_hours": 4,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-008"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio-bridge/src/engine/fake-engine.ts",
+        "apps/studio-bridge/src/engine/fake-engine.spec.ts"
+      ],
+      "usage": {
+        "tokens_in": 37513,
+        "tokens_out": 8753,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
+    },
+    {
+      "id": "TASK-012",
+      "title": "store.ts: pending persistido y migración de link/pending",
+      "user_stories": [
+        "HU-10",
+        "HU-4"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-006"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio-bridge/src/sessions/store.ts",
+        "apps/studio-bridge/src/sessions/store.spec.ts",
+        "apps/studio-bridge/src/sessions/session-manager.ts"
+      ],
+      "usage": {
+        "tokens_in": 22508,
+        "tokens_out": 5002,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
+    },
+    {
+      "id": "TASK-013",
+      "title": "SessionManager: pendientes, send/SendResult, edit/remove/flush",
+      "user_stories": [
+        "HU-10"
+      ],
+      "estimation_hours": 6,
+      "story_points": 8,
+      "depends_on": [
+        "TASK-009",
+        "TASK-011",
+        "TASK-012"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio-bridge/src/sessions/session-manager.ts",
+        "apps/studio-bridge/src/sessions/session-manager.spec.ts",
+        "apps/studio-bridge/src/sessions/store.ts"
+      ],
+      "usage": {
+        "tokens_in": 62521,
+        "tokens_out": 13755,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
+    },
+    {
+      "id": "TASK-014",
+      "title": "Router y ws-server: comandos nuevos, unsupported, features, maxPayload",
+      "user_stories": [
+        "HU-10",
+        "HU-4"
+      ],
+      "estimation_hours": 4,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-006",
+        "TASK-013"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio-bridge/src/server/router.ts",
+        "apps/studio-bridge/src/server/router.spec.ts",
+        "apps/studio-bridge/src/server/ws-server.ts",
+        "apps/studio-bridge/src/server/ws-server.spec.ts"
+      ],
+      "usage": {
+        "tokens_in": 35012,
+        "tokens_out": 7503,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
+    },
+    {
+      "id": "TASK-015",
+      "title": "always-rule.ts: alwaysOfferOf, bashPrefixOf, matchesRule",
+      "user_stories": [
+        "HU-6"
+      ],
+      "estimation_hours": 4,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-003"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio-bridge/src/sessions/always-rule.ts",
+        "apps/studio-bridge/src/sessions/always-rule.spec.ts"
+      ],
+      "usage": {
+        "tokens_in": 25008,
+        "tokens_out": 6252,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
+    },
+    {
+      "id": "TASK-016",
+      "title": "Always en SessionManager y aprobaciones",
+      "user_stories": [
+        "HU-6"
+      ],
+      "estimation_hours": 4,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-013",
+        "TASK-015"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio-bridge/src/sessions/session-manager.ts",
+        "apps/studio-bridge/src/sessions/session-manager.spec.ts"
+      ],
+      "usage": {
+        "tokens_in": 37513,
+        "tokens_out": 8753,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
+    },
+    {
+      "id": "TASK-017",
+      "title": "assignLink, thread.setLink y link en createThread",
+      "user_stories": [
+        "HU-4"
+      ],
+      "estimation_hours": 4,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-013"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio-bridge/src/sessions/thread-link.ts",
+        "apps/studio-bridge/src/sessions/thread-link.spec.ts",
+        "apps/studio-bridge/src/sessions/session-manager.ts",
+        "apps/studio-bridge/src/sessions/session-manager.spec.ts",
+        "apps/studio-bridge/src/server/router.ts",
+        "apps/studio-bridge/src/server/router.spec.ts",
+        "apps/studio-bridge/src/gate/judge.ts",
+        "apps/studio-bridge/src/test-utils/fixture.ts"
+      ],
+      "usage": {
+        "tokens_in": 35012,
+        "tokens_out": 7503,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
+    },
+    {
+      "id": "TASK-018",
+      "title": "Snapshot: source/path de agentes, skills vacío, fechas de fixes",
+      "user_stories": [
+        "HU-4",
+        "HU-3"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-005"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio-bridge/src/workspace/snapshot.ts",
+        "apps/studio-bridge/src/workspace/snapshot.spec.ts"
+      ],
+      "usage": {
+        "tokens_in": 15005,
+        "tokens_out": 3126,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
+    },
+    {
+      "id": "TASK-019",
+      "title": "Tests del puente: pendientes y entrega",
+      "user_stories": [
+        "HU-10"
+      ],
+      "estimation_hours": 4,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-013",
+        "TASK-014"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio-bridge/src/sessions/session-manager.spec.ts"
+      ],
+      "usage": {
+        "tokens_in": 37513,
+        "tokens_out": 8753,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
+    },
+    {
+      "id": "TASK-020",
+      "title": "Tests del puente: Always, vínculo y snapshot",
+      "user_stories": [
+        "HU-6",
+        "HU-4"
+      ],
+      "estimation_hours": 4,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-016",
+        "TASK-017",
+        "TASK-018"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio-bridge/src/sessions/session-manager.spec.ts"
+      ],
+      "usage": {
+        "tokens_in": 18756,
+        "tokens_out": 3751,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
+    },
+    {
+      "id": "TASK-021",
+      "title": "client.ts: guarda de frame y mensajes de versión",
+      "user_stories": [
+        "HU-10"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-014"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/lib/bridge/client.ts",
+        "apps/studio/src/lib/bridge/error-text.ts",
+        "apps/studio/src/lib/bridge/client.spec.ts",
+        "apps/studio/src/components/WorkspaceApp.tsx",
+        "apps/studio/src/components/workspace/Composer.tsx",
+        "apps/studio/src/components/connection.spec.tsx",
+        "apps/studio/src/lib/i18n/es.ts",
+        "apps/studio/src/lib/i18n/en.ts"
+      ],
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "tokens_in": 25548,
+        "tokens_out": 3650,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
+    },
+    {
+      "id": "TASK-022",
+      "title": "nav-tree.ts: buildNavTree puro",
+      "user_stories": [
+        "HU-4",
+        "HU-5"
+      ],
+      "estimation_hours": 4,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-018"
+      ],
+      "status": "done",
+      "files": [],
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "tokens_in": 41684,
+        "tokens_out": 7503,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
+    },
+    {
+      "id": "TASK-023",
+      "title": "Selector activeThreads",
+      "user_stories": [
+        "HU-7"
+      ],
+      "estimation_hours": 2,
+      "story_points": 2,
+      "depends_on": [
+        "TASK-022"
+      ],
+      "status": "done",
+      "files": [],
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "tokens_in": 25011,
+        "tokens_out": 1667,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
+    },
+    {
+      "id": "TASK-024",
+      "title": "useCollapsedState con localStorage",
+      "user_stories": [
+        "HU-5"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-022"
+      ],
+      "status": "done",
+      "files": [],
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "tokens_in": 16674,
+        "tokens_out": 3335,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
+    },
+    {
+      "id": "TASK-025",
+      "title": "Sidebar: árbol SPECS/FIXES colapsable",
+      "user_stories": [
+        "HU-4",
+        "HU-5"
+      ],
+      "estimation_hours": 4,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-022",
+        "TASK-024"
+      ],
+      "status": "done",
+      "files": [],
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "tokens_in": 50021,
+        "tokens_out": 13339,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
+    },
+    {
+      "id": "TASK-026",
+      "title": "Sección Hilos activos",
+      "user_stories": [
+        "HU-7"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-023",
+        "TASK-025"
+      ],
+      "status": "done",
+      "files": [],
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "tokens_in": 29179,
+        "tokens_out": 5002,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
+    },
+    {
+      "id": "TASK-027",
+      "title": "ThreadLinkPicker en el header del hilo",
+      "user_stories": [
+        "HU-4"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-017",
+        "TASK-025"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/workspace/ThreadLinkPicker.tsx",
+        "apps/studio/src/components/workspace/threadlink.spec.tsx",
+        "apps/studio/src/components/workspace/ThreadView.tsx",
+        "apps/studio/src/lib/i18n/es.ts",
+        "apps/studio/src/lib/i18n/en.ts"
+      ],
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "tokens_in": 21898,
+        "tokens_out": 3285,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
+    },
+    {
+      "id": "TASK-028",
+      "title": "ActivityIndicator y AgentAvatar con estado",
+      "user_stories": [
+        "HU-8"
+      ],
+      "estimation_hours": 4,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-023"
+      ],
+      "status": "done",
+      "files": [],
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "tokens_in": 33348,
+        "tokens_out": 6670,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
+    },
+    {
+      "id": "TASK-029",
+      "title": "useStickToBottom y correcciones del hilo (S1-S3)",
+      "user_stories": [
+        "HU-9"
+      ],
+      "estimation_hours": 4,
+      "story_points": 5,
+      "depends_on": [],
+      "status": "done",
+      "files": [],
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "tokens_in": 41684,
+        "tokens_out": 7503,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
+    },
+    {
+      "id": "TASK-030",
+      "title": "Layout y scroll del Sidebar y Workspace (S4-S6)",
+      "user_stories": [
+        "HU-9"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-025",
+        "TASK-026"
+      ],
+      "status": "done",
+      "files": [],
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "tokens_in": 25011,
+        "tokens_out": 5002,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
+    },
+    {
+      "id": "TASK-031",
+      "title": "Estado de pendientes y flujo de envío",
+      "user_stories": [
+        "HU-10"
+      ],
+      "estimation_hours": 4,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-021",
+        "TASK-023"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/lib/store/timeline.ts",
+        "apps/studio/src/lib/store/timeline.spec.ts",
+        "apps/studio/src/components/workspace/Composer.tsx",
+        "apps/studio/src/components/workspace/drafts.spec.tsx"
+      ],
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "tokens_in": 23358,
+        "tokens_out": 3285,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
+    },
+    {
+      "id": "TASK-032",
+      "title": "Bandeja PendingMessages y Composer \"Encolar\"",
+      "user_stories": [
+        "HU-10"
+      ],
+      "estimation_hours": 4,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-031"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/workspace/PendingMessages.tsx",
+        "apps/studio/src/components/workspace/pending.spec.tsx",
+        "apps/studio/src/components/workspace/Composer.tsx",
+        "apps/studio/src/components/workspace/Timeline.tsx",
+        "apps/studio/src/lib/bridge/error-text.ts",
+        "apps/studio/src/lib/i18n/es.ts",
+        "apps/studio/src/lib/i18n/en.ts"
+      ],
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "tokens_in": 32847,
+        "tokens_out": 5110,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
+    },
+    {
+      "id": "TASK-033",
+      "title": "Borrador de texto por hilo",
+      "user_stories": [
+        "HU-10"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [],
+      "status": "done",
+      "files": [],
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "tokens_in": 37516,
+        "tokens_out": 5002,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
+    },
+    {
+      "id": "TASK-034",
+      "title": "ApprovalCard con regla Always",
+      "user_stories": [
+        "HU-6"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-016"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/workspace/ApprovalCard.tsx",
+        "apps/studio/src/components/workspace/approval.spec.tsx",
+        "apps/studio/src/lib/store/timeline.ts",
+        "apps/studio/src/lib/store/timeline.spec.ts",
+        "apps/studio/src/lib/i18n/es.ts",
+        "apps/studio/src/lib/i18n/en.ts"
+      ],
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "tokens_in": 21898,
+        "tokens_out": 3285,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
+    },
+    {
+      "id": "TASK-035",
+      "title": "Tests web: navegación",
+      "user_stories": [
+        "HU-4",
+        "HU-5",
+        "HU-7"
+      ],
+      "estimation_hours": 4,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-026",
+        "TASK-027"
+      ],
+      "status": "done",
+      "files": [],
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "tokens_in": 25011,
+        "tokens_out": 5002,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
+    },
+    {
+      "id": "TASK-036",
+      "title": "Tests web: indicadores, scroll y aprobación",
+      "user_stories": [
+        "HU-6",
+        "HU-8",
+        "HU-9"
+      ],
+      "estimation_hours": 4,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-028",
+        "TASK-029",
+        "TASK-030",
+        "TASK-034"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/workspace/indicators.spec.tsx",
+        "apps/studio/src/components/workspace/approval-flow.spec.tsx",
+        "apps/studio/src/components/workspace/threadview.spec.tsx"
+      ],
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "tokens_in": 16059,
+        "tokens_out": 2920,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
+    },
+    {
+      "id": "TASK-037",
+      "title": "Tests web: pendientes, borrador y guarda de frame; checkpoint final",
+      "user_stories": [
+        "HU-10"
+      ],
+      "estimation_hours": 4,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-021",
+        "TASK-031",
+        "TASK-032",
+        "TASK-033"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/lib/pending-sync.spec.ts",
+        "apps/studio/src/components/workspace/pending.spec.tsx",
+        "apps/studio/src/lib/bridge/client.spec.ts",
+        "apps/studio/src/components/workspace/drafts.spec.tsx"
+      ],
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "tokens_in": 24818,
+        "tokens_out": 4015,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
+    }
+  ]
+}

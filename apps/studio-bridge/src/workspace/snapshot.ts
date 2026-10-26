@@ -1,7 +1,6 @@
 import { readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import type {
-  AgentSummary,
   Area,
   CycleSummary,
   FixSummary,
@@ -9,6 +8,8 @@ import type {
   TaskSummary,
   WorkspaceSnapshot,
 } from '@sdd-studio/protocol';
+
+import { loadCatalog } from './catalog';
 
 type Json = Record<string, any>;
 type ReadResult = { ok: true; value: Json | null; missing?: boolean } | { ok: false };
@@ -61,6 +62,8 @@ const toFix = (f: Json): FixSummary => ({
   status: str(f.status, 'pending'),
   severity: strOrNull(f.severity),
   specId: strOrNull(f.spec_id),
+  createdAt: strOrNull(f.created_at),
+  closedAt: strOrNull(f.resolved_at) ?? strOrNull(f.validated_at),
 });
 
 const SAFE_SPEC_ID = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
@@ -113,43 +116,6 @@ async function loadSpecs(root: string, sdd: string) {
   return { ok, missing: index.missing === true, specs, cycles };
 }
 
-function parseFrontmatter(text: string): Record<string, string> {
-  const match = /^---\n([\s\S]*?)\n---/.exec(text.replace(/\r\n/g, '\n'));
-  const out: Record<string, string> = {};
-  for (const line of match?.[1]?.split('\n') ?? []) {
-    const kv = /^([A-Za-z_-]+):\s*(.*)$/.exec(line);
-    if (kv?.[1] && kv[2] !== undefined) out[kv[1]] = kv[2].trim();
-  }
-  return out;
-}
-
-async function loadAgents(dir: string): Promise<{ ok: boolean; agents: AgentSummary[] }> {
-  const agents: AgentSummary[] = [];
-  let names: string[];
-  try {
-    names = await readdir(dir);
-  } catch (error) {
-    return { ok: (error as NodeJS.ErrnoException).code === 'ENOENT', agents };
-  }
-  let ok = true;
-  for (const name of names.filter((n) => n.endsWith('.agent.md')).sort()) {
-    let text: string;
-    try {
-      text = await readFile(path.join(dir, name), 'utf8');
-    } catch {
-      ok = false;
-      continue;
-    }
-    const fm = parseFrontmatter(text);
-    agents.push({
-      id: fm.name ?? name.replace(/\.agent\.md$/, ''),
-      description: fm.description ?? '',
-      model: fm.model ?? null,
-    });
-  }
-  return { ok, agents };
-}
-
 export async function loadWorkspaceSnapshot(root: string): Promise<LoadResult> {
   const sdd = path.join(root, 'sdd');
   const failed: Area[] = [];
@@ -173,8 +139,8 @@ export async function loadWorkspaceSnapshot(root: string): Promise<LoadResult> {
   const specs = await loadSpecs(root, sdd);
   if (!specs.ok) failed.push('specs');
   else if (specs.missing) missing.push('specs');
-  const agents = await loadAgents(path.join(sdd, 'agents'));
-  if (!agents.ok) failed.push('agents');
+  const catalog = await loadCatalog(root);
+  if (!catalog.ok) failed.push('agents');
   const snapshot: WorkspaceSnapshot = {
     project: str(global?.project, path.basename(root)),
     profile: str(global?.profile, 'team'),
@@ -182,7 +148,8 @@ export async function loadWorkspaceSnapshot(root: string): Promise<LoadResult> {
     specs: specs.specs,
     cycles: specs.cycles,
     fixes: Array.isArray(fixes?.fixes) ? fixes.fixes.map(toFix) : [],
-    agents: agents.agents,
+    agents: catalog.agents,
+    skills: catalog.skills,
     gateMode: tools?.claude_mod?.gate === 'warn' ? 'warn' : 'block',
     pricing: pricing && typeof pricing === 'object' ? pricing : null,
     stale: [],
@@ -194,7 +161,7 @@ const AREA_FIELDS: Record<Area, (keyof WorkspaceSnapshot)[]> = {
   global: ['project', 'profile'],
   specs: ['specs', 'cycles'],
   fixes: ['fixes'],
-  agents: ['agents'],
+  agents: ['agents', 'skills'],
   tools: ['gateMode'],
   pricing: ['pricing'],
   kit: ['kitVersion'],

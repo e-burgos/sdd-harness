@@ -1,6 +1,7 @@
 import { createServer, type Server } from 'node:http';
 import {
   decodeClientMessage,
+  MAX_FRAME_BYTES,
   PROTOCOL_VERSION,
   type ClientCommand,
   type ErrorCode,
@@ -8,12 +9,13 @@ import {
   type Welcome,
 } from '@sdd-studio/protocol';
 import { WebSocketServer, type WebSocket } from 'ws';
+import { AttachmentError } from '../sessions/attachment-store';
 import { SessionError } from '../sessions/session-manager';
 import { PathError } from '../workspace/paths';
 import { originAllowed, tokensMatch } from './security';
 import { serveStatic } from './static';
 
-export const MAX_PAYLOAD_BYTES = 1_048_576;
+export const MAX_PAYLOAD_BYTES = MAX_FRAME_BYTES;
 
 export interface BridgeHandlers {
   welcome(): Omit<Welcome, 'kind' | 'protocolVersion'>;
@@ -27,7 +29,7 @@ export interface BridgeServer {
 }
 
 function toError(error: unknown): { code: ErrorCode; message: string } {
-  if (error instanceof SessionError || error instanceof PathError) return { code: error.code, message: error.message };
+  if (error instanceof SessionError || error instanceof PathError || error instanceof AttachmentError) return { code: error.code, message: error.message };
   return { code: 'internal', message: error instanceof Error ? error.message : String(error) };
 }
 
@@ -82,9 +84,14 @@ export async function startBridgeServer(o: {
 
   wss.on('connection', (ws) => {
     let state: 'pending' | 'authed' | 'rejected' = 'pending';
-    const reject = (code: 'bad-message' | 'bad-token' | 'protocol-mismatch' | 'timeout', message: string, closeCode: number) => {
+    const reject = (
+      code: 'bad-message' | 'bad-token' | 'protocol-mismatch' | 'timeout',
+      message: string,
+      closeCode: number,
+      versions: { bridgeProtocolVersion: number; bridgeVersion: string } | null = null,
+    ) => {
       state = 'rejected';
-      send(ws, { kind: 'handshake.error', code, message });
+      send(ws, { kind: 'handshake.error', code, message, ...versions });
       ws.close(closeCode);
     };
     const timer = setTimeout(() => reject('timeout', 'hello did not arrive in time', 4000), o.helloTimeoutMs ?? 5000);
@@ -99,7 +106,12 @@ export async function startBridgeServer(o: {
           if (!decoded.ok || decoded.value.kind !== 'hello') return reject('bad-message', 'se esperaba hello', 4000);
           if (!tokensMatch(decoded.value.token, o.token)) return reject('bad-token', 'invalid token', 4001);
           if (decoded.value.protocolVersion !== PROTOCOL_VERSION) {
-            return reject('protocol-mismatch', `the bridge speaks protocol ${PROTOCOL_VERSION}`, 4002);
+            return reject(
+              'protocol-mismatch',
+              `protocol mismatch: web speaks ${decoded.value.protocolVersion}, bridge speaks ${PROTOCOL_VERSION}`,
+              4002,
+              { bridgeProtocolVersion: PROTOCOL_VERSION, bridgeVersion: o.handlers.welcome().bridgeVersion },
+            );
           }
           state = 'authed';
           clients.add(ws);

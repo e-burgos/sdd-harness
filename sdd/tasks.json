@@ -2,5 +2,142 @@
   "$schema": "./schemas/tasks-index.schema.json",
   "_comment": "Lightweight index over per-cycle task files. Canonical task data lives in each sdd/specs/{spec-id}/cycles/cycle-XX/tasks.json. Do not edit task detail here. Regenerate with: pnpm sdd:rebuild-tasks-index",
   "sdd_version": "4.0",
-  "specs": {}
+  "specs": {
+    "spec-e-burgos-001-studio-session-ux": {
+      "cycles": {
+        "cycle-01": {
+          "file": "sdd/specs/spec-e-burgos-001-studio-session-ux/cycles/cycle-01/tasks.json",
+          "module": "studio-session-ux",
+          "apps": [
+            "apps/studio",
+            "apps/studio-bridge",
+            "libs/studio-protocol"
+          ],
+          "status": "completed",
+          "tasks_total": 37,
+          "tasks_done": 37
+        },
+        "cycle-02": {
+          "file": "sdd/specs/spec-e-burgos-001-studio-session-ux/cycles/cycle-02/tasks.json",
+          "module": "studio-session-ux",
+          "apps": [
+            "apps/studio",
+            "apps/studio-bridge",
+            "libs/studio-protocol"
+          ],
+          "status": "completed",
+          "tasks_total": 25,
+          "tasks_done": 25
+        }
+      }
+    },
+    "spec-e-burgos-002-studio-ui-polish": {
+      "cycles": {
+        "cycle-01": {
+          "file": "sdd/specs/spec-e-burgos-002-studio-ui-polish/cycles/cycle-01/tasks.json",
+          "module": "studio-ui-polish",
+          "apps": [
+            "apps/studio",
+            "apps/studio-bridge"
+          ],
+          "status": "completed",
+          "tasks_total": 9,
+          "tasks_done": 9
+        }
+      }
+    },
+    "spec-e-burgos-003-studio-mission-control": {
+      "cycles": {
+        "cycle-01": {
+          "file": "sdd/specs/spec-e-burgos-003-studio-mission-control/cycles/cycle-01/tasks.json",
+          "module": "studio-mission-control",
+          "apps": [
+            "apps/studio",
+            "apps/studio-bridge"
+          ],
+          "status": "completed",
+          "tasks_total": 7,
+          "tasks_done": 7
+        }
+      }
+    },
+    "spec-e-burgos-004-studio-gates-topology": {
+      "cycles": {
+        "cycle-01": {
+          "file": "sdd/specs/spec-e-burgos-004-studio-gates-topology/cycles/cycle-01/tasks.json",
+          "module": "studio-gates-topology",
+          "apps": [
+            "apps/studio"
+          ],
+          "status": "completed",
+          "tasks_total": 6,
+          "tasks_done": 6
+        }
+      }
+    },
+    "spec-e-burgos-005-studio-conversation-sessions": {
+      "cycles": {
+        "cycle-01": {
+          "file": "sdd/specs/spec-e-burgos-005-studio-conversation-sessions/cycles/cycle-01/tasks.json",
+          "module": "studio-conversation-sessions",
+          "apps": [
+            "apps/studio",
+            "apps/studio-bridge",
+            "libs/studio-protocol"
+          ],
+          "status": "completed",
+          "tasks_total": 15,
+          "tasks_done": 15
+        }
+      }
+    },
+    "spec-e-burgos-006-studio-auth-connect": {
+      "cycles": {
+        "cycle-01": {
+          "file": "sdd/specs/spec-e-burgos-006-studio-auth-connect/cycles/cycle-01/tasks.json",
+          "module": "studio-auth-connect",
+          "apps": [
+            "apps/studio",
+            "apps/studio-bridge",
+            "libs/studio-protocol"
+          ],
+          "status": "completed",
+          "tasks_total": 4,
+          "tasks_done": 4
+        }
+      }
+    },
+    "spec-e-burgos-007-studio-session-metadata": {
+      "cycles": {
+        "cycle-01": {
+          "file": "sdd/specs/spec-e-burgos-007-studio-session-metadata/cycles/cycle-01/tasks.json",
+          "module": "studio-session-metadata",
+          "apps": [
+            "apps/studio",
+            "apps/studio-bridge",
+            "libs/studio-protocol"
+          ],
+          "status": "completed",
+          "tasks_total": 21,
+          "tasks_done": 21
+        }
+      }
+    },
+    "spec-e-burgos-008-studio-session-flow": {
+      "cycles": {
+        "cycle-01": {
+          "file": "sdd/specs/spec-e-burgos-008-studio-session-flow/cycles/cycle-01/tasks.json",
+          "module": "studio-session-flow",
+          "apps": [
+            "apps/studio",
+            "apps/studio-bridge",
+            "libs/studio-protocol"
+          ],
+          "status": "completed",
+          "tasks_total": 12,
+          "tasks_done": 12
+        }
+      }
+    }
+  }
 }

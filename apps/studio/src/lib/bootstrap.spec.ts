@@ -1,8 +1,8 @@
 import { createStudioStore } from './store/store';
 import { bootstrap, loadBotHistory, openThread } from './bootstrap';
 
-const snapshot = { project: 'p', profile: 'team', kitVersion: null, specs: [], cycles: [], fixes: [], agents: [], gateMode: 'block', pricing: null, stale: [] };
-const thread = { id: 't1', channelId: 'general', title: 'x', agent: 'sdd-orchestrator', options: { agent: 'sdd-orchestrator', model: 'kit', effort: null, permissionMode: 'default' }, status: 'idle', createdAt: 'a', lastActivity: 'a' };
+const snapshot = { project: 'p', profile: 'team', kitVersion: null, specs: [], cycles: [], fixes: [], agents: [], skills: [], gateMode: 'block', pricing: null, stale: [] };
+const thread = { id: 't1', channelId: 'general', title: 'x', agent: 'sdd-orchestrator', options: { agent: 'sdd-orchestrator', model: 'kit', effort: null, permissionMode: 'default' }, status: 'idle', createdAt: 'a', lastActivity: 'a', link: { target: { kind: 'none' }, source: 'legacy' }, pendingCount: 0 };
 
 function fakeClient(responses: Record<string, unknown>) {
   const calls: Record<string, unknown>[] = [];
@@ -39,6 +39,25 @@ describe('bootstrap', () => {
     await openThread(client as never, store, 't1');
     expect(client.calls).toEqual([{ cmd: 'thread.history', threadId: 't1', sinceSeq: 1 }]);
     expect(store.getState().threads.t1?.items).toHaveLength(2);
+  });
+
+  it('asks for the questions in the history only when the bridge announces the feature', async () => {
+    const withFeature = { ...fakeClient({ 'thread.history': [] }), supports: (f: string) => f === 'questions' };
+    await openThread(withFeature as never, createStudioStore(), 't1');
+    expect(withFeature.calls).toEqual([{ cmd: 'thread.history', threadId: 't1', sinceSeq: 0, includeQuestions: true }]);
+    const both = { ...fakeClient({ 'thread.history': [] }), supports: () => true };
+    await openThread(both as never, createStudioStore(), 't1');
+    expect(both.calls).toEqual([{ cmd: 'thread.history', threadId: 't1', sinceSeq: 0, includeDocumentTouched: true, includeQuestions: true }]);
+  });
+
+  it('asks for document.touched history only when the bridge announces the feature', async () => {
+    const store = createStudioStore();
+    const withFeature = { ...fakeClient({ 'thread.history': [] }), supports: (f: string) => f === 'document-touched' };
+    await openThread(withFeature as never, store, 't1');
+    expect(withFeature.calls).toEqual([{ cmd: 'thread.history', threadId: 't1', sinceSeq: 0, includeDocumentTouched: true }]);
+    const without = { ...fakeClient({ 'thread.history': [] }), supports: () => false };
+    await openThread(without as never, createStudioStore(), 't1');
+    expect(without.calls).toEqual([{ cmd: 'thread.history', threadId: 't1', sinceSeq: 0 }]);
   });
 
   it('re-syncs loaded threads on bootstrap after a reconnect', async () => {

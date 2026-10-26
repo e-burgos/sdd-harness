@@ -1,0 +1,219 @@
+{
+  "$schema": "../../../../schemas/cycle.schema.json",
+  "cycle": 1,
+  "module": "studio-ui-polish",
+  "spec": "spec-e-burgos-002-studio-ui-polish",
+  "apps": [
+    "apps/studio",
+    "apps/studio-bridge"
+  ],
+  "phase": "ui-polish",
+  "flow": "lite",
+  "objectives": [
+    "App anclada al viewport sin scroll del documento",
+    "Eventos del bot sin duplicar",
+    "Menú @ con agentes primero, Enter directo sobre comandos completos y re-escaneo periódico del puente",
+    "Paneles colapsables, composer acotado, error boundary y tarjeta de aprobación pulida"
+  ],
+  "status": "completed",
+  "started_at": "2026-10-23",
+  "completed_at": "2026-10-23",
+  "documents": {
+    "plan": "sdd/specs/spec-e-burgos-002-studio-ui-polish/cycles/cycle-01/plan.md",
+    "tasks": "sdd/specs/spec-e-burgos-002-studio-ui-polish/cycles/cycle-01/tasks.json"
+  },
+  "artifacts": [],
+  "metrics": {
+    "tasks_total": 9,
+    "tasks_completed": 9,
+    "tasks_skipped": 0,
+    "story_points": 18,
+    "files_created": [],
+    "files_modified": [
+      "apps/studio-bridge/src/sessions/store.spec.ts",
+      "apps/studio-bridge/src/sessions/store.ts",
+      "apps/studio-bridge/src/workspace/file-index.spec.ts",
+      "apps/studio-bridge/src/workspace/file-index.ts",
+      "apps/studio-bridge/src/workspace/watcher.spec.ts",
+      "apps/studio-bridge/src/workspace/watcher.ts",
+      "apps/studio/src/app/globals.css",
+      "apps/studio/src/components/AppShell.tsx",
+      "apps/studio/src/components/ErrorBoundary.tsx",
+      "apps/studio/src/components/WorkspaceApp.tsx",
+      "apps/studio/src/components/appshell.spec.tsx",
+      "apps/studio/src/components/errorboundary.spec.tsx",
+      "apps/studio/src/components/workspace/ApprovalCard.tsx",
+      "apps/studio/src/components/workspace/ChannelView.tsx",
+      "apps/studio/src/components/workspace/Composer.tsx",
+      "apps/studio/src/components/workspace/PanelRail.tsx",
+      "apps/studio/src/components/workspace/RightPanel.tsx",
+      "apps/studio/src/components/workspace/Sidebar.tsx",
+      "apps/studio/src/components/workspace/ThreadView.tsx",
+      "apps/studio/src/components/workspace/Workspace.tsx",
+      "apps/studio/src/components/workspace/approval.spec.tsx",
+      "apps/studio/src/components/workspace/composer.spec.tsx",
+      "apps/studio/src/components/workspace/mentionmenu.spec.tsx",
+      "apps/studio/src/components/workspace/workspace.spec.tsx",
+      "apps/studio/src/lib/i18n/en.ts",
+      "apps/studio/src/lib/i18n/es.ts",
+      "apps/studio/src/lib/store/state.spec.ts",
+      "apps/studio/src/lib/store/state.ts",
+      "apps/studio/src/lib/use-mention-menu.ts",
+      "apps/studio/src/lib/use-panel-state.ts"
+    ],
+    "files_deleted": [],
+    "usage": {
+      "tokens_in": 387000,
+      "tokens_out": 59000,
+      "approx": true,
+      "source": "declared-estimate",
+      "by_agent": [
+        {
+          "agent": "implementor-front",
+          "label": "TASK-001",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 38000,
+          "tokens_out": 6000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-23"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-002",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 38000,
+          "tokens_out": 6000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-23"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-003",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 38000,
+          "tokens_out": 6000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-23"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-004",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 38000,
+          "tokens_out": 6000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-23"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-005",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 38000,
+          "tokens_out": 6000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-23"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-006",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 38000,
+          "tokens_out": 6000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-23"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-007",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 38000,
+          "tokens_out": 6000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-23"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-008",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 38000,
+          "tokens_out": 6000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-23"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-009",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 38000,
+          "tokens_out": 6000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-23"
+        },
+        {
+          "agent": "orchestrator",
+          "label": "solo",
+          "provider_model": "claude/opus",
+          "effort": "high",
+          "tokens_in": 45000,
+          "tokens_out": 5000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-23"
+        }
+      ],
+      "by_tier": {
+        "claude/sonnet": {
+          "tokens_in": 342000,
+          "tokens_out": 54000,
+          "approx": true,
+          "source": "declared-estimate"
+        },
+        "claude/opus": {
+          "tokens_in": 45000,
+          "tokens_out": 5000,
+          "approx": true,
+          "source": "declared-estimate"
+        }
+      }
+    }
+  },
+  "tables_created": [],
+  "endpoints_implemented": [],
+  "components_created": [],
+  "issues_found": [],
+  "reviewer_report": {
+    "approved": true,
+    "date": "2026-10-23",
+    "ca_results": {
+      "US-1": "PASS — TASK-001: appshell.spec y composer.spec verifican viewport anclado y focus con preventScroll",
+      "US-2": "PASS — TASK-002: store.spec (bridge) y state.spec (web) verifican descarte de eventos bot duplicados consecutivos",
+      "US-3": "PASS — TASK-003, TASK-004: mentionmenu.spec y file-index.spec verifican prioridad de agentes y envío directo con Enter de comandos completos",
+      "US-4": "PASS — TASK-005: watcher.spec verifica re-escaneo periódico del workspace en el puente",
+      "US-5": "PASS — TASK-006 a TASK-009: workspace.spec, composer.spec, errorboundary.spec y approval.spec verifican paneles colapsables, altura acotada del composer, error boundary y tarjeta de aprobación colapsable"
+    },
+    "tests": {
+      "pnpm test": "OK — 48 suites, 397 tests pasados",
+      "sdd:validate": "OK — 14 files valid, cross-checks passed"
+    },
+    "notes": "Ciclo flow: lite completado exitosamente. 9/9 tasks done. Todos los criterios de aceptación y tests verificados. Fragmentos de contexto agregados para apps/studio y apps/studio-bridge.",
+    "follow_ups": []
+  }
+}

@@ -1,5 +1,7 @@
 # Context prompt — libs/studio-protocol
 
+> Última actualización: cycle-01 (spec-e-burgos-006-studio-auth-connect) | Fecha: 2026-10-26
+
 > Entry point para agentes y desarrolladores trabajando en `@sdd-studio/protocol`.
 > Leer este documento antes de tocar tipos, esquemas o mensajes del protocolo.
 
@@ -9,11 +11,14 @@ Es la librería que define los tipos, esquemas Zod y códec binario/JSON para la
 
 ## Estructura de archivos y contratos
 
-- `src/domain.ts`: Enums y tipos de canales, agentes, modelos de IA, esfuerzo y niveles de permiso.
+- `src/domain.ts`: Enums y tipos de canales, agentes, modelos de IA, esfuerzo y niveles de permiso; `ProviderId`/`EngineSessionId` (sesión y proveedor del hilo) y `AuthPreference`/`AuthAccount`.
 - `src/commands.ts`: Catálogo de comandos que el frontend puede enviar al backend.
 - `src/events.ts`: Eventos en streaming (texto, deltas, diffs de herramientas, aprobaciones).
 - `src/handshake.ts`: Validación de tokens de pairing y protocolo de conexión inicial.
-- `src/snapshot.ts`: Definición del estado reactivo del workspace (specs, tasks, fixes, global).
+- `src/snapshot.ts`: Definición del estado reactivo del workspace (specs, tasks, fixes, agentes, skills, global).
+- `src/limits.ts`: límites compartidos (frame, adjuntos, refs, búsqueda, pendientes) y `BRIDGE_FEATURES` (`conversation-sessions`, `auth-subscription`).
+- `src/attachments.ts`: mimes y extensiones de adjuntos.
+- `src/version.ts`: `PROTOCOL_VERSION = 2`.
 - `src/codec.ts`: Funciones `decodeClientMessage` y `decodeServerMessage`.
 - `src/index.ts`: Re-exportación completa de la API pública.
 

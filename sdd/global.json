@@ -3,7 +3,101 @@
   "project": "sdd-harness-workspace",
   "description": "Monorepo del CLI @e-burgos/sdd-harness: bootstrapea repos listos para agentes de IA con la metodología SDD e incluye el sitio de documentación y SDD Studio (puente local + web).",
   "version": "0.1.0",
-  "completed_modules": [],
+  "profile": "solo",
+  "completed_modules": [
+    {
+      "module": "studio-session-ux",
+      "spec": "spec-e-burgos-001-studio-session-ux",
+      "apps": [
+        "apps/studio",
+        "apps/studio-bridge",
+        "libs/studio-protocol"
+      ],
+      "cycles_completed": 2,
+      "description": "UX de sesión de SDD Studio: 'Always' por sesión para cualquier herramienta, imágenes en el chat y lista de hilos activos con navegación.",
+      "completed_at": "2026-10-23"
+    },
+    {
+      "module": "studio-ui-polish",
+      "spec": "spec-e-burgos-002-studio-ui-polish",
+      "apps": [
+        "apps/studio",
+        "apps/studio-bridge"
+      ],
+      "cycles_completed": 1,
+      "description": "Pulido de UI de SDD Studio: viewport anclado, eventos del bot sin duplicar, menú @ y paneles colapsables.",
+      "completed_at": "2026-10-23"
+    },
+    {
+      "module": "studio-mission-control",
+      "spec": "spec-e-burgos-003-studio-mission-control",
+      "apps": [
+        "apps/studio",
+        "apps/studio-bridge"
+      ],
+      "cycles_completed": 1,
+      "description": "Mission Control de SDD Studio: topología de agentes en vivo (Clara, Sophia, Chronos, etc.), avatares con personalidad, dashboard de ecosistema y telemetría en tiempo real.",
+      "completed_at": "2026-10-23"
+    },
+    {
+      "module": "studio-gates-topology",
+      "spec": "spec-e-burgos-004-studio-gates-topology",
+      "apps": [
+        "apps/studio"
+      ],
+      "cycles_completed": 1,
+      "description": "Topología interactiva de Gates en SDD Studio: tarjetas/puertas de las 6 Gates en el mapa del enjambre, arcos SVG animados y Split-View con feed de conversación en tiempo real.",
+      "completed_at": "2026-10-24"
+    },
+    {
+      "module": "studio-auth-connect",
+      "spec": "spec-e-burgos-006-studio-auth-connect",
+      "apps": [
+        "apps/studio",
+        "apps/studio-bridge",
+        "libs/studio-protocol"
+      ],
+      "cycles_completed": 1,
+      "description": "Panel de autenticación de SDD Studio con solapas Suscripción (login de Claude automático desde el puente) y API key.",
+      "completed_at": "2026-10-26"
+    },
+    {
+      "module": "studio-conversation-sessions",
+      "spec": "spec-e-burgos-005-studio-conversation-sessions",
+      "apps": [
+        "apps/studio",
+        "apps/studio-bridge",
+        "libs/studio-protocol"
+      ],
+      "cycles_completed": 1,
+      "description": "Una conversación = una sesión del proveedor, sesión real y proveedor visibles en la web, prefijo de sistema estable para prompt caching y enjambre de Mission Control centrado en la conversación real.",
+      "completed_at": "2026-10-26"
+    },
+    {
+      "module": "studio-session-metadata",
+      "spec": "spec-e-burgos-007-studio-session-metadata",
+      "apps": [
+        "apps/studio",
+        "apps/studio-bridge",
+        "libs/studio-protocol"
+      ],
+      "cycles_completed": 1,
+      "description": "Título real de sesión del proveedor, asociación múltiple y persistente de conversaciones a specs/ciclos/fixes y evento estructurado document.touched (incluye escrituras por Bash).",
+      "completed_at": "2026-10-26"
+    },
+    {
+      "module": "studio-session-flow",
+      "spec": "spec-e-burgos-008-studio-session-flow",
+      "apps": [
+        "apps/studio",
+        "apps/studio-bridge",
+        "libs/studio-protocol"
+      ],
+      "cycles_completed": 1,
+      "description": "Conversación nueva y asociada por cada spec o fix con briefing mínimo, medidor de contexto restante y formulario de preguntas del proveedor (AskUserQuestion) dentro del chat.",
+      "completed_at": "2026-10-26"
+    }
+  ],
   "in_progress_modules": [],
   "pending_modules": [],
   "monorepo": {

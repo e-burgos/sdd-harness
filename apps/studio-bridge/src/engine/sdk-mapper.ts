@@ -1,5 +1,5 @@
 import type { Author, Effort, ThreadEvent } from '@sdd-studio/protocol';
-import { diffFor, summarizeTool, truncate } from './tool-summary';
+import { diffFor, summarizeToolDetailed, truncate } from './tool-summary';
 
 type Block = { type: string; [key: string]: unknown };
 export type SdkMessageLike = { type: string; subtype?: string; [key: string]: unknown };
@@ -103,13 +103,15 @@ export class SdkEventMapper {
         const input = (block.input && typeof block.input === 'object' ? block.input : {}) as Record<string, unknown>;
         if (AGENT_TOOLS.has(name)) this.subagentByToolUse.set(str(block.id), str(input.subagent_type) || 'general-purpose');
         const diff = diffFor(name, input);
+        const { summary, truncated } = summarizeToolDetailed(name, input);
         out.push({
           type: 'tool.start',
           toolUseId: str(block.id),
           author,
           tool: name,
-          summary: summarizeTool(name, input),
+          summary,
           ...(diff ? { diff } : {}),
+          ...(truncated ? { summaryTruncated: true } : {}),
         });
       }
     });

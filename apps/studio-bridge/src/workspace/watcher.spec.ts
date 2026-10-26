@@ -1,9 +1,11 @@
-import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdir, mkdtemp, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { EventEmitter } from 'node:events';
+import chokidar from 'chokidar';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { copyFixture, FIXTURE_ROOT, waitFor } from '../test-utils/fixture';
-import { startWorkspaceWatcher, type WorkspaceUpdate, type WorkspaceWatcher } from './watcher';
+import { isClaudeCatalogPath, startWorkspaceWatcher, type WorkspaceUpdate, type WorkspaceWatcher } from './watcher';
 
 let root: string;
 let cleanup: () => Promise<void>;
@@ -95,5 +97,86 @@ describe('startWorkspaceWatcher', () => {
     let settled = false;
     await pending.then(() => (settled = true));
     expect(settled).toBe(true);
+  });
+});
+
+describe('.claude catalog watching', () => {
+  const restart = async () => {
+    await watcher!.close();
+    updates.length = 0;
+    // chokidar can miss a moved directory on Windows; the periodic rescan is the documented recovery.
+    const rescanIntervalMs = process.platform === 'win32' ? 300 : undefined;
+    watcher = await startWorkspaceWatcher({ root, debounceMs: 50, rescanIntervalMs, onUpdate: (u) => updates.push(u) });
+  };
+  const addSkill = async (name: string) => {
+    const staged = await mkdtemp(path.join(root, '.staged-skill-'));
+    await writeFile(path.join(staged, 'SKILL.md'), `---\nname: ${name}\ndescription: d\n---\n`);
+    await mkdir(path.join(root, '.claude/skills'), { recursive: true });
+    await rename(staged, path.join(root, '.claude/skills', name));
+  };
+
+  afterEach(() => vi.restoreAllMocks());
+
+  it('refreshes the catalog when a skill appears under .claude/skills', { retry: 2 }, async () => {
+    await addSkill('first');
+    await restart();
+    expect(watcher!.current().skills.map((s) => s.id)).toEqual(['first']);
+    await addSkill('second');
+    await waitFor(() => watcher!.current().skills.some((s) => s.id === 'second'));
+    expect(updates.some((u) => u.areas.includes('agents'))).toBe(true);
+  });
+
+  it('only admits agents/ and skills/ below .claude, never worktrees', () => {
+    const claude = path.join(root, '.claude');
+    for (const watched of [claude, path.join(claude, 'agents'), path.join(claude, 'agents/x.md'), path.join(claude, 'skills/a/SKILL.md')]) {
+      expect(isClaudeCatalogPath(claude, watched), watched).toBe(true);
+    }
+    for (const skipped of [path.join(claude, 'worktrees'), path.join(claude, 'worktrees/wt/agents/x.md'), path.join(claude, 'settings.json'), path.join(claude, 'commands'), path.join(root, 'other'), path.join(root, '.claude-evil/agents')]) {
+      expect(isClaudeCatalogPath(claude, skipped), skipped).toBe(false);
+    }
+  });
+
+  it('starts a second watcher on .claude only when it exists, with a bounded depth and the catalog filter', async () => {
+    const spy = vi.spyOn(chokidar, 'watch');
+    await restart();
+    expect(spy).toHaveBeenCalledTimes(1);
+    await mkdir(path.join(root, '.claude/worktrees/wt'), { recursive: true });
+    spy.mockClear();
+    await restart();
+    expect(spy).toHaveBeenCalledTimes(2);
+    const [target, options] = spy.mock.calls[1] as [string, { depth: number; ignored: (p: string) => boolean }];
+    expect(target).toBe(path.join(root, '.claude'));
+    expect(options.depth).toBe(3);
+    expect(options.ignored(path.join(root, '.claude/worktrees/wt'))).toBe(true);
+    expect(options.ignored(path.join(root, '.claude/skills'))).toBe(false);
+  });
+
+  it('rescans on an interval to recover fs events the OS dropped', async () => {
+    await watcher?.close();
+    const silent = Object.assign(new EventEmitter(), { close: async () => undefined });
+    vi.spyOn(chokidar, 'watch').mockImplementation(() => {
+      setTimeout(() => silent.emit('ready'), 0);
+      return silent as never;
+    });
+    updates.length = 0;
+    watcher = await startWorkspaceWatcher({ root, debounceMs: 50, rescanIntervalMs: 40, onUpdate: (u) => updates.push(u) });
+    const json = JSON.parse(await readFile(tasksFile(), 'utf8'));
+    json.tasks[1].status = 'done';
+    await writeFile(tasksFile(), JSON.stringify(json));
+    const update = await waitFor(() => updates.find((u) => u.events.some((e) => e.botKind === 'task.status')));
+    expect(update.areas).toContain('specs');
+    vi.restoreAllMocks();
+  });
+
+  it('stops rescanning once closed', async () => {
+    await watcher?.close();
+    watcher = await startWorkspaceWatcher({ root, debounceMs: 50, rescanIntervalMs: 30, onUpdate: (u) => updates.push(u) });
+    await watcher.close();
+    updates.length = 0;
+    const json = JSON.parse(await readFile(tasksFile(), 'utf8'));
+    json.tasks[1].status = 'done';
+    await writeFile(tasksFile(), JSON.stringify(json));
+    await new Promise((resolve) => setTimeout(resolve, 150));
+    expect(updates).toEqual([]);
   });
 });

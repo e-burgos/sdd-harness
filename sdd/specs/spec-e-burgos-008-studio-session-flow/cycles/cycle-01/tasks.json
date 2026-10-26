@@ -1,0 +1,408 @@
+{
+  "$schema": "../../../../schemas/cycle-tasks.schema.json",
+  "spec": "spec-e-burgos-008-studio-session-flow",
+  "cycle": 1,
+  "module": "studio-session-flow",
+  "apps": [
+    "apps/studio",
+    "apps/studio-bridge",
+    "libs/studio-protocol"
+  ],
+  "flow": "lite",
+  "user_stories_generated": true,
+  "prerequisites": {
+    "tasks_generated": true
+  },
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "Selector con ayuda: HelpSelect (icono de ayuda con tooltip en hover y foco, aria-describedby), textos es/en y tests",
+      "user_stories": [
+        "US-6"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [],
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/HelpSelect.tsx",
+        "apps/studio/src/components/helpselect.spec.tsx",
+        "apps/studio/src/lib/i18n/es.ts",
+        "apps/studio/src/lib/i18n/en.ts"
+      ],
+      "usage": {
+        "tokens_in": 18000,
+        "tokens_out": 5000,
+        "provider_model": "claude/sonnet",
+        "effort": "high",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-26"
+      }
+    },
+    {
+      "id": "TASK-002",
+      "title": "Reemplazar los 7 select nativos de Composer, ThreadLinkPicker y ConversationSelector por HelpSelect; tests existentes en verde",
+      "user_stories": [
+        "US-6"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/workspace/Composer.tsx",
+        "apps/studio/src/components/workspace/ThreadLinkPicker.tsx",
+        "apps/studio/src/components/mission-control/ConversationSelector.tsx",
+        "apps/studio/src/components/no-native-select.spec.ts"
+      ],
+      "usage": {
+        "tokens_in": 22000,
+        "tokens_out": 5000,
+        "provider_model": "claude/sonnet",
+        "effort": "high",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-26"
+      }
+    },
+    {
+      "id": "TASK-003",
+      "title": "Protocolo: evento question.requested / question.resolved, comando question.answer, feature questions y tests",
+      "user_stories": [
+        "US-3"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [],
+      "status": "done",
+      "files": [
+        "libs/studio-protocol/src/domain.ts",
+        "libs/studio-protocol/src/events.ts",
+        "libs/studio-protocol/src/commands.ts",
+        "libs/studio-protocol/src/limits.ts",
+        "libs/studio-protocol/src/events.spec.ts",
+        "libs/studio-protocol/src/commands.spec.ts",
+        "libs/studio-protocol/src/handshake.spec.ts"
+      ],
+      "usage": {
+        "tokens_in": 20000,
+        "tokens_out": 6000,
+        "provider_model": "claude/sonnet",
+        "effort": "high",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-26"
+      }
+    },
+    {
+      "id": "TASK-004",
+      "title": "Puente: interceptar AskUserQuestion en canUseTool, publicar la pregunta, devolver la respuesta al motor y cancelarla al interrumpir el turno; tests",
+      "user_stories": [
+        "US-3"
+      ],
+      "estimation_hours": 5,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-003"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio-bridge/src/engine/types.ts",
+        "apps/studio-bridge/src/engine/claude-sdk-engine.ts",
+        "apps/studio-bridge/src/engine/claude-sdk-engine.spec.ts",
+        "apps/studio-bridge/src/engine/fake-engine.ts",
+        "apps/studio-bridge/src/sessions/session-manager.ts",
+        "apps/studio-bridge/src/sessions/session-manager.spec.ts",
+        "apps/studio-bridge/src/sessions/presence.ts",
+        "apps/studio-bridge/src/server/router.ts",
+        "apps/studio-bridge/src/server/router.spec.ts"
+      ],
+      "usage": {
+        "tokens_in": 45000,
+        "tokens_out": 12000,
+        "provider_model": "claude/sonnet",
+        "effort": "high",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-26"
+      }
+    },
+    {
+      "id": "TASK-005",
+      "title": "Web: QuestionForm inline en el chat (selección única, múltiple y respuesta libre), reducer del store y acción de respuesta; tests",
+      "user_stories": [
+        "US-3"
+      ],
+      "estimation_hours": 5,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-001",
+        "TASK-003"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/workspace/QuestionForm.tsx",
+        "apps/studio/src/components/workspace/questionform.spec.tsx",
+        "apps/studio/src/components/workspace/Timeline.tsx",
+        "apps/studio/src/components/workspace/ThreadView.tsx",
+        "apps/studio/src/lib/store/timeline.ts",
+        "apps/studio/src/lib/store/timeline.spec.ts",
+        "apps/studio/src/lib/i18n/es.ts",
+        "apps/studio/src/lib/i18n/en.ts"
+      ],
+      "usage": {
+        "tokens_in": 40000,
+        "tokens_out": 12000,
+        "provider_model": "claude/sonnet",
+        "effort": "high",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-26"
+      }
+    },
+    {
+      "id": "TASK-006",
+      "title": "Actividad: contar una vez los hilos con varios targets y mostrar el agente en curso (presence/subagent) en la fila activa; tests",
+      "user_stories": [
+        "US-4"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [],
+      "status": "done",
+      "files": [
+        "apps/studio/src/lib/store/nav-tree.ts",
+        "apps/studio/src/lib/store/nav-tree.spec.ts",
+        "apps/studio/src/components/workspace/NavTree.tsx",
+        "apps/studio/src/components/workspace/Sidebar.tsx",
+        "apps/studio/src/components/workspace/sidebar.spec.tsx"
+      ],
+      "usage": {
+        "tokens_in": 30000,
+        "tokens_out": 9000,
+        "provider_model": "claude/sonnet",
+        "effort": "high",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-26"
+      }
+    },
+    {
+      "id": "TASK-007",
+      "title": "Contexto restante, protocolo y puente: uso de contexto por hilo (usado y límite del modelo) publicado al cierre de turno; tests",
+      "user_stories": [
+        "US-2"
+      ],
+      "estimation_hours": 5,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-003"
+      ],
+      "status": "done",
+      "files": [
+        "libs/studio-protocol/src/domain.ts",
+        "libs/studio-protocol/src/limits.ts",
+        "libs/studio-protocol/src/domain.spec.ts",
+        "libs/studio-protocol/src/handshake.spec.ts",
+        "apps/studio-bridge/src/engine/types.ts",
+        "apps/studio-bridge/src/engine/claude-sdk-engine.ts",
+        "apps/studio-bridge/src/engine/claude-sdk-engine.spec.ts",
+        "apps/studio-bridge/src/engine/fake-engine.ts",
+        "apps/studio-bridge/src/sessions/session-manager.ts",
+        "apps/studio-bridge/src/sessions/session-manager.spec.ts",
+        "apps/studio-bridge/src/sessions/store.ts"
+      ],
+      "usage": {
+        "tokens_in": 38000,
+        "tokens_out": 11000,
+        "provider_model": "claude/sonnet",
+        "effort": "high",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-26"
+      }
+    },
+    {
+      "id": "TASK-008",
+      "title": "Contexto restante, web: ContextMeter en la cabecera de la conversación, aviso por umbral y acción de abrir conversación nueva; tests",
+      "user_stories": [
+        "US-2"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-007"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/lib/context-meter.ts",
+        "apps/studio/src/lib/context-meter.spec.ts",
+        "apps/studio/src/components/workspace/ContextMeter.tsx",
+        "apps/studio/src/components/workspace/contextmeter.spec.tsx",
+        "apps/studio/src/components/workspace/ThreadView.tsx",
+        "apps/studio/src/components/workspace/Workspace.tsx",
+        "apps/studio/src/lib/store/state.ts",
+        "apps/studio/src/lib/store/state.spec.ts",
+        "apps/studio/src/lib/i18n/es.ts",
+        "apps/studio/src/lib/i18n/en.ts"
+      ],
+      "usage": {
+        "tokens_in": 32000,
+        "tokens_out": 9000,
+        "provider_model": "claude/sonnet",
+        "effort": "high",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-26"
+      }
+    },
+    {
+      "id": "TASK-009",
+      "title": "Modos de desarrollo e implementación, protocolo y puente: leer y escribir profile de global.json, flow del pedido de apertura y aviso de excepción a full; tests",
+      "user_stories": [
+        "US-5"
+      ],
+      "estimation_hours": 5,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-003"
+      ],
+      "status": "done",
+      "files": [
+        "libs/studio-protocol/src/domain.ts",
+        "libs/studio-protocol/src/commands.ts",
+        "libs/studio-protocol/src/limits.ts",
+        "libs/studio-protocol/src/commands.spec.ts",
+        "libs/studio-protocol/src/handshake.spec.ts",
+        "apps/studio-bridge/src/workspace/profile.ts",
+        "apps/studio-bridge/src/workspace/profile.spec.ts",
+        "apps/studio-bridge/src/server/router.ts",
+        "apps/studio-bridge/src/server/router.spec.ts"
+      ],
+      "usage": {
+        "tokens_in": 26000,
+        "tokens_out": 7000,
+        "provider_model": "claude/sonnet",
+        "effort": "high",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-26"
+      }
+    },
+    {
+      "id": "TASK-010",
+      "title": "Modos de desarrollo e implementación, web: selectores con HelpSelect antes de arrancar una spec y aviso de excepción; tests",
+      "user_stories": [
+        "US-5"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-001",
+        "TASK-009"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/lib/flow-choice.ts",
+        "apps/studio/src/lib/flow-choice.spec.ts",
+        "apps/studio/src/components/workspace/ModeSelectors.tsx",
+        "apps/studio/src/components/workspace/modes.spec.tsx",
+        "apps/studio/src/components/workspace/Composer.tsx",
+        "apps/studio/src/lib/i18n/es.ts",
+        "apps/studio/src/lib/i18n/en.ts"
+      ],
+      "usage": {
+        "tokens_in": 36000,
+        "tokens_out": 10000,
+        "provider_model": "claude/sonnet",
+        "effort": "high",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-26"
+      }
+    },
+    {
+      "id": "TASK-011",
+      "title": "Conversación automática por spec o fix con ThreadLink.targets y briefing mínimo, sin duplicar; puente y web; tests",
+      "user_stories": [
+        "US-1"
+      ],
+      "estimation_hours": 5,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-009"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/lib/auto-conversation.ts",
+        "apps/studio/src/lib/auto-conversation.spec.ts",
+        "apps/studio/src/components/workspace/PreparedConversations.tsx",
+        "apps/studio/src/components/workspace/prepared.spec.tsx",
+        "apps/studio/src/components/workspace/workspace.spec.tsx",
+        "apps/studio/src/components/workspace/Workspace.tsx",
+        "apps/studio/src/components/workspace/Composer.tsx",
+        "apps/studio/src/lib/store/state.ts",
+        "apps/studio/src/lib/store/store.ts",
+        "apps/studio/src/lib/i18n/es.ts",
+        "apps/studio/src/lib/i18n/en.ts"
+      ],
+      "usage": {
+        "tokens_in": 34000,
+        "tokens_out": 10000,
+        "provider_model": "claude/sonnet",
+        "effort": "high",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-26"
+      }
+    },
+    {
+      "id": "TASK-012",
+      "title": "Cierre: build, typecheck y test integrales del workspace, fragmentos de contexto de los tres subproyectos",
+      "user_stories": [
+        "US-1",
+        "US-2",
+        "US-3",
+        "US-4",
+        "US-5",
+        "US-6"
+      ],
+      "estimation_hours": 2,
+      "story_points": 2,
+      "depends_on": [
+        "TASK-002",
+        "TASK-005",
+        "TASK-006",
+        "TASK-008",
+        "TASK-010",
+        "TASK-011"
+      ],
+      "status": "done",
+      "files": [],
+      "usage": {
+        "tokens_in": 30000,
+        "tokens_out": 8000,
+        "provider_model": "claude/sonnet",
+        "effort": "high",
+        "agent": "reviewer",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-26"
+      }
+    }
+  ]
+}

@@ -37,3 +37,9 @@ pre,
 kbd {
   font-family: var(--font-mono);
 }
+
+html[data-app-shell],
+html[data-app-shell] body {
+  overflow: hidden;
+  overscroll-behavior: none;
+}

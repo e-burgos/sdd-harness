@@ -50,6 +50,12 @@ export class PresenceTracker {
       case 'approval.requested':
         t.approvals.set(event.approvalId, event.author.agent);
         break;
+      case 'question.requested':
+        t.approvals.set(event.questionId, event.author.agent);
+        break;
+      case 'question.resolved':
+        t.approvals.delete(event.questionId);
+        break;
       case 'approval.resolved':
         t.approvals.delete(event.approvalId);
         break;

@@ -136,6 +136,22 @@ describe('AuthState', () => {
     expect(auth.set(null)).toBe('local-claude-login');
     expect(auth.env().ANTHROPIC_API_KEY).toBeUndefined();
   });
+  it('subscription mode strips inherited credentials from the SDK env and ignores a supplied key', () => {
+    const auth = new AuthState({ PATH: '/bin', ANTHROPIC_API_KEY: 'env-key', ANTHROPIC_AUTH_TOKEN: 'env-token' }, 'sdd-studio/1.2.3');
+    expect(auth.set(null, 'subscription')).toBe('local-claude-login');
+    expect(auth.env()).toEqual({ PATH: '/bin', CLAUDE_AGENT_SDK_CLIENT_APP: 'sdd-studio/1.2.3' });
+    expect(auth.set('sk-ant-' + 'x'.repeat(30), 'subscription')).toBe('local-claude-login');
+    expect(auth.env().ANTHROPIC_API_KEY).toBeUndefined();
+  });
+  it('api-key mode replaces the inherited key and drops the inherited auth token', () => {
+    const auth = new AuthState({ ANTHROPIC_API_KEY: 'env-key', ANTHROPIC_AUTH_TOKEN: 'env-token' });
+    expect(auth.set('sk-ant-' + 'x'.repeat(30), 'api-key')).toBe('api-key');
+    expect(auth.env().ANTHROPIC_API_KEY).toBe('sk-ant-' + 'x'.repeat(30));
+    expect(auth.env().ANTHROPIC_AUTH_TOKEN).toBeUndefined();
+  });
+  it('cliEnv never carries credentials', () => {
+    expect(new AuthState({ PATH: '/bin', ANTHROPIC_API_KEY: 'k', ANTHROPIC_AUTH_TOKEN: 't' }).cliEnv()).toEqual({ PATH: '/bin' });
+  });
   it('falls back to the process ANTHROPIC_API_KEY when no browser key is set', () => {
     const auth = new AuthState({ ANTHROPIC_API_KEY: 'env-key' });
     expect(auth.mode()).toBe('api-key');

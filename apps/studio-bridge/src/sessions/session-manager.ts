@@ -1,19 +1,49 @@
 import { randomUUID } from 'node:crypto';
-import { dmAgentOfChannel } from '@sdd-studio/protocol';
+import { existsSync } from 'node:fs';
+import path from 'node:path';
+import { z } from 'zod';
+import { dmAgentOfChannel, MAX_PENDING_PER_THREAD, MAX_QUESTIONS, Question } from '@sdd-studio/protocol';
 import type {
+  AlwaysOffer,
+  AlwaysRule,
+  AttachmentRef,
+  AttachmentUpload,
+  ContextUsage,
   Presence,
+  PromptRefs,
+  QuestionAnswer,
+  SendResult,
   ServerEvent,
   SessionStatus,
   ThreadEvent,
   ThreadInfo,
+  ThreadLink,
+  ThreadLinkRef,
+  ThreadLinkTarget,
   ThreadOptions,
   WorkspaceSnapshot,
 } from '@sdd-studio/protocol';
+import { createStablePrefixLoader } from '../engine/stable-prefix';
+import { buildTurnPrompt, type AcceptedMessage } from '../engine/prompt-content';
 import { diffFor, summarizeTool } from '../engine/tool-summary';
-import type { AgentEngine, ApprovalDecision, ApprovalRequest, EngineTurn, JudgeContext, ToolVerdict } from '../engine/types';
-import { EDIT_TOOLS, editTargetOf, judgeEdit } from '../gate/judge';
+import {
+  type AgentEngine,
+  type ApprovalDecision,
+  type ApprovalRequest,
+  type EngineTurn,
+  type JudgeContext,
+  type OutgoingMessage,
+  type ToolOutcome,
+  type ToolRunContext,
+  type ToolVerdict,
+} from '../engine/types';
+import { editTargetOf, judgeEdit } from '../gate/judge';
+import { alwaysOfferOf, matchesRule, ruleOf } from './always-rule';
+import type { AttachmentStore } from './attachment-store';
+import { DocumentChangeTracker, type AttributedTouch } from './document-tracker';
+import { addManual, assignLink, detectRef, detectRefs, legacyTargetOf, linkTargetExists, removeRef, type StoredLinkEntry } from './thread-link';
 import { PresenceTracker } from './presence';
-import type { HistoryEntry, StoredThread, ThreadStore } from './store';
+import { storedLinkOf, toThreadInfo as toInfo, type HistoryEntry, type PendingMessage, type StoredThread, type ThreadStore } from './store';
 
 export class SessionError extends Error {
   constructor(
@@ -24,10 +54,18 @@ export class SessionError extends Error {
   }
 }
 
+export interface MessageInput {
+  text: string;
+  attachments?: AttachmentUpload[];
+  refs?: PromptRefs;
+}
+
 export interface SessionManagerDeps {
   root: string;
+  attachments: Pick<AttachmentStore, 'put' | 'read'>;
   engine: AgentEngine;
   store: ThreadStore;
+  stablePrefix?: () => string;
   snapshot: () => WorkspaceSnapshot;
   broadcast: (message: ServerEvent) => void;
   newId?: () => string;
@@ -37,7 +75,21 @@ export interface SessionManagerDeps {
    * The synchronous PreToolUse path (judgeTool) cannot await it and relies on the debounced watcher snapshot.
    */
   refreshSnapshot?: () => Promise<void>;
+  titleTimeoutMs?: number;
+  tracker?: DocumentChangeTracker;
 }
+
+const BASH_TOOL = 'Bash';
+const EXACT_PATH_KEYS: Record<string, string> = { Write: 'file_path', Edit: 'file_path', MultiEdit: 'file_path', NotebookEdit: 'notebook_path' };
+const SDD_PATH_PREFIXES = ['sdd/specs/', 'sdd/fixes/'];
+
+interface ExactToolRun {
+  file: string | null;
+  existedBefore: boolean;
+}
+
+const SESSION_TITLE_TIMEOUT_MS = 3_000;
+const SESSION_TITLE_BACKFILL_LIMIT = 20;
 
 const INPUT_CAP = 16_384;
 
@@ -51,19 +103,14 @@ function serializeInput(input: Record<string, unknown>): { input: string; inputT
   return text.length > INPUT_CAP ? { input: text.slice(0, INPUT_CAP), inputTruncated: true } : { input: text };
 }
 
-/** "Always in this thread" key: null = the 'thread' scope is treated as 'once'. */
-function alwaysKeyOf(toolName: string, input: Record<string, unknown>): string | null {
-  if (EDIT_TOOLS.has(toolName) || toolName.startsWith('mcp__')) return null;
-  if (toolName === 'Bash') return typeof input.command === 'string' ? `Bash:${input.command}` : null;
-  return toolName;
-}
-
 interface Live {
   turn: EngineTurn | null;
-  queued: string | null;
+  queued: OutgoingMessage[] | null;
+  delivered: Map<string, PendingMessage>;
+  deliveredIds: Set<string>;
   /** Monotonic FIFO order of the channel queue. */
   queuedAt: number;
-  alwaysAllow: Set<string>;
+  alwaysAllow: AlwaysRule[];
   /** toolUseId → reason of denies already announced by the PreToolUse hook (avoids duplicating the pair). */
   hookDenied: Map<string, string>;
   /** Raised in interrupt(), lowered when a new turn starts. */
@@ -72,32 +119,73 @@ interface Live {
   gen: number;
   /** Write mode frozen when queued/started; setOptions only affects the next turn. */
   writes: boolean;
+  /** FIFO of acceptance decisions: a slow upload never lets a later message overtake an earlier one. */
+  acceptTail: Promise<void>;
+  titleInFlight: boolean;
+  exactRuns: Map<string, ExactToolRun>;
+  unresolvedPaths: Set<string>;
 }
+
+interface PendingQuestion {
+  threadId: string;
+  questions: Question[];
+  settle: (outcome: QuestionOutcome, answers?: QuestionAnswer[]) => void;
+}
+
+type QuestionOutcome = 'answered' | 'declined' | 'cancelled';
+
+const QUESTIONS_TOOL = 'AskUserQuestion';
+const ParsedQuestions = z.array(Question).min(1).max(MAX_QUESTIONS);
+
+const questionsOf = (input: Record<string, unknown>): Question[] | null => {
+  const parsed = ParsedQuestions.safeParse(input.questions);
+  return parsed.success ? parsed.data : null;
+};
+
+const answerCoversEveryQuestion = (questions: Question[], answers: QuestionAnswer[]): boolean => {
+  if (answers.length !== questions.length) return false;
+  return questions.every((q) => {
+    const matching = answers.filter((a) => a.question === q.question);
+    return matching.length === 1 && (q.multiSelect || matching[0]!.values.length === 1);
+  });
+};
 
 interface PendingApproval {
   threadId: string;
-  alwaysKey: string | null;
-  settle: (decision: ApprovalDecision) => void;
+  always: AlwaysOffer;
+  settle: (decision: ApprovalDecision, remembered?: AlwaysRule) => void;
 }
 
 /** All dm:* channels share a single write scope; the rest use their own channel. */
 const writeScopeOf = (channelId: string): string => (channelId.startsWith('dm:') ? 'dm' : channelId);
 
-const toInfo = ({ engineSessionId: _ignored, ...info }: StoredThread): ThreadInfo => info;
 const reportError = (error: unknown): void => console.error('[sdd-studio] session manager:', error);
+
+const titleOf = ({ text, attachments }: AcceptedMessage): string =>
+  ((text.split('\n')[0] ?? '').trim() || attachments[0]?.name || '').slice(0, 80);
+
+const extrasOf = ({ attachments, refs }: AcceptedMessage) => ({
+  ...(attachments.length > 0 ? { attachments } : {}),
+  ...(refs.agents.length > 0 || refs.skills.length > 0 ? { refs } : {}),
+});
 
 export class SessionManager {
   private readonly live = new Map<string, Live>();
   private readonly approvals = new Map<string, PendingApproval>();
+  private readonly questions = new Map<string, PendingQuestion>();
   private readonly tracker: PresenceTracker;
+  private readonly documents: DocumentChangeTracker;
   private readonly newId: () => string;
   private readonly now: () => string;
+  private readonly stablePrefix: () => string;
   private lastPresence = '';
   private queueCounter = 0;
 
   constructor(private readonly deps: SessionManagerDeps) {
     this.newId = deps.newId ?? randomUUID;
     this.now = deps.now ?? (() => new Date().toISOString());
+    this.stablePrefix = deps.stablePrefix ?? createStablePrefixLoader(deps.root);
+    this.documents = deps.tracker ?? new DocumentChangeTracker(deps.root);
     this.tracker = new PresenceTracker(() => deps.snapshot().agents.map((a) => a.id));
     for (const thread of deps.store.list()) this.tracker.onThread(toInfo(thread));
   }
@@ -106,64 +194,103 @@ export class SessionManager {
     return this.deps.store.list(channelId).map(toInfo);
   }
 
-  async history(threadId: string, sinceSeq: number): Promise<HistoryEntry[]> {
+  async history(threadId: string, sinceSeq: number, includeDocumentTouched = false, includeQuestions = false): Promise<HistoryEntry[]> {
     this.require(threadId);
-    return this.deps.store.history(threadId, sinceSeq);
+    const entries = await this.deps.store.history(threadId, sinceSeq);
+    return entries.filter(({ event }) => {
+      if (event.type === 'document.touched') return includeDocumentTouched;
+      if (event.type === 'question.requested' || event.type === 'question.resolved') return includeQuestions;
+      return true;
+    });
   }
 
   presence(): Presence[] {
     return this.tracker.compute();
   }
 
-  async createThread(args: { channelId: string; options: ThreadOptions; text: string }): Promise<ThreadInfo> {
+  async createThread(args: { channelId: string; options: ThreadOptions; link?: ThreadLinkTarget } & MessageInput): Promise<ThreadInfo> {
     const dmAgent = dmAgentOfChannel(args.channelId);
     if (dmAgent !== null && args.options.agent !== dmAgent) {
       throw new SessionError('bad-request', `a DM with ${dmAgent} only accepts that agent`);
     }
+    const link = assignLink({ channelId: args.channelId, snapshot: this.deps.snapshot(), explicit: args.link });
+    if (!link) throw new SessionError('not-found', 'the link target does not exist');
+    const accepted = await this.accept(args);
     const now = this.now();
     const thread: StoredThread = {
       id: this.newId(),
       channelId: args.channelId,
-      title: (args.text.split('\n')[0] ?? '').slice(0, 80),
+      title: titleOf(accepted),
       agent: args.options.agent,
       options: args.options,
       status: 'idle',
       createdAt: now,
       lastActivity: now,
       engineSessionId: null,
+      provider: this.deps.engine.provider,
+      link: storedLinkOf(link),
+      sessionTitle: null,
+      pending: [],
     };
     this.persist(thread);
     this.tracker.onThread(toInfo(thread));
     this.deps.broadcast({ kind: 'thread.updated', thread: toInfo(thread) });
-    await this.send(thread.id, args.text);
+    this.decide(thread, accepted);
     return toInfo(this.require(thread.id));
   }
 
-  async send(threadId: string, text: string): Promise<void> {
+  async send(threadId: string, message: MessageInput): Promise<SendResult> {
+    this.require(threadId);
+    const live = this.liveOf(threadId);
+    const prepared = this.accept(message);
+    prepared.catch(() => undefined);
+    const decision = live.acceptTail.then(async () => this.decide(this.require(threadId), await prepared));
+    live.acceptTail = decision.then(
+      () => undefined,
+      () => undefined,
+    );
+    return decision;
+  }
+
+  editPending(threadId: string, pendingId: string, text: string): void {
+    const thread = this.require(threadId);
+    const message = this.findPending(thread, pendingId);
+    if (text.trim().length === 0 && !message.attachments?.length) throw new SessionError('bad-request', 'text required');
+    message.text = text;
+    this.emit(thread, { type: 'pending.edited', pendingId, text });
+    this.persist(thread);
+  }
+
+  removePending(threadId: string, pendingId: string): void {
+    const thread = this.require(threadId);
+    this.findPending(thread, pendingId);
+    thread.pending = thread.pending.filter((message) => message.id !== pendingId);
+    this.emit(thread, { type: 'pending.removed', pendingId });
+    this.publishThread(thread);
+  }
+
+  flushPending(threadId: string): SendResult {
     const thread = this.require(threadId);
     const live = this.liveOf(threadId);
-    if (live.turn || live.queued !== null) throw new SessionError('conflict', 'the thread is busy: wait or interrupt it');
-    live.writes = this.writes(thread);
-    live.interrupted = false;
-    this.emit(thread, { type: 'user.message', text });
-    if (this.blocked(thread)) {
-      live.queued = text;
-      live.queuedAt = ++this.queueCounter;
-      this.setStatus(thread, 'queued');
-      return;
+    if (live.turn || live.queued !== null) {
+      throw new SessionError('conflict', 'the thread is working: pending messages are delivered at the next cut point');
     }
-    this.start(thread, text);
+    if (thread.pending.length === 0) throw new SessionError('conflict', 'no pending messages');
+    this.launchTurn(thread);
+    return { delivery: 'started' };
   }
 
   async interrupt(threadId: string): Promise<void> {
     const thread = this.require(threadId);
     const live = this.liveOf(threadId);
-    const wasQueued = live.queued !== null;
+    const queuedMessages = live.queued;
+    const wasQueued = queuedMessages !== null;
     if (!live.turn && !wasQueued) return;
     // All in-memory work first; disk goes last and is not awaited.
     live.queued = null;
     live.interrupted = true;
     this.setStatus(thread, 'interrupted');
+    if (queuedMessages) this.restorePending(thread, queuedMessages.map((message) => message.id));
     this.settleThread(threadId, 'interrupted');
     if (wasQueued) this.drain(thread.channelId);
     try {
@@ -171,6 +298,28 @@ export class SessionManager {
     } catch (error) {
       reportError(error);
     }
+  }
+
+  setLink(threadId: string, target: ThreadLinkTarget): ThreadInfo {
+    const thread = this.require(threadId);
+    if (!linkTargetExists(this.deps.snapshot(), target)) throw new SessionError('not-found', 'the link target does not exist');
+    const entries = thread.link.targets;
+    if (target.kind === 'none') {
+      const primary = legacyTargetOf(entries).target;
+      this.replaceLinkEntries(thread, primary.kind === 'none' ? entries : removeRef(entries, primary), 'manual');
+    } else {
+      this.replaceLinkEntries(thread, addManual(entries, target), 'manual');
+    }
+    return toInfo(thread);
+  }
+
+  updateLinks(threadId: string, change: { add: ThreadLinkRef[]; remove: ThreadLinkRef[] }): ThreadInfo {
+    const thread = this.require(threadId);
+    const snapshot = this.deps.snapshot();
+    if (!change.add.every((ref) => linkTargetExists(snapshot, ref))) throw new SessionError('not-found', 'a link target does not exist');
+    const removed = change.remove.reduce(removeRef, thread.link.targets);
+    this.replaceLinkEntries(thread, change.add.reduce(addManual, removed), thread.link.source);
+    return toInfo(thread);
   }
 
   async setOptions(threadId: string, patch: Partial<Omit<ThreadOptions, 'agent'>>): Promise<ThreadInfo> {
@@ -185,8 +334,28 @@ export class SessionManager {
   respondApproval(approvalId: string, decision: 'allow' | 'deny', reason: string | undefined, scope: 'once' | 'thread'): void {
     const pending = this.approvals.get(approvalId);
     if (!pending) throw new SessionError('not-found', `no pending approval ${approvalId}`);
-    if (decision === 'allow' && scope === 'thread' && pending.alwaysKey) this.liveOf(pending.threadId).alwaysAllow.add(pending.alwaysKey);
-    pending.settle(decision === 'allow' ? { behavior: 'allow' } : { behavior: 'deny', message: reason ?? 'denied by the user' });
+    const remembered = decision === 'allow' && scope === 'thread' ? ruleOf(pending.always) : null;
+    if (remembered) this.rememberRule(pending.threadId, remembered);
+    pending.settle(
+      decision === 'allow' ? { behavior: 'allow' } : { behavior: 'deny', message: reason ?? 'denied by the user' },
+      remembered ?? undefined,
+    );
+  }
+
+  answerQuestion(questionId: string, answers: QuestionAnswer[], decline: boolean): void {
+    const pending = this.questions.get(questionId);
+    if (!pending) throw new SessionError('not-found', `no pending question ${questionId}`);
+    if (decline) return pending.settle('declined');
+    if (!answerCoversEveryQuestion(pending.questions, answers)) {
+      throw new SessionError('bad-request', 'answers must cover every question exactly once, with one value unless it is multiple choice');
+    }
+    pending.settle('answered', answers);
+  }
+
+  private rememberRule(threadId: string, rule: AlwaysRule): void {
+    const live = this.liveOf(threadId);
+    const key = JSON.stringify(rule);
+    if (!live.alwaysAllow.some((known) => JSON.stringify(known) === key)) live.alwaysAllow.push(rule);
   }
 
   /** After a restart: announces the lost approvals and the interruption of threads that were busy. */
@@ -202,8 +371,16 @@ export class SessionManager {
           this.emit(thread, { type: 'approval.resolved', approvalId: event.approvalId, decision: 'deny', reason: 'the bridge restarted' });
         }
       }
+      const answeredQuestions = new Set<string>();
+      for (const { event } of history) if (event.type === 'question.resolved') answeredQuestions.add(event.questionId);
+      for (const { event } of history) {
+        if (event.type === 'question.requested' && !answeredQuestions.has(event.questionId)) {
+          this.emit(thread, { type: 'question.resolved', questionId: event.questionId, outcome: 'cancelled' });
+        }
+      }
       this.emit(thread, { type: 'session.status', status: 'interrupted' });
     }
+    void this.backfillSessionTitles();
   }
 
   // ── internos ─────────────────────────────────────────────────────────────
@@ -217,7 +394,7 @@ export class SessionManager {
   private liveOf(threadId: string): Live {
     let live = this.live.get(threadId);
     if (!live) {
-      live = { turn: null, queued: null, queuedAt: 0, alwaysAllow: new Set(), hookDenied: new Map(), interrupted: false, gen: 0, writes: false };
+      live = { turn: null, queued: null, delivered: new Map(), deliveredIds: new Set(), queuedAt: 0, alwaysAllow: [], hookDenied: new Map(), interrupted: false, gen: 0, writes: false, acceptTail: Promise.resolve(), titleInFlight: false, exactRuns: new Map(), unresolvedPaths: new Set() };
       this.live.set(threadId, live);
     }
     return live;
@@ -236,6 +413,13 @@ export class SessionManager {
     for (const pending of [...this.approvals.values()]) {
       if (pending.threadId === threadId) pending.settle({ behavior: 'deny', message });
     }
+    for (const pending of [...this.questions.values()]) {
+      if (pending.threadId === threadId) pending.settle('cancelled');
+    }
+  }
+
+  private hasPendingPrompts(threadId: string): boolean {
+    return [...this.approvals.values(), ...this.questions.values()].some((p) => p.threadId === threadId);
   }
 
   private blocked(thread: StoredThread): boolean {
@@ -248,7 +432,251 @@ export class SessionManager {
     });
   }
 
-  private start(thread: StoredThread, text: string): void {
+  private async accept(input: MessageInput): Promise<AcceptedMessage> {
+    const attachments = await Promise.all((input.attachments ?? []).map((upload) => this.deps.attachments.put(upload)));
+    return { text: input.text, attachments, refs: this.vettedRefs(input.refs) };
+  }
+
+  private vettedRefs(refs: PromptRefs | undefined): PromptRefs {
+    const snapshot = this.deps.snapshot();
+    const known = (ids: string[], catalog: { id: string }[]) => [...new Set(ids)].filter((id) => catalog.some((entry) => entry.id === id));
+    return { agents: known(refs?.agents ?? [], snapshot.agents), skills: known(refs?.skills ?? [], snapshot.skills) };
+  }
+
+  private decide(thread: StoredThread, accepted: AcceptedMessage): SendResult {
+    const live = this.liveOf(thread.id);
+    if (live.turn || live.queued !== null) return this.addPending(thread, accepted);
+    this.launchTurn(thread, accepted);
+    return { delivery: 'started' };
+  }
+
+  private catalogView() {
+    const { agents, skills } = this.deps.snapshot();
+    return { agents, skills };
+  }
+
+  private launchTurn(thread: StoredThread, newMessage?: AcceptedMessage): void {
+    const live = this.liveOf(thread.id);
+    live.delivered.clear();
+    const prompts = this.deliverAll(thread, 'next-turn');
+    if (newMessage !== undefined) prompts.push(this.deliverNew(thread, newMessage));
+    live.writes = this.writes(thread);
+    live.interrupted = false;
+    if (this.blocked(thread)) {
+      live.queued = prompts;
+      live.queuedAt = ++this.queueCounter;
+      this.setStatus(thread, 'queued');
+      return;
+    }
+    this.start(thread, prompts);
+  }
+
+  private addPending(thread: StoredThread, accepted: AcceptedMessage): SendResult {
+    if (thread.pending.length >= MAX_PENDING_PER_THREAD) throw new SessionError('conflict', 'too many pending messages');
+    const message: PendingMessage = { id: this.newId(), text: accepted.text, createdAt: this.now(), ...extrasOf(accepted) };
+    thread.pending.push(message);
+    this.emit(thread, { type: 'pending.added', pendingId: message.id, text: message.text, ...extrasOf(accepted) });
+    this.publishThread(thread);
+    return { delivery: 'pending', pendingId: message.id };
+  }
+
+  private findPending(thread: StoredThread, pendingId: string): PendingMessage {
+    const message = thread.pending.find((candidate) => candidate.id === pendingId);
+    if (message) return message;
+    if (this.liveOf(thread.id).deliveredIds.has(pendingId)) throw new SessionError('conflict', 'already delivered');
+    throw new SessionError('not-found', `no pending message ${pendingId}`);
+  }
+
+  private deliverNew(thread: StoredThread, accepted: AcceptedMessage): OutgoingMessage {
+    this.emit(thread, { type: 'user.message', text: accepted.text, ...extrasOf(accepted) });
+    return { id: this.newId(), prompt: buildTurnPrompt(accepted, this.catalogView()) };
+  }
+
+  private deliverAll(thread: StoredThread, delivery: 'cut-point' | 'next-turn', textOnly = false): OutgoingMessage[] {
+    const live = this.liveOf(thread.id);
+    const taken = thread.pending.filter((message) => !textOnly || !message.attachments?.length);
+    const delivered = taken.map((message) => {
+      thread.pending = thread.pending.filter((candidate) => candidate.id !== message.id);
+      live.delivered.set(message.id, message);
+      live.deliveredIds.add(message.id);
+      const accepted = { text: message.text, attachments: message.attachments ?? [], refs: message.refs ?? { agents: [], skills: [] } };
+      this.emit(thread, { type: 'user.message', text: message.text, pendingId: message.id, delivery, ...extrasOf(accepted) });
+      return { id: message.id, prompt: buildTurnPrompt(accepted, this.catalogView()) };
+    });
+    if (taken.length > 0) this.publishThread(thread);
+    return delivered;
+  }
+
+  private collectPending(thread: StoredThread, gen: number, at: 'cut-point' | 'turn-end', textOnly = false): OutgoingMessage[] {
+    const live = this.liveOf(thread.id);
+    if (live.interrupted || live.gen !== gen) return [];
+    return this.deliverAll(thread, at === 'cut-point' ? 'cut-point' : 'next-turn', textOnly);
+  }
+
+  private revertPending(thread: StoredThread, gen: number, ids: string[]): void {
+    if (this.liveOf(thread.id).gen !== gen) return;
+    this.restorePending(thread, ids);
+  }
+
+  private restorePending(thread: StoredThread, ids: string[]): void {
+    const live = this.liveOf(thread.id);
+    const restored = ids.flatMap((id) => {
+      const message = live.delivered.get(id);
+      return message ? [message] : [];
+    });
+    if (restored.length === 0) return;
+    for (const message of restored) {
+      live.delivered.delete(message.id);
+      live.deliveredIds.delete(message.id);
+      this.emit(thread, { type: 'pending.reverted', pendingId: message.id, reason: 'interrupt' });
+    }
+    thread.pending = [...restored, ...thread.pending];
+    this.publishThread(thread);
+  }
+
+  private systemPrefixInput(): { systemPrefix?: string } {
+    const systemPrefix = this.stablePrefix();
+    return systemPrefix.length > 0 ? { systemPrefix } : {};
+  }
+
+  private sessionOwnedByAnotherThread(threadId: string, sessionId: string): boolean {
+    return this.deps.store.list().some((other) => other.id !== threadId && other.engineSessionId === sessionId);
+  }
+
+  private exactPathOf(input: Record<string, unknown>, toolName: string): string | null {
+    const raw = input[EXACT_PATH_KEYS[toolName] ?? ''];
+    if (typeof raw !== 'string' || raw.length === 0) return null;
+    const relative = path.relative(this.deps.root, path.resolve(this.deps.root, raw));
+    const outside = relative.startsWith('..') || path.isAbsolute(relative);
+    const normalized = (outside ? path.resolve(this.deps.root, raw) : relative).replace(/\\/g, '/');
+    return normalized.length > 0 && normalized.length <= 1024 ? normalized : null;
+  }
+
+  private absoluteOf(file: string): string {
+    return path.resolve(this.deps.root, file);
+  }
+
+  private async beforeTool(thread: StoredThread, ctx: ToolRunContext): Promise<void> {
+    if (ctx.toolName === BASH_TOOL) {
+      await this.documents.open(ctx.toolUseId, { threadId: thread.id, channelId: thread.channelId, threadAgent: thread.agent, author: ctx.author });
+      return;
+    }
+    const file = this.exactPathOf(ctx.input, ctx.toolName);
+    this.liveOf(thread.id).exactRuns.set(ctx.toolUseId, { file, existedBefore: file !== null && existsSync(this.absoluteOf(file)) });
+  }
+
+  private rebaseTool(thread: StoredThread, toolUseId: string): void {
+    void this.documents.rebase(toolUseId);
+    const run = this.liveOf(thread.id).exactRuns.get(toolUseId);
+    if (run?.file) run.existedBefore = existsSync(this.absoluteOf(run.file));
+  }
+
+  private cancelTool(thread: StoredThread, toolUseId: string): void {
+    this.documents.cancel(toolUseId);
+    this.liveOf(thread.id).exactRuns.delete(toolUseId);
+  }
+
+  private async afterTool(thread: StoredThread, ctx: ToolRunContext, outcome: ToolOutcome): Promise<void> {
+    if (ctx.toolName === BASH_TOOL) {
+      this.recordTouches(thread, await this.documents.close(ctx.toolUseId));
+      return;
+    }
+    const live = this.liveOf(thread.id);
+    const run = live.exactRuns.get(ctx.toolUseId);
+    live.exactRuns.delete(ctx.toolUseId);
+    if (!run?.file || outcome !== 'ok') return;
+    this.documents.recordExactTouch(run.file);
+    const op = ctx.toolName === 'Write' && !run.existedBefore ? 'created' : 'modified';
+    this.recordTouches(thread, [{ path: run.file, op, author: ctx.author }]);
+  }
+
+  private async closeOpenWindows(thread: StoredThread): Promise<void> {
+    try {
+      this.recordTouches(thread, await this.documents.closeThread(thread.id));
+    } catch (error) {
+      reportError(error);
+    }
+  }
+
+  private recordTouches(thread: StoredThread, touches: AttributedTouch[]): void {
+    if (touches.length === 0) return;
+    for (const touch of touches) this.emit(thread, { type: 'document.touched', path: touch.path, op: touch.op, author: touch.author });
+    this.detectLinks(thread, touches.map((touch) => touch.path), true);
+  }
+
+  private replaceLinkEntries(thread: StoredThread, entries: StoredLinkEntry[], fallbackSource: ThreadLink['source']): void {
+    if (JSON.stringify(entries) === JSON.stringify(thread.link.targets)) return;
+    thread.link = { ...thread.link, ...legacyTargetOf(entries, fallbackSource), targets: entries };
+    this.publishThread(thread);
+  }
+
+  private detectLinks(thread: StoredThread, paths: string[], retryUnresolved: boolean): void {
+    const snapshot = this.deps.snapshot();
+    const live = this.liveOf(thread.id);
+    let entries = thread.link.targets;
+    for (const file of paths) {
+      const refs = detectRefs(snapshot, file);
+      if (refs.length === 0 && retryUnresolved && SDD_PATH_PREFIXES.some((prefix) => file.startsWith(prefix))) live.unresolvedPaths.add(file);
+      for (const ref of refs) entries = detectRef(entries, ref, snapshot);
+    }
+    if (entries !== thread.link.targets) this.replaceLinkEntries(thread, entries, thread.link.source);
+  }
+
+  private async retryUnresolvedPaths(thread: StoredThread): Promise<void> {
+    const live = this.liveOf(thread.id);
+    if (live.unresolvedPaths.size === 0) return;
+    const paths = [...live.unresolvedPaths];
+    live.unresolvedPaths.clear();
+    await this.deps.refreshSnapshot?.().catch(reportError);
+    this.detectLinks(thread, paths, false);
+  }
+
+  private refreshSessionTitle(thread: StoredThread): Promise<void> {
+    const sessionId = thread.engineSessionId;
+    const read = this.deps.engine.readSessionTitle?.bind(this.deps.engine);
+    const live = this.liveOf(thread.id);
+    if (!sessionId || !read || live.titleInFlight) return Promise.resolve();
+    live.titleInFlight = true;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const timeout = new Promise<never>((_, reject) => {
+      timer = setTimeout(() => reject(new Error(`reading the title of session ${sessionId} timed out`)), this.deps.titleTimeoutMs ?? SESSION_TITLE_TIMEOUT_MS);
+    });
+    return Promise.race([read(sessionId, this.deps.root), timeout])
+      .then((title) => this.applySessionTitle(thread, sessionId, title))
+      .catch(reportError)
+      .finally(() => {
+        clearTimeout(timer);
+        live.titleInFlight = false;
+      });
+  }
+
+  private applyContextUsage(thread: StoredThread, usage: ContextUsage): void {
+    if (thread.contextUsage?.usedTokens === usage.usedTokens && thread.contextUsage.maxTokens === usage.maxTokens) return;
+    thread.contextUsage = usage;
+    this.publishThread(thread);
+  }
+
+  private applySessionTitle(thread: StoredThread, sessionId: string, title: string | null): void {
+    if (thread.engineSessionId !== sessionId || thread.sessionTitle === title) return;
+    thread.sessionTitle = title;
+    this.publishThread(thread);
+  }
+
+  private async backfillSessionTitles(): Promise<void> {
+    const candidates = this.deps.store
+      .list()
+      .filter((thread) => thread.engineSessionId !== null && thread.sessionTitle === null)
+      .slice(0, SESSION_TITLE_BACKFILL_LIMIT);
+    for (const thread of candidates) await this.refreshSessionTitle(thread);
+  }
+
+  private publishThread(thread: StoredThread): void {
+    this.tracker.onThread(toInfo(thread));
+    this.deps.broadcast({ kind: 'thread.updated', thread: toInfo(thread) });
+    this.persist(thread);
+  }
+
+  private start(thread: StoredThread, prompts: OutgoingMessage[]): void {
     const live = this.liveOf(thread.id);
     live.interrupted = false;
     const gen = ++live.gen;
@@ -256,16 +684,36 @@ export class SessionManager {
     let turn: EngineTurn;
     try {
       turn = this.deps.engine.startTurn(
-        { threadId: thread.id, text, options: thread.options, resumeSessionId: thread.engineSessionId, cwd: this.deps.root },
+        {
+          threadId: thread.id,
+          prompts,
+          options: thread.options,
+          resumeSessionId: thread.engineSessionId,
+          cwd: this.deps.root,
+          ...this.systemPrefixInput(),
+        },
         {
           emit: (event) => this.emit(thread, event, true),
           onSessionId: (id) => {
             if (thread.engineSessionId === id) return;
+            if (this.sessionOwnedByAnotherThread(thread.id, id)) {
+              reportError(new Error(`session ${id} already belongs to another thread`));
+              return;
+            }
             thread.engineSessionId = id;
-            this.persist(thread);
+            this.publishThread(thread);
+            this.refreshSessionTitle(thread);
           },
+          onContextUsage: (usage) => this.applyContextUsage(thread, usage),
           requestApproval: (request, signal) => this.requestApproval(thread, gen, request, signal),
           judgeTool: (toolName, input, ctx) => this.judgeTool(thread, gen, toolName, input, ctx),
+          readAttachment: (ref: AttachmentRef) => this.deps.attachments.read(ref.sha256, ref.mime).catch(() => null),
+          collectPending: (at, opts) => this.collectPending(thread, gen, at, opts?.textOnly === true),
+          revertPending: (ids) => this.revertPending(thread, gen, ids),
+          beforeTool: (ctx) => this.beforeTool(thread, ctx),
+          afterTool: (ctx, outcome) => this.afterTool(thread, ctx, outcome),
+          rebaseTool: (toolUseId) => this.rebaseTool(thread, toolUseId),
+          cancelTool: (toolUseId) => this.cancelTool(thread, toolUseId),
         },
       );
     } catch (error) {
@@ -275,8 +723,14 @@ export class SessionManager {
     live.turn = turn;
     turn.done
       .then(
-        () => this.finish(thread, false, null),
-        (error: unknown) => this.finish(thread, true, error),
+        async () => {
+          await this.closeOpenWindows(thread);
+          this.finish(thread, false, null);
+        },
+        async (error: unknown) => {
+          await this.closeOpenWindows(thread);
+          this.finish(thread, true, error);
+        },
       )
       .catch(reportError);
   }
@@ -293,6 +747,13 @@ export class SessionManager {
       this.setStatus(thread, 'idle');
     }
     this.drain(thread.channelId);
+    if (!failed && !this.liveOf(thread.id).interrupted && thread.status === 'idle') this.resumeWithPending(thread);
+  }
+
+  private resumeWithPending(thread: StoredThread): void {
+    const live = this.liveOf(thread.id);
+    if (thread.pending.length === 0 || live.turn || live.queued !== null) return;
+    this.launchTurn(thread);
   }
 
   private drain(channelId: string): void {
@@ -306,9 +767,9 @@ export class SessionManager {
       const live = this.liveOf(thread.id);
       if (live.queued === null) continue; // already started by a re-entry
       if (this.blocked(thread)) break;
-      const text = live.queued;
+      const prompts = live.queued;
       live.queued = null;
-      this.start(thread, text);
+      this.start(thread, prompts);
     }
   }
 
@@ -351,6 +812,9 @@ export class SessionManager {
     if (live.interrupted || live.gen !== gen) return { behavior: 'deny', message: 'interrupted' };
     if (signal.aborted) return { behavior: 'deny', message: 'aborted' };
 
+    const questions = request.toolName === QUESTIONS_TOOL ? questionsOf(request.input) : null;
+    if (questions) return this.requestQuestion(thread, request, questions, signal);
+
     const hookReason = request.toolUseId ? live.hookDenied.get(request.toolUseId) : undefined;
     if (hookReason !== undefined) return { behavior: 'deny', message: hookReason };
 
@@ -371,8 +835,8 @@ export class SessionManager {
       }
       if (verdict.kind === 'warn') gateWarning = verdict.reason;
     }
-    const alwaysKey = alwaysKeyOf(request.toolName, request.input);
-    if (!gateWarning && alwaysKey && live.alwaysAllow.has(alwaysKey)) return { behavior: 'allow' };
+    if (!gateWarning && live.alwaysAllow.some((rule) => matchesRule(rule, request.toolName, request.input))) return { behavior: 'allow' };
+    const always = alwaysOfferOf(request.toolName, request.input, gateWarning);
 
     const summary = summarizeTool(request.toolName, request.input);
     const diff = diffFor(request.toolName, request.input);
@@ -381,7 +845,7 @@ export class SessionManager {
     // The pending approval is registered BEFORE announcing it: a client may answer as soon as it sees the event.
     const decision = new Promise<ApprovalDecision>((resolve) => {
       const onAbort = () => settle({ behavior: 'deny', message: 'aborted' });
-      const settle = (result: ApprovalDecision) => {
+      const settle = (result: ApprovalDecision, remembered?: AlwaysRule) => {
         if (!this.approvals.delete(approvalId)) return;
         signal.removeEventListener('abort', onAbort);
         this.emit(thread, {
@@ -389,12 +853,12 @@ export class SessionManager {
           approvalId,
           decision: result.behavior,
           ...(result.behavior === 'deny' ? { reason: result.message } : {}),
+          ...(remembered ? { remembered } : {}),
         });
-        const stillWaiting = [...this.approvals.values()].some((p) => p.threadId === thread.id);
-        if (thread.status === 'waiting-approval' && !stillWaiting) this.setStatus(thread, 'running');
+        if (thread.status === 'waiting-approval' && !this.hasPendingPrompts(thread.id)) this.setStatus(thread, 'running');
         resolve(result);
       };
-      this.approvals.set(approvalId, { threadId: thread.id, alwaysKey: alwaysKeyOf(request.toolName, request.input), settle });
+      this.approvals.set(approvalId, { threadId: thread.id, always, settle });
       signal.addEventListener('abort', onAbort, { once: true });
     });
     // State before the broadcast; if it resolves synchronously during the broadcast, settle returns it to running.
@@ -408,8 +872,36 @@ export class SessionManager {
       ...extra,
       ...serializeInput(request.input),
       ...(gateWarning ? { gateWarning } : {}),
+      always,
     });
     return decision;
+  }
+
+  private requestQuestion(thread: StoredThread, request: ApprovalRequest, questions: Question[], signal: AbortSignal): Promise<ApprovalDecision> {
+    const questionId = this.newId();
+    // Registered BEFORE announcing it: a client may answer as soon as it sees the event.
+    const decision = new Promise<ApprovalDecision>((resolve) => {
+      const onAbort = () => settle('cancelled');
+      const settle = (outcome: QuestionOutcome, answers?: QuestionAnswer[]) => {
+        if (!this.questions.delete(questionId)) return;
+        signal.removeEventListener('abort', onAbort);
+        this.emit(thread, { type: 'question.resolved', questionId, outcome, ...(answers ? { answers } : {}) });
+        if (thread.status === 'waiting-approval' && !this.hasPendingPrompts(thread.id)) this.setStatus(thread, 'running');
+        resolve(this.decisionOf(request, outcome, answers));
+      };
+      this.questions.set(questionId, { threadId: thread.id, questions, settle });
+      signal.addEventListener('abort', onAbort, { once: true });
+    });
+    if (thread.status === 'running') this.setStatus(thread, 'waiting-approval');
+    this.emit(thread, { type: 'question.requested', questionId, author: request.author, questions });
+    return decision;
+  }
+
+  private decisionOf(request: ApprovalRequest, outcome: QuestionOutcome, answers: QuestionAnswer[] | undefined): ApprovalDecision {
+    if (outcome === 'cancelled') return { behavior: 'deny', message: 'interrupted' };
+    if (outcome === 'declined' || !answers) return { behavior: 'deny', message: 'The user declined to answer the questions' };
+    const byQuestion = Object.fromEntries(answers.map((a) => [a.question, a.values.join(', ')]));
+    return { behavior: 'allow', updatedInput: { ...request.input, answers: byQuestion } };
   }
 
   /** `fromEngine`: engine session.status events do not override `interrupted`. */
@@ -422,6 +914,10 @@ export class SessionManager {
     this.deps.broadcast({ kind: 'thread.event', threadId: thread.id, seq, event });
     this.tracker.onEvent(thread.id, event);
     this.publishPresence();
+    if (fromEngine && event.type === 'turn.end') {
+      this.refreshSessionTitle(thread);
+      void this.retryUnresolvedPaths(thread).catch(reportError);
+    }
   }
 
   private setStatus(thread: StoredThread, status: SessionStatus, error?: { code: string; message: string }): void {
@@ -432,9 +928,7 @@ export class SessionManager {
   private applyStatus(thread: StoredThread, status: SessionStatus): void {
     thread.status = status;
     thread.lastActivity = this.now();
-    this.tracker.onThread(toInfo(thread));
-    this.deps.broadcast({ kind: 'thread.updated', thread: toInfo(thread) });
-    this.persist(thread);
+    this.publishThread(thread);
   }
 
   private publishPresence(): void {

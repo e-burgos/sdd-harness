@@ -16,6 +16,7 @@ export const Welcome = z.object({
   workspace: z.object({ root: z.string(), project: z.string() }),
   kitVersion: z.string().nullable(),
   authMode: AuthMode,
+  features: z.array(z.string().max(40)).max(32).optional(),
 });
 export type Welcome = z.infer<typeof Welcome>;
 
@@ -25,5 +26,7 @@ export const HandshakeError = z.object({
   kind: z.literal('handshake.error'),
   code: HandshakeErrorCode,
   message: z.string(),
+  bridgeProtocolVersion: z.number().int().optional(),
+  bridgeVersion: z.string().max(64).optional(),
 });
 export type HandshakeError = z.infer<typeof HandshakeError>;

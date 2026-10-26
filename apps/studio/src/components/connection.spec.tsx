@@ -53,6 +53,14 @@ describe('connection UI', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('no es compatible');
     expect(sessionStorage.getItem(PAIRING_KEY)).toBe('keep');
   });
+  it('tells to reload without cache when the web is older than the bridge', () => {
+    renderConnected({ status: 'failed', reason: 'protocol-mismatch', message: 'm', hint: 'web-older' });
+    expect(screen.getByRole('alert')).toHaveTextContent('recargá sin caché');
+  });
+  it('tells to update the bridge when the bridge is older than the web', () => {
+    renderConnected({ status: 'failed', reason: 'protocol-mismatch', message: 'm', hint: 'bridge-older' });
+    expect(screen.getByRole('alert')).toHaveTextContent('npx @e-burgos/sdd-studio@latest');
+  });
 
   it('shows a sync error with a retry button', () => {
     const retry = vi.fn();

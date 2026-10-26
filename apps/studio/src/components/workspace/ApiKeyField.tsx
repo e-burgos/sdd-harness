@@ -8,7 +8,6 @@ import { useBridge } from '../BridgeProvider';
 export function ApiKeyField() {
   const { t } = useT();
   const { authMode, apiKeySource, setApiKey } = useBridge();
-  const [open, setOpen] = useState(false);
   const [value, setValue] = useState('');
   const [remember, setRemember] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -20,7 +19,6 @@ export function ApiKeyField() {
     try {
       await setApiKey(next, remember);
       setValue('');
-      setOpen(false);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -29,16 +27,9 @@ export function ApiKeyField() {
   };
   const ring = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400';
 
-  if (!open) {
-    return (
-      <button className={`rounded px-1 text-[11px] text-ink-300 hover:text-ink-100 ${ring}`} onClick={() => setOpen(true)}>
-        {apiKeySource ? t('apikey.change') : t('apikey.use')}
-      </button>
-    );
-  }
   return (
     <form
-      className="mt-2 flex flex-col gap-2 rounded-md border border-ink-800 p-2 text-[11px] text-ink-300"
+      className="flex flex-col gap-2 text-[11px] text-ink-300"
       onSubmit={(e) => {
         e.preventDefault();
         if (!isPlausibleApiKey(value)) return setError(t('apikey.invalid'));
@@ -61,13 +52,13 @@ export function ApiKeyField() {
         <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} />
         {t('apikey.remember')}
       </label>
+      {apiKeySource && <p>{t(apiKeySource === 'saved' ? 'apikey.stored.saved' : 'apikey.stored.tab')}</p>}
       <p>{t('apikey.privacy')}</p>
       {authMode === 'api-key' && apiKeySource === null && <p>{t('apikey.fromEnv')}</p>}
       {error && <p role="alert" className="text-roseish">{error}</p>}
       <div className="flex gap-2">
         <button type="submit" disabled={busy} className={`rounded bg-accent-dim px-2 py-1 text-accent-300 ${ring}`}>{t('apikey.save')}</button>
         {apiKeySource && <button type="button" disabled={busy} className={`rounded px-2 py-1 hover:text-ink-100 ${ring}`} onClick={() => void submit(null)}>{t('apikey.remove')}</button>}
-        <button type="button" className={`ml-auto rounded px-2 py-1 hover:text-ink-100 ${ring}`} onClick={() => { setOpen(false); setError(null); }}>{t('apikey.cancel')}</button>
       </div>
     </form>
   );

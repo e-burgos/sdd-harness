@@ -1,0 +1,154 @@
+{
+  "$schema": "../../../../schemas/cycle.schema.json",
+  "cycle": 1,
+  "module": "studio-gates-topology",
+  "spec": "spec-e-burgos-004-studio-gates-topology",
+  "apps": [
+    "apps/studio"
+  ],
+  "phase": "gates-topology-comms",
+  "flow": "lite",
+  "objectives": [
+    "Tarjetas interactivas de las 6 Gates a la izquierda del mapa de topología con conmutador",
+    "Conexiones visuales SVG y flujo reactivo entre agentes del enjambre y las puertas",
+    "Panel de inspección de agentes en modo Split-View compartido con feed de conversación en tiempo real",
+    "Drawer de inspección técnica de Gates con reglas, criterios y comandos CLI",
+    "Suite completa de tests unitarios y de componentes sin regresiones"
+  ],
+  "status": "completed",
+  "started_at": "2026-10-24",
+  "completed_at": "2026-10-24",
+  "documents": {
+    "plan": "sdd/specs/spec-e-burgos-004-studio-gates-topology/cycles/cycle-01/plan.md",
+    "tasks": "sdd/specs/spec-e-burgos-004-studio-gates-topology/cycles/cycle-01/tasks.json"
+  },
+  "artifacts": [],
+  "metrics": {
+    "tasks_total": 6,
+    "tasks_completed": 6,
+    "tasks_skipped": 0,
+    "story_points": 21,
+    "files_created": [
+      "apps/studio/src/lib/gates.ts",
+      "apps/studio/src/lib/gates.spec.ts",
+      "apps/studio/src/components/mission-control/GateCard.tsx",
+      "apps/studio/src/components/mission-control/GateInspectorDrawer.tsx",
+      "apps/studio/src/components/mission-control/LiveAgentChatFeed.tsx"
+    ],
+    "files_modified": [
+      "apps/studio/src/components/mission-control/AgentMapCanvas.tsx",
+      "apps/studio/src/components/mission-control/AgentInspectorDrawer.tsx",
+      "apps/studio/src/components/mission-control/agentmap.spec.tsx",
+      "apps/studio/src/components/mission-control/inspectordrawer.spec.tsx",
+      "apps/studio/src/lib/i18n/es.ts",
+      "apps/studio/src/lib/i18n/en.ts"
+    ],
+    "files_deleted": [],
+    "usage": {
+      "tokens_in": 214000,
+      "tokens_out": 27000,
+      "approx": true,
+      "source": "declared-estimate",
+      "by_tier": {
+        "claude/opus": {
+          "tokens_in": 32000,
+          "tokens_out": 4200,
+          "approx": true,
+          "source": "declared-estimate"
+        },
+        "claude/sonnet": {
+          "tokens_in": 182000,
+          "tokens_out": 22800,
+          "approx": true,
+          "source": "declared-estimate"
+        }
+      },
+      "by_agent": [
+        {
+          "agent": "orchestrator",
+          "label": "solo",
+          "provider_model": "claude/opus",
+          "tokens_in": 32000,
+          "tokens_out": 4200,
+          "approx": true,
+          "source": "declared-estimate"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-001",
+          "provider_model": "claude/sonnet",
+          "tokens_in": 25000,
+          "tokens_out": 3200,
+          "approx": true,
+          "source": "declared-estimate"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-002",
+          "provider_model": "claude/sonnet",
+          "tokens_in": 38000,
+          "tokens_out": 4800,
+          "approx": true,
+          "source": "declared-estimate"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-003",
+          "provider_model": "claude/sonnet",
+          "tokens_in": 31000,
+          "tokens_out": 3900,
+          "approx": true,
+          "source": "declared-estimate"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-004",
+          "provider_model": "claude/sonnet",
+          "tokens_in": 36000,
+          "tokens_out": 4500,
+          "approx": true,
+          "source": "declared-estimate"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-005",
+          "provider_model": "claude/sonnet",
+          "tokens_in": 28000,
+          "tokens_out": 3500,
+          "approx": true,
+          "source": "declared-estimate"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-006",
+          "provider_model": "claude/sonnet",
+          "tokens_in": 24000,
+          "tokens_out": 2900,
+          "approx": true,
+          "source": "declared-estimate"
+        }
+      ]
+    }
+  },
+  "tables_created": [],
+  "endpoints_implemented": [],
+  "components_created": [],
+  "issues_found": [],
+  "reviewer_report": {
+    "approved": true,
+    "date": "2026-10-24",
+    "ca_results": {
+      "CA-1": "passed - Tarjetas de Gates renderizadas en el lienzo izquierdo como puertas interactivas",
+      "CA-2": "passed - Conmutador de 6 gates (Ciclo, Transversales, Todas) responsivo y dinámico",
+      "CA-3": "passed - Arcos SVG animados con efectos de pulso comunicando agentes y gates",
+      "CA-4": "passed - Split-View en AgentInspectorDrawer con ficha superior y live chat feed abajo",
+      "CA-5": "passed - Drawer técnico GateInspectorDrawer con criterios, reglas y comando CLI",
+      "CA-6": "passed - 55 test files, 417 tests passed (100% green sin regresiones)"
+    },
+    "tests": {
+      "vitest-studio": "passed - 55 test files, 417 tests passed (100% green)",
+      "typecheck": "passed - tsc --noEmit 100% clean"
+    },
+    "notes": "Ciclo completado con éxito; el enjambre de SDD Studio ahora visualiza la interacción directa con las Gates y permite comunicación bidireccional en tiempo real."
+  }
+}

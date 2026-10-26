@@ -1,0 +1,308 @@
+{
+  "$schema": "../../../../schemas/cycle.schema.json",
+  "cycle": 1,
+  "module": "studio-session-flow",
+  "spec": "spec-e-burgos-008-studio-session-flow",
+  "apps": [
+    "apps/studio",
+    "apps/studio-bridge",
+    "libs/studio-protocol"
+  ],
+  "phase": "session-flow",
+  "flow": "lite",
+  "objectives": [
+    "Selector con ayuda en todo Studio (US-6)",
+    "Formulario de preguntas del proveedor en el chat (US-3)",
+    "Actividad sin repetir y con el agente en curso (US-4)",
+    "Contexto restante visible (US-2)",
+    "Modos de desarrollo e implementación elegibles antes de arrancar una spec (US-5)",
+    "Conversación automática por spec o fix con briefing mínimo (US-1)"
+  ],
+  "status": "completed",
+  "started_at": "2026-10-26",
+  "completed_at": "2026-10-26",
+  "documents": {
+    "plan": "sdd/specs/spec-e-burgos-008-studio-session-flow/cycles/cycle-01/plan.md",
+    "tasks": "sdd/specs/spec-e-burgos-008-studio-session-flow/cycles/cycle-01/tasks.json"
+  },
+  "artifacts": [],
+  "metrics": {
+    "tasks_total": 12,
+    "tasks_completed": 12,
+    "tasks_skipped": 0,
+    "story_points": 45,
+    "files_created": [
+      "apps/studio-bridge/src/workspace/profile.spec.ts",
+      "apps/studio-bridge/src/workspace/profile.ts",
+      "apps/studio/src/components/HelpSelect.tsx",
+      "apps/studio/src/components/helpselect.spec.tsx",
+      "apps/studio/src/components/no-native-select.spec.ts",
+      "apps/studio/src/components/workspace/ContextMeter.tsx",
+      "apps/studio/src/components/workspace/ModeSelectors.tsx",
+      "apps/studio/src/components/workspace/PreparedConversations.tsx",
+      "apps/studio/src/components/workspace/QuestionForm.tsx",
+      "apps/studio/src/components/workspace/contextmeter.spec.tsx",
+      "apps/studio/src/components/workspace/modes.spec.tsx",
+      "apps/studio/src/components/workspace/prepared.spec.tsx",
+      "apps/studio/src/components/workspace/questionform.spec.tsx",
+      "apps/studio/src/lib/auto-conversation.spec.ts",
+      "apps/studio/src/lib/auto-conversation.ts",
+      "apps/studio/src/lib/context-meter.spec.ts",
+      "apps/studio/src/lib/context-meter.ts",
+      "apps/studio/src/lib/flow-choice.spec.ts",
+      "apps/studio/src/lib/flow-choice.ts"
+    ],
+    "files_modified": [
+      "apps/studio-bridge/src/engine/claude-sdk-engine.spec.ts",
+      "apps/studio-bridge/src/engine/claude-sdk-engine.ts",
+      "apps/studio-bridge/src/engine/fake-engine.ts",
+      "apps/studio-bridge/src/engine/types.ts",
+      "apps/studio-bridge/src/server/router.spec.ts",
+      "apps/studio-bridge/src/server/router.ts",
+      "apps/studio-bridge/src/sessions/presence.ts",
+      "apps/studio-bridge/src/sessions/session-manager.spec.ts",
+      "apps/studio-bridge/src/sessions/session-manager.ts",
+      "apps/studio-bridge/src/sessions/store.ts",
+      "apps/studio/src/components/mission-control/ConversationSelector.tsx",
+      "apps/studio/src/components/workspace/Composer.tsx",
+      "apps/studio/src/components/workspace/NavTree.tsx",
+      "apps/studio/src/components/workspace/Sidebar.tsx",
+      "apps/studio/src/components/workspace/ThreadLinkPicker.tsx",
+      "apps/studio/src/components/workspace/ThreadView.tsx",
+      "apps/studio/src/components/workspace/Timeline.tsx",
+      "apps/studio/src/components/workspace/Workspace.tsx",
+      "apps/studio/src/components/workspace/sidebar.spec.tsx",
+      "apps/studio/src/components/workspace/workspace.spec.tsx",
+      "apps/studio/src/lib/bootstrap.spec.ts",
+      "apps/studio/src/lib/bootstrap.ts",
+      "apps/studio/src/lib/i18n/en.ts",
+      "apps/studio/src/lib/i18n/es.ts",
+      "apps/studio/src/lib/store/nav-tree.spec.ts",
+      "apps/studio/src/lib/store/nav-tree.ts",
+      "apps/studio/src/lib/store/state.spec.ts",
+      "apps/studio/src/lib/store/state.ts",
+      "apps/studio/src/lib/store/store.ts",
+      "apps/studio/src/lib/store/timeline.spec.ts",
+      "apps/studio/src/lib/store/timeline.ts",
+      "libs/studio-protocol/src/commands.spec.ts",
+      "libs/studio-protocol/src/commands.ts",
+      "libs/studio-protocol/src/domain.spec.ts",
+      "libs/studio-protocol/src/domain.ts",
+      "libs/studio-protocol/src/events.spec.ts",
+      "libs/studio-protocol/src/events.ts",
+      "libs/studio-protocol/src/handshake.spec.ts",
+      "libs/studio-protocol/src/limits.ts"
+    ],
+    "files_deleted": [],
+    "usage": {
+      "tokens_in": 461000,
+      "tokens_out": 129000,
+      "approx": true,
+      "source": "declared-estimate",
+      "by_tier": {
+        "claude/sonnet": {
+          "tokens_in": 461000,
+          "tokens_out": 129000,
+          "approx": true,
+          "source": "declared-estimate"
+        }
+      },
+      "by_agent": [
+        {
+          "agent": "orchestrator",
+          "label": "solo",
+          "provider_model": "claude/sonnet",
+          "effort": "high",
+          "tokens_in": 90000,
+          "tokens_out": 25000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-26"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-001",
+          "provider_model": "claude/sonnet",
+          "effort": "high",
+          "tokens_in": 18000,
+          "tokens_out": 5000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-26"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-002",
+          "provider_model": "claude/sonnet",
+          "effort": "high",
+          "tokens_in": 22000,
+          "tokens_out": 5000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-26"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-003",
+          "provider_model": "claude/sonnet",
+          "effort": "high",
+          "tokens_in": 20000,
+          "tokens_out": 6000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-26"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-004",
+          "provider_model": "claude/sonnet",
+          "effort": "high",
+          "tokens_in": 45000,
+          "tokens_out": 12000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-26"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-005",
+          "provider_model": "claude/sonnet",
+          "effort": "high",
+          "tokens_in": 40000,
+          "tokens_out": 12000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-26"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-006",
+          "provider_model": "claude/sonnet",
+          "effort": "high",
+          "tokens_in": 30000,
+          "tokens_out": 9000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-26"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-007",
+          "provider_model": "claude/sonnet",
+          "effort": "high",
+          "tokens_in": 38000,
+          "tokens_out": 11000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-26"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-008",
+          "provider_model": "claude/sonnet",
+          "effort": "high",
+          "tokens_in": 32000,
+          "tokens_out": 9000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-26"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-009",
+          "provider_model": "claude/sonnet",
+          "effort": "high",
+          "tokens_in": 26000,
+          "tokens_out": 7000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-26"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-010",
+          "provider_model": "claude/sonnet",
+          "effort": "high",
+          "tokens_in": 36000,
+          "tokens_out": 10000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-26"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-011",
+          "provider_model": "claude/sonnet",
+          "effort": "high",
+          "tokens_in": 34000,
+          "tokens_out": 10000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-26"
+        },
+        {
+          "agent": "reviewer",
+          "label": "TASK-012",
+          "provider_model": "claude/sonnet",
+          "effort": "high",
+          "tokens_in": 30000,
+          "tokens_out": 8000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-26"
+        }
+      ]
+    }
+  },
+  "tables_created": [],
+  "endpoints_implemented": [],
+  "components_created": [
+    "COMP-023",
+    "COMP-024",
+    "COMP-025",
+    "COMP-026",
+    "COMP-027"
+  ],
+  "issues_found": [
+    "menor: el flow lite se mantuvo por pedido explícito del dev aunque la spec cambia libs/studio-protocol (excepción de sdd-gates.md § Flow); el próximo ciclo de esta spec se abre full",
+    "menor: la conversación automática queda preparada y asociada, no se envía sola, para no gastar tokens sin que el dev lo pida",
+    "menor: una web anterior descarta question.requested y el turno espera hasta que se interrumpa; el historial lo oculta salvo includeQuestions",
+    "menor: el aviso de excepción a full solo cubre depends_on, no los contratos entre subproyectos"
+  ],
+  "reviewer_report": {
+    "approved": true,
+    "date": "2026-10-26",
+    "ca_results": {
+      "CA-1": "PASS con desvío - spec.created, cycle.opened y fix.created dejan una conversación preparada y asociada, una sola vez por objetivo; no se envía sola (auto-conversation.spec prepares / does not prepare twice; prepared.spec; workspace.spec)",
+      "CA-2": "PASS - el briefing lista solo spec, documentos del ciclo según su flow, contexto de los subproyectos que toca, lessons.md y el gate (auto-conversation.spec briefingFor, 5 casos)",
+      "CA-3": "PASS - ContextMeter muestra porcentaje y tokens usados/límite y, sin dato, dice «Contexto: sin dato» (contextmeter.spec; context-meter.spec; claude-sdk-engine.spec context usage; session-manager.spec context usage)",
+      "CA-4": "PASS - aviso a 70% y crítico a 90% con la acción de nueva conversación (contextmeter.spec warns at the threshold, turns critical)",
+      "CA-5": "PASS - selección única, múltiple y respuesta libre se renderizan en el chat y la respuesta llega al motor como updatedInput.answers (questionform.spec; session-manager.spec provider questions; claude-sdk-engine.spec; events.spec; commands.spec)",
+      "CA-6": "PASS - interrumpir o declinar cancela la pregunta, recover() cancela las abiertas y la sesión no queda bloqueada (session-manager.spec cancels a pending question when the turn is interrupted, declining, cancels a question that was open when the bridge restarted)",
+      "CA-7": "PASS con límite - PROTOCOL_VERSION sigue en 2; los campos y eventos son opcionales, contextUsage degrada a null y el historial oculta las preguntas salvo includeQuestions (domain.spec; commands.spec; session-manager.spec hides question events from history; bootstrap.spec); límite: una web anterior no muestra la pregunta y el turno espera hasta interrumpirlo",
+      "CA-8": "PASS - pnpm build, pnpm typecheck y pnpm test verdes: protocol 103, cli 202, bridge 675, studio 681; e2e Playwright 8/8",
+      "CA-9": "PASS - buildNavTree cuenta cada hilo una vez por nodo y en la sección de actividad (nav-tree.spec counts a thread once, keeps distinct threads counted separately)",
+      "CA-10": "PASS - la fila activa muestra los agentes que trabajan y la herramienta desde presence y cae al dueño del hilo sin dato (nav-tree.spec; sidebar.spec names the agent working on an active thread)",
+      "CA-11": "PASS - ModeSelectors muestra y cambia el modo de desarrollo y el de implementación antes de arrancar una spec (modes.spec ModeSelectors y Composer modes)",
+      "CA-12": "PASS - la elección antepone [LITE]/[FULL] al pedido y el cambio de perfil se persiste en sdd/global.json por profile.set (modes.spec; profile.spec; router.spec profile.set writes the profile)",
+      "CA-13": "PASS - la excepción a full por depends_on se avisa cuando el ciclo se abriría lite (flow-choice.spec; modes.spec warns about the full exception)",
+      "CA-14": "PASS - no queda ningún select nativo fuera de HelpSelect (no-native-select.spec)",
+      "CA-15": "PASS - cada selector tiene icono de ayuda, tooltip por hover y foco y texto es/en (helpselect.spec 7 casos; i18n es/en con satisfies)",
+      "CA-16": "PASS - las pruebas previas de Composer, ThreadLinkPicker y ConversationSelector siguen en verde con HelpSelect (studio 681/681)"
+    },
+    "tests": {
+      "sdd:validate": "OK",
+      "build": "pnpm build exit 0",
+      "typecheck": "pnpm typecheck exit 0",
+      "suite": "protocol 103/103, cli 202 pass (9 skipped), studio-bridge 675 pass (2 skipped), studio 681/681",
+      "e2e": "apps/studio pnpm e2e 8/8 PASS"
+    },
+    "notes": "Aprobado por el actor único del flow lite (sonnet/high). Contratos nuevos aditivos sin subir PROTOCOL_VERSION. Desvío de CA-1: la conversación se prepara y asocia pero no se lanza sola. Se encontró y corrigió antes de cerrar que question.* en thread.history rompería la carga de un hilo en una web anterior (opt-in includeQuestions, mismo patrón que document.touched). Sin comentarios narrativos nuevos (solo dos líneas de POR QUÉ en inglés y los marcadores del FakeEngine). Sin cambios en schema.json ni api.json. COMP-023 a COMP-027 implemented y COMP-001/005/016 updated. Telemetría: todo declared-estimate.",
+    "follow_ups": [
+      "El próximo ciclo de esta spec debe abrirse full (la spec toca libs/studio-protocol)",
+      "Decidir si la conversación preparada debe poder lanzarse sola con un ajuste del dev",
+      "Detectar contratos entre subproyectos en el aviso de excepción a full, hoy solo depends_on",
+      "Pedir getContextUsage solo al cruzar el umbral si resultara costoso"
+    ]
+  }
+}

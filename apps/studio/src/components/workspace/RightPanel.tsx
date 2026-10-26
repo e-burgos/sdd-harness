@@ -5,21 +5,35 @@ import { useMemo } from 'react';
 import { agentMeta } from '@/lib/agents';
 import { useT } from '@/lib/i18n/i18n';
 import { activityOf, type ActivityEntry } from '@/lib/store/activity';
+import { deriveConversation } from '@/lib/conversation';
+import { deriveConversationGate } from '@/lib/conversation-gate';
 import { cycleForChannel } from '@/lib/store/selectors';
 import { useStudio } from '../BridgeProvider';
+import { Check, Loader2, Minus, Pause, Play } from 'lucide-react';
 import { AgentAvatar } from './AgentAvatar';
+import { ConversationPanelSections, type ConversationPanelData } from './ConversationPanelSections';
+import { PanelToggle } from './PanelRail';
 import { StatusBadge } from './StatusBadge';
 
-const MARK: Record<string, string> = { done: '✓', 'in-progress': '▸', skipped: '–' };
+function TaskStatusIcon({ status }: { status: string }) {
+  if (status === 'done') return <Check size={12} className="shrink-0" data-testid="task-icon-done" aria-hidden />;
+  if (status === 'in-progress') return <Play size={10} className="shrink-0 fill-current" data-testid="task-icon-in-progress" aria-hidden />;
+  if (status === 'skipped') return <Minus size={12} className="shrink-0" data-testid="task-icon-skipped" aria-hidden />;
+  return <span aria-hidden>·</span>;
+}
+
 const TASK_KEYS = { done: 'task.done', 'in-progress': 'task.in-progress', skipped: 'task.skipped', pending: 'task.pending' } as const;
 const PRESENCE_KEYS = { working: 'presence.working', waiting: 'presence.waiting', open: 'presence.open', idle: 'presence.idle' } as const;
 
-export function RightPanelView({ activity, cycle, onOpenThread }: { activity: ActivityEntry[]; cycle: CycleSummary | null; onOpenThread(id: string): void }) {
+export function RightPanelView({ activity, cycle, conversation, onOpenThread, onCollapse }: { activity: ActivityEntry[]; cycle: CycleSummary | null; conversation?: ConversationPanelData | null; onOpenThread(id: string): void; onCollapse?(): void }) {
   const { t } = useT();
   return (
-    <aside aria-label={t('panel.label')} className="flex h-full flex-col gap-6 overflow-y-auto border-l border-ink-800 bg-ink-900 p-4">
-      <section>
-        <h2 className="mb-2 text-[11px] uppercase tracking-wider text-ink-500">{t('panel.activity')}</h2>
+    <aside aria-label={t('panel.label')} className="flex h-full flex-col gap-6 overflow-y-auto overscroll-contain border-l border-ink-800 bg-ink-900 p-4">
+      <header data-testid="panel-header" className="sticky -top-4 z-10 -mx-4 -mt-4 flex items-center justify-between bg-ink-900 px-4 pb-2 pt-4">
+        <h2 className="text-[11px] uppercase tracking-wider text-ink-500">{t('panel.activity')}</h2>
+        {onCollapse && <PanelToggle label={t('panel.right.collapse')} side="right" onClick={onCollapse} />}
+      </header>
+      <section data-testid="panel-activity" className="-mt-4">
         {activity.length === 0 && <p className="text-sm text-ink-300">{t('panel.noActivity')}</p>}
         <ul className="space-y-3">
           {activity.map((entry) => (
@@ -31,17 +45,20 @@ export function RightPanelView({ activity, cycle, onOpenThread }: { activity: Ac
               <ul className="mt-2 space-y-1">
                 {entry.agents.map((a) => (
                   <li key={a.agent} className="flex items-center gap-2 text-xs">
-                    <AgentAvatar agent={a.agent} size={18} />
-                    <span>{agentMeta(a.agent).name}</span>
+                    <AgentAvatar agent={a.agent} size={22} status={a.state === 'working' ? 'running' : a.state === 'waiting' ? 'waiting-approval' : null} />
+                    <div className="flex flex-col min-w-0 leading-tight">
+                      <span className="font-medium">{agentMeta(a.agent).name}</span>
+                      <span className="text-[10px] text-ink-400 font-mono">{agentMeta(a.agent).role}</span>
+                    </div>
                     {a.state === 'waiting' && (
                       <span className="text-amberish">
-                        <span aria-hidden>⏸</span>
+                        <Pause size={12} className="inline-block" aria-hidden />
                         <span className="sr-only">{t(PRESENCE_KEYS.waiting)}</span>
                       </span>
                     )}
                     {a.state === 'working' && (
                       <span className="text-accent-400">
-                        <span aria-hidden className="inline-block animate-pulse motion-reduce:animate-none">⟳</span>
+                        <Loader2 size={12} className="inline-block motion-safe:animate-spin" aria-hidden />
                         <span className="sr-only">{t(PRESENCE_KEYS.working)}</span>
                       </span>
                     )}
@@ -53,6 +70,7 @@ export function RightPanelView({ activity, cycle, onOpenThread }: { activity: Ac
           ))}
         </ul>
       </section>
+      {conversation && <ConversationPanelSections view={conversation.view} gate={conversation.gate} />}
       <section>
         <h2 className="mb-2 text-[11px] uppercase tracking-wider text-ink-500">{t('panel.details')}</h2>
         {!cycle ? (
@@ -79,7 +97,7 @@ export function RightPanelView({ activity, cycle, onOpenThread }: { activity: Ac
               {cycle.tasks.map((task) => (
                 <li key={task.id} className="flex gap-2 text-xs">
                   <span className={task.status === 'done' ? 'text-accent-300' : task.status === 'in-progress' ? 'text-amberish' : 'text-ink-500'}>
-                    <span aria-hidden>{MARK[task.status] ?? '·'}</span>
+                    <TaskStatusIcon status={task.status} />
                     <span className="sr-only">{task.status in TASK_KEYS ? t(TASK_KEYS[task.status as keyof typeof TASK_KEYS]) : task.status}</span>
                   </span>
                   <span className="font-mono text-ink-300">{task.id}</span>
@@ -94,10 +112,27 @@ export function RightPanelView({ activity, cycle, onOpenThread }: { activity: Ac
   );
 }
 
-export function RightPanel({ channelId, onOpenThread }: { channelId: string; onOpenThread(id: string): void }) {
+export function RightPanel({ channelId, threadId = null, onOpenThread, onCollapse }: { channelId: string; threadId?: string | null; onOpenThread(id: string): void; onCollapse?(): void }) {
   const threads = useStudio((s) => s.threads);
   const presence = useStudio((s) => s.presence);
   const snapshot = useStudio((s) => s.snapshot);
   const activity = useMemo(() => activityOf(threads, presence), [threads, presence]);
-  return <RightPanelView activity={activity} cycle={cycleForChannel(snapshot, channelId)} onOpenThread={onOpenThread} />;
+  const selected = threadId ? threads[threadId] : undefined;
+  const conversation = useMemo<ConversationPanelData | null>(() => {
+    if (!selected?.info) return null;
+    const view = deriveConversation(selected, snapshot);
+    return { view, gate: deriveConversationGate(view, snapshot) };
+  }, [selected, snapshot]);
+  const gate = conversation?.gate;
+  const derivedCycle =
+    gate?.kind === 'spec' && gate.cycle ? (snapshot?.cycles.find((c) => c.specId === gate.specId && c.cycle === gate.cycle) ?? null) : null;
+  return (
+    <RightPanelView
+      activity={activity}
+      cycle={derivedCycle ?? cycleForChannel(snapshot, channelId)}
+      conversation={conversation}
+      onOpenThread={onOpenThread}
+      onCollapse={onCollapse}
+    />
+  );
 }

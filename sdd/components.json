@@ -20,7 +20,9 @@
       "created_in_cycle": "número de ciclo donde se definió por primera vez",
       "updated_in_cycle": "número del último ciclo que lo modificó (null si nunca se actualizó)",
       "description": "qué hace el componente",
-      "consumes": ["EP-001"],
+      "consumes": [
+        "EP-001"
+      ],
       "created_at": "YYYY-MM-DD",
       "changelog": [
         {
@@ -30,5 +32,552 @@
         }
       ]
     }
+  },
+  "apps/studio": {
+    "components": [
+      {
+        "id": "COMP-001",
+        "name": "NavTree",
+        "type": "component",
+        "module": "studio-session-ux",
+        "spec": "sdd/specs/spec-e-burgos-001-studio-session-ux",
+        "path": "src/components/workspace/NavTree.tsx",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": 1,
+        "description": "Árbol del Sidebar: HILOS ACTIVOS, CANALES, SPECS (spec → ciclo → hilos), FIXES (abiertos + 5 cerrados + anteriores con hilos) y AGENTES, construido con buildNavTree.",
+        "consumes": [],
+        "created_at": "2026-10-23",
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-10-23",
+            "change": "implemented as NavTree.tsx (SectionView) rendered by SidebarView in Sidebar.tsx; tree data from src/lib/store/nav-tree.ts (buildNavTree)"
+          },
+          {
+            "cycle": 1,
+            "date": "2026-10-26",
+            "change": "buildNavTree cuenta cada hilo una vez por nodo y la fila de actividad muestra el agente en curso y la herramienta (presence)"
+          }
+        ]
+      },
+      {
+        "id": "COMP-002",
+        "name": "NavNodeView",
+        "type": "component",
+        "module": "studio-session-ux",
+        "spec": "sdd/specs/spec-e-burgos-001-studio-session-ux",
+        "path": "src/components/workspace/NavTree.tsx",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": 1,
+        "description": "Sección/nodo colapsable con aria-expanded, señal de selección contenida y de atención (waiting-approval) cuando está colapsado.",
+        "consumes": [],
+        "created_at": "2026-10-23",
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-10-23",
+            "change": "implemented as NavNodeView inside NavTree.tsx (caret toggle separated from the channel name, NodeMarks for contained selection / attention)"
+          }
+        ]
+      },
+      {
+        "id": "COMP-003",
+        "name": "ActiveThreads",
+        "type": "component",
+        "module": "studio-session-ux",
+        "spec": "sdd/specs/spec-e-burgos-001-studio-session-ux",
+        "path": "src/components/workspace/NavTree.tsx",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": 1,
+        "description": "Lista en vivo de hilos waiting-approval, running y queued con navegación y aviso de estado desactualizado sin conexión.",
+        "consumes": [],
+        "created_at": "2026-10-23",
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-10-23",
+            "change": "implemented as ActiveThreads/ActiveThreadRow inside NavTree.tsx, with pending-count badge"
+          }
+        ]
+      },
+      {
+        "id": "COMP-004",
+        "name": "ActivityIndicator",
+        "type": "component",
+        "module": "studio-session-ux",
+        "spec": "sdd/specs/spec-e-burgos-001-studio-session-ux",
+        "path": "src/components/workspace/ActivityIndicator.tsx",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": 1,
+        "description": "Indicador running/waiting-approval/queued para fila, avatar e hilo; formas distintas, sin layout shift, respeta prefers-reduced-motion.",
+        "consumes": [],
+        "created_at": "2026-10-23",
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-10-23",
+            "change": "implemented; AgentAvatar consumes it for the avatar placement"
+          }
+        ]
+      },
+      {
+        "id": "COMP-005",
+        "name": "ThreadLinkPicker",
+        "type": "component",
+        "module": "studio-session-ux",
+        "spec": "sdd/specs/spec-e-burgos-001-studio-session-ux",
+        "path": "src/components/workspace/ThreadLinkPicker.tsx",
+        "status": "updated",
+        "created_in_cycle": 1,
+        "updated_in_cycle": 1,
+        "description": "Lista las asociaciones del hilo (spec, ciclo, fix) con origen detectada/manual, permite agregar y quitar con thread.updateLinks, marca las inexistentes como no disponibles y cae al selector único con thread.setLink si el puente no anuncia link-targets.",
+        "consumes": [],
+        "created_at": "2026-10-23",
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-10-26",
+            "change": "spec-e-burgos-007 cycle-01 (architect): de selector único a lista multi-asociación con origen (ThreadLink.targets)"
+          },
+          {
+            "cycle": 1,
+            "date": "2026-10-26",
+            "change": "los dos selectores pasan a HelpSelect con ayuda"
+          }
+        ]
+      },
+      {
+        "id": "COMP-006",
+        "name": "JumpToLatest",
+        "type": "component",
+        "module": "studio-session-ux",
+        "spec": "sdd/specs/spec-e-burgos-001-studio-session-ux",
+        "path": "src/components/workspace/ThreadView.tsx",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": 1,
+        "description": "Botón para volver al final del hilo cuando el dev scrolleó hacia arriba.",
+        "consumes": [],
+        "created_at": "2026-10-23",
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-10-23",
+            "change": "implemented inline in ThreadView.tsx (thread.jumpToLatest button) driven by useStickToBottom"
+          }
+        ]
+      },
+      {
+        "id": "COMP-007",
+        "name": "AttachmentTray",
+        "type": "component",
+        "module": "studio-session-ux",
+        "spec": "sdd/specs/spec-e-burgos-001-studio-session-ux",
+        "path": "src/components/workspace/AttachmentTray.tsx",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": 2,
+        "description": "[cycle-02] Preview de adjuntos del Composer (miniatura o tarjeta, tamaño, quitar, contador n/5) y errores por archivo.",
+        "consumes": [],
+        "created_at": "2026-10-23",
+        "changelog": [
+          {
+            "cycle": 2,
+            "date": "2026-10-23",
+            "change": "path src/components/workspace/composer/AttachmentTray.tsx -> src/components/workspace/AttachmentTray.tsx (repo convention: flat components/workspace, hooks in src/lib/use-*.ts; architect cycle-02 X-5)"
+          },
+          {
+            "cycle": 2,
+            "date": "2026-10-23",
+            "change": "implemented in cycle-02 (chips with thumbnail/card, n/5 counter, per-file errors, drop hint)"
+          }
+        ]
+      },
+      {
+        "id": "COMP-008",
+        "name": "AttachmentView",
+        "type": "component",
+        "module": "studio-session-ux",
+        "spec": "sdd/specs/spec-e-burgos-001-studio-session-ux",
+        "path": "src/components/workspace/AttachmentView.tsx",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": 2,
+        "description": "[cycle-02] Render de un AttachmentRef en la timeline (imagen, tarjeta PDF/texto) con placeholder de carga y marcador de adjunto no disponible.",
+        "consumes": [],
+        "created_at": "2026-10-23",
+        "changelog": [
+          {
+            "cycle": 2,
+            "date": "2026-10-23",
+            "change": "implemented in cycle-02 (reserved image box, PDF/text cards, unavailable marker); rendered by Timeline"
+          }
+        ]
+      },
+      {
+        "id": "COMP-009",
+        "name": "MentionMenu",
+        "type": "component",
+        "module": "studio-session-ux",
+        "spec": "sdd/specs/spec-e-burgos-001-studio-session-ux",
+        "path": "src/components/workspace/MentionMenu.tsx",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": 2,
+        "description": "[cycle-02] Menú @ (archivos del repo vía workspace.searchFiles + agentes del catálogo) y / (comandos fijos + skills y prompts) con teclado y estados vacío/carga/error.",
+        "consumes": [],
+        "created_at": "2026-10-23",
+        "changelog": [
+          {
+            "cycle": 2,
+            "date": "2026-10-23",
+            "change": "path src/components/workspace/composer/MentionMenu.tsx -> src/components/workspace/MentionMenu.tsx (repo convention: flat components/workspace, hooks in src/lib/use-*.ts; architect cycle-02 X-5)"
+          },
+          {
+            "cycle": 2,
+            "date": "2026-10-23",
+            "change": "implemented in cycle-02 (groups, ARIA combobox/listbox, keyboard); wired into Composer behind file-search/catalog features"
+          }
+        ]
+      },
+      {
+        "id": "COMP-010",
+        "name": "useCollapsedState",
+        "type": "hook",
+        "module": "studio-session-ux",
+        "spec": "sdd/specs/spec-e-burgos-001-studio-session-ux",
+        "path": "src/lib/use-collapsed-state.ts",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": 1,
+        "description": "Estado de colapso del Sidebar persistido en localStorage (solo overrides, validado con zod, sync entre pestañas).",
+        "consumes": [],
+        "created_at": "2026-10-23",
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-10-23",
+            "change": "implemented at src/lib/use-collapsed-state.ts (localStorage key sdd-studio.sidebar.v1:<project>, pruned overrides)"
+          }
+        ]
+      },
+      {
+        "id": "COMP-011",
+        "name": "useStickToBottom",
+        "type": "hook",
+        "module": "studio-session-ux",
+        "spec": "sdd/specs/spec-e-burgos-001-studio-session-ux",
+        "path": "src/lib/use-stick-to-bottom.ts",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": 1,
+        "description": "Autoscroll respetuoso del hilo con ResizeObserver sobre contenido y scroller; expone atBottom y scrollToBottom.",
+        "consumes": [],
+        "created_at": "2026-10-23",
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-10-23",
+            "change": "implemented at src/lib/use-stick-to-bottom.ts (ResizeObserver, 48 px threshold)"
+          }
+        ]
+      },
+      {
+        "id": "COMP-012",
+        "name": "useAttachmentDraft",
+        "type": "hook",
+        "module": "studio-session-ux",
+        "spec": "sdd/specs/spec-e-burgos-001-studio-session-ux",
+        "path": "src/lib/use-attachment-draft.ts",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": 2,
+        "description": "[cycle-02] Validación de tipos, recompresión de imágenes (≤1568 px), sha256 y presupuesto del frame sobre el comando serializado con escalera de reducción.",
+        "consumes": [],
+        "created_at": "2026-10-23",
+        "changelog": [
+          {
+            "cycle": 2,
+            "date": "2026-10-23",
+            "change": "path src/hooks/useAttachmentDraft.ts -> src/lib/use-attachment-draft.ts (repo convention: flat components/workspace, hooks in src/lib/use-*.ts; architect cycle-02 X-5)"
+          },
+          {
+            "cycle": 2,
+            "date": "2026-10-23",
+            "change": "implemented in cycle-02 (add/remove/buildUploads over drafts slice, frame budget ladder via attachments/frame-budget)"
+          }
+        ]
+      },
+      {
+        "id": "COMP-013",
+        "name": "useAttachmentContent",
+        "type": "hook",
+        "module": "studio-session-ux",
+        "spec": "sdd/specs/spec-e-burgos-001-studio-session-ux",
+        "path": "src/lib/use-attachment-content.ts",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": 2,
+        "description": "[cycle-02] Obtiene adjuntos persistidos vía attachment.get con caché LRU de objectURL y concurrencia acotada.",
+        "consumes": [],
+        "created_at": "2026-10-23",
+        "changelog": [
+          {
+            "cycle": 2,
+            "date": "2026-10-23",
+            "change": "path src/hooks/useAttachmentContent.ts -> src/lib/use-attachment-content.ts (repo convention: flat components/workspace, hooks in src/lib/use-*.ts; architect cycle-02 X-5)"
+          },
+          {
+            "cycle": 2,
+            "date": "2026-10-23",
+            "change": "implemented in cycle-02 (LRU 64 with refcount, concurrency 2, sha256 verification, primed from sender)"
+          }
+        ]
+      },
+      {
+        "id": "COMP-014",
+        "name": "PendingMessages",
+        "type": "component",
+        "module": "studio-session-ux",
+        "spec": "sdd/specs/spec-e-burgos-001-studio-session-ux",
+        "path": "src/components/workspace/PendingMessages.tsx",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": 2,
+        "description": "Bandeja de mensajes pendientes del hilo (HU-10): lista en orden, edición inline y quitar mientras estén pendientes; desaparecen al entregarse (user.message con pendingId).",
+        "consumes": [],
+        "created_at": "2026-10-23",
+        "changelog": [
+          {
+            "cycle": 2,
+            "date": "2026-10-23",
+            "change": "read-only attachment chips; attachment-only pending can be saved empty"
+          }
+        ]
+      },
+      {
+        "id": "COMP-015",
+        "name": "useComposerDraft",
+        "type": "hook",
+        "module": "studio-session-ux",
+        "spec": "sdd/specs/spec-e-burgos-001-studio-session-ux",
+        "path": "src/lib/store/state.ts",
+        "status": "deprecated",
+        "created_in_cycle": 1,
+        "updated_in_cycle": 1,
+        "description": "Borrador del Composer por hilo (threadId o new:<channelId>) en memoria del store; texto en cycle-01, adjuntos en cycle-02; se pierde al recargar.",
+        "consumes": [],
+        "created_at": "2026-10-23",
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-10-23",
+            "change": "deprecated — no separate hook: per-thread drafts live in the store slice drafts (draftKey/setDraft in src/lib/store/state.ts) consumed by Composer.tsx"
+          }
+        ]
+      },
+      {
+        "id": "COMP-016",
+        "name": "ConversationSelector",
+        "type": "component",
+        "module": "studio-conversation-sessions",
+        "spec": "sdd/specs/spec-e-burgos-005-studio-conversation-sessions",
+        "path": "src/components/mission-control/ConversationSelector.tsx",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": 1,
+        "description": "Cinta de Mission Control: lista las conversaciones (hilos) por actividad reciente, permite elegir una y ofrece Nueva conversación; estado vacío sin conversaciones.",
+        "consumes": [],
+        "created_at": "2026-10-26",
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-10-26",
+            "change": "el selector de conversaciones pasa a HelpSelect y pierde el chevron superpuesto"
+          }
+        ]
+      },
+      {
+        "id": "COMP-017",
+        "name": "ConversationSessionInfo",
+        "type": "component",
+        "module": "studio-conversation-sessions",
+        "spec": "sdd/specs/spec-e-burgos-005-studio-conversation-sessions",
+        "path": "src/components/mission-control/ConversationSessionInfo.tsx",
+        "status": "updated",
+        "created_in_cycle": 1,
+        "updated_in_cycle": 1,
+        "description": "Muestra id de sesión, proveedor y título real de la sesión (sessionTitle): título, 'sin título disponible' o aviso de puente desactualizado; nunca fabrica un título.",
+        "consumes": [],
+        "created_at": "2026-10-26",
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-10-26",
+            "change": "spec-e-burgos-007 cycle-01 (architect): agrega sessionTitle con tres estados"
+          }
+        ]
+      },
+      {
+        "id": "COMP-018",
+        "name": "RelatedDocuments",
+        "type": "component",
+        "module": "studio-conversation-sessions",
+        "spec": "sdd/specs/spec-e-burgos-005-studio-conversation-sessions",
+        "path": "src/components/mission-control/RelatedDocuments.tsx",
+        "status": "updated",
+        "created_in_cycle": 1,
+        "updated_in_cycle": 1,
+        "description": "Specs, fixes y documentos de la conversación; la lista proviene de document.touched cuando el hilo tiene alguno y de la heurística de tool calls en hilos anteriores; muestra la operación del último toque.",
+        "consumes": [],
+        "created_at": "2026-10-26",
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-10-26",
+            "change": "spec-e-burgos-007 cycle-01 (architect): fuente estructurada document.touched con caída a la heurística; operación por documento"
+          }
+        ]
+      },
+      {
+        "id": "COMP-019",
+        "name": "NewConversationButton",
+        "type": "component",
+        "module": "studio-conversation-sessions",
+        "spec": "sdd/specs/spec-e-burgos-005-studio-conversation-sessions",
+        "path": "src/components/NewConversationButton.tsx",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "description": "Botón Nueva conversación: deja seleccionado un borrador vacío en el workspace; el hilo nace en el primer envío.",
+        "consumes": [],
+        "created_at": "2026-10-26",
+        "changelog": []
+      },
+      {
+        "id": "COMP-020",
+        "name": "useConversationSelection",
+        "type": "hook",
+        "module": "studio-conversation-sessions",
+        "spec": "sdd/specs/spec-e-burgos-005-studio-conversation-sessions",
+        "path": "src/lib/use-conversation-selection.ts",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "description": "Elección de conversación de Mission Control: default la de lastActivity más reciente, sincroniza el hilo elegido y expone la vista derivada de sus eventos.",
+        "consumes": [],
+        "created_at": "2026-10-26",
+        "changelog": []
+      },
+      {
+        "id": "COMP-021",
+        "name": "CapabilityNotice",
+        "type": "component",
+        "module": "studio-session-metadata",
+        "spec": "sdd/specs/spec-e-burgos-007-studio-session-metadata",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "consumes": [],
+        "created_at": "2026-10-26",
+        "changelog": [],
+        "path": "src/components/mission-control/CapabilityNotice.tsx",
+        "description": "Aviso no bloqueante de las capacidades que el puente conectado no anuncia en Welcome.features (título de sesión, asociaciones múltiples, documentos de consola)."
+      },
+      {
+        "id": "COMP-022",
+        "name": "useBridgeFeatures",
+        "type": "hook",
+        "module": "studio-session-metadata",
+        "spec": "sdd/specs/spec-e-burgos-007-studio-session-metadata",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "consumes": [],
+        "created_at": "2026-10-26",
+        "changelog": [],
+        "path": "src/lib/use-bridge-features.ts",
+        "description": "Hook que expone supports(feature) sobre las features del Welcome para degradar la UI cuando el puente es más viejo que la web."
+      },
+      {
+        "id": "COMP-023",
+        "name": "HelpSelect",
+        "type": "component",
+        "module": "studio-session-flow",
+        "spec": "sdd/specs/spec-e-burgos-008-studio-session-flow",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "consumes": [],
+        "created_at": "2026-10-26",
+        "changelog": [],
+        "path": "src/components/HelpSelect.tsx",
+        "description": "Selector nativo con icono de ayuda y tooltip en hover y foco de teclado, ligado por aria-describedby; reemplaza a todos los select de Studio."
+      },
+      {
+        "id": "COMP-024",
+        "name": "QuestionForm",
+        "type": "component",
+        "module": "studio-session-flow",
+        "spec": "sdd/specs/spec-e-burgos-008-studio-session-flow",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "consumes": [],
+        "created_at": "2026-10-26",
+        "changelog": [],
+        "path": "src/components/workspace/QuestionForm.tsx",
+        "description": "Formulario inline en el chat para las preguntas del proveedor (AskUserQuestion): selección única, múltiple y respuesta libre."
+      },
+      {
+        "id": "COMP-025",
+        "name": "ContextMeter",
+        "type": "component",
+        "module": "studio-session-flow",
+        "spec": "sdd/specs/spec-e-burgos-008-studio-session-flow",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "consumes": [],
+        "created_at": "2026-10-26",
+        "changelog": [],
+        "path": "src/components/workspace/ContextMeter.tsx",
+        "description": "Medidor del contexto restante de la sesión en la cabecera de la conversación, con aviso por umbral y acción de conversación nueva."
+      },
+      {
+        "id": "COMP-026",
+        "name": "ModeSelectors",
+        "type": "component",
+        "module": "studio-session-flow",
+        "spec": "sdd/specs/spec-e-burgos-008-studio-session-flow",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "consumes": [],
+        "created_at": "2026-10-26",
+        "changelog": [],
+        "path": "src/components/workspace/ModeSelectors.tsx",
+        "description": "Selectores del modo de desarrollo (solo/team) y de implementación (automática/lite/full) antes de arrancar una spec, con aviso de la excepción a full."
+      },
+      {
+        "id": "COMP-027",
+        "name": "PreparedConversations",
+        "type": "component",
+        "module": "studio-session-flow",
+        "spec": "sdd/specs/spec-e-burgos-008-studio-session-flow",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "consumes": [],
+        "created_at": "2026-10-26",
+        "changelog": [],
+        "path": "src/components/workspace/PreparedConversations.tsx",
+        "description": "Aviso de conversación nueva preparada y asociada a una spec, ciclo o fix recién creado, con el briefing mínimo listo para abrir."
+      }
+    ]
   }
 }

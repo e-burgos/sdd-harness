@@ -1,11 +1,27 @@
-import type { Author, ThreadEvent, ThreadOptions } from '@sdd-studio/protocol';
+import type { AttachmentRef, Author, ContextUsage, KnownProvider, ThreadEvent, ThreadOptions } from '@sdd-studio/protocol';
+
+export type PromptBlock = { kind: 'text'; text: string } | { kind: 'attachment'; ref: AttachmentRef };
+
+export interface TurnPrompt {
+  text: string;
+  preamble: string[];
+  blocks: PromptBlock[];
+}
+
+export interface OutgoingMessage {
+  id: string;
+  prompt: TurnPrompt;
+}
+
+export const plainPrompt = (text: string): TurnPrompt => ({ text, preamble: [], blocks: [] });
 
 export interface EngineTurnInput {
   threadId: string;
-  text: string;
+  prompts: OutgoingMessage[];
   options: ThreadOptions;
   resumeSessionId: string | null;
   cwd: string;
+  systemPrefix?: string;
 }
 
 export interface ApprovalRequest {
@@ -15,7 +31,7 @@ export interface ApprovalRequest {
   toolUseId: string | null;
 }
 
-export type ApprovalDecision = { behavior: 'allow' } | { behavior: 'deny'; message: string };
+export type ApprovalDecision = { behavior: 'allow'; updatedInput?: Record<string, unknown> } | { behavior: 'deny'; message: string };
 
 export type ToolVerdict = { kind: 'allow' } | { kind: 'warn'; reason: string } | { kind: 'deny'; reason: string };
 
@@ -23,6 +39,15 @@ export interface JudgeContext {
   author: Author;
   toolUseId: string | null;
 }
+
+export interface ToolRunContext {
+  toolName: string;
+  input: Record<string, unknown>;
+  toolUseId: string;
+  author: Author;
+}
+
+export type ToolOutcome = 'ok' | 'failed' | 'interrupted';
 
 export interface EngineCallbacks {
   emit(event: ThreadEvent): void;
@@ -33,7 +58,15 @@ export interface EngineCallbacks {
    */
   judgeTool(toolName: string, input: Record<string, unknown>, ctx?: JudgeContext): ToolVerdict;
   onSessionId(id: string): void;
+  onContextUsage?(usage: ContextUsage): void;
   requestApproval(request: ApprovalRequest, signal: AbortSignal): Promise<ApprovalDecision>;
+  readAttachment(ref: AttachmentRef): Promise<Uint8Array | null>;
+  collectPending(at: 'cut-point' | 'turn-end', opts?: { textOnly?: boolean }): OutgoingMessage[];
+  revertPending(ids: string[]): void;
+  beforeTool?(ctx: ToolRunContext): Promise<void>;
+  afterTool?(ctx: ToolRunContext, outcome: ToolOutcome): Promise<void>;
+  rebaseTool?(toolUseId: string): void;
+  cancelTool?(toolUseId: string): void;
 }
 
 export interface EngineTurn {
@@ -44,5 +77,7 @@ export interface EngineTurn {
 /** Engine boundary: the web app and the SessionManager never see SDK types. */
 export interface AgentEngine {
   readonly name: string;
+  readonly provider: KnownProvider;
   startTurn(input: EngineTurnInput, callbacks: EngineCallbacks): EngineTurn;
+  readSessionTitle?(sessionId: string, cwd: string): Promise<string | null>;
 }

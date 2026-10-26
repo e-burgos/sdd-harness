@@ -1,0 +1,397 @@
+{
+  "$schema": "../../../../schemas/cycle.schema.json",
+  "cycle": 1,
+  "module": "studio-conversation-sessions",
+  "spec": "spec-e-burgos-005-studio-conversation-sessions",
+  "apps": [
+    "apps/studio",
+    "apps/studio-bridge",
+    "libs/studio-protocol"
+  ],
+  "phase": "conversation-sessions",
+  "flow": "full",
+  "objectives": [
+    "Cada conversación nueva abre una sesión nueva del proveedor; ninguna sesión se reutiliza entre hilos (US-1)",
+    "engineSessionId y provider en ThreadInfo, visibles en la web sin ids fabricados (US-2)",
+    "Prefijo de sistema estable del proyecto para aprovechar el prompt caching de Claude (US-3)",
+    "Mission Control centrado en la conversación seleccionada, con specs/fixes derivados de eventos (US-4)",
+    "Eliminar guiones ficticios y selectores spec/fix conservando el visor de documentos (US-5)"
+  ],
+  "status": "completed",
+  "started_at": "2026-10-25",
+  "completed_at": "2026-10-26",
+  "documents": {
+    "brief": "sdd/specs/spec-e-burgos-005-studio-conversation-sessions/cycles/cycle-01/brief.yaml",
+    "functional": "sdd/specs/spec-e-burgos-005-studio-conversation-sessions/cycles/cycle-01/functional.md",
+    "architect": "sdd/specs/spec-e-burgos-005-studio-conversation-sessions/cycles/cycle-01/architect.md",
+    "planner": "sdd/specs/spec-e-burgos-005-studio-conversation-sessions/cycles/cycle-01/planner.md"
+  },
+  "artifacts": [
+    "sdd/specs/spec-e-burgos-005-studio-conversation-sessions/cycles/cycle-01/artifacts/audit-thread-creation.md"
+  ],
+  "metrics": {
+    "tasks_total": 15,
+    "tasks_completed": 15,
+    "story_points": 50,
+    "files_created": [
+      "apps/studio-bridge/src/engine/stable-prefix.spec.ts",
+      "apps/studio-bridge/src/engine/stable-prefix.ts",
+      "apps/studio/src/components/NewConversationButton.tsx",
+      "apps/studio/src/components/mission-control/ConversationSelector.spec.tsx",
+      "apps/studio/src/components/mission-control/ConversationSelector.tsx",
+      "apps/studio/src/components/mission-control/ConversationSessionInfo.spec.tsx",
+      "apps/studio/src/components/mission-control/ConversationSessionInfo.tsx",
+      "apps/studio/src/components/mission-control/RelatedDocuments.spec.tsx",
+      "apps/studio/src/components/mission-control/RelatedDocuments.tsx",
+      "apps/studio/src/components/mission-control/liveagentchatfeed.spec.tsx",
+      "apps/studio/src/lib/conversation.spec.ts",
+      "apps/studio/src/lib/conversation.ts",
+      "apps/studio/src/lib/no-fabricated-data.spec.ts",
+      "apps/studio/src/lib/use-conversation-selection.spec.tsx",
+      "apps/studio/src/lib/use-conversation-selection.ts"
+    ],
+    "files_modified": [
+      "apps/studio-bridge/src/engine/claude-sdk-engine.spec.ts",
+      "apps/studio-bridge/src/engine/claude-sdk-engine.ts",
+      "apps/studio-bridge/src/engine/fake-engine.spec.ts",
+      "apps/studio-bridge/src/engine/fake-engine.ts",
+      "apps/studio-bridge/src/engine/types.ts",
+      "apps/studio-bridge/src/sessions/session-manager.spec.ts",
+      "apps/studio-bridge/src/sessions/session-manager.ts",
+      "apps/studio-bridge/src/sessions/store.spec.ts",
+      "apps/studio-bridge/src/sessions/store.ts",
+      "apps/studio/src/components/WorkspaceApp.tsx",
+      "apps/studio/src/components/mission-control/AgentInspectorDrawer.tsx",
+      "apps/studio/src/components/mission-control/AgentMapCanvas.tsx",
+      "apps/studio/src/components/mission-control/AgentNode.tsx",
+      "apps/studio/src/components/mission-control/ChatDialogueCard.tsx",
+      "apps/studio/src/components/mission-control/LiveAgentChatFeed.tsx",
+      "apps/studio/src/components/mission-control/LiveSwarmComms.tsx",
+      "apps/studio/src/components/mission-control/LiveTelemetryHUD.tsx",
+      "apps/studio/src/components/mission-control/agentmap.spec.tsx",
+      "apps/studio/src/components/mission-control/chatdialoguecard.spec.tsx",
+      "apps/studio/src/components/mission-control/inspectordrawer.spec.tsx",
+      "apps/studio/src/components/mission-control/telemetry.spec.tsx",
+      "apps/studio/src/components/workspace/Sidebar.tsx",
+      "apps/studio/src/components/workspace/Workspace.tsx",
+      "apps/studio/src/components/workspace/sidebar.spec.tsx",
+      "apps/studio/src/components/workspace/workspace.spec.tsx",
+      "apps/studio/src/lib/i18n/en.ts",
+      "apps/studio/src/lib/i18n/es.ts",
+      "apps/studio/src/lib/store/state.spec.ts",
+      "apps/studio/src/lib/store/state.ts",
+      "libs/studio-protocol/src/domain.spec.ts",
+      "libs/studio-protocol/src/domain.ts",
+      "libs/studio-protocol/src/handshake.spec.ts",
+      "libs/studio-protocol/src/limits.ts"
+    ],
+    "files_deleted": [
+      "apps/studio/src/components/mission-control/swarm-dialogue.ts"
+    ],
+    "usage": {
+      "tokens_in": 1303000,
+      "tokens_out": 214000,
+      "by_agent": [
+        {
+          "agent": "orchestrator",
+          "label": "cycle-open+context-consolidation",
+          "provider_model": "claude/opus",
+          "effort": "medium",
+          "tokens_in": 70000,
+          "tokens_out": 16000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-25"
+        },
+        {
+          "agent": "functional",
+          "label": "functional.md",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 45000,
+          "tokens_out": 7000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-25"
+        },
+        {
+          "agent": "architect",
+          "label": "architect.md",
+          "provider_model": "claude/sonnet",
+          "effort": "high",
+          "tokens_in": 150000,
+          "tokens_out": 16000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-26"
+        },
+        {
+          "agent": "planner",
+          "label": "planner.md+tasks.json",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 60000,
+          "tokens_out": 14000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-26"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-001",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 40000,
+          "tokens_out": 8000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-26"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-002",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 45000,
+          "tokens_out": 9000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-26"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-003",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 35000,
+          "tokens_out": 7000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-26"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-004",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 30000,
+          "tokens_out": 6000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-26"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-005",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 55000,
+          "tokens_out": 11000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-26"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-006",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 45000,
+          "tokens_out": 9000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-26"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-007",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 48000,
+          "tokens_out": 10000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-26"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-008",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 40000,
+          "tokens_out": 8000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-26"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-009",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 35000,
+          "tokens_out": 7000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-26"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-010",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 70000,
+          "tokens_out": 16000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-26"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-011",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 55000,
+          "tokens_out": 12000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-26"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-012",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 70000,
+          "tokens_out": 16000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-26"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-013",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 35000,
+          "tokens_out": 8000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-26"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-014",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 25000,
+          "tokens_out": 6000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-26"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-015",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 20000,
+          "tokens_out": 4000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-26"
+        },
+        {
+          "agent": "reviewer",
+          "label": "review+close (sonnet por falta de cupo opus hasta 2026-11-01, autorizado por el dev)",
+          "provider_model": "claude/sonnet",
+          "effort": "high",
+          "tokens_in": 330000,
+          "tokens_out": 24000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-26"
+        }
+      ],
+      "approx": true,
+      "source": "declared-estimate",
+      "by_tier": {
+        "claude/opus": {
+          "tokens_in": 70000,
+          "tokens_out": 16000,
+          "approx": true,
+          "source": "declared-estimate"
+        },
+        "claude/sonnet": {
+          "tokens_in": 1233000,
+          "tokens_out": 198000,
+          "approx": true,
+          "source": "declared-estimate"
+        }
+      }
+    },
+    "tasks_skipped": 0
+  },
+  "tables_created": [],
+  "endpoints_implemented": [],
+  "components_created": [
+    "COMP-016",
+    "COMP-017",
+    "COMP-018",
+    "COMP-019",
+    "COMP-020"
+  ],
+  "issues_found": [],
+  "reviewer_report": {
+    "approved": true,
+    "date": "2026-10-26",
+    "ca_results": {
+      "CA-001": "PASS - createThread fija engineSessionId null; session-manager.spec \"creates a thread with the engine provider and no session yet\"; auditoria de Composer, feed y boton en artifacts/audit-thread-creation.md",
+      "CA-002": "PASS - session-manager.spec \"gives two threads different sessions and resumes each one with its own\" + guard sessionOwnedByAnotherThread (RN-02)",
+      "CA-003": "PASS (lectura D-09 confirmada) - NewConversationButton deja un borrador vacio seleccionado (threadId null); el hilo real nace con el primer thread.create porque el puente exige mensaje; workspace.spec \"leaves an empty draft selected when a new conversation is requested\"",
+      "CA-004": "PASS - session-manager.spec CA-002/CA-004: cada hilo retoma su propia sesion; ningun hilo retoma la de otro",
+      "CA-005": "PASS - artifacts/audit-thread-creation.md documenta las dos entradas (Composer, LiveAgentChatFeed) y el boton: ambas cumplen CA-001, el feed envia a la conversacion seleccionada",
+      "CA-006": "PASS - domain.spec \"ThreadInfo session and provider\"; store.spec \"toThreadInfo hides pending, exposes pendingCount and shows the engine session and provider\"; el test que ocultaba el id fue invertido",
+      "CA-007": "PASS - store.spec \"migrates a legacy threads.json without provider, keeping the engine session\" (provider claude por defecto)",
+      "CA-008": "PASS - ConversationSessionInfo.spec + inspectordrawer.spec: muestra id y proveedor reales, \"Sin sesion todavia\" si es nulo, \"sesion no informada\" si falta el campo",
+      "CA-009": "PASS - no-fabricated-data.spec escanea apps/studio/src fuera de *.spec.* sin hallar el patron session- literal; grep manual del reviewer sin resultados fuera de fixtures de test",
+      "CA-010": "PASS - ProviderId es string con regex extensible y KNOWN_PROVIDERS solo amplia el conjunto; domain.spec \"accepts an unknown but well-formed provider\"; providerLabel muestra el valor recibido",
+      "CA-011": "PASS - stable-prefix.ts STABLE_PREFIX_SOURCES en orden context_prompt, constitution, lessons; stable-prefix.spec \"reads the sources in the declared order\"",
+      "CA-012": "PASS - stable-prefix.spec \"is byte for byte identical across two loads\"",
+      "CA-013": "PASS - stable-prefix.spec it.each sobre las tres fuentes \"changes when %s changes\"",
+      "CA-014": "PASS - stable-prefix.spec \"omits a missing file, keeps the rest and warns once per file\"",
+      "CA-015": "PASS - sin codigo de resumen ni compactacion; stable-prefix.spec \"does not summarize: content appears verbatim\"",
+      "CA-016": "PASS - stable-prefix.spec \"carries no variable data\" y claude-sdk-engine usa excludeDynamicSections + snapshot",
+      "CA-017": "PASS - ConversationSelector.spec y agentmap.spec: lista las conversaciones existentes",
+      "CA-018": "PASS - resolveSelectedThreadId usa lastActivity mas reciente; conversation.spec y use-conversation-selection.spec; no-fabricated-data.spec prohibe el default fijo a spec-004",
+      "CA-019": "PASS - agentmap.spec y conversation.spec con dos conversaciones de eventos distintos: cambian agentes, dialogos y specs/fixes",
+      "CA-020": "PASS - conversation.spec: referencesInText sobre user/message/tool/approval; el link del hilo solo suma como source link",
+      "CA-021": "PASS - agentmap.spec y liveagentchatfeed.spec: estado vacio \"Sin actividad todavia\", sin agentes ni dialogos",
+      "CA-022": "PASS - ConversationSelector.spec: sin conversaciones muestra estado vacio con boton Nueva conversacion",
+      "CA-023": "PASS - RelatedDocuments.spec + documentviewermodal.spec: el visor se alimenta de las specs/fixes de la conversacion; desconocidos sin enlace",
+      "CA-024": "PASS - swarm-dialogue.ts eliminado (git D); no-fabricated-data.spec prohibe SWARM_SCRIPTS_BY_SPEC; grep del reviewer sin resultados",
+      "CA-025": "PASS - grep de selectores de spec/fix y filtro de fixes en mission-control sin resultados; AgentInspectorDrawer reescrito",
+      "CA-026": "PASS - telemetry.spec: estado vacio \"Sin telemetria todavia\"; no-fabricated-data.spec prohibe 6611605 y Gemini Flash; INITIAL_TELEMETRY eliminado",
+      "CA-027": "PASS - inspectordrawer.spec: sin \"Google Gemini\", \"GitHub Copilot\" ni session-* fabricados; muestra proveedor y sesion reales o estado vacio",
+      "CA-028": "PASS - inspectordrawer.spec y telemetry.spec reescritos para exigir datos reales o estado vacio; los casos ficticios se eliminaron",
+      "CA-029": "PASS - DocumentViewerModal y agent-documents.ts conservados; documentviewermodal.spec y agent-documents.spec en verde (520 tests de la web)",
+      "CA-030": "PASS - pnpm test por paquete: protocol 80, studio-bridge 518 (+2 skipped), studio web 520 en verde; typecheck y build en verde",
+      "CA-031": "PASS - campos engineSessionId y provider opcionales sin bump de PROTOCOL_VERSION (D-01); domain.spec acepta la forma legada; feature conversation-sessions anunciada en BRIDGE_FEATURES; CE-02/CE-03 cubiertos en la web"
+    },
+    "tests": {
+      "sdd:validate": "OK - 22 files valid, cross-checks passed",
+      "protocol": "passed - 8 files, 80 tests",
+      "bridge": "passed - 30 files, 518 tests (2 skipped)",
+      "studio": "passed - 68 files, 520 tests",
+      "cli": "passed - sdd.generator.integration 15/15 al correrlo solo; en pnpm test raiz agoto 30s de timeout bajo carga paralela (flake sin relacion con el diff, apps/cli no se toco)",
+      "typecheck": "passed - 4 paquetes",
+      "build": "passed"
+    },
+    "notes": "Aprobado sin bloqueantes. Revision corrida en claude/sonnet effort high porque opus estaba sin cupo hasta 2026-11-01 (autorizado por el dev); el tier alto previsto para el reviewer no se uso. Decisiones del architect confirmadas: CA-003 se cumple como borrador vacio (thread.create exige primer mensaje, D-09) y los nodos sin participacion se atenuan en vez de ocultarse (D-08). Desvios de implementadores evaluados y aceptados: provider requerido en AgentEngine adelantado a TASK-002/004 (necesario para que typecheck pase), sameInfo de state.ts compara engineSessionId y provider (sin eso la web no refleja la sesion), LiveAgentChatFeed recibe la conversacion por props (evita una segunda suscripcion). Sin comentarios narrativos, codigo muerto ni TODO en el diff del ciclo; el unico cambio de comentarios es la remocion de uno preexistente en WorkspaceApp.tsx. FIX-e-burgos-004-001 (absorbed, cerrado por el orquestador sin reviewer a pedido del dev) validado: swarm-dialogue.ts borrado, selectores de spec/fix y filtro de fixes ausentes, telemetria y proveedores ficticios eliminados, visor de documentos conservado con tests en verde; queda absorbido en este ciclo. No quedan tasks skipped (15 done). Telemetria: toda estimada (declared-estimate) porque ninguna unidad aporto contador; el reviewer registra 330K/24K estimados. Hallazgos no bloqueantes: (1) la tarjeta RTK de LiveTelemetryHUD sigue fija en Escudo de Compresion RTK Activo / PROTECCION ACTIVA y rtk es opt-in por sdd/tools.json, asi que puede mostrar un estado falso (regla RN-13 en espiritu); (2) la etiqueta STREAMING TELEMETRY ACTIVE y el contador N listos del mapa son textos fijos; (3) varios titulos de test llevan ids CA-NNN (cadenas, no comentarios, por eso no bloquean); (4) el spike de cache real con credenciales (D-06: cache_read_input_tokens > 0 en la segunda sesion y comprobar append con options.agent) no se corrio y no hay evidencia en artifacts/; el efecto real del prompt caching queda sin medir; (5) pnpm test en la raiz corta en el primer paquete que falla y puede ocultar las suites restantes.",
+    "follow_ups": [
+      "Registrar un fix o task para hacer que la tarjeta RTK de LiveTelemetryHUD refleje el estado real de rtk (sdd/tools.json) o muestre estado desconocido",
+      "Correr el spike de cache real con credenciales y dejar la evidencia en artifacts/ (dos sesiones consecutivas con cache_read_input_tokens > 0 en la segunda; verificar append con options.agent)",
+      "Reemplazar los textos fijos STREAMING TELEMETRY ACTIVE y N listos del mapa por datos reales o retirarlos"
+    ]
+  }
+}

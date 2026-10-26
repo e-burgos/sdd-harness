@@ -43,6 +43,988 @@
         "source": "declared-estimate",
         "recorded_at": "2026-10-23"
       }
+    },
+    {
+      "id": "FIX-e-burgos-002",
+      "author": "e-burgos",
+      "spec_id": null,
+      "fix_document": "sdd/fixes/fix-e-burgos-002.md",
+      "type": "IMPROVEMENT",
+      "severity": "medium",
+      "created_at": "2026-10-23",
+      "resolved_at": "2026-10-23",
+      "validated_at": "2026-10-23",
+      "title": "SDD Studio: add bypassPermissions (auto) permission mode",
+      "estimation_hours": 0.5,
+      "description": "Studio only offers default/acceptEdits/plan, so every Bash/MCP call and every SPEC GATE warn asks for approval. Add bypassPermissions to the protocol enum, pass allowDangerouslySkipPermissions to the SDK and let gate warns through in that mode (gate denies still apply).",
+      "justification": "Additive enum value plus a few lines in bridge and composer; no new entities. Blocks day-to-day use of the Studio.",
+      "related_modules": [
+        "studio",
+        "studio-bridge",
+        "studio-protocol"
+      ],
+      "affected_files": [
+        "libs/studio-protocol/src/domain.ts",
+        "apps/studio-bridge/src/engine/claude-sdk-engine.ts",
+        "apps/studio-bridge/src/engine/claude-sdk-engine.spec.ts",
+        "apps/studio/src/components/workspace/Composer.tsx",
+        "apps/studio/src/lib/i18n/es.ts",
+        "apps/studio/src/lib/i18n/en.ts",
+        "libs/studio-protocol/src/domain.spec.ts"
+      ],
+      "test_reference": "apps/studio-bridge/src/engine/claude-sdk-engine.spec.ts",
+      "status": "validated",
+      "cycle": null,
+      "usage": {
+        "provider_model": "claude/opus",
+        "effort": "medium",
+        "tokens_in": 60000,
+        "tokens_out": 8000,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
+    },
+    {
+      "id": "FIX-e-burgos-001-001",
+      "author": "e-burgos",
+      "spec_id": "spec-e-burgos-001-studio-session-ux",
+      "fix_document": "sdd/specs/spec-e-burgos-001-studio-session-ux/fixes/fix-e-burgos-001-001.md",
+      "type": "BUGFIX",
+      "severity": "medium",
+      "created_at": "2026-10-23",
+      "resolved_at": "2026-10-23",
+      "validated_at": "2026-10-23",
+      "title": "workspace.snapshot rescans before answering so a reload recovers missed fs events",
+      "estimation_hours": 0.5,
+      "description": "FSEvents (chokidar on macOS) does not guarantee delivery under load; workspace.snapshot returned the watcher's in-memory snapshot, so a skill created in .claude/skills could stay invisible even after reloading the web. The router now awaits watcher.refresh() before answering; watcher tests stage files atomically and the .claude test retries twice.",
+      "justification": "Found during cycle-02 verification on the same subproject; one router line plus tests, no contract or entity change. Blocked CA-005.5 in real use.",
+      "related_modules": [
+        "studio-bridge"
+      ],
+      "affected_files": [
+        "apps/studio-bridge/src/server/router.ts",
+        "apps/studio-bridge/src/server/router.spec.ts",
+        "apps/studio-bridge/src/workspace/watcher.spec.ts"
+      ],
+      "test_reference": "apps/studio-bridge/src/server/router.spec.ts",
+      "status": "absorbed",
+      "cycle": "cycle-02",
+      "usage": {
+        "provider_model": "claude/opus",
+        "effort": "medium",
+        "agent": "orchestrator",
+        "tokens_in": 60000,
+        "tokens_out": 5000,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
+    },
+    {
+      "id": "FIX-e-burgos-003-001",
+      "author": "e-burgos",
+      "spec_id": "spec-e-burgos-003-studio-mission-control",
+      "fix_document": "sdd/specs/spec-e-burgos-003-studio-mission-control/fixes/fix-e-burgos-003-001.md",
+      "type": "BUGFIX",
+      "severity": "medium",
+      "created_at": "2026-10-23",
+      "resolved_at": "2026-10-23",
+      "validated_at": "2026-10-23",
+      "title": "Fix undefined filter error in Studio and add drawn SVG agent faces with roles",
+      "estimation_hours": 0.5,
+      "description": "StudioHeader and Mission Control components read reactive state from useBridge instead of useStudio, causing TypeError on presence.filter. Also replaced plain text avatar initials with drawn SVG character faces and added role subtitles below names.",
+      "justification": "Fixes runtime crash in Studio Mission Control view and addresses agent visual identification requirements.",
+      "related_modules": [
+        "studio",
+        "studio-mission-control"
+      ],
+      "affected_files": [
+        "apps/studio/src/components/StudioHeader.tsx",
+        "apps/studio/src/components/mission-control/AgentMapCanvas.tsx",
+        "apps/studio/src/components/mission-control/AgentNode.tsx",
+        "apps/studio/src/components/mission-control/EcosystemDashboard.tsx",
+        "apps/studio/src/components/mission-control/LiveTelemetryHUD.tsx",
+        "apps/studio/src/components/mission-control/agentmap.spec.tsx",
+        "apps/studio/src/components/mission-control/ecosystem.spec.tsx",
+        "apps/studio/src/components/mission-control/telemetry.spec.tsx",
+        "apps/studio/src/components/workspace/AgentAvatar.tsx",
+        "apps/studio/src/components/workspace/AgentFace.tsx",
+        "apps/studio/src/components/workspace/Composer.tsx",
+        "apps/studio/src/components/workspace/NavTree.tsx",
+        "apps/studio/src/components/workspace/RightPanel.tsx",
+        "apps/studio/src/components/workspace/Timeline.tsx",
+        "apps/studio/src/components/workspace/agentavatar.spec.tsx",
+        "apps/studio/src/components/workspaceapp.spec.tsx"
+      ],
+      "test_reference": "apps/studio/src/components/workspaceapp.spec.tsx",
+      "status": "validated",
+      "cycle": null,
+      "usage": {
+        "provider_model": "claude/opus",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "tokens_in": 45000,
+        "tokens_out": 4000,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-23"
+      }
+    },
+    {
+      "id": "FIX-e-burgos-004-001",
+      "author": "e-burgos",
+      "spec_id": "spec-e-burgos-004-studio-gates-topology",
+      "fix_document": "sdd/specs/spec-e-burgos-004-studio-gates-topology/fixes/fix-e-burgos-004-001.md",
+      "type": "IMPROVEMENT",
+      "severity": "medium",
+      "created_at": "2026-10-25",
+      "resolved_at": "2026-10-25",
+      "validated_at": "2026-10-25",
+      "title": "RETROACTIVE: register Mission Control work done outside the SPEC GATE and correct fabricated provider attributions",
+      "estimation_hours": 3,
+      "description": "RETROACTIVE registration. Work in apps/studio was implemented outside the SPEC GATE after spec-e-burgos-004 closed (and four earlier commits without a cycle or fix): agent document viewer (agent-documents.ts, DocumentViewerModal), chat dialogue cards, spec/fix selectors and fix filter in AgentInspectorDrawer, canvas-panel selection sync in AgentMapCanvas, per-spec scripted dialogues in swarm-dialogue.ts, provider/session badge, user avatar, dev:studio scripts, plus commits 9bfa00e, 2fbf4f2, f2e7032 and 5658283. Also corrects SDD records that attributed Claude work to Gemini (spec-e-burgos-002 orchestrator unit, all units of spec-e-burgos-003 and spec-e-burgos-004, FIX-e-burgos-003-001): every real thread was Claude.",
+      "justification": "Not a bypass decided in advance: the code already exists and was written without a cycle or fix. Registering it retroactively restores traceability; the fictional scripts and spec/fix selectors are removed by spec-e-burgos-005 US-5 and the swarm is rebuilt around real conversations in US-4. Exceeds the FIX GATE eligibility (more than 5 files); it would have required a cycle, documented as such.",
+      "related_modules": [
+        "studio-gates-topology",
+        "studio-mission-control",
+        "studio-conversation-sessions"
+      ],
+      "affected_files": [
+        "apps/studio/src/lib/agent-documents.ts",
+        "apps/studio/src/lib/agent-documents.spec.ts",
+        "apps/studio/src/components/mission-control/DocumentViewerModal.tsx",
+        "apps/studio/src/components/mission-control/documentviewermodal.spec.tsx",
+        "apps/studio/src/components/mission-control/ChatDialogueCard.tsx",
+        "apps/studio/src/components/mission-control/chatdialoguecard.spec.tsx",
+        "apps/studio/src/components/mission-control/AgentInspectorDrawer.tsx",
+        "apps/studio/src/components/mission-control/inspectordrawer.spec.tsx",
+        "apps/studio/src/components/mission-control/AgentMapCanvas.tsx",
+        "apps/studio/src/components/mission-control/agentmap.spec.tsx",
+        "apps/studio/src/components/mission-control/swarm-dialogue.ts",
+        "apps/studio/src/components/mission-control/LiveSwarmComms.tsx",
+        "apps/studio/src/components/mission-control/LiveTelemetryHUD.tsx",
+        "apps/studio/src/components/mission-control/EcosystemDashboard.tsx",
+        "apps/studio/src/components/mission-control/SubprojectIcon.tsx",
+        "apps/studio/src/components/mission-control/ecosystem.spec.tsx",
+        "apps/studio/src/components/workspaceapp.spec.tsx",
+        "apps/studio/src/components/workspace/AgentFace.tsx",
+        "apps/studio/src/lib/agents.ts",
+        "package.json",
+        "sdd/fixes.json",
+        "sdd/specs/spec-e-burgos-002-studio-ui-polish/cycles/cycle-01/cycle.json",
+        "sdd/specs/spec-e-burgos-003-studio-mission-control/cycles/cycle-01/cycle.json",
+        "sdd/specs/spec-e-burgos-003-studio-mission-control/cycles/cycle-01/tasks.json",
+        "sdd/specs/spec-e-burgos-004-studio-gates-topology/cycles/cycle-01/cycle.json",
+        "sdd/specs/spec-e-burgos-004-studio-gates-topology/cycles/cycle-01/tasks.json"
+      ],
+      "test_reference": "pnpm --filter sdd-studio-web test (58 files, 439 tests green on 2026-10-25) + typecheck clean; apps/studio/src/lib/agent-documents.spec.ts, documentviewermodal.spec.tsx, chatdialoguecard.spec.tsx",
+      "status": "absorbed",
+      "cycle": null,
+      "usage": {
+        "provider_model": "claude/opus",
+        "effort": "medium",
+        "agent": "orchestrator",
+        "tokens_in": 255000,
+        "tokens_out": 44000,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-25",
+        "by_agent": [
+          {
+            "agent": "implementor-front",
+            "label": "retroactive-implementation",
+            "provider_model": "claude/opus",
+            "tokens_in": 160000,
+            "tokens_out": 30000,
+            "approx": true,
+            "source": "declared-estimate",
+            "recorded_at": "2026-10-25"
+          },
+          {
+            "agent": "orchestrator",
+            "label": "retroactive-registration",
+            "provider_model": "claude/opus",
+            "effort": "medium",
+            "tokens_in": 95000,
+            "tokens_out": 14000,
+            "approx": true,
+            "source": "declared-estimate",
+            "recorded_at": "2026-10-25"
+          }
+        ]
+      },
+      "process_note": "Retroactive FIX GATE: code was written before registration (FIX GATE violation, documented). Closed as absorbed by the orchestrator at the explicit request of the dev, not by the reviewer; absorbed into spec-e-burgos-005-studio-conversation-sessions (US-4 conversation-centered swarm, US-5 removal of fictional scripts and spec/fix selectors, document viewer kept). Implementation tokens of earlier turns were not metered: order-of-magnitude estimate from diff size. Reviewer validation 2026-10-26 (spec-e-burgos-005 cycle-01, claude/sonnet): absorption confirmed against the code - swarm-dialogue.ts deleted, spec/fix selectors and fix filter gone from AgentInspectorDrawer, fabricated telemetry/providers/session ids removed (guarded by no-fabricated-data.spec), document viewer and agent-documents.ts kept with green tests. Remaining out-of-scope item: static RTK card in LiveTelemetryHUD."
+    },
+    {
+      "id": "FIX-e-burgos-003",
+      "author": "e-burgos",
+      "spec_id": null,
+      "fix_document": "sdd/fixes/fix-e-burgos-003.md",
+      "type": "IMPROVEMENT",
+      "severity": "low",
+      "created_at": "2026-10-26",
+      "resolved_at": "2026-10-26",
+      "validated_at": null,
+      "title": "SDD Studio: erradicar emojis y unificar iconografía con LucideIcons",
+      "estimation_hours": 1.5,
+      "description": "Erradicar todos los emojis de la app studio e instalar lucide-react para unificar la iconografía técnica del sitio (StudioHeader, Mission Control, GateCards, drawers, HUD, avatar y vistas de workspace).",
+      "justification": "Mejora visual pura y transversal de UI sin cambio de contratos ni entidades de dominio. Excede el umbral estándar de 5 archivos (~20 archivos de presentación), autorizada explícitamente vía FIX GATE como mejora cosmética/UX.",
+      "related_modules": [
+        "studio"
+      ],
+      "affected_files": [
+        "apps/studio/package.json",
+        "pnpm-lock.yaml",
+        "apps/studio/src/lib/gates.ts",
+        "apps/studio/src/components/StudioHeader.tsx",
+        "apps/studio/src/components/ConnectScreen.tsx",
+        "apps/studio/src/components/mission-control/GateIcon.tsx",
+        "apps/studio/src/components/mission-control/GateCard.tsx",
+        "apps/studio/src/components/mission-control/GateInspectorDrawer.tsx",
+        "apps/studio/src/components/mission-control/AgentNode.tsx",
+        "apps/studio/src/components/mission-control/AgentMapCanvas.tsx",
+        "apps/studio/src/components/mission-control/AgentInspectorDrawer.tsx",
+        "apps/studio/src/components/mission-control/ChatDialogueCard.tsx",
+        "apps/studio/src/components/mission-control/DocumentViewerModal.tsx",
+        "apps/studio/src/components/mission-control/EcosystemDashboard.tsx",
+        "apps/studio/src/components/mission-control/LiveAgentChatFeed.tsx",
+        "apps/studio/src/components/mission-control/LiveSwarmComms.tsx",
+        "apps/studio/src/components/mission-control/LiveTelemetryHUD.tsx",
+        "apps/studio/src/components/mission-control/agentmap.spec.tsx",
+        "apps/studio/src/components/workspace/ActivityIndicator.tsx",
+        "apps/studio/src/components/workspace/AgentAvatar.tsx",
+        "apps/studio/src/components/workspace/agentavatar.spec.tsx",
+        "apps/studio/src/components/workspace/ApprovalCard.tsx",
+        "apps/studio/src/components/workspace/AttachmentTray.tsx",
+        "apps/studio/src/components/workspace/AttachmentView.tsx",
+        "apps/studio/src/components/workspace/ChannelView.tsx",
+        "apps/studio/src/components/workspace/Composer.tsx",
+        "apps/studio/src/components/workspace/NavTree.tsx",
+        "apps/studio/src/components/workspace/PanelRail.tsx",
+        "apps/studio/src/components/workspace/PendingMessages.tsx",
+        "apps/studio/src/components/workspace/RightPanel.tsx",
+        "apps/studio/src/components/workspace/rightpanel.spec.tsx",
+        "apps/studio/src/components/workspace/Sidebar.tsx",
+        "apps/studio/src/components/workspace/ThreadView.tsx",
+        "apps/studio/src/components/workspace/Timeline.tsx",
+        "sdd/context/apps/studio/updates/2026-10-26-fix-e-burgos-003.md",
+        "sdd/fixes/fix-e-burgos-003.md"
+      ],
+      "test_reference": "pnpm --filter sdd-studio-web test (58 files, 439 tests green) && pnpm --filter sdd-studio-web typecheck",
+      "status": "implemented",
+      "cycle": null,
+      "usage": {
+        "provider_model": "gemini/flash",
+        "effort": "high",
+        "agent": "steward",
+        "tokens_in": 120000,
+        "tokens_out": 18000,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-26"
+      }
+    },
+    {
+      "id": "FIX-e-burgos-005-001",
+      "author": "e-burgos",
+      "spec_id": "spec-e-burgos-005-studio-conversation-sessions",
+      "fix_document": "sdd/specs/spec-e-burgos-005-studio-conversation-sessions/fixes/fix-e-burgos-005-001.md",
+      "type": "IMPROVEMENT",
+      "severity": "low",
+      "created_at": "2026-10-26",
+      "resolved_at": "2026-10-26",
+      "validated_at": "2026-10-26",
+      "title": "Mission Control: selector de conversaciones compacto y envio dirigido desde el panel del agente",
+      "estimation_hours": 2,
+      "description": "Selector de conversaciones como dropdown en el header de Topologia del Enjambre junto a Nueva conversacion; el input del panel envia con thread.send a la conversacion seleccionada dirigido al agente; boton Abrir nuevo chat con <agente>.",
+      "justification": "Ajuste sobre lo entregado en spec-005 sin contratos ni entidades nuevas; el pedido se partio en dos fixes para respetar el limite de archivos del FIX GATE.",
+      "related_modules": [
+        "studio"
+      ],
+      "affected_files": [
+        "apps/studio/src/components/mission-control/ConversationSelector.tsx",
+        "apps/studio/src/components/mission-control/AgentMapCanvas.tsx",
+        "apps/studio/src/components/mission-control/LiveAgentChatFeed.tsx",
+        "apps/studio/src/components/mission-control/AgentInspectorDrawer.tsx",
+        "apps/studio/src/lib/i18n/"
+      ],
+      "test_reference": "apps/studio/src/components/mission-control/ConversationSelector.spec.tsx",
+      "status": "validated",
+      "cycle": null,
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "tokens_in": 146000,
+        "tokens_out": 18000,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-26",
+        "by_agent": [
+          {
+            "agent": "orchestrator",
+            "provider_model": "claude/sonnet",
+            "effort": "medium",
+            "tokens_in": 60000,
+            "tokens_out": 6000,
+            "approx": true,
+            "source": "declared-estimate"
+          },
+          {
+            "agent": "implementor-front",
+            "provider_model": "claude/sonnet",
+            "effort": "medium",
+            "tokens_in": 70000,
+            "tokens_out": 9000,
+            "approx": true,
+            "source": "declared-estimate"
+          },
+          {
+            "agent": "orchestrator",
+            "label": "dev-verification-record",
+            "provider_model": "claude/sonnet",
+            "effort": "medium",
+            "tokens_in": 16000,
+            "tokens_out": 3000,
+            "approx": true,
+            "source": "declared-estimate"
+          }
+        ]
+      },
+      "process_note": "Verificacion manual 2026-10-26: verificado por el dev en Studio con bridge reiniciado. Validado por el sdd-reviewer el 2026-10-26 (codigo, tests y suite verde del workspace revisados)."
+    },
+    {
+      "id": "FIX-e-burgos-005-002",
+      "author": "e-burgos",
+      "spec_id": "spec-e-burgos-005-studio-conversation-sessions",
+      "fix_document": "sdd/specs/spec-e-burgos-005-studio-conversation-sessions/fixes/fix-e-burgos-005-002.md",
+      "type": "BUGFIX",
+      "severity": "medium",
+      "created_at": "2026-10-26",
+      "resolved_at": "2026-10-26",
+      "validated_at": "2026-10-26",
+      "title": "Mission Control: documentos solo de la conversacion, tarjeta persistida y visor modal centrado",
+      "estimation_hours": 2,
+      "description": "Derivar documentos desde tool calls y FIX-ids reales descartando ids truncados inexistentes en el snapshot; tarjeta contraible persistida en localStorage; DocumentViewerModal centrado siguiendo el visor sdd/docs.",
+      "justification": "Ajuste sobre lo entregado en spec-005 sin contratos ni entidades nuevas; el pedido se partio en dos fixes para respetar el limite de archivos del FIX GATE.",
+      "related_modules": [
+        "studio"
+      ],
+      "affected_files": [
+        "apps/studio/src/lib/conversation.ts",
+        "apps/studio/src/lib/agent-documents.ts",
+        "apps/studio/src/components/mission-control/RelatedDocuments.tsx",
+        "apps/studio/src/components/mission-control/AgentInspectorDrawer.tsx",
+        "apps/studio/src/components/mission-control/DocumentViewerModal.tsx"
+      ],
+      "test_reference": "apps/studio/src/lib/conversation.spec.ts",
+      "status": "validated",
+      "cycle": null,
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "tokens_in": 166000,
+        "tokens_out": 21000,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-26",
+        "by_agent": [
+          {
+            "agent": "orchestrator",
+            "provider_model": "claude/sonnet",
+            "effort": "medium",
+            "tokens_in": 60000,
+            "tokens_out": 6000,
+            "approx": true,
+            "source": "declared-estimate"
+          },
+          {
+            "agent": "implementor-front",
+            "provider_model": "claude/sonnet",
+            "effort": "medium",
+            "tokens_in": 90000,
+            "tokens_out": 12000,
+            "approx": true,
+            "source": "declared-estimate"
+          },
+          {
+            "agent": "orchestrator",
+            "label": "dev-verification-record",
+            "provider_model": "claude/sonnet",
+            "effort": "medium",
+            "tokens_in": 16000,
+            "tokens_out": 3000,
+            "approx": true,
+            "source": "declared-estimate"
+          }
+        ]
+      },
+      "process_note": "Verificacion manual 2026-10-26: verificado por el dev en Studio con bridge reiniciado. Validado por el sdd-reviewer el 2026-10-26 (codigo, tests y suite verde del workspace revisados)."
+    },
+    {
+      "id": "FIX-e-burgos-005-003",
+      "author": "e-burgos",
+      "spec_id": "spec-e-burgos-005-studio-conversation-sessions",
+      "fix_document": "sdd/specs/spec-e-burgos-005-studio-conversation-sessions/fixes/fix-e-burgos-005-003.md",
+      "type": "IMPROVEMENT",
+      "severity": "low",
+      "created_at": "2026-10-26",
+      "resolved_at": "2026-10-26",
+      "validated_at": "2026-10-26",
+      "title": "Mission Control: header del DocumentViewerModal con layout limpio",
+      "estimation_hours": 1.5,
+      "description": "El header del visor mezcla titulo, ruta truncada, 'Copiar ruta' (se superpone y parte en dos lineas), toggle Renderizado/Crudo, Copiar y cerrar. Reorganizar: columna izquierda con titulo+badges y ruta; grupo de acciones alineado a la derecha; cerrar separado.",
+      "justification": "Ajuste de presentacion/derivacion en apps/studio sobre lo entregado en spec-005; sin contratos ni entidades nuevas. Segunda ronda de Mission Control partida en fixes de <=5 archivos.",
+      "related_modules": [
+        "studio"
+      ],
+      "affected_files": [
+        "apps/studio/src/components/mission-control/DocumentViewerModal.tsx",
+        "apps/studio/src/components/mission-control/documentviewermodal.spec.tsx"
+      ],
+      "test_reference": "apps/studio/src/components/mission-control/documentviewermodal.spec.tsx",
+      "status": "validated",
+      "cycle": null,
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "tokens_in": 96000,
+        "tokens_out": 14000,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-26",
+        "by_agent": [
+          {
+            "agent": "orchestrator",
+            "provider_model": "claude/sonnet",
+            "effort": "medium",
+            "tokens_in": 40000,
+            "tokens_out": 5000,
+            "approx": true,
+            "source": "declared-estimate"
+          },
+          {
+            "agent": "implementor-front",
+            "provider_model": "claude/sonnet",
+            "effort": "medium",
+            "tokens_in": 40000,
+            "tokens_out": 6000,
+            "approx": true,
+            "source": "declared-estimate"
+          },
+          {
+            "agent": "orchestrator",
+            "label": "dev-verification-record",
+            "provider_model": "claude/sonnet",
+            "effort": "medium",
+            "tokens_in": 16000,
+            "tokens_out": 3000,
+            "approx": true,
+            "source": "declared-estimate"
+          }
+        ]
+      },
+      "process_note": "Verificacion manual 2026-10-26: verificado por el dev en Studio con bridge reiniciado. Validado por el sdd-reviewer el 2026-10-26 (codigo, tests y suite verde del workspace revisados)."
+    },
+    {
+      "id": "FIX-e-burgos-005-004",
+      "author": "e-burgos",
+      "spec_id": "spec-e-burgos-005-studio-conversation-sessions",
+      "fix_document": "sdd/specs/spec-e-burgos-005-studio-conversation-sessions/fixes/fix-e-burgos-005-004.md",
+      "type": "BUGFIX",
+      "severity": "medium",
+      "created_at": "2026-10-26",
+      "resolved_at": "2026-10-26",
+      "validated_at": "2026-10-26",
+      "title": "Mission Control: documentos por agente generado y specs/fixes solo con documento",
+      "estimation_hours": 1.5,
+      "description": "En la pestana de un agente se listan documentos ajenos y en Enjambre entran specs/fixes sin documentos (p. ej. spec-e-burgos-004-studio-gates-topology). Causa: relatedSpecs agrega por tool Read y por link.target auto-asignado, y relatedFixes por mencion textual, sin exigir documento generado. Solucion: documentos = solo Write/Edit/MultiEdit (Read excluido); cada documento lleva los agentes autores (item.author.agent); pestana de agente filtra por agente, Enjambre muestra todos; specs y fixes se derivan de los documentos generados (un fix solo aparece enlazado a su fix doc).",
+      "justification": "Ajuste de presentacion/derivacion en apps/studio sobre lo entregado en spec-005; sin contratos ni entidades nuevas. Segunda ronda de Mission Control partida en fixes de <=5 archivos.",
+      "related_modules": [
+        "studio"
+      ],
+      "affected_files": [
+        "apps/studio/src/lib/conversation.ts",
+        "apps/studio/src/lib/conversation.spec.ts",
+        "apps/studio/src/components/mission-control/RelatedDocuments.tsx",
+        "apps/studio/src/components/mission-control/RelatedDocuments.spec.tsx",
+        "apps/studio/src/components/mission-control/AgentInspectorDrawer.tsx",
+        "apps/studio/src/lib/agent-documents.ts",
+        "apps/studio/src/lib/agent-documents.spec.ts",
+        "apps/studio/src/components/mission-control/agentmap.spec.tsx",
+        "apps/studio/src/components/mission-control/inspectordrawer.spec.tsx",
+        "apps/studio/src/lib/i18n/"
+      ],
+      "test_reference": "apps/studio/src/lib/conversation.spec.ts",
+      "status": "validated",
+      "cycle": null,
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "tokens_in": 156000,
+        "tokens_out": 21000,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-26",
+        "by_agent": [
+          {
+            "agent": "orchestrator",
+            "provider_model": "claude/sonnet",
+            "effort": "medium",
+            "tokens_in": 70000,
+            "tokens_out": 9000,
+            "approx": true,
+            "source": "declared-estimate"
+          },
+          {
+            "agent": "implementor-front",
+            "provider_model": "claude/sonnet",
+            "effort": "medium",
+            "tokens_in": 70000,
+            "tokens_out": 9000,
+            "approx": true,
+            "source": "declared-estimate"
+          },
+          {
+            "agent": "orchestrator",
+            "label": "dev-verification-record",
+            "provider_model": "claude/sonnet",
+            "effort": "medium",
+            "tokens_in": 16000,
+            "tokens_out": 3000,
+            "approx": true,
+            "source": "declared-estimate"
+          }
+        ]
+      },
+      "process_note": "Verificacion manual 2026-10-26: verificado por el dev en Studio con bridge reiniciado. Validado por el sdd-reviewer el 2026-10-26 (codigo, tests y suite verde del workspace revisados)."
+    },
+    {
+      "id": "FIX-e-burgos-005-005",
+      "author": "e-burgos",
+      "spec_id": "spec-e-burgos-005-studio-conversation-sessions",
+      "fix_document": "sdd/specs/spec-e-burgos-005-studio-conversation-sessions/fixes/fix-e-burgos-005-005.md",
+      "type": "BUGFIX",
+      "severity": "medium",
+      "created_at": "2026-10-26",
+      "resolved_at": "2026-10-26",
+      "validated_at": "2026-10-26",
+      "title": "Mission Control: sesion y proveedor visibles, sin falso 'no informado' por bridge desactualizado",
+      "estimation_hours": 1.5,
+      "description": "'proveedor no informado / sesion no informada' persiste porque el bridge en ejecucion (iniciado 11:26) es anterior al commit 414b1fd (11:42) cuyo toThreadInfo ya no descarta engineSessionId ni inyecta provider; el bridge viejo hace `{engineSessionId: _session, ...}` y lo elimina del ThreadInfo, y nunca emite provider. No son sesiones externas de Claude Code: no existe ingesta de hooks/transcripts. Solucion sin tocar contrato: la UI distingue 'bridge desactualizado, reinicialo' de 'sin sesion todavia' y muestra el id de sesion completo copiable; se reinicia el bridge. El titulo de /resume (SDKSessionInfo.summary/customTitle via getSessionInfo) requiere campo nuevo en ThreadInfo: queda fuera, ver nota de elegibilidad.",
+      "justification": "Ajuste de presentacion/derivacion en apps/studio sobre lo entregado en spec-005; sin contratos ni entidades nuevas. Segunda ronda de Mission Control partida en fixes de <=5 archivos.",
+      "related_modules": [
+        "studio"
+      ],
+      "affected_files": [
+        "apps/studio/src/components/mission-control/ConversationSessionInfo.tsx",
+        "apps/studio/src/components/mission-control/ConversationSessionInfo.spec.tsx",
+        "apps/studio/src/lib/i18n/es.ts",
+        "apps/studio/src/lib/i18n/en.ts"
+      ],
+      "test_reference": "apps/studio/src/components/mission-control/ConversationSessionInfo.spec.tsx",
+      "status": "validated",
+      "cycle": null,
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "tokens_in": 116000,
+        "tokens_out": 15000,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-26",
+        "by_agent": [
+          {
+            "agent": "orchestrator",
+            "provider_model": "claude/sonnet",
+            "effort": "medium",
+            "tokens_in": 50000,
+            "tokens_out": 6000,
+            "approx": true,
+            "source": "declared-estimate"
+          },
+          {
+            "agent": "implementor-front",
+            "provider_model": "claude/sonnet",
+            "effort": "medium",
+            "tokens_in": 50000,
+            "tokens_out": 6000,
+            "approx": true,
+            "source": "declared-estimate"
+          },
+          {
+            "agent": "orchestrator",
+            "label": "dev-verification-record",
+            "provider_model": "claude/sonnet",
+            "effort": "medium",
+            "tokens_in": 16000,
+            "tokens_out": 3000,
+            "approx": true,
+            "source": "declared-estimate"
+          }
+        ]
+      },
+      "process_note": "Verificacion manual 2026-10-26: verificado por el dev en Studio con bridge reiniciado. Diagnostico (bridge anterior a 414b1fd) confirmado. Validado por el sdd-reviewer el 2026-10-26 (codigo, tests y suite verde del workspace revisados)."
+    },
+    {
+      "id": "FIX-e-burgos-005-006",
+      "author": "e-burgos",
+      "spec_id": "spec-e-burgos-005-studio-conversation-sessions",
+      "fix_document": "sdd/specs/spec-e-burgos-005-studio-conversation-sessions/fixes/fix-e-burgos-005-006.md",
+      "type": "IMPROVEMENT",
+      "severity": "low",
+      "created_at": "2026-10-26",
+      "resolved_at": "2026-10-26",
+      "validated_at": "2026-10-26",
+      "title": "Mission Control: documentos y relaciones de la conversacion derivados tambien de Bash y menciones, agrupados por ciclo",
+      "estimation_hours": 2,
+      "description": "El panel 'Specs y fixes relacionados' omite casi todos los documentos de la conversacion y colapsa los ciclos en uno solo. Diagnostico con datos reales (hilo bf119c6c, .sdd-studio/threads/bf119c6c-9a6a-4c78-9f83-a99ef37c2cf2.jsonl, 1086 eventos): los eventos de subagentes SI se persisten y llegan (author.agent = sdd-functional/planner/architect/implementor-*/reviewer, parentToolUseId presente). Pero solo 6 tool.start son Write/Edit (5 sobre sdd/: fix-004-001.md, spec-005.spec.md, brief.yaml, architect.md + context update); todo el resto se escribio con Bash (heredocs `cat > $D/cycle.json`, `cat > functional.md` tras `cd`, script /tmp/gen-planner.mjs para planner.md/tasks.json, `sed -i`, `cat >>` a fix-005-004.md, addfix.mjs para fixes.json). conversation.ts documentOf (L127-L130) solo acepta Write/Edit/MultiEdit y exige ruta sdd/specs/<spec>/ literal en item.summary; Bash queda descartado. Ademas el summary de Bash se trunca a 160 chars (apps/studio-bridge/src/engine/tool-summary.ts:8), asi que parte de los destinos es irrecuperable en el front. Ademas relatedFromDocuments (conversation.ts L156-L171) guarda un unico `cycle` por spec (el ultimo gana), sin agrupar por ciclo.",
+      "justification": "Ajuste de derivacion/presentacion en apps/studio sobre datos ya disponibles (eventos del hilo y snapshot); sin contratos, endpoints ni entidades nuevas; <=5 archivos. Tercera ronda de Mission Control partida en fixes coherentes.",
+      "related_modules": [
+        "studio"
+      ],
+      "affected_files": [
+        "apps/studio/src/lib/conversation.ts",
+        "apps/studio/src/lib/conversation.spec.ts",
+        "apps/studio/src/lib/conversation-bash-paths.ts",
+        "apps/studio/src/lib/conversation-bash-paths.spec.ts"
+      ],
+      "test_reference": "conversation.spec.ts con fixtures del hilo real",
+      "status": "validated",
+      "cycle": null,
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "tokens_in": 79000,
+        "tokens_out": 15500,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-26",
+        "by_agent": [
+          {
+            "agent": "orchestrator",
+            "provider_model": "claude/sonnet",
+            "effort": "medium",
+            "tokens_in": 9000,
+            "tokens_out": 1500,
+            "approx": true,
+            "source": "declared-estimate"
+          },
+          {
+            "agent": "implementor-front",
+            "provider_model": "claude/sonnet",
+            "effort": "medium",
+            "tokens_in": 70000,
+            "tokens_out": 14000,
+            "approx": true,
+            "source": "declared-estimate"
+          }
+        ]
+      }
+    },
+    {
+      "id": "FIX-e-burgos-005-007",
+      "author": "e-burgos",
+      "spec_id": "spec-e-burgos-005-studio-conversation-sessions",
+      "fix_document": "sdd/specs/spec-e-burgos-005-studio-conversation-sessions/fixes/fix-e-burgos-005-007.md",
+      "type": "IMPROVEMENT",
+      "severity": "low",
+      "created_at": "2026-10-26",
+      "resolved_at": "2026-10-26",
+      "validated_at": "2026-10-26",
+      "title": "Mission Control: Specs y fixes relacionados agrupa spec -> ciclo -> archivo y fix -> documento",
+      "estimation_hours": 1.5,
+      "description": "RelatedDocuments.tsx (L89-L91) lista los documentos de una spec en plano filtrando `fixId === null` y muestra un solo ciclo; no agrupa por ciclo y los docs de fix quedan separados de su spec. Consume el modelo agrupado de FIX-e-burgos-005-006.",
+      "justification": "Ajuste de derivacion/presentacion en apps/studio sobre datos ya disponibles (eventos del hilo y snapshot); sin contratos, endpoints ni entidades nuevas; <=5 archivos. Tercera ronda de Mission Control partida en fixes coherentes.",
+      "related_modules": [
+        "studio"
+      ],
+      "affected_files": [
+        "apps/studio/src/components/mission-control/RelatedDocuments.tsx",
+        "apps/studio/src/components/mission-control/RelatedDocuments.spec.tsx",
+        "apps/studio/src/lib/i18n/es.ts",
+        "apps/studio/src/lib/i18n/en.ts"
+      ],
+      "test_reference": "RelatedDocuments.spec.tsx",
+      "status": "validated",
+      "cycle": null,
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "tokens_in": 54000,
+        "tokens_out": 10500,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-26",
+        "by_agent": [
+          {
+            "agent": "orchestrator",
+            "provider_model": "claude/sonnet",
+            "effort": "medium",
+            "tokens_in": 9000,
+            "tokens_out": 1500,
+            "approx": true,
+            "source": "declared-estimate"
+          },
+          {
+            "agent": "implementor-front",
+            "provider_model": "claude/sonnet",
+            "effort": "medium",
+            "tokens_in": 45000,
+            "tokens_out": 9000,
+            "approx": true,
+            "source": "declared-estimate"
+          }
+        ]
+      }
+    },
+    {
+      "id": "FIX-e-burgos-005-008",
+      "author": "e-burgos",
+      "spec_id": "spec-e-burgos-005-studio-conversation-sessions",
+      "fix_document": "sdd/specs/spec-e-burgos-005-studio-conversation-sessions/fixes/fix-e-burgos-005-008.md",
+      "type": "IMPROVEMENT",
+      "severity": "low",
+      "created_at": "2026-10-26",
+      "resolved_at": "2026-10-26",
+      "validated_at": "2026-10-26",
+      "title": "Header: chip de gate refleja el gate real de la conversacion seleccionada",
+      "estimation_hours": 1.5,
+      "description": "StudioHeader.tsx L85 muestra 'SPEC GATE IDLE' literal cuando no hay ciclo in-progress global (activeCycle del snapshot); ignora la conversacion seleccionada, que puede estar trabajando un FIX GATE (FIX-e-burgos-005-00x).",
+      "justification": "Ajuste de derivacion/presentacion en apps/studio sobre datos ya disponibles (eventos del hilo y snapshot); sin contratos, endpoints ni entidades nuevas; <=5 archivos. Tercera ronda de Mission Control partida en fixes coherentes.",
+      "related_modules": [
+        "studio"
+      ],
+      "affected_files": [
+        "apps/studio/src/lib/conversation-gate.ts",
+        "apps/studio/src/lib/conversation-gate.spec.ts",
+        "apps/studio/src/lib/use-selected-conversation.ts",
+        "apps/studio/src/components/StudioHeader.tsx",
+        "apps/studio/src/components/studioheader.spec.tsx",
+        "apps/studio/src/lib/store/state.ts",
+        "apps/studio/src/lib/store/store.ts",
+        "apps/studio/src/lib/use-conversation-selection.ts",
+        "apps/studio/src/components/workspace/Workspace.tsx",
+        "apps/studio/src/lib/conversation.ts",
+        "apps/studio/src/lib/i18n/es.ts",
+        "apps/studio/src/lib/i18n/en.ts"
+      ],
+      "test_reference": "conversation-gate.spec.ts",
+      "status": "validated",
+      "cycle": null,
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "tokens_in": 69000,
+        "tokens_out": 13500,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-26",
+        "by_agent": [
+          {
+            "agent": "orchestrator",
+            "provider_model": "claude/sonnet",
+            "effort": "medium",
+            "tokens_in": 9000,
+            "tokens_out": 1500,
+            "approx": true,
+            "source": "declared-estimate"
+          },
+          {
+            "agent": "implementor-front",
+            "provider_model": "claude/sonnet",
+            "effort": "medium",
+            "tokens_in": 60000,
+            "tokens_out": 12000,
+            "approx": true,
+            "source": "declared-estimate"
+          }
+        ]
+      }
+    },
+    {
+      "id": "FIX-e-burgos-005-009",
+      "author": "e-burgos",
+      "spec_id": "spec-e-burgos-005-studio-conversation-sessions",
+      "fix_document": "sdd/specs/spec-e-burgos-005-studio-conversation-sessions/fixes/fix-e-burgos-005-009.md",
+      "type": "IMPROVEMENT",
+      "severity": "low",
+      "created_at": "2026-10-26",
+      "resolved_at": "2026-10-26",
+      "validated_at": "2026-10-26",
+      "title": "Header: al tocar el chip de gate se abre un modal con el resumen del estado del enjambre",
+      "estimation_hours": 2,
+      "description": "El chip del header no es interactivo; el dev no tiene un lugar donde ver gate, spec/ciclo/fix activos, tasks/fixes con estado, agentes participantes y ultimo evento de la conversacion seleccionada.",
+      "justification": "Ajuste de derivacion/presentacion en apps/studio sobre datos ya disponibles (eventos del hilo y snapshot); sin contratos, endpoints ni entidades nuevas; <=5 archivos. Tercera ronda de Mission Control partida en fixes coherentes.",
+      "related_modules": [
+        "studio"
+      ],
+      "affected_files": [
+        "apps/studio/src/components/GateStatusModal.tsx",
+        "apps/studio/src/components/GateStatusModal.spec.tsx",
+        "apps/studio/src/components/StudioHeader.tsx",
+        "apps/studio/src/components/studioheader.spec.tsx",
+        "apps/studio/src/lib/conversation-gate.ts",
+        "apps/studio/src/lib/i18n/es.ts",
+        "apps/studio/src/lib/i18n/en.ts"
+      ],
+      "test_reference": "GateStatusModal.spec.tsx",
+      "status": "validated",
+      "cycle": null,
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "tokens_in": 64000,
+        "tokens_out": 12500,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-26",
+        "by_agent": [
+          {
+            "agent": "orchestrator",
+            "provider_model": "claude/sonnet",
+            "effort": "medium",
+            "tokens_in": 9000,
+            "tokens_out": 1500,
+            "approx": true,
+            "source": "declared-estimate"
+          },
+          {
+            "agent": "implementor-front",
+            "provider_model": "claude/sonnet",
+            "effort": "medium",
+            "tokens_in": 55000,
+            "tokens_out": 11000,
+            "approx": true,
+            "source": "declared-estimate"
+          }
+        ]
+      }
+    },
+    {
+      "id": "FIX-e-burgos-005-010",
+      "author": "e-burgos",
+      "spec_id": "spec-e-burgos-005-studio-conversation-sessions",
+      "fix_document": "sdd/specs/spec-e-burgos-005-studio-conversation-sessions/fixes/fix-e-burgos-005-010.md",
+      "type": "IMPROVEMENT",
+      "severity": "low",
+      "created_at": "2026-10-26",
+      "resolved_at": "2026-10-26",
+      "validated_at": "2026-10-26",
+      "title": "Workspace: panel derecho muestra documentos, actividad y specs/ciclos/fixes de la conversacion",
+      "estimation_hours": 2,
+      "description": "RightPanel.tsx deriva 'Detalles' solo de cycleForChannel(snapshot, channelId) (L111) -> 'Este canal no tiene un ciclo activo' y 'Actividad' solo de presence (L22-L27) -> 'Nadie esta trabajando ahora'. ThreadLinkPicker muestra 'Sin asociar' porque link.target es kind none (threads.json: link.source auto) y nada deriva la relacion de los eventos.",
+      "justification": "Ajuste de derivacion/presentacion en apps/studio sobre datos ya disponibles (eventos del hilo y snapshot); sin contratos, endpoints ni entidades nuevas; <=5 archivos. Tercera ronda de Mission Control partida en fixes coherentes.",
+      "related_modules": [
+        "studio"
+      ],
+      "affected_files": [
+        "apps/studio/src/components/workspace/RightPanel.tsx",
+        "apps/studio/src/components/workspace/rightpanel.spec.tsx",
+        "apps/studio/src/components/workspace/ConversationPanelSections.tsx",
+        "apps/studio/src/components/workspace/ThreadLinkPicker.tsx",
+        "apps/studio/src/components/workspace/threadlink.spec.tsx",
+        "apps/studio/src/components/workspace/Workspace.tsx",
+        "apps/studio/src/lib/i18n/es.ts",
+        "apps/studio/src/lib/i18n/en.ts"
+      ],
+      "test_reference": "RightPanel.spec.tsx",
+      "status": "validated",
+      "cycle": null,
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "tokens_in": 79000,
+        "tokens_out": 15500,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-26",
+        "by_agent": [
+          {
+            "agent": "orchestrator",
+            "provider_model": "claude/sonnet",
+            "effort": "medium",
+            "tokens_in": 9000,
+            "tokens_out": 1500,
+            "approx": true,
+            "source": "declared-estimate"
+          },
+          {
+            "agent": "implementor-front",
+            "provider_model": "claude/sonnet",
+            "effort": "medium",
+            "tokens_in": 70000,
+            "tokens_out": 14000,
+            "approx": true,
+            "source": "declared-estimate"
+          }
+        ]
+      }
+    },
+    {
+      "id": "FIX-e-burgos-005-011",
+      "author": "e-burgos",
+      "spec_id": "spec-e-burgos-005-studio-conversation-sessions",
+      "fix_document": "sdd/specs/spec-e-burgos-005-studio-conversation-sessions/fixes/fix-e-burgos-005-011.md",
+      "type": "BUGFIX",
+      "severity": "low",
+      "created_at": "2026-10-26",
+      "resolved_at": "2026-10-26",
+      "validated_at": "2026-10-26",
+      "title": "RelatedDocuments: overflow y truncado en panel angosto (~300px)",
+      "estimation_hours": 1.5,
+      "description": "En el panel derecho del Workspace (ConversationPanelSections → RelatedDocuments), cuando el ancho es ~300px: textos de la tarjeta 'Specs y fixes relacionados' se escapan del contenedor (ids de spec largos, nombres de archivo, fragmentos, lista de agentes). Deben truncarse con ellipsis + title completo, min-w-0 en flex children, agentes en línea propia o truncados. La fila del documento de un fix muestra solo agentes, no el nombre del archivo. 'Dónde estás' muestra FIX-e-burgos-005-004 aunque se trabajó después FIX-e-burgos-005-006..010; la regla deriveConversationGate debe tomar el fix más reciente realmente trabajado.",
+      "justification": "Ajuste de presentación/derivación en apps/studio sobre datos ya disponibles (conversación y snapshot); sin contratos, endpoints ni entidades nuevas; <=5 archivos.",
+      "related_modules": [
+        "studio"
+      ],
+      "affected_files": [
+        "apps/studio/src/components/mission-control/RelatedDocuments.tsx",
+        "apps/studio/src/lib/conversation-gate.ts",
+        "apps/studio/src/lib/conversation.ts",
+        "apps/studio/src/components/workspace/RightPanel.tsx"
+      ],
+      "test_reference": "RelatedDocuments.spec.tsx, conversation-gate.spec.ts",
+      "status": "validated",
+      "cycle": null,
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "tokens_in": 175000,
+        "tokens_out": 27000,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-26",
+        "by_agent": [
+          {
+            "agent": "orchestrator",
+            "provider_model": "claude/haiku",
+            "effort": "medium",
+            "tokens_in": 25000,
+            "tokens_out": 3000,
+            "approx": true,
+            "source": "declared-estimate"
+          },
+          {
+            "agent": "implementor-front",
+            "provider_model": "claude/sonnet",
+            "effort": "medium",
+            "tokens_in": 110000,
+            "tokens_out": 18000,
+            "approx": true,
+            "source": "declared-estimate"
+          },
+          {
+            "agent": "implementor-front",
+            "provider_model": "claude/sonnet",
+            "effort": "medium",
+            "tokens_in": 40000,
+            "tokens_out": 6000,
+            "approx": true,
+            "source": "declared-estimate"
+          }
+        ]
+      }
     }
   ]
 }

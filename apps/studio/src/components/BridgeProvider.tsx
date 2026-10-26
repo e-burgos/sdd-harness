@@ -2,8 +2,9 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useStore } from 'zustand';
-import type { AuthMode } from '@sdd-studio/protocol';
+import type { AuthMode, AuthPreference } from '@sdd-studio/protocol';
 import { bootstrap } from '@/lib/bootstrap';
+import { loadAuthPreference, saveAuthPreference } from '@/lib/auth-preference';
 import { clearApiKey, loadApiKey, saveApiKey } from '@/lib/api-key';
 import { BridgeClient, BridgeError, type ConnectionState } from '@/lib/bridge/client';
 import { bridgeUrl, type PairingInfo } from '@/lib/bridge/pairing';
@@ -24,6 +25,9 @@ export interface BridgeContextValue {
   /** 'tab' | 'saved' when this browser holds a key, null otherwise. */
   apiKeySource: 'tab' | 'saved' | null;
   setApiKey: (apiKey: string | null, remember: boolean) => Promise<void>;
+  /** Which auth tab is in effect for the SDK subprocess, null until the user (or storage) decides. */
+  authPreference: AuthPreference | null;
+  setAuthPreference: (preference: AuthPreference) => Promise<void>;
 }
 
 export const BridgeContext = createContext<BridgeContextValue | null>(null);
@@ -37,16 +41,29 @@ export function BridgeProvider({ pairing, children }: { pairing: PairingInfo; ch
   const [authMode, setAuthMode] = useState<AuthMode | null>(null);
   const [apiKeySource, setApiKeySource] = useState<'tab' | 'saved' | null>(null);
 
-  const pushApiKey = useCallback(
-    async (apiKey: string | null) => {
-      const result = (await client.request({ cmd: 'auth.set', apiKey })) as { authMode: AuthMode };
+  const [authPreference, setAuthPreferenceState] = useState<AuthPreference | null>(null);
+
+  const pushAuth = useCallback(
+    async (apiKey: string | null, mode: AuthPreference) => {
+      const result = (await client.request({ cmd: 'auth.set', apiKey, mode })) as { authMode: AuthMode };
       setAuthMode(result.authMode);
     },
     [client],
   );
+  const pushApiKey = useCallback((apiKey: string | null) => pushAuth(apiKey, 'api-key'), [pushAuth]);
+  const setAuthPreference = useCallback(
+    async (preference: AuthPreference) => {
+      await pushAuth(preference === 'api-key' ? (loadApiKey()?.apiKey ?? null) : null, preference);
+      saveAuthPreference(preference);
+      setAuthPreferenceState(preference);
+    },
+    [pushAuth],
+  );
   const setApiKey = useCallback(
     async (apiKey: string | null, remember: boolean) => {
       await pushApiKey(apiKey);
+      saveAuthPreference('api-key');
+      setAuthPreferenceState('api-key');
       if (apiKey) saveApiKey(apiKey, remember);
       else clearApiKey();
       setApiKeySource(apiKey ? (remember ? 'saved' : 'tab') : null);
@@ -79,7 +96,10 @@ export function BridgeProvider({ pairing, children }: { pairing: PairingInfo; ch
         // The bridge keeps the key in memory only: hand it back after every (re)connection.
         const stored = loadApiKey();
         setApiKeySource(stored ? (stored.remembered ? 'saved' : 'tab') : null);
-        if (stored) pushApiKey(stored.apiKey).catch((e: unknown) => console.error('[sdd-studio] auth.set:', e instanceof Error ? e.message : 'failed'));
+        const preference = loadAuthPreference();
+        setAuthPreferenceState(preference);
+        if (preference === 'subscription') pushAuth(null, 'subscription').catch((e: unknown) => console.error('[sdd-studio] auth.set:', e instanceof Error ? e.message : 'failed'));
+        else if (stored) pushApiKey(stored.apiKey).catch((e: unknown) => console.error('[sdd-studio] auth.set:', e instanceof Error ? e.message : 'failed'));
         sync();
       }
       else {
@@ -94,11 +114,11 @@ export function BridgeProvider({ pairing, children }: { pairing: PairingInfo; ch
       offEvents();
       client.close();
     };
-  }, [client, store, sync, pushApiKey]);
+  }, [client, store, sync, pushApiKey, pushAuth]);
 
   const value = useMemo(
-    () => ({ client, store, connection, pairing, syncError, retrySync: sync, authMode, apiKeySource, setApiKey }),
-    [client, store, connection, pairing, syncError, sync, authMode, apiKeySource, setApiKey],
+    () => ({ client, store, connection, pairing, syncError, retrySync: sync, authMode, apiKeySource, setApiKey, authPreference, setAuthPreference }),
+    [client, store, connection, pairing, syncError, sync, authMode, apiKeySource, setApiKey, authPreference, setAuthPreference],
   );
   return <BridgeContext.Provider value={value}>{children}</BridgeContext.Provider>;
 }

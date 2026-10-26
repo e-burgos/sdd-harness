@@ -4,7 +4,8 @@ import { applyServerEvent, beginSync, initialState, loadHistory, setBotHistory, 
 const info = (over: Partial<ThreadInfo> = {}): ThreadInfo => ({
   id: 't1', channelId: 'general', title: 'hola', agent: 'sdd-orchestrator',
   options: { agent: 'sdd-orchestrator', model: 'kit', effort: null, permissionMode: 'default' },
-  status: 'idle', createdAt: '2026-10-07T10:00:00Z', lastActivity: '2026-10-07T10:00:00Z', ...over,
+  status: 'idle', createdAt: '2026-10-07T10:00:00Z', lastActivity: '2026-10-07T10:00:00Z',
+  link: { target: { kind: 'none' }, source: 'legacy' }, pendingCount: 0, ...over,
 });
 
 describe('state reducers', () => {
@@ -58,11 +59,30 @@ describe('state reducers', () => {
     expect(buffer[0]?.seq).toBe(5);
   });
 
+  it('republishes thread info when only the session title changes', () => {
+    const s = setThreads(initialState(), [info({ sessionTitle: null })]);
+    const next = applyServerEvent(s, { kind: 'thread.updated', thread: info({ sessionTitle: 'Revisar spec' }) });
+    expect(next.threads.t1?.info?.sessionTitle).toBe('Revisar spec');
+  });
+
+  it('republishes thread info when only the context reading changes', () => {
+    const s = setThreads(initialState(), [info({ contextUsage: { usedTokens: 10, maxTokens: 200_000 } })]);
+    const same = applyServerEvent(s, { kind: 'thread.updated', thread: info({ contextUsage: { usedTokens: 10, maxTokens: 200_000 } }) });
+    expect(same).toBe(s);
+    const next = applyServerEvent(s, { kind: 'thread.updated', thread: info({ contextUsage: { usedTokens: 90_000, maxTokens: 200_000 } }) });
+    expect(next.threads.t1?.info?.contextUsage?.usedTokens).toBe(90_000);
+  });
+
   it('keeps identities when incoming thread info is equal', () => {
     const s = setThreads(initialState(), [info()]);
     expect(setThreads(s, [info()])).toBe(s);
     expect(applyServerEvent(s, { kind: 'thread.updated', thread: info() })).toBe(s);
     expect(applyServerEvent(s, { kind: 'thread.updated', thread: info({ status: 'running' }) })).not.toBe(s);
+    const relinked = info({ link: { target: { kind: 'fix', fixId: 'FIX-1' }, source: 'manual' } });
+    expect(applyServerEvent(s, { kind: 'thread.updated', thread: relinked }).threads['t1']?.info?.link).toEqual(relinked.link);
+    expect(applyServerEvent(s, { kind: 'thread.updated', thread: info({ pendingCount: 2 }) }).threads['t1']?.info?.pendingCount).toBe(2);
+    const withSession = applyServerEvent(s, { kind: 'thread.updated', thread: info({ engineSessionId: 'sess-1', provider: 'claude' }) });
+    expect(withSession.threads['t1']?.info).toMatchObject({ engineSessionId: 'sess-1', provider: 'claude' });
   });
 
   it('resolves an approval answered in another tab', () => {
@@ -75,7 +95,7 @@ describe('state reducers', () => {
   });
 
   it('keeps workspace snapshot, presence, bot events and command runs', () => {
-    const snapshot = { project: 'p', profile: 'team', kitVersion: null, specs: [], cycles: [], fixes: [], agents: [], gateMode: 'block', pricing: null, stale: [] } satisfies WorkspaceSnapshot;
+    const snapshot = { project: 'p', profile: 'team', kitVersion: null, specs: [], cycles: [], fixes: [], agents: [], skills: [], gateMode: 'block', pricing: null, stale: [] } satisfies WorkspaceSnapshot;
     let s = applyServerEvent(initialState(), { kind: 'workspace.changed', areas: ['specs'], snapshot });
     s = applyServerEvent(s, { kind: 'presence.changed', presence: [{ agent: 'a', state: 'working', threadId: 't1', specId: null, tool: 'Read' }] });
     s = setBotHistory(s, 'fixes', [{ channelId: 'fixes', botKind: 'fix.created', payload: { fixId: 'F1' } }]);

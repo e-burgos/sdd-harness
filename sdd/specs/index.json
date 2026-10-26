@@ -2,5 +2,130 @@
   "$schema": "../schemas/specs-index.schema.json",
   "_comment": "Central SDD spec registry. Append-only — never edit existing entries, only add new ones. Updated when a spec branch is merged to master.",
   "_convention": "Folder/ID format: spec-[gh-user]-[NNN]-[slug] where NNN is the author's own counter (not global). Each developer maintains their own sequence.",
-  "specs": []
+  "specs": [
+    {
+      "id": "spec-e-burgos-001-studio-session-ux",
+      "author": "e-burgos",
+      "slug": "studio-session-ux",
+      "folder": "sdd/specs/spec-e-burgos-001-studio-session-ux",
+      "file": "sdd/specs/spec-e-burgos-001-studio-session-ux/spec-e-burgos-001-studio-session-ux.spec.md",
+      "module": "studio-session-ux",
+      "app": "apps/studio",
+      "status": "completed",
+      "title": "SDD Studio: aprobaciones de sesión, imágenes en el chat y lista de hilos activos",
+      "created_at": "2026-10-23",
+      "completed_at": "2026-10-23",
+      "depends_on": []
+    },
+    {
+      "id": "spec-e-burgos-002-studio-ui-polish",
+      "author": "e-burgos",
+      "slug": "studio-ui-polish",
+      "folder": "sdd/specs/spec-e-burgos-002-studio-ui-polish",
+      "file": "sdd/specs/spec-e-burgos-002-studio-ui-polish/spec-e-burgos-002-studio-ui-polish.spec.md",
+      "module": "studio-ui-polish",
+      "app": "apps/studio",
+      "status": "completed",
+      "title": "SDD Studio: pulido de UI (viewport, eventos del bot, menú @, paneles)",
+      "created_at": "2026-10-23",
+      "depends_on": [],
+      "completed_at": "2026-10-23"
+    },
+    {
+      "id": "spec-e-burgos-003-studio-mission-control",
+      "author": "e-burgos",
+      "slug": "studio-mission-control",
+      "folder": "sdd/specs/spec-e-burgos-003-studio-mission-control",
+      "file": "sdd/specs/spec-e-burgos-003-studio-mission-control/spec-e-burgos-003-studio-mission-control.spec.md",
+      "module": "studio-mission-control",
+      "app": "apps/studio",
+      "status": "completed",
+      "title": "SDD Studio: Mission Control, topología de agentes en vivo, avatares con personalidad y telemetría en tiempo real",
+      "created_at": "2026-10-23",
+      "depends_on": [
+        "spec-e-burgos-001-studio-session-ux",
+        "spec-e-burgos-002-studio-ui-polish"
+      ],
+      "completed_at": "2026-10-23"
+    },
+    {
+      "id": "spec-e-burgos-004-studio-gates-topology",
+      "author": "e-burgos",
+      "slug": "studio-gates-topology",
+      "folder": "sdd/specs/spec-e-burgos-004-studio-gates-topology",
+      "file": "sdd/specs/spec-e-burgos-004-studio-gates-topology/spec-e-burgos-004-studio-gates-topology.spec.md",
+      "module": "studio-gates-topology",
+      "app": "apps/studio",
+      "status": "completed",
+      "title": "SDD Studio: Topología interactiva de Gates, visualización del enjambre y live chat compartido",
+      "created_at": "2026-10-24",
+      "completed_at": "2026-10-24",
+      "depends_on": [
+        "spec-e-burgos-003-studio-mission-control"
+      ]
+    },
+    {
+      "id": "spec-e-burgos-005-studio-conversation-sessions",
+      "author": "e-burgos",
+      "slug": "studio-conversation-sessions",
+      "folder": "sdd/specs/spec-e-burgos-005-studio-conversation-sessions",
+      "file": "sdd/specs/spec-e-burgos-005-studio-conversation-sessions/spec-e-burgos-005-studio-conversation-sessions.spec.md",
+      "module": "studio-conversation-sessions",
+      "app": "apps/studio",
+      "status": "completed",
+      "title": "SDD Studio: una conversación, una sesión — sesión real visible, cache de contexto y enjambre centrado en la conversación",
+      "created_at": "2026-10-25",
+      "completed_at": "2026-10-26",
+      "depends_on": [
+        "spec-e-burgos-001-studio-session-ux",
+        "spec-e-burgos-004-studio-gates-topology"
+      ]
+    },
+    {
+      "id": "spec-e-burgos-006-studio-auth-connect",
+      "author": "e-burgos",
+      "slug": "studio-auth-connect",
+      "folder": "sdd/specs/spec-e-burgos-006-studio-auth-connect",
+      "file": "sdd/specs/spec-e-burgos-006-studio-auth-connect/spec-e-burgos-006-studio-auth-connect.spec.md",
+      "module": "studio-auth-connect",
+      "app": "apps/studio",
+      "status": "completed",
+      "title": "SDD Studio: conectar suscripción de Claude o API key desde la sidebar",
+      "created_at": "2026-10-26",
+      "completed_at": "2026-10-26",
+      "depends_on": []
+    },
+    {
+      "id": "spec-e-burgos-007-studio-session-metadata",
+      "author": "e-burgos",
+      "slug": "studio-session-metadata",
+      "folder": "sdd/specs/spec-e-burgos-007-studio-session-metadata",
+      "file": "sdd/specs/spec-e-burgos-007-studio-session-metadata/spec-e-burgos-007-studio-session-metadata.spec.md",
+      "module": "studio-session-metadata",
+      "app": "apps/studio",
+      "status": "completed",
+      "title": "SDD Studio: título real de sesión, asociación múltiple persistente y documentos tocados como evento estructurado",
+      "created_at": "2026-10-26",
+      "completed_at": "2026-10-26",
+      "depends_on": [
+        "spec-e-burgos-005-studio-conversation-sessions"
+      ]
+    },
+    {
+      "id": "spec-e-burgos-008-studio-session-flow",
+      "author": "e-burgos",
+      "slug": "studio-session-flow",
+      "folder": "sdd/specs/spec-e-burgos-008-studio-session-flow",
+      "file": "sdd/specs/spec-e-burgos-008-studio-session-flow/spec-e-burgos-008-studio-session-flow.spec.md",
+      "module": "studio-session-flow",
+      "app": "apps/studio",
+      "status": "completed",
+      "title": "SDD Studio: conversación automática por spec/fix, medidor de contexto y formulario de preguntas del proveedor",
+      "created_at": "2026-10-26",
+      "completed_at": "2026-10-26",
+      "depends_on": [
+        "spec-e-burgos-007-studio-session-metadata"
+      ]
+    }
+  ]
 }

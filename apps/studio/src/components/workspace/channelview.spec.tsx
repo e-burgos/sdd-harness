@@ -6,7 +6,7 @@ import { BridgeContext, type BridgeContextValue } from '../BridgeProvider';
 import { ChannelView } from './ChannelView';
 
 const snapshot: WorkspaceSnapshot = {
-  project: 'p', profile: 'team', kitVersion: '0.16.0', gateMode: 'block', pricing: null, stale: [], fixes: [], agents: [],
+  project: 'p', profile: 'team', kitVersion: '0.16.0', gateMode: 'block', pricing: null, stale: [], fixes: [], agents: [], skills: [],
   specs: [
     { id: 's1', title: 'Uno', status: 'in-progress', folder: 'sdd/specs/s1', module: null, app: null, dependsOn: [] },
     { id: 's2', title: 'Dos', status: 'draft', folder: 'sdd/specs/s2', module: null, app: null, dependsOn: [] },
@@ -17,7 +17,7 @@ const snapshot: WorkspaceSnapshot = {
 function view(channelId: string, lang: 'es' | 'en') {
   const store = createStudioStore();
   store.getState().setSnapshot(snapshot);
-  const value = { client: { request: vi.fn() }, store, connection: { status: 'idle' } } as unknown as BridgeContextValue;
+  const value = { client: { request: vi.fn(), supports: () => false }, store, connection: { status: 'idle' } } as unknown as BridgeContextValue;
   render(
     <I18nProvider initial={lang}>
       <BridgeContext.Provider value={value}>

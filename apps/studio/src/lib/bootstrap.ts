@@ -3,7 +3,7 @@ import { z } from 'zod';
 import type { BridgeClient } from './bridge/client';
 import type { StudioStore } from './store/store';
 
-type Requester = Pick<BridgeClient, 'request'>;
+type Requester = Pick<BridgeClient, 'request'> & Partial<Pick<BridgeClient, 'supports'>>;
 const History = z.array(z.object({ seq: z.number().int().nonnegative(), event: ThreadEvent }));
 
 /**
@@ -14,7 +14,11 @@ const History = z.array(z.object({ seq: z.number().int().nonnegative(), event: T
 export async function openThread(client: Requester, store: StudioStore, threadId: string): Promise<void> {
   store.getState().beginSync(threadId);
   const sinceSeq = (store.getState().threads[threadId]?.lastSeq ?? -1) + 1;
-  const entries = History.parse(await client.request({ cmd: 'thread.history', threadId, sinceSeq }));
+  const includeDocumentTouched = client.supports?.('document-touched') === true;
+  const includeQuestions = client.supports?.('questions') === true;
+  const entries = History.parse(
+    await client.request({ cmd: 'thread.history', threadId, sinceSeq, ...(includeDocumentTouched ? { includeDocumentTouched } : {}), ...(includeQuestions ? { includeQuestions } : {}) }),
+  );
   store.getState().loadHistory(threadId, entries);
 }
 

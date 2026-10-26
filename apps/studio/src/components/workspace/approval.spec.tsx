@@ -1,12 +1,13 @@
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { I18nProvider } from '@/lib/i18n/i18n';
 import type { TimelineItem } from '@/lib/store/timeline';
-import { ApprovalCard } from './ApprovalCard';
+import { ApprovalCard, SUMMARY_CLAMP_CHARS } from './ApprovalCard';
 
 type Approval = Extract<TimelineItem, { kind: 'approval' }>;
 const base: Approval = {
   kind: 'approval', id: 'p1', seq: 3, author: { agent: 'sdd-implementor-back', parentToolUseId: 't' },
   tool: 'Bash', summary: '$ pnpm nx test api', decision: 'pending',
+  always: { kind: 'bash-prefix', prefix: 'pnpm nx test' },
 };
 const wrap = (ui: React.ReactNode) => render(<I18nProvider initial="es">{ui}</I18nProvider>);
 
@@ -15,7 +16,7 @@ describe('ApprovalCard', () => {
     const onRespond = vi.fn(() => Promise.resolve());
     // after responding the card stays locked until the decision changes: one instance per action
     wrap(<ApprovalCard item={base} onRespond={onRespond} />);
-    expect(screen.getByText('Impl-back quiere usar Bash')).toBeInTheDocument();
+    expect(screen.getByText('Vulcan quiere usar Bash')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Aprobar' }));
     cleanup();
     wrap(<ApprovalCard item={base} onRespond={onRespond} />);
@@ -86,5 +87,69 @@ describe('ApprovalCard', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  describe('Always rule', () => {
+    const always = (item: Partial<Approval>) => wrap(<ApprovalCard item={{ ...base, ...item }} onRespond={vi.fn()} />);
+
+    it.each([
+      [{ kind: 'tool', tool: 'Edit' }, 'Siempre recordaría: la herramienta Edit, solo en este hilo'],
+      [{ kind: 'mcp', tool: 'mcp__fake__ping' }, 'Siempre recordaría: la tool MCP mcp__fake__ping, solo en este hilo'],
+      [{ kind: 'bash-prefix', prefix: 'git status' }, 'Siempre recordaría: los comandos Bash que empiezan con «git status», solo en este hilo'],
+    ] as const)('shows before choosing the exact scope Always would remember: %j', (offer, text) => {
+      always({ always: offer });
+      expect(screen.getByTestId('always-scope')).toHaveTextContent(text);
+      expect(screen.getByRole('button', { name: 'Siempre (hilo)' })).toHaveAccessibleDescription(text);
+    });
+
+    it('sends scope thread when Always is chosen', () => {
+      const onRespond = vi.fn(() => Promise.resolve());
+      wrap(<ApprovalCard item={{ ...base, always: { kind: 'tool', tool: 'Edit' } }} onRespond={onRespond} />);
+      fireEvent.click(screen.getByRole('button', { name: 'Siempre (hilo)' }));
+      expect(onRespond).toHaveBeenCalledWith('allow', 'thread', undefined);
+    });
+
+    it('hides Always on a gate warning card and explains that nothing is remembered (CA-008.4, CA-009.3)', () => {
+      always({ tool: 'Edit', gateWarning: 'SPEC GATE: sin ciclo', always: { kind: 'none', reason: 'gate-warning' } });
+      expect(screen.queryByRole('button', { name: 'Siempre (hilo)' })).toBeNull();
+      expect(screen.queryByTestId('always-scope')).toBeNull();
+      expect(screen.getByTestId('always-unavailable')).toHaveTextContent('aviso del SPEC GATE');
+      expect(screen.getByRole('button', { name: 'Aprobar' })).toBeInTheDocument();
+    });
+
+    it('hides Always and explains when the rule is not calculable', () => {
+      always({ always: { kind: 'none', reason: 'not-calculable' } });
+      expect(screen.queryByRole('button', { name: 'Siempre (hilo)' })).toBeNull();
+      expect(screen.getByTestId('always-unavailable')).toHaveTextContent('No hay una regla segura');
+    });
+
+    it('does not promise anything when the bridge did not offer a rule', () => {
+      always({ always: undefined });
+      expect(screen.queryByRole('button', { name: 'Siempre (hilo)' })).toBeNull();
+    });
+
+    it('shows the remembered rule once resolved', () => {
+      always({ decision: 'allow', remembered: { kind: 'bash-prefix', prefix: 'pnpm nx test' } });
+      expect(screen.getByTestId('always-remembered')).toHaveTextContent('regla recordada: los comandos Bash que empiezan con «pnpm nx test»');
+      expect(screen.queryByTestId('always-scope')).toBeNull();
+    });
+
+    it('shows no remembered text for a plain approval', () => {
+      always({ decision: 'allow' });
+      expect(screen.queryByTestId('always-remembered')).toBeNull();
+    });
+  });
+
+  it('clamps a long summary behind a toggle and leaves a short one alone', () => {
+    const { unmount } = wrap(<ApprovalCard item={{ ...base, summary: 'a'.repeat(SUMMARY_CLAMP_CHARS + 1) }} onRespond={vi.fn()} />);
+    const summary = screen.getByTestId('approval-summary');
+    expect(summary).toHaveClass('line-clamp-3');
+    fireEvent.click(screen.getByRole('button', { name: 'Ver todo' }));
+    expect(summary).not.toHaveClass('line-clamp-3');
+    fireEvent.click(screen.getByRole('button', { name: 'Ver menos' }));
+    expect(summary).toHaveClass('line-clamp-3');
+    unmount();
+    wrap(<ApprovalCard item={{ ...base, summary: 'ls -la' }} onRespond={vi.fn()} />);
+    expect(screen.queryByRole('button', { name: 'Ver todo' })).toBeNull();
   });
 });

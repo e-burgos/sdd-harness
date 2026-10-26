@@ -1,11 +1,13 @@
 import { defaultThreadOptions, type ServerEvent, type ThreadEvent, type WorkspaceSnapshot } from '@sdd-studio/protocol';
+import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FakeEngine } from '../engine/fake-engine';
 import type { AgentEngine, EngineCallbacks, EngineTurn, EngineTurnInput } from '../engine/types';
 import { copyFixture, waitFor } from '../test-utils/fixture';
 import { loadWorkspaceSnapshot } from '../workspace/snapshot';
-import { SessionError, SessionManager } from './session-manager';
+import { createAttachmentStore, type AttachmentStore } from './attachment-store';
+import { SessionError, SessionManager, type SessionManagerDeps } from './session-manager';
 import { ThreadStore } from './store';
 
 let root: string;
@@ -25,13 +27,16 @@ afterEach(async () => {
   await cleanup();
 });
 
-async function manager(engine: AgentEngine = new FakeEngine(1)) {
+async function manager(engine: AgentEngine = new FakeEngine(1), wrapAttachments: (inner: AttachmentStore) => AttachmentStore = (inner) => inner, extra: Partial<SessionManagerDeps> = {}) {
   const store = new ThreadStore(root);
   await store.init();
   stores.push(store);
   let n = 0;
+  const realAttachments = createAttachmentStore(root);
+  await realAttachments.init();
+  const attachments = wrapAttachments(realAttachments);
   const m = new SessionManager({
-    root, engine, store, snapshot: () => snapshot, broadcast: (e) => sent.push(e), newId: () => `id${++n}`,
+    root, engine, store, attachments, snapshot: () => snapshot, broadcast: (e) => sent.push(e), newId: () => `id${++n}`, ...extra,
   });
   return { m, store };
 }
@@ -90,7 +95,7 @@ describe('SessionManager', () => {
     m.respondApproval((await waitFor(() => pendingApproval(t.id))).approvalId, 'allow', undefined, 'thread');
     await waitFor(() => statusOf(m, t.id) === 'idle');
     sent.length = 0;
-    await m.send(t.id, '#tool');
+    await m.send(t.id, { text: '#tool' });
     await waitFor(() => statusOf(m, t.id) === 'idle' && eventsOf(t.id).some((e) => e.type === 'tool.start'));
     expect(pendingApproval(t.id)).toBeUndefined();
   });
@@ -142,13 +147,6 @@ describe('SessionManager', () => {
     await m.interrupt(d.id);
   });
 
-  it('rejects a send while the thread is busy', async () => {
-    const { m } = await manager();
-    const t = await m.createThread({ channelId: 'general', options: opts, text: '#slow' });
-    await expect(m.send(t.id, 'otra')).rejects.toMatchObject({ code: 'conflict' });
-    await m.interrupt(t.id);
-  });
-
   it('interrupting a thread denies its pending approval', async () => {
     const { m } = await manager();
     const t = await m.createThread({ channelId: 'general', options: opts, text: '#tool' });
@@ -170,6 +168,7 @@ describe('SessionManager', () => {
     const inputs: EngineTurnInput[] = [];
     const spy: AgentEngine = {
       name: 'spy',
+      provider: 'claude' as const,
       startTurn: (input, cb) => {
         inputs.push(input);
         cb.onSessionId('sess-42');
@@ -181,9 +180,104 @@ describe('SessionManager', () => {
     await waitFor(() => statusOf(first.m, t.id) === 'idle');
     await first.store.flush();
     const second = await manager(spy);
-    await second.m.send(t.id, 'dos');
+    await second.m.send(t.id, { text: 'dos' });
     expect(inputs.map((i) => i.resumeSessionId)).toEqual([null, 'sess-42']);
     await waitFor(() => statusOf(second.m, t.id) === 'idle');
+  });
+
+  describe('conversation sessions', () => {
+    const idleEngine = (inputs: EngineTurnInput[], sessionFor: (input: EngineTurnInput) => string | null): AgentEngine => ({
+      name: 'scripted',
+      provider: 'claude' as const,
+      startTurn: (input, cb) => {
+        inputs.push(input);
+        const id = sessionFor(input);
+        if (id) cb.onSessionId(id);
+        return { done: Promise.resolve(), interrupt: async () => {} };
+      },
+    });
+    const threadUpdates = (threadId: string) =>
+      sent.flatMap((e) => (e.kind === 'thread.updated' && e.thread.id === threadId ? [e.thread] : []));
+
+    it('creates a thread with the engine provider and no session yet (CA-001, CA-006)', async () => {
+      const { m } = await manager(idleEngine([], () => null));
+      const t = await m.createThread({ channelId: 'general', options: opts, text: 'uno' });
+      expect(t).toMatchObject({ provider: 'claude', engineSessionId: null });
+    });
+
+    it('gives two threads different sessions and resumes each one with its own (CA-002, CA-004)', async () => {
+      const inputs: EngineTurnInput[] = [];
+      const { m } = await manager(idleEngine(inputs, (input) => `sess-of-${input.threadId}`));
+      const a = await m.createThread({ channelId: 'general', options: opts, text: 'a1' });
+      const b = await m.createThread({ channelId: 'general', options: opts, text: 'b1' });
+      await waitFor(() => statusOf(m, a.id) === 'idle' && statusOf(m, b.id) === 'idle');
+      const sessionOf = (id: string) => m.list().find((t) => t.id === id)?.engineSessionId;
+      expect(sessionOf(a.id)).toBe(`sess-of-${a.id}`);
+      expect(sessionOf(b.id)).toBe(`sess-of-${b.id}`);
+      expect(sessionOf(a.id)).not.toBe(sessionOf(b.id));
+      await m.send(a.id, { text: 'a2' });
+      await waitFor(() => inputs.length === 3);
+      expect(inputs[2]).toMatchObject({ threadId: a.id, resumeSessionId: `sess-of-${a.id}` });
+    });
+
+    it('rejects a session id that belongs to another thread (RN-02)', async () => {
+      const errors = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const inputs: EngineTurnInput[] = [];
+      const { m } = await manager(idleEngine(inputs, () => 'shared-session'));
+      const a = await m.createThread({ channelId: 'general', options: opts, text: 'a1' });
+      await waitFor(() => statusOf(m, a.id) === 'idle');
+      const b = await m.createThread({ channelId: 'general', options: opts, text: 'b1' });
+      await waitFor(() => statusOf(m, b.id) === 'idle');
+      expect(m.list().find((t) => t.id === a.id)?.engineSessionId).toBe('shared-session');
+      expect(m.list().find((t) => t.id === b.id)?.engineSessionId).toBeNull();
+      expect(errors).toHaveBeenCalledWith('[sdd-studio] session manager:', expect.objectContaining({ message: expect.stringContaining('already belongs to another thread') }));
+      errors.mockRestore();
+    });
+
+    it('keeps a null session when the engine fails before init and does not resume next turn (CE-01)', async () => {
+      const inputs: EngineTurnInput[] = [];
+      const failing: AgentEngine = {
+        name: 'failing',
+        provider: 'claude' as const,
+        startTurn: (input) => {
+          inputs.push(input);
+          return { done: Promise.reject(new Error('boom')), interrupt: async () => {} };
+        },
+      };
+      const { m } = await manager(failing);
+      const t = await m.createThread({ channelId: 'general', options: opts, text: 'uno' });
+      await waitFor(() => statusOf(m, t.id) === 'error');
+      expect(m.list().find((x) => x.id === t.id)?.engineSessionId).toBeNull();
+      await m.send(t.id, { text: 'dos' });
+      await waitFor(() => inputs.length === 2);
+      expect(inputs.map((i) => i.resumeSessionId)).toEqual([null, null]);
+    });
+
+    it('broadcasts thread.updated carrying the session id once it is known', async () => {
+      const { m } = await manager(idleEngine([], (input) => `sess-of-${input.threadId}`));
+      const t = await m.createThread({ channelId: 'general', options: opts, text: 'uno' });
+      await waitFor(() => threadUpdates(t.id).some((info) => info.engineSessionId === `sess-of-${t.id}`));
+      expect(threadUpdates(t.id)[0]?.engineSessionId).toBeNull();
+    });
+
+    it('passes the stable prefix to the engine on every turn, also when resuming', async () => {
+      const inputs: EngineTurnInput[] = [];
+      const { m } = await manager(idleEngine(inputs, (input) => `sess-of-${input.threadId}`), undefined, { stablePrefix: () => 'PREFIX' });
+      const t = await m.createThread({ channelId: 'general', options: opts, text: 'uno' });
+      await waitFor(() => statusOf(m, t.id) === 'idle');
+      await m.send(t.id, { text: 'dos' });
+      await waitFor(() => inputs.length === 2);
+      expect(inputs.map((i) => i.systemPrefix)).toEqual(['PREFIX', 'PREFIX']);
+      expect(inputs[1]?.resumeSessionId).toBe(`sess-of-${t.id}`);
+    });
+
+    it('omits the system prefix when there is none', async () => {
+      const inputs: EngineTurnInput[] = [];
+      const { m } = await manager(idleEngine(inputs, () => null), undefined, { stablePrefix: () => '' });
+      await m.createThread({ channelId: 'general', options: opts, text: 'uno' });
+      await waitFor(() => inputs.length === 1);
+      expect('systemPrefix' in (inputs[0] as object)).toBe(false);
+    });
   });
 
   it('applies option changes without touching the agent', async () => {
@@ -196,7 +290,7 @@ describe('SessionManager', () => {
 
   it('reports unknown threads and approvals as not-found', async () => {
     const { m } = await manager();
-    await expect(m.send('nope', 'x')).rejects.toBeInstanceOf(SessionError);
+    await expect(m.send('nope', { text: 'x' })).rejects.toBeInstanceOf(SessionError);
     expect(() => m.respondApproval('nope', 'allow', undefined, 'once')).toThrow(SessionError);
   });
 
@@ -212,6 +306,7 @@ describe('SessionManager', () => {
       const runs: Run[] = [];
       const engine: AgentEngine = {
         name: 'scripted',
+        provider: 'claude' as const,
         startTurn: (input, cb): EngineTurn => {
           onStart?.(input, runs.length);
           const ac = new AbortController();
@@ -229,8 +324,9 @@ describe('SessionManager', () => {
       const fake = new FakeEngine(1);
       const engine: AgentEngine = {
         name: 'throwing',
+        provider: 'claude' as const,
         startTurn: (input, cb) => {
-          if (input.text.includes('boom')) throw new Error('no se pudo arrancar');
+          if (input.prompts[0]?.prompt.text.includes('boom')) throw new Error('no se pudo arrancar');
           return fake.startTurn(input, cb);
         },
       };
@@ -310,7 +406,7 @@ describe('SessionManager', () => {
       expect(decision).toEqual({ behavior: 'deny', message: 'turn ended' });
       expect(eventsOf(t.id)).toContainEqual({ type: 'approval.resolved', approvalId: pending.approvalId, decision: 'deny', reason: 'turn ended' });
       expect(() => m.respondApproval(pending.approvalId, 'allow', undefined, 'once')).toThrow(SessionError);
-      await m.send(t.id, 'dos');
+      await m.send(t.id, { text: 'dos' });
       expect(statusOf(m, t.id)).toBe('running');
       runs[1]!.finish();
       await waitFor(() => statusOf(m, t.id) === 'idle');
@@ -336,7 +432,7 @@ describe('SessionManager', () => {
       await waitFor(() => statusOf(m, t.id) === 'idle');
       snapshot = { ...base, cycles: base.cycles.map((c) => ({ ...c, status: 'completed' })), fixes: [] };
       sent.length = 0;
-      await m.send(t.id, '#edit');
+      await m.send(t.id, { text: '#edit' });
       await waitFor(() => statusOf(m, t.id) === 'idle');
       const resolved = eventsOf(t.id).find((e) => e.type === 'approval.resolved');
       expect(resolved).toMatchObject({ decision: 'deny' });
@@ -418,7 +514,7 @@ describe('SessionManager', () => {
         const command = `echo ${'a'.repeat(300)} && rm -rf /tmp/zzz`;
         void runs[0]!.cb.requestApproval({ ...req, input: { command } }, runs[0]!.ac.signal);
         const e = await waitFor(() => pendingApproval(t.id));
-        expect(e.summary.length).toBeLessThanOrEqual(160);
+        expect(e.summary.length).toBeLessThanOrEqual(600);
         expect(JSON.parse(e.input ?? '')).toEqual({ command });
         expect(e.inputTruncated).toBeUndefined();
         await m.interrupt(t.id);
@@ -459,16 +555,17 @@ describe('SessionManager', () => {
         await m.interrupt(t.id);
       });
 
-      it('I2: thread scope on an mcp__ tool asks again', async () => {
+      it('I2: thread scope on an mcp__ tool remembers only that tool, not the rest of the server', async () => {
         const { engine, runs } = scripted();
         const { m } = await manager(engine);
         const t = await m.createThread({ channelId: 'general', options: opts, text: 'x' });
-        const ask = () => runs[0]!.cb.requestApproval({ ...req, toolName: 'mcp__srv__do', input: {} }, runs[0]!.ac.signal);
-        const first = ask();
+        const ask = (toolName: string) => runs[0]!.cb.requestApproval({ ...req, toolName, input: {} }, runs[0]!.ac.signal);
+        const first = ask('mcp__srv__do');
         m.respondApproval((await waitFor(() => pendingApproval(t.id))).approvalId, 'allow', undefined, 'thread');
         await first;
+        expect(await ask('mcp__srv__do')).toEqual({ behavior: 'allow' });
         sent.length = 0;
-        void ask();
+        void ask('mcp__srv__other');
         await waitFor(() => pendingApproval(t.id));
         await m.interrupt(t.id);
       });
@@ -494,7 +591,7 @@ describe('SessionManager', () => {
         });
         const { engine, runs } = scripted();
         const m = new SessionManager({
-          root, engine, store, snapshot: () => snapshot, broadcast: (e) => sent.push(e), refreshSnapshot: refresh,
+          root, attachments: createAttachmentStore(root), engine, store, snapshot: () => snapshot, broadcast: (e) => sent.push(e), refreshSnapshot: refresh,
         });
         const t = await m.createThread({ channelId: 'general', options: opts, text: 'x' });
         const file = path.join(root, 'apps', 'x.ts');
@@ -508,6 +605,20 @@ describe('SessionManager', () => {
     });
 
     describe('restart recovery (I3)', () => {
+      it('cancels a question that was open when the bridge restarted', async () => {
+        const { m, store } = await manager();
+        const t = await m.createThread({ channelId: 'general', options: opts, text: '#ask' });
+        const asked = await waitFor(() => eventsOf(t.id).find((e) => e.type === 'question.requested'));
+        await store.flush();
+        const store2 = new ThreadStore(root);
+        await store2.init();
+        stores.push(store2);
+        const m2 = new SessionManager({ root, attachments: createAttachmentStore(root), engine: new FakeEngine(1), store: store2, snapshot: () => snapshot, broadcast: () => {} });
+        await m2.recover();
+        const hist = (await m2.history(t.id, 0, false, true)).map((h) => h.event);
+        expect(hist).toContainEqual({ type: 'question.resolved', questionId: (asked as { questionId: string }).questionId, outcome: 'cancelled' });
+      });
+
       it('announces lost approvals and the interruption in the thread history', async () => {
         const { m, store } = await manager();
         const t = await m.createThread({ channelId: 'general', options: opts, text: '#tool' });
@@ -517,7 +628,7 @@ describe('SessionManager', () => {
         await store2.init();
         stores.push(store2);
         expect(store2.recoveredThreadIds()).toEqual([t.id]);
-        const m2 = new SessionManager({ root, engine: new FakeEngine(1), store: store2, snapshot: () => snapshot, broadcast: () => {} });
+        const m2 = new SessionManager({ root, attachments: createAttachmentStore(root), engine: new FakeEngine(1), store: store2, snapshot: () => snapshot, broadcast: () => {} });
         await m2.recover();
         const hist = (await m2.history(t.id, 0)).map((h) => h.event);
         const requested = hist.find((e) => e.type === 'approval.requested');
@@ -529,5 +640,1172 @@ describe('SessionManager', () => {
         await m.interrupt(t.id);
       });
     });
+  });
+
+  describe('pending messages', () => {
+    const create = async (m: SessionManager, text: string) => {
+      const t = await m.createThread({ channelId: 'general', options: opts, text });
+      await waitFor(() => statusOf(m, t.id) === 'running' || statusOf(m, t.id) === 'waiting-approval');
+      return t;
+    };
+    const settled = () => new Promise((r) => setTimeout(r, 30));
+    const pendingCountOf = (m: SessionManager, id: string) => m.list().find((t) => t.id === id)?.pendingCount;
+    const userMessages = (threadId: string) =>
+      eventsOf(threadId).filter((e): e is Extract<ThreadEvent, { type: 'user.message' }> => e.type === 'user.message');
+    const echoes = (threadId: string) =>
+      eventsOf(threadId).flatMap((e) => (e.type === 'message.delta' ? [e.text] : []));
+
+    it('adds a pending message while the thread is busy instead of throwing conflict', async () => {
+      const { m } = await manager();
+      const t = await create(m, '#slow');
+      const result = await m.send(t.id, { text: 'otra' });
+      expect(result).toEqual({ delivery: 'pending', pendingId: expect.any(String) });
+      expect(eventsOf(t.id).filter((e) => e.type === 'pending.added')).toEqual([
+        { type: 'pending.added', pendingId: (result as { pendingId: string }).pendingId, text: 'otra' },
+      ]);
+      expect(pendingCountOf(m, t.id)).toBe(1);
+      await m.interrupt(t.id);
+    });
+
+    it('starts the turn as before when the thread is idle', async () => {
+      const { m } = await manager();
+      const t = await m.createThread({ channelId: 'general', options: opts, text: 'hola' });
+      await waitFor(() => statusOf(m, t.id) === 'idle');
+      expect(await m.send(t.id, { text: 'otra' })).toEqual({ delivery: 'started' });
+      await waitFor(() => echoes(t.id).includes('echo: otra'));
+    });
+
+    it('delivers every pending message at the next cut point, in order', async () => {
+      const { m } = await manager();
+      const t = await create(m, '#steps:6');
+      await m.send(t.id, { text: 'first' });
+      await m.send(t.id, { text: 'second' });
+      await waitFor(() => statusOf(m, t.id) === 'idle');
+      const delivered = userMessages(t.id).filter((e) => e.pendingId);
+      expect(delivered.map((e) => [e.text, e.delivery])).toEqual([['first', 'cut-point'], ['second', 'cut-point']]);
+      expect(echoes(t.id)).toEqual(expect.arrayContaining(['heard: first', 'heard: second']));
+      expect(pendingCountOf(m, t.id)).toBe(0);
+    });
+
+    it('does not deliver on approval resolution but at the end of the turn as next-turn', async () => {
+      const { m } = await manager();
+      const t = await m.createThread({ channelId: 'general', options: opts, text: '#tool' });
+      const request = await waitFor(() => pendingApproval(t.id));
+      await m.send(t.id, { text: 'queued while waiting' });
+      m.respondApproval(request.approvalId, 'allow', undefined, 'once');
+      await waitFor(() => statusOf(m, t.id) === 'idle');
+      const delivered = userMessages(t.id).find((e) => e.pendingId);
+      expect(delivered).toMatchObject({ text: 'queued while waiting', delivery: 'next-turn' });
+      expect(echoes(t.id)).toContain('echo: queued while waiting');
+    });
+
+    it('edits and removes a message only while it is pending', async () => {
+      const { m } = await manager();
+      const t = await create(m, '#steps:6');
+      const a = (await m.send(t.id, { text: 'a' })) as { pendingId: string };
+      const b = (await m.send(t.id, { text: 'b' })) as { pendingId: string };
+      m.editPending(t.id, a.pendingId, 'a2');
+      m.removePending(t.id, b.pendingId);
+      expect(eventsOf(t.id).map((e) => e.type)).toEqual(expect.arrayContaining(['pending.edited', 'pending.removed']));
+      await waitFor(() => userMessages(t.id).some((e) => e.pendingId === a.pendingId));
+      expect(userMessages(t.id).find((e) => e.pendingId === a.pendingId)?.text).toBe('a2');
+      expect(userMessages(t.id).some((e) => e.pendingId === b.pendingId)).toBe(false);
+      expect(() => m.editPending(t.id, a.pendingId, 'late')).toThrowError(new SessionError('conflict', 'already delivered'));
+      expect(() => m.removePending(t.id, a.pendingId)).toThrowError(new SessionError('conflict', 'already delivered'));
+      expect(() => m.removePending(t.id, 'nope')).toThrowError(expect.objectContaining({ code: 'not-found' }));
+      await waitFor(() => statusOf(m, t.id) === 'idle');
+      expect(echoes(t.id)).toContain('heard: a2');
+      expect(echoes(t.id).some((text) => text.includes('b'))).toBe(false);
+    });
+
+    it('rejects an empty edit and an 11th pending message', async () => {
+      const { m } = await manager();
+      const t = await create(m, '#slow');
+      const first = (await m.send(t.id, { text: 'm0' })) as { pendingId: string };
+      expect(() => m.editPending(t.id, first.pendingId, '  ')).toThrowError(expect.objectContaining({ code: 'bad-request' }));
+      for (let i = 1; i < 10; i++) await m.send(t.id, { text: `m${i}` });
+      await expect(m.send(t.id, { text: 'm10' })).rejects.toMatchObject({ code: 'conflict', message: 'too many pending messages' });
+      await m.interrupt(t.id);
+    });
+
+    it('keeps the pending messages after an interrupt and does not auto-send them', async () => {
+      const { m } = await manager();
+      const t = await create(m, '#slow');
+      await m.send(t.id, { text: 'kept' });
+      await m.interrupt(t.id);
+      await waitFor(() => statusOf(m, t.id) === 'interrupted');
+      await new Promise((r) => setTimeout(r, 30));
+      expect(pendingCountOf(m, t.id)).toBe(1);
+      expect(userMessages(t.id).some((e) => e.pendingId)).toBe(false);
+    });
+
+    it('keeps pending messages untouched when the turn fails and does not send them again', async () => {
+      const started: string[][] = [];
+      let failTurn!: (error: Error) => void;
+      const engine: AgentEngine = {
+        name: 'failing',
+        provider: 'claude' as const,
+        startTurn: (input) => {
+          started.push(input.prompts.map((p) => p.prompt.text));
+          const done = new Promise<void>((_resolve, reject) => (failTurn = reject));
+          return { done, interrupt: async () => {} };
+        },
+      };
+      const { m } = await manager(engine);
+      const t = await m.createThread({ channelId: 'general', options: opts, text: 'first' });
+      await m.send(t.id, { text: 'kept after error' });
+      failTurn(new Error('boom'));
+      await waitFor(() => statusOf(m, t.id) === 'error');
+      await settled();
+      expect(started).toEqual([['first']]);
+      expect(pendingCountOf(m, t.id)).toBe(1);
+      expect(userMessages(t.id).some((e) => e.pendingId)).toBe(false);
+    });
+
+    it('sending to an interrupted thread delivers the pending ones first, then the new message', async () => {
+      const { m } = await manager();
+      const t = await create(m, '#slow');
+      await m.send(t.id, { text: 'p1' });
+      await m.send(t.id, { text: 'p2' });
+      await m.interrupt(t.id);
+      await waitFor(() => statusOf(m, t.id) === 'interrupted');
+      await settled();
+      expect(await m.send(t.id, { text: 'new' })).toEqual({ delivery: 'started' });
+      await waitFor(() => echoes(t.id).includes('echo: p2'));
+      const after = userMessages(t.id).slice(1);
+      expect(after.map((e) => [e.text, e.pendingId ? e.delivery : 'direct'])).toEqual([
+        ['p1', 'next-turn'], ['p2', 'next-turn'], ['new', 'direct'],
+      ]);
+      expect(pendingCountOf(m, t.id)).toBe(0);
+    });
+
+    it('flushPending starts a turn with the pending messages and conflicts when there is nothing to do', async () => {
+      const { m } = await manager();
+      const t = await create(m, '#slow');
+      await m.send(t.id, { text: 'p1' });
+      expect(() => m.flushPending(t.id)).toThrowError(expect.objectContaining({ code: 'conflict' }));
+      await m.interrupt(t.id);
+      await waitFor(() => statusOf(m, t.id) === 'interrupted');
+      await settled();
+      expect(m.flushPending(t.id)).toEqual({ delivery: 'started' });
+      await waitFor(() => echoes(t.id).includes('echo: p1'));
+      await waitFor(() => statusOf(m, t.id) === 'idle');
+      expect(() => m.flushPending(t.id)).toThrowError(expect.objectContaining({ code: 'conflict', message: 'no pending messages' }));
+    });
+
+    it('reverts the batch the engine reports as undelivered on interrupt', async () => {
+      const { m } = await manager();
+      const t = await create(m, '#steps:20 #revert');
+      await m.send(t.id, { text: 'late' });
+      await waitFor(() => userMessages(t.id).some((e) => e.pendingId));
+      await m.interrupt(t.id);
+      const reverted = eventsOf(t.id).find((e) => e.type === 'pending.reverted');
+      expect(reverted).toMatchObject({ reason: 'interrupt' });
+      expect(pendingCountOf(m, t.id)).toBe(1);
+      await waitFor(() => statusOf(m, t.id) === 'interrupted');
+      expect(userMessages(t.id).filter((e) => e.pendingId)).toHaveLength(1);
+    });
+
+    it('starts a new turn from finish() when a message arrives after the engine ended its stream', async () => {
+      const prompts: string[][] = [];
+      let finishFirst!: () => void;
+      const engine: AgentEngine = {
+        name: 'late-end',
+        provider: 'claude' as const,
+        startTurn: (input) => {
+          prompts.push(input.prompts.map((p) => p.prompt.text));
+          const first = prompts.length === 1;
+          const done = first ? new Promise<void>((resolve) => (finishFirst = resolve)) : Promise.resolve();
+          return { done, interrupt: async () => {} };
+        },
+      };
+      const { m } = await manager(engine);
+      const t = await m.createThread({ channelId: 'general', options: opts, text: 'first' });
+      await m.send(t.id, { text: 'raced' });
+      finishFirst();
+      await waitFor(() => prompts.length === 2);
+      expect(prompts[1]).toEqual(['raced']);
+      expect(userMessages(t.id).find((e) => e.pendingId)).toMatchObject({ delivery: 'next-turn' });
+    });
+
+    it('delivers a message sent while waiting-approval at the first cut point after the decision', async () => {
+      const { m } = await manager();
+      const t = await m.createThread({ channelId: 'general', options: opts, text: '#tool #steps:4' });
+      const request = await waitFor(() => pendingApproval(t.id));
+      await m.send(t.id, { text: 'while waiting' });
+      await settled();
+      expect(userMessages(t.id).some((e) => e.pendingId)).toBe(false);
+      expect(statusOf(m, t.id)).toBe('waiting-approval');
+      m.respondApproval(request.approvalId, 'allow', undefined, 'once');
+      await waitFor(() => statusOf(m, t.id) === 'idle');
+      expect(userMessages(t.id).find((e) => e.pendingId)).toMatchObject({ text: 'while waiting', delivery: 'cut-point' });
+      expect(echoes(t.id)).toContain('heard: while waiting');
+    });
+
+    it('delivers each message exactly once and in order across cut points and turn end', async () => {
+      const { m } = await manager();
+      const t = await create(m, '#steps:3');
+      await m.send(t.id, { text: 'one' });
+      await waitFor(() => userMessages(t.id).some((e) => e.pendingId));
+      await m.send(t.id, { text: 'two' });
+      await waitFor(() => statusOf(m, t.id) === 'idle');
+      const delivered = userMessages(t.id).filter((e) => e.pendingId).map((e) => e.text);
+      expect(delivered).toEqual(['one', 'two']);
+      expect(echoes(t.id).filter((text) => text.endsWith('one')).length).toBeGreaterThan(0);
+      expect(pendingCountOf(m, t.id)).toBe(0);
+    });
+
+    it('lets the dev edit and remove messages that stayed pending after an interrupt', async () => {
+      const { m } = await manager();
+      const t = await create(m, '#slow');
+      const a = (await m.send(t.id, { text: 'a' })) as { pendingId: string };
+      const b = (await m.send(t.id, { text: 'b' })) as { pendingId: string };
+      await m.interrupt(t.id);
+      await waitFor(() => statusOf(m, t.id) === 'interrupted');
+      m.editPending(t.id, a.pendingId, 'a edited');
+      m.removePending(t.id, b.pendingId);
+      expect(pendingCountOf(m, t.id)).toBe(1);
+      await settled();
+      expect(m.flushPending(t.id)).toEqual({ delivery: 'started' });
+      await waitFor(() => echoes(t.id).includes('echo: a edited'));
+    });
+
+    it('records pending messages in the history so a reload or another tab sees the real state', async () => {
+      const { m } = await manager();
+      const t = await create(m, '#steps:5');
+      const { pendingId } = (await m.send(t.id, { text: 'late' })) as { pendingId: string };
+      await waitFor(() => statusOf(m, t.id) === 'idle');
+      const kinds = (await m.history(t.id, 0))
+        .map((h) => h.event)
+        .filter((e) => (e.type === 'pending.added' || e.type === 'user.message') && 'pendingId' in e && e.pendingId === pendingId)
+        .map((e) => e.type);
+      expect(kinds).toEqual(['pending.added', 'user.message']);
+      expect(pendingCountOf(m, t.id)).toBe(0);
+    });
+
+    it('a queued thread (write scope) accepts pending messages without changing its queued status', async () => {
+      const { m } = await manager();
+      const ch = 'spec:spec-dev-001-pagos';
+      const a = await m.createThread({ channelId: ch, options: opts, text: '#slow' });
+      const b = await m.createThread({ channelId: ch, options: opts, text: 'hola' });
+      expect(statusOf(m, b.id)).toBe('queued');
+      expect(await m.send(b.id, { text: 'while queued' })).toMatchObject({ delivery: 'pending' });
+      expect(statusOf(m, b.id)).toBe('queued');
+      expect(pendingCountOf(m, b.id)).toBe(1);
+      await m.interrupt(a.id);
+      await waitFor(() => statusOf(m, b.id) === 'idle');
+      expect(userMessages(b.id).find((e) => e.pendingId)).toMatchObject({ text: 'while queued', delivery: 'next-turn' });
+    });
+
+    it('reloads pending messages after a restart and does not send them', async () => {
+      const first = await manager();
+      const t = await create(first.m, '#slow');
+      await first.m.send(t.id, { text: 'survives' });
+      await first.store.flush();
+      const started: string[] = [];
+      const store = new ThreadStore(root);
+      await store.init();
+      stores.push(store);
+      const m = new SessionManager({
+        root, attachments: createAttachmentStore(root), store, snapshot: () => snapshot, broadcast: (e) => sent.push(e),
+        engine: { name: 'spy', provider: 'claude', startTurn: (input) => (started.push(input.threadId), new FakeEngine(1).startTurn(input, null as never)) },
+      });
+      await m.recover();
+      expect(m.list().find((x) => x.id === t.id)).toMatchObject({ status: 'interrupted', pendingCount: 1 });
+      await new Promise((r) => setTimeout(r, 20));
+      expect(started).toEqual([]);
+      await first.m.interrupt(t.id);
+    });
+  });
+
+  describe('always rules', () => {
+    const answer = async (m: SessionManager, threadId: string, scope: 'once' | 'thread') => {
+      const request = await waitFor(() => pendingApproval(threadId));
+      m.respondApproval(request.approvalId, 'allow', undefined, scope);
+      return request;
+    };
+    const resolutions = (threadId: string) =>
+      eventsOf(threadId).filter((e): e is Extract<ThreadEvent, { type: 'approval.resolved' }> => e.type === 'approval.resolved');
+    const idle = (m: SessionManager, id: string) => waitFor(() => statusOf(m, id) === 'idle');
+    const runAndAnswer = async (m: SessionManager, threadId: string, text: string, scope: 'once' | 'thread') => {
+      sent.length = 0;
+      await m.send(threadId, { text });
+      const request = await answer(m, threadId, scope);
+      await idle(m, threadId);
+      return request;
+    };
+    const runExpectingNoApproval = async (m: SessionManager, threadId: string, text: string) => {
+      sent.length = 0;
+      await m.send(threadId, { text });
+      await waitFor(() => statusOf(m, threadId) === 'running');
+      await idle(m, threadId);
+      expect(pendingApproval(threadId)).toBeUndefined();
+      expect(eventsOf(threadId).some((e) => e.type === 'tool.start')).toBe(true);
+    };
+    const start = async (m: SessionManager, text: string) => {
+      const t = await m.createThread({ channelId: 'general', options: opts, text });
+      return t;
+    };
+
+    it('offers the rule in approval.requested and reports it as remembered in approval.resolved', async () => {
+      const { m } = await manager();
+      const t = await start(m, '#bash-git');
+      const request = await answer(m, t.id, 'thread');
+      await idle(m, t.id);
+      expect(request.always).toEqual({ kind: 'bash-prefix', prefix: 'git status' });
+      expect(resolutions(t.id)[0]).toMatchObject({ decision: 'allow', remembered: { kind: 'bash-prefix', prefix: 'git status' } });
+    });
+
+    it('a bash prefix rule auto-allows later commands with that prefix but not compound ones', async () => {
+      const { m } = await manager();
+      const t = await start(m, '#bash-git');
+      await answer(m, t.id, 'thread');
+      await idle(m, t.id);
+      await runExpectingNoApproval(m, t.id, '#bash-git2');
+      sent.length = 0;
+      await m.send(t.id, { text: '#bash-chain' });
+      const chained = await waitFor(() => pendingApproval(t.id));
+      expect(chained.always).toEqual({ kind: 'none', reason: 'not-calculable' });
+      await m.interrupt(t.id);
+    });
+
+    it('thread scope on a non-calculable command behaves as once and remembers nothing', async () => {
+      const { m } = await manager();
+      const t = await start(m, '#bash-chain');
+      await answer(m, t.id, 'thread');
+      await idle(m, t.id);
+      expect(resolutions(t.id)[0]?.remembered).toBeUndefined();
+      sent.length = 0;
+      await m.send(t.id, { text: '#bash-chain' });
+      await waitFor(() => pendingApproval(t.id));
+      await m.interrupt(t.id);
+    });
+
+    it('remembers a mcp tool and an edit tool as tool rules', async () => {
+      const { m } = await manager();
+      const t = await start(m, '#mcp');
+      await answer(m, t.id, 'thread');
+      await idle(m, t.id);
+      await runExpectingNoApproval(m, t.id, '#mcp');
+      const edit = await runAndAnswer(m, t.id, '#edit-tool', 'thread');
+      expect(edit.always).toEqual({ kind: 'tool', tool: 'Edit' });
+      await runExpectingNoApproval(m, t.id, '#edit-tool');
+    });
+
+    it('Approve once saves no rule and Deny keeps rejecting', async () => {
+      const { m } = await manager();
+      const t = await start(m, '#mcp');
+      await answer(m, t.id, 'once');
+      await idle(m, t.id);
+      expect(resolutions(t.id)[0]?.remembered).toBeUndefined();
+      sent.length = 0;
+      await m.send(t.id, { text: '#mcp' });
+      const second = await waitFor(() => pendingApproval(t.id));
+      m.respondApproval(second.approvalId, 'deny', 'no', 'thread');
+      await idle(m, t.id);
+      expect(resolutions(t.id)[0]).toMatchObject({ decision: 'deny', reason: 'no' });
+      expect(resolutions(t.id)[0]?.remembered).toBeUndefined();
+      expect(eventsOf(t.id).some((e) => e.type === 'tool.start')).toBe(false);
+    });
+
+    it('rules do not survive a bridge restart', async () => {
+      const first = await manager();
+      const t = await start(first.m, '#mcp');
+      await answer(first.m, t.id, 'thread');
+      await idle(first.m, t.id);
+      await first.store.flush();
+      const store = new ThreadStore(root);
+      await store.init();
+      stores.push(store);
+      const restarted = new SessionManager({ root, attachments: createAttachmentStore(root), store, engine: new FakeEngine(1), snapshot: () => snapshot, broadcast: (e) => sent.push(e) });
+      await restarted.recover();
+      sent.length = 0;
+      await restarted.send(t.id, { text: '#mcp' });
+      await waitFor(() => pendingApproval(t.id));
+      await restarted.interrupt(t.id);
+    });
+
+    it('the rule lives only with its thread', async () => {
+      const { m } = await manager();
+      const first = await start(m, '#mcp');
+      await answer(m, first.id, 'thread');
+      await idle(m, first.id);
+      const second = await start(m, '#mcp');
+      const request = await waitFor(() => pendingApproval(second.id));
+      expect(request.always).toEqual({ kind: 'mcp', tool: 'mcp__fake__ping' });
+      await m.interrupt(second.id);
+    });
+
+    it('a gate warning offers no Always, ignores scope thread and asks again next time', async () => {
+      const base = snapshot;
+      snapshot = { ...base, gateMode: 'warn', cycles: [], fixes: [] };
+      const { m } = await manager();
+      const t = await start(m, '#edit-tool');
+      const request = await answer(m, t.id, 'thread');
+      await idle(m, t.id);
+      expect(request.gateWarning).toBeDefined();
+      expect(request.always).toEqual({ kind: 'none', reason: 'gate-warning' });
+      expect(resolutions(t.id)[0]?.remembered).toBeUndefined();
+      sent.length = 0;
+      await m.send(t.id, { text: '#edit-tool' });
+      const again = await waitFor(() => pendingApproval(t.id));
+      expect(again.gateWarning).toBeDefined();
+      await m.interrupt(t.id);
+    });
+
+    it('a rule never bypasses a SPEC GATE deny or a later warning', async () => {
+      const base = snapshot;
+      const { m } = await manager();
+      const t = await start(m, '#edit-tool');
+      await answer(m, t.id, 'thread');
+      await idle(m, t.id);
+      snapshot = { ...base, cycles: base.cycles.map((c) => ({ ...c, status: 'completed' })), fixes: [] };
+      sent.length = 0;
+      await m.send(t.id, { text: '#edit-tool' });
+      await idle(m, t.id);
+      expect(resolutions(t.id)[0]).toMatchObject({ decision: 'deny' });
+      expect(eventsOf(t.id).some((e) => e.type === 'tool.start')).toBe(false);
+      snapshot = { ...base, gateMode: 'warn', cycles: [], fixes: [] };
+      sent.length = 0;
+      await m.send(t.id, { text: '#edit-tool' });
+      const warned = await waitFor(() => pendingApproval(t.id));
+      expect(warned.always).toEqual({ kind: 'none', reason: 'gate-warning' });
+      await m.interrupt(t.id);
+    });
+  });
+
+  describe('thread links', () => {
+    const idleOf = (m: SessionManager, id: string) => waitFor(() => statusOf(m, id) === 'idle');
+    const updates = (threadId: string) => sent.filter((e) => e.kind === 'thread.updated' && e.thread.id === threadId);
+
+    it('auto-links a thread created in a spec channel to the in-progress cycle', async () => {
+      const { m } = await manager();
+      const t = await m.createThread({ channelId: 'spec:spec-dev-001-pagos', options: opts, text: 'hola' });
+      expect(t.link).toEqual({ target: { kind: 'cycle', specId: 'spec-dev-001-pagos', cycle: 'cycle-01' }, source: 'auto', targets: [{ ...{ kind: 'cycle', specId: 'spec-dev-001-pagos', cycle: 'cycle-01' }, origin: 'detected' }] });
+      await idleOf(m, t.id);
+    });
+
+    it('auto-links general threads to none and keeps the link in the listing', async () => {
+      const { m } = await manager();
+      const t = await m.createThread({ channelId: 'general', options: opts, text: 'hola' });
+      expect(m.list().find((x) => x.id === t.id)?.link).toEqual({ target: { kind: 'none' }, source: 'auto', targets: [] });
+      await idleOf(m, t.id);
+    });
+
+    it('honors an explicit link as manual and rejects a missing destination without creating the thread', async () => {
+      const { m } = await manager();
+      const t = await m.createThread({ channelId: 'general', options: opts, text: 'hola', link: { kind: 'fix', fixId: 'FIX-dev-001-001' } });
+      expect(t.link).toEqual({ target: { kind: 'fix', fixId: 'FIX-dev-001-001' }, source: 'manual', targets: [{ kind: 'fix', fixId: 'FIX-dev-001-001', origin: 'manual' }] });
+      await idleOf(m, t.id);
+      const before = m.list().length;
+      await expect(m.createThread({ channelId: 'general', options: opts, text: 'x', link: { kind: 'fix', fixId: 'FIX-nope' } })).rejects.toMatchObject({ code: 'not-found' });
+      expect(m.list()).toHaveLength(before);
+    });
+
+    it('setLink reassigns manually, broadcasts thread.updated and persists', async () => {
+      const { m, store } = await manager();
+      const t = await m.createThread({ channelId: 'general', options: opts, text: 'hola' });
+      await idleOf(m, t.id);
+      sent.length = 0;
+      const info = m.setLink(t.id, { kind: 'cycle', specId: 'spec-dev-001-pagos', cycle: 'cycle-01' });
+      expect(info.link).toEqual({ target: { kind: 'cycle', specId: 'spec-dev-001-pagos', cycle: 'cycle-01' }, source: 'manual', targets: [{ ...{ kind: 'cycle', specId: 'spec-dev-001-pagos', cycle: 'cycle-01' }, origin: 'manual' }] });
+      expect(updates(t.id)).toHaveLength(1);
+      await store.flush();
+      expect(store.get(t.id)?.link.source).toBe('manual');
+      expect(m.setLink(t.id, { kind: 'none' }).link).toEqual({ target: { kind: 'none' }, source: 'manual', targets: [] });
+    });
+
+    it('setLink keeps the previous link when the destination or the thread does not exist', async () => {
+      const { m } = await manager();
+      const t = await m.createThread({ channelId: 'general', options: opts, text: 'hola' });
+      await idleOf(m, t.id);
+      expect(() => m.setLink(t.id, { kind: 'fix', fixId: 'FIX-nope' })).toThrowError(expect.objectContaining({ code: 'not-found' }));
+      expect(() => m.setLink('missing', { kind: 'none' })).toThrowError(expect.objectContaining({ code: 'not-found' }));
+      expect(m.list().find((x) => x.id === t.id)?.link).toEqual({ target: { kind: 'none' }, source: 'auto', targets: [] });
+    });
+
+    describe('multiple associations', () => {
+      const CYCLE = { kind: 'cycle', specId: 'spec-dev-001-pagos', cycle: 'cycle-01' } as const;
+      const SPEC = { kind: 'spec', specId: 'spec-dev-001-pagos' } as const;
+      const FIX = { kind: 'fix', fixId: 'FIX-dev-001-001' } as const;
+      const idleThread = async () => {
+        const { m, store } = await manager();
+        const t = await m.createThread({ channelId: 'general', options: opts, text: 'hola' });
+        await idleOf(m, t.id);
+        sent.length = 0;
+        return { m, store, id: t.id };
+      };
+      const targetsOf = (m: SessionManager, id: string) => m.list().find((x) => x.id === id)?.link.targets;
+
+      it('updateLinks adds manual associations and publishes thread.updated once', async () => {
+        const { m, id } = await idleThread();
+        const info = m.updateLinks(id, { add: [CYCLE, FIX], remove: [] });
+        expect(info.link.targets).toEqual([{ ...CYCLE, origin: 'manual' }, { ...FIX, origin: 'manual' }]);
+        expect(info.link.target).toEqual(FIX);
+        expect(updates(id)).toHaveLength(1);
+      });
+
+      it('updateLinks removes first and then adds, and a removed association is not shown again', async () => {
+        const { m, id } = await idleThread();
+        m.updateLinks(id, { add: [CYCLE, FIX], remove: [] });
+        const info = m.updateLinks(id, { add: [SPEC], remove: [FIX] });
+        expect(info.link.targets).toEqual([{ ...CYCLE, origin: 'manual' }, { ...SPEC, origin: 'manual' }]);
+        expect(info.link.target).toEqual(CYCLE);
+      });
+
+      it('updateLinks leaves the list intact when an added destination does not exist', async () => {
+        const { m, id } = await idleThread();
+        m.updateLinks(id, { add: [CYCLE], remove: [] });
+        sent.length = 0;
+        expect(() => m.updateLinks(id, { add: [FIX, { kind: 'fix', fixId: 'FIX-nope' }], remove: [CYCLE] })).toThrowError(
+          expect.objectContaining({ code: 'not-found' }),
+        );
+        expect(targetsOf(m, id)).toEqual([{ ...CYCLE, origin: 'manual' }]);
+        expect(updates(id)).toHaveLength(0);
+      });
+
+      it('updateLinks is idempotent and silent when nothing changes', async () => {
+        const { m, id } = await idleThread();
+        m.updateLinks(id, { add: [CYCLE], remove: [] });
+        sent.length = 0;
+        m.updateLinks(id, { add: [CYCLE], remove: [] });
+        m.updateLinks(id, { add: [], remove: [FIX] });
+        expect(targetsOf(m, id)).toEqual([{ ...CYCLE, origin: 'manual' }]);
+        expect(updates(id)).toHaveLength(0);
+      });
+
+      it('updateLinks rejects an unknown thread', async () => {
+        const { m } = await idleThread();
+        expect(() => m.updateLinks('missing', { add: [], remove: [] })).toThrowError(expect.objectContaining({ code: 'not-found' }));
+      });
+
+      it('a dismissed association is not detected again from a later document change', async () => {
+        const { m, id } = await idleThread();
+        m.updateLinks(id, { add: [CYCLE], remove: [] });
+        m.updateLinks(id, { add: [], remove: [CYCLE] });
+        await m.send(id, { text: '#write-doc' });
+        await waitFor(() => eventsOf(id).some((e) => e.type === 'document.touched'));
+        await idleOf(m, id);
+        expect(targetsOf(m, id)).toEqual([]);
+      });
+
+      it('legacy setLink adds only the primary association and keeps the others', async () => {
+        const { m, id } = await idleThread();
+        m.updateLinks(id, { add: [SPEC, FIX], remove: [] });
+        const info = m.setLink(id, CYCLE);
+        expect(info.link.targets).toEqual([{ ...SPEC, origin: 'manual' }, { ...FIX, origin: 'manual' }, { ...CYCLE, origin: 'manual' }]);
+        expect(info.link).toMatchObject({ target: CYCLE, source: 'manual' });
+      });
+
+      it('legacy setLink none removes only the primary association and keeps the others', async () => {
+        const { m, id } = await idleThread();
+        m.updateLinks(id, { add: [SPEC, FIX, CYCLE], remove: [] });
+        const info = m.setLink(id, { kind: 'none' });
+        expect(info.link.targets).toEqual([{ ...SPEC, origin: 'manual' }, { ...FIX, origin: 'manual' }]);
+        expect(info.link.target).toEqual(FIX);
+        expect(m.setLink(id, { kind: 'none' }).link.targets).toEqual([{ ...SPEC, origin: 'manual' }]);
+        expect(m.setLink(id, { kind: 'none' }).link).toMatchObject({ target: { kind: 'none' }, targets: [{ ...SPEC, origin: 'manual' }] });
+      });
+
+      it('persists the associations across a restart', async () => {
+        const { m, store, id } = await idleThread();
+        m.updateLinks(id, { add: [CYCLE, FIX], remove: [] });
+        await store.flush();
+        const reloaded = new ThreadStore(root);
+        await reloaded.init();
+        stores.push(reloaded);
+        expect(reloaded.get(id)?.link.targets).toEqual([{ ...CYCLE, origin: 'manual' }, { ...FIX, origin: 'manual' }]);
+      });
+    });
+
+    it('shows legacy threads from a v1 threads.json with a legacy link', async () => {
+      const first = await manager();
+      const t = await first.m.createThread({ channelId: 'general', options: opts, text: 'hola' });
+      await idleOf(first.m, t.id);
+      await first.store.flush();
+      const file = path.join(root, '.sdd-studio/threads.json');
+      const stored = JSON.parse(await readFile(file, 'utf8')) as Array<Record<string, unknown>>;
+      for (const entry of stored) {
+        delete entry.link;
+        delete entry.pending;
+        entry.pendingCount = 0;
+      }
+      await writeFile(file, JSON.stringify(stored));
+      const store = new ThreadStore(root);
+      await store.init();
+      stores.push(store);
+      const migrated = new SessionManager({ root, attachments: createAttachmentStore(root), store, engine: new FakeEngine(1), snapshot: () => snapshot, broadcast: (e) => sent.push(e) });
+      expect(migrated.list().find((x) => x.id === t.id)).toMatchObject({ link: { target: { kind: 'none' }, source: 'legacy' }, pendingCount: 0 });
+    });
+
+    it('creates the thread unlinked when there is no cycle nor fix to assign', async () => {
+      snapshot = { ...snapshot, cycles: [], fixes: [] };
+      const { m } = await manager();
+      const t = await m.createThread({ channelId: 'spec:spec-dev-001-pagos', options: opts, text: 'hola' });
+      expect(t.link).toEqual({ target: { kind: 'none' }, source: 'auto', targets: [] });
+      await idleOf(m, t.id);
+    });
+
+    it('assigns against the current workspace state, so a new cycle on disk is used right away', async () => {
+      const base = snapshot;
+      const { m } = await manager();
+      snapshot = { ...base, cycles: [...base.cycles, { ...base.cycles[0]!, cycle: 'cycle-02' }] };
+      const t = await m.createThread({ channelId: 'spec:spec-dev-001-pagos', options: opts, text: 'hola' });
+      expect(t.link.target).toEqual({ kind: 'cycle', specId: 'spec-dev-001-pagos', cycle: 'cycle-02' });
+      await idleOf(m, t.id);
+    });
+
+    it('the link does not change the queue or the gate: a linked thread still shares the channel write scope', async () => {
+      const { m } = await manager();
+      const ch = 'spec:spec-dev-001-pagos';
+      const a = await m.createThread({ channelId: ch, options: opts, text: '#slow' });
+      const b = await m.createThread({ channelId: ch, options: opts, text: 'hola' });
+      expect(statusOf(m, b.id)).toBe('queued');
+      await m.interrupt(a.id);
+      await idleOf(m, b.id);
+    });
+  });
+});
+
+describe('SessionManager attachments and refs', () => {
+  const png = (name: string, extra = 0) => ({
+    kind: 'image' as const, name, mime: 'image/png' as const, width: 2, height: 2,
+    data: Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, extra]).toString('base64'),
+  });
+  const userMessages = (threadId: string) =>
+    eventsOf(threadId).filter((e): e is Extract<ThreadEvent, { type: 'user.message' }> => e.type === 'user.message');
+  const withSkills = () => {
+    snapshot = { ...snapshot, skills: [{ id: 'commit', kind: 'skill', description: '', source: 'claude', path: '.claude/skills/commit/SKILL.md' }] };
+  };
+
+  it('keeps arrival order when an upload-heavy send is followed by a quick text send', async () => {
+    const { m } = await manager(new FakeEngine(1), (inner) => ({
+      ...inner,
+      put: async (upload) => {
+        if (upload.name === 'slow.png') await new Promise((r) => setTimeout(r, 80));
+        return inner.put(upload);
+      },
+    }));
+    const t = await m.createThread({ channelId: 'general', options: opts, text: 'first' });
+    await waitFor(() => statusOf(m, t.id) === 'idle');
+    const slow = m.send(t.id, { text: 'with file', attachments: [png('slow.png')] });
+    const fast = m.send(t.id, { text: 'quick' });
+    expect(await slow).toEqual({ delivery: 'started' });
+    expect(await fast).toMatchObject({ delivery: 'pending' });
+    await waitFor(() => userMessages(t.id).length === 3 && statusOf(m, t.id) === 'idle');
+    expect(userMessages(t.id).map((e) => e.text)).toEqual(['first', 'with file', 'quick']);
+  });
+
+  it('a failed upload emits nothing and the acceptance queue keeps serving the next send', async () => {
+    const { m } = await manager();
+    const t = await m.createThread({ channelId: 'general', options: opts, text: 'first' });
+    await waitFor(() => statusOf(m, t.id) === 'idle');
+    const before = eventsOf(t.id).length;
+    const broken = { ...png('x.png'), data: Buffer.from('not a png').toString('base64') };
+    await expect(m.send(t.id, { text: 'bad', attachments: [broken] })).rejects.toMatchObject({ code: 'bad-request' });
+    expect(eventsOf(t.id)).toHaveLength(before);
+    expect(await m.send(t.id, { text: 'next' })).toEqual({ delivery: 'started' });
+    await waitFor(() => statusOf(m, t.id) === 'idle');
+  });
+
+  it('createThread materialises attachments first: a failure leaves no thread behind', async () => {
+    const { m } = await manager();
+    const broken = { ...png('x.png'), data: Buffer.from('nope').toString('base64') };
+    await expect(m.createThread({ channelId: 'general', options: opts, text: 'hi', attachments: [broken] })).rejects.toMatchObject({ code: 'bad-request' });
+    expect(m.list()).toEqual([]);
+  });
+
+  it('createThread titles from the first attachment when the text is empty and stores refs on user.message', async () => {
+    withSkills();
+    const { m } = await manager();
+    const t = await m.createThread({
+      channelId: 'general', options: opts, text: '', attachments: [png('diagram.png'), png('b.png', 1)],
+      refs: { agents: ['sdd-planner', 'ghost', 'sdd-planner'], skills: ['commit', 'nope'] },
+    });
+    expect(t.title).toBe('diagram.png');
+    const [message] = userMessages(t.id);
+    expect(message?.attachments?.map((a) => a.name)).toEqual(['diagram.png', 'b.png']);
+    expect(message?.refs).toEqual({ agents: ['sdd-planner'], skills: ['commit'] });
+    await waitFor(() => statusOf(m, t.id) === 'idle');
+  });
+
+  it('omits attachments and refs keys for plain text messages and drops refs that no longer exist', async () => {
+    const { m } = await manager();
+    const t = await m.createThread({ channelId: 'general', options: opts, text: 'plain', refs: { agents: ['ghost'], skills: ['ghost'] } });
+    const [message] = userMessages(t.id);
+    expect('attachments' in (message ?? {})).toBe(false);
+    expect('refs' in (message ?? {})).toBe(false);
+    await waitFor(() => statusOf(m, t.id) === 'idle');
+  });
+
+  it('pending.added carries attachments and refs and delivery re-emits them with the pendingId', async () => {
+    withSkills();
+    const { m } = await manager();
+    const t = await m.createThread({ channelId: 'general', options: opts, text: '#steps:3' });
+    const result = await m.send(t.id, { text: '/commit now', attachments: [png('p.png')], refs: { agents: [], skills: ['commit'] } });
+    expect(result.delivery).toBe('pending');
+    const added = eventsOf(t.id).find((e) => e.type === 'pending.added');
+    expect(added).toMatchObject({ attachments: [{ name: 'p.png' }], refs: { agents: [], skills: ['commit'] } });
+    await waitFor(() => userMessages(t.id).some((e) => e.pendingId));
+    expect(userMessages(t.id).find((e) => e.pendingId)).toMatchObject({ attachments: [{ name: 'p.png' }], refs: { skills: ['commit'] } });
+    expect(m.list()[0]?.pendingCount).toBe(0);
+    await waitFor(() => statusOf(m, t.id) === 'idle');
+  });
+
+  it('editPending allows empty text only when the pending message has attachments', async () => {
+    const { m } = await manager();
+    const t = await m.createThread({ channelId: 'general', options: opts, text: '#slow' });
+    const withFile = await m.send(t.id, { text: 'a', attachments: [png('p.png')] });
+    const plain = await m.send(t.id, { text: 'b' });
+    if (withFile.delivery !== 'pending' || plain.delivery !== 'pending') throw new Error('expected pending');
+    m.editPending(t.id, withFile.pendingId, '');
+    expect(() => m.editPending(t.id, plain.pendingId, ' ')).toThrow(SessionError);
+    await m.interrupt(t.id);
+  });
+
+  it('#bad-attachment ends in error without retrying or auto-sending the pending messages', async () => {
+    const { m } = await manager(new FakeEngine(40));
+    const t = await m.createThread({ channelId: 'general', options: opts, text: '#bad-attachment', attachments: [png('p.png')] });
+    const queued = await m.send(t.id, { text: 'later', attachments: [png('q.png', 1)] });
+    expect(queued.delivery).toBe('pending');
+    await waitFor(() => statusOf(m, t.id) === 'error');
+    await new Promise((r) => setTimeout(r, 80));
+    expect(statusOf(m, t.id)).toBe('error');
+    expect(m.list()[0]?.pendingCount).toBe(1);
+    expect(userMessages(t.id)).toHaveLength(1);
+  });
+
+  it('hands the engine a preamble, an attachment block and the text without the leading skill token', async () => {
+    withSkills();
+    const seen: EngineTurnInput[] = [];
+    const engine: AgentEngine = { name: 'spy', provider: 'claude', startTurn: (input, cb) => (seen.push(input), new FakeEngine(1).startTurn(input, cb)) };
+    const { m } = await manager(engine);
+    await m.createThread({ channelId: 'general', options: opts, text: '/commit please', attachments: [png('p.png')], refs: { agents: [], skills: ['commit'] } });
+    const prompt = seen[0]?.prompts[0]?.prompt;
+    expect(prompt?.text).toBe('please');
+    expect(prompt?.preamble).toEqual(['Use the skill "commit" (.claude/skills/commit/SKILL.md) for this task.']);
+    expect(prompt?.blocks).toEqual([{ kind: 'attachment', ref: expect.objectContaining({ name: 'p.png', kind: 'image' }) }]);
+    await waitFor(() => m.list().every((thread) => thread.status === 'idle'));
+  });
+
+  it('collectPending textOnly leaves pending messages with attachments for the turn end', async () => {
+    const collected: Array<{ at: string; ids: string[] }> = [];
+    const engine: AgentEngine = {
+      name: 'spy',
+      provider: 'claude' as const,
+      startTurn: (_input, cb) => ({
+        done: (async () => {
+          await new Promise((r) => setTimeout(r, 60));
+          collected.push({ at: 'cut-point', ids: cb.collectPending('cut-point', { textOnly: true }).map((x) => x.id) });
+          collected.push({ at: 'turn-end', ids: cb.collectPending('turn-end').map((x) => x.id) });
+        })(),
+        interrupt: async () => undefined,
+      }),
+    };
+    const { m } = await manager(engine);
+    const t = await m.createThread({ channelId: 'general', options: opts, text: 'go' });
+    const text = await m.send(t.id, { text: 'only text' });
+    const file = await m.send(t.id, { text: 'with file', attachments: [png('p.png')] });
+    await waitFor(() => collected.length === 2);
+    expect(collected[0]?.ids).toEqual([text.delivery === 'pending' ? text.pendingId : '']);
+    expect(collected[1]?.ids).toEqual([file.delivery === 'pending' ? file.pendingId : '']);
+    await waitFor(() => statusOf(m, t.id) === 'idle');
+  });
+
+  describe('session title', () => {
+    class TitleEngine extends FakeEngine {
+      reads = 0;
+      next: () => Promise<string | null> = async () => null;
+      override async readSessionTitle(): Promise<string | null> {
+        this.reads++;
+        return this.next();
+      }
+    }
+    const titleHistory = (threadId: string) => {
+      const titles = sent.flatMap((e) => (e.kind === 'thread.updated' && e.thread.id === threadId ? [e.thread.sessionTitle] : []));
+      return titles.filter((title, index) => index === 0 || title !== titles[index - 1]);
+    };
+    const titleOf = (m: SessionManager, id: string) => m.list().find((t) => t.id === id)?.sessionTitle;
+    const settle = (m: SessionManager, id: string) => waitFor(() => statusOf(m, id) === 'idle');
+
+    it('publishes the title read at session start and at turn end once per change', async () => {
+      const engine = new TitleEngine(1);
+      engine.next = async () => 'Planning payments';
+      const { m } = await manager(engine);
+      const t = await m.createThread({ channelId: 'general', options: opts, text: 'hola' });
+      await settle(m, t.id);
+      await waitFor(() => titleOf(m, t.id) === 'Planning payments');
+      expect(titleHistory(t.id)).toEqual([null, 'Planning payments']);
+      expect(engine.reads).toBeGreaterThanOrEqual(2);
+    });
+
+    it('picks up a rename that happens after the first turn', async () => {
+      const engine = new TitleEngine(1);
+      engine.next = async () => 'First';
+      const { m } = await manager(engine);
+      const t = await m.createThread({ channelId: 'general', options: opts, text: 'hola' });
+      await settle(m, t.id);
+      await waitFor(() => titleOf(m, t.id) === 'First');
+      engine.next = async () => 'Renamed';
+      await m.send(t.id, { text: 'otra' });
+      await waitFor(() => titleOf(m, t.id) === 'Renamed');
+    });
+
+    it('keeps the last known title and the thread running when the read fails', async () => {
+      const errors = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+      const engine = new TitleEngine(1);
+      engine.next = async () => 'Known';
+      const { m } = await manager(engine);
+      const t = await m.createThread({ channelId: 'general', options: opts, text: 'hola' });
+      await settle(m, t.id);
+      await waitFor(() => titleOf(m, t.id) === 'Known');
+      engine.next = async () => {
+        throw new Error('EACCES');
+      };
+      await m.send(t.id, { text: 'otra' });
+      await waitFor(() => errors.mock.calls.some((call) => String(call[1]).includes('EACCES')));
+      await settle(m, t.id);
+      expect(titleOf(m, t.id)).toBe('Known');
+      expect(statusOf(m, t.id)).toBe('idle');
+      expect(titleHistory(t.id)).toEqual([null, 'Known']);
+      errors.mockRestore();
+    });
+
+    it('keeps the last known title when the read times out', async () => {
+      const errors = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+      const engine = new TitleEngine(1);
+      engine.next = async () => 'Known';
+      const { m } = await manager(engine, undefined, { titleTimeoutMs: 30 });
+      const t = await m.createThread({ channelId: 'general', options: opts, text: 'hola' });
+      await settle(m, t.id);
+      await waitFor(() => titleOf(m, t.id) === 'Known');
+      engine.next = () => new Promise(() => undefined);
+      await m.send(t.id, { text: 'otra' });
+      await waitFor(() => errors.mock.calls.some((call) => String(call[1]).includes('timed out')));
+      await settle(m, t.id);
+      expect(titleOf(m, t.id)).toBe('Known');
+      errors.mockRestore();
+    });
+
+    it('does not publish again when the title did not change', async () => {
+      const engine = new TitleEngine(1);
+      engine.next = async () => 'Same';
+      const { m } = await manager(engine);
+      const t = await m.createThread({ channelId: 'general', options: opts, text: 'hola' });
+      await settle(m, t.id);
+      await waitFor(() => titleOf(m, t.id) === 'Same');
+      const readsBefore = engine.reads;
+      await m.send(t.id, { text: 'otra' });
+      await settle(m, t.id);
+      await waitFor(() => engine.reads > readsBefore);
+      expect(titleHistory(t.id)).toEqual([null, 'Same']);
+    });
+
+    it('runs one read at a time per thread', async () => {
+      const engine = new TitleEngine(1);
+      let running = 0;
+      let peak = 0;
+      engine.next = async () => {
+        peak = Math.max(peak, ++running);
+        await new Promise((r) => setTimeout(r, 30));
+        running--;
+        return 'T';
+      };
+      const { m } = await manager(engine);
+      const t = await m.createThread({ channelId: 'general', options: opts, text: '#steps:2' });
+      await settle(m, t.id);
+      await waitFor(() => titleOf(m, t.id) === 'T');
+      expect(peak).toBe(1);
+    });
+
+    it('backfills threads with a session but no title after a restart, up to 20', async () => {
+      const first = await manager(new TitleEngine(1));
+      const ids: string[] = [];
+      for (let i = 0; i < 22; i++) {
+        const t = await first.m.createThread({ channelId: 'general', options: opts, text: `hilo ${i}` });
+        await settle(first.m, t.id);
+        ids.push(t.id);
+      }
+      await first.store.flush();
+      const store = new ThreadStore(root);
+      await store.init();
+      stores.push(store);
+      const engine = new TitleEngine(1);
+      engine.next = async () => 'Backfilled';
+      const restarted = new SessionManager({ root, attachments: createAttachmentStore(root), store, engine, snapshot: () => snapshot, broadcast: () => {} });
+      await restarted.recover();
+      await waitFor(() => restarted.list().filter((t) => t.sessionTitle === 'Backfilled').length === 20);
+      expect(engine.reads).toBe(20);
+    });
+  });
+
+  describe('document.touched', () => {
+    const SPEC_DOC = 'sdd/specs/spec-dev-001-pagos/cycles/cycle-01';
+    const touchedOf = (id: string) => eventsOf(id).filter((e): e is Extract<ThreadEvent, { type: 'document.touched' }> => e.type === 'document.touched');
+    const settle = (m: SessionManager, id: string) => waitFor(() => statusOf(m, id) === 'idle');
+    const targetsOf = (m: SessionManager, id: string) => m.list().find((t) => t.id === id)?.link.targets ?? [];
+
+    const hookedEngine = (run: (cb: EngineCallbacks, cwd: string) => Promise<void>): AgentEngine => ({
+      name: 'hooked',
+      provider: 'claude',
+      startTurn: (input, cb): EngineTurn => ({
+        done: run(cb, input.cwd),
+        interrupt: async () => undefined,
+      }),
+    });
+    const ctx = (toolName: string, toolInput: Record<string, unknown>, toolUseId = 'tu-1') => ({
+      toolName, input: toolInput, toolUseId, author: { agent: 'dm', parentToolUseId: null },
+    });
+
+    it('emits created for a Write of a new document and links the thread to its cycle', async () => {
+      const { m } = await manager();
+      const t = await m.createThread({ channelId: 'general', options: opts, text: '#write-doc' });
+      await settle(m, t.id);
+      expect(touchedOf(t.id)).toMatchObject([{ path: `${SPEC_DOC}/fake-write-doc.md`, op: 'created' }]);
+      expect(targetsOf(m, t.id)).toContainEqual({ kind: 'cycle', specId: 'spec-dev-001-pagos', cycle: 'cycle-01', origin: 'detected' });
+      expect(m.list().find((x) => x.id === t.id)?.link.target).toEqual({ kind: 'cycle', specId: 'spec-dev-001-pagos', cycle: 'cycle-01' });
+    });
+
+    it('emits modified when the Write rewrites an existing document', async () => {
+      const { m } = await manager();
+      const t = await m.createThread({ channelId: 'general', options: opts, text: '#write-doc' });
+      await settle(m, t.id);
+      await m.send(t.id, { text: '#write-doc' });
+      await waitFor(() => touchedOf(t.id).length === 2);
+      expect(touchedOf(t.id).map((e) => e.op)).toEqual(['created', 'modified']);
+    });
+
+    it('emits the files a Bash run changed under sdd/', async () => {
+      const { m } = await manager();
+      const t = await m.createThread({ channelId: 'general', options: opts, text: '#bash-doc' });
+      await settle(m, t.id);
+      expect(touchedOf(t.id)).toMatchObject([{ path: `${SPEC_DOC}/fake-bash-doc.md`, op: 'created', author: { agent: 'sdd-orchestrator', parentToolUseId: null } }]);
+    });
+
+    it('emits nothing for a Bash that does not touch sdd/', async () => {
+      const { m } = await manager(hookedEngine(async (cb) => {
+        await cb.beforeTool?.(ctx('Bash', { command: 'ls' }));
+        await cb.afterTool?.(ctx('Bash', { command: 'ls' }), 'ok');
+        cb.emit({ type: 'turn.end', usage: { model: 'x', effort: null, tokensIn: 1, tokensOut: 1, costUsd: 0 } });
+      }));
+      const t = await m.createThread({ channelId: 'general', options: opts, text: 'go' });
+      await settle(m, t.id);
+      expect(touchedOf(t.id)).toEqual([]);
+      expect(targetsOf(m, t.id)).toEqual([]);
+    });
+
+    it.each(['Edit', 'MultiEdit', 'NotebookEdit'])('emits modified for %s and ignores a failed run', async (toolName) => {
+      const key = toolName === 'NotebookEdit' ? 'notebook_path' : 'file_path';
+      const { m } = await manager(hookedEngine(async (cb, cwd) => {
+        const good = ctx(toolName, { [key]: path.join(cwd, 'apps/a.ts') }, 'ok-1');
+        await cb.beforeTool?.(good);
+        await cb.afterTool?.(good, 'ok');
+        const bad = ctx(toolName, { [key]: path.join(cwd, 'apps/b.ts') }, 'bad-1');
+        await cb.beforeTool?.(bad);
+        await cb.afterTool?.(bad, 'failed');
+      }));
+      const t = await m.createThread({ channelId: 'general', options: opts, text: 'go' });
+      await settle(m, t.id);
+      expect(touchedOf(t.id)).toMatchObject([{ path: 'apps/a.ts', op: 'modified' }]);
+    });
+
+    it('sends a path outside the workspace as absolute with forward slashes', async () => {
+      const outside = path.join(path.dirname(root), 'outside-file.md');
+      const { m } = await manager(hookedEngine(async (cb) => {
+        const write = ctx('Write', { file_path: outside });
+        await cb.beforeTool?.(write);
+        await cb.afterTool?.(write, 'ok');
+      }));
+      const t = await m.createThread({ channelId: 'general', options: opts, text: 'go' });
+      await settle(m, t.id);
+      expect(touchedOf(t.id).map((e) => e.path)).toEqual([outside.replace(/\\/g, '/')]);
+    });
+
+    it('records nothing when the approval is denied', async () => {
+      const { m } = await manager(hookedEngine(async (cb) => {
+        const write = ctx('Write', { file_path: path.join(root, `${SPEC_DOC}/denied.md`) });
+        await cb.beforeTool?.(write);
+        cb.cancelTool?.('tu-1');
+        await cb.afterTool?.(write, 'failed');
+      }));
+      const t = await m.createThread({ channelId: 'general', options: opts, text: 'go' });
+      await settle(m, t.id);
+      expect(touchedOf(t.id)).toEqual([]);
+    });
+
+    it('closes a window left open at the end of the turn with the final diff', async () => {
+      const { m } = await manager(hookedEngine(async (cb, cwd) => {
+        await cb.beforeTool?.(ctx('Bash', { command: 'never reports' }));
+        await writeFile(path.join(cwd, SPEC_DOC, 'left-open.md'), 'x');
+      }));
+      const t = await m.createThread({ channelId: 'general', options: opts, text: 'go' });
+      await settle(m, t.id);
+      expect(touchedOf(t.id)).toMatchObject([{ path: `${SPEC_DOC}/left-open.md`, op: 'created' }]);
+    });
+
+    it('retries paths of a spec the snapshot does not know yet after refreshing it at turn end', async () => {
+      const newSpec = 'spec-dev-009-nueva';
+      let known = false;
+      const refreshSnapshot = vi.fn(async () => {
+        known = true;
+        snapshot = { ...snapshot, specs: [...snapshot.specs, { ...snapshot.specs[0]!, id: newSpec }] };
+      });
+      const { m } = await manager(
+        hookedEngine(async (cb) => {
+          const write = ctx('Write', { file_path: path.join(root, `sdd/specs/${newSpec}/${newSpec}.spec.md`) });
+          await cb.beforeTool?.(write);
+          await cb.afterTool?.(write, 'ok');
+          cb.emit({ type: 'turn.end', usage: { model: 'x', effort: null, tokensIn: 1, tokensOut: 1, costUsd: 0 } });
+        }),
+        undefined,
+        { refreshSnapshot },
+      );
+      const t = await m.createThread({ channelId: 'general', options: opts, text: 'go' });
+      await settle(m, t.id);
+      await waitFor(() => targetsOf(m, t.id).length === 1);
+      expect(known).toBe(true);
+      expect(targetsOf(m, t.id)).toEqual([{ kind: 'spec', specId: newSpec, origin: 'detected' }]);
+    });
+
+    it('serves history without document.touched by default and with it on request', async () => {
+      const { m } = await manager();
+      const t = await m.createThread({ channelId: 'general', options: opts, text: '#write-doc' });
+      await settle(m, t.id);
+      expect((await m.history(t.id, 0)).some((h) => h.event.type === 'document.touched')).toBe(false);
+      expect((await m.history(t.id, 0, false)).some((h) => h.event.type === 'document.touched')).toBe(false);
+      expect((await m.history(t.id, 0, true)).some((h) => h.event.type === 'document.touched')).toBe(true);
+    });
+  });
+});
+
+describe('SessionManager provider questions', () => {
+  const pendingQuestion = (threadId: string) =>
+    eventsOf(threadId).find((e): e is Extract<ThreadEvent, { type: 'question.requested' }> => e.type === 'question.requested');
+  const answer = (question: string, ...values: string[]) => ({ question, values });
+
+  it('publishes the question instead of an approval and waits for the answer', async () => {
+    const { m } = await manager();
+    const t = await m.createThread({ channelId: 'general', options: opts, text: '#ask' });
+    const asked = await waitFor(() => pendingQuestion(t.id));
+    expect(asked.questions[0]).toMatchObject({ question: 'Which mode?', multiSelect: false });
+    expect(pendingApproval(t.id)).toBeUndefined();
+    expect(statusOf(m, t.id)).toBe('waiting-approval');
+  });
+
+  it('returns the chosen answers to the engine and resumes the turn', async () => {
+    const { m } = await manager();
+    const t = await m.createThread({ channelId: 'general', options: opts, text: '#ask' });
+    const asked = await waitFor(() => pendingQuestion(t.id));
+    m.answerQuestion(asked.questionId, [answer('Which mode?', 'lite')], false);
+    await waitFor(() => statusOf(m, t.id) === 'idle');
+    expect(eventsOf(t.id)).toContainEqual({ type: 'question.resolved', questionId: asked.questionId, outcome: 'answered', answers: [answer('Which mode?', 'lite')] });
+    const heard = eventsOf(t.id).filter((e) => e.type === 'message.delta').map((e) => (e.type === 'message.delta' ? e.text : '')).join('');
+    expect(heard).toContain('{"Which mode?":"lite"}');
+  });
+
+  it('accepts a free-text answer that is not one of the options', async () => {
+    const { m } = await manager();
+    const t = await m.createThread({ channelId: 'general', options: opts, text: '#ask' });
+    const asked = await waitFor(() => pendingQuestion(t.id));
+    m.answerQuestion(asked.questionId, [answer('Which mode?', 'otro modo')], false);
+    await waitFor(() => statusOf(m, t.id) === 'idle');
+    expect(eventsOf(t.id)).toContainEqual({ type: 'question.resolved', questionId: asked.questionId, outcome: 'answered', answers: [answer('Which mode?', 'otro modo')] });
+  });
+
+  it('rejects answers that miss a question, repeat it or send several values to a single choice', async () => {
+    const { m } = await manager();
+    const t = await m.createThread({ channelId: 'general', options: opts, text: '#ask' });
+    const asked = await waitFor(() => pendingQuestion(t.id));
+    expect(() => m.answerQuestion(asked.questionId, [], false)).toThrowError(SessionError);
+    expect(() => m.answerQuestion(asked.questionId, [answer('Other?', 'x')], false)).toThrowError(SessionError);
+    expect(() => m.answerQuestion(asked.questionId, [answer('Which mode?', 'lite', 'full')], false)).toThrowError(SessionError);
+    expect(statusOf(m, t.id)).toBe('waiting-approval');
+  });
+
+  it('declining resolves the question and tells the engine the user declined', async () => {
+    const { m } = await manager();
+    const t = await m.createThread({ channelId: 'general', options: opts, text: '#ask' });
+    const asked = await waitFor(() => pendingQuestion(t.id));
+    m.answerQuestion(asked.questionId, [], true);
+    await waitFor(() => statusOf(m, t.id) === 'idle');
+    expect(eventsOf(t.id)).toContainEqual({ type: 'question.resolved', questionId: asked.questionId, outcome: 'declined' });
+  });
+
+  it('cancels a pending question when the turn is interrupted', async () => {
+    const { m } = await manager();
+    const t = await m.createThread({ channelId: 'general', options: opts, text: '#ask' });
+    const asked = await waitFor(() => pendingQuestion(t.id));
+    await m.interrupt(t.id);
+    await waitFor(() => eventsOf(t.id).some((e) => e.type === 'question.resolved'));
+    expect(eventsOf(t.id)).toContainEqual({ type: 'question.resolved', questionId: asked.questionId, outcome: 'cancelled' });
+    expect(statusOf(m, t.id)).toBe('interrupted');
+    expect(() => m.answerQuestion(asked.questionId, [answer('Which mode?', 'lite')], false)).toThrowError(SessionError);
+  });
+
+  it('reports an unknown question as not-found', async () => {
+    const { m } = await manager();
+    expect(() => m.answerQuestion('nope', [], true)).toThrowError(expect.objectContaining({ code: 'not-found' }));
+  });
+
+  it('marks the agent as waiting while the question is open', async () => {
+    const { m } = await manager();
+    const t = await m.createThread({ channelId: 'general', options: opts, text: '#ask' });
+    await waitFor(() => pendingQuestion(t.id));
+    const last = [...sent].reverse().find((e) => e.kind === 'presence.changed');
+    expect(last && last.kind === 'presence.changed' && last.presence.some((p) => p.threadId === t.id && p.state === 'waiting')).toBe(true);
+  });
+});
+
+describe('SessionManager context usage', () => {
+  const infoOf = (m: SessionManager, id: string) => m.list().find((t) => t.id === id);
+
+  it('publishes the context reading of the engine on the thread', async () => {
+    const { m } = await manager();
+    const t = await m.createThread({ channelId: 'general', options: opts, text: '#ctx:25' });
+    await waitFor(() => statusOf(m, t.id) === 'idle');
+    expect(infoOf(m, t.id)?.contextUsage).toEqual({ usedTokens: 50_000, maxTokens: 200_000 });
+    expect(sent.some((e) => e.kind === 'thread.updated' && e.thread.id === t.id && e.thread.contextUsage?.usedTokens === 50_000)).toBe(true);
+  });
+
+  it('leaves the thread without a reading when the engine gives none', async () => {
+    const { m } = await manager();
+    const t = await m.createThread({ channelId: 'general', options: opts, text: 'hola' });
+    await waitFor(() => statusOf(m, t.id) === 'idle');
+    expect(infoOf(m, t.id)?.contextUsage ?? null).toBeNull();
+  });
+
+  it('replaces the reading on the next turn', async () => {
+    const { m } = await manager();
+    const t = await m.createThread({ channelId: 'general', options: opts, text: '#ctx:10' });
+    await waitFor(() => statusOf(m, t.id) === 'idle');
+    expect(infoOf(m, t.id)?.contextUsage?.usedTokens).toBe(20_000);
+    await m.send(t.id, { text: 'otra vez #ctx:30' });
+    await waitFor(() => infoOf(m, t.id)?.contextUsage?.usedTokens === 60_000);
+    await waitFor(() => statusOf(m, t.id) === 'idle');
+  });
+
+  it('keeps the reading after a restart', async () => {
+    const { m, store } = await manager();
+    const t = await m.createThread({ channelId: 'general', options: opts, text: '#ctx:60' });
+    await waitFor(() => statusOf(m, t.id) === 'idle');
+    await store.flush();
+    const store2 = new ThreadStore(root);
+    await store2.init();
+    stores.push(store2);
+    expect(store2.get(t.id)?.contextUsage).toEqual({ usedTokens: 120_000, maxTokens: 200_000 });
+  });
+});
+
+describe('SessionManager history and questions', () => {
+  it('hides question events from history unless the client asks for them', async () => {
+    const { m } = await manager();
+    const t = await m.createThread({ channelId: 'general', options: opts, text: '#ask' });
+    const asked = await waitFor(() => eventsOf(t.id).find((e) => e.type === 'question.requested'));
+    m.answerQuestion((asked as { questionId: string }).questionId, [{ question: 'Which mode?', values: ['lite'] }], false);
+    await waitFor(() => statusOf(m, t.id) === 'idle');
+    const types = (entries: { event: ThreadEvent }[]) => entries.map((e) => e.event.type);
+    expect(types(await m.history(t.id, 0))).not.toContain('question.requested');
+    expect(types(await m.history(t.id, 0))).not.toContain('question.resolved');
+    expect(types(await m.history(t.id, 0, false, true))).toEqual(expect.arrayContaining(['question.requested', 'question.resolved']));
   });
 });

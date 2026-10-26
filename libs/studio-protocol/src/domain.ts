@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { MAX_LINK_TARGETS, MAX_PENDING_PER_THREAD } from './limits';
 
 export const KNOWN_AGENTS = [
   'sdd-orchestrator',
@@ -18,10 +19,33 @@ export const ModelChoice = z.enum(['kit', 'haiku', 'sonnet', 'opus', 'fable']);
 export type ModelChoice = z.infer<typeof ModelChoice>;
 export const Effort = z.enum(['low', 'medium', 'high', 'xhigh', 'max']);
 export type Effort = z.infer<typeof Effort>;
-export const PermissionModeChoice = z.enum(['default', 'acceptEdits', 'plan']);
+export const PermissionModeChoice = z.enum(['default', 'acceptEdits', 'bypassPermissions', 'plan']);
 export type PermissionModeChoice = z.infer<typeof PermissionModeChoice>;
 export const AuthMode = z.enum(['local-claude-login', 'api-key']);
 export type AuthMode = z.infer<typeof AuthMode>;
+export const AuthPreference = z.enum(['subscription', 'api-key']);
+export type AuthPreference = z.infer<typeof AuthPreference>;
+export const AuthAccountState = z.enum(['connected', 'disconnected', 'pending', 'error']);
+export type AuthAccountState = z.infer<typeof AuthAccountState>;
+export const AuthAccount = z.object({
+  state: AuthAccountState,
+  email: z.string().max(320).nullable(),
+  method: z.string().max(64).nullable(),
+  plan: z.string().max(64).nullable(),
+  loginUrl: z.string().url().max(2048).nullable(),
+  error: z.string().max(500).nullable(),
+});
+export type AuthAccount = z.infer<typeof AuthAccount>;
+
+export const KNOWN_PROVIDERS = ['claude'] as const;
+export type KnownProvider = (typeof KNOWN_PROVIDERS)[number];
+export const DEFAULT_PROVIDER: KnownProvider = 'claude';
+export const ProviderId = z.string().regex(/^[a-z][a-z0-9-]{0,31}$/);
+export type ProviderId = z.infer<typeof ProviderId>;
+export const isKnownProvider = (value: string): value is KnownProvider =>
+  (KNOWN_PROVIDERS as readonly string[]).includes(value);
+export const EngineSessionId = z.string().min(1).max(128);
+export type EngineSessionId = z.infer<typeof EngineSessionId>;
 
 export const ChannelId = z
   .string()
@@ -42,6 +66,47 @@ export type Author = z.infer<typeof Author>;
 export const SessionStatus = z.enum(['queued', 'running', 'waiting-approval', 'idle', 'interrupted', 'error']);
 export type SessionStatus = z.infer<typeof SessionStatus>;
 
+export const SpecIdValue = z.string().regex(/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/);
+export type SpecIdValue = z.infer<typeof SpecIdValue>;
+export const CycleIdValue = z.string().regex(/^cycle-\d{2}$/);
+export type CycleIdValue = z.infer<typeof CycleIdValue>;
+export const FixIdValue = z.string().regex(/^FIX-[A-Za-z0-9._-]{1,96}$/);
+export type FixIdValue = z.infer<typeof FixIdValue>;
+
+export const ThreadLinkTarget = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('cycle'), specId: SpecIdValue, cycle: CycleIdValue }),
+  z.object({ kind: z.literal('fix'), fixId: FixIdValue }),
+  z.object({ kind: z.literal('none') }),
+]);
+export type ThreadLinkTarget = z.infer<typeof ThreadLinkTarget>;
+
+export const LinkOrigin = z.enum(['detected', 'manual']);
+export type LinkOrigin = z.infer<typeof LinkOrigin>;
+const SpecRef = z.object({ kind: z.literal('spec'), specId: SpecIdValue });
+const CycleRef = z.object({ kind: z.literal('cycle'), specId: SpecIdValue, cycle: CycleIdValue });
+const FixRef = z.object({ kind: z.literal('fix'), fixId: FixIdValue });
+export const ThreadLinkRef = z.discriminatedUnion('kind', [SpecRef, CycleRef, FixRef]);
+export type ThreadLinkRef = z.infer<typeof ThreadLinkRef>;
+export const ThreadLinkEntry = z.discriminatedUnion('kind', [
+  SpecRef.extend({ origin: LinkOrigin }),
+  CycleRef.extend({ origin: LinkOrigin }),
+  FixRef.extend({ origin: LinkOrigin }),
+]);
+export type ThreadLinkEntry = z.infer<typeof ThreadLinkEntry>;
+
+export const ThreadLink = z.object({
+  target: ThreadLinkTarget,
+  source: z.enum(['auto', 'manual', 'legacy']),
+  targets: z.array(ThreadLinkEntry).max(MAX_LINK_TARGETS).optional().catch(undefined),
+});
+export type ThreadLink = z.infer<typeof ThreadLink>;
+
+export const ContextUsage = z.object({
+  usedTokens: z.number().int().nonnegative(),
+  maxTokens: z.number().int().positive(),
+});
+export type ContextUsage = z.infer<typeof ContextUsage>;
+
 export const ThreadInfo = z.object({
   id: z.string().min(1),
   channelId: ChannelId,
@@ -51,8 +116,27 @@ export const ThreadInfo = z.object({
   status: SessionStatus,
   createdAt: z.string(),
   lastActivity: z.string(),
+  link: ThreadLink,
+  pendingCount: z.number().int().min(0).max(MAX_PENDING_PER_THREAD),
+  engineSessionId: EngineSessionId.nullable().optional(),
+  provider: ProviderId.optional(),
+  sessionTitle: z.string().max(300).nullable().optional().catch(null),
+  contextUsage: ContextUsage.nullable().optional().catch(null),
 });
 export type ThreadInfo = z.infer<typeof ThreadInfo>;
+
+export const AlwaysRule = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('tool'), tool: z.string().min(1).max(128) }),
+  z.object({ kind: z.literal('mcp'), tool: z.string().regex(/^mcp__.+__.+$/).max(256) }),
+  z.object({ kind: z.literal('bash-prefix'), prefix: z.string().min(1).max(256) }),
+]);
+export type AlwaysRule = z.infer<typeof AlwaysRule>;
+
+export const AlwaysOffer = z.union([
+  AlwaysRule,
+  z.object({ kind: z.literal('none'), reason: z.enum(['gate-warning', 'not-calculable']) }),
+]);
+export type AlwaysOffer = z.infer<typeof AlwaysOffer>;
 
 export const PresenceState = z.enum(['working', 'waiting', 'open', 'idle']);
 export type PresenceState = z.infer<typeof PresenceState>;
@@ -76,3 +160,32 @@ export const dmAgentOfChannel = (channelId: string): string | null =>
 export function defaultThreadOptions(agent: string = DEFAULT_AGENT): ThreadOptions {
   return { agent, model: 'kit', effort: null, permissionMode: 'default' };
 }
+
+export const MAX_QUESTIONS = 4;
+export const MAX_QUESTION_OPTIONS = 8;
+
+export const QuestionOption = z.object({
+  label: z.string().min(1).max(200),
+  description: z.string().max(1000).optional(),
+});
+export type QuestionOption = z.infer<typeof QuestionOption>;
+
+export const Question = z.object({
+  question: z.string().min(1).max(1000),
+  header: z.string().max(60).optional(),
+  options: z.array(QuestionOption).max(MAX_QUESTION_OPTIONS),
+  multiSelect: z.boolean(),
+});
+export type Question = z.infer<typeof Question>;
+
+export const QuestionAnswer = z.object({
+  question: z.string().min(1).max(1000),
+  values: z.array(z.string().min(1).max(2000)).min(1).max(MAX_QUESTION_OPTIONS),
+});
+export type QuestionAnswer = z.infer<typeof QuestionAnswer>;
+
+export const DevProfile = z.enum(['team', 'solo']);
+export type DevProfile = z.infer<typeof DevProfile>;
+
+export const FlowChoice = z.enum(['auto', 'lite', 'full']);
+export type FlowChoice = z.infer<typeof FlowChoice>;

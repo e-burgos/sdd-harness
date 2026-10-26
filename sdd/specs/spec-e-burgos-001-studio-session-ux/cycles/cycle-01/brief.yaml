@@ -1,0 +1,326 @@
+# sdd/specs/spec-e-burgos-001-studio-session-ux/cycles/cycle-01/brief.yaml
+# Generado por: sdd-orchestrator
+# Al: iniciar el ciclo · re-scope 2026-10-23 (2º): corte en dos ciclos (opción A del planner) + HU-10
+# Rama: feat/studio-session-ux
+
+cycle: 1
+module: studio-session-ux
+phase: session-ux
+flow: full
+date: 2026-10-23
+estimated_weeks: 2
+spec: sdd/specs/spec-e-burgos-001-studio-session-ux/spec-e-burgos-001-studio-session-ux.spec.md
+app_context: sdd/context/apps/studio/context_prompt.md
+subproject_contexts:
+  - sdd/context/apps/studio/context_prompt.md
+  - sdd/context/apps/studio/constitution.md
+  - sdd/context/apps/studio-bridge/context_prompt.md
+  - sdd/context/apps/studio-bridge/constitution.md
+  - sdd/context/libs/studio-protocol/context_prompt.md
+  - sdd/context/libs/studio-protocol/constitution.md
+context_freshness: |
+  Base vigente; updates/ vacío en los tres subproyectos. Dato desactualizado:
+  apps/studio/constitution.md dice "Next.js 15" y package.json tiene next 16.4.3 (react 19.3.0).
+  Lo corrige el fragmento de cierre del ciclo; el base no se edita durante el ciclo.
+
+objective: |
+  Al cerrar el ciclo, el dev navega conversaciones por spec → ciclo y por fix en un menú colapsable
+  con hilos activos e indicadores de trabajo; concede "Always" por herramienta/tool MCP/prefijo Bash;
+  los paneles scrollean bien; puede escribirle a una sesión que trabaja sin interrumpirla (mensajes
+  encolados entregados en el próximo punto de corte del turno); y el protocolo ya publica los
+  contratos de toda la spec (incluidos adjuntos, búsqueda de archivos y skills/agentes de cycle-02)
+  con un único bump de PROTOCOL_VERSION.
+
+scope:
+  - "F1 contratos de protocolo de TODA la spec en un único bump de PROTOCOL_VERSION: HU-4/5/6/7/8/10 y también los de HU-1..HU-3 (adjuntos en thread.create/send y user.message, referencia por sha256, búsqueda de archivos, skills/agentes en snapshot o comando) para que cycle-02 no requiera otro bump. Los contratos de HU-1..3 se publican y testean con zod, sin consumidores todavía"
+  - "Puente a prompt streaming del SDK (AsyncIterable<SDKUserMessage>) — lo exige HU-10 en este ciclo; el mapeo de bloques image/document queda para cycle-02"
+  - "HU-4 Menú SPECS y FIXES: todas las specs (incluidas completadas) → ciclos → conversaciones; fixes abiertos + últimos cerrados → conversaciones; asociación hilo↔spec/ciclo|fix automática al crear, reasignable desde el hilo, hilos viejos por canal"
+  - "HU-5 Todas las secciones y subsecciones del menú (CANALES, AGENTES, SPECS, FIXES y sus hijos) colapsables/expandibles"
+  - "HU-6 'Always': por herramienta para Edit/Write/MultiEdit/NotebookEdit; por tool puntual para mcp__srv__tool; por prefijo de comando para Bash; vida = hilo vivo en el puente (memoria); warn del gate siempre pregunta; deny siempre bloquea"
+  - "HU-7 Hilos activos (running / waiting-approval / queued) en el Sidebar con navegación"
+  - "HU-8 Indicadores animados (typing dots / shimmer / spinner) en hilo, lista de hilos y avatar del agente; running vs waiting-approval distinguibles; prefers-reduced-motion"
+  - "HU-9 Arreglos de scroll: autoscroll de timeline/hilo, paneles, overflow del sidebar"
+  - "HU-10 (imperativa) Mensajes encolados sin interrumpir: enviar al hilo running/waiting-approval; el puente encola y entrega al modelo en el próximo punto de corte del turno (tras el tool en curso), no al final; si el turno termina/interrumpe con pendientes no se pierden; la UI muestra pendiente → entregado y permite editar/quitar mientras estén pendientes"
+  - "Decisiones de UI: los canales spec:* salen de CANALES (solo bajo SPECS); el Composer conserva borrador de texto por hilo en memoria al cambiar de hilo (se pierde al recargar; en cycle-02 se extiende a adjuntos)"
+
+next_cycle_scope:
+  cycle: 2
+  note: "No abierto todavía (sin carpeta). Se abre tras cerrar cycle-01, sobre los contratos ya publicados, sin bump de PROTOCOL_VERSION"
+  stories:
+    - "HU-1 Adjuntos: pegar/arrastrar/elegir; png/jpg/webp/gif, PDF, texto/código/markdown; preview con quitar; máx 5; imágenes ≤ 1568 px re-encodeadas SIEMPRE (quita EXIF/GPS); frame ≤ 1 MiB medido sobre el JSON serializado; bloques image/document/text al SDK; persistencia .sdd-studio/attachments/<sha256>.<ext>; render al recargar; borrador por hilo incluye adjuntos"
+    - "HU-2 @archivo: búsqueda de archivos del repo; se inserta la ruta; el agente la lee"
+    - "HU-3 @agente y /skill: descubrimiento de .claude/skills, .claude/agents, sdd/skills, sdd/agents; delegación / uso de skill"
+
+
+out_of_scope:
+  - "Implementación de HU-1, HU-2, HU-3 en puente y Composer (cycle-02); en cycle-01 solo sus contratos de protocolo"
+  - "FIX-e-burgos-002 (modo bypassPermissions): ya commiteado (5993bd2), status implemented; no se toca. PermissionModeChoice incluye bypassPermissions y el ciclo lo asume"
+  - "Persistir reglas 'Always' entre reinicios del puente o a nivel proyecto (.claude/settings)"
+  - "Que 'Always' cubra los warn del SPEC GATE"
+  - "Adjuntos binarios distintos de imagen/PDF (zip, office, audio, video)"
+  - "Inyectar el contenido de archivos referenciados con @ en el prompt"
+  - "Imágenes generadas por el agente; render de imágenes remotas en Markdown (sigue como link por privacidad)"
+  - "Routing por URL de hilos (deep links) salvo que el Arquitecto lo justifique como la vía mínima"
+  - "Cambios a las reglas del SPEC GATE (gate/judge.ts debe seguir en sincronía con sdd-mod y spec-gate.mjs)"
+
+dependencies_required: []
+
+current_state:
+  approvals:
+    summary: |
+      'Always (thread)' existe como allowlist en memoria por hilo (Live.alwaysAllow). alwaysKeyOf
+      devuelve null para EDIT_TOOLS y mcp__* → el scope 'thread' se degrada a 'once'; Bash usa
+      'Bash:<cmd literal>'; el resto, el nombre de la herramienta. Los warn del gate re-preguntan
+      (se mantiene). canUseTool no usa suggestions/updatedPermissions del SDK. La tarjeta no muestra
+      qué regla se recuerda.
+    key_files:
+      - apps/studio/src/components/workspace/ApprovalCard.tsx            # Approve / Always (thread) / Deny; RespondFn(decision, scope, reason)
+      - apps/studio/src/components/workspace/ThreadView.tsx              # envía approval.respond
+      - libs/studio-protocol/src/commands.ts                             # approval.respond {approvalId, decision, reason?, scope: once|thread}
+      - libs/studio-protocol/src/events.ts                               # approval.requested {tool, summary, diff?, input? 16KB, gateWarning?}; approval.resolved
+      - apps/studio-bridge/src/sessions/session-manager.ts               # alwaysKeyOf, Live.alwaysAllow, respondApproval, requestApproval
+      - apps/studio-bridge/src/engine/claude-sdk-engine.ts               # canUseTool → requestApproval; PreToolUse → judgeTool (deny / warn→ask)
+      - apps/studio-bridge/src/gate/judge.ts                             # EDIT_TOOLS
+  composer_and_messages:
+    summary: |
+      Solo texto plano. thread.send/thread.create llevan text (zod string 1..100_000); user.message
+      es {text}. El puente llama query({prompt: string}) — sin streaming input ni content blocks.
+      ws-server.ts fija maxPayload = 1_048_576 (cierre 1009, listener de error para no caer); el
+      cliente no mide el frame. Hilos persistidos como JSONL (.sdd-studio/threads/<id>.jsonl) y
+      reenviados por thread.history. Sin adjuntos. '/' se parsea en lib/slash.ts con un mapa fijo
+      de prompts (open-cycle, review, hotfix, check, resume, steward) + run gate|validate. No hay
+      menú '@' ni comando para buscar/listar archivos (solo workspace.readFile, máx 2 MiB, con
+      safePathWithinRoot). El snapshot descubre agentes solo de sdd/agents; skills no se descubren.
+    key_files:
+      - apps/studio/src/components/workspace/Composer.tsx               # ComposerView + Composer.send; MAX_MESSAGE 100_000
+      - apps/studio/src/lib/slash.ts                                    # PROMPT_COMMANDS, parseSlash
+      - apps/studio/src/lib/bridge/client.ts                            # ws.send(JSON.stringify(...)) sin pre-chequeo
+      - libs/studio-protocol/src/commands.ts                            # Text, thread.create/send, workspace.readFile, command.run
+      - libs/studio-protocol/src/events.ts                              # user.message {text}
+      - libs/studio-protocol/src/snapshot.ts                            # AgentSummary (sin skills)
+      - apps/studio-bridge/src/server/ws-server.ts                      # MAX_PAYLOAD_BYTES, 1009
+      - apps/studio-bridge/src/server/router.ts                         # thread.send → sessions.send(threadId, text); MAX_READ_BYTES
+      - apps/studio-bridge/src/engine/types.ts                          # EngineTurnInput.text: string
+      - apps/studio-bridge/src/engine/claude-sdk-engine.ts              # QueryFn prompt: string
+      - apps/studio-bridge/src/engine/fake-engine.ts                    # debe aceptar el nuevo input
+      - apps/studio-bridge/src/sessions/store.ts                        # JSONL por hilo bajo .sdd-studio/
+      - apps/studio-bridge/src/workspace/paths.ts                       # safePathWithinRoot
+      - apps/studio-bridge/src/workspace/snapshot.ts                    # loadAgents(sdd/agents)
+      - apps/studio/src/components/workspace/Timeline.tsx               # case 'user' → <p>{text}</p>
+      - apps/studio/src/lib/store/timeline.ts                           # TimelineItem user {id, seq, text}
+  sidebar_sessions_navigation:
+    summary: |
+      SessionStatus = queued | running | waiting-approval | idle | interrupted | error; ThreadInfo
+      {id, channelId, title, agent, options, status, createdAt, lastActivity} — sin vínculo a
+      spec/ciclo/fix. El puente emite thread.updated en cada cambio y bootstrap carga thread.list,
+      así que la web ya tiene todos los hilos con estado. Sidebar.tsx muestra canales del sistema,
+      canales spec:<id> y DMs con presencia; no hay SPECS/FIXES, ni árbol, ni colapsables, ni hilos.
+      ChannelView lista hilos de un canal; RightPanel muestra actividad. La navegación es useState
+      en Workspace.tsx ({channelId, threadId|null}).
+    how_bridge_reads_sdd: |
+      workspace/snapshot.ts → loadWorkspaceSnapshot(root): lee sdd/global.json, sdd/specs/index.json
+      (SpecSummary) y cada sdd/specs/<id>/cycles/cycle-XX/{cycle,tasks}.json (CycleSummary con
+      specId, cycle 'cycle-NN', status, tareas), sdd/fixes.json (FixSummary id/title/status),
+      sdd/agents (AgentSummary), tools.json, pricing.json, kit.json. watcher.ts (chokidar sobre sdd/)
+      debouncea y emite workspace.changed con las áreas cambiadas (mergeSnapshot / changedAreas).
+      La asociación hilo↔ciclo/fix puede resolverse con estos datos: el ciclo in-progress de la spec
+      del canal o el fix abierto.
+    key_files:
+      - libs/studio-protocol/src/domain.ts                              # SessionStatus, ThreadInfo, ChannelId
+      - libs/studio-protocol/src/snapshot.ts                            # SpecSummary, CycleSummary, FixSummary, WorkspaceSnapshot
+      - apps/studio-bridge/src/sessions/session-manager.ts              # createThread, list, applyStatus → thread.updated, cola por write scope
+      - apps/studio-bridge/src/sessions/store.ts                        # threads.json (metadatos del hilo)
+      - apps/studio-bridge/src/workspace/snapshot.ts
+      - apps/studio-bridge/src/workspace/watcher.ts
+      - apps/studio/src/components/workspace/Sidebar.tsx                # nav overflow-y-auto; secciones fijas
+      - apps/studio/src/components/workspace/Workspace.tsx              # view state; <main overflow-hidden>
+      - apps/studio/src/components/workspace/ChannelView.tsx            # lista de hilos del canal, StatusBadge
+      - apps/studio/src/components/workspace/ThreadView.tsx             # stick-to-bottom (NEAR_BOTTOM_PX)
+      - apps/studio/src/components/workspace/RightPanel.tsx
+      - apps/studio/src/lib/store/state.ts                              # StudioState {snapshot, threads, presence, bot, runs}
+      - apps/studio/src/lib/store/selectors.ts                          # threadsInChannel, pendingApprovals, channelsOf
+      - apps/studio/src/lib/bridge/bootstrap.ts                         # thread.list al conectar
+  queued_messages:
+    summary: |
+      Hoy no se puede escribir a un hilo ocupado: SessionManager.send(threadId, text) lanza
+      SessionError('conflict', 'the thread is busy: wait or interrupt it') si live.turn o
+      live.queued !== null; la única vía es thread.interrupt (AbortController + q.interrupt()).
+      El engine llama query({prompt: string}): un turno = un prompt, sin canal para inyectar
+      mensajes durante el turno. HU-10 requiere prompt streaming (AsyncIterable<SDKUserMessage>)
+      para empujar el mensaje encolado en el próximo punto de corte (tras el tool en curso), o el
+      mecanismo equivalente que el SDK 0.3.292 ofrezca; el Arquitecto lo verifica contra el SDK real.
+      No hay estado de "mensaje pendiente" ni comandos para editar/quitar en el protocolo.
+    key_files:
+      - apps/studio-bridge/src/engine/claude-sdk-engine.ts              # QueryFn prompt: string; run/interrupt del turno
+      - apps/studio-bridge/src/engine/types.ts                          # EngineTurnInput, EngineTurn
+      - apps/studio-bridge/src/engine/fake-engine.ts                    # debe simular puntos de corte y entrega de encolados
+      - apps/studio-bridge/src/sessions/session-manager.ts              # send (conflict), Live.turn/queued, drain, interrupt, recover
+      - apps/studio-bridge/src/sessions/store.ts                        # persistencia de eventos user.message
+      - libs/studio-protocol/src/commands.ts                            # thread.send (+ nuevos: editar/quitar encolado)
+      - libs/studio-protocol/src/events.ts                              # user.message (+ estado pendiente/entregado/quitado)
+      - apps/studio/src/components/workspace/Composer.tsx               # hoy deshabilita/rechaza envío con hilo ocupado
+      - apps/studio/src/components/workspace/ThreadView.tsx             # render de encolados, interrupt
+      - apps/studio/src/lib/store/timeline.ts                           # items user + estado de cola
+  activity_and_scroll:
+    summary: |
+      Presencia por agente (working | waiting | open | idle) con puntos en Sidebar; no hay
+      animaciones de trabajo en hilo/lista/avatar. ThreadView ya tiene stick-to-bottom
+      (NEAR_BOTTOM_PX) pero debe revisarse con streaming/adjuntos; Sidebar y RightPanel usan
+      overflow-y-auto; ChannelView scrollea la lista; Workspace <main> overflow-hidden. El
+      implementor debe reproducir y listar los problemas concretos antes de arreglarlos.
+    key_files:
+      - apps/studio/src/components/workspace/ThreadView.tsx
+      - apps/studio/src/components/workspace/Timeline.tsx
+      - apps/studio/src/components/workspace/ChannelView.tsx
+      - apps/studio/src/components/workspace/Sidebar.tsx
+      - apps/studio/src/components/workspace/RightPanel.tsx
+      - apps/studio/src/components/workspace/Workspace.tsx
+  tests:
+    - "protocol: vitest node — commands/events/domain/codec/handshake/snapshot .spec.ts"
+    - "bridge: vitest node — session-manager.spec.ts, claude-sdk-engine.spec.ts (+ e2e), ws-server.spec.ts, router.spec.ts, store.spec.ts, judge.spec.ts, fake-engine.spec.ts, snapshot/watcher"
+    - "studio: vitest jsdom — approval/composer/timeline/sidebar/channelview/rightpanel .spec.tsx, lib/store/*.spec.ts, lib/bridge/client.spec.ts; Playwright e2e/studio.e2e.ts con --engine fake"
+
+resolved_decisions:
+  - "Q1 alcance de 'Always' → RESUELTA: por herramienta para Edit/Write/MultiEdit/NotebookEdit; por tool puntual para mcp__srv__tool; por prefijo de comando para Bash (el Arquitecto define cómo se calcula el prefijo y cómo se muestra en la tarjeta)"
+  - "Q2 vida de la regla → RESUELTA: mientras viva el hilo en el puente, en memoria (como hoy); sin persistencia ni nivel proyecto"
+  - "Q3 warn del gate → RESUELTA: los warn siguen preguntando siempre; los deny siguen bloqueando"
+  - "Q4 adjuntos en historial → RESUELTA: persistencia por hash en .sdd-studio/attachments/<sha256>.<ext>; se ven al recargar"
+  - "Q5 límites → RESUELTA: hasta 5 adjuntos por mensaje; lado mayor 1568 px; imágenes png/jpg/webp/gif, PDF, texto/código/markdown; se respeta maxPayload 1 MiB midiendo el JSON serializado"
+  - "Q6 hilos activos → RESUELTA: en el Sidebar; estados running / waiting-approval / queued; navegación a cada uno"
+  - "Asociación hilo↔ciclo/fix → RESUELTA: automática al crear (spec del canal + ciclo in-progress, o fix abierto), reasignable desde el hilo, hilos viejos por canal"
+  - "SPECS/FIXES → RESUELTA: todas las specs incluidas completadas; fixes abiertos + últimos cerrados"
+  - "Corte de ciclos → RESUELTA (opción A del planner): cycle-01 = HU-4..HU-10 + contratos de protocolo de toda la spec (un bump); cycle-02 = HU-1..HU-3 (puente + Composer)"
+  - "HU-10 → RESUELTA: imperativa en cycle-01; entrega en el próximo punto de corte del turno (no al final); UI pendiente → entregado con editar/quitar mientras pendiente; requiere prompt streaming del SDK en cycle-01"
+  - "Canales spec:* → RESUELTA: no se mantienen en CANALES, solo bajo SPECS"
+  - "Borrador del Composer → RESUELTA: por hilo, en memoria, texto y adjuntos; se pierde al recargar"
+  - "EXIF/GPS → RESUELTA: las imágenes se re-encodean siempre en el cliente (cycle-02)"
+
+open_questions:
+  - "Para el Arquitecto: ¿cuántos fixes cerrados son 'los últimos' (sugerido: 5 o los de los últimos 14 días)?"
+  - "Para el Arquitecto: ¿cómo se sirven los adjuntos persistidos a la web al recargar (comando nuevo vs workspace.readFile acotado a .sdd-studio/attachments) respetando el frame de 1 MiB?"
+
+risks:
+  - "R1 tamaño: resuelto con el corte en dos ciclos. cycle-01 sigue siendo grande (7 historias + contratos de toda la spec + prompt streaming); el Planner mantiene fases con checkpoint de tests verdes: F1 protocolo (un bump) · F2 puente (streaming + cola HU-10, Always, vínculo hilo↔ciclo/fix) · F3 web (Sidebar SPECS/FIXES colapsable, hilos activos, indicadores, scroll, cola en ThreadView/Composer, borrador por hilo)"
+  - "R2 PROTOCOL_VERSION: los cambios (adjuntos en thread.send/create y user.message, vínculo en ThreadInfo, comandos de búsqueda/reasignación, skills en el snapshot, regla en approval) probablemente no son retrocompatibles; el handshake exige igualdad, y la web en Cloudflare y el puente en npm pueden desfasarse. Hacer un único bump en F1 y mensaje de error claro de versión"
+  - "R3 prompt streaming del SDK — ADELANTADO A cycle-01 por HU-10: pasar QueryFn de prompt string a AsyncIterable<SDKUserMessage> cambia el ciclo de vida del turno (fin de turno con el iterable abierto, interrupt/AbortController, resume, recover tras reinicio); verificar contra el SDK 0.3.292 real (claude-sdk-engine.e2e.spec.ts) que un mensaje empujado durante el turno se lee tras el tool en curso y no recién al final; adaptar fake-engine para simular puntos de corte"
+  - "R9 semántica de la cola (HU-10): carrera entre editar/quitar un pendiente y su entrega (el puente es la fuente de verdad; editar/quitar un mensaje ya entregado debe fallar con error claro); interacción con waiting-approval (¿se entrega al resolver la aprobación?), con interrupt (los pendientes no se pierden) y con la cola por write scope existente (status queued de hilos bloqueados ≠ mensajes encolados: no confundir en protocolo ni UI)"
+  - "R10 contratos sin consumidor en cycle-01 (HU-1..3): riesgo de diseñarlos mal sin uso real; cubrirlos con tests zod y revisarlos al abrir cycle-02 (cualquier ajuste debe ser retrocompatible para no forzar otro bump)"
+  - "R4 (cycle-02) frame de 1 MiB: base64 +33% → ~750 KB binarios para todo el mensaje con hasta 5 adjuntos; un PDF grande puede no entrar aun recomprimiendo imágenes. El cliente mide el JSON serializado y rechaza antes de enviar; un frame > maxPayload cierra el socket (1009) y dispara reconexión"
+  - "R6 seguridad: 'Always' por herramienta en Edit/Write reduce la protección del modo ask (mitigado: warn/deny del gate intactos); la búsqueda de archivos y la lectura de adjuntos deben pasar por safePathWithinRoot y no exponer archivos fuera del root ni secretos (.env)"
+  - "R7 crecimiento de .sdd-studio/attachments sin límite: considerar dedupe por hash (ya implícito) y no borrar en este ciclo"
+  - "R8 dato desactualizado en contexto (Next 15 vs 16.4.3) puede inducir a errores de API de Next en el implementor front"
+
+agent_contexts:
+  functional:
+    goal: |
+      Actualizar functional.md: historias de cycle-01 = HU-4..HU-10 (HU-10 nueva, imperativa:
+      mensajes encolados sin interrumpir, CA-013..CA-015) y decisiones de CA-016; HU-1..HU-3 quedan
+      documentadas como alcance de cycle-02. Criterios de aceptación verificables por historia
+      (base: CA-001..CA-016 de la spec) y reglas de negocio: deny/warn
+      del gate inviolables, sin envío parcial de adjuntos, @archivo pasa ruta no contenido,
+      asociación hilo↔ciclo/fix automática y editable, zero-credentials.
+    business_context: |
+      SDD Studio es la UI web estilo Slack para operar agentes SDD vía un puente local. El dev
+      necesita: no reaprobar lo mismo en modo ask; mostrarle al agente capturas, PDFs y archivos;
+      apuntarlo a archivos, subagentes y skills; ver las conversaciones organizadas por spec →
+      ciclo y por fix, saber qué hilos corren o esperan aprobación y navegar sin problemas de scroll.
+    relevant_spec_sections:
+      - Contexto de Negocio
+      - Evidencia y decisiones (decisiones del dev)
+      - Corte de ciclos
+      - Requisitos Funcionales (RF-1..RF-20; HU-10 = RF-15..RF-17)
+      - Criterios de Aceptación (CA-001..CA-016)
+    output_file: sdd/specs/spec-e-burgos-001-studio-session-ux/cycles/cycle-01/functional.md
+
+  planner:
+    goal: |
+      Re-planificar cycle-01 según la opción A: tasks TASK-NNN para HU-4..HU-10 + contratos de
+      protocolo de toda la spec (incluidos HU-1..3) + prompt streaming, en fases F1 protocolo →
+      F2 puente → F3 web (ver R1), con estimation_hours y story_points (ninguna > 8h), y completar
+      tasks.json (user_stories_generated y prerequisites.tasks_generated en true). Las tasks de
+      HU-1..HU-3 de puente/Composer se listan en planner.md como backlog de cycle-02, no en tasks.json.
+    note: "Recibe output del Funcional y del Arquitecto; no necesita la spec completa"
+    output_file: sdd/specs/spec-e-burgos-001-studio-session-ux/cycles/cycle-01/planner.md
+    tasks_file: sdd/specs/spec-e-burgos-001-studio-session-ux/cycles/cycle-01/tasks.json
+
+  architect:
+    goal: |
+      Definir contratos zod y decisiones técnicas:
+      (1) Adjuntos: shape en thread.create/thread.send y en user.message (inline base64 al enviar,
+          referencia por sha256 al persistir/reenviar), límites zod (≤5, tipos MIME, tamaños),
+          algoritmo de presupuesto de bytes en cliente, cómo se sirven al recargar, mapeo a bloques
+          image/document/text del SDK y paso a prompt streaming (SDKUserMessage).
+      (2) @archivo: comando de búsqueda de archivos del repo (fuzzy, límite de resultados, ignora
+          .git/node_modules/.sdd-studio y secretos, safePathWithinRoot) y cómo viaja la ruta al prompt.
+      (3) @agente y /skill: descubrimiento de .claude/skills, .claude/agents, sdd/skills, sdd/agents
+          (dedupe por nombre, extensión del snapshot o comando nuevo, refresco vía watcher) y la
+          instrucción que se antepone al prompt; convivencia con PROMPT_COMMANDS de slash.ts.
+      (4) Vínculo hilo↔spec/ciclo|fix: campo en ThreadInfo (persistido en threads.json), regla de
+          asignación automática, comando de reasignación, migración de hilos viejos por canal.
+      (5) Sidebar: árbol SPECS/FIXES + hilos activos + colapsables (estado de colapso local en la
+          web), selectores derivados del store.
+      (6) 'Always': clave de regla por herramienta / mcp__srv__tool / prefijo Bash, cómo la ve el
+          usuario en ApprovalCard, interacción con warn/deny.
+      (7) Indicadores de trabajo y scroll: componentes compartidos, reduced-motion.
+      (8) HU-10 mensajes encolados: modelo de cola en el puente (fuente de verdad), estados
+          pending → delivered | removed, comandos para enviar/editar/quitar un encolado y eventos
+          de estado, punto de entrega (próximo corte del turno vía prompt streaming del SDK;
+          comportamiento con waiting-approval, interrupt, fin de turno y recover), y cómo se
+          distingue del status 'queued' de hilos bloqueados por write scope.
+      Decidir el bump de PROTOCOL_VERSION (uno solo, en cycle-01, cubriendo también los contratos
+      de HU-1..3 de cycle-02) y registrar componentes nuevos en sdd/components.json (app-key apps/studio).
+      Decisiones ya cerradas a reflejar: spec:* fuera de CANALES; borrador por hilo en memoria;
+      re-encode siempre de imágenes (EXIF/GPS).
+    existing_tables: []
+    existing_endpoints: []
+    existing_contracts:
+      - "libs/studio-protocol/src/commands.ts: thread.create, thread.send, thread.list, thread.history, thread.setOptions, approval.respond, workspace.readFile, command.run"
+      - "libs/studio-protocol/src/events.ts: user.message, approval.requested, approval.resolved, session.status, thread.updated, workspace.changed"
+      - "libs/studio-protocol/src/domain.ts: SessionStatus, ThreadInfo, ChannelId, PermissionModeChoice (incluye bypassPermissions por FIX-e-burgos-002)"
+      - "libs/studio-protocol/src/snapshot.ts: SpecSummary, CycleSummary, FixSummary, AgentSummary, WorkspaceSnapshot"
+      - "libs/studio-protocol/src/version.ts: PROTOCOL_VERSION = 1"
+    note: "No hay DB ni REST: los contratos son mensajes websocket zod"
+    output_file: sdd/specs/spec-e-burgos-001-studio-session-ux/cycles/cycle-01/architect.md
+
+  implementor_back:
+    goal: "F1 protocolo zod de toda la spec (un bump) + F2 puente: prompt streaming del SDK y cola de mensajes HU-10 (entrega en el próximo corte del turno, editar/quitar pendientes), regla 'Always', vínculo hilo↔ciclo/fix. Adjuntos, búsqueda de archivos y skills/agentes en el puente quedan para cycle-02"
+    apps:
+      - libs/studio-protocol
+      - apps/studio-bridge
+    app_context:
+      - sdd/context/libs/studio-protocol/context_prompt.md
+      - sdd/context/apps/studio-bridge/context_prompt.md
+    key_files:
+      - libs/studio-protocol/src/{commands,events,domain,snapshot,version}.ts
+      - apps/studio-bridge/src/sessions/session-manager.ts
+      - apps/studio-bridge/src/sessions/store.ts
+      - apps/studio-bridge/src/engine/claude-sdk-engine.ts
+      - apps/studio-bridge/src/engine/fake-engine.ts
+      - apps/studio-bridge/src/engine/types.ts
+      - apps/studio-bridge/src/server/ws-server.ts
+      - apps/studio-bridge/src/server/router.ts
+      - apps/studio-bridge/src/workspace/{snapshot,watcher,paths}.ts
+    note: "Una task a la vez del Planner. pnpm sdd:gate spec-e-burgos-001-studio-session-ux cycle-01 (GATE B) antes de escribir código"
+
+  implementor_front:
+    goal: "F3 Sidebar SPECS/FIXES colapsable (spec:* fuera de CANALES) + hilos activos + indicadores + scroll; ApprovalCard con regla visible; Composer habilitado con hilo ocupado + borrador por hilo en memoria; ThreadView/Timeline con mensajes encolados pendiente → entregado y editar/quitar. Adjuntos, menú @ y /skill quedan para cycle-02"
+    app: apps/studio
+    app_context: sdd/context/apps/studio/context_prompt.md
+    key_files:
+      - apps/studio/src/components/workspace/Sidebar.tsx
+      - apps/studio/src/components/workspace/Workspace.tsx
+      - apps/studio/src/components/workspace/ChannelView.tsx
+      - apps/studio/src/components/workspace/ThreadView.tsx
+      - apps/studio/src/components/workspace/Timeline.tsx
+      - apps/studio/src/components/workspace/Composer.tsx
+      - apps/studio/src/components/workspace/ApprovalCard.tsx
+      - apps/studio/src/lib/slash.ts
+      - apps/studio/src/lib/bridge/client.ts
+      - apps/studio/src/lib/store/{state,timeline,selectors}.ts
+    note: "Una task a la vez, después de que el contrato F1 esté listo. Next 16.4.3 (no 15)"
+
+  reviewer:
+    goal: Validar todo el output del ciclo
+    checklist: sdd/skills/sdd-reviewer/checklist.md
+    output_file: sdd/specs/spec-e-burgos-001-studio-session-ux/cycles/cycle-01/cycle.json
+    note: "Fragmento de contexto en updates/ de los tres subproyectos al cerrar; corregir 'Next.js 15' → 16 en el de apps/studio"

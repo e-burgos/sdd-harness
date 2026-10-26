@@ -1,0 +1,170 @@
+{
+  "$schema": "../../../../schemas/cycle.schema.json",
+  "cycle": 1,
+  "module": "studio-mission-control",
+  "spec": "spec-e-burgos-003-studio-mission-control",
+  "apps": [
+    "apps/studio",
+    "apps/studio-bridge"
+  ],
+  "phase": "mission-control",
+  "flow": "lite",
+  "objectives": [
+    "Identidades y avatares distintivos con Clara como orquestadora y los 9 agentes del sistema",
+    "Mapa interactivo de topología de agentes en tiempo real con pulsos de estado y handoffs",
+    "Dashboard dinámico del ecosistema (apps, libs, tools, módulos y semáforo SPEC GATE)",
+    "Vista HUD de telemetría y costos en vivo con ticker de tokens y comparador de ahorro",
+    "Navegador de vistas en el header de Studio sin interrumpir la sesión activa"
+  ],
+  "status": "completed",
+  "started_at": "2026-10-23",
+  "completed_at": "2026-10-23",
+  "documents": {
+    "plan": "sdd/specs/spec-e-burgos-003-studio-mission-control/cycles/cycle-01/plan.md",
+    "tasks": "sdd/specs/spec-e-burgos-003-studio-mission-control/cycles/cycle-01/tasks.json"
+  },
+  "artifacts": [],
+  "metrics": {
+    "tasks_total": 7,
+    "tasks_completed": 7,
+    "tasks_skipped": 0,
+    "story_points": 22,
+    "files_created": [
+      "apps/studio/src/lib/use-studio-view.ts",
+      "apps/studio/src/components/StudioHeader.tsx",
+      "apps/studio/src/components/mission-control/AgentNode.tsx",
+      "apps/studio/src/components/mission-control/AgentInspectorDrawer.tsx",
+      "apps/studio/src/components/mission-control/AgentMapCanvas.tsx",
+      "apps/studio/src/components/mission-control/EcosystemDashboard.tsx",
+      "apps/studio/src/components/mission-control/LiveTelemetryHUD.tsx",
+      "apps/studio/src/components/mission-control/agentmap.spec.tsx",
+      "apps/studio/src/components/mission-control/inspectordrawer.spec.tsx",
+      "apps/studio/src/components/mission-control/ecosystem.spec.tsx",
+      "apps/studio/src/components/mission-control/telemetry.spec.tsx",
+      "apps/studio/src/components/workspaceapp.spec.tsx"
+    ],
+    "files_modified": [
+      "apps/studio/src/lib/agents.ts",
+      "apps/studio/src/lib/agents.spec.ts",
+      "apps/studio/src/lib/i18n/es.ts",
+      "apps/studio/src/lib/i18n/en.ts",
+      "apps/studio/src/components/workspace/AgentAvatar.tsx",
+      "apps/studio/src/components/workspace/Workspace.tsx",
+      "apps/studio/src/components/WorkspaceApp.tsx"
+    ],
+    "files_deleted": [],
+    "usage": {
+      "tokens_in": 261000,
+      "tokens_out": 33200,
+      "approx": true,
+      "source": "declared-estimate",
+      "by_tier": {
+        "claude/opus": {
+          "tokens_in": 67000,
+          "tokens_out": 8700,
+          "approx": true,
+          "source": "declared-estimate"
+        },
+        "claude/sonnet": {
+          "tokens_in": 194000,
+          "tokens_out": 24500,
+          "approx": true,
+          "source": "declared-estimate"
+        }
+      },
+      "by_agent": [
+        {
+          "agent": "orchestrator",
+          "label": "solo",
+          "provider_model": "claude/opus",
+          "tokens_in": 35000,
+          "tokens_out": 4500,
+          "approx": true,
+          "source": "declared-estimate"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-001",
+          "provider_model": "claude/sonnet",
+          "tokens_in": 35000,
+          "tokens_out": 4000,
+          "approx": true,
+          "source": "declared-estimate"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-002",
+          "provider_model": "claude/sonnet",
+          "tokens_in": 28000,
+          "tokens_out": 3500,
+          "approx": true,
+          "source": "declared-estimate"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-003",
+          "provider_model": "claude/sonnet",
+          "tokens_in": 42000,
+          "tokens_out": 5500,
+          "approx": true,
+          "source": "declared-estimate"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-004",
+          "provider_model": "claude/sonnet",
+          "tokens_in": 25000,
+          "tokens_out": 3200,
+          "approx": true,
+          "source": "declared-estimate"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-005",
+          "provider_model": "claude/sonnet",
+          "tokens_in": 31000,
+          "tokens_out": 4200,
+          "approx": true,
+          "source": "declared-estimate"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-006",
+          "provider_model": "claude/sonnet",
+          "tokens_in": 33000,
+          "tokens_out": 4100,
+          "approx": true,
+          "source": "declared-estimate"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-007",
+          "provider_model": "claude/opus",
+          "tokens_in": 32000,
+          "tokens_out": 4200,
+          "approx": true,
+          "source": "declared-estimate"
+        }
+      ]
+    }
+  },
+  "tables_created": [],
+  "endpoints_implemented": [],
+  "components_created": [],
+  "issues_found": [],
+  "reviewer_report": {
+    "approved": true,
+    "date": "2026-10-23",
+    "ca_results": {
+      "CA-1": "passed - Catálogo de agentes y avatares con Clara como líder coronada",
+      "CA-2": "passed - Segmented view switcher y persistencia sin perder estado del workspace",
+      "CA-3": "passed - Topología 2D SVG responsiva y animaciones de handoff agéntico",
+      "CA-4": "passed - Dashboard dinámico del ecosistema y salud de subproyectos",
+      "CA-5": "passed - Live Telemetry HUD con ticker, comparador USD y compresión rtk"
+    },
+    "tests": {
+      "vitest-studio": "passed - 54 test files, 409 tests passed (100% green)"
+    },
+    "notes": "Ciclo completado con excelencia; Mission Control proporciona visibilidad y control agéntico en tiempo real en SDD Studio."
+  }
+}

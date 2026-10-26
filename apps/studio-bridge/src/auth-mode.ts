@@ -1,4 +1,12 @@
-import type { AuthMode } from '@sdd-studio/protocol';
+import type { AuthMode, AuthPreference } from '@sdd-studio/protocol';
+
+const CREDENTIAL_ENV_KEYS = ['ANTHROPIC_API_KEY', 'ANTHROPIC_AUTH_TOKEN'] as const;
+
+export const withoutCredentialEnv = <T extends Record<string, string | undefined>>(env: T): T => {
+  const clean = { ...env };
+  for (const key of CREDENTIAL_ENV_KEYS) delete clean[key];
+  return clean;
+};
 
 /** With ANTHROPIC_API_KEY the SDK uses the key; without it, the local Claude Code login. */
 export const detectAuthMode = (env: NodeJS.ProcessEnv = process.env): AuthMode =>
@@ -16,25 +24,37 @@ export const CLIENT_APP = (version: string): string => `sdd-studio/${version}`;
  */
 export class AuthState {
   private apiKey: string | null = null;
+  private preference: AuthPreference | null = null;
 
   constructor(
     private readonly baseEnv: NodeJS.ProcessEnv = process.env,
     private readonly clientApp: string = CLIENT_APP('0.0.0'),
   ) {}
 
-  set(apiKey: string | null): AuthMode {
-    this.apiKey = apiKey;
+  set(apiKey: string | null, preference?: AuthPreference): AuthMode {
+    this.preference = preference ?? (apiKey ? 'api-key' : null);
+    this.apiKey = this.preference === 'subscription' ? null : apiKey;
     return this.mode();
   }
 
   mode(): AuthMode {
+    if (this.preference === 'subscription') return 'local-claude-login';
     return this.apiKey ? 'api-key' : detectAuthMode(this.baseEnv);
+  }
+
+  /** Env for the `claude auth …` CLI: never inherits credentials, so it reports and edits the account login. */
+  cliEnv(): NodeJS.ProcessEnv {
+    return withoutCredentialEnv(this.baseEnv);
   }
 
   /** Full env for the SDK subprocess (`options.env` replaces the environment, it is not merged). */
   env(): Record<string, string | undefined> {
     const env: Record<string, string | undefined> = { ...this.baseEnv, CLAUDE_AGENT_SDK_CLIENT_APP: this.clientApp };
-    if (this.apiKey) env.ANTHROPIC_API_KEY = this.apiKey;
+    if (this.preference === 'subscription') return { ...withoutCredentialEnv(env), CLAUDE_AGENT_SDK_CLIENT_APP: this.clientApp };
+    if (this.apiKey) {
+      env.ANTHROPIC_API_KEY = this.apiKey;
+      delete env.ANTHROPIC_AUTH_TOKEN;
+    }
     return env;
   }
 }
