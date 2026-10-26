@@ -164,6 +164,7 @@ export class SessionManager {
       createdAt: now,
       lastActivity: now,
       engineSessionId: null,
+      provider: this.deps.engine.provider,
       link,
       pending: [],
     };

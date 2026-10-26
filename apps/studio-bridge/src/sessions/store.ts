@@ -1,6 +1,6 @@
 import { appendFile, mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { ChannelId, MAX_PENDING_PER_THREAD, type AttachmentRef, type BotEvent, type PromptRefs, ThreadEvent, type ThreadInfo } from '@sdd-studio/protocol';
+import { ChannelId, DEFAULT_PROVIDER, MAX_PENDING_PER_THREAD, ProviderId, type AttachmentRef, type BotEvent, type PromptRefs, ThreadEvent, type ThreadInfo } from '@sdd-studio/protocol';
 
 export interface PendingMessage {
   id: string;
@@ -10,12 +10,13 @@ export interface PendingMessage {
   createdAt: string;
 }
 
-export interface StoredThread extends Omit<ThreadInfo, 'pendingCount'> {
+export interface StoredThread extends Omit<ThreadInfo, 'pendingCount' | 'engineSessionId' | 'provider'> {
   engineSessionId: string | null;
+  provider: ProviderId;
   pending: PendingMessage[];
 }
 
-export const toThreadInfo = ({ engineSessionId: _session, pending, ...info }: StoredThread): ThreadInfo => ({
+export const toThreadInfo = ({ pending, ...info }: StoredThread): ThreadInfo => ({
   ...info,
   pendingCount: Math.min(pending.length, MAX_PENDING_PER_THREAD),
 });
@@ -111,6 +112,8 @@ export class ThreadStore {
         t.status = 'interrupted';
       }
       t.link ??= { target: { kind: 'none' }, source: 'legacy' };
+      t.engineSessionId = typeof t.engineSessionId === 'string' && t.engineSessionId.length > 0 ? t.engineSessionId : null;
+      t.provider = ProviderId.safeParse(t.provider).success ? t.provider : DEFAULT_PROVIDER;
       t.pending = Array.isArray(t.pending) ? t.pending : [];
       delete (t as { pendingCount?: number }).pendingCount;
       this.threads.set(t.id, t);

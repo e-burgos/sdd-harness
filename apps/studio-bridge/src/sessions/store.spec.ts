@@ -13,7 +13,7 @@ afterEach(() => cleanup());
 const thread = (over: Partial<StoredThread> = {}): StoredThread => ({
   id: 't1', channelId: 'general', title: 'hola', agent: 'sdd-orchestrator', options: defaultThreadOptions(),
   status: 'idle', createdAt: '2026-10-07T00:00:00.000Z', lastActivity: '2026-10-07T00:00:00.000Z',
-  engineSessionId: null, link: { target: { kind: 'none' }, source: 'legacy' }, pending: [], ...over,
+  engineSessionId: null, provider: 'claude', link: { target: { kind: 'none' }, source: 'legacy' }, pending: [], ...over,
 });
 
 describe('ThreadStore', () => {
@@ -206,11 +206,48 @@ describe('ThreadStore', () => {
       expect(b.get('t1')?.status).toBe('idle');
     });
 
-    it('toThreadInfo hides pending and the engine session and exposes pendingCount', async () => {
+    it('toThreadInfo hides pending, exposes pendingCount and shows the engine session and provider (CA-006)', async () => {
       const info = toThreadInfo(thread({ engineSessionId: 's', pending: [{ id: 'p-1', text: 'x', createdAt: 'c' }] }));
       expect(info.pendingCount).toBe(1);
       expect('pending' in info).toBe(false);
-      expect('engineSessionId' in info).toBe(false);
+      expect(info.engineSessionId).toBe('s');
+      expect(info.provider).toBe('claude');
+    });
+
+    it('toThreadInfo reports a null session for a thread that has not started yet', async () => {
+      expect(toThreadInfo(thread()).engineSessionId).toBeNull();
+    });
+
+    it('migrates a legacy threads.json without provider, keeping the engine session (CA-007)', async () => {
+      await new ThreadStore(root).init();
+      const { provider: _provider, ...withoutProvider } = thread({ engineSessionId: 'sess-old' });
+      await writeThreadsJson([withoutProvider, { ...withoutProvider, id: 't2', engineSessionId: undefined }]);
+      const s = new ThreadStore(root);
+      await s.init();
+      await s.flush();
+      expect(s.get('t1')).toMatchObject({ provider: 'claude', engineSessionId: 'sess-old' });
+      expect(s.get('t2')).toMatchObject({ provider: 'claude', engineSessionId: null });
+      const rewritten = JSON.parse(await readFile(path.join(root, '.sdd-studio/threads.json'), 'utf8')) as StoredThread[];
+      expect(rewritten.map((t) => t.provider)).toEqual(['claude', 'claude']);
+    });
+
+    it('is idempotent and keeps a valid provider', async () => {
+      await new ThreadStore(root).init();
+      await writeThreadsJson([thread({ provider: 'gemini', engineSessionId: 'g-1' })]);
+      const first = new ThreadStore(root);
+      await first.init();
+      await first.flush();
+      const second = new ThreadStore(root);
+      await second.init();
+      expect(second.get('t1')).toMatchObject({ provider: 'gemini', engineSessionId: 'g-1' });
+    });
+
+    it('replaces an invalid provider or empty session with defaults', async () => {
+      await new ThreadStore(root).init();
+      await writeThreadsJson([thread({ provider: 'Bad Provider', engineSessionId: '' })]);
+      const s = new ThreadStore(root);
+      await s.init();
+      expect(s.get('t1')).toMatchObject({ provider: 'claude', engineSessionId: null });
     });
   });
 });
