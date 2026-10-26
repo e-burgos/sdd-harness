@@ -56,17 +56,25 @@ const withExtras = (e: { attachments?: AttachmentRef[]; refs?: PromptRefs }) => 
   ...(e.refs ? { refs: e.refs } : {}),
 });
 
+export interface TouchedDocument {
+  seq: number;
+  path: string;
+  op: 'created' | 'modified' | 'deleted';
+  author: Author;
+}
+
 export interface ThreadState {
   info: ThreadInfo | null;
   pending: PendingItem[];
   items: TimelineItem[];
+  touched: TouchedDocument[];
   lastSeq: number;
   /** false until history was applied; live events are buffered meanwhile */
   synced: boolean;
   buffer: { seq: number; event: ThreadEvent }[];
 }
 
-export const emptyThread = (): ThreadState => ({ info: null, pending: [], items: [], lastSeq: -1, synced: false, buffer: [] });
+export const emptyThread = (): ThreadState => ({ info: null, pending: [], items: [], touched: [], lastSeq: -1, synced: false, buffer: [] });
 
 function update<K extends TimelineItem['kind']>(
   items: TimelineItem[],
@@ -86,6 +94,7 @@ export function applyThreadEvent(thread: ThreadState, seq: number, event: Thread
   let items = thread.items;
   let info = thread.info;
   let pending = thread.pending;
+  let touched = thread.touched;
   switch (event.type) {
     case 'user.message':
       items = [
@@ -165,6 +174,9 @@ export function applyThreadEvent(thread: ThreadState, seq: number, event: Thread
     case 'approval.resolved':
       items = update(items, 'approval', event.approvalId, (a) => ({ ...a, decision: event.decision, reason: event.reason, remembered: event.remembered }));
       break;
+    case 'document.touched':
+      touched = [...touched, { seq, path: event.path, op: event.op, author: event.author }];
+      break;
     case 'turn.end':
       items = [...items, { kind: 'usage', id: `usage:${seq}`, seq, usage: event.usage }];
       break;
@@ -175,5 +187,5 @@ export function applyThreadEvent(thread: ThreadState, seq: number, event: Thread
       }
       break;
   }
-  return { ...thread, info, items, pending, lastSeq: seq };
+  return { ...thread, info, items, pending, touched, lastSeq: seq };
 }

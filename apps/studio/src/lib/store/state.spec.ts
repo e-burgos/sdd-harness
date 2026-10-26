@@ -59,6 +59,12 @@ describe('state reducers', () => {
     expect(buffer[0]?.seq).toBe(5);
   });
 
+  it('republishes thread info when only the session title changes', () => {
+    const s = setThreads(initialState(), [info({ sessionTitle: null })]);
+    const next = applyServerEvent(s, { kind: 'thread.updated', thread: info({ sessionTitle: 'Revisar spec' }) });
+    expect(next.threads.t1?.info?.sessionTitle).toBe('Revisar spec');
+  });
+
   it('keeps identities when incoming thread info is equal', () => {
     const s = setThreads(initialState(), [info()]);
     expect(setThreads(s, [info()])).toBe(s);

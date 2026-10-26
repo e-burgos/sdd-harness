@@ -79,7 +79,7 @@ describe('Timeline and PendingMessages with attachments', () => {
   it('shows read-only attachment chips on a pending message and lets an attachment-only one be saved empty', async () => {
     const ref = await refFor('y', { name: 'adjunto.txt' });
     const { store, client } = mount(<PendingMessages threadId="t1" />, async () => ({}));
-    store.setState({ threads: { t1: { info: { status: 'running' }, pending: [{ id: 'p1', text: '', attachments: [ref] }], items: [], lastSeq: -1, synced: true, buffer: [] } } } as never);
+    store.setState({ threads: { t1: { info: { status: 'running' }, pending: [{ id: 'p1', text: '', attachments: [ref] }], items: [], touched: [], lastSeq: -1, synced: true, buffer: [] } } } as never);
     expect(await screen.findByText('adjunto.txt')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Editar mensaje pendiente' }));
     expect(screen.queryByText('No puede quedar vacío: quitalo en su lugar.')).toBeNull();

@@ -41,6 +41,16 @@ describe('bootstrap', () => {
     expect(store.getState().threads.t1?.items).toHaveLength(2);
   });
 
+  it('asks for document.touched history only when the bridge announces the feature', async () => {
+    const store = createStudioStore();
+    const withFeature = { ...fakeClient({ 'thread.history': [] }), supports: (f: string) => f === 'document-touched' };
+    await openThread(withFeature as never, store, 't1');
+    expect(withFeature.calls).toEqual([{ cmd: 'thread.history', threadId: 't1', sinceSeq: 0, includeDocumentTouched: true }]);
+    const without = { ...fakeClient({ 'thread.history': [] }), supports: () => false };
+    await openThread(without as never, createStudioStore(), 't1');
+    expect(without.calls).toEqual([{ cmd: 'thread.history', threadId: 't1', sinceSeq: 0 }]);
+  });
+
   it('re-syncs loaded threads on bootstrap after a reconnect', async () => {
     const store = createStudioStore();
     store.getState().loadHistory('t1', [{ seq: 0, event: { type: 'user.message', text: 'a' } }]);

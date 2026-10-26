@@ -382,15 +382,26 @@
         "TASK-002",
         "TASK-003"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/studio/src/lib/store/timeline.ts",
         "apps/studio/src/lib/store/state.ts",
         "apps/studio/src/lib/bootstrap.ts",
         "apps/studio/src/lib/store/timeline.spec.ts",
         "apps/studio/src/lib/store/state.spec.ts",
-        "apps/studio/src/lib/bootstrap.spec.ts"
-      ]
+        "apps/studio/src/lib/bootstrap.spec.ts",
+        "apps/studio/src/components/workspace/attachmentview.spec.tsx"
+      ],
+      "usage": {
+        "tokens_in": 40000,
+        "tokens_out": 9000,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-26"
+      }
     },
     {
       "id": "TASK-014",

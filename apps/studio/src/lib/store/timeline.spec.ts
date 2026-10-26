@@ -162,3 +162,22 @@ describe('attachments and refs in the timeline', () => {
     expect(t.pending[0]).toEqual({ id: 'p1', text: 'uno', attachments: [ref], refs });
   });
 });
+
+describe('document.touched', () => {
+  it('records touched documents without entering the timeline items', () => {
+    const t = run([
+      [0, { type: 'user.message', text: 'hola' }],
+      [1, { type: 'document.touched', path: 'sdd/specs/a/brief.yaml', op: 'created', author: main }],
+    ]);
+    expect(t.touched).toEqual([{ seq: 1, path: 'sdd/specs/a/brief.yaml', op: 'created', author: main }]);
+    expect(t.items).toHaveLength(1);
+    expect(t.lastSeq).toBe(1);
+  });
+
+  it('ignores a touched event whose seq is not newer than lastSeq', () => {
+    const touch: ThreadEvent = { type: 'document.touched', path: 'sdd/x.md', op: 'modified', author: main };
+    const t = run([[3, touch]]);
+    expect(applyThreadEvent(t, 3, touch)).toBe(t);
+    expect(applyThreadEvent(t, 2, touch).touched).toHaveLength(1);
+  });
+});
