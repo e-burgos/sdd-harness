@@ -324,6 +324,82 @@
         "source": "declared-estimate",
         "recorded_at": "2026-10-26"
       }
+    },
+    {
+      "id": "FIX-e-burgos-005-001",
+      "author": "e-burgos",
+      "spec_id": "spec-e-burgos-005-studio-conversation-sessions",
+      "fix_document": "sdd/specs/spec-e-burgos-005-studio-conversation-sessions/fixes/fix-e-burgos-005-001.md",
+      "type": "IMPROVEMENT",
+      "severity": "low",
+      "created_at": "2026-10-26",
+      "resolved_at": null,
+      "validated_at": null,
+      "title": "Mission Control: selector de conversaciones compacto y envio dirigido desde el panel del agente",
+      "estimation_hours": 2,
+      "description": "Selector de conversaciones como dropdown en el header de Topologia del Enjambre junto a Nueva conversacion; el input del panel envia con thread.send a la conversacion seleccionada dirigido al agente; boton Abrir nuevo chat con <agente>.",
+      "justification": "Ajuste sobre lo entregado en spec-005 sin contratos ni entidades nuevas; el pedido se partio en dos fixes para respetar el limite de archivos del FIX GATE.",
+      "related_modules": [
+        "studio"
+      ],
+      "affected_files": [
+        "apps/studio/src/components/mission-control/ConversationSelector.tsx",
+        "apps/studio/src/components/mission-control/AgentMapCanvas.tsx",
+        "apps/studio/src/components/mission-control/LiveAgentChatFeed.tsx",
+        "apps/studio/src/components/mission-control/AgentInspectorDrawer.tsx",
+        "apps/studio/src/lib/i18n/"
+      ],
+      "test_reference": null,
+      "status": "pending",
+      "cycle": null,
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "orchestrator",
+        "tokens_in": 60000,
+        "tokens_out": 6000,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-26"
+      }
+    },
+    {
+      "id": "FIX-e-burgos-005-002",
+      "author": "e-burgos",
+      "spec_id": "spec-e-burgos-005-studio-conversation-sessions",
+      "fix_document": "sdd/specs/spec-e-burgos-005-studio-conversation-sessions/fixes/fix-e-burgos-005-002.md",
+      "type": "BUGFIX",
+      "severity": "medium",
+      "created_at": "2026-10-26",
+      "resolved_at": null,
+      "validated_at": null,
+      "title": "Mission Control: documentos solo de la conversacion, tarjeta persistida y visor modal centrado",
+      "estimation_hours": 2,
+      "description": "Derivar documentos desde tool calls y FIX-ids reales descartando ids truncados inexistentes en el snapshot; tarjeta contraible persistida en localStorage; DocumentViewerModal centrado siguiendo el visor sdd/docs.",
+      "justification": "Ajuste sobre lo entregado en spec-005 sin contratos ni entidades nuevas; el pedido se partio en dos fixes para respetar el limite de archivos del FIX GATE.",
+      "related_modules": [
+        "studio"
+      ],
+      "affected_files": [
+        "apps/studio/src/lib/conversation.ts",
+        "apps/studio/src/lib/agent-documents.ts",
+        "apps/studio/src/components/mission-control/RelatedDocuments.tsx",
+        "apps/studio/src/components/mission-control/AgentInspectorDrawer.tsx",
+        "apps/studio/src/components/mission-control/DocumentViewerModal.tsx"
+      ],
+      "test_reference": null,
+      "status": "pending",
+      "cycle": null,
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "orchestrator",
+        "tokens_in": 60000,
+        "tokens_out": 6000,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-26"
+      }
     }
   ]
 }
