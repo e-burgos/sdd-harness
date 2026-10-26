@@ -65,4 +65,5 @@ export interface AgentEngine {
   readonly name: string;
   readonly provider: KnownProvider;
   startTurn(input: EngineTurnInput, callbacks: EngineCallbacks): EngineTurn;
+  readSessionTitle?(sessionId: string, cwd: string): Promise<string | null>;
 }

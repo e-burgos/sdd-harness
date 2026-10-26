@@ -1,9 +1,20 @@
-import { query as sdkQuery, type HookInput, type HookJSONOutput, type Options, type PreToolUseHookInput, type Query, type SDKUserMessage } from '@anthropic-ai/claude-agent-sdk';
+import {
+  getSessionInfo as sdkGetSessionInfo,
+  query as sdkQuery,
+  type HookInput,
+  type HookJSONOutput,
+  type Options,
+  type PreToolUseHookInput,
+  type Query,
+  type SDKSessionInfo,
+  type SDKUserMessage,
+} from '@anthropic-ai/claude-agent-sdk';
 import { DEFAULT_AGENT, type ThreadOptions } from '@sdd-studio/protocol';
 import { InputChannel } from './input-channel';
 import { toHookContext, toSdkUserMessage } from './prompt-content';
 import type { JudgeContext, ToolVerdict } from './types';
 import { SdkEventMapper, type SdkMessageLike } from './sdk-mapper';
+import { truncate } from './tool-summary';
 import type { AgentEngine, EngineCallbacks, EngineTurn, EngineTurnInput, OutgoingMessage } from './types';
 
 export type DeliveryMode = 'stream' | 'hook-context';
@@ -18,6 +29,25 @@ export const MODEL_IDS: Record<Exclude<ThreadOptions['model'], 'kit'>, string> =
   opus: 'claude-opus-5-5',
   fable: 'claude-fable-5-1',
 };
+
+export const SESSION_TITLE_MAX = 300;
+
+export type SessionInfoFn = (sessionId: string, options?: { dir?: string }) => Promise<SDKSessionInfo | undefined>;
+
+export function cleanTitle(raw: string | undefined | null): string | null {
+  const collapsed = (raw ?? '').replace(/\s+/g, ' ').trim();
+  return collapsed ? truncate(collapsed, SESSION_TITLE_MAX) : null;
+}
+
+export function pickSessionTitle(
+  info: Pick<SDKSessionInfo, 'customTitle' | 'summary' | 'firstPrompt'> | undefined,
+): string | null {
+  const custom = cleanTitle(info?.customTitle);
+  if (custom) return custom;
+  const summary = cleanTitle(info?.summary);
+  const first = cleanTitle(info?.firstPrompt);
+  return summary && summary !== first ? summary : null;
+}
 
 export function buildQueryOptions(
   input: EngineTurnInput,
@@ -103,7 +133,16 @@ export class ClaudeAgentSdkEngine implements AgentEngine {
     private readonly queryFn: QueryFn = sdkQuery as QueryFn,
     private readonly getEnv?: () => Record<string, string | undefined>,
     private readonly deliveryMode: DeliveryMode = 'stream',
+    private readonly sessionInfoFn: SessionInfoFn = sdkGetSessionInfo,
   ) {}
+
+  async readSessionTitle(sessionId: string, cwd: string): Promise<string | null> {
+    try {
+      return pickSessionTitle(await this.sessionInfoFn(sessionId, { dir: cwd }));
+    } catch {
+      return null;
+    }
+  }
 
   startTurn(input: EngineTurnInput, cb: EngineCallbacks): EngineTurn {
     const abort = new AbortController();

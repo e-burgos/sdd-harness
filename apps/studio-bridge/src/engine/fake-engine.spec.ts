@@ -245,3 +245,25 @@ describe('FakeEngine cut points and markers', () => {
     });
   });
 });
+
+describe('FakeEngine session title', () => {
+  it('answers null until a title is simulated', async () => {
+    const engine = new FakeEngine(1);
+    expect(await engine.readSessionTitle('fake-t')).toBeNull();
+  });
+
+  it('simulates a title from the #title marker of the first prompt', async () => {
+    const engine = new FakeEngine(1);
+    const { sessions, cb } = harness();
+    await engine.startTurn(input('hola #title:Refactor_billing'), cb).done;
+    expect(await engine.readSessionTitle(sessions[0] as string)).toBe('Refactor billing');
+  });
+
+  it('lets a test change or clear the title of a session', async () => {
+    const engine = new FakeEngine(1);
+    engine.setSessionTitle('s1', 'Renamed');
+    expect(await engine.readSessionTitle('s1')).toBe('Renamed');
+    engine.setSessionTitle('s1', null);
+    expect(await engine.readSessionTitle('s1')).toBeNull();
+  });
+});

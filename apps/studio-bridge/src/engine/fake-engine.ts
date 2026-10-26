@@ -11,6 +11,7 @@ const refMarkerOf = (line: string): string | null => {
   const prompt = /^Follow the instructions in .*?([^/]+)\.prompt\.md\.$/.exec(line);
   return prompt ? `/${prompt[1]}` : null;
 };
+const titleOf = (text: string): string | null => /#title:(\S+)/.exec(text)?.[1]?.replace(/_/g, ' ') ?? null;
 const stepsOf = (text: string): number => Number(/#steps:(\d+)/.exec(text)?.[1] ?? 0);
 
 /**
@@ -18,7 +19,8 @@ const stepsOf = (text: string): number => Number(/#steps:(\d+)/.exec(text)?.[1] 
  * #sub, #tool (Bash approval), #edit (Write approval; skipped in acceptEdits), #slow (waits for interrupt), #fail,
  * #steps:N (N Read rounds with a cut point after each), #revert (interrupt reports the last cut-point batch as undelivered),
  * #mcp, #edit-tool, #bash-git, #bash-git2, #bash-chain (approvals that exercise Always rules),
- * #bad-attachment (fails like #fail with 'attachment rejected').
+ * #bad-attachment (fails like #fail with 'attachment rejected'),
+ * #title:Some_title (readSessionTitle answers 'Some title' for that session; setSessionTitle changes it later).
  * Echoes append ' [attachments: a, b (missing)]' and ' [refs: @agent /skill]' when the prompt carries them.
  */
 export class FakeEngine implements AgentEngine {
@@ -26,8 +28,18 @@ export class FakeEngine implements AgentEngine {
   readonly provider = 'claude' as const;
   readonly receivedSystemPrefixes: (string | undefined)[] = [];
   private counter = 0;
+  private readonly titles = new Map<string, string>();
 
   constructor(private readonly delayMs = 5) {}
+
+  setSessionTitle(sessionId: string, title: string | null): void {
+    if (title === null) this.titles.delete(sessionId);
+    else this.titles.set(sessionId, title);
+  }
+
+  async readSessionTitle(sessionId: string): Promise<string | null> {
+    return this.titles.get(sessionId) ?? null;
+  }
 
   startTurn(input: EngineTurnInput, cb: EngineCallbacks): EngineTurn {
     this.receivedSystemPrefixes.push(input.systemPrefix);
@@ -130,7 +142,10 @@ export class FakeEngine implements AgentEngine {
     };
 
     const done = (async () => {
-      cb.onSessionId(input.resumeSessionId ?? `fake-${input.threadId}`);
+      const sessionId = input.resumeSessionId ?? `fake-${input.threadId}`;
+      const title = titleOf(firstText);
+      if (title) this.titles.set(sessionId, title);
+      cb.onSessionId(sessionId);
       await wait();
       if (marker(firstText, 'fail')) throw new Error('fake failure');
       if (marker(firstText, 'bad-attachment')) throw new Error('attachment rejected');

@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import type { Options, Query } from '@anthropic-ai/claude-agent-sdk';
 import { defaultThreadOptions, type ThreadEvent } from '@sdd-studio/protocol';
 import { describe, expect, it, vi } from 'vitest';
-import { buildQueryOptions, ClaudeAgentSdkEngine, type QueryFn } from './claude-sdk-engine';
+import { buildQueryOptions, ClaudeAgentSdkEngine, cleanTitle, pickSessionTitle, SESSION_TITLE_MAX, type QueryFn, type SessionInfoFn } from './claude-sdk-engine';
 import { plainPrompt, type ApprovalRequest, type EngineCallbacks, type EngineTurnInput } from './types';
 
 const noPending = { collectPending: () => [], revertPending: () => {}, readAttachment: async () => null };
@@ -471,5 +471,65 @@ describe('PostToolBatch delivery', () => {
     const { output, collect } = await startAndFire('stream', batchInput('sub-1'));
     expect(collect).not.toHaveBeenCalled();
     expect(output).toEqual({});
+  });
+});
+
+describe('pickSessionTitle', () => {
+  it('prefers customTitle over summary', () => {
+    expect(pickSessionTitle({ customTitle: 'Billing refactor', summary: 'something else', firstPrompt: 'hi' })).toBe('Billing refactor');
+  });
+
+  it('uses summary when it differs from the first prompt', () => {
+    expect(pickSessionTitle({ summary: 'Generated summary', firstPrompt: 'fix the bug' })).toBe('Generated summary');
+  });
+
+  it('never returns the first message as the title', () => {
+    expect(pickSessionTitle({ summary: 'fix the bug', firstPrompt: 'fix the bug' })).toBeNull();
+    expect(pickSessionTitle({ summary: '  fix   the\nbug ', firstPrompt: 'fix the bug' })).toBeNull();
+    expect(pickSessionTitle({ summary: 'only summary' })).toBe('only summary');
+  });
+
+  it('treats empty, blank and missing info as no title', () => {
+    expect(pickSessionTitle(undefined)).toBeNull();
+    expect(pickSessionTitle({ customTitle: '   ', summary: '', firstPrompt: 'x' })).toBeNull();
+    expect(pickSessionTitle({ customTitle: '\n\t', summary: ' ', firstPrompt: undefined })).toBeNull();
+  });
+
+  it('falls through a blank customTitle to a distinct summary', () => {
+    expect(pickSessionTitle({ customTitle: ' ', summary: 'Real summary', firstPrompt: 'p' })).toBe('Real summary');
+  });
+});
+
+describe('cleanTitle', () => {
+  it('collapses whitespace and trims', () => {
+    expect(cleanTitle('  a \n b\t c  ')).toBe('a b c');
+  });
+
+  it('bounds the title with an ellipsis', () => {
+    const cleaned = cleanTitle('w'.repeat(SESSION_TITLE_MAX + 50));
+    expect(cleaned).toHaveLength(SESSION_TITLE_MAX);
+    expect(cleaned?.endsWith('…')).toBe(true);
+    expect(cleanTitle('w'.repeat(SESSION_TITLE_MAX))).toHaveLength(SESSION_TITLE_MAX);
+  });
+});
+
+describe('ClaudeAgentSdkEngine.readSessionTitle', () => {
+  const engineWith = (infoFn: SessionInfoFn) => new ClaudeAgentSdkEngine(undefined, undefined, 'stream', infoFn);
+
+  it('reads the session of the given workspace through the injected function', async () => {
+    const infoFn = vi.fn<SessionInfoFn>(async () => ({ sessionId: 's1', summary: 'ignored', lastModified: 1, customTitle: 'Renamed' }));
+    expect(await engineWith(infoFn).readSessionTitle('s1', '/repo')).toBe('Renamed');
+    expect(infoFn).toHaveBeenCalledWith('s1', { dir: '/repo' });
+  });
+
+  it('answers null when the session file does not exist yet', async () => {
+    expect(await engineWith(async () => undefined).readSessionTitle('s1', '/repo')).toBeNull();
+  });
+
+  it('answers null instead of throwing when the SDK fails', async () => {
+    const failing: SessionInfoFn = async () => {
+      throw new Error('EACCES');
+    };
+    expect(await engineWith(failing).readSessionTitle('s1', '/repo')).toBeNull();
   });
 });
