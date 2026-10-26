@@ -82,6 +82,8 @@ export function createAttachmentStore(root: string, opts: { onWarn?: (message: s
       await rename(tmp, file);
     } catch {
       await unlink(tmp).catch(() => undefined);
+      // Windows refuses to rename over a file another writer just created; the name is the content hash, so it is already stored.
+      if (await alreadyStored(file, bytes.length)) return;
       throw new AttachmentError('internal', 'attachment could not be saved');
     }
   };

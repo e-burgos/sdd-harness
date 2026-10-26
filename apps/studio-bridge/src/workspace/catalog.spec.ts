@@ -21,7 +21,7 @@ const write = async (rel: string, content: string, base = root) => {
 };
 const fm = (fields: Record<string, string>) => `---\n${Object.entries(fields).map(([k, v]) => `${k}: ${v}`).join('\n')}\n---\nbody`;
 const skill = (dir: string, name: string | null, description = 'd') =>
-  write(`${dir}/${name ?? 'x'}/SKILL.md`, fm({ ...(name ? { name } : {}), description }));
+  write(`${dir}/${(name ?? 'x').replace(/[:<>"|?*]/g, '_')}/SKILL.md`, fm({ ...(name ? { name } : {}), description }));
 
 describe('loadCatalog', () => {
   it('is empty and healthy when no source exists', async () => {

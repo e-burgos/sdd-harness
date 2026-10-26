@@ -104,7 +104,9 @@ describe('.claude catalog watching', () => {
   const restart = async () => {
     await watcher!.close();
     updates.length = 0;
-    watcher = await startWorkspaceWatcher({ root, debounceMs: 50, onUpdate: (u) => updates.push(u) });
+    // chokidar can miss a moved directory on Windows; the periodic rescan is the documented recovery.
+    const rescanIntervalMs = process.platform === 'win32' ? 300 : undefined;
+    watcher = await startWorkspaceWatcher({ root, debounceMs: 50, rescanIntervalMs, onUpdate: (u) => updates.push(u) });
   };
   const addSkill = async (name: string) => {
     const staged = await mkdtemp(path.join(root, '.staged-skill-'));
