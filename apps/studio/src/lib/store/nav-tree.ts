@@ -8,6 +8,7 @@ import {
   type ThreadInfo,
   type WorkspaceSnapshot,
 } from '@sdd-studio/protocol';
+import { linkEntriesOf } from '../link-targets';
 
 export const VISIBLE_CLOSED_FIXES = 5;
 
@@ -182,17 +183,19 @@ export function buildNavTree(snapshot: WorkspaceSnapshot | null, threads: Thread
   const knownFixes = new Set((snapshot?.fixes ?? []).map((f) => f.id));
 
   for (const info of threads) {
-    const target = info.link.target;
-    if (target.kind === 'cycle') {
-      cycleDraft(target.specId, target.cycle, null).infos.push(info);
-    } else if (target.kind === 'fix') {
-      fixDraft(target.fixId).infos.push(info);
-    } else {
+    const entries = linkEntriesOf(info);
+    if (entries.length === 0) {
       const specId = specIdOfChannel(info.channelId);
       const agent = dmAgentOfChannel(info.channelId);
       if (specId !== null) specEntry(specId).none.infos.push(info);
       else if (agent !== null) dmDraft(agent).infos.push(info);
       else channelDraft(info.channelId).infos.push(info);
+      continue;
+    }
+    for (const entry of entries) {
+      if (entry.kind === 'cycle') cycleDraft(entry.specId, entry.cycle, null).infos.push(info);
+      else if (entry.kind === 'fix') fixDraft(entry.fixId).infos.push(info);
+      else specEntry(entry.specId).none.infos.push(info);
     }
   }
 

@@ -415,13 +415,23 @@
       "depends_on": [
         "TASK-001"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/studio/src/lib/link-targets.ts",
         "apps/studio/src/lib/link-targets.spec.ts",
         "apps/studio/src/lib/store/nav-tree.ts",
         "apps/studio/src/lib/store/nav-tree.spec.ts"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 40000,
+        "tokens_out": 9000,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-26"
+      }
     },
     {
       "id": "TASK-015",

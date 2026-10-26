@@ -29,6 +29,38 @@ const section = (tree: NavSection[], key: string) => tree.find((s) => s.key === 
 const ids = (nodes: NavNode[]) => nodes.map((n) => n.id);
 const flatThreadIds = (n: NavNode): string[] => [...n.threads.map((t) => t.id), ...n.children.flatMap(flatThreadIds)];
 
+describe('buildNavTree with multiple associations', () => {
+  const multi = (id: string, targets: NonNullable<ThreadInfo['link']['targets']>) =>
+    thread({ id, link: { target: { kind: 'none' }, source: 'auto', targets } });
+  const find = (tree: NavSection[], nodeId: string) => {
+    const walk = (n: NavNode): NavNode | null => (n.id === nodeId ? n : n.children.map(walk).find(Boolean) ?? null);
+    return tree.map(walk).find(Boolean) ?? null;
+  };
+
+  it('places the thread under every active association', () => {
+    const tree = buildNavTree(
+      snapshot,
+      [
+        multi('m', [
+          { kind: 'cycle', specId: 's1', cycle: 'cycle-02', origin: 'detected' },
+          { kind: 'fix', fixId: 'FIX-a', origin: 'manual' },
+          { kind: 'spec', specId: 's2', origin: 'detected' },
+        ]),
+      ],
+      view,
+    );
+    expect(find(tree, 'cycle:s1/cycle-02')!.threads.map((t) => t.id)).toEqual(['m']);
+    expect(find(tree, 'fix:FIX-a')!.threads.map((t) => t.id)).toEqual(['m']);
+    expect(find(tree, 'spec-none:s2')!.threads.map((t) => t.id)).toEqual(['m']);
+    expect(section(tree, 'channels').children.flatMap(flatThreadIds)).not.toContain('m');
+  });
+
+  it('falls back to the channel placement when the bridge reports no associations', () => {
+    const tree = buildNavTree(snapshot, [multi('free', [])], view);
+    expect(find(tree, 'channel:general')!.threads.map((t) => t.id)).toEqual(['free']);
+  });
+});
+
 describe('buildNavTree', () => {
   it('returns the five sections in order and keeps spec channels out of CHANNELS', () => {
     const tree = buildNavTree(snapshot, [], view);
