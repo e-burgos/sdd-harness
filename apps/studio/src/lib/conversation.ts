@@ -1,4 +1,5 @@
 import { isKnownProvider, type KnownProvider, type ThreadInfo, type WorkspaceSnapshot } from '@sdd-studio/protocol';
+import { bashWritePaths } from './conversation-bash-paths';
 import type { GateId } from './gates';
 import type { ThreadState, TimelineItem } from './store/timeline';
 
@@ -17,6 +18,7 @@ export interface ConversationDialogue {
 export interface RelatedSpec {
   specId: string;
   cycle: string | null;
+  cycles: string[];
 }
 
 export interface RelatedFix {
@@ -29,7 +31,13 @@ export interface ConversationDocument {
   name: string;
   specId: string;
   fixId: string | null;
+  cycle: string | null;
   agents: string[];
+}
+
+export interface ConversationMentions {
+  specIds: string[];
+  fixIds: string[];
 }
 
 export interface ConversationParticipant {
@@ -44,6 +52,7 @@ export interface ConversationView {
   specs: RelatedSpec[];
   fixes: RelatedFix[];
   documents: ConversationDocument[];
+  mentions: ConversationMentions;
   engineSessionId: string | null | undefined;
   provider: string | undefined;
   isEmpty: boolean;
@@ -145,15 +154,15 @@ function participantsOf(items: TimelineItem[], threadAgent: string | null, hasEv
 const DOCUMENT_TOOLS = new Set(['Write', 'Edit', 'MultiEdit']);
 const SPEC_DOCUMENT_PATH = /(?:^|\/)(sdd\/specs\/(spec-[A-Za-z0-9._-]{1,123})\/[^\s]+)$/;
 const FIX_DOCUMENT_PATH = /\/fixes\/fix-([A-Za-z0-9][A-Za-z0-9._-]{0,94}?)\.md$/;
+const CYCLE_IN_PATH = /\/cycles\/(cycle-\d{2})\//;
 
 const specIdsOf = (snapshot: WorkspaceSnapshot | null): Map<string, string> =>
   new Map((snapshot?.specs ?? []).map((spec) => [spec.id.toLowerCase(), spec.id]));
 
 const fixesOf = (snapshot: WorkspaceSnapshot | null) => new Map((snapshot?.fixes ?? []).map((fix) => [fix.id.toLowerCase(), fix]));
 
-function documentOf(item: TimelineItem, snapshot: WorkspaceSnapshot | null): ConversationDocument | null {
-  if (item.kind !== 'tool' || !DOCUMENT_TOOLS.has(item.tool)) return null;
-  const match = SPEC_DOCUMENT_PATH.exec(item.summary.trim());
+function documentAt(rawPath: string, agent: string, snapshot: WorkspaceSnapshot | null): ConversationDocument | null {
+  const match = SPEC_DOCUMENT_PATH.exec(rawPath.trim());
   if (!match) return null;
   const specId = specIdsOf(snapshot).get((match[2] ?? '').toLowerCase());
   if (!specId) return null;
@@ -165,33 +174,81 @@ function documentOf(item: TimelineItem, snapshot: WorkspaceSnapshot | null): Con
     name: path.split('/').at(-1) ?? path,
     specId,
     fixId: knownFix?.id ?? null,
-    agents: [item.author.agent],
+    cycle: CYCLE_IN_PATH.exec(path)?.[1] ?? null,
+    agents: [agent],
   };
+}
+
+function writtenPathsOf(item: TimelineItem): string[] {
+  if (item.kind !== 'tool') return [];
+  if (DOCUMENT_TOOLS.has(item.tool)) return [item.summary];
+  return item.tool === 'Bash' ? bashWritePaths(item.summary) : [];
 }
 
 function relatedDocuments(thread: ThreadState, snapshot: WorkspaceSnapshot | null): ConversationDocument[] {
   const byPath = new Map<string, ConversationDocument>();
   for (const item of thread.items) {
-    const document = documentOf(item, snapshot);
-    if (!document) continue;
-    const previous = byPath.get(document.path);
-    byPath.set(document.path, previous ? { ...previous, agents: [...new Set([...previous.agents, ...document.agents])] } : document);
+    if (item.kind !== 'tool') continue;
+    for (const rawPath of writtenPathsOf(item)) {
+      const document = documentAt(rawPath, item.author.agent, snapshot);
+      if (!document) continue;
+      const previous = byPath.get(document.path);
+      byPath.set(document.path, previous ? { ...previous, agents: [...new Set([...previous.agents, ...document.agents])] } : document);
+    }
   }
   return [...byPath.values()];
 }
 
-const CYCLE_IN_PATH = /\/cycles\/(cycle-\d{2})\//;
+const escapeRegExp = (text: string): string => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+function mentionedTexts(item: TimelineItem): string[] {
+  switch (item.kind) {
+    case 'user':
+    case 'message':
+      return [item.text];
+    case 'tool':
+    case 'approval':
+      return [item.summary];
+    default:
+      return [];
+  }
+}
+
+function mentionsOf(items: TimelineItem[], snapshot: WorkspaceSnapshot | null): ConversationMentions {
+  const specs = [...specIdsOf(snapshot).values()];
+  const fixes = (snapshot?.fixes ?? []).map((fix) => fix.id);
+  const known = [...specs, ...fixes].sort((a, b) => b.length - a.length);
+  if (known.length === 0) return { specIds: [], fixIds: [] };
+  const matcher = new RegExp(`(?<![A-Za-z0-9_-])(${known.map(escapeRegExp).join('|')})(?![A-Za-z0-9_-])`, 'gi');
+  const canonical = new Map(known.map((id) => [id.toLowerCase(), id]));
+  const lastSeen = new Map<string, number>();
+  items.forEach((item, position) => {
+    for (const text of mentionedTexts(item)) {
+      for (const match of text.matchAll(matcher)) {
+        const id = canonical.get((match[1] ?? '').toLowerCase());
+        if (id) lastSeen.set(id, position);
+      }
+    }
+  });
+  const byRecency = [...lastSeen].sort((a, b) => a[1] - b[1]).map(([id]) => id);
+  return {
+    specIds: byRecency.filter((id) => specs.includes(id)),
+    fixIds: byRecency.filter((id) => fixes.includes(id)),
+  };
+}
 
 export function relatedFromDocuments(documents: ConversationDocument[]): { specs: RelatedSpec[]; fixes: RelatedFix[] } {
   const specs = new Map<string, RelatedSpec>();
   const fixes = new Map<string, RelatedFix>();
   for (const document of documents) {
-    const cycle = CYCLE_IN_PATH.exec(document.path)?.[1] ?? null;
     const current = specs.get(document.specId);
     if (current) {
-      if (cycle) current.cycle = cycle;
+      if (document.cycle) {
+        current.cycle = document.cycle;
+        if (!current.cycles.includes(document.cycle)) current.cycles = [...current.cycles, document.cycle].sort();
+      }
     } else {
-      specs.set(document.specId, { specId: document.specId, cycle });
+      specs.set(document.specId, { specId: document.specId, cycle: document.cycle, cycles: document.cycle ? [document.cycle] : [] });
     }
     if (document.fixId && !fixes.has(document.fixId)) fixes.set(document.fixId, { fixId: document.fixId, specId: document.specId });
   }
@@ -215,6 +272,7 @@ export function deriveConversation(thread: ThreadState, snapshot: WorkspaceSnaps
     specs,
     fixes,
     documents,
+    mentions: mentionsOf(thread.items, snapshot),
     engineSessionId: thread.info?.engineSessionId,
     provider: thread.info?.provider,
     isEmpty: dialogues.length === 0,

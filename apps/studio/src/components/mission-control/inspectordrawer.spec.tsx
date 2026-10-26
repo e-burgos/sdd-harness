@@ -57,9 +57,10 @@ const conversation = (patch: Partial<ConversationView> = {}): ConversationView =
   threadId: 't-1',
   participants: [{ agentId: 'sdd-orchestrator', events: 2 }],
   dialogues: [dialogue(1, 'sdd-orchestrator', 'user', 'Primer mensaje'), dialogue(2, 'sdd-reviewer', 'user', 'Último mensaje', { gateId: 'contexto-gate' })],
-  specs: [{ specId: 'spec-real-1', cycle: 'cycle-01' }],
+  specs: [{ specId: 'spec-real-1', cycle: 'cycle-01', cycles: ['cycle-01'] }],
   fixes: [],
-  documents: [{ path: 'sdd/specs/spec-real-1/cycles/cycle-01/plan.md', name: 'plan.md', specId: 'spec-real-1', fixId: null, agents: ['sdd-orchestrator'] }],
+  mentions: { specIds: [], fixIds: [] },
+  documents: [{ path: 'sdd/specs/spec-real-1/cycles/cycle-01/plan.md', name: 'plan.md', specId: 'spec-real-1', fixId: null, cycle: 'cycle-01', agents: ['sdd-orchestrator'] }],
   engineSessionId: 'real-session-0001',
   provider: 'claude',
   isEmpty: false,
@@ -147,7 +148,7 @@ describe('AgentInspectorDrawer', () => {
   });
 
   it('scopes the agent tab to the documents that agent wrote and the swarm tab to all of them', () => {
-    const planner = { path: 'sdd/specs/spec-real-1/cycles/cycle-01/architect.md', name: 'architect.md', specId: 'spec-real-1', fixId: null, agents: ['sdd-architect'] };
+    const planner = { path: 'sdd/specs/spec-real-1/cycles/cycle-01/architect.md', name: 'architect.md', specId: 'spec-real-1', fixId: null, cycle: 'cycle-01', agents: ['sdd-architect'] };
     const base = conversation();
     renderDrawer({ conversation: conversation({ documents: [...base.documents, planner] }) });
     fireEvent.click(screen.getByText('Ver info'));

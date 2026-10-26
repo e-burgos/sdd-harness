@@ -14,8 +14,8 @@ const bridge: any = {
   retrySync: () => {},
 };
 
-const planDoc: ConversationDocument = { path: 'sdd/specs/spec-a/cycles/cycle-01/plan.md', name: 'plan.md', specId: 'spec-a', fixId: null, agents: ['sdd-planner'] };
-const fixDoc: ConversationDocument = { path: 'sdd/specs/spec-a/fixes/fix-1.md', name: 'fix-1.md', specId: 'spec-a', fixId: 'FIX-1', agents: ['sdd-reviewer'] };
+const planDoc: ConversationDocument = { path: 'sdd/specs/spec-a/cycles/cycle-01/plan.md', name: 'plan.md', specId: 'spec-a', fixId: null, cycle: 'cycle-01', agents: ['sdd-planner'] };
+const fixDoc: ConversationDocument = { path: 'sdd/specs/spec-a/fixes/fix-1.md', name: 'fix-1.md', specId: 'spec-a', fixId: 'FIX-1', cycle: null, agents: ['sdd-reviewer'] };
 
 const renderDocs = (
   specs: RelatedSpec[],
@@ -39,7 +39,7 @@ describe('RelatedDocuments', () => {
 
   it('hides the body when collapsed and reports the toggle', () => {
     const onToggle = vi.fn();
-    renderDocs([{ specId: 'spec-a', cycle: null }], [], [planDoc], { open: false, onToggle });
+    renderDocs([{ specId: 'spec-a', cycle: null, cycles: [] }], [], [planDoc], { open: false, onToggle });
     expect(screen.queryByTestId('related-documents-body')).toBeNull();
     expect(screen.getByTestId('related-documents-toggle')).toHaveAttribute('aria-expanded', 'false');
     fireEvent.click(screen.getByTestId('related-documents-toggle'));
@@ -47,7 +47,7 @@ describe('RelatedDocuments', () => {
   });
 
   it('lists only the conversation documents under their spec and shows the cycle of the event', () => {
-    renderDocs([{ specId: 'spec-a', cycle: 'cycle-01' }], [], [planDoc, fixDoc]);
+    renderDocs([{ specId: 'spec-a', cycle: 'cycle-01', cycles: ['cycle-01'] }], [], [planDoc, fixDoc]);
     expect(screen.getByText('ciclo cycle-01')).toBeInTheDocument();
     const buttons = [...screen.getByTestId('related-spec-spec-a').querySelectorAll('button')].map((b) => b.getAttribute('title'));
     expect(buttons).toEqual([planDoc.path]);
@@ -64,7 +64,7 @@ describe('RelatedDocuments', () => {
   });
 
   it('opens the document viewer when a document is clicked', () => {
-    renderDocs([{ specId: 'spec-a', cycle: 'cycle-01' }], [], [planDoc]);
+    renderDocs([{ specId: 'spec-a', cycle: 'cycle-01', cycles: ['cycle-01'] }], [], [planDoc]);
     fireEvent.click(screen.getByTestId('related-spec-spec-a').querySelector('button') as HTMLElement);
     expect(screen.getByTestId('document-viewer-modal')).toBeInTheDocument();
   });

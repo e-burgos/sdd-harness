@@ -1,6 +1,6 @@
 import { toViewerDocument } from './agent-documents';
 
-const doc = (path: string) => ({ path, name: path.split('/').at(-1) ?? path, specId: 'spec-a', fixId: null, agents: ['sdd-planner'] });
+const doc = (path: string) => ({ path, name: path.split('/').at(-1) ?? path, specId: 'spec-a', fixId: null, cycle: null, agents: ['sdd-planner'] });
 
 describe('toViewerDocument', () => {
   it('keeps the real path and name and maps well-known files to their type', () => {

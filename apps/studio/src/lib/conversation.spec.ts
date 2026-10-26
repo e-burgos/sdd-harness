@@ -98,14 +98,14 @@ describe('deriveConversation', () => {
     ]);
     const viewA = deriveConversation(a, snapshot);
     const viewB = deriveConversation(b, snapshot);
-    expect(viewA.specs).toEqual([{ specId: 'spec-e-burgos-005-sessions', cycle: 'cycle-01' }]);
+    expect(viewA.specs).toEqual([{ specId: 'spec-e-burgos-005-sessions', cycle: 'cycle-01', cycles: ['cycle-01'] }]);
     expect(viewA.fixes).toEqual([]);
     expect(viewA.participants).toEqual([
       { agentId: 'sdd-orchestrator', events: 1 },
       { agentId: 'sdd-planner', events: 1 },
     ]);
     expect(viewA.documents).toEqual([
-      { path: 'sdd/specs/spec-e-burgos-005-sessions/cycles/cycle-01/brief.yaml', name: 'brief.yaml', specId: 'spec-e-burgos-005-sessions', fixId: null, agents: ['sdd-orchestrator'] },
+      { path: 'sdd/specs/spec-e-burgos-005-sessions/cycles/cycle-01/brief.yaml', name: 'brief.yaml', specId: 'spec-e-burgos-005-sessions', fixId: null, cycle: 'cycle-01', agents: ['sdd-orchestrator'] },
     ]);
     expect(viewB.specs).toEqual([]);
     expect(viewB.documents).toEqual([]);
@@ -178,11 +178,11 @@ describe('deriveConversation', () => {
       snapshot,
     );
     expect(view.documents).toEqual([
-      { path: 'sdd/specs/spec-e-burgos-005-sessions/fixes/fix-e-burgos-003.md', name: 'fix-e-burgos-003.md', specId: 'spec-e-burgos-005-sessions', fixId: 'FIX-e-burgos-003', agents: ['sdd-reviewer', 'sdd-planner'] },
-      { path: 'sdd/specs/spec-e-burgos-005-sessions/cycles/cycle-01/plan.md', name: 'plan.md', specId: 'spec-e-burgos-005-sessions', fixId: null, agents: ['sdd-reviewer'] },
+      { path: 'sdd/specs/spec-e-burgos-005-sessions/fixes/fix-e-burgos-003.md', name: 'fix-e-burgos-003.md', specId: 'spec-e-burgos-005-sessions', fixId: 'FIX-e-burgos-003', cycle: null, agents: ['sdd-reviewer', 'sdd-planner'] },
+      { path: 'sdd/specs/spec-e-burgos-005-sessions/cycles/cycle-01/plan.md', name: 'plan.md', specId: 'spec-e-burgos-005-sessions', fixId: null, cycle: 'cycle-01', agents: ['sdd-reviewer'] },
     ]);
     expect(view.fixes).toEqual([{ fixId: 'FIX-e-burgos-003', specId: 'spec-e-burgos-005-sessions' }]);
-    expect(view.specs).toEqual([{ specId: 'spec-e-burgos-005-sessions', cycle: 'cycle-01' }]);
+    expect(view.specs).toEqual([{ specId: 'spec-e-burgos-005-sessions', cycle: 'cycle-01', cycles: ['cycle-01'] }]);
   });
 
   it('attributes a write to the subagent author, not to the thread agent', () => {
@@ -201,7 +201,7 @@ describe('deriveConversation', () => {
     );
     const planner = documentsOfAgent(view.documents, 'sdd-planner');
     expect(planner.map((d) => d.name)).toEqual(['plan.md']);
-    expect(relatedFromDocuments(planner)).toEqual({ specs: [{ specId: 'spec-e-burgos-005-sessions', cycle: 'cycle-01' }], fixes: [] });
+    expect(relatedFromDocuments(planner)).toEqual({ specs: [{ specId: 'spec-e-burgos-005-sessions', cycle: 'cycle-01', cycles: ['cycle-01'] }], fixes: [] });
     expect(documentsOfAgent(view.documents, 'sdd-architect')).toEqual([]);
     expect(relatedFromDocuments([])).toEqual({ specs: [], fixes: [] });
   });
@@ -238,6 +238,62 @@ describe('deriveConversation', () => {
       { agentId: 'sdd-planner', events: 1 },
       { agentId: 'sdd-orchestrator', events: 0 },
     ]);
+  });
+});
+
+describe('deriveConversation from Bash writes and mentions', () => {
+  const root = 'sdd/specs/spec-e-burgos-005-sessions';
+
+  it('derives documents from Bash heredocs, cd, variables and sed -i, grouped by cycle', () => {
+    const view = deriveConversation(
+      thread(info('bash'), [
+        tool(1, 'sdd-orchestrator', 'Bash', `$ D=${root}/cycles/cycle-01 && mkdir -p $D && cat > $D/cycle.json <<'EOF'\n{}\nEOF`),
+        tool(2, 'sdd-functional', 'Bash', `$ cd /w/${root}/cycles/cycle-02; cat > functional.md <<'…`),
+        tool(3, 'sdd-architect', 'Bash', `$ sed -i '' 's/a/b/' ${root}/cycles/cycle-02/architect.md && pnpm sdd:validate`),
+        tool(4, 'sdd-planner', 'Bash', `$ cat >> ${root}/fixes/fix-e-burgos-003.md <<'EOF'\nx\nEOF`),
+        tool(5, 'sdd-planner', 'Bash', `$ cat ${root}/plan.md`),
+      ]),
+      snapshot,
+    );
+    expect(view.documents.map((d) => [d.name, d.cycle, d.agents[0]])).toEqual([
+      ['cycle.json', 'cycle-01', 'sdd-orchestrator'],
+      ['functional.md', 'cycle-02', 'sdd-functional'],
+      ['architect.md', 'cycle-02', 'sdd-architect'],
+      ['fix-e-burgos-003.md', null, 'sdd-planner'],
+    ]);
+    expect(view.specs).toEqual([{ specId: 'spec-e-burgos-005-sessions', cycle: 'cycle-02', cycles: ['cycle-01', 'cycle-02'] }]);
+    expect(view.fixes).toEqual([{ fixId: 'FIX-e-burgos-003', specId: 'spec-e-burgos-005-sessions' }]);
+  });
+
+  it('discards Bash writes to specs absent from the snapshot or with unresolved paths', () => {
+    const view = deriveConversation(
+      thread(info('bash2'), [
+        tool(1, 'a', 'Bash', '$ cat > sdd/specs/spec-unknown-1/plan.md <<EOF\nx\nEOF'),
+        tool(2, 'a', 'Bash', `$ cat > $UNSET/plan.md; cd $(pwd); cat > ${root}/a.md`),
+        tool(3, 'a', 'Bash', `$ cat > ${root}/cycles/cycle-01/pla…`),
+      ]),
+      snapshot,
+    );
+    expect(view.documents).toEqual([]);
+  });
+
+  it('collects mentions validated against the snapshot without creating specs, fixes or documents', () => {
+    const view = deriveConversation(
+      thread(info('m'), [
+        user(1, 'mirá FIX-e-burgos-003 y spec-e-burgos-005-sessions'),
+        message(2, 'sdd-planner', 'FIX-e-burgos-00… y spec-e-burgos-005-ses…'),
+        tool(3, 'sdd-planner', 'Read', `${root}/plan.md`),
+      ]),
+      snapshot,
+    );
+    expect(view.mentions).toEqual({ specIds: ['spec-e-burgos-005-sessions'], fixIds: ['FIX-e-burgos-003'] });
+    expect(view.specs).toEqual([]);
+    expect(view.fixes).toEqual([]);
+    expect(view.documents).toEqual([]);
+  });
+
+  it('reports no mentions without a snapshot', () => {
+    expect(deriveConversation(thread(info('n'), [user(1, 'FIX-e-burgos-003')]), null).mentions).toEqual({ specIds: [], fixIds: [] });
   });
 });
 

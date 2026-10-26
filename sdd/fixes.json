@@ -674,10 +674,10 @@
       "type": "IMPROVEMENT",
       "severity": "low",
       "created_at": "2026-10-26",
-      "resolved_at": null,
+      "resolved_at": "2026-10-26",
       "validated_at": null,
       "title": "Mission Control: documentos y relaciones de la conversacion derivados tambien de Bash y menciones, agrupados por ciclo",
-      "estimation_hours": 2.0,
+      "estimation_hours": 2,
       "description": "El panel 'Specs y fixes relacionados' omite casi todos los documentos de la conversacion y colapsa los ciclos en uno solo. Diagnostico con datos reales (hilo bf119c6c, .sdd-studio/threads/bf119c6c-9a6a-4c78-9f83-a99ef37c2cf2.jsonl, 1086 eventos): los eventos de subagentes SI se persisten y llegan (author.agent = sdd-functional/planner/architect/implementor-*/reviewer, parentToolUseId presente). Pero solo 6 tool.start son Write/Edit (5 sobre sdd/: fix-004-001.md, spec-005.spec.md, brief.yaml, architect.md + context update); todo el resto se escribio con Bash (heredocs `cat > $D/cycle.json`, `cat > functional.md` tras `cd`, script /tmp/gen-planner.mjs para planner.md/tasks.json, `sed -i`, `cat >>` a fix-005-004.md, addfix.mjs para fixes.json). conversation.ts documentOf (L127-L130) solo acepta Write/Edit/MultiEdit y exige ruta sdd/specs/<spec>/ literal en item.summary; Bash queda descartado. Ademas el summary de Bash se trunca a 160 chars (apps/studio-bridge/src/engine/tool-summary.ts:8), asi que parte de los destinos es irrecuperable en el front. Ademas relatedFromDocuments (conversation.ts L156-L171) guarda un unico `cycle` por spec (el ultimo gana), sin agrupar por ciclo.",
       "justification": "Ajuste de derivacion/presentacion en apps/studio sobre datos ya disponibles (eventos del hilo y snapshot); sin contratos, endpoints ni entidades nuevas; <=5 archivos. Tercera ronda de Mission Control partida en fixes coherentes.",
       "related_modules": [
@@ -686,16 +686,17 @@
       "affected_files": [
         "apps/studio/src/lib/conversation.ts",
         "apps/studio/src/lib/conversation.spec.ts",
-        "apps/studio/src/lib/conversation-bash-paths.ts"
+        "apps/studio/src/lib/conversation-bash-paths.ts",
+        "apps/studio/src/lib/conversation-bash-paths.spec.ts"
       ],
       "test_reference": "conversation.spec.ts con fixtures del hilo real",
-      "status": "pending",
+      "status": "implemented",
       "cycle": null,
       "usage": {
         "provider_model": "claude/sonnet",
         "effort": "medium",
-        "tokens_in": 9000,
-        "tokens_out": 1500,
+        "tokens_in": 79000,
+        "tokens_out": 15500,
         "approx": true,
         "source": "declared-estimate",
         "recorded_at": "2026-10-26",
@@ -706,6 +707,15 @@
             "effort": "medium",
             "tokens_in": 9000,
             "tokens_out": 1500,
+            "approx": true,
+            "source": "declared-estimate"
+          },
+          {
+            "agent": "implementor-front",
+            "provider_model": "claude/sonnet",
+            "effort": "medium",
+            "tokens_in": 70000,
+            "tokens_out": 14000,
             "approx": true,
             "source": "declared-estimate"
           }
@@ -818,7 +828,7 @@
       "resolved_at": null,
       "validated_at": null,
       "title": "Header: al tocar el chip de gate se abre un modal con el resumen del estado del enjambre",
-      "estimation_hours": 2.0,
+      "estimation_hours": 2,
       "description": "El chip del header no es interactivo; el dev no tiene un lugar donde ver gate, spec/ciclo/fix activos, tasks/fixes con estado, agentes participantes y ultimo evento de la conversacion seleccionada.",
       "justification": "Ajuste de derivacion/presentacion en apps/studio sobre datos ya disponibles (eventos del hilo y snapshot); sin contratos, endpoints ni entidades nuevas; <=5 archivos. Tercera ronda de Mission Control partida en fixes coherentes.",
       "related_modules": [
@@ -866,7 +876,7 @@
       "resolved_at": null,
       "validated_at": null,
       "title": "Workspace: panel derecho muestra documentos, actividad y specs/ciclos/fixes de la conversacion",
-      "estimation_hours": 2.0,
+      "estimation_hours": 2,
       "description": "RightPanel.tsx deriva 'Detalles' solo de cycleForChannel(snapshot, channelId) (L111) -> 'Este canal no tiene un ciclo activo' y 'Actividad' solo de presence (L22-L27) -> 'Nadie esta trabajando ahora'. ThreadLinkPicker muestra 'Sin asociar' porque link.target es kind none (threads.json: link.source auto) y nada deriva la relacion de los eventos.",
       "justification": "Ajuste de derivacion/presentacion en apps/studio sobre datos ya disponibles (eventos del hilo y snapshot); sin contratos, endpoints ni entidades nuevas; <=5 archivos. Tercera ronda de Mission Control partida en fixes coherentes.",
       "related_modules": [

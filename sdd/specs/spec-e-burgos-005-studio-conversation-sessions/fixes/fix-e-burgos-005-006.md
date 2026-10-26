@@ -7,7 +7,7 @@
 | **Severidad** | low |
 | **Fecha**     | 2026-10-26 |
 | **Autor**     | e-burgos |
-| **Estado**    | pending |
+| **Estado**    | implemented |
 | **Spec**      | spec-e-burgos-005-studio-conversation-sessions |
 
 ## Problema
@@ -30,3 +30,10 @@ El panel 'Specs y fixes relacionados' omite casi todos los documentos de la conv
 ## Verificacion
 
 - conversation.spec.ts con fixtures del hilo real: Bash `cat > $D/cycle.json`, `cd X; cat > functional.md`, `sed -i`; ruta absoluta y relativa; multiples ciclos de una spec; mencion sin documento.
+
+## Ajuste del coordinador (prevalece sobre la solucion propuesta)
+
+- Las menciones de spec/fix en texto NO crean entradas en 'Specs y fixes relacionados' ni documentos: solo se listan specs/fixes con al menos un documento generado.
+- Las menciones, validadas contra el snapshot (nunca ids truncados), se exponen en `ConversationView.mentions` y solo alimentan `deriveConversationGate` (FIX-e-burgos-005-008) y el 'Detectado: ...' del ThreadLinkPicker (FIX-e-burgos-005-010).
+- Derivacion desde Bash: parser puro y conservador; si el summary esta truncado y la ruta no se resuelve con certeza, se descarta.
+- `touchedBy` no se agrega: el campo existente `agents` ya cumple ese rol. Documentos de `sdd/fixes*/` fuera de una spec no se derivan (`ConversationDocument.specId` es obligatorio).
