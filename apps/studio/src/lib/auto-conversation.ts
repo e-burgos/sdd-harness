@@ -13,6 +13,9 @@ export interface PreparedConversation {
   link: ThreadLinkTarget;
 }
 
+export const MAX_PREPARED = 3;
+const OPEN_SPEC_STATUSES = new Set(['draft', 'in-progress']);
+const OPEN_FIX_STATUSES = new Set(['pending', 'in-progress']);
 const SPEC_FILE = (specId: string) => `sdd/specs/${specId}/${specId}.spec.md`;
 const GLOBAL_CONTEXT = 'sdd/context/context_prompt.md';
 const LESSONS = 'sdd/memory/lessons.md';
@@ -25,13 +28,14 @@ export const preparedLabelOf = (target: PreparedTarget): string =>
 
 const text = (value: unknown): string | null => (typeof value === 'string' && value.length > 0 ? value : null);
 
-function targetOf(event: BotEvent): PreparedTarget | null {
+function targetOf(event: BotEvent, snapshot: WorkspaceSnapshot | null): PreparedTarget | null {
   const specId = text(event.payload.specId);
-  if (event.botKind === 'spec.created' && specId) return { kind: 'spec', specId };
+  if (event.botKind === 'spec.created' && specId && OPEN_SPEC_STATUSES.has(text(event.payload.status) ?? '')) return { kind: 'spec', specId };
   const cycle = text(event.payload.cycle);
-  if (event.botKind === 'cycle.opened' && specId && cycle) return { kind: 'cycle', specId, cycle };
+  if (event.botKind === 'cycle.opened' && specId && cycle && text(event.payload.status) === 'in-progress') return { kind: 'cycle', specId, cycle };
   const fixId = text(event.payload.fixId);
-  if (event.botKind === 'fix.created' && fixId) return { kind: 'fix', fixId, specId };
+  const fix = fixId ? snapshot?.fixes.find((f) => f.id === fixId) : undefined;
+  if (event.botKind === 'fix.created' && fixId && fix && OPEN_FIX_STATUSES.has(fix.status)) return { kind: 'fix', fixId, specId };
   return null;
 }
 
@@ -46,8 +50,8 @@ const alreadyHasThread = (target: PreparedTarget, threads: ThreadInfo[]): boolea
     ),
   );
 
-export function prepareFromBotEvent(event: BotEvent, threads: ThreadInfo[], current: PreparedConversation[]): PreparedConversation[] {
-  const target = targetOf(event);
+export function prepareFromBotEvent(event: BotEvent, threads: ThreadInfo[], current: PreparedConversation[], snapshot: WorkspaceSnapshot | null): PreparedConversation[] {
+  const target = targetOf(event, snapshot);
   if (!target) return current;
   const id = preparedIdOf(target);
   if (current.some((p) => p.id === id) || alreadyHasThread(target, threads)) return current;
@@ -55,6 +59,7 @@ export function prepareFromBotEvent(event: BotEvent, threads: ThreadInfo[], curr
   const link: ThreadLinkTarget =
     target.kind === 'cycle' ? { kind: 'cycle', specId: target.specId, cycle: target.cycle } : target.kind === 'fix' ? { kind: 'fix', fixId: target.fixId } : { kind: 'none' };
   const kept = target.kind === 'cycle' ? current.filter((p) => !(p.target.kind === 'spec' && p.target.specId === target.specId)) : current;
+  if (kept.length >= MAX_PREPARED) return current;
   return [...kept, { id, channelId, target, link }];
 }
 
