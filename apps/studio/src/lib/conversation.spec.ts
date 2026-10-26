@@ -1,6 +1,6 @@
 import type { ThreadInfo, WorkspaceSnapshot } from '@sdd-studio/protocol';
 import { deriveConversation, documentsOfAgent, inferGateFromText, listConversations, providerLabel, relatedFromDocuments, resolveSelectedThreadId } from './conversation';
-import { emptyThread, type ThreadState, type TimelineItem } from './store/timeline';
+import { emptyThread, type ThreadState, type TimelineItem, type TouchedDocument } from './store/timeline';
 
 const info = (id: string, patch: Partial<ThreadInfo> = {}): ThreadInfo => ({
   id,
@@ -301,5 +301,72 @@ describe('providerLabel', () => {
   it('labels known providers and echoes unknown ones', () => {
     expect(providerLabel('claude')).toBe('Claude Code');
     expect(providerLabel('gemini')).toBe('gemini');
+  });
+});
+
+describe('deriveConversation with document.touched (seq cutoff)', () => {
+  const SPEC = 'spec-e-burgos-005-sessions';
+  const doc = (name: string) => `sdd/specs/${SPEC}/${name}`;
+  const touch = (seq: number, name: string, op: TouchedDocument['op'], agent = 'sdd-planner'): TouchedDocument => ({ seq, path: doc(name), op, author: author(agent) });
+  const withTouched = (items: TimelineItem[], touched: TouchedDocument[]): ThreadState => ({ ...thread(info('t'), items), touched });
+
+  it('uses only the heuristic when the thread has no structured touches', () => {
+    const view = deriveConversation(withTouched([tool(1, 'sdd-planner', 'Write', doc('a.md'))], []), snapshot);
+    expect(view.documents.map((d) => d.path)).toEqual([doc('a.md')]);
+    expect(view.documents[0]?.op).toBeUndefined();
+    expect(view.documentSource).toBe('heuristic');
+  });
+
+  it('uses the heuristic before the first touch and only touches after it', () => {
+    const view = deriveConversation(
+      withTouched(
+        [
+          tool(1, 'sdd-planner', 'Write', doc('before.md')),
+          tool(5, 'sdd-planner', 'Write', doc('after-tool.md')),
+        ],
+        [touch(4, 'structured.md', 'created')],
+      ),
+      snapshot,
+    );
+    expect(view.documents.map((d) => d.path)).toEqual([doc('before.md'), doc('structured.md')]);
+    expect(view.documents.map((d) => d.op)).toEqual([undefined, 'created']);
+    expect(view.documentSource).toBe('mixed');
+    expect(view.gateActivity.documentSeqs).toEqual({ [doc('before.md')]: 1, [doc('structured.md')]: 4 });
+  });
+
+  it('merges a path present in both stretches into a single record', () => {
+    const view = deriveConversation(
+      withTouched(
+        [tool(1, 'sdd-reviewer', 'Edit', doc('shared.md')), tool(2, 'sdd-reviewer', 'Write', doc('other.md'))],
+        [touch(6, 'shared.md', 'modified', 'sdd-planner')],
+      ),
+      snapshot,
+    );
+    expect(view.documents.map((d) => d.path)).toEqual([doc('other.md'), doc('shared.md')]);
+    const shared = view.documents[1]!;
+    expect(shared.agents).toEqual(['sdd-reviewer', 'sdd-planner']);
+    expect(shared.op).toBe('modified');
+    expect(view.gateActivity.documentSeqs[doc('shared.md')]).toBe(6);
+  });
+
+  it('reports structured when the thread only has touches', () => {
+    const view = deriveConversation(
+      withTouched([], [touch(2, 'a.md', 'created'), touch(3, 'a.md', 'deleted'), touch(4, 'b.md', 'modified')]),
+      snapshot,
+    );
+    expect(view.documents.map((d) => [d.path, d.op])).toEqual([[doc('a.md'), 'deleted'], [doc('b.md'), 'modified']]);
+    expect(view.documentSource).toBe('structured');
+  });
+
+  it('ignores touches outside known specs and keeps the source structured', () => {
+    const view = deriveConversation(withTouched([], [{ seq: 1, path: 'README.md', op: 'modified', author: author('a') }]), snapshot);
+    expect(view.documents).toEqual([]);
+    expect(view.documentSource).toBe('structured');
+  });
+
+  it('exposes the session title exactly as received', () => {
+    expect(deriveConversation(thread(info('t', { sessionTitle: 'Revisar' })), snapshot).sessionTitle).toBe('Revisar');
+    expect(deriveConversation(thread(info('t', { sessionTitle: null })), snapshot).sessionTitle).toBeNull();
+    expect(deriveConversation(thread(info('t')), snapshot).sessionTitle).toBeUndefined();
   });
 });

@@ -37,6 +37,8 @@ const view = (dialogues: ConversationDialogue[], patch: Partial<ConversationView
   documents: [],
   mentions: { specIds: [], fixIds: [] },
   gateActivity: { documentSeqs: {}, fixMentionSeqs: {} },
+  documentSource: 'heuristic',
+  sessionTitle: null,
   engineSessionId: 'sess',
   provider: 'claude',
   isEmpty: dialogues.length === 0,

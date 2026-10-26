@@ -62,6 +62,8 @@ const conversation = (patch: Partial<ConversationView> = {}): ConversationView =
   mentions: { specIds: [], fixIds: [] },
   gateActivity: { documentSeqs: {}, fixMentionSeqs: {} },
   documents: [{ path: 'sdd/specs/spec-real-1/cycles/cycle-01/plan.md', name: 'plan.md', specId: 'spec-real-1', fixId: null, cycle: 'cycle-01', agents: ['sdd-orchestrator'] }],
+  documentSource: 'heuristic',
+  sessionTitle: null,
   engineSessionId: 'real-session-0001',
   provider: 'claude',
   isEmpty: false,

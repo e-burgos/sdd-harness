@@ -1,7 +1,7 @@
 import { isKnownProvider, type KnownProvider, type ThreadInfo, type WorkspaceSnapshot } from '@sdd-studio/protocol';
 import { bashWritePaths } from './conversation-bash-paths';
 import type { GateId } from './gates';
-import type { ThreadState, TimelineItem } from './store/timeline';
+import type { ThreadState, TimelineItem, TouchedDocument } from './store/timeline';
 
 export interface ConversationDialogue {
   id: string;
@@ -33,7 +33,10 @@ export interface ConversationDocument {
   fixId: string | null;
   cycle: string | null;
   agents: string[];
+  op?: TouchedDocument['op'];
 }
+
+export type DocumentSource = 'structured' | 'heuristic' | 'mixed';
 
 export interface ConversationMentions {
   specIds: string[];
@@ -59,7 +62,9 @@ export interface ConversationView {
   documents: ConversationDocument[];
   mentions: ConversationMentions;
   gateActivity: ConversationGateActivity;
+  documentSource: DocumentSource;
   engineSessionId: string | null | undefined;
+  sessionTitle: string | null | undefined;
   provider: string | undefined;
   isEmpty: boolean;
 }
@@ -216,11 +221,16 @@ function writtenPathsOf(item: TimelineItem): string[] {
   return item.tool === 'Bash' ? bashWritePaths(item.summary) : [];
 }
 
-function relatedDocuments(thread: ThreadState, snapshot: WorkspaceSnapshot | null): { documents: ConversationDocument[]; seqs: Record<string, number> } {
+interface DocumentsWithSeqs {
+  documents: ConversationDocument[];
+  seqs: Record<string, number>;
+}
+
+function relatedDocuments(thread: ThreadState, snapshot: WorkspaceSnapshot | null, beforeSeq = Infinity): DocumentsWithSeqs {
   const byPath = new Map<string, ConversationDocument>();
   const seqs: Record<string, number> = {};
   for (const item of thread.items) {
-    if (item.kind !== 'tool') continue;
+    if (item.kind !== 'tool' || item.seq >= beforeSeq) continue;
     for (const rawPath of writtenPathsOf(item)) {
       const document = documentAt(rawPath, item.author.agent, snapshot);
       if (!document) continue;
@@ -239,6 +249,31 @@ function relatedDocuments(thread: ThreadState, snapshot: WorkspaceSnapshot | nul
     }
   }
   return { documents: [...byPath.values()], seqs };
+}
+
+function structuredDocuments(touched: TouchedDocument[], snapshot: WorkspaceSnapshot | null, base: DocumentsWithSeqs): DocumentsWithSeqs {
+  const byPath = new Map(base.documents.map((document) => [document.path, document]));
+  const seqs = { ...base.seqs };
+  for (const touch of [...touched].sort((a, b) => a.seq - b.seq)) {
+    const document = documentAt(touch.path, touch.author.agent, snapshot);
+    if (!document) continue;
+    const previous = byPath.get(document.path);
+    seqs[document.path] = touch.seq;
+    byPath.delete(document.path);
+    byPath.set(document.path, {
+      ...document,
+      op: touch.op,
+      agents: previous ? [...new Set([...previous.agents, ...document.agents])] : document.agents,
+    });
+  }
+  return { documents: [...byPath.values()], seqs };
+}
+
+function documentSourceOf(heuristicCount: number, structuredCount: number, touchedCount: number): DocumentSource {
+  if (structuredCount > 0 && heuristicCount > 0) return 'mixed';
+  if (structuredCount > 0) return 'structured';
+  if (heuristicCount > 0) return 'heuristic';
+  return touchedCount > 0 ? 'structured' : 'heuristic';
 }
 
 const escapeRegExp = (text: string): string => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -318,7 +353,10 @@ export const documentsOfAgent = (documents: ConversationDocument[], agentId: str
 export function deriveConversation(thread: ThreadState, snapshot: WorkspaceSnapshot | null): ConversationView {
   const threadAgent = thread.info?.agent ?? null;
   const dialogues = thread.items.flatMap((item) => dialogueOf(item, threadAgent) ?? []).sort((a, b) => a.seq - b.seq);
-  const { documents, seqs } = relatedDocuments(thread, snapshot);
+  const cutoffSeq = thread.touched.length > 0 ? Math.min(...thread.touched.map((touch) => touch.seq)) : Infinity;
+  const heuristic = relatedDocuments(thread, snapshot, cutoffSeq);
+  const { documents, seqs } = structuredDocuments(thread.touched, snapshot, heuristic);
+  const structuredCount = documents.filter((document) => document.op !== undefined).length;
   const { specs, fixes } = relatedFromDocuments(documents);
   const { mentions, fixMentionSeqs } = mentionsOf(thread.items, snapshot);
   return {
@@ -330,7 +368,9 @@ export function deriveConversation(thread: ThreadState, snapshot: WorkspaceSnaps
     documents,
     mentions,
     gateActivity: { documentSeqs: seqs, fixMentionSeqs },
+    documentSource: documentSourceOf(heuristic.documents.length, structuredCount, thread.touched.length),
     engineSessionId: thread.info?.engineSessionId,
+    sessionTitle: thread.info?.sessionTitle,
     provider: thread.info?.provider,
     isEmpty: dialogues.length === 0,
   };
