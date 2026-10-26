@@ -47,7 +47,7 @@ describe('indicators under prefers-reduced-motion (CA-011.4)', () => {
     const store = createStudioStore();
     store.getState().setThreads([info(status)]);
     store.getState().loadHistory('t1', []);
-    const value = { client: { request: vi.fn() }, store, connection: { status: 'idle' } } as unknown as BridgeContextValue;
+    const value = { client: { request: vi.fn(), supports: () => false }, store, connection: { status: 'idle' } } as unknown as BridgeContextValue;
     render(
       <I18nProvider initial="es">
         <BridgeContext.Provider value={value}>

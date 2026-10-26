@@ -5,6 +5,7 @@ import { agentMeta } from '@/lib/agents';
 import type { ConversationView } from '@/lib/conversation';
 import { gateLabel, type ConversationGate } from '@/lib/conversation-gate';
 import { useT } from '@/lib/i18n/i18n';
+import { CapabilityNotice } from '../mission-control/CapabilityNotice';
 import { RelatedDocuments } from '../mission-control/RelatedDocuments';
 
 export interface ConversationPanelData {
@@ -33,6 +34,9 @@ export function ConversationPanelSections({ view, gate }: ConversationPanelData)
       </section>
       <section data-testid="panel-documents">
         <h2 className={heading}>{t('panel.documents')}</h2>
+        <div className="mb-2 empty:hidden">
+          <CapabilityNotice capabilities={['document-touched', 'session-title']} />
+        </div>
         <RelatedDocuments specs={view.specs} fixes={view.fixes} documents={view.documents} documentSource={view.documentSource} open={documentsOpen} onToggle={() => setDocumentsOpen((open) => !open)} />
       </section>
       {recent.length > 0 && (

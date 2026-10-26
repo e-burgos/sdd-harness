@@ -301,5 +301,14 @@ export const es = {
   'caps.session-title': 'título de sesión',
   'caps.link-targets': 'asociaciones múltiples',
   'caps.document-touched': 'documentos modificados desde la consola',
+  'link.add': 'Agregar asociación…',
+  'link.max': 'Máximo de asociaciones',
+  'link.specs': 'Specs',
+  'link.remove': 'Quitar asociación {target}',
+  'link.unavailable': 'no disponible',
+  'link.origin.detected': 'detectada',
+  'link.origin.manual': 'manual',
+  'mc.related.deletedNoOpen': 'Eliminado: ya no hay contenido para abrir en el visor',
+  'mc.related.deletedLabel': 'eliminado',
 };
 export type Dict = typeof es;

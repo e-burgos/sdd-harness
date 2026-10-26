@@ -17,12 +17,12 @@ const snapshot: WorkspaceSnapshot = {
   fixes: [{ id: 'FIX-a-001', title: 'x', status: 'pending', severity: null, specId: null, createdAt: null, closedAt: null }],
 };
 
-function mount(request: (cmd: { cmd: string; link?: unknown }) => Promise<unknown>, link: ThreadInfo['link'] = { target: { kind: 'cycle', specId: 's1', cycle: 'cycle-02' }, source: 'auto' }) {
+function mount(request: (cmd: { cmd: string; link?: unknown }) => Promise<unknown>, link: ThreadInfo['link'] = { target: { kind: 'cycle', specId: 's1', cycle: 'cycle-02' }, source: 'auto' }, features: string[] = []) {
   const store = createStudioStore();
   store.getState().setSnapshot(snapshot);
   store.getState().setThreads([thread(link)]);
-  const client = { request: vi.fn(request) };
-  const value = { client, store, connection: { status: 'idle' } } as unknown as BridgeContextValue;
+  const client = { request: vi.fn(request), supports: (f: string) => features.includes(f) };
+  const value = { client, store, connection: { status: features.length > 0 ? 'open' : 'idle' } } as unknown as BridgeContextValue;
   render(
     <I18nProvider initial="es">
       <BridgeContext.Provider value={value}>
@@ -31,6 +31,22 @@ function mount(request: (cmd: { cmd: string; link?: unknown }) => Promise<unknow
     </I18nProvider>,
   );
   return { store, client, select: screen.getByLabelText('Asociado a') as HTMLSelectElement };
+}
+
+function mountMulti(request: (cmd: { cmd: string; add?: unknown[]; remove?: unknown[] }) => Promise<unknown>, link: ThreadInfo['link']) {
+  const store = createStudioStore();
+  store.getState().setSnapshot({ ...snapshot, specs: [{ id: 's1', title: 'S', status: 'in-progress', folder: 'f', module: null, app: null, dependsOn: [] }] });
+  store.getState().setThreads([thread(link)]);
+  const client = { request: vi.fn(request), supports: (f: string) => f === 'link-targets' };
+  const value = { client, store, connection: { status: 'open' } } as unknown as BridgeContextValue;
+  render(
+    <I18nProvider initial="es">
+      <BridgeContext.Provider value={value}>
+        <ThreadLinkPicker threadId="t1" />
+      </BridgeContext.Provider>
+    </I18nProvider>,
+  );
+  return { store, client, add: screen.getByLabelText('Asociado a') as HTMLSelectElement };
 }
 
 describe('ThreadLinkPicker', () => {
@@ -94,7 +110,7 @@ describe('ThreadLinkPicker detected target', () => {
     store.getState().setSnapshot(detectedSnapshot);
     store.getState().setThreads([thread(link)]);
     store.getState().loadHistory('t1', events);
-    const value = { client: { request: vi.fn() }, store, connection: { status: 'idle' } } as unknown as BridgeContextValue;
+    const value = { client: { request: vi.fn(), supports: () => false }, store, connection: { status: 'idle' } } as unknown as BridgeContextValue;
     render(
       <I18nProvider initial="es">
         <BridgeContext.Provider value={value}>
@@ -123,3 +139,78 @@ describe('ThreadLinkPicker detected target', () => {
   });
 });
 
+
+describe('ThreadLinkPicker with link-targets', () => {
+  const withTargets: ThreadInfo['link'] = {
+    target: { kind: 'cycle', specId: 's1', cycle: 'cycle-02' },
+    source: 'manual',
+    targets: [
+      { kind: 'cycle', specId: 's1', cycle: 'cycle-02', origin: 'manual' },
+      { kind: 'fix', fixId: 'FIX-gone-001', origin: 'detected' },
+    ],
+  };
+
+  it('lists every association as a chip with origin and flags the unavailable ones', () => {
+    mountMulti(() => Promise.resolve(null), withTargets);
+    const live = screen.getByTestId('link-chip-cycle:s1/cycle-02');
+    expect(live).toHaveTextContent('s1 · cycle-02');
+    expect(live).toHaveTextContent('manual');
+    expect(live).not.toHaveTextContent('no disponible');
+    const gone = screen.getByTestId('link-chip-fix:FIX-gone-001');
+    expect(gone).toHaveTextContent('detectada');
+    expect(gone).toHaveTextContent('no disponible');
+  });
+
+  it('adds an association with thread.updateLinks and offers only the ones not yet linked', async () => {
+    const { add, client, store } = mountMulti(
+      (cmd) => Promise.resolve(thread({ ...withTargets, targets: [...(withTargets.targets ?? []), { kind: 'fix', fixId: 'FIX-a-001', origin: 'manual' }] })),
+      withTargets,
+    );
+    expect([...add.options].map((o) => o.textContent)).toEqual(['Agregar asociación…', 's1', 's1 · cycle-01 (completed)', 'FIX-a-001 (pending)']);
+    fireEvent.change(add, { target: { value: 'fix:FIX-a-001' } });
+    await waitFor(() => expect(screen.getByTestId('link-chip-fix:FIX-a-001')).toBeInTheDocument());
+    expect(client.request).toHaveBeenCalledWith({ cmd: 'thread.updateLinks', threadId: 't1', add: [{ kind: 'fix', fixId: 'FIX-a-001' }], remove: [] });
+    expect(store.getState().threads['t1']?.info?.link.targets).toHaveLength(3);
+  });
+
+  it('removes an association with thread.updateLinks', async () => {
+    const { client } = mountMulti(
+      () => Promise.resolve(thread({ ...withTargets, targets: [{ kind: 'cycle', specId: 's1', cycle: 'cycle-02', origin: 'manual' }] })),
+      withTargets,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Quitar asociación FIX-gone-001' }));
+    await waitFor(() => expect(screen.queryByTestId('link-chip-fix:FIX-gone-001')).toBeNull());
+    expect(client.request).toHaveBeenCalledWith({ cmd: 'thread.updateLinks', threadId: 't1', add: [], remove: [{ kind: 'fix', fixId: 'FIX-gone-001' }] });
+  });
+
+  it('keeps the chips and shows the error when the update fails', async () => {
+    mountMulti(() => Promise.reject(new BridgeError('not-found', 'the link target does not exist')), withTargets);
+    fireEvent.click(screen.getByRole('button', { name: 'Quitar asociación FIX-gone-001' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('the link target does not exist');
+    expect(screen.getByTestId('link-chip-fix:FIX-gone-001')).toBeInTheDocument();
+  });
+
+  it('never uses thread.setLink and falls back to chips derived from the single target', () => {
+    const { client } = mountMulti(() => Promise.resolve(null), { target: { kind: 'fix', fixId: 'FIX-a-001' }, source: 'manual' });
+    expect(screen.getByTestId('link-chip-fix:FIX-a-001')).toHaveTextContent('manual');
+    expect(client.request).not.toHaveBeenCalled();
+  });
+});
+
+describe('ThreadLinkPicker without link-targets', () => {
+  it('uses thread.setLink and warns about the missing capability on an open connection', () => {
+    const store = createStudioStore();
+    store.getState().setSnapshot(snapshot);
+    store.getState().setThreads([thread({ target: { kind: 'none' }, source: 'auto' })]);
+    const value = { client: { request: vi.fn(), supports: () => false }, store, connection: { status: 'open' } } as unknown as BridgeContextValue;
+    render(
+      <I18nProvider initial="es">
+        <BridgeContext.Provider value={value}>
+          <ThreadLinkPicker threadId="t1" />
+        </BridgeContext.Provider>
+      </I18nProvider>,
+    );
+    expect(screen.getByTestId('capability-notice')).toHaveTextContent('asociaciones múltiples');
+    expect(screen.queryByTestId('link-chips')).toBeNull();
+  });
+});

@@ -144,4 +144,14 @@ describe('RelatedDocuments', () => {
     expect(screen.getByTestId('document-op-created')).toHaveTextContent('creado');
     expect(screen.getByTestId('related-documents-source')).toHaveTextContent('Inferido de las herramientas y registrado por el puente');
   });
+
+  it('does not offer to open a deleted document in the viewer', () => {
+    const specs = [{ specId: 'spec-a', cycle: 'cycle-01', cycles: ['cycle-01'] }];
+    renderDocs(specs, [], [{ ...planDoc, op: 'deleted' }]);
+    const button = screen.getByTitle('Eliminado: ya no hay contenido para abrir en el visor');
+    expect(button).toBeDisabled();
+    expect(screen.getByTestId('document-op-deleted')).toBeInTheDocument();
+    fireEvent.click(button);
+    expect(screen.queryByTestId('document-viewer-modal')).toBeNull();
+  });
 });

@@ -303,4 +303,13 @@ export const en = {
   'caps.session-title': 'session title',
   'caps.link-targets': 'multiple associations',
   'caps.document-touched': 'documents changed from the console',
+  'link.add': 'Add association…',
+  'link.max': 'Association limit reached',
+  'link.specs': 'Specs',
+  'link.remove': 'Remove association {target}',
+  'link.unavailable': 'unavailable',
+  'link.origin.detected': 'detected',
+  'link.origin.manual': 'manual',
+  'mc.related.deletedNoOpen': 'Deleted: there is no content left to open in the viewer',
+  'mc.related.deletedLabel': 'deleted',
 } satisfies Record<keyof Dict, string>;

@@ -74,8 +74,13 @@ export function RelatedDocuments({
             <button
               type="button"
               onClick={() => setViewing(toViewerDocument(item))}
-              title={item.path}
-              className="flex w-full min-w-0 items-start gap-1.5 rounded bg-white/5 px-1.5 py-1 text-left text-[10px] text-white hover:bg-white/10 hover:text-emerald-300"
+              disabled={item.op === "deleted"}
+              title={
+                item.op === "deleted"
+                  ? t("mc.related.deletedNoOpen")
+                  : item.path
+              }
+              className="flex w-full min-w-0 items-start gap-1.5 rounded bg-white/5 px-1.5 py-1 text-left text-[10px] text-white enabled:hover:bg-white/10 enabled:hover:text-emerald-300 disabled:cursor-not-allowed disabled:opacity-60"
             >
               <FileText
                 className="mt-0.5 h-3 w-3 shrink-0 text-emerald-400"

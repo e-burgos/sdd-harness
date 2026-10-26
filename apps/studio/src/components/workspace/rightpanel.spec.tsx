@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { I18nProvider } from '@/lib/i18n/i18n';
 import type { ThreadInfo, WorkspaceSnapshot } from '@sdd-studio/protocol';
 import { createStudioStore } from '@/lib/store/store';
@@ -67,12 +67,12 @@ describe('RightPanel with a selected conversation', () => {
   };
   const write = (seq: number, summary: string) => ({ seq, event: { type: 'tool.start', toolUseId: `w${seq}`, author: { agent: 'sdd-planner', parentToolUseId: null }, tool: 'Write', summary } as never });
 
-  function mount(threadId: string | null, events: { seq: number; event: never }[]) {
+  function mount(threadId: string | null, events: { seq: number; event: never }[], bridge: { open: boolean; features: string[] } = { open: false, features: [] }) {
     const store = createStudioStore();
     store.getState().setSnapshot(snapshot);
     store.getState().setThreads([info]);
     store.getState().loadHistory('t1', events);
-    const value = { client: { request: vi.fn() }, store, connection: { status: 'idle' } } as unknown as BridgeContextValue;
+    const value = { client: { request: vi.fn(), supports: (f: string) => bridge.features.includes(f) }, store, connection: { status: bridge.open ? 'open' : 'idle' } } as unknown as BridgeContextValue;
     render(
       <I18nProvider initial="es">
         <BridgeContext.Provider value={value}>
@@ -121,5 +121,12 @@ describe('RightPanel with a selected conversation', () => {
     expect(screen.queryByTestId('panel-where')).toBeNull();
     expect(screen.getByText('Nadie está trabajando ahora.')).toBeInTheDocument();
   });
-});
 
+  it('warns about missing bridge capabilities in the conversation panel and hides it when they exist', () => {
+    mount('t1', [], { open: true, features: [] });
+    expect(screen.getByTestId('capability-notice')).toHaveTextContent('documentos modificados desde la consola');
+    cleanup();
+    mount('t1', [], { open: true, features: ['document-touched', 'session-title'] });
+    expect(screen.queryByTestId('capability-notice')).toBeNull();
+  });
+});

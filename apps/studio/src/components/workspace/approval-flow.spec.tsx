@@ -16,7 +16,7 @@ function mount() {
   const store = createStudioStore();
   store.getState().setThreads([info]);
   store.getState().loadHistory('t1', []);
-  const client = { request: vi.fn(() => Promise.resolve(null)) };
+  const client = { request: vi.fn(() => Promise.resolve(null)), supports: () => false };
   const value = { client, store, connection: { status: 'idle' } } as unknown as BridgeContextValue;
   render(
     <I18nProvider initial="es">

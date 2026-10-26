@@ -544,13 +544,29 @@
         "TASK-014",
         "TASK-015"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/studio/src/components/workspace/ThreadLinkPicker.tsx",
         "apps/studio/src/components/workspace/ConversationPanelSections.tsx",
-        "apps/studio/src/components/workspace/RightPanel.tsx",
-        "apps/studio/src/components/workspace/threadlink.spec.tsx"
-      ]
+        "apps/studio/src/components/mission-control/RelatedDocuments.tsx",
+        "apps/studio/src/components/workspace/threadlink.spec.tsx",
+        "apps/studio/src/components/workspace/rightpanel.spec.tsx",
+        "apps/studio/src/components/mission-control/RelatedDocuments.spec.tsx",
+        "apps/studio/src/components/workspace/approval-flow.spec.tsx",
+        "apps/studio/src/components/workspace/indicators.spec.tsx",
+        "apps/studio/src/lib/i18n/es.ts",
+        "apps/studio/src/lib/i18n/en.ts"
+      ],
+      "usage": {
+        "tokens_in": 45000,
+        "tokens_out": 11000,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-26"
+      }
     },
     {
       "id": "TASK-019",
