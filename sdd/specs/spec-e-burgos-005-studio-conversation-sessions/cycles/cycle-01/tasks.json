@@ -344,12 +344,20 @@
         "TASK-010",
         "TASK-011"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
-        "apps/studio/src/components/mission-control/AgentMapCanvas.tsx",
-        "apps/studio/src/components/mission-control/agentmap.spec.tsx",
-        "apps/studio/src/components/mission-control/swarm-dialogue.ts"
-      ]
+        "apps/studio/src/components/mission-control/AgentMapCanvas.tsx apps/studio/src/components/mission-control/AgentNode.tsx apps/studio/src/components/mission-control/agentmap.spec.tsx apps/studio/src/components/mission-control/swarm-dialogue.ts"
+      ],
+      "usage": {
+        "tokens_in": 70000,
+        "tokens_out": 16000,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-26"
+      }
     },
     {
       "id": "TASK-013",

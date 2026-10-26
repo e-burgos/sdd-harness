@@ -10,10 +10,11 @@ interface AgentNodeProps {
   y: number;
   presence?: Presence;
   isSelected?: boolean;
+  participating?: boolean;
   onSelect: (agentId: string) => void;
 }
 
-export function AgentNode({ agentId, x, y, presence, isSelected, onSelect }: AgentNodeProps) {
+export function AgentNode({ agentId, x, y, presence, isSelected, participating = true, onSelect }: AgentNodeProps) {
   const meta = agentMeta(agentId);
   const state = presence?.state ?? 'idle';
   const isWorking = state === 'working';
@@ -30,9 +31,10 @@ export function AgentNode({ agentId, x, y, presence, isSelected, onSelect }: Age
       transform={`translate(${x}, ${y})`}
       onClick={() => onSelect(agentId)}
       className="cursor-pointer group select-none"
+      opacity={participating ? 1 : 0.35}
+      data-participating={participating}
     >
-      {/* Outer ambient glow when active or selected */}
-      {(isWorking || isSelected) && (
+      {participating && (isWorking || isSelected) && (
         <circle
           r="48"
           fill="none"
@@ -43,8 +45,6 @@ export function AgentNode({ agentId, x, y, presence, isSelected, onSelect }: Age
           style={{ transformOrigin: '0 0' }}
         />
       )}
-
-      {/* Hexagonal / Circular Node Body */}
       <circle
         r="36"
         fill="#090d16"
@@ -53,8 +53,6 @@ export function AgentNode({ agentId, x, y, presence, isSelected, onSelect }: Age
         className="transition-all duration-300 group-hover:scale-105"
         filter="drop-shadow(0px 4px 12px rgba(0,0,0,0.7))"
       />
-
-      {/* Gradient Inner Ring */}
       <circle
         r="30"
         fill={`${meta.color}18`}
@@ -64,13 +62,9 @@ export function AgentNode({ agentId, x, y, presence, isSelected, onSelect }: Age
         className={isWorking ? 'animate-spin' : ''}
         style={{ transformOrigin: '0 0' }}
       />
-
-      {/* Avatar Drawn Face */}
       <g transform="translate(-24, -24)" className="pointer-events-none drop-shadow">
         <AgentFace agent={agentId} size={48} />
       </g>
-
-      {/* Crown indicator for Clara */}
       {meta.isLeader && (
         <g transform="translate(-8, -50)" className="pointer-events-none drop-shadow" data-testid="agent-node-crown">
           <path
@@ -84,8 +78,6 @@ export function AgentNode({ agentId, x, y, presence, isSelected, onSelect }: Age
           />
         </g>
       )}
-
-      {/* Codename Pill Badge Below */}
       <g transform="translate(0, 52)">
         <rect
           x="-50"
@@ -109,8 +101,6 @@ export function AgentNode({ agentId, x, y, presence, isSelected, onSelect }: Age
           {meta.name}
         </text>
       </g>
-
-      {/* Role description below badge */}
       <g transform="translate(0, 75)">
         <rect
           x="-55"
@@ -134,8 +124,6 @@ export function AgentNode({ agentId, x, y, presence, isSelected, onSelect }: Age
           {meta.role}
         </text>
       </g>
-
-      {/* Active tool indicator tag if present */}
       {presence?.tool && (
         <g transform="translate(0, 98)">
           <rect

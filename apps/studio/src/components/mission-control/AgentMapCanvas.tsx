@@ -3,10 +3,11 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Bot } from 'lucide-react';
 import { agentMeta } from '@/lib/agents';
-import { useStudio, useBridge } from '../BridgeProvider';
-import { openThread } from '@/lib/bootstrap';
+import { useStudio } from '../BridgeProvider';
+import { useConversationSelection } from '@/lib/use-conversation-selection';
 import { AgentNode } from './AgentNode';
 import { AgentInspectorDrawer } from './AgentInspectorDrawer';
+import { ConversationSelector } from './ConversationSelector';
 import { GateCard } from './GateCard';
 import { GateInspectorDrawer } from './GateInspectorDrawer';
 import {
@@ -15,9 +16,7 @@ import {
   TRANSVERSAL_GATES,
   ALL_GATES,
   type GateId,
-  type GateGroup,
 } from '@/lib/gates';
-import { extractRuntimeDialogues, SDD_SWARM_SCRIPT } from './swarm-dialogue';
 import { SwarmSpeechBubble, SwarmCommsConsole } from './LiveSwarmComms';
 
 interface AgentPosition {
@@ -70,17 +69,14 @@ const GATE_CONNECTIONS: { gateId: GateId; agentId: string }[] = [
   { gateId: 'memoria-gate', agentId: 'sdd-orchestrator' },
 ];
 
-export function AgentMapCanvas({ onOpenDm }: { onOpenDm: (agentId: string) => void; onNewConversation?: () => void }) {
-  const { client, store } = useBridge();
-  const presence = useStudio((s) => s.presence ?? []);
-  const threads = useStudio((s) => s.threads ?? {});
+export function AgentMapCanvas({ onOpenDm, onNewConversation }: { onOpenDm: (agentId: string) => void; onNewConversation: () => void }) {
+  const presence = useStudio((s) => s.presence);
   const snapshot = useStudio((s) => s.snapshot);
+  const { conversations, selectedThreadId, pick, view } = useConversationSelection();
 
   const [selectedAgent, setSelectedAgent] = useState<string | null>('sdd-orchestrator');
   const [selectedGate, setSelectedGate] = useState<GateId | null>(null);
   const [gateFilter, setGateFilter] = useState<'cycle' | 'transversal' | 'all'>('cycle');
-  const [selectedSpecId, setSelectedSpecId] = useState<string>('spec-e-burgos-004-studio-gates-topology');
-  const [selectedFixId, setSelectedFixId] = useState<string>('');
 
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
@@ -90,118 +86,60 @@ export function AgentMapCanvas({ onOpenDm }: { onOpenDm: (agentId: string) => vo
 
   const [dialogueIdx, setDialogueIdx] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [mode, setMode] = useState<'demo' | 'live'>('live');
   const [inspectedDialogueId, setInspectedDialogueId] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!client) return;
-    const threadList = Object.values(threads).filter((t) => t.info);
-    if (threadList.length === 0) return;
-
-    const sId = selectedSpecId.toLowerCase();
-    const fId = selectedFixId.toLowerCase();
-    const matchingThread = threadList.find((t) => {
-      if (fId) {
-        return (
-          (t.info?.link?.target?.kind === 'fix' && t.info.link.target.fixId.toLowerCase() === fId) ||
-          t.info?.title.toLowerCase().includes(fId)
-        );
-      }
-      if (sId) {
-        return (
-          (t.info?.link?.target?.kind === 'cycle' && t.info.link.target.specId.toLowerCase() === sId) ||
-          t.info?.title.toLowerCase().includes(sId)
-        );
-      }
-      return false;
-    });
-    if (matchingThread && !matchingThread.synced && matchingThread.info?.id) {
-      void openThread(client, store, matchingThread.info.id);
-    }
-
-    threadList.sort(
-      (a, b) =>
-        new Date(b.info!.lastActivity).getTime() -
-        new Date(a.info!.lastActivity).getTime(),
-    );
-    const topThreads = threadList.slice(0, 3);
-    for (const t of topThreads) {
-      if (!t.synced && t.info?.id) {
-        void openThread(client, store, t.info.id);
-      }
-    }
-  }, [client, store, threads, selectedSpecId, selectedFixId]);
-
-  const liveDialogues = useMemo(
-    () =>
-      extractRuntimeDialogues(presence, threads, {
-        specId: selectedSpecId,
-        fixId: selectedFixId || undefined,
-      }),
-    [presence, threads, selectedSpecId, selectedFixId],
-  );
-  const activeScript = mode === 'demo' ? SDD_SWARM_SCRIPT : liveDialogues;
+  const dialogues = view?.dialogues ?? [];
+  const lastDialogueIdx = dialogues.length - 1;
 
   useEffect(() => {
-    if (activeScript.length > 0) {
-      setDialogueIdx(activeScript.length - 1);
-    }
-  }, [selectedSpecId, selectedFixId, activeScript.length]);
+    setDialogueIdx(Math.max(0, lastDialogueIdx));
+    setInspectedDialogueId(null);
+  }, [selectedThreadId, lastDialogueIdx]);
 
-  const currentDialogue =
-    activeScript.length > 0
-      ? activeScript[dialogueIdx % activeScript.length]
-      : mode === 'demo'
-        ? SDD_SWARM_SCRIPT[0]
-        : null;
+  const currentDialogue = dialogues[Math.min(dialogueIdx, lastDialogueIdx)] ?? null;
 
   useEffect(() => {
-    if (!isPlaying || activeScript.length === 0) return;
-    if (mode === 'live') {
-      const timer = setInterval(() => {
-        setDialogueIdx((prev) => {
-          if (prev + 1 >= activeScript.length) {
-            setIsPlaying(false);
-            return prev;
-          }
-          return prev + 1;
-        });
-      }, 5000);
-      return () => clearInterval(timer);
-    }
+    if (!isPlaying || dialogues.length === 0) return;
     const timer = setInterval(() => {
-      setDialogueIdx((prev) => (prev + 1) % activeScript.length);
+      setDialogueIdx((prev) => {
+        if (prev + 1 >= dialogues.length) {
+          setIsPlaying(false);
+          return prev;
+        }
+        return prev + 1;
+      });
     }, 5000);
     return () => clearInterval(timer);
-  }, [isPlaying, activeScript.length, mode]);
+  }, [isPlaying, dialogues.length]);
 
-  const presenceMap = new Map((presence ?? []).map((p) => [p.agent, p]));
+  const conversationPresence = useMemo(
+    () => presence.filter((p) => p.threadId !== null && p.threadId === selectedThreadId),
+    [presence, selectedThreadId],
+  );
+  const presenceMap = new Map(conversationPresence.map((p) => [p.agent, p]));
   const nodeMap = new Map(NODES.map((n) => [n.id, n]));
 
   const workingAgents = useMemo(
-    () => new Set((presence ?? []).filter((p) => p.state === 'working').map((p) => p.agent)),
-    [presence],
+    () => new Set(conversationPresence.filter((p) => p.state === 'working').map((p) => p.agent)),
+    [conversationPresence],
   );
+  const participantIds = useMemo(() => new Set((view?.participants ?? []).map((p) => p.agentId)), [view]);
+  const dimNonParticipants = participantIds.size > 0;
 
-  const activePresenceCount = (presence ?? []).filter((p) => p.state === 'working').length;
+  const activePresenceCount = workingAgents.size;
   const fromPos = (currentDialogue && nodeMap.get(currentDialogue.from)) ?? { x: 500, y: 70 };
 
   const isInspecting = Boolean(inspectedDialogueId && currentDialogue?.id === inspectedDialogueId);
-  const shouldShowBubble =
-    Boolean(currentDialogue) &&
-    (mode === 'demo'
-      ? isPlaying
-      : Boolean(activePresenceCount > 0 || currentDialogue?.isLive || isInspecting));
+  const shouldShowBubble = Boolean(currentDialogue) && Boolean(activePresenceCount > 0 || currentDialogue?.isLive || isInspecting);
 
   const displayedGateIds: GateId[] = useMemo(() => {
-    if (mode === 'demo') return ALL_GATES;
     if (gateFilter === 'cycle') return CYCLE_GATES;
     if (gateFilter === 'transversal') return TRANSVERSAL_GATES;
     return ALL_GATES;
-  }, [gateFilter, mode]);
+  }, [gateFilter]);
 
   const gateLayouts = useMemo(() => {
-    const isAll = mode === 'demo' || gateFilter === 'all';
+    const isAll = gateFilter === 'all';
     const cardWidth = 168;
     const cardHeight = isAll ? 98 : 124;
     const startY = isAll ? 60 : 70;
@@ -221,7 +159,7 @@ export function AgentMapCanvas({ onOpenDm }: { onOpenDm: (agentId: string) => vo
         anchorY: y + cardHeight / 2,
       };
     });
-  }, [displayedGateIds, gateFilter, mode]);
+  }, [displayedGateIds, gateFilter]);
 
   const gateLayoutMap = new Map(gateLayouts.map((g) => [g.id, g]));
 
@@ -239,7 +177,7 @@ export function AgentMapCanvas({ onOpenDm }: { onOpenDm: (agentId: string) => vo
     const target = e.target as HTMLElement | SVGElement | null;
     if (
       target?.closest?.(
-        'button, input, textarea, form, [data-testid="gate-card"], .agent-node-interactive, [data-testid="agent-inspector-drawer"], [data-testid="gate-inspector-drawer"], [data-testid="swarm-comms-console"], [data-testid="open-panel-button"], [data-testid="zoom-toolbar"]'
+        'button, input, textarea, form, [data-testid="gate-card"], .agent-node-interactive, [data-testid="agent-inspector-drawer"], [data-testid="gate-inspector-drawer"], [data-testid="swarm-comms-console"], [data-testid="conversation-selector"], [data-testid="open-panel-button"], [data-testid="zoom-toolbar"]'
       )
     ) {
       return;
@@ -309,7 +247,7 @@ export function AgentMapCanvas({ onOpenDm }: { onOpenDm: (agentId: string) => vo
             </span>
           </div>
           <span className="text-xs text-white/50 font-mono">
-            {snapshot?.project ? `Proyecto: ${snapshot.project}` : '9 agentes en línea'}
+            {snapshot?.project ? `Proyecto: ${snapshot.project}` : `${NODES.length} agentes`}
           </span>
         </div>
 
@@ -359,10 +297,19 @@ export function AgentMapCanvas({ onOpenDm }: { onOpenDm: (agentId: string) => vo
             </span>
             <span className="flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full bg-emerald-400" />
-              <span>9 listos</span>
+              <span>{NODES.length - activePresenceCount} listos</span>
             </span>
           </div>
         </div>
+      </div>
+
+      <div className="relative z-10 px-6 py-2">
+        <ConversationSelector
+          conversations={conversations}
+          selectedThreadId={selectedThreadId}
+          onPick={pick}
+          onNewConversation={onNewConversation}
+        />
       </div>
 
       <div
@@ -409,12 +356,7 @@ export function AgentMapCanvas({ onOpenDm }: { onOpenDm: (agentId: string) => vo
 
               const isGateSelected = selectedGate === conn.gateId;
               const isAgentSelected = selectedAgent === conn.agentId;
-              const isDemoActiveConn =
-                mode === 'demo' &&
-                Boolean(currentDialogue && currentDialogue.gateId === conn.gateId &&
-                (conn.agentId === currentDialogue.from || conn.agentId === currentDialogue.to));
-
-              const isHighlight = isGateSelected || isAgentSelected || isDemoActiveConn;
+              const isHighlight = isGateSelected || isAgentSelected;
 
               const midX = (gateLayout.anchorX + targetNode.x) / 2;
               const pathData = `M ${gateLayout.anchorX} ${gateLayout.anchorY} C ${gateLayout.anchorX + 50} ${gateLayout.anchorY}, ${midX} ${targetNode.y}, ${targetNode.x} ${targetNode.y}`;
@@ -424,18 +366,12 @@ export function AgentMapCanvas({ onOpenDm }: { onOpenDm: (agentId: string) => vo
                   <path
                     d={pathData}
                     fill="none"
-                    stroke={isDemoActiveConn ? gateLayout.gate.color : isHighlight ? gateLayout.gate.color : '#ffffff'}
-                    strokeOpacity={isDemoActiveConn ? '0.95' : isHighlight ? '0.75' : '0.1'}
-                    strokeWidth={isDemoActiveConn ? '3' : isHighlight ? '2.5' : '1'}
-                    strokeDasharray={isDemoActiveConn ? '8 4' : isHighlight ? '6 4' : '3 4'}
-                    filter={isDemoActiveConn || isHighlight ? 'url(#gate-glow)' : undefined}
-                    className={
-                      isDemoActiveConn
-                        ? 'animate-[dash_0.6s_linear_infinite]'
-                        : isHighlight
-                          ? 'animate-[dash_1s_linear_infinite]'
-                          : undefined
-                    }
+                    stroke={isHighlight ? gateLayout.gate.color : '#ffffff'}
+                    strokeOpacity={isHighlight ? '0.75' : '0.1'}
+                    strokeWidth={isHighlight ? '2.5' : '1'}
+                    strokeDasharray={isHighlight ? '6 4' : '3 4'}
+                    filter={isHighlight ? 'url(#gate-glow)' : undefined}
+                    className={isHighlight ? 'animate-[dash_1s_linear_infinite]' : undefined}
                   />
                 </g>
               );
@@ -497,7 +433,6 @@ export function AgentMapCanvas({ onOpenDm }: { onOpenDm: (agentId: string) => vo
                 <GateCard
                   gate={g.gate}
                   isSelected={selectedGate === g.id}
-                  isActive={mode === 'demo' && currentDialogue?.gateId === g.id}
                   onSelect={handleSelectGate}
                   width={g.width}
                   height={g.height}
@@ -512,6 +447,7 @@ export function AgentMapCanvas({ onOpenDm }: { onOpenDm: (agentId: string) => vo
                 x={node.x}
                 y={node.y}
                 presence={presenceMap.get(node.id)}
+                participating={!dimNonParticipants || participantIds.has(node.id)}
                 isSelected={selectedAgent === node.id}
                 onSelect={(id) => {
                   setSelectedAgent(id);
@@ -582,7 +518,7 @@ export function AgentMapCanvas({ onOpenDm }: { onOpenDm: (agentId: string) => vo
           currentDialogue={currentDialogue}
           isPlaying={isPlaying}
           onTogglePlay={() => setIsPlaying(!isPlaying)}
-          onNext={() => setDialogueIdx((prev) => (prev + 1) % activeScript.length)}
+          onNext={() => setDialogueIdx((prev) => (dialogues.length === 0 ? 0 : (prev + 1) % dialogues.length))}
           activePresenceCount={activePresenceCount}
           isPanelCollapsed={isPanelCollapsed}
         />
@@ -591,10 +527,17 @@ export function AgentMapCanvas({ onOpenDm }: { onOpenDm: (agentId: string) => vo
           <AgentInspectorDrawer
             agentId={selectedAgent}
             presence={selectedAgent ? presenceMap.get(selectedAgent) : undefined}
-            conversation={null}
+            conversation={view}
+            currentDialogueId={currentDialogue?.id}
+            onPickConversation={pick}
             onSelectAgent={(id) => {
               setSelectedAgent(id);
               setSelectedGate(null);
+            }}
+            onSelectDialogue={(dialogue) => {
+              setInspectedDialogueId(dialogue.id);
+              const idx = dialogues.findIndex((item) => item.id === dialogue.id);
+              if (idx >= 0) setDialogueIdx(idx);
             }}
             onClose={() => setIsPanelCollapsed(true)}
             onOpenDm={onOpenDm}
