@@ -2,7 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { BridgeContext } from '../BridgeProvider';
 import { I18nProvider } from '@/lib/i18n/i18n';
 import { createStudioStore } from '@/lib/store/store';
-import type { ConversationDocument, RelatedFix, RelatedSpec } from '@/lib/conversation';
+import type { ConversationDocument, DocumentSource, RelatedFix, RelatedSpec } from '@/lib/conversation';
 import { RelatedDocuments } from './RelatedDocuments';
 
 const bridge: any = {
@@ -21,12 +21,12 @@ const renderDocs = (
   specs: RelatedSpec[],
   fixes: RelatedFix[],
   documents: ConversationDocument[] = [],
-  { open = true, onToggle = () => {}, emptyMessage }: { open?: boolean; onToggle?: () => void; emptyMessage?: string } = {},
+  { open = true, onToggle = () => {}, emptyMessage, documentSource }: { open?: boolean; onToggle?: () => void; emptyMessage?: string; documentSource?: DocumentSource } = {},
 ) =>
   render(
     <I18nProvider initial="es">
       <BridgeContext.Provider value={bridge}>
-        <RelatedDocuments specs={specs} fixes={fixes} documents={documents} emptyMessage={emptyMessage} open={open} onToggle={onToggle} />
+        <RelatedDocuments specs={specs} fixes={fixes} documents={documents} documentSource={documentSource} emptyMessage={emptyMessage} open={open} onToggle={onToggle} />
       </BridgeContext.Provider>
     </I18nProvider>,
   );
@@ -132,5 +132,16 @@ describe('RelatedDocuments', () => {
     expect(row).toHaveTextContent('fix-1.md');
     expect(row).toHaveTextContent('sdd-reviewer');
     expect(screen.getByTitle('fix-1.md')).toBeInTheDocument();
+  });
+
+  it('shows the operation and the source only when they are known', () => {
+    const specs = [{ specId: 'spec-a', cycle: 'cycle-01', cycles: ['cycle-01'] }];
+    const { unmount } = renderDocs(specs, [], [planDoc]);
+    expect(screen.queryByTestId('document-op-created')).toBeNull();
+    expect(screen.queryByTestId('related-documents-source')).toBeNull();
+    unmount();
+    renderDocs(specs, [], [{ ...planDoc, op: 'created' }], { documentSource: 'mixed' });
+    expect(screen.getByTestId('document-op-created')).toHaveTextContent('creado');
+    expect(screen.getByTestId('related-documents-source')).toHaveTextContent('Inferido de las herramientas y registrado por el puente');
   });
 });

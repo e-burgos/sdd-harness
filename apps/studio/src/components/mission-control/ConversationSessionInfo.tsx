@@ -1,16 +1,17 @@
 'use client';
 
 import { useState } from 'react';
-import { Check, Copy, Cpu, Fingerprint, TriangleAlert } from 'lucide-react';
+import { Check, Copy, Cpu, Fingerprint, Tag, TriangleAlert } from 'lucide-react';
 import { providerLabel } from '@/lib/conversation';
 import { useT } from '@/lib/i18n/i18n';
 
 export interface ConversationSessionInfoProps {
+  sessionTitle: string | null | undefined;
   engineSessionId: string | null | undefined;
   provider: string | undefined;
 }
 
-export function ConversationSessionInfo({ engineSessionId, provider }: ConversationSessionInfoProps) {
+export function ConversationSessionInfo({ sessionTitle, engineSessionId, provider }: ConversationSessionInfoProps) {
   const { t } = useT();
   const [copied, setCopied] = useState(false);
 
@@ -30,6 +31,21 @@ export function ConversationSessionInfo({ engineSessionId, provider }: Conversat
 
   return (
     <dl data-testid="conversation-session-info" className="grid gap-1 rounded-lg border border-white/5 bg-white/5 px-2 py-1.5 font-mono text-[10px]">
+      <div className="flex min-w-0 items-center gap-1.5">
+        <Tag className="h-3 w-3 shrink-0 text-amber-300" aria-hidden />
+        <dt className="uppercase text-white/50">{t('mc.title')}</dt>
+        {sessionTitle === undefined ? (
+          staleBridge('conversation-title')
+        ) : sessionTitle === null ? (
+          <dd data-testid="conversation-title" className="text-white/60">
+            {t('mc.noTitle')}
+          </dd>
+        ) : (
+          <dd data-testid="conversation-title" title={sessionTitle} className="min-w-0 flex-1 truncate font-bold text-amber-300">
+            {sessionTitle}
+          </dd>
+        )}
+      </div>
       <div className="flex items-center gap-1.5">
         <Cpu className="h-3 w-3 shrink-0 text-purple-300" aria-hidden />
         <dt className="uppercase text-white/50">{t('mc.provider')}</dt>

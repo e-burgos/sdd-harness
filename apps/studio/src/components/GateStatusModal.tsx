@@ -120,7 +120,7 @@ export function GateStatusModal({ open, onClose, thread, view, gate, snapshot }:
                   </div>
                 </dl>
                 <div className="mt-2">
-                  <ConversationSessionInfo engineSessionId={view.engineSessionId} provider={view.provider} />
+                  <ConversationSessionInfo sessionTitle={view.sessionTitle} engineSessionId={view.engineSessionId} provider={view.provider} />
                 </div>
               </Section>
 

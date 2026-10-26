@@ -14,6 +14,7 @@ import {
 } from "@/lib/agent-documents";
 import type {
   ConversationDocument,
+  DocumentSource,
   RelatedFix,
   RelatedSpec,
 } from "@/lib/conversation";
@@ -24,6 +25,7 @@ export interface RelatedDocumentsProps {
   specs: RelatedSpec[];
   fixes: RelatedFix[];
   documents: ConversationDocument[];
+  documentSource?: DocumentSource;
   emptyMessage?: string;
   open: boolean;
   onToggle: () => void;
@@ -56,6 +58,7 @@ export function RelatedDocuments({
   specs,
   fixes,
   documents,
+  documentSource,
   emptyMessage,
   open,
   onToggle,
@@ -79,8 +82,18 @@ export function RelatedDocuments({
                 aria-hidden
               />
               <span className="flex min-w-0 flex-1 flex-col">
-                <span className="min-w-0 truncate" title={item.name}>
-                  {item.name}
+                <span className="flex min-w-0 items-center gap-1.5">
+                  <span className="min-w-0 truncate" title={item.name}>
+                    {item.name}
+                  </span>
+                  {item.op && (
+                    <span
+                      data-testid={`document-op-${item.op}`}
+                      className="shrink-0 rounded bg-white/10 px-1 text-[9px] uppercase text-white/60"
+                    >
+                      {t(`mc.related.op.${item.op}`)}
+                    </span>
+                  )}
                 </span>
                 <span
                   className="min-w-0 truncate text-xs text-white/40"
@@ -149,6 +162,11 @@ export function RelatedDocuments({
           {isEmpty && (
             <p data-testid="related-documents-empty" className="text-white/50">
               {emptyMessage ?? t("mc.related.empty")}
+            </p>
+          )}
+          {documentSource && documents.length > 0 && (
+            <p data-testid="related-documents-source" className="min-w-0 truncate text-white/40" title={t(`mc.related.source.${documentSource}`)}>
+              {t(`mc.related.source.${documentSource}`)}
             </p>
           )}
           {specs.length > 0 && (

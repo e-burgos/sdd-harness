@@ -76,11 +76,12 @@ export function AgentInspectorDrawer({
 
   const sessionAndDocuments = conversation && (
     <div className="space-y-2">
-      <ConversationSessionInfo engineSessionId={conversation.engineSessionId} provider={conversation.provider} />
+      <ConversationSessionInfo sessionTitle={conversation.sessionTitle} engineSessionId={conversation.engineSessionId} provider={conversation.provider} />
       <RelatedDocuments
         specs={shownRelated.specs}
         fixes={shownRelated.fixes}
         documents={shownDocuments}
+        documentSource={conversation.documentSource}
         emptyMessage={scopedToAgent ? t('mc.related.agentEmpty') : undefined}
         open={showFullProfile}
         onToggle={toggleAgentInfo}

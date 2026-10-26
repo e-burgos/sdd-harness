@@ -507,13 +507,28 @@
         "TASK-015",
         "TASK-016"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/studio/src/components/mission-control/ConversationSessionInfo.tsx",
         "apps/studio/src/components/mission-control/RelatedDocuments.tsx",
         "apps/studio/src/components/mission-control/ConversationSessionInfo.spec.tsx",
-        "apps/studio/src/components/mission-control/RelatedDocuments.spec.tsx"
-      ]
+        "apps/studio/src/components/mission-control/RelatedDocuments.spec.tsx",
+        "apps/studio/src/components/GateStatusModal.tsx",
+        "apps/studio/src/components/mission-control/AgentInspectorDrawer.tsx",
+        "apps/studio/src/components/workspace/ConversationPanelSections.tsx",
+        "apps/studio/src/lib/i18n/es.ts",
+        "apps/studio/src/lib/i18n/en.ts"
+      ],
+      "usage": {
+        "tokens_in": 40000,
+        "tokens_out": 9000,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-26"
+      }
     },
     {
       "id": "TASK-018",

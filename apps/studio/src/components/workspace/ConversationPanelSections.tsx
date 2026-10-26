@@ -33,7 +33,7 @@ export function ConversationPanelSections({ view, gate }: ConversationPanelData)
       </section>
       <section data-testid="panel-documents">
         <h2 className={heading}>{t('panel.documents')}</h2>
-        <RelatedDocuments specs={view.specs} fixes={view.fixes} documents={view.documents} open={documentsOpen} onToggle={() => setDocumentsOpen((open) => !open)} />
+        <RelatedDocuments specs={view.specs} fixes={view.fixes} documents={view.documents} documentSource={view.documentSource} open={documentsOpen} onToggle={() => setDocumentsOpen((open) => !open)} />
       </section>
       {recent.length > 0 && (
         <section data-testid="panel-recent">
