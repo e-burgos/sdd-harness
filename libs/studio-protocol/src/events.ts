@@ -42,6 +42,13 @@ export const ThreadEvent = z.discriminatedUnion('type', [
     tool: z.string(),
     summary: z.string(),
     diff: z.string().optional(),
+    summaryTruncated: z.boolean().optional(),
+  }),
+  z.object({
+    type: z.literal('document.touched'),
+    path: z.string().min(1).max(1024),
+    op: z.enum(['created', 'modified', 'deleted']),
+    author: Author,
   }),
   z.object({ type: z.literal('tool.end'), toolUseId: z.string(), isError: z.boolean(), summary: z.string() }),
   z.object({ type: z.literal('subagent.start'), agentId: z.string(), agentType: z.string() }),

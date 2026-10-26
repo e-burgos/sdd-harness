@@ -11,6 +11,8 @@ describe('ThreadEvent', () => {
       { type: 'message.delta', messageId: 'm1', text: 'x' },
       { type: 'message.end', messageId: 'm1' },
       { type: 'tool.start', toolUseId: 't1', author, tool: 'Edit', summary: 'a.ts', diff: '-a\n+b' },
+      { type: 'tool.start', toolUseId: 't2', author, tool: 'Bash', summary: '$ ls …', summaryTruncated: true },
+      { type: 'document.touched', path: 'sdd/specs/spec-a/brief.yaml', op: 'created', author },
       { type: 'tool.end', toolUseId: 't1', isError: false, summary: 'ok' },
       { type: 'subagent.start', agentId: 'a1', agentType: 'sdd-planner' },
       { type: 'subagent.stop', agentId: 'a1', agentType: 'sdd-planner' },
@@ -26,6 +28,35 @@ describe('ThreadEvent', () => {
     expect(ThreadEvent.safeParse({ type: 'nope' }).success).toBe(false);
     const bad = { type: 'turn.end', usage: { model: 'm', effort: null, tokensIn: -1, tokensOut: 0, costUsd: 0 } };
     expect(ThreadEvent.safeParse(bad).success).toBe(false);
+  });
+});
+
+describe('document.touched', () => {
+  const touched = { type: 'document.touched', path: 'sdd/a.md', op: 'modified', author };
+
+  it('accepts each operation', () => {
+    for (const op of ['created', 'modified', 'deleted']) {
+      expect(ThreadEvent.parse({ ...touched, op })).toEqual({ ...touched, op });
+    }
+  });
+
+  it('bounds the path between 1 and 1024 characters', () => {
+    expect(ThreadEvent.safeParse({ ...touched, path: '' }).success).toBe(false);
+    expect(ThreadEvent.safeParse({ ...touched, path: 'a'.repeat(1024) }).success).toBe(true);
+    expect(ThreadEvent.safeParse({ ...touched, path: 'a'.repeat(1025) }).success).toBe(false);
+  });
+
+  it('rejects unknown operations and a missing author', () => {
+    expect(ThreadEvent.safeParse({ ...touched, op: 'renamed' }).success).toBe(false);
+    const { author: omitted, ...withoutAuthor } = touched;
+    expect(omitted).toBeDefined();
+    expect(ThreadEvent.safeParse(withoutAuthor).success).toBe(false);
+  });
+
+  it('keeps tool.start without summaryTruncated valid', () => {
+    const start = { type: 'tool.start', toolUseId: 't1', author, tool: 'Bash', summary: '$ ls' };
+    expect(ThreadEvent.parse(start)).toEqual(start);
+    expect(ThreadEvent.safeParse({ ...start, summaryTruncated: 'yes' }).success).toBe(false);
   });
 });
 
