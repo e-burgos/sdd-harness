@@ -170,7 +170,7 @@
         {
           "agent": "orchestrator",
           "label": "solo",
-          "provider_model": "gemini/flash",
+          "provider_model": "claude/opus",
           "effort": "high",
           "tokens_in": 45000,
           "tokens_out": 5000,
@@ -186,7 +186,7 @@
           "approx": true,
           "source": "declared-estimate"
         },
-        "gemini/flash": {
+        "claude/opus": {
           "tokens_in": 45000,
           "tokens_out": 5000,
           "approx": true,

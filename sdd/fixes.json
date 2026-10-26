@@ -161,7 +161,7 @@
       "status": "validated",
       "cycle": null,
       "usage": {
-        "provider_model": "gemini/pro",
+        "provider_model": "claude/opus",
         "effort": "medium",
         "agent": "implementor-front",
         "tokens_in": 45000,
@@ -170,6 +170,91 @@
         "source": "declared-estimate",
         "recorded_at": "2026-10-23"
       }
+    },
+    {
+      "id": "FIX-e-burgos-004-001",
+      "author": "e-burgos",
+      "spec_id": "spec-e-burgos-004-studio-gates-topology",
+      "fix_document": "sdd/specs/spec-e-burgos-004-studio-gates-topology/fixes/fix-e-burgos-004-001.md",
+      "type": "IMPROVEMENT",
+      "severity": "medium",
+      "created_at": "2026-10-25",
+      "resolved_at": "2026-10-25",
+      "validated_at": "2026-10-25",
+      "title": "RETROACTIVE: register Mission Control work done outside the SPEC GATE and correct fabricated provider attributions",
+      "estimation_hours": 3,
+      "description": "RETROACTIVE registration. Work in apps/studio was implemented outside the SPEC GATE after spec-e-burgos-004 closed (and four earlier commits without a cycle or fix): agent document viewer (agent-documents.ts, DocumentViewerModal), chat dialogue cards, spec/fix selectors and fix filter in AgentInspectorDrawer, canvas-panel selection sync in AgentMapCanvas, per-spec scripted dialogues in swarm-dialogue.ts, provider/session badge, user avatar, dev:studio scripts, plus commits 9bfa00e, 2fbf4f2, f2e7032 and 5658283. Also corrects SDD records that attributed Claude work to Gemini (spec-e-burgos-002 orchestrator unit, all units of spec-e-burgos-003 and spec-e-burgos-004, FIX-e-burgos-003-001): every real thread was Claude.",
+      "justification": "Not a bypass decided in advance: the code already exists and was written without a cycle or fix. Registering it retroactively restores traceability; the fictional scripts and spec/fix selectors are removed by spec-e-burgos-005 US-5 and the swarm is rebuilt around real conversations in US-4. Exceeds the FIX GATE eligibility (more than 5 files); it would have required a cycle, documented as such.",
+      "related_modules": [
+        "studio-gates-topology",
+        "studio-mission-control",
+        "studio-conversation-sessions"
+      ],
+      "affected_files": [
+        "apps/studio/src/lib/agent-documents.ts",
+        "apps/studio/src/lib/agent-documents.spec.ts",
+        "apps/studio/src/components/mission-control/DocumentViewerModal.tsx",
+        "apps/studio/src/components/mission-control/documentviewermodal.spec.tsx",
+        "apps/studio/src/components/mission-control/ChatDialogueCard.tsx",
+        "apps/studio/src/components/mission-control/chatdialoguecard.spec.tsx",
+        "apps/studio/src/components/mission-control/AgentInspectorDrawer.tsx",
+        "apps/studio/src/components/mission-control/inspectordrawer.spec.tsx",
+        "apps/studio/src/components/mission-control/AgentMapCanvas.tsx",
+        "apps/studio/src/components/mission-control/agentmap.spec.tsx",
+        "apps/studio/src/components/mission-control/swarm-dialogue.ts",
+        "apps/studio/src/components/mission-control/LiveSwarmComms.tsx",
+        "apps/studio/src/components/mission-control/LiveTelemetryHUD.tsx",
+        "apps/studio/src/components/mission-control/EcosystemDashboard.tsx",
+        "apps/studio/src/components/mission-control/SubprojectIcon.tsx",
+        "apps/studio/src/components/mission-control/ecosystem.spec.tsx",
+        "apps/studio/src/components/workspaceapp.spec.tsx",
+        "apps/studio/src/components/workspace/AgentFace.tsx",
+        "apps/studio/src/lib/agents.ts",
+        "package.json",
+        "sdd/fixes.json",
+        "sdd/specs/spec-e-burgos-002-studio-ui-polish/cycles/cycle-01/cycle.json",
+        "sdd/specs/spec-e-burgos-003-studio-mission-control/cycles/cycle-01/cycle.json",
+        "sdd/specs/spec-e-burgos-003-studio-mission-control/cycles/cycle-01/tasks.json",
+        "sdd/specs/spec-e-burgos-004-studio-gates-topology/cycles/cycle-01/cycle.json",
+        "sdd/specs/spec-e-burgos-004-studio-gates-topology/cycles/cycle-01/tasks.json"
+      ],
+      "test_reference": "pnpm --filter sdd-studio-web test (58 files, 439 tests green on 2026-10-25) + typecheck clean; apps/studio/src/lib/agent-documents.spec.ts, documentviewermodal.spec.tsx, chatdialoguecard.spec.tsx",
+      "status": "absorbed",
+      "cycle": null,
+      "usage": {
+        "provider_model": "claude/opus",
+        "effort": "medium",
+        "agent": "orchestrator",
+        "tokens_in": 255000,
+        "tokens_out": 44000,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-25",
+        "by_agent": [
+          {
+            "agent": "implementor-front",
+            "label": "retroactive-implementation",
+            "provider_model": "claude/opus",
+            "tokens_in": 160000,
+            "tokens_out": 30000,
+            "approx": true,
+            "source": "declared-estimate",
+            "recorded_at": "2026-10-25"
+          },
+          {
+            "agent": "orchestrator",
+            "label": "retroactive-registration",
+            "provider_model": "claude/opus",
+            "effort": "medium",
+            "tokens_in": 95000,
+            "tokens_out": 14000,
+            "approx": true,
+            "source": "declared-estimate",
+            "recorded_at": "2026-10-25"
+          }
+        ]
+      },
+      "process_note": "Retroactive FIX GATE: code was written before registration (FIX GATE violation, documented). Closed as absorbed by the orchestrator at the explicit request of the dev, not by the reviewer; absorbed into spec-e-burgos-005-studio-conversation-sessions (US-4 conversation-centered swarm, US-5 removal of fictional scripts and spec/fix selectors, document viewer kept). Implementation tokens of earlier turns were not metered: order-of-magnitude estimate from diff size."
     }
   ]
 }

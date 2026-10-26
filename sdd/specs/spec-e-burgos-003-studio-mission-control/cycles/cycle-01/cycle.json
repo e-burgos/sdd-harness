@@ -59,15 +59,15 @@
       "approx": true,
       "source": "declared-estimate",
       "by_tier": {
-        "gemini/flash": {
-          "tokens_in": 194000,
-          "tokens_out": 24500,
+        "claude/opus": {
+          "tokens_in": 67000,
+          "tokens_out": 8700,
           "approx": true,
           "source": "declared-estimate"
         },
-        "gemini/pro": {
-          "tokens_in": 67000,
-          "tokens_out": 8700,
+        "claude/sonnet": {
+          "tokens_in": 194000,
+          "tokens_out": 24500,
           "approx": true,
           "source": "declared-estimate"
         }
@@ -76,7 +76,7 @@
         {
           "agent": "orchestrator",
           "label": "solo",
-          "provider_model": "gemini/pro",
+          "provider_model": "claude/opus",
           "tokens_in": 35000,
           "tokens_out": 4500,
           "approx": true,
@@ -85,7 +85,7 @@
         {
           "agent": "implementor-front",
           "label": "TASK-001",
-          "provider_model": "gemini/flash",
+          "provider_model": "claude/sonnet",
           "tokens_in": 35000,
           "tokens_out": 4000,
           "approx": true,
@@ -94,7 +94,7 @@
         {
           "agent": "implementor-front",
           "label": "TASK-002",
-          "provider_model": "gemini/flash",
+          "provider_model": "claude/sonnet",
           "tokens_in": 28000,
           "tokens_out": 3500,
           "approx": true,
@@ -103,7 +103,7 @@
         {
           "agent": "implementor-front",
           "label": "TASK-003",
-          "provider_model": "gemini/flash",
+          "provider_model": "claude/sonnet",
           "tokens_in": 42000,
           "tokens_out": 5500,
           "approx": true,
@@ -112,7 +112,7 @@
         {
           "agent": "implementor-front",
           "label": "TASK-004",
-          "provider_model": "gemini/flash",
+          "provider_model": "claude/sonnet",
           "tokens_in": 25000,
           "tokens_out": 3200,
           "approx": true,
@@ -121,7 +121,7 @@
         {
           "agent": "implementor-front",
           "label": "TASK-005",
-          "provider_model": "gemini/flash",
+          "provider_model": "claude/sonnet",
           "tokens_in": 31000,
           "tokens_out": 4200,
           "approx": true,
@@ -130,7 +130,7 @@
         {
           "agent": "implementor-front",
           "label": "TASK-006",
-          "provider_model": "gemini/flash",
+          "provider_model": "claude/sonnet",
           "tokens_in": 33000,
           "tokens_out": 4100,
           "approx": true,
@@ -139,7 +139,7 @@
         {
           "agent": "implementor-front",
           "label": "TASK-007",
-          "provider_model": "gemini/pro",
+          "provider_model": "claude/opus",
           "tokens_in": 32000,
           "tokens_out": 4200,
           "approx": true,

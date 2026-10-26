@@ -32,7 +32,7 @@
       "usage": {
         "tokens_in": 35000,
         "tokens_out": 4000,
-        "provider_model": "gemini/flash",
+        "provider_model": "claude/sonnet",
         "effort": "high",
         "agent": "implementor-front",
         "approx": true,
@@ -62,7 +62,7 @@
       "usage": {
         "tokens_in": 28000,
         "tokens_out": 3500,
-        "provider_model": "gemini/flash",
+        "provider_model": "claude/sonnet",
         "effort": "medium",
         "agent": "implementor-front",
         "approx": true,
@@ -90,7 +90,7 @@
       "usage": {
         "tokens_in": 42000,
         "tokens_out": 5500,
-        "provider_model": "gemini/flash",
+        "provider_model": "claude/sonnet",
         "effort": "high",
         "agent": "implementor-front",
         "approx": true,
@@ -117,7 +117,7 @@
       "usage": {
         "tokens_in": 25000,
         "tokens_out": 3200,
-        "provider_model": "gemini/flash",
+        "provider_model": "claude/sonnet",
         "effort": "medium",
         "agent": "implementor-front",
         "approx": true,
@@ -142,7 +142,7 @@
       "usage": {
         "tokens_in": 31000,
         "tokens_out": 4200,
-        "provider_model": "gemini/flash",
+        "provider_model": "claude/sonnet",
         "effort": "medium",
         "agent": "implementor-front",
         "approx": true,
@@ -167,7 +167,7 @@
       "usage": {
         "tokens_in": 33000,
         "tokens_out": 4100,
-        "provider_model": "gemini/flash",
+        "provider_model": "claude/sonnet",
         "effort": "medium",
         "agent": "implementor-front",
         "approx": true,
@@ -202,7 +202,7 @@
       "usage": {
         "tokens_in": 32000,
         "tokens_out": 4200,
-        "provider_model": "gemini/pro",
+        "provider_model": "claude/opus",
         "effort": "high",
         "agent": "implementor-front",
         "approx": true,
