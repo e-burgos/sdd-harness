@@ -65,22 +65,29 @@ export function RelatedDocuments({
 
   const renderDocuments = (items: ConversationDocument[]) =>
     items.length > 0 && (
-      <ul className="mt-1 space-y-1">
+      <ul className="mt-1 min-w-0 space-y-1">
         {items.map((item) => (
-          <li key={item.path}>
+          <li key={item.path} className="min-w-0">
             <button
               type="button"
               onClick={() => setViewing(toViewerDocument(item))}
               title={item.path}
-              className="flex w-full items-center gap-1.5 rounded bg-white/5 px-1.5 py-1 text-left text-[10px] text-white hover:bg-white/10 hover:text-emerald-300"
+              className="flex w-full min-w-0 items-start gap-1.5 rounded bg-white/5 px-1.5 py-1 text-left text-[10px] text-white hover:bg-white/10 hover:text-emerald-300"
             >
               <FileText
-                className="h-3 w-3 shrink-0 text-emerald-400"
+                className="mt-0.5 h-3 w-3 shrink-0 text-emerald-400"
                 aria-hidden
               />
-              <span className="truncate">{item.name}</span>
-              <span className="ml-auto shrink-0 text-white/40">
-                {item.agents.join(", ")}
+              <span className="flex min-w-0 flex-1 flex-col">
+                <span className="min-w-0 truncate" title={item.name}>
+                  {item.name}
+                </span>
+                <span
+                  className="min-w-0 truncate text-xs text-white/40"
+                  title={item.agents.join(", ")}
+                >
+                  {item.agents.join(", ")}
+                </span>
               </span>
             </button>
           </li>
@@ -93,10 +100,17 @@ export function RelatedDocuments({
       <div
         key={group.cycle ?? "root"}
         data-testid={`related-group-${specId}-${group.cycle ?? "root"}`}
-        className="mt-1.5 pl-2"
+        className="mt-1.5 min-w-0 pl-2"
       >
-        <div className="flex items-center justify-between gap-2 text-white/60">
-          <span className="truncate">
+        <div className="flex min-w-0 items-center justify-between gap-2 text-white/60">
+          <span
+            className="min-w-0 truncate"
+            title={
+              group.cycle
+                ? t("mc.related.cycle", { cycle: group.cycle })
+                : t("mc.related.root")
+            }
+          >
             {group.cycle
               ? t("mc.related.cycle", { cycle: group.cycle })
               : t("mc.related.root")}
@@ -114,7 +128,7 @@ export function RelatedDocuments({
     <section
       data-testid="related-documents"
       aria-label={t("mc.related.title")}
-      className="rounded-lg border border-white/10 bg-white/5 font-mono text-[10px]"
+      className="min-w-0 overflow-hidden rounded-lg border border-white/10 bg-white/5 font-mono text-[10px]"
     >
       <button
         type="button"
@@ -124,13 +138,13 @@ export function RelatedDocuments({
         className="flex w-full items-center gap-1.5 px-2 py-1.5 text-left font-bold uppercase text-white/80 hover:text-white"
       >
         <Chevron className="h-3 w-3 shrink-0" aria-hidden />
-        <span className="flex-1 truncate">{t("mc.related.title")}</span>
-        <span className="text-white/50">{documents.length}</span>
+        <span className="min-w-0 flex-1 truncate">{t("mc.related.title")}</span>
+        <span className="shrink-0 text-white/50">{documents.length}</span>
       </button>
       {open && (
         <div
           data-testid="related-documents-body"
-          className="space-y-2 border-t border-white/10 px-2 py-2"
+          className="min-w-0 space-y-2 overflow-hidden border-t border-white/10 px-2 py-2"
         >
           {isEmpty && (
             <p data-testid="related-documents-empty" className="text-white/50">
@@ -138,12 +152,12 @@ export function RelatedDocuments({
             </p>
           )}
           {specs.length > 0 && (
-            <div>
+            <div className="min-w-0">
               <h4 className="mb-1 flex items-center gap-1 font-bold uppercase text-emerald-400">
                 <GitBranch className="h-3 w-3" aria-hidden />
                 {t("mc.related.specs")}
               </h4>
-              <ul className="space-y-1.5">
+              <ul className="min-w-0 space-y-1.5">
                 {specs.map((spec) => {
                   const specDocuments = documents.filter(
                     (item) =>
@@ -153,9 +167,10 @@ export function RelatedDocuments({
                     <li
                       key={spec.specId}
                       data-testid={`related-spec-${spec.specId}`}
+                      className="min-w-0"
                     >
-                      <div className="flex items-center justify-between gap-2 text-white">
-                        <span className="truncate" title={spec.specId}>
+                      <div className="flex min-w-0 items-center justify-between gap-2 text-white">
+                        <span className="min-w-0 truncate" title={spec.specId}>
                           {spec.specId}
                         </span>
                         <span className="shrink-0 text-white/50">
@@ -170,25 +185,34 @@ export function RelatedDocuments({
             </div>
           )}
           {fixes.length > 0 && (
-            <div>
+            <div className="min-w-0">
               <h4 className="mb-1 flex items-center gap-1 font-bold uppercase text-amber-400">
                 <Wrench className="h-3 w-3" aria-hidden />
                 {t("mc.related.fixes")}
               </h4>
-              <ul className="space-y-1.5">
+              <ul className="min-w-0 space-y-1.5">
                 {fixes.map((fix) => (
-                  <li key={fix.fixId} data-testid={`related-fix-${fix.fixId}`}>
-                    <div className="flex items-center justify-between gap-2 text-white">
-                      <span className="truncate" title={fix.fixId}>
+                  <li
+                    key={fix.fixId}
+                    data-testid={`related-fix-${fix.fixId}`}
+                    className="min-w-0"
+                  >
+                    <div className="flex min-w-0 items-center justify-between gap-2 text-white">
+                      <span className="min-w-0 truncate" title={fix.fixId}>
                         {fix.fixId}
                       </span>
                       <span className="shrink-0 text-white/50">
-                        {t("mc.related.inSpec", { spec: fix.specId })} ·{" "}
                         {
                           documents.filter((item) => item.fixId === fix.fixId)
                             .length
                         }
                       </span>
+                    </div>
+                    <div
+                      className="min-w-0 truncate text-white/50"
+                      title={t("mc.related.inSpec", { spec: fix.specId })}
+                    >
+                      {t("mc.related.inSpec", { spec: fix.specId })}
                     </div>
                     {renderDocuments(
                       documents.filter((item) => item.fixId === fix.fixId),

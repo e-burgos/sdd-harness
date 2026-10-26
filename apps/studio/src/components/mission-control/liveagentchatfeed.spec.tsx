@@ -36,6 +36,7 @@ const view = (dialogues: ConversationDialogue[], patch: Partial<ConversationView
   fixes: [],
   documents: [],
   mentions: { specIds: [], fixIds: [] },
+  gateActivity: { documentSeqs: {}, fixMentionSeqs: {} },
   engineSessionId: 'sess',
   provider: 'claude',
   isEmpty: dialogues.length === 0,

@@ -83,4 +83,30 @@ describe('deriveConversationGate', () => {
     expect(gateOf([text(1, 'hola')], snap)).toEqual({ kind: 'idle' });
     expect(gateOf([text(1, `trabajamos en ${SPEC}`)], snapshot({ cycles: [cycle('completed')] }))).toEqual({ kind: 'idle' });
   });
+
+  it('follows the fix with the most recent activity, not the first document written', () => {
+    const snap = snapshot({
+      fixes: [
+        { id: 'FIX-e-burgos-005-004', title: 'F', status: 'implemented', severity: null, specId: SPEC, createdAt: null, closedAt: null },
+        { id: 'FIX-e-burgos-005-006', title: 'F', status: 'pending', severity: null, specId: SPEC, createdAt: null, closedAt: null },
+        { id: 'FIX-e-burgos-005-007', title: 'F', status: 'pending', severity: null, specId: SPEC, createdAt: null, closedAt: null },
+      ],
+    });
+    const items = [
+      write(1, `sdd/specs/${SPEC}/fixes/fix-e-burgos-005-004.md`),
+      text(2, 'registré FIX-e-burgos-005-006'),
+      text(3, 'y también FIX-e-burgos-005-007'),
+    ];
+    expect(gateOf(items, snap)).toEqual({ kind: 'fix', fixId: 'FIX-e-burgos-005-007' });
+  });
+
+  it('keeps the written document when it is newer than every valid fix mention', () => {
+    const items = [text(1, 'hay que hacer FIX-e-burgos-005-006'), write(2, `sdd/specs/${SPEC}/fixes/fix-e-burgos-005-001.md`)];
+    expect(gateOf(items, snapshot())).toEqual({ kind: 'fix', fixId: 'FIX-e-burgos-005-001' });
+  });
+
+  it('prefers a newer written spec document over an older open fix mention', () => {
+    const items = [text(1, 'hay que hacer FIX-e-burgos-005-006'), write(2, `sdd/specs/${SPEC}/cycles/cycle-01/plan.md`)];
+    expect(gateOf(items, snapshot())).toEqual({ kind: 'spec', specId: SPEC, cycle: 'cycle-01' });
+  });
 });

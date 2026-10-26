@@ -92,12 +92,45 @@ describe('RelatedDocuments', () => {
 
   it('links a fix to its spec and counts its documents', () => {
     renderDocs([{ specId: 'spec-a', cycle: null, cycles: [] }], [{ fixId: 'FIX-1', specId: 'spec-a' }], [fixDoc]);
-    expect(screen.getByTestId('related-fix-FIX-1')).toHaveTextContent('en spec-a · 1');
+    const item = screen.getByTestId('related-fix-FIX-1');
+    expect(item).toHaveTextContent('en spec-a');
+    expect(item).toHaveTextContent('FIX-11');
   });
 
   it('does not list a spec that was only mentioned and has no documents', () => {
     renderDocs([], [], []);
     expect(screen.queryByTestId('related-spec-spec-a')).toBeNull();
     expect(screen.getByTestId('related-documents-empty')).toBeInTheDocument();
+  });
+
+  it('truncates long ids with min-w-0 and a full-text title so nothing overflows the narrow panel', () => {
+    const longSpec = 'spec-e-burgos-005-studio-conversation-sessions-with-a-very-long-slug';
+    const longFix = 'FIX-e-burgos-005-004';
+    const longDoc: ConversationDocument = {
+      path: `sdd/specs/${longSpec}/cycles/cycle-01/architect-decisions-and-contracts.md`,
+      name: 'architect-decisions-and-contracts.md',
+      specId: longSpec,
+      fixId: null,
+      cycle: 'cycle-01',
+      agents: ['sdd-architect', 'sdd-planner', 'sdd-reviewer'],
+    };
+    renderDocs([{ specId: longSpec, cycle: 'cycle-01', cycles: ['cycle-01'] }], [{ fixId: longFix, specId: longSpec }], [longDoc]);
+    const specId = screen.getByTitle(longSpec);
+    expect(specId).toHaveClass('truncate', 'min-w-0');
+    const name = screen.getByTitle(longDoc.name);
+    expect(name).toHaveClass('truncate', 'min-w-0');
+    const agents = screen.getByTitle('sdd-architect, sdd-planner, sdd-reviewer');
+    expect(agents).toHaveClass('truncate', 'min-w-0', 'text-xs');
+    const inSpec = screen.getByTitle(`en ${longSpec}`);
+    expect(inSpec).toHaveClass('truncate', 'min-w-0');
+    expect(screen.getByTestId('related-documents')).toHaveClass('min-w-0', 'overflow-hidden');
+  });
+
+  it('always shows the file name on the fix document row, separate from the agents', () => {
+    renderDocs([], [{ fixId: 'FIX-1', specId: 'spec-a' }], [fixDoc]);
+    const row = screen.getByTestId('related-fix-FIX-1').querySelector('button')!;
+    expect(row).toHaveTextContent('fix-1.md');
+    expect(row).toHaveTextContent('sdd-reviewer');
+    expect(screen.getByTitle('fix-1.md')).toBeInTheDocument();
   });
 });

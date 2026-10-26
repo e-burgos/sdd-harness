@@ -969,7 +969,7 @@
       "type": "BUGFIX",
       "severity": "low",
       "created_at": "2026-10-26",
-      "resolved_at": null,
+      "resolved_at": "2026-10-26",
       "validated_at": null,
       "title": "RelatedDocuments: overflow y truncado en panel angosto (~300px)",
       "estimation_hours": 1.5,
@@ -981,11 +981,40 @@
       "affected_files": [
         "apps/studio/src/components/mission-control/RelatedDocuments.tsx",
         "apps/studio/src/lib/conversation-gate.ts",
-        "apps/studio/src/components/workspace/ConversationPanelSections.tsx"
+        "apps/studio/src/lib/conversation.ts"
       ],
       "test_reference": "RelatedDocuments.spec.tsx, conversation-gate.spec.ts",
-      "status": "pending",
-      "cycle": null
+      "status": "implemented",
+      "cycle": null,
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "tokens_in": 135000,
+        "tokens_out": 21000,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-26",
+        "by_agent": [
+          {
+            "agent": "orchestrator",
+            "provider_model": "claude/haiku",
+            "effort": "medium",
+            "tokens_in": 25000,
+            "tokens_out": 3000,
+            "approx": true,
+            "source": "declared-estimate"
+          },
+          {
+            "agent": "implementor-front",
+            "provider_model": "claude/sonnet",
+            "effort": "medium",
+            "tokens_in": 110000,
+            "tokens_out": 18000,
+            "approx": true,
+            "source": "declared-estimate"
+          }
+        ]
+      }
     }
   ]
 }
