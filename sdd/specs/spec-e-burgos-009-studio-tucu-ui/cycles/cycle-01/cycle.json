@@ -1,0 +1,31 @@
+{
+  "$schema": "../../../../schemas/cycle.schema.json",
+  "cycle": 1,
+  "module": "studio-tucu-ui",
+  "spec": "spec-e-burgos-009-studio-tucu-ui",
+  "apps": [
+    "apps/studio"
+  ],
+  "phase": "tucu-ui-adoption",
+  "flow": "lite",
+  "objectives": [
+    "NextThemeProvider en layout clean sin romper el viewport (RF-1, RF-4)",
+    "Paleta y tipografía de tucu-ui vía puente de tokens (RF-2)",
+    "Primitivas de tucu-ui: botones, campos, modales, overlays (RF-3)",
+    "Build estático y e2e intactos (RF-5)"
+  ],
+  "status": "in-progress",
+  "started_at": "2026-10-27",
+  "completed_at": null,
+  "documents": {
+    "plan": "sdd/specs/spec-e-burgos-009-studio-tucu-ui/cycles/cycle-01/plan.md",
+    "tasks": "sdd/specs/spec-e-burgos-009-studio-tucu-ui/cycles/cycle-01/tasks.json"
+  },
+  "artifacts": [],
+  "metrics": null,
+  "tables_created": [],
+  "endpoints_implemented": [],
+  "components_created": [],
+  "issues_found": [],
+  "reviewer_report": null
+}

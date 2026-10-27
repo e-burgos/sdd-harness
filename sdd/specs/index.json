@@ -126,6 +126,20 @@
       "depends_on": [
         "spec-e-burgos-007-studio-session-metadata"
       ]
+    },
+    {
+      "id": "spec-e-burgos-009-studio-tucu-ui",
+      "author": "e-burgos",
+      "slug": "studio-tucu-ui",
+      "folder": "sdd/specs/spec-e-burgos-009-studio-tucu-ui",
+      "file": "sdd/specs/spec-e-burgos-009-studio-tucu-ui/spec-e-burgos-009-studio-tucu-ui.spec.md",
+      "module": "studio-tucu-ui",
+      "app": "apps/studio",
+      "status": "in-progress",
+      "title": "SDD Studio: adopta tucu-ui (tema, paleta y primitivas) sin cambiar la distribución",
+      "created_at": "2026-10-27",
+      "completed_at": null,
+      "depends_on": []
     }
   ]
 }

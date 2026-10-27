@@ -98,7 +98,17 @@
       "completed_at": "2026-10-26"
     }
   ],
-  "in_progress_modules": [],
+  "in_progress_modules": [
+    {
+      "module": "studio-tucu-ui",
+      "spec": "spec-e-burgos-009-studio-tucu-ui",
+      "apps": [
+        "apps/studio"
+      ],
+      "cycles_completed": 0,
+      "description": "Studio adopta @e-burgos/tucu-ui vía el entry ./next: tema, paleta y primitivas de la librería con la misma distribución de pantallas."
+    }
+  ],
   "pending_modules": [],
   "monorepo": {
     "tool": "none (multi-app repo)",
