@@ -1,0 +1,29 @@
+{
+  "$schema": "../../../../schemas/cycle.schema.json",
+  "cycle": 6,
+  "module": "studio-tucu-ui",
+  "spec": "spec-e-burgos-009-studio-tucu-ui",
+  "apps": [
+    "apps/studio"
+  ],
+  "phase": "tucu-ui-3.7-adoption",
+  "flow": "lite",
+  "objectives": [
+    "Modales con SplitModal: contenido en el cuerpo y opciones en la barra lateral (US-014)",
+    "Adoptar tucu-ui 3.7.0 sin los ajustes que resuelve (US-015)"
+  ],
+  "status": "in-progress",
+  "started_at": "2026-10-27",
+  "completed_at": null,
+  "documents": {
+    "plan": "sdd/specs/spec-e-burgos-009-studio-tucu-ui/cycles/cycle-06/plan.md",
+    "tasks": "sdd/specs/spec-e-burgos-009-studio-tucu-ui/cycles/cycle-06/tasks.json"
+  },
+  "artifacts": [],
+  "metrics": null,
+  "tables_created": [],
+  "endpoints_implemented": [],
+  "components_created": [],
+  "issues_found": [],
+  "reviewer_report": null
+}
