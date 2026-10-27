@@ -11,6 +11,7 @@ import { useCollapsedState } from '@/lib/use-collapsed-state';
 import { AgentAvatar } from '../workspace/AgentAvatar';
 import { useStudio } from '../BridgeProvider';
 import { SegmentedControl } from '../SegmentedControl';
+import { Tip } from '../Tip';
 import { ChatDialogueCard } from './ChatDialogueCard';
 import { ConversationSessionInfo } from './ConversationSessionInfo';
 import { LiveAgentChatFeed } from './LiveAgentChatFeed';
@@ -31,8 +32,6 @@ interface AgentInspectorDrawerProps {
 const PAGE_SIZE = 50;
 const AGENT_INFO_NODE = 'mission-control.agent-info';
 
-const displayName = (id: string): string => (id === 'user' ? 'Tú' : agentMeta(id).name);
-
 export function AgentInspectorDrawer({
   agentId,
   presence,
@@ -45,6 +44,7 @@ export function AgentInspectorDrawer({
   onOpenDm,
 }: AgentInspectorDrawerProps) {
   const { t } = useT();
+  const displayName = (id: string): string => (id === 'user' ? t('ui.you') : agentMeta(id).name);
   const snapshot = useStudio((s) => s.snapshot);
   const [activeTab, setActiveTab] = useState<'agent' | 'swarm'>(() => (agentId ? 'agent' : 'swarm'));
   const collapsed = useCollapsedState(snapshot?.project ?? '');
@@ -109,20 +109,24 @@ export function AgentInspectorDrawer({
             } else if (agentId) setActiveTab('agent');
           }}
           options={[
-            { id: 'swarm', label: 'Enjambre', icon: <Bot className="h-3.5 w-3.5" /> },
-            { id: 'agent', label: meta ? meta.name : 'Agente', icon: <User className="h-3.5 w-3.5" />, disabled: !agentId },
+            { id: 'swarm', label: t('ui.swarm'), icon: <Bot className="h-3.5 w-3.5" /> },
+            { id: 'agent', label: meta ? meta.name : t('ui.inspector.agent'), icon: <User className="h-3.5 w-3.5" />, disabled: !agentId },
           ]}
         />
 
         <div className="flex items-center gap-1">
           {activeTab === 'agent' && meta && (
-            <Button type="button" variant="transparent" color="gray" size="tiny" className="font-mono" onClick={toggleAgentInfo} title="Alternar vista de perfil completo">
-              {showFullProfile ? t('map.hideInfo') : t('map.showInfo')}
-            </Button>
+            <Tip text={t('ui.inspector.toggleProfile')}>
+              <Button type="button" variant="transparent" color="gray" size="tiny" className="font-mono" onClick={toggleAgentInfo}>
+                {showFullProfile ? t('map.hideInfo') : t('map.showInfo')}
+              </Button>
+            </Tip>
           )}
-          <Button type="button" variant="transparent" color="gray" shape="circle" size="tiny" onClick={onClose} title="Contraer panel">
-            <X className="w-3.5 h-3.5" />
-          </Button>
+          <Tip text={t('ui.inspector.collapse')}>
+            <Button type="button" variant="transparent" color="gray" shape="circle" size="tiny" onClick={onClose} aria-label={t('ui.inspector.collapse')}>
+              <X className="w-3.5 h-3.5" />
+            </Button>
+          </Tip>
         </div>
       </div>
 
@@ -136,7 +140,7 @@ export function AgentInspectorDrawer({
                   <h3 className="font-semibold text-sm text-ink-100 truncate">{meta.name}</h3>
                   {meta.isLeader && (
                     <span className="rounded bg-emerald-500/20 px-1.5 py-0.5 font-mono text-micro text-emerald-300 font-bold shrink-0">
-                      LEADER
+                      {t('ui.inspector.leaderBadge')}
                     </span>
                   )}
                 </div>
@@ -153,7 +157,7 @@ export function AgentInspectorDrawer({
                     }`}
                   />
                   <span className="text-meta font-mono font-medium text-ink-100 capitalize">
-                    {state === 'working' ? 'Ejecutando turno en vivo' : state === 'waiting' ? 'Esperando aprobación' : 'En espera (Ready)'}
+                    {state === 'working' ? t('ui.inspector.stateWorking') : state === 'waiting' ? t('ui.inspector.stateWaiting') : t('ui.inspector.stateReady')}
                   </span>
                 </div>
                 <span className="text-micro text-ink-500 font-mono truncate max-w-[160px]">{meta.title}</span>
@@ -199,9 +203,9 @@ export function AgentInspectorDrawer({
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center p-6 text-center text-ink-500 space-y-3">
             <Users className="w-8 h-8 text-ink-500" />
-            <p className="text-xs font-semibold text-ink-100">Ningún agente seleccionado</p>
+            <p className="text-xs font-semibold text-ink-100">{t('ui.inspector.noAgent')}</p>
             <p className="text-meta text-ink-500 max-w-[260px] leading-relaxed">
-              Haz clic en cualquiera de los nodos del mapa para inspeccionar a un agente y ver los documentos que generó.
+              {t('ui.inspector.noAgentHint')}
             </p>
           </div>
         )
@@ -217,12 +221,14 @@ export function AgentInspectorDrawer({
                 className={`h-2 w-2 rounded-full ${displayedDialogues.some((d) => d.isLive) ? 'bg-rose-400 animate-ping' : 'bg-emerald-400'}`}
               />
               <span className="text-micro font-mono font-bold text-ink-100 uppercase tracking-wider">
-                Comms del Enjambre ({conversation?.dialogues.length ?? 0})
+                {t('ui.inspector.swarmComms', { n: conversation?.dialogues.length ?? 0 })}
               </span>
             </div>
-            <Button type="button" variant="transparent" color="success" size="tiny" className="font-mono text-meta!" onClick={scrollToBottom} title="Bajar al último mensaje">
-              ↓ Abajo
-            </Button>
+            <Tip text={t('ui.inspector.scrollBottom')}>
+              <Button type="button" variant="transparent" color="success" size="tiny" className="font-mono text-meta!" onClick={scrollToBottom}>
+                {t('ui.inspector.down')}
+              </Button>
+            </Tip>
           </div>
 
           <div
@@ -240,7 +246,7 @@ export function AgentInspectorDrawer({
                   <div className="flex justify-center pb-1">
                     <Button type="button" variant="transparent" color="success" size="tiny" className="font-mono text-meta!" onClick={() => setSwarmLimit((v) => v + PAGE_SIZE)}>
                       <span>↑</span>
-                      <span>Cargar mensajes anteriores (+{PAGE_SIZE})</span>
+                      <span>{t('ui.inspector.loadOlder', { n: PAGE_SIZE })}</span>
                     </Button>
                   </div>
                 )}

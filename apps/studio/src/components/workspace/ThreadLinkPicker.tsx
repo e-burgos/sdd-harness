@@ -12,6 +12,7 @@ import { useBridgeFeatures } from '@/lib/use-bridge-features';
 import { useBridge, useStudio } from '../BridgeProvider';
 import { CapabilityNotice } from '../mission-control/CapabilityNotice';
 import { HelpSelect, groupHeader, type HelpSelectOption } from '../HelpSelect';
+import { Tip } from '../Tip';
 
 const NONE = 'none';
 const ring = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400';
@@ -143,16 +144,17 @@ export function ThreadLinkPicker({ threadId }: { threadId: string }) {
               <span className={`truncate font-mono text-meta ${available ? 'text-ink-100' : 'text-ink-400 line-through'}`} title={label}>{label}</span>
               <span data-testid="link-origin" className="shrink-0 text-micro uppercase text-ink-500">{t(`link.origin.${entry.origin}`)}</span>
               {!available && <span data-testid="link-unavailable" className="shrink-0 text-micro text-amberish">{t('link.unavailable')}</span>}
-              <button
-                type="button"
-                aria-label={t('link.remove', { target: label })}
-                title={t('link.remove', { target: label })}
-                disabled={saving}
-                onClick={() => void remove(ref)}
-                className={`shrink-0 rounded text-ink-400 hover:text-ink-100 disabled:opacity-40 ${ring}`}
-              >
-                <X size={12} aria-hidden />
-              </button>
+              <Tip text={t('link.remove', { target: label })}>
+                <button
+                  type="button"
+                  aria-label={t('link.remove', { target: label })}
+                  disabled={saving}
+                  onClick={() => void remove(ref)}
+                  className={`shrink-0 rounded text-ink-400 hover:text-ink-100 disabled:opacity-40 ${ring}`}
+                >
+                  <X size={12} aria-hidden />
+                </button>
+              </Tip>
             </li>
           );
         })}

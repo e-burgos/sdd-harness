@@ -5,6 +5,8 @@ import React, { useState } from 'react';
 import { X, Check, ArrowRight } from 'lucide-react';
 import { getGateMeta, type GateId } from '@/lib/gates';
 import { agentMeta } from '@/lib/agents';
+import { useT } from '@/lib/i18n/i18n';
+import { Tip } from '../Tip';
 import { AgentAvatar } from '../workspace/AgentAvatar';
 import { GateIcon } from './GateIcon';
 
@@ -19,6 +21,7 @@ export function GateInspectorDrawer({
   onClose,
   onSelectAgent,
 }: GateInspectorDrawerProps) {
+  const { t } = useT();
   const [copied, setCopied] = useState(false);
 
   if (!gateId) return null;
@@ -54,21 +57,23 @@ export function GateInspectorDrawer({
                 {gate.name}
               </h3>
               <span className="rounded bg-foreground/10 px-1.5 py-0.5 font-mono text-micro text-ink-300">
-                {gate.group === 'cycle' ? 'CICLO SDD' : 'TRANSVERSAL'}
+                {gate.group === 'cycle' ? t('ui.gate.group.cycle') : t('ui.gate.group.transversal')}
               </span>
             </div>
             <p className="text-xs text-ink-300 font-sans mt-0.5">{gate.subtitle}</p>
           </div>
         </div>
-        <Button type="button" variant="transparent" color="gray" shape="circle" size="tiny" onClick={onClose} title="Cerrar inspector de gate">
-          <X className="w-4 h-4" />
-        </Button>
+        <Tip text={t('ui.gate.close')}>
+          <Button type="button" variant="transparent" color="gray" shape="circle" size="tiny" onClick={onClose} aria-label={t('ui.gate.close')}>
+            <X className="w-4 h-4" />
+          </Button>
+        </Tip>
       </div>
 
       <div className="py-3 space-y-4 flex-1">
         <div>
           <h4 className="text-micro font-mono uppercase tracking-wider text-ink-500 mb-1">
-            Propósito del Gate
+            {t('ui.gate.purpose')}
           </h4>
           <p className="text-xs leading-relaxed text-ink-100 bg-foreground/5 p-3 rounded-xl border border-foreground/5">
             {gate.description}
@@ -77,7 +82,7 @@ export function GateInspectorDrawer({
 
         <div>
           <h4 className="text-micro font-mono uppercase tracking-wider text-ink-500 mb-2">
-            Agente Responsable
+            {t('ui.gate.responsible')}
           </h4>
           <div
             onClick={() => onSelectAgent(gate.responsibleAgent)}
@@ -93,14 +98,14 @@ export function GateInspectorDrawer({
               </div>
             </div>
             <span className="flex items-center gap-1 text-micro font-mono text-emerald-400">
-              Ver en mapa <ArrowRight className="w-3 h-3" />
+              {t('ui.gate.viewOnMap')} <ArrowRight className="w-3 h-3" />
             </span>
           </div>
         </div>
 
         <div>
           <h4 className="text-micro font-mono uppercase tracking-wider text-ink-500 mb-2">
-            Agentes Involucrados
+            {t('ui.gate.involved')}
           </h4>
           <div className="flex flex-wrap gap-1.5">
             {gate.associatedAgents.map((aid) => {
@@ -122,7 +127,7 @@ export function GateInspectorDrawer({
 
         <div>
           <h4 className="text-micro font-mono uppercase tracking-wider text-ink-500 mb-2">
-            Reglas & Checklist Canónica
+            {t('ui.gate.rules')}
           </h4>
           <ul className="space-y-1.5">
             {gate.rules.map((rule, idx) => (
@@ -139,12 +144,12 @@ export function GateInspectorDrawer({
 
         <div>
           <h4 className="text-micro font-mono uppercase tracking-wider text-ink-500 mb-1.5">
-            Comando de Verificación CLI
+            {t('ui.gate.cli')}
           </h4>
           <div className="flex items-center justify-between p-2.5 rounded-xl border border-foreground/10 bg-ink-950 font-mono text-xs text-emerald-300">
             <span className="truncate mr-2">{gate.cliCommand}</span>
             <Button type="button" variant="transparent" color="gray" size="tiny" onClick={handleCopyCli}>
-              {copied ? 'Copiado!' : 'Copiar'}
+              {copied ? t('ui.copied') : t('ui.copy')}
             </Button>
           </div>
         </div>
@@ -152,7 +157,7 @@ export function GateInspectorDrawer({
 
       <div className="pt-3 border-t border-foreground/10 shrink-0">
         <Button type="button" variant="solid" color="gray" size="mini" fullWidth className="font-mono" onClick={onClose}>
-          Cerrar Ficha Técnica
+          {t('ui.gate.closeSheet')}
         </Button>
       </div>
     </aside>

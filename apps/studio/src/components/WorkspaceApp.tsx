@@ -54,7 +54,7 @@ export function Connected() {
     <AppShell>
       <StudioHeader activeView={activeView} onSelectView={setActiveView} />
       <ConnectionBanner connection={connection} syncError={syncError} onRetry={retrySync} />
-      <div className={`flex flex-1 min-h-0 ${activeView === 'workspace' ? '' : 'hidden'}`}>
+      <div className={`min-h-0 flex-1 ${activeView === 'workspace' ? 'flex' : 'hidden'}`}>
         <Workspace selectedChannelId={selectedChannelId} newConversationSignal={newConversationSignal} />
       </div>
       {activeView === 'agent-map' && (

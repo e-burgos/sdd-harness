@@ -10,6 +10,8 @@ import type { StudioView } from '@/lib/use-studio-view';
 import { useStudio } from './BridgeProvider';
 import { GateStatusModal } from './GateStatusModal';
 import { SegmentedControl } from './SegmentedControl';
+import { StatusPill } from './StatusPill';
+import { Tip } from './Tip';
 import { AgentAvatar } from './workspace/AgentAvatar';
 
 interface StudioHeaderProps {
@@ -51,9 +53,7 @@ export function StudioHeader({ activeView, onSelectView }: StudioHeaderProps) {
           <AgentAvatar agent="sdd-orchestrator" size={24} showBadge={false} />
           <span className="font-semibold text-sm tracking-tight text-ink-100 flex items-center gap-1.5">
             SDD Studio
-            <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 font-mono text-micro font-medium text-emerald-400 border border-emerald-500/20">
-              v0.16
-            </span>
+            <StatusPill tone="success">v0.16</StatusPill>
           </span>
         </div>
         {snapshot?.project && (
@@ -102,43 +102,34 @@ export function StudioHeader({ activeView, onSelectView }: StudioHeaderProps) {
         </button>
 
         {/* Working Swarm Presence Counter */}
-        <div
-          className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-meta font-mono border ${
-            workingAgents.length > 0
-              ? 'bg-sky-500/10 text-sky-300 border-sky-500/25 animate-pulse'
-              : 'bg-foreground/5 text-ink-300 border-foreground/10'
-          }`}
-          title={`${workingAgents.length} agentes ejecutando tareas actualmente`}
-        >
-          <span className={`h-1.5 w-1.5 rounded-full ${workingAgents.length > 0 ? 'bg-sky-400' : 'bg-emerald-400'}`} />
-          <span>{workingAgents.length > 0 ? `${workingAgents.length} activos` : 'Equipo listo'}</span>
-        </div>
+        <Tip text={t('ui.header.activeHint', { n: workingAgents.length })}>
+          <StatusPill tone={workingAgents.length > 0 ? 'info' : 'neutral'} size="meta" data-testid="presence-pill" className={`px-2.5! py-1! ${workingAgents.length > 0 ? 'animate-pulse' : ''}`}>
+            <span className={`h-1.5 w-1.5 rounded-full ${workingAgents.length > 0 ? 'bg-sky-400' : 'bg-emerald-400'}`} />
+            <span>{workingAgents.length > 0 ? t('ui.header.activeCount', { n: workingAgents.length }) : t('ui.header.ready')}</span>
+          </StatusPill>
+        </Tip>
 
         {/* Language Toggle */}
-        <Button
-          type="button"
-          onClick={() => setLang(lang === 'es' ? 'en' : 'es')}
-          variant="transparent"
-          color="gray"
-          size="tiny"
-          className="font-mono uppercase"
-          title="Cambiar idioma / Toggle language"
-        >
-          {lang}
-        </Button>
+        <Tip text={t('ui.header.langToggle')}>
+          <Button type="button" onClick={() => setLang(lang === 'es' ? 'en' : 'es')} variant="transparent" color="gray" size="tiny" className="font-mono uppercase">
+            {lang}
+          </Button>
+        </Tip>
 
-        <Button
-          type="button"
-          data-testid="mode-toggle"
-          onClick={() => setMode(mode === 'dark' ? 'light' : 'dark')}
-          variant="transparent"
-          color="gray"
-          size="tiny"
-          shape="circle"
-          aria-label={mode === 'dark' ? t('mode.toLight') : t('mode.toDark')}
-        >
-          {mode === 'dark' ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
-        </Button>
+        <Tip text={mode === 'dark' ? t('mode.toLight') : t('mode.toDark')}>
+          <Button
+            type="button"
+            data-testid="mode-toggle"
+            onClick={() => setMode(mode === 'dark' ? 'light' : 'dark')}
+            variant="transparent"
+            color="gray"
+            size="tiny"
+            shape="circle"
+            aria-label={mode === 'dark' ? t('mode.toLight') : t('mode.toDark')}
+          >
+            {mode === 'dark' ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
+          </Button>
+        </Tip>
       </div>
       <GateStatusModal open={statusOpen} onClose={() => setStatusOpen(false)} thread={thread} view={view} gate={gate} snapshot={snapshot} />
     </header>

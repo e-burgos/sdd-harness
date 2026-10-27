@@ -7,6 +7,7 @@ import type { QuestionAnswer } from '@sdd-studio/protocol';
 import { agentMeta } from '@/lib/agents';
 import { bridgeErrorText } from '@/lib/bridge/error-text';
 import { useT } from '@/lib/i18n/i18n';
+import { Tip } from '../Tip';
 import type { TimelineItem } from '@/lib/store/timeline';
 
 type QuestionItem = Extract<TimelineItem, { kind: 'question' }>;
@@ -142,9 +143,11 @@ export function QuestionForm({ item, onAnswer }: { item: QuestionItem; onAnswer:
             {t('question.send')}
           </Button>
           <div className="ml-auto">
-            <Button type="button" variant="ghost" color="gray" size="mini" disabled={sending} title={t('help.question.decline')} onClick={() => void submit(true)}>
-              {t('question.decline')}
-            </Button>
+            <Tip text={t('help.question.decline')}>
+              <Button type="button" variant="ghost" color="gray" size="mini" disabled={sending} onClick={() => void submit(true)}>
+                {t('question.decline')}
+              </Button>
+            </Tip>
           </div>
         </div>
       ) : (

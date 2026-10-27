@@ -1,6 +1,6 @@
 'use client';
 
-import { Button } from '@e-burgos/tucu-ui';
+import { Button, Skeleton } from '@e-burgos/tucu-ui';
 import { AlertTriangle, FileText } from 'lucide-react';
 import type { AttachmentRef } from '@sdd-studio/protocol';
 import { useEffect, useState } from 'react';
@@ -35,7 +35,7 @@ function ImageAttachment({ attachment }: { attachment: AttachmentRef }) {
           <img src={content.url} alt={attachment.name} width={attachment.width} height={attachment.height} className="h-full w-full object-contain" />
         </a>
       ) : (
-        <div className="h-full w-full animate-pulse bg-ink-800" aria-hidden />
+        <Skeleton animation="pulse" shape="rectangle" height="100%" className="bg-ink-800!" aria-hidden />
       )}
     </div>
   );

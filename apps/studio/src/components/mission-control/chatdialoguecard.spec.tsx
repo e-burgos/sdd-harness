@@ -1,5 +1,8 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render as rtlRender, screen, fireEvent } from '@testing-library/react';
+import { I18nProvider } from '@/lib/i18n/i18n';
 import { ChatDialogueCard } from './ChatDialogueCard';
+
+const render = (ui: React.ReactElement) => rtlRender(<I18nProvider initial="es">{ui}</I18nProvider>);
 
 describe('ChatDialogueCard', () => {
   it('renders short message without expand button', () => {

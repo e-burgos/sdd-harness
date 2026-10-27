@@ -41,6 +41,7 @@ import { useAttachmentDraft } from '@/lib/use-attachment-draft';
 import { useMentionMenu } from '@/lib/use-mention-menu';
 import { useBridge, useStudio } from '../BridgeProvider';
 import { HelpSelect } from '../HelpSelect';
+import { Tip } from '../Tip';
 import { AttachmentTray } from './AttachmentTray';
 import { MentionMenu } from './MentionMenu';
 import { ModeSelectors } from './ModeSelectors';
@@ -268,34 +269,36 @@ export function ComposerView(p: ComposerViewProps) {
                     if (files.length > 0) p.onFiles?.(files);
                   }}
                 />
-                <Button
-                  type="button"
-                  variant="transparent"
-                  color="gray"
-                  shape="circle"
-                  size="mini"
-                  aria-label={t('attach.add')}
-                  title={t('attach.add')}
-                  disabled={pending}
-                  onClick={() => fileInput.current?.click()}
-                >
-                  <Paperclip size={16} />
-                </Button>
+                <Tip text={t('attach.add')}>
+                  <Button
+                    type="button"
+                    variant="transparent"
+                    color="gray"
+                    shape="circle"
+                    size="mini"
+                    aria-label={t('attach.add')}
+                    disabled={pending}
+                    onClick={() => fileInput.current?.click()}
+                  >
+                    <Paperclip size={16} />
+                  </Button>
+                </Tip>
               </>
             )}
             <div className="ml-auto">
-              <Button
-                type="button"
-                shape={p.queueing ? 'rounded' : 'circle'}
-                size="mini"
-                aria-label={p.queueing ? t('composer.queue') : t('composer.send')}
-                title={p.queueing ? t('composer.queueHint') : undefined}
-                disabled={pending}
-                onClick={() => void submit()}
-              >
-                {p.queueing ? <Clock size={16} /> : <Send size={16} />}
-                {p.queueing && <span className="pr-1 text-xs font-medium">{t('composer.queue')}</span>}
-              </Button>
+              <Tip text={p.queueing ? t('composer.queueHint') : t('composer.send')}>
+                <Button
+                  type="button"
+                  shape={p.queueing ? 'rounded' : 'circle'}
+                  size="mini"
+                  aria-label={p.queueing ? t('composer.queue') : t('composer.send')}
+                  disabled={pending}
+                  onClick={() => void submit()}
+                >
+                  {p.queueing ? <Clock size={16} /> : <Send size={16} />}
+                  {p.queueing && <span className="pr-1 text-xs font-medium">{t('composer.queue')}</span>}
+                </Button>
+              </Tip>
             </div>
           </div>
         </div>

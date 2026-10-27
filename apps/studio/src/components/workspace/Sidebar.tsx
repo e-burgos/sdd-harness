@@ -40,8 +40,8 @@ export function SidebarView(p: SidebarViewProps) {
   const dmState = (agent: string) => p.presence.find((x) => x.agent === agent)?.state ?? 'idle';
   const handlers: NavTreeHandlers = { collapse, stale: p.connection !== 'open', onSelectChannel: p.onSelectChannel, onOpenThread: p.onOpenThread };
   return (
-    <nav className="flex h-full min-h-0 flex-col border-r border-ink-800 bg-ink-900">
-      <header className="shrink-0 p-3 pb-2">
+    <nav className="flex h-full min-h-0 flex-col overflow-hidden border-r border-ink-800 bg-ink-900">
+      <header className="max-h-[55%] shrink-0 overflow-y-auto p-3 pb-2">
         <div className="flex items-center gap-2">
           <div className="min-w-0 flex-1 truncate text-base font-semibold">{p.project}</div>
           {p.onCollapse && <PanelToggle label={t('panel.sidebar.collapse')} side="left" onClick={p.onCollapse} />}

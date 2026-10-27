@@ -8,6 +8,7 @@ import { agentMeta } from '@/lib/agents';
 import type { ConversationView } from '@/lib/conversation';
 import { useT } from '@/lib/i18n/i18n';
 import { useBridge } from '../BridgeProvider';
+import { Tip } from '../Tip';
 import { ChatDialogueCard } from './ChatDialogueCard';
 
 interface LiveAgentChatFeedProps {
@@ -16,14 +17,12 @@ interface LiveAgentChatFeedProps {
   onPickConversation?: (threadId: string) => void;
 }
 
-const USER_NAME = 'Tú';
 const PAGE_SIZE = 50;
-
-const displayName = (id: string): string => (id === 'user' ? USER_NAME : agentMeta(id).name);
 
 export function LiveAgentChatFeed({ agentId, conversation, onPickConversation }: LiveAgentChatFeedProps) {
   const { client } = useBridge();
   const { t } = useT();
+  const displayName = (id: string): string => (id === 'user' ? t('ui.you') : agentMeta(id).name);
   const [quickInput, setQuickInput] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
@@ -66,7 +65,7 @@ export function LiveAgentChatFeed({ agentId, conversation, onPickConversation }:
       await sendQuickMessage(text);
       setQuickInput('');
     } catch (err: unknown) {
-      setSendError(err instanceof Error ? err.message : 'Error al enviar');
+      setSendError(err instanceof Error ? err.message : t('ui.feed.sendError'));
     } finally {
       setIsSending(false);
     }
@@ -101,8 +100,8 @@ export function LiveAgentChatFeed({ agentId, conversation, onPickConversation }:
               <div className="flex justify-center pb-1">
                 <Button type="button" variant="transparent" color="success" size="tiny" className="font-mono text-meta!" onClick={() => setVisibleLimit((v) => v + PAGE_SIZE)}>
                   <ArrowUp className="w-3 h-3" />
-                  <span>Cargar más mensajes (+{PAGE_SIZE})</span>
-                  <span className="text-ink-500">({hiddenCount} restantes)</span>
+                  <span>{t('ui.feed.loadMore', { n: PAGE_SIZE })}</span>
+                  <span className="text-ink-500">{t('ui.feed.remaining', { n: hiddenCount })}</span>
                 </Button>
               </div>
             )}
@@ -144,21 +143,18 @@ export function LiveAgentChatFeed({ agentId, conversation, onPickConversation }:
             className="flex-1"
             inputClassName="h-auto! sm:h-auto! rounded-lg! px-2.5! py-1.5! text-ui!"
           />
-          <Button
-            type="submit"
-            size="tiny"
-            disabled={isSending || !quickInput.trim()}
-            title={`Enviar mensaje a ${meta.name}`}
-          >
-            {isSending ? (
-              <>
-                <span className="h-2.5 w-2.5 rounded-full border border-foreground border-t-transparent animate-spin" />
-                <span>Enviando</span>
-              </>
-            ) : (
-              <span>{t('map.chat.send')}</span>
-            )}
-          </Button>
+          <Tip text={t('ui.feed.sendTo', { name: meta.name })}>
+            <Button type="submit" size="tiny" disabled={isSending || !quickInput.trim()}>
+              {isSending ? (
+                <>
+                  <span className="h-2.5 w-2.5 rounded-full border border-foreground border-t-transparent animate-spin" />
+                  <span>{t('ui.feed.sending')}</span>
+                </>
+              ) : (
+                <span>{t('map.chat.send')}</span>
+              )}
+            </Button>
+          </Tip>
         </div>
       </form>
     </div>

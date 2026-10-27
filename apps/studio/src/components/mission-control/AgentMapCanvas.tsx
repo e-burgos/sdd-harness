@@ -5,6 +5,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Bot } from 'lucide-react';
 import { agentMeta } from '@/lib/agents';
 import { useT } from '@/lib/i18n/i18n';
+import { Tip } from '../Tip';
 import { useStudio } from '../BridgeProvider';
 import { SegmentedControl } from '../SegmentedControl';
 import { useConversationSelection } from '@/lib/use-conversation-selection';
@@ -245,13 +246,13 @@ export function AgentMapCanvas({ onOpenDm, onNewConversation }: { onOpenDm: (age
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
             <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
-            <h2 className="text-sm font-semibold text-ink-100 tracking-tight">Topología del Enjambre</h2>
+            <h2 className="text-sm font-semibold text-ink-100 tracking-tight">{t('ui.map.title')}</h2>
             <span className="rounded bg-foreground/10 px-1.5 py-0.5 font-mono text-micro text-emerald-400 font-bold border border-emerald-500/20">
               GATES
             </span>
           </div>
           <span className="text-xs text-ink-500 font-mono">
-            {snapshot?.project ? `Proyecto: ${snapshot.project}` : `${NODES.length} agentes`}
+            {snapshot?.project ? t('ui.map.project', { name: snapshot.project }) : t('ui.map.agentsCount', { n: NODES.length })}
           </span>
         </div>
 
@@ -272,9 +273,9 @@ export function AgentMapCanvas({ onOpenDm, onNewConversation }: { onOpenDm: (age
             value={gateFilter}
             onChange={setGateFilter}
             options={[
-              { id: 'cycle', label: 'Ciclo (4)' },
-              { id: 'transversal', label: 'Transversales (2)' },
-              { id: 'all', label: 'Todas (6)' },
+              { id: 'cycle', label: t('ui.map.filter.cycle') },
+              { id: 'transversal', label: t('ui.map.filter.transversal') },
+              { id: 'all', label: t('ui.map.filter.all') },
             ]}
           />
 
@@ -283,11 +284,11 @@ export function AgentMapCanvas({ onOpenDm, onNewConversation }: { onOpenDm: (age
           <div className="flex items-center gap-4 text-xs font-mono text-ink-300">
             <span className="flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full bg-sky-400" />
-              <span>{activePresenceCount} en ejecución</span>
+              <span>{t('ui.map.running', { n: activePresenceCount })}</span>
             </span>
             <span className="flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full bg-emerald-400" />
-              <span>{NODES.length - activePresenceCount} listos</span>
+              <span>{t('ui.map.ready', { n: NODES.length - activePresenceCount })}</span>
             </span>
           </div>
         </div>
@@ -448,39 +449,39 @@ export function AgentMapCanvas({ onOpenDm, onNewConversation }: { onOpenDm: (age
           data-testid="zoom-toolbar"
           className="absolute bottom-6 left-6 z-20 flex items-center gap-1.5 rounded-xl border border-foreground/15 bg-ink-950/85 p-1.5 shadow-xl backdrop-blur-xl select-none"
         >
-          <Button type="button" variant="transparent" color="gray" shape="circle" size="tiny" className="font-mono" onClick={handleZoomIn} title="Acercar (+)">
-            +
-          </Button>
+          <Tip text={t('ui.map.zoomIn')}>
+            <Button type="button" variant="transparent" color="gray" shape="circle" size="tiny" className="font-mono" onClick={handleZoomIn}>
+              +
+            </Button>
+          </Tip>
           <span className="min-w-[42px] text-center font-mono text-meta font-semibold text-emerald-400">
             {Math.round(zoom * 100)}%
           </span>
-          <Button type="button" variant="transparent" color="gray" shape="circle" size="tiny" className="font-mono" onClick={handleZoomOut} title="Alejar (-)">
-            -
-          </Button>
+          <Tip text={t('ui.map.zoomOut')}>
+            <Button type="button" variant="transparent" color="gray" shape="circle" size="tiny" className="font-mono" onClick={handleZoomOut}>
+              -
+            </Button>
+          </Tip>
           <div className="h-4 w-[1px] bg-foreground/10 mx-0.5" />
-          <Button type="button" variant="transparent" color="gray" size="tiny" className="font-mono text-meta!" onClick={handleResetZoom} title="Restablecer posición y zoom (100%)">
-            <span>⟲</span>
-            <span>Ajustar</span>
-          </Button>
+          <Tip text={t('ui.map.zoomReset')}>
+            <Button type="button" variant="transparent" color="gray" size="tiny" className="font-mono text-meta!" onClick={handleResetZoom}>
+              <span>⟲</span>
+              <span>{t('ui.map.fit')}</span>
+            </Button>
+          </Tip>
         </div>
 
         {isPanelCollapsed && (
           <div className="absolute top-4 right-4 z-20">
-            <Button
-              type="button"
-              data-testid="open-panel-button"
-              variant="solid"
-              color="gray"
-              size="mini"
-              onClick={() => setIsPanelCollapsed(false)}
-              title="Expandir panel lateral"
-            >
-              <Bot className="w-4 h-4 text-emerald-400" />
-              <span className="font-semibold text-ink-100">Panel</span>
-              <span className="rounded bg-emerald-500/20 px-1.5 py-0.5 text-micro font-bold text-emerald-400 border border-emerald-500/30">
-                {selectedAgent ? agentMeta(selectedAgent).name : 'Enjambre'}
-              </span>
-            </Button>
+            <Tip text={t('ui.map.expandPanel')} placement="left">
+              <Button type="button" data-testid="open-panel-button" variant="solid" color="gray" size="mini" onClick={() => setIsPanelCollapsed(false)}>
+                <Bot className="w-4 h-4 text-emerald-400" />
+                <span className="font-semibold text-ink-100">{t('ui.map.panel')}</span>
+                <span className="rounded bg-emerald-500/20 px-1.5 py-0.5 text-micro font-bold text-emerald-400 border border-emerald-500/30">
+                  {selectedAgent ? agentMeta(selectedAgent).name : t('ui.swarm')}
+                </span>
+              </Button>
+            </Tip>
           </div>
         )}
 

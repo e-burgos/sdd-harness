@@ -258,8 +258,48 @@
         "TASK-004",
         "TASK-005"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/studio/src/app/globals.css",
+        "apps/studio/src/components/HelpSelect.tsx",
+        "apps/studio/src/components/StudioHeader.tsx",
+        "apps/studio/src/components/mission-control/AgentInspectorDrawer.tsx",
+        "apps/studio/src/components/mission-control/AgentMapCanvas.tsx",
+        "apps/studio/src/components/mission-control/ChatDialogueCard.tsx",
+        "apps/studio/src/components/mission-control/ConversationSessionInfo.tsx",
+        "apps/studio/src/components/mission-control/DocumentViewerModal.tsx",
+        "apps/studio/src/components/mission-control/EcosystemDashboard.tsx",
+        "apps/studio/src/components/mission-control/GateCard.tsx",
+        "apps/studio/src/components/mission-control/GateInspectorDrawer.tsx",
+        "apps/studio/src/components/mission-control/LiveAgentChatFeed.tsx",
+        "apps/studio/src/components/mission-control/LiveSwarmComms.tsx",
+        "apps/studio/src/components/mission-control/LiveTelemetryHUD.tsx",
+        "apps/studio/src/components/mission-control/agentmap.spec.tsx",
+        "apps/studio/src/components/mission-control/chatdialoguecard.spec.tsx",
+        "apps/studio/src/components/mission-control/ecosystem.spec.tsx",
+        "apps/studio/src/components/mission-control/inspectordrawer.spec.tsx",
+        "apps/studio/src/components/mission-control/telemetry.spec.tsx",
+        "apps/studio/src/components/workspace/AgentAvatar.tsx",
+        "apps/studio/src/components/workspace/AttachmentView.tsx",
+        "apps/studio/src/components/workspace/Composer.tsx",
+        "apps/studio/src/components/workspace/PanelRail.tsx",
+        "apps/studio/src/components/workspace/QuestionForm.tsx",
+        "apps/studio/src/components/workspace/ThreadLinkPicker.tsx",
+        "apps/studio/src/components/workspace/activity.spec.tsx",
+        "apps/studio/src/components/workspace/agentavatar.spec.tsx",
+        "apps/studio/src/components/StatusPill.tsx",
+        "apps/studio/src/components/Tip.tsx"
+      ],
+      "usage": {
+        "tokens_in": 188031,
+        "tokens_out": 33181,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-10-27"
+      }
     },
     {
       "id": "TASK-007",
@@ -273,8 +313,24 @@
         "TASK-004",
         "TASK-005"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "pps/studio/next.config.ts",
+        "apps/studio/src/components/WorkspaceApp.tsx",
+        "apps/studio/src/components/workspace/Sidebar.tsx",
+        "apps/studio/src/lib/i18n/en.ts",
+        "apps/studio/src/lib/i18n/es.ts"
+      ],
+      "usage": {
+        "tokens_in": 62677,
+        "tokens_out": 11061,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-10-27"
+      }
     },
     {
       "id": "TASK-008",

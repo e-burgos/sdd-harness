@@ -92,7 +92,7 @@ describe('AgentInspectorDrawer', () => {
     renderDrawer({ presence: { agent: 'sdd-orchestrator', state: 'working', threadId: 't-1', specId: null, tool: 'git status' }, onClose, onOpenDm });
 
     expect(screen.getByTestId('agent-inspector-drawer')).toBeInTheDocument();
-    expect(screen.getByText('LEADER')).toBeInTheDocument();
+    expect(screen.getByText('LÍDER')).toBeInTheDocument();
     expect(screen.getByText(/git status/)).toBeInTheDocument();
     expect(screen.getByTestId('live-agent-chat-feed')).toBeInTheDocument();
 
@@ -237,7 +237,7 @@ describe('AgentInspectorDrawer', () => {
     renderDrawer({ onPickConversation });
 
     fireEvent.change(screen.getByPlaceholderText(/Escribir a Clara/), { target: { value: 'Hola' } });
-    fireEvent.click(screen.getByTitle(/Enviar mensaje a Clara/));
+    fireEvent.click(screen.getByRole('button', { name: 'Enviar' }));
 
     await waitFor(() => expect(mockClient.request).toHaveBeenCalledWith(expect.objectContaining({ cmd: 'thread.create', channelId: 'dm:sdd-orchestrator', text: 'Hola' })));
     await waitFor(() => expect(onPickConversation).toHaveBeenCalledWith('thread-9'));

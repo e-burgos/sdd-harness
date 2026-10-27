@@ -1,6 +1,6 @@
 'use client';
 
-import { Button } from '@e-burgos/tucu-ui';
+import { Button, Skeleton } from '@e-burgos/tucu-ui';
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Code2, ClipboardList, Zap, FileText, Check, Copy, Link2, X } from 'lucide-react';
@@ -9,6 +9,7 @@ import remarkGfm from 'remark-gfm';
 import type { AgentGeneratedDocument } from '@/lib/agent-documents';
 import { useT } from '@/lib/i18n/i18n';
 import { SegmentedControl } from '../SegmentedControl';
+import { Tip } from '../Tip';
 import { useBridge } from '../BridgeProvider';
 
 export interface DocumentViewerModalProps {
@@ -160,83 +161,62 @@ export function DocumentViewerModal({ document: doc, onClose }: DocumentViewerMo
                 value={viewMode}
                 onChange={setViewMode}
                 options={[
-                  { id: 'rendered', label: 'Renderizado' },
-                  { id: 'raw', label: 'Crudo / Fuente' },
+                  { id: 'rendered', label: t('ui.doc.rendered') },
+                  { id: 'raw', label: t('ui.doc.raw') },
                 ]}
               />
             )}
 
-            <Button
-              type="button"
-              onClick={handleCopyContent}
-              variant="transparent"
-              color="gray"
-              size="tiny"
-              className="font-mono whitespace-nowrap"
-              title="Copiar todo el contenido"
-            >
-              {copied ? (
-                <>
-                  <Check className="w-3 h-3 text-emerald-400" />
-                  <span className="text-emerald-400">Copiado</span>
-                </>
-              ) : (
-                <>
-                  <Copy className="w-3 h-3" />
-                  <span>Copiar</span>
-                </>
-              )}
-            </Button>
+            <Tip text={t('ui.doc.copyAll')}>
+              <Button type="button" onClick={handleCopyContent} variant="transparent" color="gray" size="tiny" className="font-mono whitespace-nowrap">
+                {copied ? (
+                  <>
+                    <Check className="w-3 h-3 text-emerald-400" />
+                    <span className="text-emerald-400">{t('ui.copied')}</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3 h-3" />
+                    <span>{t('ui.copy')}</span>
+                  </>
+                )}
+              </Button>
+            </Tip>
 
-            <Button
-              type="button"
-              onClick={handleCopyPath}
-              data-testid="copy-path-button"
-              variant="transparent"
-              color="gray"
-              size="tiny"
-              className="font-mono whitespace-nowrap"
-              title="Copiar ruta"
-            >
-              {pathCopied ? (
-                <>
-                  <Check className="w-3 h-3 text-emerald-400" />
-                  <span className="text-emerald-400">Copiada</span>
-                </>
-              ) : (
-                <>
-                  <Link2 className="w-3 h-3" />
-                  <span>Copiar ruta</span>
-                </>
-              )}
-            </Button>
+            <Tip text={t('ui.doc.copyPath')}>
+              <Button type="button" onClick={handleCopyPath} data-testid="copy-path-button" variant="transparent" color="gray" size="tiny" className="font-mono whitespace-nowrap">
+                {pathCopied ? (
+                  <>
+                    <Check className="w-3 h-3 text-emerald-400" />
+                    <span className="text-emerald-400">{t('ui.doc.pathCopied')}</span>
+                  </>
+                ) : (
+                  <>
+                    <Link2 className="w-3 h-3" />
+                    <span>{t('ui.doc.copyPath')}</span>
+                  </>
+                )}
+              </Button>
+            </Tip>
 
             <span aria-hidden="true" data-testid="document-viewer-divider" className="h-6 w-px bg-foreground/15 shrink-0" />
 
-            <Button
-              type="button"
-              onClick={onClose}
-              data-testid="modal-close-button"
-              aria-label="Cerrar modal de documento"
-              variant="transparent"
-              color="gray"
-              shape="circle"
-              size="mini"
-              title="Cerrar modal (Esc)"
-            >
-              <X className="w-4 h-4" />
-            </Button>
+            <Tip text={t('ui.doc.closeHint')}>
+              <Button type="button" onClick={onClose} data-testid="modal-close-button" aria-label={t('ui.doc.closeAria')} variant="transparent" color="gray" shape="circle" size="mini">
+                <X className="w-4 h-4" />
+              </Button>
+            </Tip>
           </div>
         </div>
 
         <div className="flex-1 overflow-y-auto p-6 bg-ink-900/30">
           {isLoading ? (
             <div className="space-y-3 py-6">
-              <div className="h-6 w-1/3 bg-foreground/10 rounded animate-pulse" />
-              <div className="h-4 w-full bg-foreground/5 rounded animate-pulse" />
-              <div className="h-4 w-5/6 bg-foreground/5 rounded animate-pulse" />
-              <div className="h-4 w-4/6 bg-foreground/5 rounded animate-pulse" />
-              <div className="h-32 w-full bg-foreground/5 rounded animate-pulse mt-4" />
+              <Skeleton animation="pulse" height="1.5rem" width="33%" className="bg-foreground/10!" />
+              <Skeleton animation="pulse" height="1rem" className="bg-foreground/5!" />
+              <Skeleton animation="pulse" height="1rem" width="83%" className="bg-foreground/5!" />
+              <Skeleton animation="pulse" height="1rem" width="66%" className="bg-foreground/5!" />
+              <Skeleton animation="pulse" height="8rem" className="mt-4 bg-foreground/5!" />
             </div>
           ) : loadFailed ? (
             <p data-testid="document-load-error" className="rounded-xl border border-rose-500/30 bg-rose-950/30 p-4 font-mono text-xs text-rose-200">

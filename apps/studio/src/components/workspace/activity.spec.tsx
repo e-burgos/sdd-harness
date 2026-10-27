@@ -69,7 +69,7 @@ describe('AgentAvatar', () => {
   });
 
   it('keeps the avatar size independent of the badge', () => {
-    const { container } = render(<AgentAvatar agent="sdd-planner" size={24} status="running" />);
+    const { container } = render(<I18nProvider initial="es"><AgentAvatar agent="sdd-planner" size={24} status="running" /></I18nProvider>);
     expect(container.querySelector<HTMLElement>('span > span')?.style.width).toBe('24px');
   });
 });

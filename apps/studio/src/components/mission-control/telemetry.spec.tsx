@@ -52,7 +52,7 @@ describe('LiveTelemetryHUD', () => {
     const request = mount({ [`${base}/cycle.json`]: { metrics: {} }, [`${base}/tasks.json`]: { tasks: [] } });
     await waitFor(() => expect(request).toHaveBeenCalled());
     expect(screen.getByTestId('telemetry-empty')).toBeInTheDocument();
-    expect(screen.queryByText('STREAMING TELEMETRY ACTIVE')).toBeNull();
+    expect(screen.queryByText('TELEMETRÍA EN VIVO ACTIVA')).toBeNull();
   });
 
   it('computes tokens, cost, models and agents from the recorded usage only', async () => {

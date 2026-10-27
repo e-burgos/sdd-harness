@@ -5,6 +5,7 @@ import { ArrowRight, Pause, Play, SkipForward } from 'lucide-react';
 import { agentMeta } from '@/lib/agents';
 import type { ConversationDialogue } from '@/lib/conversation';
 import { useT } from '@/lib/i18n/i18n';
+import { Tip } from '../Tip';
 import { AgentFace } from '../workspace/AgentFace';
 
 export type CommsDialogue = Pick<ConversationDialogue, 'id' | 'from' | 'to' | 'text' | 'gateId'> & { isLive?: boolean };
@@ -16,6 +17,7 @@ export function SwarmSpeechBubble({
   dialogue: CommsDialogue;
   fromNodePos: { x: number; y: number };
 }) {
+  const { t } = useT();
   const fromMeta = agentMeta(dialogue.from);
   const toMeta = dialogue.to ? agentMeta(dialogue.to) : null;
 
@@ -72,7 +74,7 @@ export function SwarmSpeechBubble({
         {dialogue.isLive && (
           <tspan fill="var(--color-rose-400)" fontSize="9" fontWeight="bold">
             {' '}
-            [EN VIVO]
+            [{t('ui.comms.bubbleLive')}]
           </tspan>
         )}
       </text>
@@ -126,7 +128,7 @@ export function SwarmCommsConsole({
                 isActuallyLive ? 'text-rose-400' : 'text-emerald-400'
               }`}
             >
-              {isActuallyLive ? 'COMMS EN VIVO' : 'SISTEMA EN ESPERA'}
+              {isActuallyLive ? t('ui.comms.live') : t('ui.comms.idle')}
             </span>
           </div>
 
@@ -160,16 +162,20 @@ export function SwarmCommsConsole({
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          <Button type="button" variant="transparent" color="gray" size="tiny" className="font-mono" onClick={onTogglePlay} title={isPlaying ? 'Pausar diálogo' : 'Reanudar diálogo'}>
-            {isPlaying ? (
-              <span className="flex items-center gap-1.5"><Pause className="w-3 h-3" /> Pausa</span>
-            ) : (
-              <span className="flex items-center gap-1.5"><Play className="w-3 h-3" /> Play</span>
-            )}
-          </Button>
-          <Button type="button" variant="transparent" color="gray" size="tiny" className="font-mono" onClick={onNext} title="Siguiente mensaje">
-            <span className="flex items-center gap-1.5"><SkipForward className="w-3 h-3" /> Siguiente</span>
-          </Button>
+          <Tip text={isPlaying ? t('ui.comms.pauseHint') : t('ui.comms.resumeHint')}>
+            <Button type="button" variant="transparent" color="gray" size="tiny" className="font-mono" onClick={onTogglePlay}>
+              {isPlaying ? (
+                <span className="flex items-center gap-1.5"><Pause className="w-3 h-3" /> {t('ui.comms.pause')}</span>
+              ) : (
+                <span className="flex items-center gap-1.5"><Play className="w-3 h-3" /> {t('ui.comms.play')}</span>
+              )}
+            </Button>
+          </Tip>
+          <Tip text={t('ui.comms.nextHint')}>
+            <Button type="button" variant="transparent" color="gray" size="tiny" className="font-mono" onClick={onNext}>
+              <span className="flex items-center gap-1.5"><SkipForward className="w-3 h-3" /> {t('ui.comms.next')}</span>
+            </Button>
+          </Tip>
         </div>
       </div>
     </div>

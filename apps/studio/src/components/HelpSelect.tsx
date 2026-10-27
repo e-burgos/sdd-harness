@@ -1,8 +1,9 @@
 'use client';
 
 import { CircleHelp } from 'lucide-react';
-import { Select, Tooltip, type SelectOption } from '@e-burgos/tucu-ui';
+import { Select, type SelectOption } from '@e-burgos/tucu-ui';
 import { useT } from '@/lib/i18n/i18n';
+import { Tip } from './Tip';
 
 export interface HelpSelectOption {
   value: string;
@@ -43,7 +44,7 @@ export function HelpSelect({ label, help, options, value, onChange, disabled, wr
           if (option.value !== value) onChange(option.value);
         }}
       />
-      <Tooltip content={<span className="text-meta font-normal normal-case leading-snug">{help}</span>} className="max-w-64 px-2 py-1 text-left">
+      <Tip text={help}>
         <button
           type="button"
           data-testid="help-select-icon"
@@ -52,7 +53,7 @@ export function HelpSelect({ label, help, options, value, onChange, disabled, wr
         >
           <CircleHelp size={14} aria-hidden />
         </button>
-      </Tooltip>
+      </Tip>
     </span>
   );
 }

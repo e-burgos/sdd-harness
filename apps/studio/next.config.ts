@@ -8,6 +8,7 @@ const config: NextConfig = {
   transpilePackages: ['@sdd-studio/protocol'],
   outputFileTracingRoot: monorepoRoot,
   turbopack: { root: monorepoRoot },
+  devIndicators: { position: 'bottom-right' },
   ...(isExport
     ? { output: 'export', trailingSlash: true, images: { unoptimized: true } }
     : {}),

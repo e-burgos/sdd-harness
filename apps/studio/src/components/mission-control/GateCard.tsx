@@ -4,6 +4,7 @@ import React from 'react';
 import { ArrowRight } from 'lucide-react';
 import type { GateMeta, GateStatus } from '@/lib/gates';
 import { agentMeta } from '@/lib/agents';
+import { useT } from '@/lib/i18n/i18n';
 import { GateIcon } from './GateIcon';
 
 interface GateCardProps {
@@ -25,6 +26,7 @@ export function GateCard({
   width = 165,
   height = 122,
 }: GateCardProps) {
+  const { t } = useT();
   const respMeta = agentMeta(gate.responsibleAgent);
 
   const statusBg =
@@ -113,7 +115,7 @@ export function GateCard({
 
       <div className="flex items-center justify-between pt-1 border-t border-foreground/10 z-10 text-micro font-mono text-ink-500">
         <div className="flex items-center gap-1 truncate">
-          <span className="text-ink-500 text-micro">RESP:</span>
+          <span className="text-ink-500 text-micro">{t('ui.gate.resp')}</span>
           <span className="font-semibold truncate" style={{ color: respMeta.color }}>
             {respMeta.name}
           </span>

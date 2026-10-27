@@ -245,18 +245,18 @@ describe('AgentMapCanvas', () => {
     expect(screen.getByTestId('zoom-toolbar')).toBeInTheDocument();
     expect(screen.getByText('100%')).toBeInTheDocument();
 
-    const zoomInBtn = screen.getByTitle('Acercar (+)');
+    const zoomInBtn = screen.getByRole('button', { name: '+' });
     fireEvent.click(zoomInBtn);
     expect(screen.getByText('115%')).toBeInTheDocument();
 
-    const zoomOutBtn = screen.getByTitle('Alejar (-)');
+    const zoomOutBtn = screen.getByRole('button', { name: '-' });
     fireEvent.click(zoomOutBtn);
     expect(screen.getByText('100%')).toBeInTheDocument();
 
     fireEvent.click(zoomOutBtn);
     expect(screen.getByText('85%')).toBeInTheDocument();
 
-    const resetBtn = screen.getByTitle('Restablecer posición y zoom (100%)');
+    const resetBtn = screen.getByRole('button', { name: /Ajustar/ });
     fireEvent.click(resetBtn);
     expect(screen.getByText('100%')).toBeInTheDocument();
   });
@@ -271,7 +271,7 @@ describe('AgentMapCanvas', () => {
 
     expect(screen.getByTestId('agent-inspector-drawer')).toBeInTheDocument();
 
-    const closeBtn = screen.getByTitle('Contraer panel');
+    const closeBtn = screen.getByRole('button', { name: 'Contraer panel' });
     fireEvent.click(closeBtn);
 
     expect(screen.queryByTestId('agent-inspector-drawer')).not.toBeInTheDocument();

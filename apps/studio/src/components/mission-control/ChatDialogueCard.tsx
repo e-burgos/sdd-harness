@@ -4,6 +4,7 @@ import { Button } from '@e-burgos/tucu-ui';
 import { useState } from 'react';
 import { ArrowRight } from 'lucide-react';
 import type { GateId } from '@/lib/gates';
+import { useT } from '@/lib/i18n/i18n';
 import { AgentFace } from '../workspace/AgentFace';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -43,6 +44,7 @@ export function ChatDialogueCard({
   provider,
   onClick,
 }: ChatDialogueCardProps) {
+  const { t } = useT();
   const isLong = text.length > 150 || (text.match(/\n/g) || []).length >= 2;
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -150,10 +152,10 @@ export function ChatDialogueCard({
             }}
           >
             <span>{isExpanded ? '⌃' : '⌄'}</span>
-            <span>{isExpanded ? 'Mostrar menos' : 'Mostrar más'}</span>
+            <span>{isExpanded ? t('ui.card.less') : t('ui.card.more')}</span>
           </Button>
           <span className="text-micro font-mono text-ink-500">
-            {text.length} caracteres
+            {t('ui.card.chars', { n: text.length })}
           </span>
         </div>
       )}

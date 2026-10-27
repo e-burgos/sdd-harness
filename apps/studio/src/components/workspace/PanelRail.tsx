@@ -2,6 +2,7 @@
 
 import { Button } from '@e-burgos/tucu-ui';
 import { PanelLeft, PanelRight } from 'lucide-react';
+import { Tip } from '../Tip';
 
 export function PanelRail({ side, label, onExpand }: { side: 'left' | 'right'; label: string; onExpand(): void }) {
   return (
@@ -13,8 +14,10 @@ export function PanelRail({ side, label, onExpand }: { side: 'left' | 'right'; l
 
 export function PanelToggle({ label, side, onClick }: { label: string; side: 'left' | 'right'; onClick(): void }) {
   return (
-    <Button type="button" variant="transparent" color="gray" shape="circle" size="mini" aria-label={label} title={label} onClick={onClick}>
-      {side === 'right' ? <PanelRight size={16} /> : <PanelLeft size={16} />}
-    </Button>
+    <Tip text={label} placement={side === 'right' ? 'left' : 'right'}>
+      <Button type="button" variant="transparent" color="gray" shape="circle" size="mini" aria-label={label} onClick={onClick}>
+        {side === 'right' ? <PanelRight size={16} /> : <PanelLeft size={16} />}
+      </Button>
+    </Tip>
   );
 }
