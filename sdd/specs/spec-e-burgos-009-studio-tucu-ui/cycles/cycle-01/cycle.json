@@ -39,7 +39,12 @@
     "fricción tucu-ui: className sin tailwind-merge; overrides de h-*/bg-*/text-xs no son confiables",
     "fricción tucu-ui: variant transparent agrega siempre bg-gray-100/25 (en oscuro se ve como píldora gris); Studio lo neutraliza en globals.css con [data-tucu=button][data-variant=transparent]",
     "fricción tucu-ui: ghost tiene border-2 fijo; gray solid es gray-600 sin un tono de superficie oscura; no hay type por defecto",
-    "CA-002 excepciones (24 <button> nativos): carets/filas/headers de NavTree, tabs del header y segmented controls (AgentInspectorDrawer, AgentMapCanvas, DocumentViewerModal), tab con roving tabindex de AuthPanel, filas de ChannelView/RightPanel/RelatedDocuments, chips de GateInspectorDrawer y ThreadLinkPicker, gate-chip del header e icono de ayuda de HelpSelect"
+    "CA-002 excepciones (24 <button> nativos): carets/filas/headers de NavTree, tabs del header y segmented controls (AgentInspectorDrawer, AgentMapCanvas, DocumentViewerModal), tab con roving tabindex de AuthPanel, filas de ChannelView/RightPanel/RelatedDocuments, chips de GateInspectorDrawer y ThreadLinkPicker, gate-chip del header e icono de ayuda de HelpSelect",
+    "desvío CA-003: GateStatusModal y DocumentViewerModal siguen custom; tucu Modal no deja pasar aria-label ni data-testid al role=dialog, trae el cierre con aria-label fijo en inglés, el título es solo string (DocumentViewerModal tiene header compuesto), escucha Escape en document, el backdrop es hermano y no click-through, demora ~200 ms al cerrar y fija max-h-[60vh]/sm:max-w-[800px]",
+    "excepción CA-002: HelpSelect conserva el <select> nativo (tucu Select es botón + listbox en portal con options[] y onChange(option), sin <option> hijos ni aria-describedby) y el <input type=file> oculto del Composer",
+    "fricción tucu-ui: Input/Textarea sin tamaño compacto (mínimo h-8 sm:h-10) y sin merge de clases; Studio fuerza alturas con utilidades ! vía inputClassName; Input pone siempre aria-invalid=false y el toggle de password tiene aria-label en inglés; Textarea separa className (wrapper) de inputClassName",
+    "fricción tucu-ui: Radio/Checkbox con label flex items-center (multilínea necesita items-start!) y Radio sin id/htmlFor",
+    "fricción tucu-ui: Alert fija role=alert y aria-live=assertive (no hay variante status/polite) e interpola className como string (undefined se renderiza); Badge soft usa colores fijos y no tokens del tema; Spinner sin tamaño xs"
   ],
   "reviewer_report": null
 }

@@ -136,10 +136,25 @@
       "depends_on": [
         "TASK-002"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
-        "apps/studio/src/components"
-      ]
+        "apps/studio/src/components/workspace/ApiKeyField.tsx",
+        "apps/studio/src/components/workspace/ApprovalCard.tsx",
+        "apps/studio/src/components/workspace/PendingMessages.tsx",
+        "apps/studio/src/components/mission-control/LiveAgentChatFeed.tsx",
+        "apps/studio/src/components/workspace/QuestionForm.tsx",
+        "apps/studio/src/components/workspace/Composer.tsx"
+      ],
+      "usage": {
+        "tokens_in": 91900,
+        "tokens_out": 16200,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-10-27"
+      }
     },
     {
       "id": "TASK-005",
@@ -152,10 +167,23 @@
       "depends_on": [
         "TASK-002"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
-        "apps/studio/src/components"
-      ]
+        "apps/studio/src/components/ConnectionBanner.tsx",
+        "apps/studio/src/components/workspace/StatusBadge.tsx",
+        "apps/studio/src/components/workspace/PendingMessages.tsx",
+        "apps/studio/src/components/workspace/QuestionForm.tsx"
+      ],
+      "usage": {
+        "tokens_in": 49480,
+        "tokens_out": 8750,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-10-27"
+      }
     },
     {
       "id": "TASK-006",

@@ -1,6 +1,6 @@
 'use client';
 
-import { Button } from '@e-burgos/tucu-ui';
+import { Button, Input } from '@e-burgos/tucu-ui';
 import { ShieldAlert } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { agentMeta } from '@/lib/agents';
@@ -64,7 +64,6 @@ export function ApprovalCard({ item, onRespond }: { item: Approval; onRespond: R
   const rule = offer && offer.kind !== 'none' ? offer : null;
   const ruleHintId = `always-${item.id}`;
   const deny = () => void send('deny', 'once', reason.trim() || undefined);
-  const ring = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-50';
   return (
     <div className={`min-w-0 rounded-xl border p-4 ${pending ? 'border-amberish/50 bg-amberish/5' : 'border-ink-700 bg-ink-900'}`}>
       <div className="mb-2 flex items-center gap-2 text-sm font-medium">
@@ -131,8 +130,8 @@ export function ApprovalCard({ item, onRespond }: { item: Approval; onRespond: R
               </Button>
             </div>
           </div>
-          <input
-            className={`block w-full min-w-0 rounded-md border border-ink-700 bg-ink-950 px-2 py-1.5 text-sm ${ring}`}
+          <Input
+            inputClassName="h-auto! sm:h-auto! rounded-md! px-2! py-1.5!"
             placeholder={t('approval.reason')}
             value={reason}
             maxLength={2000}

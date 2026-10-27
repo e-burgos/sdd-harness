@@ -1,6 +1,6 @@
 'use client';
 
-import { Button } from '@e-burgos/tucu-ui';
+import { Badge, Button, Textarea } from '@e-burgos/tucu-ui';
 import { Pencil, Trash2 } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { bridgeErrorText } from '@/lib/bridge/error-text';
@@ -8,7 +8,6 @@ import { useT } from '@/lib/i18n/i18n';
 import { useBridge, useStudio } from '../BridgeProvider';
 
 const BUSY = new Set(['running', 'waiting-approval', 'queued']);
-const ring = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-50';
 
 export function PendingMessages({ threadId }: { threadId: string }) {
   const { t } = useT();
@@ -68,12 +67,12 @@ export function PendingMessages({ threadId }: { threadId: string }) {
           const isEditing = editing?.id === item.id;
           return (
             <li key={item.id} className="flex items-start gap-2 rounded-md border border-ink-800 bg-ink-950 px-2 py-1.5 text-sm">
-              <span className="mt-0.5 shrink-0 rounded bg-amberish/15 px-1.5 text-[11px] text-amberish">{t('pending.badge')}</span>
+              <Badge variant="soft" color="warning" shape="rounded" className="mt-0.5 shrink-0 text-[11px]!">{t('pending.badge')}</Badge>
               {isEditing ? (
                 <div className="flex min-w-0 flex-1 flex-col gap-1">
-                  <textarea
+                  <Textarea
                     aria-label={t('pending.editLabel')}
-                    className={`min-h-[44px] w-full resize-y rounded-md border border-ink-700 bg-ink-900 px-2 py-1 text-sm ${ring}`}
+                    inputClassName="min-h-[44px]! sm:min-h-[44px]! resize-y rounded-md! px-2! py-1!"
                     value={editing.text}
                     autoFocus
                     onChange={(e) => setEditing({ id: item.id, text: e.target.value })}

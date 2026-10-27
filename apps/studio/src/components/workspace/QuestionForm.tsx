@@ -1,6 +1,6 @@
 'use client';
 
-import { Button } from '@e-burgos/tucu-ui';
+import { Badge, Button, Checkbox, Input, Radio } from '@e-burgos/tucu-ui';
 import { MessageCircleQuestion } from 'lucide-react';
 import { useState } from 'react';
 import type { QuestionAnswer } from '@sdd-studio/protocol';
@@ -22,7 +22,7 @@ interface Choice {
 }
 
 const EMPTY: Choice = { labels: [], otherOn: false, otherText: '' };
-const ring = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-50';
+const choiceRow = 'cursor-pointer items-start! rounded-md px-2 py-1 hover:bg-ink-800';
 
 export const valuesOf = (choice: Choice): string[] => [...choice.labels, ...(choice.otherOn && choice.otherText.trim() ? [choice.otherText.trim()] : [])];
 
@@ -65,7 +65,7 @@ export function QuestionForm({ item, onAnswer }: { item: QuestionItem; onAnswer:
           return (
             <fieldset key={group} disabled={!pending || sending} className="min-w-0 space-y-2">
               <legend className="mb-1 text-sm text-ink-100">
-                {q.header && <span className="mr-2 rounded-full bg-ink-800 px-2 py-0.5 text-[10px] uppercase tracking-wide text-ink-300">{q.header}</span>}
+                {q.header && <Badge variant="soft" color="gray" className="mr-2 text-[10px]! uppercase tracking-wide">{q.header}</Badge>}
                 {q.question}
                 {q.multiSelect && <span className="ml-2 text-xs text-ink-400">{t('question.multiHint')}</span>}
               </legend>
@@ -73,50 +73,60 @@ export function QuestionForm({ item, onAnswer }: { item: QuestionItem; onAnswer:
                 <>
                   {q.options.map((option) => {
                     const checked = choice.labels.includes(option.label);
+                    const ChoiceControl = q.multiSelect ? Checkbox : Radio;
                     return (
-                      <label key={option.label} className="flex cursor-pointer items-start gap-2 rounded-md px-2 py-1 text-sm hover:bg-ink-800">
-                        <input
-                          type={q.multiSelect ? 'checkbox' : 'radio'}
-                          name={group}
-                          className="mt-1"
-                          checked={checked}
-                          onChange={() =>
-                            change(index, (c) =>
-                              q.multiSelect
-                                ? { ...c, labels: checked ? c.labels.filter((l) => l !== option.label) : [...c.labels, option.label] }
-                                : { labels: [option.label], otherOn: false, otherText: c.otherText },
-                            )
-                          }
-                        />
-                        <span className="min-w-0">
-                          <span className="block">{option.label}</span>
-                          {option.description && <span className="block text-xs text-ink-400">{option.description}</span>}
-                        </span>
-                      </label>
+                      <ChoiceControl
+                        key={option.label}
+                        name={group}
+                        size="sm"
+                        checked={checked}
+                        containerClassName={choiceRow}
+                        labelClassName="min-w-0 flex-1"
+                        onChange={() =>
+                          change(index, (c) =>
+                            q.multiSelect
+                              ? { ...c, labels: checked ? c.labels.filter((l) => l !== option.label) : [...c.labels, option.label] }
+                              : { labels: [option.label], otherOn: false, otherText: c.otherText },
+                          )
+                        }
+                        label={
+                          <>
+                            <span className="block">{option.label}</span>
+                            {option.description && <span className="block text-xs text-ink-400">{option.description}</span>}
+                          </>
+                        }
+                      />
                     );
                   })}
-                  <label className="flex cursor-pointer items-start gap-2 rounded-md px-2 py-1 text-sm hover:bg-ink-800">
-                    <input
-                      type={q.multiSelect ? 'checkbox' : 'radio'}
-                      name={group}
-                      className="mt-1"
-                      checked={choice.otherOn}
-                      onChange={() => change(index, (c) => (q.multiSelect ? { ...c, otherOn: !c.otherOn } : { labels: [], otherOn: true, otherText: c.otherText }))}
-                    />
-                    <span className="min-w-0 flex-1">
-                      <span className="block">{t('question.other')}</span>
-                      {choice.otherOn && (
-                        <input
-                          type="text"
-                          aria-label={t('question.other')}
-                          placeholder={t('question.otherPlaceholder')}
-                          value={choice.otherText}
-                          onChange={(e) => change(index, (c) => ({ ...c, otherText: e.target.value }))}
-                          className={`mt-1 w-full rounded-md border border-ink-700 bg-ink-950 px-2 py-1 text-sm ${ring}`}
-                        />
-                      )}
-                    </span>
-                  </label>
+                  {(() => {
+                    const OtherControl = q.multiSelect ? Checkbox : Radio;
+                    return (
+                      <OtherControl
+                        name={group}
+                        size="sm"
+                        checked={choice.otherOn}
+                        containerClassName={choiceRow}
+                        labelClassName="min-w-0 flex-1"
+                        onChange={() => change(index, (c) => (q.multiSelect ? { ...c, otherOn: !c.otherOn } : { labels: [], otherOn: true, otherText: c.otherText }))}
+                        label={
+                          <>
+                            <span className="block">{t('question.other')}</span>
+                            {choice.otherOn && (
+                              <Input
+                                type="text"
+                                aria-label={t('question.other')}
+                                placeholder={t('question.otherPlaceholder')}
+                                value={choice.otherText}
+                                onChange={(e) => change(index, (c) => ({ ...c, otherText: e.target.value }))}
+                                className="mt-1 w-full"
+                                inputClassName="h-auto! sm:h-auto! rounded-md! px-2! py-1!"
+                              />
+                            )}
+                          </>
+                        }
+                      />
+                    );
+                  })()}
                 </>
               ) : (
                 answered && <p className="rounded-md bg-ink-950 px-2 py-1 text-sm text-accent-300">{answered.values.join(', ')}</p>

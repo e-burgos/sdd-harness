@@ -1,6 +1,6 @@
 'use client';
 
-import { Button } from '@e-burgos/tucu-ui';
+import { Button, Checkbox, Input } from '@e-burgos/tucu-ui';
 import { useState } from 'react';
 import { isPlausibleApiKey } from '@/lib/api-key';
 import { useT } from '@/lib/i18n/i18n';
@@ -26,7 +26,6 @@ export function ApiKeyField() {
       setBusy(false);
     }
   };
-  const ring = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400';
 
   return (
     <form
@@ -39,20 +38,23 @@ export function ApiKeyField() {
     >
       <label className="flex flex-col gap-1">
         {t('apikey.label')}
-        <input
+        <Input
           type="password"
           autoComplete="off"
           spellCheck={false}
           value={value}
           onChange={(e) => setValue(e.target.value)}
           placeholder="sk-ant-…"
-          className={`rounded border border-ink-700 bg-ink-950 px-2 py-1 text-ink-100 ${ring}`}
+          inputClassName="h-auto! sm:h-auto! rounded-md! px-2! py-1! pr-9! text-[11px]!"
         />
       </label>
-      <label className="flex items-center gap-2">
-        <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} />
-        {t('apikey.remember')}
-      </label>
+      <Checkbox
+        size="sm"
+        checked={remember}
+        onChange={(e) => setRemember(e.target.checked)}
+        label={t('apikey.remember')}
+        labelClassName="text-[11px]! text-ink-300"
+      />
       {apiKeySource && <p>{t(apiKeySource === 'saved' ? 'apikey.stored.saved' : 'apikey.stored.tab')}</p>}
       <p>{t('apikey.privacy')}</p>
       {authMode === 'api-key' && apiKeySource === null && <p>{t('apikey.fromEnv')}</p>}

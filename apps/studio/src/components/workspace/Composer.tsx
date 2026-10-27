@@ -1,6 +1,6 @@
 'use client';
 
-import { Button } from '@e-burgos/tucu-ui';
+import { Button, Textarea } from '@e-burgos/tucu-ui';
 import { Clock, Paperclip, Send } from 'lucide-react';
 import {
   DEFAULT_AGENT,
@@ -196,9 +196,10 @@ export function ComposerView(p: ComposerViewProps) {
         {p.error && <p role="alert" className="mb-2 text-xs text-roseish">{p.error}</p>}
         <div className="relative rounded-xl border border-ink-700 bg-ink-900 focus-within:border-accent-500/60">
           {mentionsOn && <MentionMenu menu={menu} />}
-          <textarea
+          <Textarea
             {...(mentionsOn ? menu.comboboxProps : {})}
-            className="block min-h-[44px] w-full resize-none overflow-y-auto bg-transparent px-3 py-2 text-sm outline-none"
+            variant="transparent"
+            inputClassName="min-h-[44px]! sm:min-h-[44px]! resize-none overflow-y-auto rounded-none! px-3! py-2! focus-visible:outline-0!"
             aria-label={t('composer.placeholder')}
             placeholder={t('composer.placeholder')}
             ref={box}

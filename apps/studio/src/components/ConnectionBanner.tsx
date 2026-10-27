@@ -1,6 +1,6 @@
 'use client';
 
-import { Button } from '@e-burgos/tucu-ui';
+import { Alert, Button } from '@e-burgos/tucu-ui';
 import type { ConnectionState } from '@/lib/bridge/client';
 import { useT } from '@/lib/i18n/i18n';
 
@@ -16,14 +16,14 @@ export function ConnectionBanner({
   const { t } = useT();
   if (syncError) {
     return (
-      <div role="alert" className="flex items-center justify-center gap-3 border-b border-roseish/30 bg-roseish/10 px-4 py-1.5 text-xs text-roseish">
+      <Alert variant="error" className="flex items-center justify-center gap-3 rounded-none! border-x-0! border-t-0! px-4! py-1.5! text-xs! shadow-none!">
         <span>{t('conn.syncError', { message: syncError })}</span>
         {onRetry && (
           <Button type="button" variant="ghost" color="danger" size="tiny" onClick={onRetry}>
             {t('conn.retry')}
           </Button>
         )}
-      </div>
+      </Alert>
     );
   }
   if (connection.status === 'open' || connection.status === 'idle' || connection.status === 'failed') return null;

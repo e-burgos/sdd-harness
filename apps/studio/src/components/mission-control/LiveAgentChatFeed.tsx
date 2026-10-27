@@ -1,6 +1,6 @@
 'use client';
 
-import { Button } from '@e-burgos/tucu-ui';
+import { Button, Input } from '@e-burgos/tucu-ui';
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { ArrowUp, Moon } from 'lucide-react';
 import { ThreadInfo, channelForDm, defaultThreadOptions } from '@sdd-studio/protocol';
@@ -135,13 +135,14 @@ export function LiveAgentChatFeed({ agentId, conversation, onPickConversation }:
       <form onSubmit={handleSendQuick} className="p-2 border-t border-white/10 bg-ink-950/90 flex flex-col gap-1.5">
         {sendError && <span className="text-[10px] text-rose-400 font-mono px-1">{sendError}</span>}
         <div className="flex items-center gap-2">
-          <input
+          <Input
             type="text"
             value={quickInput}
             onChange={(e) => setQuickInput(e.target.value)}
             placeholder={t('map.chat.placeholder', { name: meta.name })}
             disabled={isSending}
-            className="flex-1 bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-white/40 focus:outline-none focus:border-emerald-400 focus:bg-white/10 transition-colors font-sans disabled:opacity-50"
+            className="flex-1"
+            inputClassName="h-auto! sm:h-auto! rounded-lg! px-2.5! py-1.5! text-xs!"
           />
           <Button
             type="submit"
