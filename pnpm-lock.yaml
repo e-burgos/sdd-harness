@@ -112,12 +112,6 @@ importers:
       '@e-burgos/tucu-ui':
         specifier: 3.4.0
         version: 3.4.0(@types/react@19.2.18)(immer@11.2.9)(next@16.4.3(@playwright/test@1.63.0)(@types/node@20.19.43)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react-dom@19.3.0(react@19.3.0))(react-is@17.0.2)(react@19.3.0)(redux@5.0.1)(tailwindcss@4.3.3)(use-sync-external-store@1.7.0(react@19.3.0))
-      '@fontsource-variable/jetbrains-mono':
-        specifier: ^5.2.8
-        version: 5.3.0
-      '@fontsource-variable/space-grotesk':
-        specifier: ^5.2.8
-        version: 5.3.0
       '@sdd-studio/protocol':
         specifier: workspace:*
         version: link:../../libs/studio-protocol

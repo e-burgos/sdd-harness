@@ -53,10 +53,23 @@
       "depends_on": [
         "TASK-001"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
-        "apps/studio/src/app/globals.css"
-      ]
+        "apps/studio/src/app/globals.css",
+        "apps/studio/src/app/layout.tsx",
+        "apps/studio/package.json",
+        "pnpm-lock.yaml"
+      ],
+      "usage": {
+        "tokens_in": 80000,
+        "tokens_out": 9000,
+        "provider_model": "claude/opus",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-27"
+      }
     },
     {
       "id": "TASK-003",

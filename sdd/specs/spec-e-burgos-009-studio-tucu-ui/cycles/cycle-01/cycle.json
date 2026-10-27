@@ -30,7 +30,10 @@
     "fricción tucu-ui: el colorScheme por defecto del store es macos-tahoe; layout=\"clean\" solo no alcanza, hay que pasar themeStyle=\"default\" y background=\"none\" o la app arranca con el wallpaper de Tahoe",
     "fricción tucu-ui: el barrel raíz importa CSS de swiper; vitest/jsdom exige server.deps.inline de @e-burgos/tucu-ui y swiper, y cargar el barrel desde el i18n suma ~9 s a la suite de Studio",
     "fricción tucu-ui: @source sobre el paquete entero lleva el CSS exportado a ~727 KB; revisar si conviene acotar @source a los módulos usados",
-    "menor: spec-e-burgos-008-studio-session-flow.spec.md está vacío (0 bytes) desde su cierre; sdd:validate no lo detecta"
+    "menor: spec-e-burgos-008-studio-session-flow.spec.md está vacío (0 bytes) desde su cierre; sdd:validate no lo detecta",
+    "proceso: el e2e de Studio corre contra apps/studio-bridge/dist/web, una copia de studio/out que solo se refresca con el build del bridge; el e2e de TASK-001 corrió contra la UI vieja y se repitió en TASK-002 tras pnpm --filter sdd-studio build (8/8 con la UI nueva)",
+    "menor: emerald-* (113 usos en Mission Control y header) se mapea a --color-success para conservar la semántica de estado; los CTA verdes pasan al color de marca al migrarse a Button en TASK-003",
+    "menor: los colores por agente en lib/agents.ts y lib/gates.ts (#10b981 y otros) son identidad de cada agente y quedan fuera del puente"
   ],
   "reviewer_report": null
 }
