@@ -177,7 +177,7 @@ export function EcosystemDashboard() {
       key: 'status',
       label: t('ui.eco.col.status'),
       render: (v) => (
-        <Badge variant="soft" size="tiny" shape="pill" tone={statusTone(String(v))} className={`h-auto gap-1.5 px-2 py-0.5 font-mono text-micro uppercase ${v === 'in-progress' ? 'animate-pulse' : ''}`}>
+        <Badge variant="soft" size="micro" shape="pill" tone={statusTone(String(v))} className={`gap-1.5 px-2 py-0.5 font-mono text-micro uppercase ${v === 'in-progress' ? 'animate-pulse' : ''}`}>
           {String(v)}
         </Badge>
       ),

@@ -448,7 +448,7 @@ export function AgentMapCanvas({ onOpenDm, onNewConversation }: { onOpenDm: (age
           data-testid="zoom-toolbar"
           className="absolute bottom-6 left-6 z-20 flex items-center gap-1.5 rounded-xl border border-foreground/15 bg-ink-950/85 p-1.5 shadow-xl backdrop-blur-xl select-none"
         >
-          <Tooltip size="xs" arrow={false} content={t('ui.map.zoomIn')}>
+          <Tooltip lazy size="xs" arrow={false} content={t('ui.map.zoomIn')}>
             <Button type="button" variant="transparent" color="gray" shape="circle" size="tiny" className="font-mono" onClick={handleZoomIn}>
               +
             </Button>
@@ -456,13 +456,13 @@ export function AgentMapCanvas({ onOpenDm, onNewConversation }: { onOpenDm: (age
           <span className="min-w-[42px] text-center font-mono text-meta font-semibold text-emerald-400">
             {Math.round(zoom * 100)}%
           </span>
-          <Tooltip size="xs" arrow={false} content={t('ui.map.zoomOut')}>
+          <Tooltip lazy size="xs" arrow={false} content={t('ui.map.zoomOut')}>
             <Button type="button" variant="transparent" color="gray" shape="circle" size="tiny" className="font-mono" onClick={handleZoomOut}>
               -
             </Button>
           </Tooltip>
           <div className="h-4 w-[1px] bg-foreground/10 mx-0.5" />
-          <Tooltip size="xs" arrow={false} content={t('ui.map.zoomReset')}>
+          <Tooltip lazy size="xs" arrow={false} content={t('ui.map.zoomReset')}>
             <Button type="button" variant="transparent" color="gray" size="tiny" className="font-mono text-meta" onClick={handleResetZoom}>
               <span>⟲</span>
               <span>{t('ui.map.fit')}</span>
@@ -472,7 +472,7 @@ export function AgentMapCanvas({ onOpenDm, onNewConversation }: { onOpenDm: (age
 
         {isPanelCollapsed && (
           <div className="absolute top-4 right-4 z-20">
-            <Tooltip size="xs" arrow={false} content={t('ui.map.expandPanel')} placement="left">
+            <Tooltip lazy size="xs" arrow={false} content={t('ui.map.expandPanel')} placement="left">
               <Button type="button" data-testid="open-panel-button" variant="solid" color="gray" size="mini" onClick={() => setIsPanelCollapsed(false)}>
                 <Bot className="w-4 h-4 text-emerald-400" />
                 <span className="font-semibold text-ink-100">{t('ui.map.panel')}</span>

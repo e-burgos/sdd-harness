@@ -51,7 +51,7 @@ export function StudioHeader({ activeView, onSelectView }: StudioHeaderProps) {
           <AgentAvatar agent="sdd-orchestrator" size={24} showBadge={false} />
           <span className="font-semibold text-sm tracking-tight text-ink-100 flex items-center gap-1.5">
             SDD Studio
-            <Badge variant="soft" size="tiny" shape="pill" tone="success" className="h-auto gap-1.5 px-2 py-0.5 font-mono text-micro">v0.16</Badge>
+            <Badge variant="soft" size="micro" shape="pill" tone="success" className="gap-1.5 px-2 py-0.5 font-mono text-micro">v0.16</Badge>
           </span>
         </div>
         {snapshot?.project && (
@@ -100,21 +100,21 @@ export function StudioHeader({ activeView, onSelectView }: StudioHeaderProps) {
         </button>
 
         {/* Working Swarm Presence Counter */}
-        <Tooltip size="xs" arrow={false} content={t('ui.header.activeHint', { n: workingAgents.length })}>
-          <Badge variant="soft" size="tiny" shape="pill" tone={workingAgents.length > 0 ? 'info' : 'neutral'} data-testid="presence-pill" className={`h-auto gap-1.5 px-2.5 py-1 font-mono text-meta ${workingAgents.length > 0 ? 'animate-pulse' : ''}`}>
+        <Tooltip lazy size="xs" arrow={false} content={t('ui.header.activeHint', { n: workingAgents.length })}>
+          <Badge variant="soft" size="micro" shape="pill" tone={workingAgents.length > 0 ? 'info' : 'neutral'} data-testid="presence-pill" className={`gap-1.5 px-2.5 py-1 font-mono text-meta ${workingAgents.length > 0 ? 'animate-pulse' : ''}`}>
             <span className={`h-1.5 w-1.5 rounded-full ${workingAgents.length > 0 ? 'bg-sky-400' : 'bg-emerald-400'}`} />
             <span>{workingAgents.length > 0 ? t('ui.header.activeCount', { n: workingAgents.length }) : t('ui.header.ready')}</span>
           </Badge>
         </Tooltip>
 
         {/* Language Toggle */}
-        <Tooltip size="xs" arrow={false} content={t('ui.header.langToggle')}>
+        <Tooltip lazy size="xs" arrow={false} content={t('ui.header.langToggle')}>
           <Button type="button" onClick={() => setLang(lang === 'es' ? 'en' : 'es')} variant="transparent" color="gray" size="tiny" className="font-mono uppercase">
             {lang}
           </Button>
         </Tooltip>
 
-        <Tooltip size="xs" arrow={false} content={mode === 'dark' ? t('mode.toLight') : t('mode.toDark')}>
+        <Tooltip lazy size="xs" arrow={false} content={mode === 'dark' ? t('mode.toLight') : t('mode.toDark')}>
           <Button
             type="button"
             data-testid="mode-toggle"

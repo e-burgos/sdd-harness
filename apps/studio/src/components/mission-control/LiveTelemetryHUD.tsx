@@ -228,7 +228,7 @@ export function LiveTelemetryHUD() {
           </p>
         </div>
         {telemetry && (
-          <Badge variant="soft" size="tiny" shape="pill" tone="success" className="h-auto gap-2 px-3 py-1.5 font-mono text-meta font-bold">
+          <Badge variant="soft" size="micro" shape="pill" tone="success" className="gap-2 px-3 py-1.5 font-mono text-meta font-bold">
             <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
             <span>{t('ui.tel.streaming')}</span>
           </Badge>
@@ -315,7 +315,7 @@ export function LiveTelemetryHUD() {
               <p className="text-ui text-ink-300 font-mono">{t('ui.tel.shieldBody')}</p>
             </div>
           </div>
-          <Badge variant="soft" size="tiny" shape="pill" tone="success" className="h-auto gap-1.5 px-3 py-1.5 font-mono text-meta font-bold">
+          <Badge variant="soft" size="micro" shape="pill" tone="success" className="gap-1.5 px-3 py-1.5 font-mono text-meta font-bold">
             {t('ui.tel.protection')}
           </Badge>
         </div>

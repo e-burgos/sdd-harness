@@ -72,7 +72,7 @@ export function ConversationSessionInfo({ sessionTitle, engineSessionId, provide
             <span data-testid="conversation-session" className="min-w-0 flex-1 break-all text-sky-300">
               {engineSessionId}
             </span>
-            <Tooltip size="xs" arrow={false} content={t('mc.copySession')}>
+            <Tooltip lazy size="xs" arrow={false} content={t('mc.copySession')}>
               <Button
                 type="button"
                 data-testid="copy-session-button"

@@ -472,6 +472,8 @@ export const en = {
   'ui.doc.copyPath': 'Copy path',
   'ui.doc.pathCopied': 'Copied',
   'ui.doc.closeAria': 'Close document modal',
+  'ui.doc.view': 'View',
+  'ui.doc.related': 'Other documents',
   'ui.doc.closeHint': 'Close modal (Esc)',
   'ui.eco.title': 'Repository ecosystem',
   'ui.eco.subtitle': 'Live monitoring of subprojects, contracts, spec roadmap and SPEC GATE health.',

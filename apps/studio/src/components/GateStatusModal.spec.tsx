@@ -77,21 +77,28 @@ describe('GateStatusModal', () => {
     expect(screen.queryByTestId('gate-status-modal')).toBeNull();
   });
 
-  it('summarizes conversation, FIX GATE, related fixes, participants and the last event', () => {
+  const openItem = (name: string) => fireEvent.click(within(screen.getByRole('dialog')).getAllByRole('button', { name: new RegExp(name, 'i') })[0]);
+
+  it('opens on the gate and each sidebar item shows its own summary', () => {
     renderModal();
     expect(screen.getByRole('dialog', { name: 'Estado del enjambre' })).toBeInTheDocument();
+    expect(screen.getByTestId('gate-status-gate-label')).toHaveTextContent('FIX GATE FIX-e-burgos-005-006');
+    openItem('Conversación');
     expect(within(screen.getByTestId('gate-status-conversation')).getByText('Seguimos con el plan')).toBeInTheDocument();
     expect(screen.getByTestId('conversation-session')).toHaveTextContent('session-abc');
-    expect(screen.getByTestId('gate-status-gate-label')).toHaveTextContent('FIX GATE FIX-e-burgos-005-006');
     expect(screen.queryByTestId('gate-status-tasks')).toBeNull();
+    openItem('Fixes relacionados');
     expect(screen.getByTestId('gate-status-fixes')).toHaveTextContent('FIX-e-burgos-005-006');
     expect(screen.getByTestId('gate-status-fixes')).toHaveTextContent('pending');
+    openItem('Agentes participantes');
     expect(screen.getByTestId('gate-status-agents')).toHaveTextContent('2 eventos');
+    openItem('Último evento');
     expect(screen.getByTestId('gate-status-last-event')).toHaveTextContent('Listo el fix');
   });
 
   it('lists the tasks of the cycle with their status for a SPEC GATE', () => {
     renderModal({ gate: { kind: 'spec', specId: SPEC, cycle: 'cycle-01' } });
+    openItem('Tasks del ciclo');
     const tasks = screen.getByTestId('gate-status-tasks');
     expect(tasks).toHaveTextContent('TASK-001');
     expect(tasks).toHaveTextContent('hecha');
@@ -103,8 +110,11 @@ describe('GateStatusModal', () => {
     renderModal({ view: emptyView, gate: { kind: 'idle' } });
     expect(screen.getByTestId('gate-status-gate-label')).toHaveTextContent('IDLE');
     expect(screen.getByTestId('gate-status-gate')).toHaveTextContent('Sin gate activo en esta conversación');
+    openItem('Fixes relacionados');
     expect(screen.getByTestId('gate-status-fixes')).toHaveTextContent('Sin fixes relacionados');
+    openItem('Agentes participantes');
     expect(screen.getByTestId('gate-status-agents')).toHaveTextContent('Ningún agente participó todavía');
+    openItem('Último evento');
     expect(screen.getByTestId('gate-status-last-event')).toHaveTextContent('Sin eventos todavía');
   });
 
@@ -122,7 +132,7 @@ describe('GateStatusModal', () => {
     fireEvent.mouseDown(overlay);
     fireEvent.click(overlay);
     expect(onClose).toHaveBeenCalledTimes(3);
-    fireEvent.click(screen.getByTestId('gate-status-conversation'));
+    fireEvent.click(screen.getByTestId('gate-status-gate'));
     expect(onClose).toHaveBeenCalledTimes(3);
   });
 });

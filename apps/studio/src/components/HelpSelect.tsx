@@ -28,12 +28,6 @@ export interface HelpSelectProps {
 }
 
 const iconRing = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400';
-const listboxClasses = [
-  'w-max! min-w-40 max-w-80 max-h-80 [&>div]:max-h-72',
-  '[&_[data-tucu=select-option]_.text-muted]:whitespace-normal',
-  '[&_[data-tucu=select-option]_.text-muted]:text-meta',
-  '[&_[data-tucu=select-option]_.text-muted]:text-ink-400',
-].join(' ');
 const triggerClasses = 'gap-1.5 font-normal [&>svg]:size-3';
 
 export function HelpSelect({ label, help, options, value, onChange, disabled, searchable, wrapperClassName = '', className = 'max-w-[16rem]' }: HelpSelectProps) {
@@ -46,11 +40,9 @@ export function HelpSelect({ label, help, options, value, onChange, disabled, se
     group: o.group,
     icon: o.icon,
     description: o.description,
+    triggerLabel: o.triggerLabel,
   }));
-  const current = options.find((o) => o.value === value);
-  const selected: SelectOption = current
-    ? { name: current.triggerLabel ?? current.label, value, icon: current.icon }
-    : { name: '', value };
+  const selected: SelectOption = items.find((o) => o.value === value) ?? { name: '', value };
   return (
     <span data-testid="help-select" className={`relative inline-flex min-w-0 items-center gap-1 ${wrapperClassName}`}>
       <Select
@@ -65,13 +57,16 @@ export function HelpSelect({ label, help, options, value, onChange, disabled, se
         buttonClassName={triggerClasses}
         showCheck
         searchable={searchable}
-        listboxClassName={listboxClasses}
+        menuWidth="content"
+        wrapDescription
+        descriptionClassName="text-meta text-ink-400"
+        maxMenuHeight={320}
         onChange={(option: SelectOption) => onChange(option.value)}
       />
       <span id={helpId} className="sr-only">
         {help}
       </span>
-      <Tooltip content={help} size="xs" arrow={false}>
+      <Tooltip lazy content={help} size="xs" arrow={false}>
         <button
           type="button"
           data-testid="help-select-icon"

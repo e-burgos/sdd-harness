@@ -1,26 +1,50 @@
 'use client';
 
-import { Button, Modal, Skeleton, Tooltip } from '@e-burgos/tucu-ui';
+import { Button, Skeleton, SplitModal, Tooltip, type SplitModalSection } from '@e-burgos/tucu-ui';
 import React, { useState, useEffect } from 'react';
 import { Code2, ClipboardList, Zap, FileText, Check, Copy, Link2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { AgentGeneratedDocument } from '@/lib/agent-documents';
 import { useT } from '@/lib/i18n/i18n';
-import { SegmentedControl } from '../SegmentedControl';
 import { useBridge } from '../BridgeProvider';
 
 export interface DocumentViewerModalProps {
   document: AgentGeneratedDocument | null;
   onClose: () => void;
+  related?: AgentGeneratedDocument[];
+  onNavigate?: (document: AgentGeneratedDocument) => void;
 }
 
-export function DocumentViewerModal({ document: doc, onClose }: DocumentViewerModalProps) {
+type ViewMode = 'rendered' | 'raw';
+
+const RELATED_PREFIX = 'related:';
+
+const TYPE_BADGE_CLASS: Record<string, string> = {
+  spec: 'border-sky-500/40 bg-sky-500/20 text-sky-300',
+  plan: 'border-purple-500/40 bg-purple-500/20 text-purple-300',
+  wbs: 'border-purple-500/40 bg-purple-500/20 text-purple-300',
+  code: 'border-emerald-500/40 bg-emerald-500/20 text-emerald-300',
+  context: 'border-amber-500/40 bg-amber-500/20 text-amber-300',
+};
+
+const DocumentTypeIcon = ({ type }: { type: string }) =>
+  type === 'code' ? (
+    <Code2 className="h-3.5 w-3.5 text-emerald-400" aria-hidden />
+  ) : type === 'plan' || type === 'wbs' ? (
+    <ClipboardList className="h-3.5 w-3.5 text-purple-400" aria-hidden />
+  ) : type === 'fix' ? (
+    <Zap className="h-3.5 w-3.5 text-amber-400" aria-hidden />
+  ) : (
+    <FileText className="h-3.5 w-3.5 text-sky-400" aria-hidden />
+  );
+
+export function DocumentViewerModal({ document: doc, onClose, related = [], onNavigate }: DocumentViewerModalProps) {
   const { client } = useBridge();
   const { t } = useT();
   const [content, setContent] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [viewMode, setViewMode] = useState<'rendered' | 'raw'>('rendered');
+  const [viewMode, setViewMode] = useState<ViewMode>('rendered');
   const [loadFailed, setLoadFailed] = useState<boolean>(false);
   const [copied, setCopied] = useState<boolean>(false);
   const [pathCopied, setPathCopied] = useState<boolean>(false);
@@ -62,9 +86,52 @@ export function DocumentViewerModal({ document: doc, onClose }: DocumentViewerMo
     };
   }, [doc, client]);
 
+  useEffect(() => {
+    setViewMode('rendered');
+  }, [doc?.path]);
+
   const path = doc?.path ?? '';
   const isMarkdown = path.endsWith('.md');
   const isCodeOrJson = path.endsWith('.json') || path.endsWith('.ts') || path.endsWith('.tsx');
+
+  const others = related.filter((item) => item.path !== path);
+  const sections: SplitModalSection[] = [
+    ...(isMarkdown
+      ? [
+          {
+            id: 'view',
+            label: t('ui.doc.view'),
+            items: [
+              { id: 'rendered', label: t('ui.doc.rendered') },
+              { id: 'raw', label: t('ui.doc.raw') },
+            ],
+          },
+        ]
+      : []),
+    ...(others.length > 0
+      ? [
+          {
+            id: 'related',
+            label: t('ui.doc.related'),
+            items: others.map((item) => ({
+              id: `${RELATED_PREFIX}${item.path}`,
+              label: item.name,
+              icon: <DocumentTypeIcon type={item.type} />,
+              description: item.type,
+            })),
+          },
+        ]
+      : []),
+  ];
+
+  const handleSelect = (id: string) => {
+    if (id.startsWith(RELATED_PREFIX)) {
+      const target = others.find((item) => item.path === id.slice(RELATED_PREFIX.length));
+      if (target) onNavigate?.(target);
+      return;
+    }
+    setViewMode(id as ViewMode);
+  };
 
   const handleCopyContent = () => {
     void navigator.clipboard.writeText(content);
@@ -78,128 +145,79 @@ export function DocumentViewerModal({ document: doc, onClose }: DocumentViewerMo
     setTimeout(() => setPathCopied(false), 2000);
   };
 
+  const typeBadge = doc && (
+    <span
+      className={`shrink-0 rounded border px-1.5 py-0.5 font-mono text-micro font-extrabold uppercase ${TYPE_BADGE_CLASS[doc.type] ?? 'border-rose-500/40 bg-rose-500/20 text-rose-300'}`}
+    >
+      {doc.type}
+    </span>
+  );
+
   return (
-    <Modal
+    <SplitModal
       isOpen={!!doc}
-      setIsOpen={(next) => {
-        if (!next) onClose();
-      }}
-      hideButtons
-      size="xl"
-      maxWidth="56rem"
-      maxHeight="calc(85vh - 6rem)"
-      overlayClassName="bg-ink-950/80 backdrop-blur-md"
-      closeLabel={t('ui.doc.closeAria')}
-      closeButtonProps={{ 'data-testid': 'modal-close-button', title: t('ui.doc.closeHint') }}
-      data-testid="document-viewer-modal"
-      className="select-text rounded-2xl border border-foreground/15 bg-ink-950/95 text-ink-100 shadow-2xl backdrop-blur-2xl"
-      headerClassName="gap-3 border-foreground/10"
-      contentClassName="bg-ink-900/30 p-6"
-      header={
+      onClose={onClose}
+      title={doc?.name}
+      chips={
         doc && (
-          <div
-            data-testid="document-viewer-header"
-            className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3"
-          >
-            <div className="flex items-start gap-3 min-w-0 flex-1 basis-64">
-              <div className="h-10 w-10 rounded-xl bg-foreground/5 border border-foreground/10 flex items-center justify-center shrink-0">
-                {doc.type === 'code' ? (
-                  <Code2 className="w-5 h-5 text-emerald-400" />
-                ) : doc.type === 'plan' || doc.type === 'wbs' ? (
-                  <ClipboardList className="w-5 h-5 text-purple-400" />
-                ) : doc.type === 'fix' ? (
-                  <Zap className="w-5 h-5 text-amber-400" />
-                ) : (
-                  <FileText className="w-5 h-5 text-sky-400" />
-                )}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2 min-w-0">
-                  <h2 className="text-base font-bold text-ink-100 truncate font-sans min-w-0">{doc.name}</h2>
-                  <span
-                    className={`px-1.5 py-0.5 rounded text-micro font-mono font-extrabold uppercase shrink-0 ${
-                      doc.type === 'spec'
-                        ? 'bg-sky-500/20 text-sky-300 border border-sky-500/40'
-                        : doc.type === 'plan' || doc.type === 'wbs'
-                          ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
-                          : doc.type === 'code'
-                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                            : doc.type === 'context'
-                              ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-                              : 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
-                    }`}
-                  >
-                    {doc.type}
-                  </span>
-                  <span className="text-micro font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20 shrink-0">
-                    {doc.status}
-                  </span>
-                </div>
-                <p
-                  data-testid="document-viewer-path"
-                  className="mt-0.5 truncate text-xs text-ink-500 font-mono"
-                  title={doc.path}
-                >
-                  {doc.path}
-                </p>
-              </div>
-            </div>
-
-            <div
-              data-testid="document-viewer-actions"
-              className="flex flex-wrap items-center justify-end gap-2 shrink-0 ml-auto"
-            >
-              {isMarkdown && (
-                <SegmentedControl<'rendered' | 'raw'>
-                  semantics="radio"
-                  ariaLabel={t('segment.docMode')}
-                  className="font-mono"
-                  value={viewMode}
-                  onChange={setViewMode}
-                  options={[
-                    { id: 'rendered', label: t('ui.doc.rendered') },
-                    { id: 'raw', label: t('ui.doc.raw') },
-                  ]}
-                />
-              )}
-
-              <Tooltip content={t('ui.doc.copyAll')} size="xs" arrow={false} maxWidth={256} contentClassName="text-left">
-                <Button type="button" onClick={handleCopyContent} variant="transparent" color="gray" size="tiny" className="font-mono whitespace-nowrap">
-                  {copied ? (
-                    <>
-                      <Check className="w-3 h-3 text-emerald-400" />
-                      <span className="text-emerald-400">{t('ui.copied')}</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3 h-3" />
-                      <span>{t('ui.copy')}</span>
-                    </>
-                  )}
-                </Button>
-              </Tooltip>
-
-              <Tooltip content={t('ui.doc.copyPath')} size="xs" arrow={false} maxWidth={256} contentClassName="text-left">
-                <Button type="button" onClick={handleCopyPath} data-testid="copy-path-button" variant="transparent" color="gray" size="tiny" className="font-mono whitespace-nowrap">
-                  {pathCopied ? (
-                    <>
-                      <Check className="w-3 h-3 text-emerald-400" />
-                      <span className="text-emerald-400">{t('ui.doc.pathCopied')}</span>
-                    </>
-                  ) : (
-                    <>
-                      <Link2 className="w-3 h-3" />
-                      <span>{t('ui.doc.copyPath')}</span>
-                    </>
-                  )}
-                </Button>
-              </Tooltip>
-
-              <span aria-hidden="true" data-testid="document-viewer-divider" className="h-6 w-px bg-foreground/15 shrink-0" />
-            </div>
-          </div>
+          <>
+            {typeBadge}
+            <span className="shrink-0 rounded border border-emerald-500/20 bg-emerald-500/10 px-1.5 py-0.5 font-mono text-micro text-emerald-400">{doc.status}</span>
+          </>
         )
       }
+      sections={sections}
+      activeItemId={isMarkdown ? viewMode : undefined}
+      onActiveItemChange={handleSelect}
+      sidebarHeader={
+        doc && (
+          <p data-testid="document-viewer-path" className="truncate font-mono text-meta text-ink-500" title={doc.path}>
+            {doc.path}
+          </p>
+        )
+      }
+      sidebarFooter={
+        <div data-testid="document-viewer-actions" className="flex flex-wrap items-center gap-2">
+          <Tooltip content={t('ui.doc.copyAll')} size="xs" arrow={false} maxWidth={256} contentClassName="text-left">
+            <Button type="button" onClick={handleCopyContent} variant="transparent" color="gray" size="tiny" className="whitespace-nowrap font-mono">
+              {copied ? (
+                <>
+                  <Check className="h-3 w-3 text-emerald-400" />
+                  <span className="text-emerald-400">{t('ui.copied')}</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="h-3 w-3" />
+                  <span>{t('ui.copy')}</span>
+                </>
+              )}
+            </Button>
+          </Tooltip>
+          <Tooltip content={t('ui.doc.copyPath')} size="xs" arrow={false} maxWidth={256} contentClassName="text-left">
+            <Button type="button" onClick={handleCopyPath} data-testid="copy-path-button" variant="transparent" color="gray" size="tiny" className="whitespace-nowrap font-mono">
+              {pathCopied ? (
+                <>
+                  <Check className="h-3 w-3 text-emerald-400" />
+                  <span className="text-emerald-400">{t('ui.doc.pathCopied')}</span>
+                </>
+              ) : (
+                <>
+                  <Link2 className="h-3 w-3" />
+                  <span>{t('ui.doc.copyPath')}</span>
+                </>
+              )}
+            </Button>
+          </Tooltip>
+        </div>
+      }
+      maxWidth="64rem"
+      overlayClassName="bg-ink-950/80 backdrop-blur-md"
+      closeLabel={t('ui.doc.closeAria')}
+      closeTooltip={t('ui.doc.closeHint')}
+      closeButtonProps={{ 'data-testid': 'modal-close-button' }}
+      data-testid="document-viewer-modal"
+      className="select-text rounded-2xl border border-foreground/15 bg-ink-950/95 text-ink-100 shadow-2xl backdrop-blur-2xl"
+      bodyClassName="bg-ink-900/30 p-6"
     >
       {doc && (
         <>
@@ -216,7 +234,7 @@ export function DocumentViewerModal({ document: doc, onClose }: DocumentViewerMo
               {t('mc.doc.loadFailed', { path: doc.path })}
             </p>
           ) : viewMode === 'raw' || isCodeOrJson ? (
-            <div className="relative rounded-xl border border-foreground/10 bg-ink-950 p-4 font-mono text-xs leading-relaxed overflow-x-auto text-emerald-300">
+            <div className="relative overflow-x-auto rounded-xl border border-foreground/10 bg-ink-950 p-4 font-mono text-xs leading-relaxed text-emerald-300">
               <pre className="whitespace-pre-wrap break-words">{content}</pre>
             </div>
           ) : (
@@ -226,6 +244,6 @@ export function DocumentViewerModal({ document: doc, onClose }: DocumentViewerMo
           )}
         </>
       )}
-    </Modal>
+    </SplitModal>
   );
 }

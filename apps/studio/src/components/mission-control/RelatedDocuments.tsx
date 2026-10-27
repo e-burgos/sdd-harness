@@ -250,6 +250,10 @@ export function RelatedDocuments({
       <DocumentViewerModal
         document={viewing}
         onClose={() => setViewing(null)}
+        related={documents
+          .filter((item) => item.op !== "deleted")
+          .map(toViewerDocument)}
+        onNavigate={setViewing}
       />
     </section>
   );

@@ -142,7 +142,7 @@ export function LiveAgentChatFeed({ agentId, conversation, onPickConversation }:
             className="flex-1"
             inputClassName="h-auto sm:h-auto rounded-lg px-2.5 py-1.5 text-ui"
           />
-          <Tooltip size="xs" arrow={false} content={t('ui.feed.sendTo', { name: meta.name })}>
+          <Tooltip lazy size="xs" arrow={false} content={t('ui.feed.sendTo', { name: meta.name })}>
             <Button type="submit" size="tiny" disabled={isSending || !quickInput.trim()}>
               {isSending ? (
                 <>

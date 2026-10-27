@@ -470,6 +470,8 @@ export const es = {
   'ui.doc.copyPath': 'Copiar ruta',
   'ui.doc.pathCopied': 'Copiada',
   'ui.doc.closeAria': 'Cerrar modal de documento',
+  'ui.doc.view': 'Vista',
+  'ui.doc.related': 'Otros documentos',
   'ui.doc.closeHint': 'Cerrar modal (Esc)',
   'ui.eco.title': 'Ecosistema del Repositorio',
   'ui.eco.subtitle': 'Monitoreo dinámico de subproyectos, contratos, roadmap de specs y salud del SPEC GATE.',

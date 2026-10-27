@@ -279,7 +279,7 @@ export function ComposerView(p: ComposerViewProps) {
                     if (files.length > 0) p.onFiles?.(files);
                   }}
                 />
-                <Tooltip size="xs" arrow={false} content={t('attach.add')}>
+                <Tooltip lazy size="xs" arrow={false} content={t('attach.add')}>
                   <Button
                     type="button"
                     variant="transparent"
@@ -296,7 +296,7 @@ export function ComposerView(p: ComposerViewProps) {
               </>
             )}
             <div className="ml-auto">
-              <Tooltip size="xs" arrow={false} content={p.queueing ? t('composer.queueHint') : t('composer.send')}>
+              <Tooltip lazy size="xs" arrow={false} content={p.queueing ? t('composer.queueHint') : t('composer.send')}>
                 <Button
                   type="button"
                   shape={p.queueing ? 'rounded' : 'circle'}

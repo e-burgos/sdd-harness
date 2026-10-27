@@ -99,5 +99,9 @@ html[data-app-shell] body {
   --tucu-table-header-bg: color-mix(in oklab, var(--color-light-dark) 50%, var(--color-secondary));
   --tucu-table-header-fg: var(--color-muted);
   --tucu-table-cell-fg: color-mix(in oklab, var(--color-foreground) 92%, var(--color-muted));
+  --tucu-table-cell-px: 1rem;
+  --tucu-table-cell-py: 0.75rem;
+  --tucu-table-font-size: 12px;
+  --tucu-table-header-font-size: 11px;
   --tucu-table-row-hover: color-mix(in oklab, var(--color-foreground) 5%, transparent);
 }

@@ -145,7 +145,7 @@ export function ThreadLinkPicker({ threadId }: { threadId: string }) {
               <span className={`truncate font-mono text-meta ${available ? 'text-ink-100' : 'text-ink-400 line-through'}`} title={label}>{label}</span>
               <span data-testid="link-origin" className="shrink-0 text-micro uppercase text-ink-500">{t(`link.origin.${entry.origin}`)}</span>
               {!available && <span data-testid="link-unavailable" className="shrink-0 text-micro text-amberish">{t('link.unavailable')}</span>}
-              <Tooltip size="xs" arrow={false} content={t('link.remove', { target: label })}>
+              <Tooltip lazy size="xs" arrow={false} content={t('link.remove', { target: label })}>
                 <button
                   type="button"
                   aria-label={t('link.remove', { target: label })}

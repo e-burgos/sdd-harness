@@ -115,13 +115,13 @@ export function AgentInspectorDrawer({
 
         <div className="flex items-center gap-1">
           {activeTab === 'agent' && meta && (
-            <Tooltip size="xs" arrow={false} content={t('ui.inspector.toggleProfile')}>
+            <Tooltip lazy size="xs" arrow={false} content={t('ui.inspector.toggleProfile')}>
               <Button type="button" variant="transparent" color="gray" size="tiny" className="font-mono" onClick={toggleAgentInfo}>
                 {showFullProfile ? t('map.hideInfo') : t('map.showInfo')}
               </Button>
             </Tooltip>
           )}
-          <Tooltip size="xs" arrow={false} content={t('ui.inspector.collapse')}>
+          <Tooltip lazy size="xs" arrow={false} content={t('ui.inspector.collapse')}>
             <Button type="button" variant="transparent" color="gray" shape="circle" size="tiny" onClick={onClose} aria-label={t('ui.inspector.collapse')}>
               <X className="w-3.5 h-3.5" />
             </Button>
@@ -223,7 +223,7 @@ export function AgentInspectorDrawer({
                 {t('ui.inspector.swarmComms', { n: conversation?.dialogues.length ?? 0 })}
               </span>
             </div>
-            <Tooltip size="xs" arrow={false} content={t('ui.inspector.scrollBottom')}>
+            <Tooltip lazy size="xs" arrow={false} content={t('ui.inspector.scrollBottom')}>
               <Button type="button" variant="transparent" color="success" size="tiny" className="font-mono text-meta" onClick={scrollToBottom}>
                 {t('ui.inspector.down')}
               </Button>
