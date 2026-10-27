@@ -1,0 +1,33 @@
+{
+  "$schema": "../../../../schemas/cycle.schema.json",
+  "cycle": 2,
+  "module": "studio-tucu-ui",
+  "spec": "spec-e-burgos-009-studio-tucu-ui",
+  "apps": [
+    "apps/studio"
+  ],
+  "phase": "tucu-ui-full-pass",
+  "flow": "lite",
+  "objectives": [
+    "Modo claro/oscuro persistente con selector en el header (US-004)",
+    "Todas las vistas legibles en los dos modos",
+    "Escala tipográfica y tamaños de controles armónicos (US-008)",
+    "Selectores con Select de tucu-ui (US-005)",
+    "Pestañas, colapsables, tooltips, tarjetas y tablas de tucu-ui (US-006)",
+    "Bugs de interfaz e i18n corregidos (US-007)"
+  ],
+  "status": "in-progress",
+  "started_at": "2026-10-27",
+  "completed_at": null,
+  "documents": {
+    "plan": "sdd/specs/spec-e-burgos-009-studio-tucu-ui/cycles/cycle-02/plan.md",
+    "tasks": "sdd/specs/spec-e-burgos-009-studio-tucu-ui/cycles/cycle-02/tasks.json"
+  },
+  "artifacts": [],
+  "metrics": null,
+  "tables_created": [],
+  "endpoints_implemented": [],
+  "components_created": [],
+  "issues_found": [],
+  "reviewer_report": null
+}

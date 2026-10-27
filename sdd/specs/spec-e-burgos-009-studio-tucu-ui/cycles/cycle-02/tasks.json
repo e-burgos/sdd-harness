@@ -1,0 +1,133 @@
+{
+  "$schema": "../../../../schemas/cycle-tasks.schema.json",
+  "spec": "spec-e-burgos-009-studio-tucu-ui",
+  "cycle": 2,
+  "module": "studio-tucu-ui",
+  "apps": [
+    "apps/studio"
+  ],
+  "flow": "lite",
+  "user_stories_generated": true,
+  "prerequisites": {
+    "tasks_generated": true
+  },
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "Tema claro/oscuro persistente: sin mode fijo en el provider, selector en StudioHeader junto al idioma, primera visita según prefers-color-scheme, sin selector de idioma duplicado en el sidebar",
+      "user_stories": [
+        "US-004"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-002",
+      "title": "Legibilidad en los dos modos: text-white, bg/border-white y paletas fijas de Mission Control, header y modales a tokens; accent-300/emerald-300 mezclados con foreground; SVG genéricos con currentColor",
+      "user_stories": [
+        "US-004"
+      ],
+      "estimation_hours": 5,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-003",
+      "title": "Escala tipográfica armónica y tamaños de controles: Button tiny/mini a 12px sin tracking-wider desde globals.css, revisión de botones y campos sobredimensionados",
+      "user_stories": [
+        "US-008"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-002"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-004",
+      "title": "Selectores: HelpSelect envuelve Select y Tooltip de tucu-ui, 9 usos migrados, guarda de cero <select> nativos",
+      "user_stories": [
+        "US-005"
+      ],
+      "estimation_hours": 5,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-003"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-005",
+      "title": "Pestañas y colapsables: tabs del header, AuthPanel y segmented controls a Tab/TabSelect; NavTree, RelatedDocuments y Timeline a Collapse, o excepción documentada",
+      "user_stories": [
+        "US-006"
+      ],
+      "estimation_hours": 5,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-003"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-006",
+      "title": "Tooltips, skeletons, tarjetas y tablas: title= de acciones a Tooltip, Skeleton, Card/DataTable en Ecosistema, Badge en las pills del header",
+      "user_stories": [
+        "US-006"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-004",
+        "TASK-005"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-007",
+      "title": "Bugs: indicador de dev de Next, overflow del sidebar, flex+hidden en WorkspaceApp, textos fijos al i18n es/en",
+      "user_stories": [
+        "US-007"
+      ],
+      "estimation_hours": 2,
+      "story_points": 2,
+      "depends_on": [
+        "TASK-004",
+        "TASK-005"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-008",
+      "title": "Verificación completa (build/typecheck/test, build:local → bridge → e2e, recorrida visual en los dos modos) y cierre del ciclo",
+      "user_stories": [
+        "US-004",
+        "US-005",
+        "US-006",
+        "US-007",
+        "US-008"
+      ],
+      "estimation_hours": 2,
+      "story_points": 2,
+      "depends_on": [
+        "TASK-006",
+        "TASK-007"
+      ],
+      "status": "pending",
+      "files": []
+    }
+  ]
+}
