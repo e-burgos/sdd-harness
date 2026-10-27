@@ -180,6 +180,16 @@
           "status": "completed",
           "tasks_total": 3,
           "tasks_done": 3
+        },
+        "cycle-05": {
+          "file": "sdd/specs/spec-e-burgos-009-studio-tucu-ui/cycles/cycle-05/tasks.json",
+          "module": "studio-tucu-ui",
+          "apps": [
+            "apps/studio"
+          ],
+          "status": "in-progress",
+          "tasks_total": 2,
+          "tasks_done": 0
         }
       }
     }

@@ -1,0 +1,29 @@
+{
+  "$schema": "../../../../schemas/cycle.schema.json",
+  "cycle": 5,
+  "module": "studio-tucu-ui",
+  "spec": "spec-e-burgos-009-studio-tucu-ui",
+  "apps": [
+    "apps/studio"
+  ],
+  "phase": "tucu-ui-3.6-adoption",
+  "flow": "lite",
+  "objectives": [
+    "Adoptar tucu-ui 3.6.0 sin ajustes propios que la versión resuelve (US-013)",
+    "Base para el sidebar doble estilo Slack"
+  ],
+  "status": "in-progress",
+  "started_at": "2026-10-27",
+  "completed_at": null,
+  "documents": {
+    "plan": "sdd/specs/spec-e-burgos-009-studio-tucu-ui/cycles/cycle-05/plan.md",
+    "tasks": "sdd/specs/spec-e-burgos-009-studio-tucu-ui/cycles/cycle-05/tasks.json"
+  },
+  "artifacts": [],
+  "metrics": null,
+  "tables_created": [],
+  "endpoints_implemented": [],
+  "components_created": [],
+  "issues_found": [],
+  "reviewer_report": null
+}
