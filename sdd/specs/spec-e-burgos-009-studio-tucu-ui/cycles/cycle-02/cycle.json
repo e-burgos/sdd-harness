@@ -16,15 +16,226 @@
     "Pestañas, colapsables, tooltips, tarjetas y tablas de tucu-ui (US-006)",
     "Bugs de interfaz e i18n corregidos (US-007)"
   ],
-  "status": "in-progress",
+  "status": "completed",
   "started_at": "2026-10-27",
-  "completed_at": null,
+  "completed_at": "2026-10-27",
   "documents": {
     "plan": "sdd/specs/spec-e-burgos-009-studio-tucu-ui/cycles/cycle-02/plan.md",
     "tasks": "sdd/specs/spec-e-burgos-009-studio-tucu-ui/cycles/cycle-02/tasks.json"
   },
   "artifacts": [],
-  "metrics": null,
+  "metrics": {
+    "tasks_total": 8,
+    "tasks_completed": 8,
+    "tasks_skipped": 0,
+    "story_points": 28,
+    "files_created": [
+      "apps/studio/src/components/ColorModeBootstrap.tsx",
+      "apps/studio/src/components/SegmentedControl.tsx",
+      "apps/studio/src/components/StatusPill.tsx",
+      "apps/studio/src/components/Tip.tsx",
+      "apps/studio/src/components/colormodebootstrap.spec.tsx",
+      "apps/studio/src/components/segmentedcontrol.spec.tsx",
+      "apps/studio/src/lib/test-utils/pick-option.ts"
+    ],
+    "files_modified": [
+      "apps/studio/next.config.ts",
+      "apps/studio/src/app/globals.css",
+      "apps/studio/src/app/layout.tsx",
+      "apps/studio/src/components/ConnectScreen.tsx",
+      "apps/studio/src/components/GateStatusModal.tsx",
+      "apps/studio/src/components/HelpSelect.tsx",
+      "apps/studio/src/components/StudioHeader.tsx",
+      "apps/studio/src/components/WorkspaceApp.tsx",
+      "apps/studio/src/components/helpselect.spec.tsx",
+      "apps/studio/src/components/mission-control/AgentInspectorDrawer.tsx",
+      "apps/studio/src/components/mission-control/AgentMapCanvas.tsx",
+      "apps/studio/src/components/mission-control/AgentNode.tsx",
+      "apps/studio/src/components/mission-control/CapabilityNotice.tsx",
+      "apps/studio/src/components/mission-control/ChatDialogueCard.tsx",
+      "apps/studio/src/components/mission-control/ConversationSelector.spec.tsx",
+      "apps/studio/src/components/mission-control/ConversationSelector.tsx",
+      "apps/studio/src/components/mission-control/ConversationSessionInfo.tsx",
+      "apps/studio/src/components/mission-control/DocumentViewerModal.tsx",
+      "apps/studio/src/components/mission-control/EcosystemDashboard.tsx",
+      "apps/studio/src/components/mission-control/GateCard.tsx",
+      "apps/studio/src/components/mission-control/GateInspectorDrawer.tsx",
+      "apps/studio/src/components/mission-control/LiveAgentChatFeed.tsx",
+      "apps/studio/src/components/mission-control/LiveSwarmComms.tsx",
+      "apps/studio/src/components/mission-control/LiveTelemetryHUD.tsx",
+      "apps/studio/src/components/mission-control/RelatedDocuments.tsx",
+      "apps/studio/src/components/mission-control/SubprojectIcon.tsx",
+      "apps/studio/src/components/mission-control/agentmap.spec.tsx",
+      "apps/studio/src/components/mission-control/chatdialoguecard.spec.tsx",
+      "apps/studio/src/components/mission-control/ecosystem.spec.tsx",
+      "apps/studio/src/components/mission-control/inspectordrawer.spec.tsx",
+      "apps/studio/src/components/mission-control/telemetry.spec.tsx",
+      "apps/studio/src/components/no-native-select.spec.ts",
+      "apps/studio/src/components/studioheader.spec.tsx",
+      "apps/studio/src/components/workspace/AgentAvatar.tsx",
+      "apps/studio/src/components/workspace/ApiKeyField.tsx",
+      "apps/studio/src/components/workspace/ApprovalCard.tsx",
+      "apps/studio/src/components/workspace/AttachmentTray.tsx",
+      "apps/studio/src/components/workspace/AttachmentView.tsx",
+      "apps/studio/src/components/workspace/AuthPanel.tsx",
+      "apps/studio/src/components/workspace/ChannelView.tsx",
+      "apps/studio/src/components/workspace/Composer.tsx",
+      "apps/studio/src/components/workspace/ConversationPanelSections.tsx",
+      "apps/studio/src/components/workspace/MentionMenu.tsx",
+      "apps/studio/src/components/workspace/ModeSelectors.tsx",
+      "apps/studio/src/components/workspace/NavTree.tsx",
+      "apps/studio/src/components/workspace/PanelRail.tsx",
+      "apps/studio/src/components/workspace/PendingMessages.tsx",
+      "apps/studio/src/components/workspace/QuestionForm.tsx",
+      "apps/studio/src/components/workspace/RightPanel.tsx",
+      "apps/studio/src/components/workspace/RunOutput.tsx",
+      "apps/studio/src/components/workspace/Sidebar.tsx",
+      "apps/studio/src/components/workspace/StatusBadge.tsx",
+      "apps/studio/src/components/workspace/ThreadLinkPicker.tsx",
+      "apps/studio/src/components/workspace/Timeline.tsx",
+      "apps/studio/src/components/workspace/activity.spec.tsx",
+      "apps/studio/src/components/workspace/agentavatar.spec.tsx",
+      "apps/studio/src/components/workspace/composer.spec.tsx",
+      "apps/studio/src/components/workspace/modes.spec.tsx",
+      "apps/studio/src/components/workspace/threadlink.spec.tsx",
+      "apps/studio/src/lib/i18n/en.ts",
+      "apps/studio/src/lib/i18n/es.ts",
+      "apps/studio/vitest.setup.ts"
+    ],
+    "files_deleted": [],
+    "usage": {
+      "tokens_in": 945402,
+      "tokens_out": 160953,
+      "approx": true,
+      "source": "declared-estimate",
+      "by_tier": {
+        "claude/opus": {
+          "tokens_in": 260000,
+          "tokens_out": 40000,
+          "approx": true,
+          "source": "declared-estimate"
+        },
+        "claude/sonnet": {
+          "tokens_in": 685402,
+          "tokens_out": 120953,
+          "approx": true,
+          "source": "declared-estimate"
+        }
+      },
+      "by_agent": [
+        {
+          "agent": "orchestrator",
+          "label": "solo",
+          "provider_model": "claude/opus",
+          "effort": "high",
+          "tokens_in": 110000,
+          "tokens_out": 18000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-27"
+        },
+        {
+          "agent": "orchestrator",
+          "label": "audit",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 78334,
+          "tokens_out": 13824,
+          "approx": true,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-10-27"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-001",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 54200,
+          "tokens_out": 9570,
+          "approx": true,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-10-27"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-002",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 84330,
+          "tokens_out": 14890,
+          "approx": true,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-10-27"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-003",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 42166,
+          "tokens_out": 7427,
+          "approx": true,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-10-27"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-004",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 117110,
+          "tokens_out": 20666,
+          "approx": true,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-10-27"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-005",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 58554,
+          "tokens_out": 10334,
+          "approx": true,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-10-27"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-006",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 188031,
+          "tokens_out": 33181,
+          "approx": true,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-10-27"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-007",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 62677,
+          "tokens_out": 11061,
+          "approx": true,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-10-27"
+        },
+        {
+          "agent": "reviewer",
+          "label": "TASK-008",
+          "provider_model": "claude/opus",
+          "effort": "medium",
+          "tokens_in": 150000,
+          "tokens_out": 22000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-27"
+        }
+      ]
+    }
+  },
   "tables_created": [],
   "endpoints_implemented": [],
   "components_created": [],
@@ -45,5 +256,28 @@
     "excepción i18n: datos de identidad de agentes y gates (lib/agents.ts, lib/gates.ts), etiquetas técnicas de aristas del mapa, Monorepo, SDD Studio, GATES y el centinela desconocido de LiveTelemetryHUD",
     "fricción tucu-ui: Tooltip y Button.tooltip sin className ni theming por instancia, colores gray/white fijos y sin data-tucu en la raíz; Skeleton con bg-gray fijo y brillo blanco; Badge 3.4.0 sin tone y sin override de tamaño/color; Card sin merge de clases, body p-4 sin flex-grow y sin densidad; BasicTable sin data-testid ni rest props, colores gray y text-sm/px-3 py-2 fijos, maxRows con alto de fila implícito y divisores de celda no desactivables"
   ],
-  "reviewer_report": null
+  "reviewer_report": {
+    "approved": true,
+    "date": "2026-10-27",
+    "ca_results": {
+      "US-004": "PASS - selector Sol/Luna en el header junto al idioma; el modo persiste al recargar (verificado en el navegador: light tras reload); primera visita según prefers-color-scheme (colormodebootstrap.spec); Workspace, Mapa de Agentes, Ecosistema y Telemetría legibles en claro y oscuro (revisión visual)",
+      "US-005": "PASS - los 9 selectores usan tucu Select vía HelpSelect con ayuda y tooltip; nombre y descripción accesibles conservados (helpselect.spec); no-native-select.spec exige cero <select>; lista compacta revisada en los dos modos",
+      "US-006": "PASS con excepciones - segmented controls unificados en SegmentedControl (tucu Tab no conserva densidad/roles/testids); tooltips con Tip, Badge vía StatusPill, Skeleton, Card y BasicTable en Ecosistema y Telemetría; colapsables y modales siguen custom con motivo registrado",
+      "US-007": "PASS - devIndicators abajo a la derecha (solo next dev, no verificado en vivo), sidebar sin superposición a 1280x700 con AuthPanel abierto, flex/hidden resuelto en WorkspaceApp, 122 claves ui.* nuevas en es/en",
+      "US-008": "PASS - escala text-micro/meta/ui/small/body/title definida una vez; Button tiny/mini a 12px sin tracking-wider; Mostrar más/Abajo/Ajustar a 11px y Play/Siguiente/Nueva conversación a 12px (revisión visual)"
+    },
+    "tests": {
+      "sdd:validate": "OK",
+      "build": "pnpm build exit 0",
+      "typecheck": "pnpm typecheck exit 0",
+      "suite": "protocol 103/103, cli 202 pass (9 skipped), studio-bridge 675 pass (2 skipped), studio 695/695",
+      "e2e": "apps/studio e2e 8/8 PASS contra dist/web recompilado"
+    },
+    "notes": "Aprobado por el actor único del flow lite (opus/medium); TASK-001..007 implementadas por subagentes sonnet/medium en tres tandas, cada una revisada en el navegador en los dos modos antes de commitear. Sin comentarios narrativos nuevos. Todas las fricciones de tucu-ui (puntos 24-43) se enviaron a la sesión de tucu-ui spec-002, que ya resolvió 24-26 y la escala de Button en su rama sin publicar.",
+    "follow_ups": [
+      "Ciclo corto de actualización cuando tucu-ui publique spec-002: borrar overrides de globals.css, ColorModeBootstrap y wrappers que sobren; migrar GateStatusModal y DocumentViewerModal a Modal",
+      "Revisar en modo claro los tres colores de identidad de agentes muy claros",
+      "Verificar devIndicators en next dev"
+    ]
+  }
 }
