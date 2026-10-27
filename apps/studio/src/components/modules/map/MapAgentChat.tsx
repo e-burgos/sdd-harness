@@ -1,7 +1,6 @@
 'use client';
 
 import { Button } from '@e-burgos/tucu-ui';
-import { useState } from 'react';
 import { ChevronDown, ChevronUp, X } from 'lucide-react';
 import { agentMeta } from '@/lib/agents';
 import { useT } from '@/lib/i18n/i18n';
@@ -11,15 +10,18 @@ import { MAP_AGENT_IDS } from '../../mission-control/AgentMapCanvas';
 import { AgentDirectChat } from '../agents/AgentDirectChat';
 import { AgentFaceChip } from '../agents/AgentFaceChip';
 import { presenceOfAgent } from '../agents/agent-presence';
+import { useMapChatState } from './map-chat-state';
 
 export function MapAgentChat() {
   const { t } = useT();
   const agentId = useNav((s) => s.selection.agents);
-  const select = useNav((s) => s.select);
   const state = useStudio((s) => (agentId ? (presenceOfAgent(s.presence, agentId)?.state ?? 'idle') : 'idle'));
-  const [expanded, setExpanded] = useState(false);
+  const expanded = useMapChatState((s) => s.expanded);
+  const setExpanded = useMapChatState((s) => s.setExpanded);
+  const open = useMapChatState((s) => s.open);
+  const closeChat = useMapChatState((s) => s.closeChat);
   const inSnapshot = useStudio((s) => (agentId ? s.snapshot?.agents.some((agent) => agent.id === agentId) === true : false));
-  if (agentId === null) return null;
+  if (agentId === null || !open) return null;
   const meta = agentMeta(agentId);
   const available = inSnapshot || MAP_AGENT_IDS.includes(agentId);
 
@@ -46,11 +48,11 @@ export function MapAgentChat() {
             size="tiny"
             aria-label={t(expanded ? 'module.map.chat.collapse' : 'module.map.chat.expand')}
             aria-expanded={expanded}
-            onClick={() => setExpanded((value) => !value)}
+            onClick={() => setExpanded(!expanded)}
           >
             {expanded ? <ChevronDown aria-hidden size={16} /> : <ChevronUp aria-hidden size={16} />}
           </Button>
-          <Button type="button" variant="transparent" color="gray" shape="circle" size="tiny" aria-label={t('module.map.chat.close')} onClick={() => select('agents', null)}>
+          <Button type="button" variant="transparent" color="gray" shape="circle" size="tiny" aria-label={t('module.map.chat.close')} onClick={closeChat}>
             <X aria-hidden size={16} />
           </Button>
         </header>

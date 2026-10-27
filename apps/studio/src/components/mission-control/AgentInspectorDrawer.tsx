@@ -23,7 +23,8 @@ interface AgentInspectorDrawerProps {
   onPickConversation?: (threadId: string) => void;
   onSelectAgent?: (agentId: string) => void;
   onSelectDialogue?: (dialogue: ConversationDialogue) => void;
-  onClose: () => void;
+  onClose?: () => void;
+  embedded?: boolean;
   onOpenDm: (agentId: string) => void;
 }
 
@@ -39,6 +40,7 @@ export function AgentInspectorDrawer({
   onSelectAgent,
   onSelectDialogue,
   onClose,
+  embedded = false,
   onOpenDm,
 }: AgentInspectorDrawerProps) {
   const { t } = useT();
@@ -92,11 +94,17 @@ export function AgentInspectorDrawer({
   return (
     <aside
       data-testid="agent-inspector-drawer"
-      className="absolute top-4 right-4 bottom-4 w-96 lg:w-[420px] rounded-2xl border border-foreground/15 bg-ink-950/95 p-4 shadow-2xl backdrop-blur-xl flex flex-col z-20 animate-in fade-in slide-in-from-right duration-300 select-none overflow-hidden"
+      data-embedded={embedded}
+      className={
+        embedded
+          ? 'flex h-full min-h-0 flex-col overflow-hidden select-none'
+          : 'absolute top-4 right-4 bottom-4 w-96 lg:w-[420px] rounded-2xl border border-foreground/15 bg-ink-950/95 p-4 shadow-2xl backdrop-blur-xl flex flex-col z-20 animate-in fade-in slide-in-from-right duration-300 select-none overflow-hidden'
+      }
     >
       <div className="flex items-center justify-between pb-3 border-b border-foreground/10 shrink-0">
         <SegmentedControl
           semantics="tabs"
+          data-studio-exempt="hosted-component"
           aria-label={t('segment.inspector')}
           size="sm"
           className="font-mono"
@@ -108,12 +116,12 @@ export function AgentInspectorDrawer({
             } else if (agentId) setActiveTab('agent');
           }}
           options={[
-            { value: 'swarm', label: t('ui.swarm'), icon: <Bot className="h-3.5 w-3.5" /> },
-            { value: 'agent', label: meta ? meta.name : t('ui.inspector.agent'), icon: <User className="h-3.5 w-3.5" />, disabled: !agentId },
+            { value: 'swarm', label: t('ui.swarm'), labelClassName: 'text-ui', icon: <Bot className="h-3.5 w-3.5" /> },
+            { value: 'agent', label: meta ? meta.name : t('ui.inspector.agent'), labelClassName: 'text-ui', icon: <User className="h-3.5 w-3.5" />, disabled: !agentId },
           ]}
         />
 
-        <div className="flex items-center gap-1">
+        <div data-studio-exempt="hosted-component" className="flex items-center gap-1">
           {activeTab === 'agent' && meta && (
             <Tooltip size="xs" arrow={false} content={t('ui.inspector.toggleProfile')}>
               <Button type="button" variant="transparent" color="gray" size="tiny" className="font-mono" onClick={toggleAgentInfo}>
@@ -121,11 +129,13 @@ export function AgentInspectorDrawer({
               </Button>
             </Tooltip>
           )}
-          <Tooltip size="xs" arrow={false} content={t('ui.inspector.collapse')}>
-            <Button type="button" variant="transparent" color="gray" shape="circle" size="tiny" onClick={onClose} aria-label={t('ui.inspector.collapse')}>
-              <X className="w-3.5 h-3.5" />
-            </Button>
-          </Tooltip>
+          {onClose && !embedded && (
+            <Tooltip size="xs" arrow={false} content={t('ui.inspector.collapse')}>
+              <Button type="button" variant="transparent" color="gray" shape="circle" size="tiny" onClick={onClose} aria-label={t('ui.inspector.collapse')}>
+                <X className="w-3.5 h-3.5" />
+              </Button>
+            </Tooltip>
+          )}
         </div>
       </div>
 
@@ -136,7 +146,7 @@ export function AgentInspectorDrawer({
               <AgentAvatar agent={agentId} size={42} status={presence?.state === 'working' ? 'running' : null} />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-1.5">
-                  <h3 className="font-semibold text-sm text-ink-100 truncate">{meta.name}</h3>
+                  <h3 className="font-semibold text-small text-ink-100 truncate">{meta.name}</h3>
                   {meta.isLeader && (
                     <span className="rounded bg-emerald-500/20 px-1.5 py-0.5 font-mono text-micro text-emerald-300 font-bold shrink-0">
                       {t('ui.inspector.leaderBadge')}
@@ -191,7 +201,7 @@ export function AgentInspectorDrawer({
                 size="mini"
                 onClick={() => {
                   onOpenDm(agentId);
-                  onClose();
+                  if (!embedded) onClose?.();
                 }}
               >
                 <MessageSquare className="w-3.5 h-3.5" />
@@ -202,7 +212,7 @@ export function AgentInspectorDrawer({
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center p-6 text-center text-ink-500 space-y-3">
             <Users className="w-8 h-8 text-ink-500" />
-            <p className="text-xs font-semibold text-ink-100">{t('ui.inspector.noAgent')}</p>
+            <p className="text-ui font-semibold text-ink-100">{t('ui.inspector.noAgent')}</p>
             <p className="text-meta text-ink-500 max-w-[260px] leading-relaxed">
               {t('ui.inspector.noAgentHint')}
             </p>
@@ -223,21 +233,23 @@ export function AgentInspectorDrawer({
                 {t('ui.inspector.swarmComms', { n: conversation?.dialogues.length ?? 0 })}
               </span>
             </div>
-            <Tooltip size="xs" arrow={false} content={t('ui.inspector.scrollBottom')}>
-              <Button type="button" variant="transparent" color="success" size="tiny" className="font-mono text-meta" onClick={scrollToBottom}>
-                {t('ui.inspector.down')}
-              </Button>
-            </Tooltip>
+            <span data-studio-exempt="hosted-component">
+              <Tooltip size="xs" arrow={false} content={t('ui.inspector.scrollBottom')}>
+                <Button type="button" variant="transparent" color="success" size="tiny" className="font-mono text-meta" onClick={scrollToBottom}>
+                  {t('ui.inspector.down')}
+                </Button>
+              </Tooltip>
+            </span>
           </div>
 
           <div
             data-testid="swarm-comms-scroll"
-            className="flex-1 overflow-y-auto p-2.5 space-y-2 text-xs select-text scroll-smooth bg-ink-900/40 rounded-b-xl border border-foreground/5"
+            className="flex-1 overflow-y-auto p-2.5 space-y-2 text-ui select-text scroll-smooth bg-ink-900/40 rounded-b-xl border border-foreground/5"
           >
             {!conversation || conversation.isEmpty ? (
               <div data-testid="swarm-comms-empty-state" className="h-full flex flex-col items-center justify-center p-4 text-center text-ink-500 space-y-2">
                 <Moon className="w-8 h-8 text-ink-500" />
-                <p className="text-xs font-sans leading-relaxed">{conversation ? t('mc.noActivity') : t('mc.noConversations')}</p>
+                <p className="text-ui font-sans leading-relaxed">{conversation ? t('mc.noActivity') : t('mc.noConversations')}</p>
               </div>
             ) : (
               <>

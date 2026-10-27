@@ -4,6 +4,7 @@ import { bridgeValue, renderShell, shellSnapshot } from '../../shell/shell-test-
 import { MapPanel } from './MapPanel';
 import { MapAgentChat } from './MapAgentChat';
 import { MapRight } from './MapRight';
+import { useMapChatState } from './map-chat-state';
 import { SwarmPlaybackProvider } from './swarm-playback';
 import { mapModule } from './index';
 import { agentMeta } from '@/lib/agents';
@@ -51,6 +52,7 @@ describe('Map module', () => {
   beforeEach(() => {
     window.localStorage.clear();
     window.HTMLElement.prototype.scrollIntoView = vi.fn();
+    useMapChatState.getState().closeChat();
   });
 
   it('registers a swarm scope and lets the shell render the three columns', () => {
@@ -95,7 +97,7 @@ describe('Map module', () => {
     expect(value.store.getState().selectedThreadId).toBe('de-fix');
   });
 
-  it('shows the swarm and a hint until an agent is selected, then switches to the agent tab with its card', () => {
+  it('embeds the inspector in the right panel: swarm comms until an agent is selected, then its profile and feed', () => {
     renderShell(
       <Wrapped>
         <Pick agent="sdd-planner" />
@@ -103,16 +105,17 @@ describe('Map module', () => {
       </Wrapped>,
       { value: setup() },
     );
-    expect(screen.getByTestId('swarm-interaction')).toBeInTheDocument();
-    expect(screen.getByTestId('map-select-hint')).toBeInTheDocument();
-    expect(screen.queryByTestId('agent-card')).toBeNull();
+    const drawer = screen.getByTestId('agent-inspector-drawer');
+    expect(drawer).toHaveAttribute('data-embedded', 'true');
+    expect(drawer.className).not.toContain('absolute');
+    expect(screen.getByTestId('swarm-comms-empty-state')).toBeInTheDocument();
+    expect(screen.queryByTestId('live-agent-chat-feed')).toBeNull();
     act(() => fireEvent.click(screen.getByText('pick')));
-    expect(screen.getByTestId('agent-card')).toHaveAttribute('data-agent', 'sdd-planner');
-    expect(screen.getByTestId('agent-history')).toBeInTheDocument();
-    expect(screen.queryByTestId('map-select-hint')).toBeNull();
+    expect(screen.getByTestId('live-agent-chat-feed')).toBeInTheDocument();
+    expect(within(screen.getByTestId('agent-inspector-drawer')).getByRole('heading', { name: agentMeta('sdd-planner').name })).toBeInTheDocument();
   });
 
-  it('switches between the whole swarm history and the selected agent history with tabs', () => {
+  it('switches between the swarm comms and the selected agent with tabs and has no close button', () => {
     renderShell(
       <Wrapped>
         <Pick agent="sdd-planner" />
@@ -120,32 +123,35 @@ describe('Map module', () => {
       </Wrapped>,
       { value: setup() },
     );
-    const tablist = screen.getByRole('tablist', { name: 'Vista del panel derecho' });
+    const tablist = screen.getByRole('tablist', { name: 'Vista del panel' });
     expect(within(tablist).getByRole('tab', { name: 'Enjambre' })).toHaveAttribute('aria-selected', 'true');
     expect(within(tablist).getAllByRole('tab').find((tab) => tab.textContent !== 'Enjambre')).toBeDisabled();
     act(() => fireEvent.click(screen.getByText('pick')));
     const agentTab = within(tablist).getByRole('tab', { name: agentMeta('sdd-planner').name });
     expect(agentTab).toHaveAttribute('aria-selected', 'true');
-    expect(screen.getByTestId('agent-history')).toBeInTheDocument();
-    expect(screen.queryByTestId('swarm-interaction')).toBeNull();
     fireEvent.click(within(tablist).getByRole('tab', { name: 'Enjambre' }));
-    expect(screen.getByTestId('swarm-interaction')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Reproducir|Play/ })).toBeInTheDocument();
-    expect(screen.queryByTestId('agent-card')).toBeNull();
+    expect(screen.getByTestId('swarm-comms-empty-state')).toBeInTheDocument();
     fireEvent.click(within(tablist).getByRole('tab', { name: agentMeta('sdd-planner').name }));
-    expect(screen.getByTestId('agent-card')).toBeInTheDocument();
+    expect(screen.getByTestId('live-agent-chat-feed')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Contraer panel' })).toBeNull();
   });
 
-  it('keeps the direct chat out of the right panel', () => {
+  it('keeps the direct chat out of the right panel and expands the floating card from the open chat button', () => {
     renderShell(
       <Wrapped>
         <Pick agent="sdd-planner" />
         <MapRight />
+        <MapAgentChat />
       </Wrapped>,
       { value: setup() },
     );
     act(() => fireEvent.click(screen.getByText('pick')));
-    expect(screen.queryByTestId('agent-direct-chat')).toBeNull();
+    const drawer = screen.getByTestId('agent-inspector-drawer');
+    expect(within(drawer).queryByTestId('agent-direct-chat')).toBeNull();
+    expect(screen.queryByTestId('map-agent-chat')).toBeNull();
+    fireEvent.click(within(drawer).getByText(/Abrir nuevo chat con/));
+    expect(screen.getByTestId('map-agent-chat')).toHaveAttribute('data-expanded', 'true');
+    expect(screen.getByTestId('map-agent-chat')).toHaveAttribute('data-agent', 'sdd-planner');
   });
 
   it('gives a map agent that is not in the snapshot its card and an enabled direct chat', () => {
@@ -158,10 +164,9 @@ describe('Map module', () => {
       { value: setup() },
     );
     act(() => fireEvent.click(screen.getByText('pick')));
-    const card = screen.getByTestId('agent-card');
-    expect(card).toHaveAttribute('data-agent', 'sdd-hermes');
-    expect(card).toHaveTextContent(agentMeta('sdd-hermes').name);
+    expect(within(screen.getByTestId('agent-inspector-drawer')).getByRole('heading', { name: agentMeta('sdd-hermes').name })).toBeInTheDocument();
     expect(screen.queryByText('Agente no disponible')).toBeNull();
+    act(() => useMapChatState.getState().openChat());
     const chat = screen.getByTestId('map-agent-chat');
     expect(within(chat).queryByTestId('agent-chat-disabled')).toBeNull();
     expect(within(chat).getByRole('textbox')).toBeInTheDocument();
@@ -177,11 +182,11 @@ describe('Map module', () => {
       { value: setup() },
     );
     act(() => fireEvent.click(screen.getByText('pick')));
-    expect(screen.getByText('Agente no disponible')).toBeInTheDocument();
+    act(() => useMapChatState.getState().openChat());
     expect(within(screen.getByTestId('map-agent-chat')).getByTestId('agent-chat-disabled')).toBeInTheDocument();
   });
 
-  it('floats the direct chat only while an agent is selected and closes it from its button', () => {
+  it('floats the direct chat only after it is opened for the selected agent and closes it from its button', () => {
     renderShell(
       <Wrapped>
         <Pick agent="sdd-planner" />
@@ -189,8 +194,9 @@ describe('Map module', () => {
       </Wrapped>,
       { value: setup() },
     );
-    expect(screen.queryByTestId('map-agent-chat')).toBeNull();
     act(() => fireEvent.click(screen.getByText('pick')));
+    expect(screen.queryByTestId('map-agent-chat')).toBeNull();
+    act(() => useMapChatState.getState().openChat());
     const chat = screen.getByTestId('map-agent-chat');
     expect(chat).toHaveAttribute('data-agent', 'sdd-planner');
     expect(chat).toHaveTextContent(agentMeta('sdd-planner').name);
@@ -198,7 +204,5 @@ describe('Map module', () => {
     expect(chat.parentElement?.className).toContain('absolute');
     fireEvent.click(within(chat).getByRole('button', { name: 'Cerrar chat' }));
     expect(screen.queryByTestId('map-agent-chat')).toBeNull();
-    fireEvent.click(screen.getByText('pick'));
-    expect(screen.getByTestId('map-agent-chat')).toBeInTheDocument();
   });
 });

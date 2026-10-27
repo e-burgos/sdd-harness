@@ -87,11 +87,11 @@ export function LiveAgentChatFeed({ agentId, conversation, onPickConversation }:
         </span>
       </div>
 
-      <div ref={scrollRef} className="flex-1 overflow-y-auto p-2.5 space-y-2.5 text-xs select-text scroll-smooth">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto p-2.5 space-y-2.5 text-ui select-text scroll-smooth">
         {agentDialogues.length === 0 ? (
           <div data-testid="live-agent-chat-feed-empty" className="h-full flex flex-col items-center justify-center p-4 text-center text-ink-500 space-y-2">
             <Moon className="w-8 h-8 text-ink-500" />
-            <p className="text-xs font-sans leading-relaxed">{t('mc.noActivity')}</p>
+            <p className="text-ui font-sans leading-relaxed">{t('mc.noActivity')}</p>
           </div>
         ) : (
           <>

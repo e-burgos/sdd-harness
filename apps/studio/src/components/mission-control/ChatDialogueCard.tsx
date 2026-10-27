@@ -122,13 +122,13 @@ export function ChatDialogueCard({
         </div>
       </div>
 
-      <div className="relative text-xs leading-relaxed text-ink-100 font-sans">
+      <div className="relative text-ui leading-relaxed text-ink-100 font-sans">
         <div
           className={`transition-all duration-200 ${
             isLong && !isExpanded ? 'max-h-[72px] overflow-hidden' : 'max-h-none'
           }`}
         >
-          <div className="prose-studio min-w-0 break-words text-meta leading-relaxed [&_code]:rounded [&_code]:bg-foreground/10 [&_code]:px-1 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-micro [&_pre]:overflow-auto [&_pre]:rounded-lg [&_pre]:bg-ink-950 [&_pre]:p-2.5 [&_a]:text-sky-300 [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_p]:my-1 [&_h1]:text-xs [&_h1]:font-bold [&_h2]:text-xs [&_h2]:font-bold [&_h3]:text-xs [&_h3]:font-bold [&_h4]:text-xs [&_h4]:font-bold [&_strong]:text-ink-100">
+          <div className="prose-studio min-w-0 break-words text-meta leading-relaxed [&_code]:rounded [&_code]:bg-foreground/10 [&_code]:px-1 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-micro [&_pre]:overflow-auto [&_pre]:rounded-lg [&_pre]:bg-ink-950 [&_pre]:p-2.5 [&_a]:text-sky-300 [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_p]:my-1 [&_h1]:text-ui [&_h1]:font-bold [&_h2]:text-ui [&_h2]:font-bold [&_h3]:text-ui [&_h3]:font-bold [&_h4]:text-ui [&_h4]:font-bold [&_strong]:text-ink-100">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>
           </div>
         </div>

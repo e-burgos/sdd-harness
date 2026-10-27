@@ -101,6 +101,19 @@ describe('AgentInspectorDrawer', () => {
     expect(onClose).toHaveBeenCalled();
   });
 
+  it('embedded variant drops the floating chrome, the close button and does not close on open chat', () => {
+    const onClose = vi.fn();
+    const onOpenDm = vi.fn();
+    renderDrawer({ embedded: true, onClose, onOpenDm });
+    const drawer = screen.getByTestId('agent-inspector-drawer');
+    expect(drawer).toHaveAttribute('data-embedded', 'true');
+    expect(drawer.className).not.toContain('absolute');
+    expect(screen.queryByRole('button', { name: 'Contraer panel' })).toBeNull();
+    fireEvent.click(screen.getByText(/Abrir nuevo chat con Clara/));
+    expect(onOpenDm).toHaveBeenCalledWith('sdd-orchestrator');
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
   it('shows the empty feed state without a conversation', () => {
     renderDrawer({ agentId: 'sdd-architect' });
     expect(screen.getByTestId('live-agent-chat-feed-empty')).toHaveTextContent('Sin actividad todavía');

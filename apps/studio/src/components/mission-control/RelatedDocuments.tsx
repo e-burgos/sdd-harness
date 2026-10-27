@@ -101,7 +101,7 @@ export function RelatedDocuments({
                   )}
                 </span>
                 <span
-                  className="min-w-0 truncate text-xs text-ink-500"
+                  className="min-w-0 truncate text-ui text-ink-500"
                   title={item.agents.join(", ")}
                 >
                   {item.agents.join(", ")}
