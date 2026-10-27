@@ -5,6 +5,7 @@ import { agentMeta } from '@/lib/agents';
 import { documentsOfAgent, type ConversationView } from '@/lib/conversation';
 import { useT } from '@/lib/i18n/i18n';
 import { useStudio } from '../../BridgeProvider';
+import { MAP_AGENT_IDS } from '../../mission-control/AgentMapCanvas';
 import { AgentFaceChip } from './AgentFaceChip';
 import { AgentDirectChat } from './AgentDirectChat';
 import { presenceDotClass, presenceLabelKey, presenceOfAgent } from './agent-presence';
@@ -22,20 +23,20 @@ function Field({ label, value, title }: { label: string; value: string; title?: 
   );
 }
 
-export function AgentCard({ agentId, conversation = null }: { agentId: string; conversation?: ConversationView | null }) {
+export function AgentCard({ agentId, conversation = null, showChat = true }: { agentId: string; conversation?: ConversationView | null; showChat?: boolean }) {
   const { t } = useT();
   const summary = useStudio((s) => s.snapshot?.agents.find((agent) => agent.id === agentId) ?? null);
   const presence = useStudio((s) => presenceOfAgent(s.presence, agentId));
   const meta = agentMeta(agentId);
 
-  if (summary === null) {
+  if (summary === null && !MAP_AGENT_IDS.includes(agentId)) {
     return (
       <article data-testid="agent-card" data-agent={agentId} className="flex flex-col gap-3">
         <div role="status" className="flex flex-col gap-1">
           <h3 className="text-copy font-semibold text-ink-100">{t('module.agents.card.unavailable')}</h3>
           <p className="text-ui text-ink-300">{t('module.agents.card.unavailableHint')}</p>
         </div>
-        <AgentDirectChat agentId={agentId} disabledReason={t('module.agents.chat.unavailable')} />
+        {showChat && <AgentDirectChat agentId={agentId} disabledReason={t('module.agents.chat.unavailable')} />}
       </article>
     );
   }
@@ -75,10 +76,15 @@ export function AgentCard({ agentId, conversation = null }: { agentId: string; c
             )}
           </dd>
         </div>
-        {summary.description !== '' && <Field label={t('module.agents.card.description')} value={summary.description} />}
-        <Field label={t('module.agents.card.model')} value={summary.model ?? '—'} />
-        <Field label={t('module.agents.card.source')} value={t(summary.source === 'sdd' ? 'module.agents.card.source.kit' : 'module.agents.card.source.project')} />
-        <Field label={t('module.agents.card.path')} value={summary.path} title={summary.path} />
+        <Field label={t('module.agents.card.description')} value={summary?.description || meta.title} />
+        {summary === null && <Field label={t('module.agents.card.personality')} value={meta.personality} />}
+        {summary !== null && (
+          <>
+            <Field label={t('module.agents.card.model')} value={summary.model ?? '—'} />
+            <Field label={t('module.agents.card.source')} value={t(summary.source === 'sdd' ? 'module.agents.card.source.kit' : 'module.agents.card.source.project')} />
+            <Field label={t('module.agents.card.path')} value={summary.path} title={summary.path} />
+          </>
+        )}
       </dl>
 
       {documents.length > 0 && (
@@ -95,7 +101,7 @@ export function AgentCard({ agentId, conversation = null }: { agentId: string; c
         </section>
       )}
 
-      <AgentDirectChat agentId={agentId} />
+      {showChat && <AgentDirectChat agentId={agentId} />}
     </article>
   );
 }

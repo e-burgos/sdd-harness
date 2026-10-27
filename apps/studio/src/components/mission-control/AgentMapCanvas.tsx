@@ -35,6 +35,8 @@ const NODES: AgentPosition[] = [
   { id: 'sdd-reviewer', x: 500, y: 690 },
 ];
 
+export const MAP_AGENT_IDS: readonly string[] = NODES.map((node) => node.id);
+
 const AGENT_EDGES: { from: string; to: string; label?: string }[] = [
   { from: 'sdd-steward', to: 'sdd-orchestrator', label: 'kit status' },
   { from: 'sdd-hermes', to: 'sdd-orchestrator', label: 'new spec' },

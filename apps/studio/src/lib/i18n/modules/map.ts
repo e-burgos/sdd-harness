@@ -16,6 +16,13 @@ export const mapEs = {
   'module.map.swarm.hint': 'Seleccioná un agente en el mapa o en la lista para ver su ficha y chatear.',
   'module.map.swarm.older': 'Cargar anteriores',
   'module.map.swarm.noConversation': 'Elegí una conversación para ver cómo interactúan los agentes.',
+  'module.map.tabs': 'Vista del panel derecho',
+  'module.map.tab.swarm': 'Enjambre',
+  'module.map.agent.history': 'Historial de {name}',
+  'module.map.chat.title': 'Chat directo con {name}',
+  'module.map.chat.close': 'Cerrar chat',
+  'module.map.chat.expand': 'Expandir chat',
+  'module.map.chat.collapse': 'Contraer chat',
 };
 
 export const mapEn = {
@@ -36,4 +43,11 @@ export const mapEn = {
   'module.map.swarm.hint': 'Select an agent on the map or in the list to see its card and chat.',
   'module.map.swarm.older': 'Load older',
   'module.map.swarm.noConversation': 'Pick a conversation to see how the agents interact.',
+  'module.map.tabs': 'Right panel view',
+  'module.map.tab.swarm': 'Swarm',
+  'module.map.agent.history': '{name} history',
+  'module.map.chat.title': 'Direct chat with {name}',
+  'module.map.chat.close': 'Close chat',
+  'module.map.chat.expand': 'Expand chat',
+  'module.map.chat.collapse': 'Collapse chat',
 } satisfies Record<keyof typeof mapEs, string>;
