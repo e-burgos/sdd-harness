@@ -1,0 +1,29 @@
+{
+  "$schema": "../../../../schemas/cycle.schema.json",
+  "cycle": 4,
+  "module": "studio-tucu-ui",
+  "spec": "spec-e-burgos-009-studio-tucu-ui",
+  "apps": [
+    "apps/studio"
+  ],
+  "phase": "selects-and-sidebar",
+  "flow": "lite",
+  "objectives": [
+    "Selectores con opciones descriptivas, check, búsqueda y menús ajustados al contenido (US-011)",
+    "Propuesta de rediseño del sidebar para aprobación del dev"
+  ],
+  "status": "in-progress",
+  "started_at": "2026-10-27",
+  "completed_at": null,
+  "documents": {
+    "plan": "sdd/specs/spec-e-burgos-009-studio-tucu-ui/cycles/cycle-04/plan.md",
+    "tasks": "sdd/specs/spec-e-burgos-009-studio-tucu-ui/cycles/cycle-04/tasks.json"
+  },
+  "artifacts": [],
+  "metrics": null,
+  "tables_created": [],
+  "endpoints_implemented": [],
+  "components_created": [],
+  "issues_found": [],
+  "reviewer_report": null
+}

@@ -1,0 +1,42 @@
+{
+  "$schema": "../../../../schemas/cycle-tasks.schema.json",
+  "spec": "spec-e-burgos-009-studio-tucu-ui",
+  "cycle": 4,
+  "module": "studio-tucu-ui",
+  "apps": [
+    "apps/studio"
+  ],
+  "flow": "lite",
+  "user_stories_generated": true,
+  "prerequisites": {
+    "tasks_generated": true
+  },
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "Selectores: opciones con icon y description, showCheck, searchable en listas largas, valor corto en el disparador y menú ajustado al contenido, textos es/en",
+      "user_stories": [
+        "US-011"
+      ],
+      "estimation_hours": 5,
+      "story_points": 5,
+      "depends_on": [],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-002",
+      "title": "Verificación y cierre: build, typecheck, test, e2e contra el bridge reconstruido, recorrida visual y fricciones nuevas a tucu-ui",
+      "user_stories": [
+        "US-011"
+      ],
+      "estimation_hours": 2,
+      "story_points": 2,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "status": "pending",
+      "files": []
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 # SPEC-e-burgos-009: Studio adopta tucu-ui (tema y primitivas)
 
-> Estado: **completed** — `cycle-01`, `cycle-02` y `cycle-03` cerrados el 2026-10-27 (flow `lite`). CA-003 cumplido en cycle-03: los modales usan `Modal` de tucu-ui.
+> Estado: **in-progress** — `cycle-01` a `cycle-03` cerrados el 2026-10-27; `cycle-04` abierto el 2026-10-27 (flow `lite`): selectores descriptivos y propuesta de sidebar.
 
 ## Resumen Ejecutivo
 
