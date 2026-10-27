@@ -258,6 +258,8 @@ export const es = {
   'approval.summary.more': 'Ver todo',
   'approval.summary.less': 'Ver menos',
   'lang.switch': 'English',
+  'mode.toLight': 'Cambiar a modo claro',
+  'mode.toDark': 'Cambiar a modo oscuro',
   'map.gates.title': 'Topología del Enjambre & Gates SDD',
   'map.gates.cycle': 'Ciclo (4)',
   'map.gates.transversal': 'Transversales (2)',

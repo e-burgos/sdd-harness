@@ -83,13 +83,13 @@ export function ApprovalCard({ item, onRespond }: { item: Approval; onRespond: R
       )}
       {item.gateWarning && <p className="mt-2 rounded-md bg-roseish/10 p-2 text-xs text-roseish">{item.gateWarning}</p>}
       {item.diff && (
-        <pre className="mt-2 max-h-64 overflow-auto rounded-md bg-ink-950 p-2 font-mono text-[11px] leading-snug">{item.diff}</pre>
+        <pre className="mt-2 max-h-64 overflow-auto rounded-md bg-ink-950 p-2 font-mono text-meta leading-snug">{item.diff}</pre>
       )}
       {item.input && (
         <details className="mt-2">
           <summary className="cursor-pointer text-xs text-ink-300">{t('approval.input')}</summary>
           {item.inputTruncated && <p className="mt-1 text-xs text-amberish">{t('approval.truncated')}</p>}
-          <pre data-testid="approval-input" className="mt-1 max-h-64 overflow-auto whitespace-pre-wrap break-all rounded-md bg-ink-950 p-2 font-mono text-[11px]">
+          <pre data-testid="approval-input" className="mt-1 max-h-64 overflow-auto whitespace-pre-wrap break-all rounded-md bg-ink-950 p-2 font-mono text-meta">
             {item.input}
           </pre>
         </details>
@@ -131,7 +131,7 @@ export function ApprovalCard({ item, onRespond }: { item: Approval; onRespond: R
             </div>
           </div>
           <Input
-            inputClassName="h-auto! sm:h-auto! rounded-md! px-2! py-1.5!"
+            inputClassName="h-auto! sm:h-auto! rounded-md! px-2! py-1.5! text-ui!"
             placeholder={t('approval.reason')}
             value={reason}
             maxLength={2000}

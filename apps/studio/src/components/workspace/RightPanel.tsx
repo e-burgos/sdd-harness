@@ -30,7 +30,7 @@ export function RightPanelView({ activity, cycle, conversation, onOpenThread, on
   return (
     <aside aria-label={t('panel.label')} className="flex h-full flex-col gap-6 overflow-y-auto overscroll-contain border-l border-ink-800 bg-ink-900 p-4">
       <header data-testid="panel-header" className="sticky -top-4 z-10 -mx-4 -mt-4 flex items-center justify-between bg-ink-900 px-4 pb-2 pt-4">
-        <h2 className="text-[11px] uppercase tracking-wider text-ink-500">{t('panel.activity')}</h2>
+        <h2 className="text-meta uppercase tracking-wider text-ink-500">{t('panel.activity')}</h2>
         {onCollapse && <PanelToggle label={t('panel.right.collapse')} side="right" onClick={onCollapse} />}
       </header>
       <section data-testid="panel-activity" className="-mt-4">
@@ -48,7 +48,7 @@ export function RightPanelView({ activity, cycle, conversation, onOpenThread, on
                     <AgentAvatar agent={a.agent} size={22} status={a.state === 'working' ? 'running' : a.state === 'waiting' ? 'waiting-approval' : null} />
                     <div className="flex flex-col min-w-0 leading-tight">
                       <span className="font-medium">{agentMeta(a.agent).name}</span>
-                      <span className="text-[10px] text-ink-400 font-mono">{agentMeta(a.agent).role}</span>
+                      <span className="text-micro text-ink-400 font-mono">{agentMeta(a.agent).role}</span>
                     </div>
                     {a.state === 'waiting' && (
                       <span className="text-amberish">
@@ -72,7 +72,7 @@ export function RightPanelView({ activity, cycle, conversation, onOpenThread, on
       </section>
       {conversation && <ConversationPanelSections view={conversation.view} gate={conversation.gate} />}
       <section>
-        <h2 className="mb-2 text-[11px] uppercase tracking-wider text-ink-500">{t('panel.details')}</h2>
+        <h2 className="mb-2 text-meta uppercase tracking-wider text-ink-500">{t('panel.details')}</h2>
         {!cycle ? (
           <p className="text-sm text-ink-300">{t('panel.noCycle')}</p>
         ) : (
@@ -92,7 +92,7 @@ export function RightPanelView({ activity, cycle, conversation, onOpenThread, on
               <div className="h-full bg-accent-400" style={{ width: `${cycle.tasksTotal ? (100 * cycle.tasksDone) / cycle.tasksTotal : 0}%` }} />
             </div>
             <p className="mt-1 text-xs text-ink-300">{t('cycle.progress', { done: cycle.tasksDone, total: cycle.tasksTotal })}</p>
-            {cycle.apps.length > 0 && <p className="mt-1 font-mono text-[11px] text-ink-500">{cycle.apps.join(', ')}</p>}
+            {cycle.apps.length > 0 && <p className="mt-1 font-mono text-meta text-ink-500">{cycle.apps.join(', ')}</p>}
             <ul className="mt-3 space-y-1">
               {cycle.tasks.map((task) => (
                 <li key={task.id} className="flex gap-2 text-xs">

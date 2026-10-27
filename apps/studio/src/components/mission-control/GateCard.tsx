@@ -34,7 +34,7 @@ export function GateCard({
         ? 'bg-sky-500/20 text-sky-300 border-sky-500/40'
         : status === 'blocked'
           ? 'bg-rose-500/20 text-rose-300 border-rose-500/40'
-          : 'bg-white/5 text-white/50 border-white/10';
+          : 'bg-foreground/5 text-ink-500 border-foreground/10';
 
   const statusDot =
     status === 'passing'
@@ -43,7 +43,7 @@ export function GateCard({
         ? 'bg-sky-400 animate-ping'
         : status === 'blocked'
           ? 'bg-rose-400 animate-pulse'
-          : 'bg-white/30';
+          : 'bg-foreground/30';
 
   return (
     <div
@@ -60,7 +60,7 @@ export function GateCard({
           ? 'bg-ink-900/95 border-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.35)] scale-[1.02]'
           : isActive
             ? 'bg-ink-900/95 animate-pulse scale-[1.02]'
-            : 'bg-ink-950/80 border-white/15 hover:border-white/30 hover:bg-ink-900/90 hover:shadow-lg'
+            : 'bg-ink-950/80 border-foreground/15 hover:border-foreground/30 hover:bg-ink-900/90 hover:shadow-lg'
       }`}
     >
       <div
@@ -89,36 +89,36 @@ export function GateCard({
             >
               {gate.shortLabel}
             </h4>
-            <p className="text-[9px] font-sans text-white/50 truncate leading-none mt-0.5">
+            <p className="text-micro font-sans text-ink-500 truncate leading-none mt-0.5">
               {gate.subtitle}
             </p>
           </div>
         </div>
 
         <div
-          className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full border text-[9px] font-mono shrink-0 ${statusBg}`}
+          className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full border text-micro font-mono shrink-0 ${statusBg}`}
         >
           <span className={`h-1.5 w-1.5 rounded-full ${statusDot}`} />
-          <span className="uppercase text-[8px] font-bold">
+          <span className="uppercase text-micro font-bold">
             {status === 'passing' ? 'OK' : status === 'active' ? 'RUN' : status === 'blocked' ? 'STOP' : 'IDLE'}
           </span>
         </div>
       </div>
 
       <div className="z-10 my-1">
-        <p className="text-[10px] text-white/70 line-clamp-2 leading-snug font-sans">
+        <p className="text-micro text-ink-300 line-clamp-2 leading-snug font-sans">
           {gate.description}
         </p>
       </div>
 
-      <div className="flex items-center justify-between pt-1 border-t border-white/10 z-10 text-[9px] font-mono text-white/40">
+      <div className="flex items-center justify-between pt-1 border-t border-foreground/10 z-10 text-micro font-mono text-ink-500">
         <div className="flex items-center gap-1 truncate">
-          <span className="text-white/30 text-[8px]">RESP:</span>
+          <span className="text-ink-500 text-micro">RESP:</span>
           <span className="font-semibold truncate" style={{ color: respMeta.color }}>
             {respMeta.name}
           </span>
         </div>
-        <span className="flex items-center gap-1 text-[8px] text-emerald-400/80 group-hover:text-emerald-300 transition-colors">
+        <span className="flex items-center gap-1 text-micro text-emerald-400/80 group-hover:text-emerald-300 transition-colors">
           Info <ArrowRight className="w-2.5 h-2.5" />
         </span>
       </div>

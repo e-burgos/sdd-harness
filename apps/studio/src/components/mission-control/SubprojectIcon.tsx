@@ -132,7 +132,7 @@ export function SubprojectIcon({
           <circle cx="8.5" cy="5.5" r="1" fill="#38bdf8" />
           <rect x="5" y="11" width="6" height="7" rx="1.5" fill="rgba(16,185,129,0.3)" stroke="#10b981" strokeWidth="1.2" />
           <path d="M14 12H19" stroke="#10b981" strokeWidth="1.4" strokeLinecap="round" />
-          <path d="M14 15H18" stroke="rgba(255,255,255,0.4)" strokeWidth="1.2" strokeLinecap="round" />
+          <path d="M14 15H18" stroke="var(--color-ink-500)" strokeWidth="1.2" strokeLinecap="round" />
         </svg>
       );
 

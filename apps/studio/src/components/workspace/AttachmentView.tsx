@@ -50,7 +50,7 @@ function PdfAttachment({ attachment }: { attachment: AttachmentRef }) {
       <FileText size={20} className="shrink-0 text-ink-300" aria-hidden />
       <span className="min-w-0 flex-1">
         <span className="block truncate text-ink-100">{attachment.name}</span>
-        <span className="block text-[11px] text-ink-400">{formatBytes(attachment.size)}</span>
+        <span className="block text-meta text-ink-400">{formatBytes(attachment.size)}</span>
       </span>
       {content.status === 'ready' && (
         <a href={content.url} target="_blank" rel="noreferrer" className={`rounded-md border border-ink-700 px-2 py-0.5 hover:bg-ink-800 ${ring}`}>
@@ -76,7 +76,7 @@ function TextBody({ attachment }: { attachment: AttachmentRef }) {
     };
   }, [url]);
   if (content.status === 'unavailable') return <Unavailable name={attachment.name} />;
-  return <pre className="mt-1 max-h-48 max-w-xl overflow-auto whitespace-pre-wrap break-words rounded-lg bg-ink-950 p-2 font-mono text-[11px]">{body ?? '…'}</pre>;
+  return <pre className="mt-1 max-h-48 max-w-xl overflow-auto whitespace-pre-wrap break-words rounded-lg bg-ink-950 p-2 font-mono text-meta">{body ?? '…'}</pre>;
 }
 
 function TextAttachment({ attachment }: { attachment: AttachmentRef }) {
@@ -88,7 +88,7 @@ function TextAttachment({ attachment }: { attachment: AttachmentRef }) {
         <FileText size={20} className="shrink-0 text-ink-300" aria-hidden />
         <span className="min-w-0 flex-1">
           <span className="block truncate text-ink-100">{attachment.name}</span>
-          <span className="block text-[11px] text-ink-400">{formatBytes(attachment.size)}</span>
+          <span className="block text-meta text-ink-400">{formatBytes(attachment.size)}</span>
         </span>
         <Button type="button" variant="ghost" color="gray" size="tiny" aria-expanded={expanded} onClick={() => setExpanded((v) => !v)}>
           {expanded ? t('attach.collapse') : t('attach.expand')}

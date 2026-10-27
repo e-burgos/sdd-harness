@@ -1,4 +1,5 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { useTheme } from '@e-burgos/tucu-ui';
 import type { ThreadInfo, WorkspaceSnapshot } from '@sdd-studio/protocol';
 import { I18nProvider } from '@/lib/i18n/i18n';
 import { createStudioStore } from '@/lib/store/store';
@@ -91,5 +92,37 @@ describe('StudioHeader gate chip', () => {
     mount();
     fireEvent.click(screen.getByTestId('gate-chip'));
     expect(screen.getByTestId('gate-status-no-conversation')).toBeInTheDocument();
+  });
+});
+
+describe('StudioHeader mode toggle', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    useTheme.setState({ mode: 'dark' });
+  });
+
+  it('switches between dark and light and labels the action it will perform', () => {
+    mount();
+    fireEvent.click(screen.getByTestId('mode-toggle'));
+    expect(useTheme.getState().mode).toBe('light');
+    expect(screen.getByTestId('mode-toggle')).toHaveAccessibleName('Cambiar a modo oscuro');
+    fireEvent.click(screen.getByTestId('mode-toggle'));
+    expect(useTheme.getState().mode).toBe('dark');
+    expect(screen.getByTestId('mode-toggle')).toHaveAccessibleName('Cambiar a modo claro');
+  });
+
+  it('persists the chosen mode across a remount', () => {
+    const first = mount();
+    fireEvent.click(screen.getByTestId('mode-toggle'));
+    expect(JSON.parse(localStorage.getItem('theme-storage') ?? '{}').state.mode).toBe('light');
+    cleanup();
+    mount(first);
+    expect(screen.getByTestId('mode-toggle')).toHaveAccessibleName('Cambiar a modo oscuro');
+  });
+
+  it('keeps the language toggle in the header', () => {
+    mount();
+    fireEvent.click(screen.getByRole('button', { name: 'es' }));
+    expect(screen.getByRole('button', { name: 'en' })).toBeInTheDocument();
   });
 });

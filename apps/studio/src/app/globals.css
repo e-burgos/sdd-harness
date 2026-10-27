@@ -4,6 +4,21 @@
 
 @import '@e-burgos/tucu-ui/fonts';
 
+@theme {
+  --text-micro: 0.625rem;
+  --text-micro--line-height: 1.2;
+  --text-meta: 0.6875rem;
+  --text-meta--line-height: 1.4;
+  --text-ui: 0.75rem;
+  --text-ui--line-height: 1.33;
+  --text-small: 0.8125rem;
+  --text-small--line-height: 1.45;
+  --text-body: 0.875rem;
+  --text-body--line-height: 1.5;
+  --text-title: 1rem;
+  --text-title--line-height: 1.5;
+}
+
 @theme inline {
   --font-display: var(--font-sans);
   --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', monospace;
@@ -12,18 +27,45 @@
   --color-ink-850: color-mix(in oklab, var(--color-light-dark) 50%, var(--color-secondary));
   --color-ink-800: var(--color-secondary);
   --color-ink-700: color-mix(in oklab, var(--color-foreground) 14%, var(--color-light-dark));
-  --color-ink-500: color-mix(in oklab, var(--color-muted) 60%, var(--color-body));
+  --color-ink-400: color-mix(in oklab, var(--color-ink-300) 45%, var(--color-muted));
+  --color-ink-500: var(--color-muted);
   --color-ink-300: color-mix(in oklab, var(--color-muted) 75%, var(--color-foreground));
+  --color-ink-50: var(--color-foreground);
   --color-ink-100: color-mix(in oklab, var(--color-foreground) 92%, var(--color-muted));
-  --color-accent-300: color-mix(in oklab, var(--color-brand) 65%, white);
+  --color-accent-300: color-mix(in oklab, var(--color-brand) 65%, var(--color-foreground));
   --color-accent-400: var(--color-brand);
   --color-accent-500: color-mix(in oklab, var(--color-brand) 85%, black);
   --color-accent-dim: color-mix(in oklab, var(--color-brand) 14%, transparent);
-  --color-emerald-200: color-mix(in oklab, var(--color-success) 45%, white);
-  --color-emerald-300: color-mix(in oklab, var(--color-success) 65%, white);
+  --color-emerald-200: color-mix(in oklab, var(--color-success) 45%, var(--color-foreground));
+  --color-emerald-300: color-mix(in oklab, var(--color-success) 65%, var(--color-foreground));
   --color-emerald-400: var(--color-success);
   --color-emerald-500: color-mix(in oklab, var(--color-success) 85%, black);
   --color-emerald-950: color-mix(in oklab, var(--color-success) 15%, var(--color-body));
+  --color-sky-200: color-mix(in oklab, oklch(0.72 0.13 235) 40%, var(--color-foreground));
+  --color-sky-300: color-mix(in oklab, oklch(0.72 0.13 235) 65%, var(--color-foreground));
+  --color-sky-400: color-mix(in oklab, oklch(0.72 0.13 235) 68%, var(--color-foreground));
+  --color-sky-500: color-mix(in oklab, oklch(0.72 0.13 235) 85%, black);
+  --color-sky-950: color-mix(in oklab, oklch(0.72 0.13 235) 15%, var(--color-body));
+  --color-purple-200: color-mix(in oklab, oklch(0.68 0.17 305) 40%, var(--color-foreground));
+  --color-purple-300: color-mix(in oklab, oklch(0.68 0.17 305) 65%, var(--color-foreground));
+  --color-purple-400: color-mix(in oklab, oklch(0.68 0.17 305) 82%, var(--color-foreground));
+  --color-purple-500: color-mix(in oklab, oklch(0.68 0.17 305) 85%, black);
+  --color-purple-950: color-mix(in oklab, oklch(0.68 0.17 305) 15%, var(--color-body));
+  --color-amber-200: color-mix(in oklab, var(--color-warning) 40%, var(--color-foreground));
+  --color-amber-300: color-mix(in oklab, var(--color-warning) 65%, var(--color-foreground));
+  --color-amber-400: color-mix(in oklab, var(--color-warning) 74%, var(--color-foreground));
+  --color-amber-500: color-mix(in oklab, var(--color-warning) 85%, black);
+  --color-amber-950: color-mix(in oklab, var(--color-warning) 15%, var(--color-body));
+  --color-rose-200: color-mix(in oklab, var(--color-error) 40%, var(--color-foreground));
+  --color-rose-300: color-mix(in oklab, var(--color-error) 65%, var(--color-foreground));
+  --color-rose-400: var(--color-error);
+  --color-rose-500: color-mix(in oklab, var(--color-error) 85%, black);
+  --color-rose-950: color-mix(in oklab, var(--color-error) 15%, var(--color-body));
+  --color-yellow-200: color-mix(in oklab, color-mix(in oklab, var(--color-warning) 80%, oklch(0.85 0.17 95)) 40%, var(--color-foreground));
+  --color-yellow-300: color-mix(in oklab, color-mix(in oklab, var(--color-warning) 80%, oklch(0.85 0.17 95)) 65%, var(--color-foreground));
+  --color-yellow-400: color-mix(in oklab, var(--color-warning) 80%, oklch(0.85 0.17 95));
+  --color-yellow-500: color-mix(in oklab, color-mix(in oklab, var(--color-warning) 80%, oklch(0.85 0.17 95)) 85%, black);
+  --color-yellow-950: color-mix(in oklab, color-mix(in oklab, var(--color-warning) 80%, oklch(0.85 0.17 95)) 15%, var(--color-body));
   --color-amberish: var(--color-warning);
   --color-roseish: var(--color-error);
 }
@@ -55,4 +97,27 @@ html[data-app-shell] body {
 
 [data-tucu='button'][data-variant='transparent']:not(:disabled):not(:hover):not(:focus-visible) {
   background-color: transparent;
+}
+
+[data-tucu='button'] {
+  font-weight: 500;
+  letter-spacing: normal;
+  line-height: 1.2;
+}
+
+[data-tucu='button'][data-size='tiny'],
+[data-tucu='button'][data-size='mini'] {
+  font-size: var(--text-ui);
+}
+
+[data-tucu='button'][data-size='small'] {
+  font-size: var(--text-small);
+}
+
+[data-tucu='button'][data-size='medium'] {
+  font-size: var(--text-body);
+}
+
+[data-tucu='button'][data-size='large'] {
+  font-size: var(--text-title);
 }

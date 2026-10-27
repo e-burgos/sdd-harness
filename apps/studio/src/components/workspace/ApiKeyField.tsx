@@ -29,7 +29,7 @@ export function ApiKeyField() {
 
   return (
     <form
-      className="flex flex-col gap-2 text-[11px] text-ink-300"
+      className="flex flex-col gap-2 text-meta text-ink-300"
       onSubmit={(e) => {
         e.preventDefault();
         if (!isPlausibleApiKey(value)) return setError(t('apikey.invalid'));
@@ -45,7 +45,7 @@ export function ApiKeyField() {
           value={value}
           onChange={(e) => setValue(e.target.value)}
           placeholder="sk-ant-…"
-          inputClassName="h-auto! sm:h-auto! rounded-md! px-2! py-1! pr-9! text-[11px]!"
+          inputClassName="h-auto! sm:h-auto! rounded-md! px-2! py-1! pr-9! text-ui!"
         />
       </label>
       <Checkbox
@@ -53,7 +53,7 @@ export function ApiKeyField() {
         checked={remember}
         onChange={(e) => setRemember(e.target.checked)}
         label={t('apikey.remember')}
-        labelClassName="text-[11px]! text-ink-300"
+        labelClassName="text-meta! text-ink-300"
       />
       {apiKeySource && <p>{t(apiKeySource === 'saved' ? 'apikey.stored.saved' : 'apikey.stored.tab')}</p>}
       <p>{t('apikey.privacy')}</p>

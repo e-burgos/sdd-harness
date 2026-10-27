@@ -43,7 +43,7 @@ export function AttachmentTray({ attachments, failures, dragging = false, onRemo
                 )}
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-xs text-ink-100">{a.name}</span>
-                  <span className="block text-[11px] text-ink-400">{formatBytes(a.size)}</span>
+                  <span className="block text-meta text-ink-400">{formatBytes(a.size)}</span>
                 </span>
                 <Button type="button" variant="transparent" color="gray" shape="circle" size="tiny" aria-label={t('attach.remove', { name: a.name })} onClick={() => onRemove(a.id)}>
                   <X size={12} />
@@ -51,7 +51,7 @@ export function AttachmentTray({ attachments, failures, dragging = false, onRemo
               </li>
             ))}
           </ul>
-          <p className="mt-1 text-[11px] text-ink-400" aria-live="polite">{t('attach.count', { n: attachments.length, max: MAX_ATTACHMENTS })}</p>
+          <p className="mt-1 text-meta text-ink-400" aria-live="polite">{t('attach.count', { n: attachments.length, max: MAX_ATTACHMENTS })}</p>
         </>
       )}
       {failures.length > 0 && (

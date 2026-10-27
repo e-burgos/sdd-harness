@@ -1,6 +1,5 @@
 'use client';
 
-import { Button } from '@e-burgos/tucu-ui';
 import { useMemo, type ReactNode } from 'react';
 import { LayoutGrid } from 'lucide-react';
 import type { AuthMode, Presence } from '@sdd-studio/protocol';
@@ -36,7 +35,7 @@ export interface SidebarViewProps {
 }
 
 export function SidebarView(p: SidebarViewProps) {
-  const { t, lang, setLang } = useT();
+  const { t } = useT();
   const collapse = useCollapsedState(p.project);
   const dmState = (agent: string) => p.presence.find((x) => x.agent === agent)?.state ?? 'idle';
   const handlers: NavTreeHandlers = { collapse, stale: p.connection !== 'open', onSelectChannel: p.onSelectChannel, onOpenThread: p.onOpenThread };
@@ -47,14 +46,11 @@ export function SidebarView(p: SidebarViewProps) {
           <div className="min-w-0 flex-1 truncate text-base font-semibold">{p.project}</div>
           {p.onCollapse && <PanelToggle label={t('panel.sidebar.collapse')} side="left" onClick={p.onCollapse} />}
         </div>
-        <div className="mt-0.5 flex items-center gap-2 text-[11px] text-ink-300">
+        <div className="mt-0.5 flex items-center gap-2 text-meta text-ink-300">
           <span data-testid="conn-dot" aria-hidden className={`h-2 w-2 rounded-full ${CONN_DOT[p.connection].cls}`} />
           <span className="sr-only">{t(CONN_DOT[p.connection].key)}</span>
           {p.authMode ? t(`auth.${p.authMode}`) : '…'}
           {p.kitVersion && <span>· kit {p.kitVersion}</span>}
-          <div className="ml-auto">
-            <Button type="button" variant="transparent" color="gray" size="tiny" onClick={() => setLang(lang === 'es' ? 'en' : 'es')}>{t('lang.switch')}</Button>
-          </div>
         </div>
         {p.onNewConversation && <NewConversationButton onNewConversation={p.onNewConversation} className="mt-2" fullWidth />}
         {p.authSlot}
@@ -66,7 +62,7 @@ export function SidebarView(p: SidebarViewProps) {
       </div>
       <footer className="shrink-0 border-t border-ink-800 p-3">
         <section>
-          <h2 className="mb-1 px-2 text-[11px] uppercase tracking-wider text-ink-500">{t('sidebar.views')}</h2>
+          <h2 className="mb-1 px-2 text-meta uppercase tracking-wider text-ink-500">{t('sidebar.views')}</h2>
           <div className="flex items-center gap-2 px-2 text-xs text-ink-500">
             <LayoutGrid size={14} /> {t('sidebar.viewsSoon')}
           </div>

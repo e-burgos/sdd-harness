@@ -34,9 +34,9 @@ export function GateInspectorDrawer({
   return (
     <aside
       data-testid="gate-inspector-drawer"
-      className="absolute top-4 left-4 bottom-4 w-96 lg:w-[400px] rounded-2xl border border-white/15 bg-ink-950/95 p-4 shadow-2xl backdrop-blur-xl flex flex-col z-20 animate-in fade-in slide-in-from-left duration-300 select-none overflow-y-auto"
+      className="absolute top-4 left-4 bottom-4 w-96 lg:w-[400px] rounded-2xl border border-foreground/15 bg-ink-950/95 p-4 shadow-2xl backdrop-blur-xl flex flex-col z-20 animate-in fade-in slide-in-from-left duration-300 select-none overflow-y-auto"
     >
-      <div className="flex items-start justify-between pb-3 border-b border-white/10 shrink-0">
+      <div className="flex items-start justify-between pb-3 border-b border-foreground/10 shrink-0">
         <div className="flex items-center gap-3">
           <div
             className="h-11 w-11 rounded-xl flex items-center justify-center shrink-0 border"
@@ -50,14 +50,14 @@ export function GateInspectorDrawer({
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="font-semibold text-sm text-white" style={{ color: gate.color }}>
+              <h3 className="font-semibold text-sm text-ink-100" style={{ color: gate.color }}>
                 {gate.name}
               </h3>
-              <span className="rounded bg-white/10 px-1.5 py-0.5 font-mono text-[9px] text-white/70">
+              <span className="rounded bg-foreground/10 px-1.5 py-0.5 font-mono text-micro text-ink-300">
                 {gate.group === 'cycle' ? 'CICLO SDD' : 'TRANSVERSAL'}
               </span>
             </div>
-            <p className="text-xs text-white/60 font-sans mt-0.5">{gate.subtitle}</p>
+            <p className="text-xs text-ink-300 font-sans mt-0.5">{gate.subtitle}</p>
           </div>
         </div>
         <Button type="button" variant="transparent" color="gray" shape="circle" size="tiny" onClick={onClose} title="Cerrar inspector de gate">
@@ -67,39 +67,39 @@ export function GateInspectorDrawer({
 
       <div className="py-3 space-y-4 flex-1">
         <div>
-          <h4 className="text-[10px] font-mono uppercase tracking-wider text-white/40 mb-1">
+          <h4 className="text-micro font-mono uppercase tracking-wider text-ink-500 mb-1">
             Propósito del Gate
           </h4>
-          <p className="text-xs leading-relaxed text-white/85 bg-white/5 p-3 rounded-xl border border-white/5">
+          <p className="text-xs leading-relaxed text-ink-100 bg-foreground/5 p-3 rounded-xl border border-foreground/5">
             {gate.description}
           </p>
         </div>
 
         <div>
-          <h4 className="text-[10px] font-mono uppercase tracking-wider text-white/40 mb-2">
+          <h4 className="text-micro font-mono uppercase tracking-wider text-ink-500 mb-2">
             Agente Responsable
           </h4>
           <div
             onClick={() => onSelectAgent(gate.responsibleAgent)}
-            className="flex items-center justify-between p-2.5 rounded-xl border border-white/10 bg-white/5 hover:bg-white/10 cursor-pointer transition-colors"
+            className="flex items-center justify-between p-2.5 rounded-xl border border-foreground/10 bg-foreground/5 hover:bg-foreground/10 cursor-pointer transition-colors"
           >
             <div className="flex items-center gap-2.5">
               <AgentAvatar agent={gate.responsibleAgent} size={32} />
               <div>
-                <p className="text-xs font-bold text-white" style={{ color: respAgent.color }}>
+                <p className="text-xs font-bold text-ink-100" style={{ color: respAgent.color }}>
                   {respAgent.name}
                 </p>
-                <p className="text-[10px] text-white/40 font-mono uppercase">{respAgent.role}</p>
+                <p className="text-micro text-ink-500 font-mono uppercase">{respAgent.role}</p>
               </div>
             </div>
-            <span className="flex items-center gap-1 text-[10px] font-mono text-emerald-400">
+            <span className="flex items-center gap-1 text-micro font-mono text-emerald-400">
               Ver en mapa <ArrowRight className="w-3 h-3" />
             </span>
           </div>
         </div>
 
         <div>
-          <h4 className="text-[10px] font-mono uppercase tracking-wider text-white/40 mb-2">
+          <h4 className="text-micro font-mono uppercase tracking-wider text-ink-500 mb-2">
             Agentes Involucrados
           </h4>
           <div className="flex flex-wrap gap-1.5">
@@ -110,10 +110,10 @@ export function GateInspectorDrawer({
                   key={aid}
                   type="button"
                   onClick={() => onSelectAgent(aid)}
-                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-white/10 bg-ink-900 hover:bg-white/10 transition-colors text-[11px] font-mono"
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-foreground/10 bg-ink-900 hover:bg-foreground/10 transition-colors text-meta font-mono"
                 >
                   <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: a.color }} />
-                  <span className="text-white/80">{a.name}</span>
+                  <span className="text-ink-100">{a.name}</span>
                 </button>
               );
             })}
@@ -121,14 +121,14 @@ export function GateInspectorDrawer({
         </div>
 
         <div>
-          <h4 className="text-[10px] font-mono uppercase tracking-wider text-white/40 mb-2">
+          <h4 className="text-micro font-mono uppercase tracking-wider text-ink-500 mb-2">
             Reglas & Checklist Canónica
           </h4>
           <ul className="space-y-1.5">
             {gate.rules.map((rule, idx) => (
               <li
                 key={idx}
-                className="flex items-start gap-2 text-xs text-white/75 bg-ink-900/60 p-2 rounded-lg border border-white/5"
+                className="flex items-start gap-2 text-xs text-ink-100 bg-ink-900/60 p-2 rounded-lg border border-foreground/5"
               >
                 <Check className="w-3.5 h-3.5 text-emerald-400 shrink-0 mt-0.5" />
                 <span className="leading-snug">{rule}</span>
@@ -138,10 +138,10 @@ export function GateInspectorDrawer({
         </div>
 
         <div>
-          <h4 className="text-[10px] font-mono uppercase tracking-wider text-white/40 mb-1.5">
+          <h4 className="text-micro font-mono uppercase tracking-wider text-ink-500 mb-1.5">
             Comando de Verificación CLI
           </h4>
-          <div className="flex items-center justify-between p-2.5 rounded-xl border border-white/10 bg-black/60 font-mono text-xs text-emerald-300">
+          <div className="flex items-center justify-between p-2.5 rounded-xl border border-foreground/10 bg-ink-950 font-mono text-xs text-emerald-300">
             <span className="truncate mr-2">{gate.cliCommand}</span>
             <Button type="button" variant="transparent" color="gray" size="tiny" onClick={handleCopyCli}>
               {copied ? 'Copiado!' : 'Copiar'}
@@ -150,7 +150,7 @@ export function GateInspectorDrawer({
         </div>
       </div>
 
-      <div className="pt-3 border-t border-white/10 shrink-0">
+      <div className="pt-3 border-t border-foreground/10 shrink-0">
         <Button type="button" variant="solid" color="gray" size="mini" fullWidth className="font-mono" onClick={onClose}>
           Cerrar Ficha Técnica
         </Button>

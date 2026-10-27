@@ -98,13 +98,13 @@ export function DocumentViewerModal({ document: doc, onClose }: DocumentViewerMo
       }}
       className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-ink-950/80 backdrop-blur-md animate-in fade-in duration-200"
     >
-      <div className="relative w-full max-w-4xl max-h-[85vh] rounded-2xl border border-white/15 bg-ink-950/95 shadow-2xl backdrop-blur-2xl flex flex-col overflow-hidden select-text text-white">
+      <div className="relative w-full max-w-4xl max-h-[85vh] rounded-2xl border border-foreground/15 bg-ink-950/95 shadow-2xl backdrop-blur-2xl flex flex-col overflow-hidden select-text text-ink-100">
         <div
           data-testid="document-viewer-header"
-          className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3 px-5 py-4 border-b border-white/10 shrink-0 bg-white/5"
+          className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3 px-5 py-4 border-b border-foreground/10 shrink-0 bg-foreground/5"
         >
           <div className="flex items-start gap-3 min-w-0 flex-1 basis-64">
-            <div className="h-10 w-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+            <div className="h-10 w-10 rounded-xl bg-foreground/5 border border-foreground/10 flex items-center justify-center shrink-0">
               {doc.type === 'code' ? (
                 <Code2 className="w-5 h-5 text-emerald-400" />
               ) : doc.type === 'plan' || doc.type === 'wbs' ? (
@@ -117,9 +117,9 @@ export function DocumentViewerModal({ document: doc, onClose }: DocumentViewerMo
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-2 min-w-0">
-                <h2 className="text-base font-bold text-white truncate font-sans min-w-0">{doc.name}</h2>
+                <h2 className="text-base font-bold text-ink-100 truncate font-sans min-w-0">{doc.name}</h2>
                 <span
-                  className={`px-1.5 py-0.5 rounded text-[9px] font-mono font-extrabold uppercase shrink-0 ${
+                  className={`px-1.5 py-0.5 rounded text-micro font-mono font-extrabold uppercase shrink-0 ${
                     doc.type === 'spec'
                       ? 'bg-sky-500/20 text-sky-300 border border-sky-500/40'
                       : doc.type === 'plan' || doc.type === 'wbs'
@@ -133,13 +133,13 @@ export function DocumentViewerModal({ document: doc, onClose }: DocumentViewerMo
                 >
                   {doc.type}
                 </span>
-                <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20 shrink-0">
+                <span className="text-micro font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20 shrink-0">
                   {doc.status}
                 </span>
               </div>
               <p
                 data-testid="document-viewer-path"
-                className="mt-0.5 truncate text-xs text-white/50 font-mono"
+                className="mt-0.5 truncate text-xs text-ink-500 font-mono"
                 title={doc.path}
               >
                 {doc.path}
@@ -152,14 +152,14 @@ export function DocumentViewerModal({ document: doc, onClose }: DocumentViewerMo
             className="flex flex-wrap items-center justify-end gap-2 shrink-0 ml-auto"
           >
             {isMarkdown && (
-              <div className="flex items-center bg-white/10 p-0.5 rounded-lg border border-white/10 text-[10px] font-mono shrink-0 whitespace-nowrap">
+              <div className="flex items-center bg-foreground/10 p-0.5 rounded-lg border border-foreground/10 text-micro font-mono shrink-0 whitespace-nowrap">
                 <button
                   type="button"
                   onClick={() => setViewMode('rendered')}
                   className={`px-2.5 py-1 rounded transition-all whitespace-nowrap ${
                     viewMode === 'rendered'
                       ? 'bg-emerald-500 text-ink-950 font-bold shadow'
-                      : 'text-white/60 hover:text-white'
+                      : 'text-ink-300 hover:text-ink-100'
                   }`}
                 >
                   Renderizado
@@ -170,7 +170,7 @@ export function DocumentViewerModal({ document: doc, onClose }: DocumentViewerMo
                   className={`px-2.5 py-1 rounded transition-all whitespace-nowrap ${
                     viewMode === 'raw'
                       ? 'bg-emerald-500 text-ink-950 font-bold shadow'
-                      : 'text-white/60 hover:text-white'
+                      : 'text-ink-300 hover:text-ink-100'
                   }`}
                 >
                   Crudo / Fuente
@@ -223,7 +223,7 @@ export function DocumentViewerModal({ document: doc, onClose }: DocumentViewerMo
               )}
             </Button>
 
-            <span aria-hidden="true" data-testid="document-viewer-divider" className="h-6 w-px bg-white/15 shrink-0" />
+            <span aria-hidden="true" data-testid="document-viewer-divider" className="h-6 w-px bg-foreground/15 shrink-0" />
 
             <Button
               type="button"
@@ -244,22 +244,22 @@ export function DocumentViewerModal({ document: doc, onClose }: DocumentViewerMo
         <div className="flex-1 overflow-y-auto p-6 bg-ink-900/30">
           {isLoading ? (
             <div className="space-y-3 py-6">
-              <div className="h-6 w-1/3 bg-white/10 rounded animate-pulse" />
-              <div className="h-4 w-full bg-white/5 rounded animate-pulse" />
-              <div className="h-4 w-5/6 bg-white/5 rounded animate-pulse" />
-              <div className="h-4 w-4/6 bg-white/5 rounded animate-pulse" />
-              <div className="h-32 w-full bg-white/5 rounded animate-pulse mt-4" />
+              <div className="h-6 w-1/3 bg-foreground/10 rounded animate-pulse" />
+              <div className="h-4 w-full bg-foreground/5 rounded animate-pulse" />
+              <div className="h-4 w-5/6 bg-foreground/5 rounded animate-pulse" />
+              <div className="h-4 w-4/6 bg-foreground/5 rounded animate-pulse" />
+              <div className="h-32 w-full bg-foreground/5 rounded animate-pulse mt-4" />
             </div>
           ) : loadFailed ? (
             <p data-testid="document-load-error" className="rounded-xl border border-rose-500/30 bg-rose-950/30 p-4 font-mono text-xs text-rose-200">
               {t('mc.doc.loadFailed', { path: doc.path })}
             </p>
           ) : viewMode === 'raw' || isCodeOrJson ? (
-            <div className="relative rounded-xl border border-white/10 bg-ink-950 p-4 font-mono text-xs leading-relaxed overflow-x-auto text-emerald-300">
+            <div className="relative rounded-xl border border-foreground/10 bg-ink-950 p-4 font-mono text-xs leading-relaxed overflow-x-auto text-emerald-300">
               <pre className="whitespace-pre-wrap break-words">{content}</pre>
             </div>
           ) : (
-            <div className="prose-studio mx-auto max-w-[72ch] text-[15px] leading-7 select-text [&_h1]:text-xl [&_h1]:font-bold [&_h1]:text-white [&_h1]:border-b [&_h1]:border-white/10 [&_h1]:pb-2 [&_h1]:mb-4 [&_h2]:text-lg [&_h2]:font-bold [&_h2]:text-white [&_h2]:mt-6 [&_h2]:mb-3 [&_h3]:text-base [&_h3]:font-bold [&_h3]:text-white [&_h3]:mt-4 [&_h3]:mb-2 [&_p]:my-2.5 [&_p]:text-white/80 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:my-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:my-2 [&_li]:my-1 [&_li]:text-white/80 [&_code]:rounded [&_code]:bg-white/10 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-xs [&_code]:text-emerald-300 [&_pre]:overflow-auto [&_pre]:rounded-xl [&_pre]:bg-ink-950 [&_pre]:p-4 [&_pre]:border [&_pre]:border-white/10 [&_blockquote]:border-l-2 [&_blockquote]:border-emerald-500/60 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-white/60 [&_table]:w-full [&_table]:border-collapse [&_table]:my-4 [&_th]:border [&_th]:border-white/15 [&_th]:bg-white/5 [&_th]:p-2 [&_th]:text-left [&_th]:text-xs [&_th]:font-bold [&_td]:border [&_td]:border-white/10 [&_td]:p-2 [&_td]:text-xs">
+            <div className="prose-studio mx-auto max-w-[72ch] text-body leading-7 select-text [&_h1]:text-xl [&_h1]:font-bold [&_h1]:text-ink-100 [&_h1]:border-b [&_h1]:border-foreground/10 [&_h1]:pb-2 [&_h1]:mb-4 [&_h2]:text-lg [&_h2]:font-bold [&_h2]:text-ink-100 [&_h2]:mt-6 [&_h2]:mb-3 [&_h3]:text-base [&_h3]:font-bold [&_h3]:text-ink-100 [&_h3]:mt-4 [&_h3]:mb-2 [&_p]:my-2.5 [&_p]:text-ink-100 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:my-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:my-2 [&_li]:my-1 [&_li]:text-ink-100 [&_code]:rounded [&_code]:bg-foreground/10 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-xs [&_code]:text-emerald-300 [&_pre]:overflow-auto [&_pre]:rounded-xl [&_pre]:bg-ink-950 [&_pre]:p-4 [&_pre]:border [&_pre]:border-foreground/10 [&_blockquote]:border-l-2 [&_blockquote]:border-emerald-500/60 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-ink-300 [&_table]:w-full [&_table]:border-collapse [&_table]:my-4 [&_th]:border [&_th]:border-foreground/15 [&_th]:bg-foreground/5 [&_th]:p-2 [&_th]:text-left [&_th]:text-xs [&_th]:font-bold [&_td]:border [&_td]:border-foreground/10 [&_td]:p-2 [&_td]:text-xs">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
             </div>
           )}

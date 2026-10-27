@@ -67,7 +67,7 @@ export function PendingMessages({ threadId }: { threadId: string }) {
           const isEditing = editing?.id === item.id;
           return (
             <li key={item.id} className="flex items-start gap-2 rounded-md border border-ink-800 bg-ink-950 px-2 py-1.5 text-sm">
-              <Badge variant="soft" color="warning" shape="rounded" className="mt-0.5 shrink-0 text-[11px]!">{t('pending.badge')}</Badge>
+              <Badge variant="soft" color="warning" shape="rounded" className="mt-0.5 shrink-0 text-meta!">{t('pending.badge')}</Badge>
               {isEditing ? (
                 <div className="flex min-w-0 flex-1 flex-col gap-1">
                   <Textarea
@@ -94,7 +94,7 @@ export function PendingMessages({ threadId }: { threadId: string }) {
                     {item.attachments && item.attachments.length > 0 && (
                       <ul aria-label={t('attach.tray')} className="mt-0.5 flex flex-wrap gap-1">
                         {item.attachments.map((a) => (
-                          <li key={a.sha256} className="max-w-[10rem] truncate rounded bg-ink-800 px-1.5 text-[11px] text-ink-300">{a.name}</li>
+                          <li key={a.sha256} className="max-w-[10rem] truncate rounded bg-ink-800 px-1.5 text-meta text-ink-300">{a.name}</li>
                         ))}
                       </ul>
                     )}

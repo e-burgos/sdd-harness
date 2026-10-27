@@ -233,21 +233,21 @@ export function AgentMapCanvas({ onOpenDm, onNewConversation }: { onOpenDm: (age
       <div
         className="absolute inset-0 opacity-[0.07] pointer-events-none"
         style={{
-          backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)',
+          backgroundImage: 'radial-gradient(var(--color-foreground) 1px, transparent 1px)',
           backgroundSize: '24px 24px',
         }}
       />
 
-      <div className="flex items-center justify-between px-6 py-3 border-b border-white/5 bg-ink-950/40 backdrop-blur-md z-10">
+      <div className="flex items-center justify-between px-6 py-3 border-b border-foreground/5 bg-ink-950/40 backdrop-blur-md z-10">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
             <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
-            <h2 className="text-sm font-semibold text-white tracking-tight">Topología del Enjambre</h2>
-            <span className="rounded bg-white/10 px-1.5 py-0.5 font-mono text-[9px] text-emerald-400 font-bold border border-emerald-500/20">
+            <h2 className="text-sm font-semibold text-ink-100 tracking-tight">Topología del Enjambre</h2>
+            <span className="rounded bg-foreground/10 px-1.5 py-0.5 font-mono text-micro text-emerald-400 font-bold border border-emerald-500/20">
               GATES
             </span>
           </div>
-          <span className="text-xs text-white/50 font-mono">
+          <span className="text-xs text-ink-500 font-mono">
             {snapshot?.project ? `Proyecto: ${snapshot.project}` : `${NODES.length} agentes`}
           </span>
         </div>
@@ -260,16 +260,16 @@ export function AgentMapCanvas({ onOpenDm, onNewConversation }: { onOpenDm: (age
             onNewConversation={onNewConversation}
           />
 
-          <div className="h-4 w-[1px] bg-white/10" />
+          <div className="h-4 w-[1px] bg-foreground/10" />
 
-          <div className="flex items-center bg-white/5 p-0.5 rounded-lg border border-white/10 text-[10px] font-mono">
+          <div className="flex items-center bg-foreground/5 p-0.5 rounded-lg border border-foreground/10 text-micro font-mono">
             <button
               type="button"
               onClick={() => setGateFilter('cycle')}
               className={`px-2 py-0.5 rounded-md transition-all ${
                 gateFilter === 'cycle'
                   ? 'bg-emerald-500 text-ink-950 font-bold shadow'
-                  : 'text-white/60 hover:text-white'
+                  : 'text-ink-300 hover:text-ink-100'
               }`}
             >
               Ciclo (4)
@@ -280,7 +280,7 @@ export function AgentMapCanvas({ onOpenDm, onNewConversation }: { onOpenDm: (age
               className={`px-2 py-0.5 rounded-md transition-all ${
                 gateFilter === 'transversal'
                   ? 'bg-emerald-500 text-ink-950 font-bold shadow'
-                  : 'text-white/60 hover:text-white'
+                  : 'text-ink-300 hover:text-ink-100'
               }`}
             >
               Transversales (2)
@@ -291,16 +291,16 @@ export function AgentMapCanvas({ onOpenDm, onNewConversation }: { onOpenDm: (age
               className={`px-2 py-0.5 rounded-md transition-all ${
                 gateFilter === 'all'
                   ? 'bg-emerald-500 text-ink-950 font-bold shadow'
-                  : 'text-white/60 hover:text-white'
+                  : 'text-ink-300 hover:text-ink-100'
               }`}
             >
               Todas (6)
             </button>
           </div>
 
-          <div className="h-4 w-[1px] bg-white/10" />
+          <div className="h-4 w-[1px] bg-foreground/10" />
 
-          <div className="flex items-center gap-4 text-xs font-mono text-white/60">
+          <div className="flex items-center gap-4 text-xs font-mono text-ink-300">
             <span className="flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full bg-sky-400" />
               <span>{activePresenceCount} en ejecución</span>
@@ -367,7 +367,7 @@ export function AgentMapCanvas({ onOpenDm, onNewConversation }: { onOpenDm: (age
                   <path
                     d={pathData}
                     fill="none"
-                    stroke={isHighlight ? gateLayout.gate.color : '#ffffff'}
+                    stroke={isHighlight ? gateLayout.gate.color : 'var(--color-foreground)'}
                     strokeOpacity={isHighlight ? '0.75' : '0.1'}
                     strokeWidth={isHighlight ? '2.5' : '1'}
                     strokeDasharray={isHighlight ? '6 4' : '3 4'}
@@ -403,7 +403,7 @@ export function AgentMapCanvas({ onOpenDm, onNewConversation }: { onOpenDm: (age
                   <path
                     d={pathData}
                     fill="none"
-                    stroke={isCommunicating ? '#10b981' : isFlowActive ? '#38bdf8' : '#ffffff'}
+                    stroke={isCommunicating ? '#10b981' : isFlowActive ? '#38bdf8' : 'var(--color-foreground)'}
                     strokeOpacity={isCommunicating ? '0.85' : isFlowActive ? '0.5' : '0.12'}
                     strokeWidth={isCommunicating ? '3' : isFlowActive ? '2.5' : '1.5'}
                     filter={isFlowActive || isCommunicating ? 'url(#glow)' : undefined}
@@ -466,19 +466,19 @@ export function AgentMapCanvas({ onOpenDm, onNewConversation }: { onOpenDm: (age
 
         <div
           data-testid="zoom-toolbar"
-          className="absolute bottom-6 left-6 z-20 flex items-center gap-1.5 rounded-xl border border-white/15 bg-ink-950/85 p-1.5 shadow-xl backdrop-blur-xl select-none"
+          className="absolute bottom-6 left-6 z-20 flex items-center gap-1.5 rounded-xl border border-foreground/15 bg-ink-950/85 p-1.5 shadow-xl backdrop-blur-xl select-none"
         >
           <Button type="button" variant="transparent" color="gray" shape="circle" size="tiny" className="font-mono" onClick={handleZoomIn} title="Acercar (+)">
             +
           </Button>
-          <span className="min-w-[42px] text-center font-mono text-[11px] font-semibold text-emerald-400">
+          <span className="min-w-[42px] text-center font-mono text-meta font-semibold text-emerald-400">
             {Math.round(zoom * 100)}%
           </span>
           <Button type="button" variant="transparent" color="gray" shape="circle" size="tiny" className="font-mono" onClick={handleZoomOut} title="Alejar (-)">
             -
           </Button>
-          <div className="h-4 w-[1px] bg-white/10 mx-0.5" />
-          <Button type="button" variant="transparent" color="gray" size="tiny" className="font-mono" onClick={handleResetZoom} title="Restablecer posición y zoom (100%)">
+          <div className="h-4 w-[1px] bg-foreground/10 mx-0.5" />
+          <Button type="button" variant="transparent" color="gray" size="tiny" className="font-mono text-meta!" onClick={handleResetZoom} title="Restablecer posición y zoom (100%)">
             <span>⟲</span>
             <span>Ajustar</span>
           </Button>
@@ -496,8 +496,8 @@ export function AgentMapCanvas({ onOpenDm, onNewConversation }: { onOpenDm: (age
               title="Expandir panel lateral"
             >
               <Bot className="w-4 h-4 text-emerald-400" />
-              <span className="font-semibold text-white">Panel</span>
-              <span className="rounded bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/30">
+              <span className="font-semibold text-ink-100">Panel</span>
+              <span className="rounded bg-emerald-500/20 px-1.5 py-0.5 text-micro font-bold text-emerald-400 border border-emerald-500/30">
                 {selectedAgent ? agentMeta(selectedAgent).name : 'Enjambre'}
               </span>
             </Button>

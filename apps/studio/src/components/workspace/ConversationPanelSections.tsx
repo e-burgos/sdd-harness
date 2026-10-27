@@ -17,7 +17,7 @@ const RECENT_ACTIONS = 5;
 const ACTION_TEXT_MAX = 120;
 
 const clip = (text: string): string => (text.length > ACTION_TEXT_MAX ? `${text.slice(0, ACTION_TEXT_MAX - 1)}…` : text);
-const heading = 'mb-2 text-[11px] uppercase tracking-wider text-ink-500';
+const heading = 'mb-2 text-meta uppercase tracking-wider text-ink-500';
 
 export function ConversationPanelSections({ view, gate }: ConversationPanelData) {
   const { t } = useT();

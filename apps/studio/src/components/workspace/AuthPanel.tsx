@@ -23,7 +23,7 @@ function SubscriptionTab({ active }: { active: boolean }) {
   const connectLabel = state === 'connected' ? t('auth.sub.switch') : t('auth.sub.connect');
 
   return (
-    <div className="flex flex-col gap-2 text-[11px] text-ink-300">
+    <div className="flex flex-col gap-2 text-meta text-ink-300">
       <p aria-live="polite">
         {state === 'connected' && t('auth.sub.connected', { details })}
         {state === 'pending' && t('auth.sub.pending')}
@@ -93,7 +93,7 @@ export function AuthPanel() {
   }
   return (
     <section aria-label={t('auth.panel.title')} className="mt-2 rounded-md border border-ink-800 p-2">
-      <div role="tablist" aria-label={t('auth.panel.title')} className="mb-2 flex gap-1 text-[11px]">
+      <div role="tablist" aria-label={t('auth.panel.title')} className="mb-2 flex gap-1 text-meta">
         {TABS.map((tab) => (
           <button
             key={tab}
@@ -114,9 +114,9 @@ export function AuthPanel() {
           <Button type="button" variant="transparent" color="gray" size="tiny" onClick={() => setOpen(false)}>{t('auth.panel.close')}</Button>
         </div>
       </div>
-      {error && <p role="alert" className="mb-2 text-[11px] text-roseish">{error}</p>}
+      {error && <p role="alert" className="mb-2 text-meta text-roseish">{error}</p>}
       <div role="tabpanel" id={`${baseId}-panel-${selected}`} aria-labelledby={`${baseId}-tab-${selected}`}>
-        {selected === 'subscription' ? (supported ? <SubscriptionTab active /> : <p className="text-[11px] text-ink-300">{t('auth.sub.unsupported')}</p>) : <ApiKeyField />}
+        {selected === 'subscription' ? (supported ? <SubscriptionTab active /> : <p className="text-meta text-ink-300">{t('auth.sub.unsupported')}</p>) : <ApiKeyField />}
       </div>
     </section>
   );

@@ -65,7 +65,7 @@ export function QuestionForm({ item, onAnswer }: { item: QuestionItem; onAnswer:
           return (
             <fieldset key={group} disabled={!pending || sending} className="min-w-0 space-y-2">
               <legend className="mb-1 text-sm text-ink-100">
-                {q.header && <Badge variant="soft" color="gray" className="mr-2 text-[10px]! uppercase tracking-wide">{q.header}</Badge>}
+                {q.header && <Badge variant="soft" color="gray" className="mr-2 text-micro! uppercase tracking-wide">{q.header}</Badge>}
                 {q.question}
                 {q.multiSelect && <span className="ml-2 text-xs text-ink-400">{t('question.multiHint')}</span>}
               </legend>
@@ -119,7 +119,7 @@ export function QuestionForm({ item, onAnswer }: { item: QuestionItem; onAnswer:
                                 value={choice.otherText}
                                 onChange={(e) => change(index, (c) => ({ ...c, otherText: e.target.value }))}
                                 className="mt-1 w-full"
-                                inputClassName="h-auto! sm:h-auto! rounded-md! px-2! py-1!"
+                                inputClassName="h-auto! sm:h-auto! rounded-md! px-2! py-1! text-ui!"
                               />
                             )}
                           </>

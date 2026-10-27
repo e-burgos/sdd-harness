@@ -54,14 +54,14 @@ export function ChatDialogueCard({
       } ${
         isCurrent
           ? 'border-emerald-500/70 bg-emerald-950/30 shadow-[0_0_16px_rgba(16,185,129,0.22)]'
-          : 'border-white/10 bg-ink-950/80 hover:border-white/20 hover:bg-ink-900/90'
+          : 'border-foreground/10 bg-ink-950/80 hover:border-foreground/20 hover:bg-ink-900/90'
       }`}
     >
-      <div className="flex items-center justify-between mb-2 text-[10px] font-mono select-none">
+      <div className="flex items-center justify-between mb-2 text-micro font-mono select-none">
         <div className="flex items-center gap-1.5 truncate">
           {senderId && (
             <div
-              className="h-4 w-4 rounded-full flex items-center justify-center shrink-0 border border-white/10"
+              className="h-4 w-4 rounded-full flex items-center justify-center shrink-0 border border-foreground/10"
               style={{ backgroundColor: `${senderColor}25` }}
             >
               <AgentFace agent={senderId} size={14} />
@@ -73,10 +73,10 @@ export function ChatDialogueCard({
 
           {receiverName && (
             <>
-              <ArrowRight className="w-2.5 h-2.5 text-white/30 shrink-0" />
+              <ArrowRight className="w-2.5 h-2.5 text-ink-500 shrink-0" />
               {receiverId && (
                 <div
-                  className="h-4 w-4 rounded-full flex items-center justify-center shrink-0 border border-white/10"
+                  className="h-4 w-4 rounded-full flex items-center justify-center shrink-0 border border-foreground/10"
                   style={{ backgroundColor: `${receiverColor}25` }}
                 >
                   <AgentFace agent={receiverId} size={14} />
@@ -93,40 +93,40 @@ export function ChatDialogueCard({
           {provider && (
             <span
               data-testid="dialogue-provider"
-              className="text-[8px] font-bold px-1.5 py-0.2 rounded border font-mono text-purple-300 bg-purple-500/10 border-purple-500/30"
+              className="text-micro font-bold px-1.5 py-0.2 rounded border font-mono text-purple-300 bg-purple-500/10 border-purple-500/30"
             >
               {provider.toUpperCase()}
             </span>
           )}
           {gateId && (
-            <span className="bg-yellow-500/15 text-yellow-300 border border-yellow-500/40 text-[8px] font-mono px-1.5 py-0.2 rounded uppercase font-bold tracking-wider">
+            <span className="bg-yellow-500/15 text-yellow-300 border border-yellow-500/40 text-micro font-mono px-1.5 py-0.2 rounded uppercase font-bold tracking-wider">
               {gateId.toUpperCase()}
             </span>
           )}
           {badge && (
             <span
-              className={`text-[8px] font-bold px-1.5 py-0.2 rounded border font-mono ${
+              className={`text-micro font-bold px-1.5 py-0.2 rounded border font-mono ${
                 isLive
                   ? 'text-rose-400 bg-rose-500/10 border-rose-500/30'
-                  : 'text-white/70 bg-white/5 border-white/10'
+                  : 'text-ink-300 bg-foreground/5 border-foreground/10'
               }`}
             >
               {badge}
             </span>
           )}
           {seqNumber !== undefined && (
-            <span className="text-white/30 text-[9px] font-mono">#{seqNumber}</span>
+            <span className="text-ink-500 text-micro font-mono">#{seqNumber}</span>
           )}
         </div>
       </div>
 
-      <div className="relative text-xs leading-relaxed text-white/90 font-sans">
+      <div className="relative text-xs leading-relaxed text-ink-100 font-sans">
         <div
           className={`transition-all duration-200 ${
             isLong && !isExpanded ? 'max-h-[72px] overflow-hidden' : 'max-h-none'
           }`}
         >
-          <div className="prose-studio min-w-0 break-words text-[11px] leading-relaxed [&_code]:rounded [&_code]:bg-white/10 [&_code]:px-1 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-[10px] [&_pre]:overflow-auto [&_pre]:rounded-lg [&_pre]:bg-ink-950 [&_pre]:p-2.5 [&_a]:text-sky-300 [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_p]:my-1 [&_h1]:text-xs [&_h1]:font-bold [&_h2]:text-xs [&_h2]:font-bold [&_h3]:text-xs [&_h3]:font-bold [&_h4]:text-xs [&_h4]:font-bold [&_strong]:text-white">
+          <div className="prose-studio min-w-0 break-words text-meta leading-relaxed [&_code]:rounded [&_code]:bg-foreground/10 [&_code]:px-1 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-micro [&_pre]:overflow-auto [&_pre]:rounded-lg [&_pre]:bg-ink-950 [&_pre]:p-2.5 [&_a]:text-sky-300 [&_ul]:list-disc [&_ul]:pl-4 [&_ol]:list-decimal [&_ol]:pl-4 [&_p]:my-1 [&_h1]:text-xs [&_h1]:font-bold [&_h2]:text-xs [&_h2]:font-bold [&_h3]:text-xs [&_h3]:font-bold [&_h4]:text-xs [&_h4]:font-bold [&_strong]:text-ink-100">
             <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>
           </div>
         </div>
@@ -137,13 +137,13 @@ export function ChatDialogueCard({
       </div>
 
       {isLong && (
-        <div className="mt-1.5 pt-1 border-t border-white/5 flex items-center justify-between select-none">
+        <div className="mt-1.5 pt-1 border-t border-foreground/5 flex items-center justify-between select-none">
           <Button
             type="button"
             variant="transparent"
             color="success"
             size="tiny"
-            className="font-mono"
+            className="font-mono text-meta!"
             onClick={(e) => {
               e.stopPropagation();
               setIsExpanded(!isExpanded);
@@ -152,7 +152,7 @@ export function ChatDialogueCard({
             <span>{isExpanded ? '⌃' : '⌄'}</span>
             <span>{isExpanded ? 'Mostrar menos' : 'Mostrar más'}</span>
           </Button>
-          <span className="text-[9px] font-mono text-white/30">
+          <span className="text-micro font-mono text-ink-500">
             {text.length} caracteres
           </span>
         </div>

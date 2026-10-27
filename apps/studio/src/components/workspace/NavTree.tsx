@@ -55,7 +55,7 @@ export function NodeMarks({ node }: { node: NavNode }) {
           <span className="sr-only">, {t('sidebar.containsSelection')}</span>
         </>
       )}
-      {node.threadCount > 0 && <span className="text-[10px] text-ink-500">{node.threadCount}</span>}
+      {node.threadCount > 0 && <span className="text-micro text-ink-500">{node.threadCount}</span>}
     </span>
   );
 }
@@ -120,12 +120,12 @@ function ActiveThreadRow({ thread, h }: { thread: NavThread; h: NavTreeHandlers 
       <ActivityIndicator status={thread.status} placement="row" />
       <span className="flex min-w-0 flex-1 flex-col">
         <span className="truncate">{thread.title}</span>
-        <span className="truncate text-[11px] text-ink-500" data-testid="active-thread-agents">
+        <span className="truncate text-meta text-ink-500" data-testid="active-thread-agents">
           {(thread.workingAgents.length > 0 ? thread.workingAgents : [thread.agent]).map((agent) => agentMeta(agent).name).join(', ')} · {t(`status.${thread.status}`)}
           {thread.tool && ` · ${thread.tool}`}
         </span>
       </span>
-      {thread.pendingCount > 0 && <span className="shrink-0 rounded-full bg-ink-800 px-1.5 text-[10px] text-ink-300">{t('sidebar.pending', { count: thread.pendingCount })}</span>}
+      {thread.pendingCount > 0 && <span className="shrink-0 rounded-full bg-ink-800 px-1.5 text-micro text-ink-300">{t('sidebar.pending', { count: thread.pendingCount })}</span>}
     </button>
   );
 }
@@ -184,7 +184,7 @@ export function NavNodeView({ node, depth, h, dmState }: { node: NavNode; depth:
           {node.kind === 'dm' ? (
             <div className="flex flex-col min-w-0 leading-tight">
               <span className="truncate">{label}</span>
-              <span className="truncate text-[10px] text-ink-400 font-mono font-normal">
+              <span className="truncate text-micro text-ink-400 font-mono font-normal">
                 {agentMeta(node.label).role}
               </span>
             </div>
@@ -252,7 +252,7 @@ export function SectionView({ section, h, dmState }: { section: NavSection; h: N
     <section>
       <button
         type="button"
-        className={`${focusRing} mb-1 flex w-full items-center gap-1 rounded px-2 text-left text-[11px] uppercase tracking-wider text-ink-500 hover:text-ink-300`}
+        className={`${focusRing} mb-1 flex w-full items-center gap-1 rounded px-2 text-left text-meta uppercase tracking-wider text-ink-500 hover:text-ink-300`}
         aria-expanded={!collapsed}
         aria-controls={collapsed ? undefined : regionId}
         onClick={() => h.collapse.toggle(section.id, section.defaultCollapsed)}

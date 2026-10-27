@@ -25,7 +25,7 @@ export function AgentAvatar({
       title={`${meta.name} (${meta.title}) · ${meta.personality}`}
     >
       <span
-        className={`relative inline-flex items-center justify-center rounded-xl transition-all duration-300 shadow-sm border border-white/20 overflow-hidden ${
+        className={`relative inline-flex items-center justify-center rounded-xl transition-all duration-300 shadow-sm border border-foreground/20 overflow-hidden ${
           isRunning ? 'ring-2 ring-emerald-400/80 animate-pulse' : ''
         }`}
         style={{

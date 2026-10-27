@@ -96,7 +96,7 @@ export function ThreadLinkPicker({ threadId }: { threadId: string }) {
   const remove = (ref: ThreadLinkRef) => run({ cmd: 'thread.updateLinks', threadId, add: [], remove: [ref] });
 
   const detectedNote = detected && (
-    <span data-testid="link-detected" className="truncate font-mono text-[11px] text-ink-400" title={detected}>
+    <span data-testid="link-detected" className="truncate font-mono text-meta text-ink-400" title={detected}>
       {t('link.detected', { target: detected })}
     </span>
   );
@@ -139,9 +139,9 @@ export function ThreadLinkPicker({ threadId }: { threadId: string }) {
           const available = isLinkEntryAvailable(ref, snapshot);
           return (
             <li key={linkRefKey(ref)} data-testid={`link-chip-${linkRefKey(ref)}`} className="flex min-w-0 items-center gap-1 rounded-md border border-ink-700 bg-ink-950 px-1.5 py-0.5">
-              <span className={`truncate font-mono text-[11px] ${available ? 'text-ink-100' : 'text-ink-400 line-through'}`} title={label}>{label}</span>
-              <span data-testid="link-origin" className="shrink-0 text-[10px] uppercase text-ink-500">{t(`link.origin.${entry.origin}`)}</span>
-              {!available && <span data-testid="link-unavailable" className="shrink-0 text-[10px] text-amberish">{t('link.unavailable')}</span>}
+              <span className={`truncate font-mono text-meta ${available ? 'text-ink-100' : 'text-ink-400 line-through'}`} title={label}>{label}</span>
+              <span data-testid="link-origin" className="shrink-0 text-micro uppercase text-ink-500">{t(`link.origin.${entry.origin}`)}</span>
+              {!available && <span data-testid="link-unavailable" className="shrink-0 text-micro text-amberish">{t('link.unavailable')}</span>}
               <button
                 type="button"
                 aria-label={t('link.remove', { target: label })}

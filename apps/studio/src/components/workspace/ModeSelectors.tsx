@@ -46,13 +46,13 @@ export function ModeSelectors(p: ModeSelectorsProps) {
       >
         {FLOWS.map((x) => <option key={x} value={x}>{t('mode.flow.option', { mode: t(`mode.flow.${x}`) })}</option>)}
       </HelpSelect>
-      <span data-testid="mode-effective" className="text-[11px] text-ink-400">
+      <span data-testid="mode-effective" className="text-meta text-ink-400">
         {t('mode.effective', { flow: effectiveFlow(p.profile, p.flow).toUpperCase() })}
       </span>
-      {!p.canEditProfile && <span className="text-[11px] text-ink-500">{t('mode.dev.readonly')}</span>}
-      {p.profileError && <span role="alert" className="text-[11px] text-roseish">{p.profileError}</span>}
+      {!p.canEditProfile && <span className="text-meta text-ink-500">{t('mode.dev.readonly')}</span>}
+      {p.profileError && <span role="alert" className="text-meta text-roseish">{p.profileError}</span>}
       {warn && (
-        <span role="status" data-testid="mode-exception" className="inline-flex basis-full items-center gap-1 text-[11px] text-amberish">
+        <span role="status" data-testid="mode-exception" className="inline-flex basis-full items-center gap-1 text-meta text-amberish">
           <TriangleAlert size={12} aria-hidden />
           {t(p.exception === 'depends-on' ? 'mode.exception.dependsOn' : 'mode.exception.dependedOn')}
         </span>

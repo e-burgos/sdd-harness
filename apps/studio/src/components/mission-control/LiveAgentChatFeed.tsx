@@ -75,34 +75,34 @@ export function LiveAgentChatFeed({ agentId, conversation, onPickConversation }:
   return (
     <div
       data-testid="live-agent-chat-feed"
-      className="flex-1 flex flex-col min-h-0 bg-ink-900/60 rounded-xl border border-white/10 overflow-hidden"
+      className="flex-1 flex flex-col min-h-0 bg-ink-900/60 rounded-xl border border-foreground/10 overflow-hidden"
     >
-      <div className="flex items-center justify-between px-3 py-2 border-b border-white/10 bg-white/5">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-foreground/10 bg-foreground/5">
         <div className="flex items-center gap-2">
           <span className={`h-2 w-2 rounded-full ${hasLive ? 'bg-rose-400 animate-ping' : 'bg-emerald-400'}`} />
-          <span className="text-[10px] font-mono font-bold text-white uppercase tracking-wider">
+          <span className="text-micro font-mono font-bold text-ink-100 uppercase tracking-wider">
             {hasLive ? t('map.chat.live') : t('mc.conversations')} ({agentDialogues.length})
           </span>
         </div>
-        <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-white/10 text-white/70" style={{ color: meta.color }}>
+        <span className="text-micro font-mono px-1.5 py-0.5 rounded bg-foreground/10 text-ink-300" style={{ color: meta.color }}>
           @{meta.name}
         </span>
       </div>
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto p-2.5 space-y-2.5 text-xs select-text scroll-smooth">
         {agentDialogues.length === 0 ? (
-          <div data-testid="live-agent-chat-feed-empty" className="h-full flex flex-col items-center justify-center p-4 text-center text-white/50 space-y-2">
-            <Moon className="w-8 h-8 text-white/30" />
+          <div data-testid="live-agent-chat-feed-empty" className="h-full flex flex-col items-center justify-center p-4 text-center text-ink-500 space-y-2">
+            <Moon className="w-8 h-8 text-ink-500" />
             <p className="text-xs font-sans leading-relaxed">{t('mc.noActivity')}</p>
           </div>
         ) : (
           <>
             {hiddenCount > 0 && (
               <div className="flex justify-center pb-1">
-                <Button type="button" variant="transparent" color="success" size="tiny" className="font-mono" onClick={() => setVisibleLimit((v) => v + PAGE_SIZE)}>
+                <Button type="button" variant="transparent" color="success" size="tiny" className="font-mono text-meta!" onClick={() => setVisibleLimit((v) => v + PAGE_SIZE)}>
                   <ArrowUp className="w-3 h-3" />
                   <span>Cargar más mensajes (+{PAGE_SIZE})</span>
-                  <span className="text-white/40">({hiddenCount} restantes)</span>
+                  <span className="text-ink-500">({hiddenCount} restantes)</span>
                 </Button>
               </div>
             )}
@@ -132,8 +132,8 @@ export function LiveAgentChatFeed({ agentId, conversation, onPickConversation }:
         )}
       </div>
 
-      <form onSubmit={handleSendQuick} className="p-2 border-t border-white/10 bg-ink-950/90 flex flex-col gap-1.5">
-        {sendError && <span className="text-[10px] text-rose-400 font-mono px-1">{sendError}</span>}
+      <form onSubmit={handleSendQuick} className="p-2 border-t border-foreground/10 bg-ink-950/90 flex flex-col gap-1.5">
+        {sendError && <span className="text-micro text-rose-400 font-mono px-1">{sendError}</span>}
         <div className="flex items-center gap-2">
           <Input
             type="text"
@@ -142,7 +142,7 @@ export function LiveAgentChatFeed({ agentId, conversation, onPickConversation }:
             placeholder={t('map.chat.placeholder', { name: meta.name })}
             disabled={isSending}
             className="flex-1"
-            inputClassName="h-auto! sm:h-auto! rounded-lg! px-2.5! py-1.5! text-xs!"
+            inputClassName="h-auto! sm:h-auto! rounded-lg! px-2.5! py-1.5! text-ui!"
           />
           <Button
             type="submit"
@@ -152,7 +152,7 @@ export function LiveAgentChatFeed({ agentId, conversation, onPickConversation }:
           >
             {isSending ? (
               <>
-                <span className="h-2.5 w-2.5 rounded-full border border-white border-t-transparent animate-spin" />
+                <span className="h-2.5 w-2.5 rounded-full border border-foreground border-t-transparent animate-spin" />
                 <span>Enviando</span>
               </>
             ) : (

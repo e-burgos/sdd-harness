@@ -139,26 +139,26 @@ export function EcosystemDashboard() {
   return (
     <div
       data-testid="ecosystem-dashboard"
-      className="flex-1 h-full w-full overflow-y-auto bg-radial from-ink-900 to-ink-950 p-6 space-y-6 text-white select-none"
+      className="flex-1 h-full w-full overflow-y-auto bg-radial from-ink-900 to-ink-950 p-6 space-y-6 text-ink-100 select-none"
     >
       {/* Header Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-5">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-foreground/10 pb-5">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <Globe className="w-5 h-5 text-emerald-400" />
-            <h2 className="text-xl font-bold tracking-tight text-white">Ecosistema del Repositorio</h2>
+            <h2 className="text-xl font-bold tracking-tight text-ink-100">Ecosistema del Repositorio</h2>
           </div>
-          <p className="text-xs text-white/50 font-mono">
+          <p className="text-xs text-ink-500 font-mono">
             Monitoreo dinámico de subproyectos, contratos, roadmap de specs y salud del SPEC GATE.
           </p>
         </div>
 
         {/* Global Gate Status Pill */}
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 rounded-2xl bg-ink-900 border border-white/10 px-4 py-2 shadow-lg">
+          <div className="flex items-center gap-2 rounded-2xl bg-ink-900 border border-foreground/10 px-4 py-2 shadow-lg">
             <span className={`h-2.5 w-2.5 rounded-full ${activeCycle ? 'bg-emerald-400 animate-ping' : 'bg-sky-400'}`} />
             <div>
-              <p className="text-[10px] font-mono uppercase text-white/40">SPEC GATE STATUS</p>
+              <p className="text-micro font-mono uppercase text-ink-500">SPEC GATE STATUS</p>
               <p className="text-xs font-mono font-bold text-emerald-400">
                 {activeCycle ? `CYCLE IN-PROGRESS (${activeCycle.flow})` : 'IDLE (NO ACTIVE CYCLE)'}
               </p>
@@ -169,38 +169,38 @@ export function EcosystemDashboard() {
 
       {/* KPI Headline Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-md">
-          <p className="text-[11px] font-mono uppercase text-white/40 mb-1">Especificaciones</p>
+        <div className="rounded-2xl border border-foreground/10 bg-foreground/5 p-4 backdrop-blur-md">
+          <p className="text-meta font-mono uppercase text-ink-500 mb-1">Especificaciones</p>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold font-mono text-white">{specs.length}</span>
+            <span className="text-2xl font-bold font-mono text-ink-100">{specs.length}</span>
             <span className="text-xs text-emerald-400 font-mono font-semibold">
               {completedSpecs} listas · {inProgressSpecs} activas
             </span>
           </div>
         </div>
 
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-md">
-          <p className="text-[11px] font-mono uppercase text-white/40 mb-1">Tareas & Sprint</p>
+        <div className="rounded-2xl border border-foreground/10 bg-foreground/5 p-4 backdrop-blur-md">
+          <p className="text-meta font-mono uppercase text-ink-500 mb-1">Tareas & Sprint</p>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold font-mono text-white">{doneTasks}/{totalTasks}</span>
+            <span className="text-2xl font-bold font-mono text-ink-100">{doneTasks}/{totalTasks}</span>
             <span className="text-xs text-sky-400 font-mono font-semibold">{taskProgressPct}% completado</span>
           </div>
         </div>
 
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-md">
-          <p className="text-[11px] font-mono uppercase text-white/40 mb-1">Ciclos Totales</p>
+        <div className="rounded-2xl border border-foreground/10 bg-foreground/5 p-4 backdrop-blur-md">
+          <p className="text-meta font-mono uppercase text-ink-500 mb-1">Ciclos Totales</p>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold font-mono text-white">{cycles.length}</span>
+            <span className="text-2xl font-bold font-mono text-ink-100">{cycles.length}</span>
             <span className="text-xs text-purple-400 font-mono font-semibold">
               {cycles.filter((c) => c.status === 'completed').length} cerrados
             </span>
           </div>
         </div>
 
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-md">
-          <p className="text-[11px] font-mono uppercase text-white/40 mb-1">Fixes Registrados</p>
+        <div className="rounded-2xl border border-foreground/10 bg-foreground/5 p-4 backdrop-blur-md">
+          <p className="text-meta font-mono uppercase text-ink-500 mb-1">Fixes Registrados</p>
           <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold font-mono text-white">{fixes.length}</span>
+            <span className="text-2xl font-bold font-mono text-ink-100">{fixes.length}</span>
             <span className="text-xs text-amber-400 font-mono font-semibold">100% absorbidos</span>
           </div>
         </div>
@@ -209,15 +209,15 @@ export function EcosystemDashboard() {
       {/* Subprojects Grid (Apps, Libs, Tools) */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-semibold tracking-tight text-white flex items-center gap-2">
+          <h3 className="text-sm font-semibold tracking-tight text-ink-100 flex items-center gap-2">
             <Folder className="w-4 h-4 text-emerald-400" />
             <span>Subproyectos y Módulos del Workspace ({subprojects.length})</span>
           </h3>
-          <span className="text-[11px] font-mono text-white/40">Detección automática de arquitectura</span>
+          <span className="text-meta font-mono text-ink-500">Detección automática de arquitectura</span>
         </div>
 
         {subprojects.length === 0 ? (
-          <div className="rounded-xl border border-white/10 bg-ink-900/40 p-8 text-center text-white/40 font-mono text-xs">
+          <div className="rounded-xl border border-foreground/10 bg-ink-900/40 p-8 text-center text-ink-500 font-mono text-xs">
             No se detectaron subproyectos registrados en este workspace.
           </div>
         ) : (
@@ -225,15 +225,15 @@ export function EcosystemDashboard() {
             {subprojects.map((app) => (
               <div
                 key={app.name}
-                className="rounded-xl border border-white/10 bg-ink-900/60 p-4 hover:border-white/20 transition-all hover:bg-ink-900/90 shadow-sm flex flex-col justify-between"
+                className="rounded-xl border border-foreground/10 bg-ink-900/60 p-4 hover:border-foreground/20 transition-all hover:bg-ink-900/90 shadow-sm flex flex-col justify-between"
               >
                 <div>
                   <div className="flex items-start justify-between mb-3">
-                    <div className="p-2 rounded-xl bg-white/5 border border-white/10">
+                    <div className="p-2 rounded-xl bg-foreground/5 border border-foreground/10">
                       <SubprojectIcon category={app.category} size={24} />
                     </div>
                     <span
-                      className="rounded px-2 py-0.5 font-mono text-[10px] font-semibold tracking-wide border"
+                      className="rounded px-2 py-0.5 font-mono text-micro font-semibold tracking-wide border"
                       style={{
                         color: app.color,
                         backgroundColor: app.badgeBg,
@@ -243,27 +243,27 @@ export function EcosystemDashboard() {
                       {app.typeLabel}
                     </span>
                   </div>
-                  <h4 className="font-mono text-xs font-bold text-white mb-1 truncate" title={app.name}>
+                  <h4 className="font-mono text-xs font-bold text-ink-100 mb-1 truncate" title={app.name}>
                     {app.name}
                   </h4>
-                  <p className="text-xs text-white/60 leading-relaxed mb-4 line-clamp-2" title={app.desc}>
+                  <p className="text-xs text-ink-300 leading-relaxed mb-4 line-clamp-2" title={app.desc}>
                     {app.desc}
                   </p>
                 </div>
 
-                <div className="flex items-center justify-between pt-2 border-t border-white/5 text-[10px] font-mono">
+                <div className="flex items-center justify-between pt-2 border-t border-foreground/5 text-micro font-mono">
                   {app.isActive ? (
                     <div className="flex items-center gap-1.5 text-emerald-400 font-semibold">
                       <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" />
                       <span>Activo en {activeCycle?.cycle}</span>
                     </div>
                   ) : (
-                    <div className="flex items-center gap-1.5 text-white/50">
-                      <span className="h-1.5 w-1.5 rounded-full bg-white/30" />
+                    <div className="flex items-center gap-1.5 text-ink-500">
+                      <span className="h-1.5 w-1.5 rounded-full bg-foreground/30" />
                       <span>{app.specsCount > 0 ? `${app.specsCount} spec${app.specsCount > 1 ? 's' : ''}` : 'Estable'}</span>
                     </div>
                   )}
-                  <span className="text-white/40 uppercase tracking-wider text-[9px]">Monorepo</span>
+                  <span className="text-ink-500 uppercase tracking-wider text-micro">Monorepo</span>
                 </div>
               </div>
             ))}
@@ -273,14 +273,14 @@ export function EcosystemDashboard() {
 
       {/* Specs Status Table */}
       <div>
-        <h3 className="text-sm font-semibold tracking-tight text-white mb-3 flex items-center gap-2">
+        <h3 className="text-sm font-semibold tracking-tight text-ink-100 mb-3 flex items-center gap-2">
           <ScrollText className="w-4 h-4 text-purple-400" />
           <span>Roadmap de Especificaciones SDD</span>
         </h3>
-        <div className="rounded-xl border border-white/10 bg-ink-900/70 overflow-hidden">
+        <div className="rounded-xl border border-foreground/10 bg-ink-900/70 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs font-mono">
-              <thead className="bg-white/5 text-white/50 border-b border-white/10 uppercase">
+              <thead className="bg-foreground/5 text-ink-500 border-b border-foreground/10 uppercase">
                 <tr>
                   <th className="py-2.5 px-4">Spec ID</th>
                   <th className="py-2.5 px-4">Título</th>
@@ -288,20 +288,20 @@ export function EcosystemDashboard() {
                   <th className="py-2.5 px-4">Estado</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5 text-white/80">
+              <tbody className="divide-y divide-foreground/5 text-ink-100">
                 {specs.map((s) => (
-                  <tr key={s.id} className="hover:bg-white/5 transition-colors">
+                  <tr key={s.id} className="hover:bg-foreground/5 transition-colors">
                     <td className="py-3 px-4 text-emerald-400 font-bold truncate max-w-[220px]">{s.id}</td>
-                    <td className="py-3 px-4 font-sans text-xs text-white font-medium">{s.title}</td>
-                    <td className="py-3 px-4 text-white/50">{s.module ?? '—'}</td>
+                    <td className="py-3 px-4 font-sans text-xs text-ink-100 font-medium">{s.title}</td>
+                    <td className="py-3 px-4 text-ink-500">{s.module ?? '—'}</td>
                     <td className="py-3 px-4">
                       <span
-                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase ${
+                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-micro font-semibold uppercase ${
                           s.status === 'completed'
                             ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/20'
                             : s.status === 'in-progress'
                               ? 'bg-sky-500/15 text-sky-300 border border-sky-500/20 animate-pulse'
-                              : 'bg-white/10 text-white/60'
+                              : 'bg-foreground/10 text-ink-300'
                         }`}
                       >
                         {s.status}

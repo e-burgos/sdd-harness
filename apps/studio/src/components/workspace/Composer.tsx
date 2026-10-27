@@ -300,7 +300,7 @@ export function ComposerView(p: ComposerViewProps) {
           </div>
         </div>
         {p.modes}
-        <p data-testid="composer-hints" className="mt-1.5 px-1 text-[11px] text-ink-500">{t('composer.hints')}</p>
+        <p data-testid="composer-hints" className="mt-1.5 px-1 text-meta text-ink-500">{t('composer.hints')}</p>
       </div>
     </div>
   );

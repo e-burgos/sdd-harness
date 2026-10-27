@@ -28,6 +28,12 @@
   "tables_created": [],
   "endpoints_implemented": [],
   "components_created": [],
-  "issues_found": [],
+  "issues_found": [
+    "decisión: escala tipográfica text-micro 10 / text-meta 11 / text-ui 12 / text-small 13 / text-body 14 / text-title 16 en @theme; los Button siguen la escala por data-size desde globals.css (tiny/mini 12, small 13, medium 14, large 16, sin tracking-wider)",
+    "decisión: tokens mode-aware sky/purple/amber/rose/yellow en @theme inline; ink-500 = --color-muted; ink-400 e ink-50 estaban sin definir (25 y 1 usos) y ahora existen",
+    "menor: la primera visita con preferencia clara puede mostrar un frame oscuro; las visitas siguientes no (script inline en <head> + ColorModeBootstrap)",
+    "menor: colores de identidad de agentes muy claros (#e2e8f0, #a1a1aa, #94a3b8 en lib/agents.ts) quedan pálidos como texto en modo claro; se mantienen por ser identidad",
+    "fricción tucu-ui: SwitchMode tiene la etiqueta \"Mode\" fija y sin aria-label; ThemeWrapper recarga mode desde themeConfigs al montar, así que un estado persistido parcial no sobrevive; labels de Input/Textarea con tracking-widest"
+  ],
   "reviewer_report": null
 }

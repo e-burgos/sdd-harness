@@ -1,8 +1,8 @@
 'use client';
 
-import { Button } from '@e-burgos/tucu-ui';
+import { Button, useTheme } from '@e-burgos/tucu-ui';
 import React, { useState } from 'react';
-import { MessageSquare, Network, Globe, Activity } from 'lucide-react';
+import { MessageSquare, Network, Globe, Activity, Sun, Moon } from 'lucide-react';
 import { deriveConversationGate, gateLabel, type ConversationGate } from '@/lib/conversation-gate';
 import { useT } from '@/lib/i18n/i18n';
 import { useSelectedConversation } from '@/lib/use-selected-conversation';
@@ -18,6 +18,8 @@ interface StudioHeaderProps {
 
 export function StudioHeader({ activeView, onSelectView }: StudioHeaderProps) {
   const { t, lang, setLang } = useT();
+  const mode = useTheme((s) => s.mode);
+  const setMode = useTheme((s) => s.setMode);
   const snapshot = useStudio((s) => s.snapshot);
   const presence = useStudio((s) => s.presence ?? []);
 
@@ -41,27 +43,27 @@ export function StudioHeader({ activeView, onSelectView }: StudioHeaderProps) {
   ];
 
   return (
-    <header className="flex h-12 shrink-0 items-center justify-between border-b border-white/10 bg-ink-950/90 px-4 backdrop-blur-md z-30 select-none">
+    <header className="flex h-12 shrink-0 items-center justify-between border-b border-foreground/10 bg-ink-950/90 px-4 backdrop-blur-md z-30 select-none">
       {/* Brand & Active Project */}
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2">
           <AgentAvatar agent="sdd-orchestrator" size={24} showBadge={false} />
-          <span className="font-semibold text-sm tracking-tight text-white flex items-center gap-1.5">
+          <span className="font-semibold text-sm tracking-tight text-ink-100 flex items-center gap-1.5">
             SDD Studio
-            <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 font-mono text-[10px] font-medium text-emerald-400 border border-emerald-500/20">
+            <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 font-mono text-micro font-medium text-emerald-400 border border-emerald-500/20">
               v0.16
             </span>
           </span>
         </div>
         {snapshot?.project && (
-          <span className="hidden sm:inline-flex items-center text-xs text-white/50 border-l border-white/10 pl-3 font-mono truncate max-w-[200px]">
+          <span className="hidden sm:inline-flex items-center text-xs text-ink-500 border-l border-foreground/10 pl-3 font-mono truncate max-w-[200px]">
             {snapshot.project}
           </span>
         )}
       </div>
 
       {/* Main View Switcher Segmented Control */}
-      <nav className="flex items-center rounded-xl bg-ink-900/80 p-1 border border-white/10 shadow-inner">
+      <nav className="flex items-center rounded-xl bg-ink-900/80 p-1 border border-foreground/10 shadow-inner">
         {views.map((v) => {
           const isActive = activeView === v.id;
           const Icon = v.icon;
@@ -72,8 +74,8 @@ export function StudioHeader({ activeView, onSelectView }: StudioHeaderProps) {
               onClick={() => onSelectView(v.id)}
               className={`flex items-center gap-1.5 rounded-lg px-3 py-1 text-xs font-medium transition-all duration-200 ${
                 isActive
-                  ? 'bg-ink-800 text-white shadow-sm border border-white/15'
-                  : 'text-white/60 hover:text-white hover:bg-white/5'
+                  ? 'bg-ink-800 text-ink-100 shadow-sm border border-foreground/15'
+                  : 'text-ink-300 hover:text-ink-100 hover:bg-foreground/5'
               }`}
             >
               <Icon className="w-3.5 h-3.5 shrink-0" />
@@ -93,12 +95,12 @@ export function StudioHeader({ activeView, onSelectView }: StudioHeaderProps) {
           aria-label={t('gate.modal.open')}
           aria-haspopup="dialog"
           onClick={() => setStatusOpen(true)}
-          className={`hidden max-w-[320px] items-center gap-1.5 rounded-full border px-2.5 py-1 font-mono text-[11px] transition-colors lg:flex ${
+          className={`hidden max-w-[320px] items-center gap-1.5 rounded-full border px-2.5 py-1 font-mono text-meta transition-colors lg:flex ${
             gate.kind === 'fix'
               ? 'border-amber-500/25 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20'
               : gate.kind === 'spec'
                 ? 'border-emerald-500/25 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20'
-                : 'border-white/10 bg-white/5 text-white/40 hover:bg-white/10'
+                : 'border-foreground/10 bg-foreground/5 text-ink-500 hover:bg-foreground/10'
           }`}
         >
           {gate.kind !== 'idle' && <span className="h-1.5 w-1.5 shrink-0 animate-ping rounded-full bg-current" />}
@@ -107,10 +109,10 @@ export function StudioHeader({ activeView, onSelectView }: StudioHeaderProps) {
 
         {/* Working Swarm Presence Counter */}
         <div
-          className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-mono border ${
+          className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-meta font-mono border ${
             workingAgents.length > 0
               ? 'bg-sky-500/10 text-sky-300 border-sky-500/25 animate-pulse'
-              : 'bg-white/5 text-white/60 border-white/10'
+              : 'bg-foreground/5 text-ink-300 border-foreground/10'
           }`}
           title={`${workingAgents.length} agentes ejecutando tareas actualmente`}
         >
@@ -129,6 +131,19 @@ export function StudioHeader({ activeView, onSelectView }: StudioHeaderProps) {
           title="Cambiar idioma / Toggle language"
         >
           {lang}
+        </Button>
+
+        <Button
+          type="button"
+          data-testid="mode-toggle"
+          onClick={() => setMode(mode === 'dark' ? 'light' : 'dark')}
+          variant="transparent"
+          color="gray"
+          size="tiny"
+          shape="circle"
+          aria-label={mode === 'dark' ? t('mode.toLight') : t('mode.toDark')}
+        >
+          {mode === 'dark' ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
         </Button>
       </div>
       <GateStatusModal open={statusOpen} onClose={() => setStatusOpen(false)} thread={thread} view={view} gate={gate} snapshot={snapshot} />

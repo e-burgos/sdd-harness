@@ -189,15 +189,15 @@ export function LiveTelemetryHUD() {
   return (
     <div
       data-testid="live-telemetry-hud"
-      className="flex-1 h-full w-full overflow-y-auto bg-radial from-ink-900 to-ink-950 p-6 space-y-6 text-white select-none"
+      className="flex-1 h-full w-full overflow-y-auto bg-radial from-ink-900 to-ink-950 p-6 space-y-6 text-ink-100 select-none"
     >
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-5">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-foreground/10 pb-5">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <Activity className="w-5 h-5 text-emerald-400" />
-            <h2 className="text-xl font-bold tracking-tight text-white">Telemetría de Misión & Tokens</h2>
+            <h2 className="text-xl font-bold tracking-tight text-ink-100">Telemetría de Misión & Tokens</h2>
           </div>
-          <p className="text-xs text-white/50 font-mono">
+          <p className="text-xs text-ink-500 font-mono">
             Monitoreo en vivo de tokens consumidos, inversión en modelos, ROI agéntico y compresión rtk.
           </p>
         </div>
@@ -211,41 +211,41 @@ export function LiveTelemetryHUD() {
       {telemetry ? (
         <>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-md relative overflow-hidden">
-            <div className="absolute -right-4 -bottom-4 text-7xl font-mono text-white/5 pointer-events-none">∑</div>
-            <p className="text-[11px] font-mono uppercase text-white/40 mb-1">Tokens Totales Consumidos</p>
-            <div className="text-3xl font-extrabold font-mono text-white tracking-tight mb-2">
+          <div className="rounded-2xl border border-foreground/10 bg-foreground/5 p-5 backdrop-blur-md relative overflow-hidden">
+            <div className="absolute -right-4 -bottom-4 text-7xl font-mono text-foreground/5 pointer-events-none">∑</div>
+            <p className="text-meta font-mono uppercase text-ink-500 mb-1">Tokens Totales Consumidos</p>
+            <div className="text-3xl font-extrabold font-mono text-ink-100 tracking-tight mb-2">
               {telemetry.totalTokens.toLocaleString()}
             </div>
-            <div className="flex items-center gap-4 text-xs font-mono text-white/60">
+            <div className="flex items-center gap-4 text-xs font-mono text-ink-300">
               <span className="flex items-center gap-1.5"><ArrowDownToLine className="w-3.5 h-3.5 text-emerald-400" /> In: {telemetry.totalTokensIn.toLocaleString()}</span>
               <span className="flex items-center gap-1.5"><ArrowUpFromLine className="w-3.5 h-3.5 text-sky-400" /> Out: {telemetry.totalTokensOut.toLocaleString()}</span>
             </div>
           </div>
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-md relative overflow-hidden">
+          <div className="rounded-2xl border border-foreground/10 bg-foreground/5 p-5 backdrop-blur-md relative overflow-hidden">
             <div className="absolute -right-4 -bottom-4 text-7xl font-mono text-emerald-500/10 pointer-events-none">$</div>
-            <p className="text-[11px] font-mono uppercase text-white/40 mb-1">Inversión Real en Modelos</p>
+            <p className="text-meta font-mono uppercase text-ink-500 mb-1">Inversión Real en Modelos</p>
             <div className="text-3xl font-extrabold font-mono text-emerald-400 tracking-tight mb-2">
               ${telemetry.estimatedCostUsd.toFixed(2)} USD
             </div>
-            <p className="text-xs font-mono text-white/60">
-              Tarifas sincronizadas con <code className="text-white">sdd/pricing.json</code>
+            <p className="text-xs font-mono text-ink-300">
+              Tarifas sincronizadas con <code className="text-ink-100">sdd/pricing.json</code>
             </p>
           </div>
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-md relative overflow-hidden">
+          <div className="rounded-2xl border border-foreground/10 bg-foreground/5 p-5 backdrop-blur-md relative overflow-hidden">
             <div className="absolute -right-4 -bottom-4 text-7xl font-mono text-purple-500/10 pointer-events-none">%</div>
-            <p className="text-[11px] font-mono uppercase text-white/40 mb-1">Ahorro Agéntico vs Tradicional</p>
+            <p className="text-meta font-mono uppercase text-ink-500 mb-1">Ahorro Agéntico vs Tradicional</p>
             <div className="text-3xl font-extrabold font-mono text-purple-300 tracking-tight mb-2">
               {telemetry.savingsPct === null ? '—' : `${telemetry.savingsPct}% Ahorro`}
             </div>
-            <p className="text-xs font-mono text-white/60">
+            <p className="text-xs font-mono text-ink-300">
               Tradicional: ${telemetry.traditionalCostUsd.toLocaleString()} ({telemetry.traditionalHours}h) · Agéntico: ${telemetry.estimatedCostUsd}
             </p>
           </div>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="rounded-2xl border border-white/10 bg-ink-900/60 p-5 space-y-4">
-            <h3 className="text-sm font-semibold text-white tracking-tight flex items-center gap-2">
+          <div className="rounded-2xl border border-foreground/10 bg-ink-900/60 p-5 space-y-4">
+            <h3 className="text-sm font-semibold text-ink-100 tracking-tight flex items-center gap-2">
               <Cpu className="w-4 h-4 text-sky-400" />
               <span>Distribución de Carga por Modelo</span>
             </h3>
@@ -253,13 +253,13 @@ export function LiveTelemetryHUD() {
               {telemetry.modelBreakdown.map((m) => (
                 <div key={m.name} className="space-y-1">
                   <div className="flex items-center justify-between text-xs font-mono">
-                    <span className="text-white font-medium">
+                    <span className="text-ink-100 font-medium">
                       {m.name}
-                      {m.provider && <span className="ml-1 text-[10px] text-white/40">({m.provider})</span>}
+                      {m.provider && <span className="ml-1 text-micro text-ink-500">({m.provider})</span>}
                     </span>
-                    <span className="text-white/60">{m.tokens.toLocaleString()} tokens ({m.pct}%)</span>
+                    <span className="text-ink-300">{m.tokens.toLocaleString()} tokens ({m.pct}%)</span>
                   </div>
-                  <div className="h-2 w-full rounded-full bg-white/5 overflow-hidden">
+                  <div className="h-2 w-full rounded-full bg-foreground/5 overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all duration-500"
                       style={{ width: `${m.pct}%`, backgroundColor: m.color }}
@@ -269,8 +269,8 @@ export function LiveTelemetryHUD() {
               ))}
             </div>
           </div>
-          <div className="rounded-2xl border border-white/10 bg-ink-900/60 p-5 space-y-4">
-            <h3 className="text-sm font-semibold text-white tracking-tight flex items-center gap-2">
+          <div className="rounded-2xl border border-foreground/10 bg-ink-900/60 p-5 space-y-4">
+            <h3 className="text-sm font-semibold text-ink-100 tracking-tight flex items-center gap-2">
               <Users className="w-4 h-4 text-purple-400" />
               <span>Consumo de Tokens por Agente</span>
             </h3>
@@ -278,12 +278,12 @@ export function LiveTelemetryHUD() {
               {telemetry.agentConsumption.map((a) => (
                 <div key={a.id} className="space-y-1">
                   <div className="flex items-center justify-between text-xs font-mono">
-                    <span className="text-white font-medium">
-                      {a.name} <span className="text-white/40 text-[10px]">({agentMeta(a.id).role})</span>
+                    <span className="text-ink-100 font-medium">
+                      {a.name} <span className="text-ink-500 text-micro">({agentMeta(a.id).role})</span>
                     </span>
-                    <span className="text-white/60">{a.pct}% del enjambre</span>
+                    <span className="text-ink-300">{a.pct}% del enjambre</span>
                   </div>
-                  <div className="h-2 w-full rounded-full bg-white/5 overflow-hidden">
+                  <div className="h-2 w-full rounded-full bg-foreground/5 overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all duration-500"
                       style={{ width: `${a.pct}%`, backgroundColor: a.color }}
@@ -296,7 +296,7 @@ export function LiveTelemetryHUD() {
         </div>
         </>
       ) : (
-        <div data-testid="telemetry-empty" className="rounded-2xl border border-white/10 bg-white/5 p-8 text-center font-mono text-sm text-white/60">
+        <div data-testid="telemetry-empty" className="rounded-2xl border border-foreground/10 bg-foreground/5 p-8 text-center font-mono text-sm text-ink-300">
           {t('mc.noTelemetry')}
         </div>
       )}
@@ -307,7 +307,7 @@ export function LiveTelemetryHUD() {
             <Feather className="w-5 h-5 text-emerald-400" />
           </div>
           <div>
-            <h4 className="font-semibold text-sm text-white">Escudo de Compresión RTK Activo</h4>
+            <h4 className="font-semibold text-sm text-ink-100">Escudo de Compresión RTK Activo</h4>
             <p className="text-xs text-emerald-200/70 font-mono">
               Comprimiendo salidas de shell en tiempo real. Ahorro promedio: 60%–90% de contexto.
             </p>

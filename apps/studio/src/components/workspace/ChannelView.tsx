@@ -34,7 +34,7 @@ export function ChannelView({ channelId, onOpenThread, composer }: { channelId: 
         <h1 className="truncate text-lg font-semibold">
           {dmAgent ? t('channel.dmWith', { name: agentMeta(dmAgent).name }) : `# ${spec?.id ?? channelId}`}
         </h1>
-        {spec && <span className="rounded-full bg-ink-800 px-2 py-0.5 text-[11px] text-ink-300">{spec.status === 'in-progress' || spec.status === 'completed' ? t(`channel.status.${spec.status}`) : spec.status}</span>}
+        {spec && <span className="rounded-full bg-ink-800 px-2 py-0.5 text-meta text-ink-300">{spec.status === 'in-progress' || spec.status === 'completed' ? t(`channel.status.${spec.status}`) : spec.status}</span>}
         {cycle && (
           <div className="ml-auto flex items-center gap-2 text-xs text-ink-300">
             <span>{cycle.cycle} · {cycle.flow}</span>
@@ -47,7 +47,7 @@ export function ChannelView({ channelId, onOpenThread, composer }: { channelId: 
       </header>
       <div className="min-h-0 flex-1 space-y-6 overflow-y-auto overscroll-contain px-5 py-4">
         <section>
-          <h2 className="mb-2 text-[11px] uppercase tracking-wider text-ink-500">{t('channel.threads')}</h2>
+          <h2 className="mb-2 text-meta uppercase tracking-wider text-ink-500">{t('channel.threads')}</h2>
           {list.length === 0 && <p className="text-sm text-ink-300">{t('channel.noThreads')}</p>}
           <ul className="space-y-2">
             {list.map((thread) => (
@@ -66,7 +66,7 @@ export function ChannelView({ channelId, onOpenThread, composer }: { channelId: 
         </section>
         {!dmAgent && (bot?.length ?? 0) > 0 && (
           <section>
-            <h2 className="mb-2 text-[11px] uppercase tracking-wider text-ink-500">{t('channel.bot')}</h2>
+            <h2 className="mb-2 text-meta uppercase tracking-wider text-ink-500">{t('channel.bot')}</h2>
             <ul className="space-y-1 font-mono text-xs text-ink-300">
               {[...(bot ?? [])].reverse().map((e, i) => (
                 <li key={`${e.botKind}:${i}`} className="flex items-center gap-1.5">

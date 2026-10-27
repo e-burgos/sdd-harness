@@ -33,7 +33,7 @@ export function HelpSelect({ help, wrapperClassName = '', children, ...selectPro
         id={tooltipId}
         role="tooltip"
         data-testid="help-select-tooltip"
-        className={`pointer-events-none absolute bottom-full left-0 z-30 mb-1 w-max max-w-[16rem] rounded-md border border-ink-700 bg-ink-900 px-2 py-1 text-left text-[11px] font-normal normal-case leading-snug text-ink-100 shadow-lg transition-opacity ${tooltipVisibility}`}
+        className={`pointer-events-none absolute bottom-full left-0 z-30 mb-1 w-max max-w-[16rem] rounded-md border border-ink-700 bg-ink-900 px-2 py-1 text-left text-meta font-normal normal-case leading-snug text-ink-100 shadow-lg transition-opacity ${tooltipVisibility}`}
       >
         {help}
       </span>

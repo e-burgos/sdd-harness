@@ -19,7 +19,7 @@ export function ConversationSelector({ conversations, selectedThreadId, onPick, 
   return (
     <div data-testid="conversation-selector" className="flex items-center gap-2">
       {conversations.length === 0 ? (
-        <span data-testid="conversation-selector-empty" className="font-mono text-[11px] text-white/60">
+        <span data-testid="conversation-selector-empty" className="font-mono text-meta text-ink-300">
           {t('mc.noConversations')}
         </span>
       ) : (
@@ -29,10 +29,10 @@ export function ConversationSelector({ conversations, selectedThreadId, onPick, 
           aria-label={t('mc.conversations')}
           value={selectedThreadId ?? ''}
           onChange={(event) => onPick(event.target.value)}
-          className="max-w-[220px] cursor-pointer truncate rounded-lg border border-white/10 bg-white/5 py-1 pl-2.5 pr-2 font-mono text-[11px] text-white focus:border-emerald-400 focus:outline-none"
+          className="max-w-[220px] cursor-pointer truncate rounded-lg border border-foreground/10 bg-foreground/5 py-1 pl-2.5 pr-2 font-mono text-meta text-ink-100 focus:border-emerald-400 focus:outline-none"
         >
           {conversations.map((conversation) => (
-            <option key={conversation.id} value={conversation.id} data-testid={`conversation-option-${conversation.id}`} className="bg-ink-950 text-white">
+            <option key={conversation.id} value={conversation.id} data-testid={`conversation-option-${conversation.id}`} className="bg-ink-950 text-ink-100">
               {labelOf(conversation)}
             </option>
           ))}

@@ -34,7 +34,8 @@ export function SwarmSpeechBubble({
         width="240"
         height="90"
         rx="14"
-        fill="rgba(9, 13, 22, 0.94)"
+        fill="var(--color-ink-900)"
+        fillOpacity="0.96"
         stroke={fromMeta.color}
         strokeWidth="1.5"
         strokeOpacity="0.8"
@@ -43,7 +44,8 @@ export function SwarmSpeechBubble({
 
       <polygon
         points={fromNodePos.x > 500 ? '240,40 252,48 240,56' : '0,40 -12,48 0,56'}
-        fill="rgba(9, 13, 22, 0.94)"
+        fill="var(--color-ink-900)"
+        fillOpacity="0.96"
         stroke={fromMeta.color}
         strokeWidth="1.5"
       />
@@ -53,34 +55,34 @@ export function SwarmSpeechBubble({
         <AgentFace agent={dialogue.from} size={32} />
       </g>
 
-      <text x="48" y="22" fill="#ffffff" fontSize="11" fontWeight="bold">
+      <text x="48" y="22" fill="var(--color-ink-100)" fontSize="11" fontWeight="bold">
         {fromMeta.name}
         {toMeta && (
-          <tspan fill="#38bdf8" fontSize="10" fontWeight="normal">
+          <tspan fill="var(--color-sky-300)" fontSize="10" fontWeight="normal">
             {' '}
             → {toMeta.name}
           </tspan>
         )}
         {dialogue.gateId && (
-          <tspan fill="#eab308" fontSize="9" fontWeight="bold">
+          <tspan fill="var(--color-yellow-300)" fontSize="9" fontWeight="bold">
             {' '}
             [{dialogue.gateId.toUpperCase()}]
           </tspan>
         )}
         {dialogue.isLive && (
-          <tspan fill="#f43f5e" fontSize="9" fontWeight="bold">
+          <tspan fill="var(--color-rose-400)" fontSize="9" fontWeight="bold">
             {' '}
             [EN VIVO]
           </tspan>
         )}
       </text>
 
-      <text x="48" y="34" fill="rgba(255,255,255,0.45)" fontSize="9" fontFamily="var(--font-mono, monospace)">
+      <text x="48" y="34" fill="var(--color-ink-500)" fontSize="9" fontFamily="var(--font-mono, monospace)">
         {toMeta ? `${fromMeta.role.toUpperCase()} → ${toMeta.role.toUpperCase()}` : fromMeta.role.toUpperCase()}
       </text>
 
       <foreignObject x="10" y="42" width="220" height="42">
-        <div className="text-[10px] text-white/90 leading-tight font-sans line-clamp-2 select-none">
+        <div className="text-micro text-ink-100 leading-tight font-sans line-clamp-2 select-none">
           &ldquo;{dialogue.text}&rdquo;
         </div>
       </foreignObject>
@@ -115,12 +117,12 @@ export function SwarmCommsConsole({
         isPanelCollapsed ? 'lg:right-6' : 'lg:right-[420px]'
       } z-20 flex flex-col items-center pointer-events-none select-none transition-all duration-300`}
     >
-      <div className="pointer-events-auto w-full max-w-3xl rounded-2xl border border-white/15 bg-ink-950/85 p-3.5 shadow-2xl backdrop-blur-xl flex flex-col md:flex-row items-center justify-between gap-3 text-white">
+      <div className="pointer-events-auto w-full max-w-3xl rounded-2xl border border-foreground/15 bg-ink-950/85 p-3.5 shadow-2xl backdrop-blur-xl flex flex-col md:flex-row items-center justify-between gap-3 text-ink-100">
         <div className="flex items-center gap-3 overflow-hidden">
           <div className="flex items-center gap-2 shrink-0">
             <span className={`h-2.5 w-2.5 rounded-full ${isActuallyLive ? 'bg-rose-500 animate-ping' : 'bg-emerald-400'}`} />
             <span
-              className={`font-mono text-[10px] font-extrabold uppercase tracking-wider ${
+              className={`font-mono text-micro font-extrabold uppercase tracking-wider ${
                 isActuallyLive ? 'text-rose-400' : 'text-emerald-400'
               }`}
             >
@@ -128,12 +130,12 @@ export function SwarmCommsConsole({
             </span>
           </div>
 
-          <div className="h-4 w-[1px] bg-white/10 shrink-0" />
+          <div className="h-4 w-[1px] bg-foreground/10 shrink-0" />
 
           {currentDialogue && fromMeta ? (
             <div className="flex items-center gap-2 truncate text-xs">
               {currentDialogue.gateId && (
-                <span className="bg-yellow-500/20 text-yellow-300 border border-yellow-500/40 text-[9px] font-mono px-1.5 py-0.5 rounded uppercase font-bold shrink-0">
+                <span className="bg-yellow-500/20 text-yellow-300 border border-yellow-500/40 text-micro font-mono px-1.5 py-0.5 rounded uppercase font-bold shrink-0">
                   {currentDialogue.gateId}
                 </span>
               )}
@@ -142,16 +144,16 @@ export function SwarmCommsConsole({
               </span>
               {toMeta && (
                 <>
-                  <ArrowRight className="w-2.5 h-2.5 text-white/40 shrink-0" />
+                  <ArrowRight className="w-2.5 h-2.5 text-ink-500 shrink-0" />
                   <span className="font-bold shrink-0" style={{ color: toMeta.color }}>
                     {toMeta.name}
                   </span>
                 </>
               )}
-              <span className="text-white/70 truncate text-[11px]">&ldquo;{currentDialogue.text}&rdquo;</span>
+              <span className="text-ink-300 truncate text-meta">&ldquo;{currentDialogue.text}&rdquo;</span>
             </div>
           ) : (
-            <span data-testid="swarm-comms-empty" className="text-white/60 text-xs italic truncate">
+            <span data-testid="swarm-comms-empty" className="text-ink-300 text-xs italic truncate">
               {t('mc.noActivity')}
             </span>
           )}

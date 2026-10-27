@@ -16,7 +16,7 @@ function CommandBox({ command, label }: { command: string; label?: string }) {
   const state = copied ? t('connect.copied') : t('connect.copy');
   return (
     <div>
-      {label && <div className="mb-1 text-[11px] uppercase tracking-wider text-ink-500">{label}</div>}
+      {label && <div className="mb-1 text-meta uppercase tracking-wider text-ink-500">{label}</div>}
       <div className="flex items-center gap-2 rounded-lg bg-ink-950 p-3 font-mono text-sm">
         <code className="min-w-0 flex-1 break-words text-accent-300">{command}</code>
         <Button
@@ -96,7 +96,7 @@ export function ConnectScreen({ error }: { error?: string }) {
           </Step>
         </ol>
         <section aria-label={t('connect.requirements')} className="mt-6 border-t border-ink-800 pt-4">
-          <h2 className="mb-2 text-[11px] uppercase tracking-wider text-ink-500">{t('connect.requirements')}</h2>
+          <h2 className="mb-2 text-meta uppercase tracking-wider text-ink-500">{t('connect.requirements')}</h2>
           <ul className="list-disc space-y-1 pl-4 text-xs text-ink-300">
             <li>{t('connect.req.node')}</li>
             <li>{t('connect.auth')}</li>

@@ -48,7 +48,7 @@ export function MentionMenu({ menu }: { menu: MentionMenuModel }) {
         {menu.groups.map((group) =>
           group.items.length === 0 && !group.undiscovered ? null : (
             <div key={group.id} role="group" aria-labelledby={`${menu.listboxId}-${group.id}`}>
-              <div id={`${menu.listboxId}-${group.id}`} className="px-2 py-1 text-[11px] font-medium uppercase tracking-wide text-ink-400">
+              <div id={`${menu.listboxId}-${group.id}`} className="px-2 py-1 text-meta font-medium uppercase tracking-wide text-ink-400">
                 {t(GROUP_LABEL[group.id])}
               </div>
               {group.items.length === 0 && <UndiscoveredHint id={group.id} />}

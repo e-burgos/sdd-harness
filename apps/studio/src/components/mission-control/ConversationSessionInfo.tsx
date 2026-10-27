@@ -31,14 +31,14 @@ export function ConversationSessionInfo({ sessionTitle, engineSessionId, provide
   );
 
   return (
-    <dl data-testid="conversation-session-info" className="grid gap-1 rounded-lg border border-white/5 bg-white/5 px-2 py-1.5 font-mono text-[10px]">
+    <dl data-testid="conversation-session-info" className="grid gap-1 rounded-lg border border-foreground/5 bg-foreground/5 px-2 py-1.5 font-mono text-micro">
       <div className="flex min-w-0 items-center gap-1.5">
         <Tag className="h-3 w-3 shrink-0 text-amber-300" aria-hidden />
-        <dt className="uppercase text-white/50">{t('mc.title')}</dt>
+        <dt className="uppercase text-ink-500">{t('mc.title')}</dt>
         {sessionTitle === undefined ? (
           staleBridge('conversation-title')
         ) : sessionTitle === null ? (
-          <dd data-testid="conversation-title" className="text-white/60">
+          <dd data-testid="conversation-title" className="text-ink-300">
             {t('mc.noTitle')}
           </dd>
         ) : (
@@ -49,7 +49,7 @@ export function ConversationSessionInfo({ sessionTitle, engineSessionId, provide
       </div>
       <div className="flex items-center gap-1.5">
         <Cpu className="h-3 w-3 shrink-0 text-purple-300" aria-hidden />
-        <dt className="uppercase text-white/50">{t('mc.provider')}</dt>
+        <dt className="uppercase text-ink-500">{t('mc.provider')}</dt>
         {provider === undefined ? (
           staleBridge('conversation-provider')
         ) : (
@@ -60,11 +60,11 @@ export function ConversationSessionInfo({ sessionTitle, engineSessionId, provide
       </div>
       <div className="flex items-start gap-1.5">
         <Fingerprint className="mt-0.5 h-3 w-3 shrink-0 text-sky-300" aria-hidden />
-        <dt className="uppercase text-white/50">{t('mc.session')}</dt>
+        <dt className="uppercase text-ink-500">{t('mc.session')}</dt>
         {engineSessionId === undefined ? (
           staleBridge('conversation-session')
         ) : engineSessionId === null ? (
-          <dd data-testid="conversation-session" className="text-white/60">
+          <dd data-testid="conversation-session" className="text-ink-300">
             {t('mc.noSession')}
           </dd>
         ) : (
