@@ -11,6 +11,5 @@ export default defineConfig({
     setupFiles: ['./vitest.setup.ts'],
     include: ['src/**/*.spec.{ts,tsx}'],
     testTimeout: 30000,
-    server: { deps: { inline: ['@e-burgos/tucu-ui', 'swiper'] } },
   },
 });

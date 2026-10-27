@@ -1,6 +1,6 @@
 @import 'tailwindcss';
 @import '@e-burgos/tucu-ui/theme';
-@source '../../node_modules/@e-burgos/tucu-ui';
+@source '../../node_modules/@e-burgos/tucu-ui/**/*.mjs';
 
 @import '@e-burgos/tucu-ui/fonts';
 

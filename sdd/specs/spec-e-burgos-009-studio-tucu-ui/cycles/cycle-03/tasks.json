@@ -21,8 +21,28 @@
       "estimation_hours": 2,
       "story_points": 2,
       "depends_on": [],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/studio/package.json",
+        "pnpm-lock.yaml",
+        "apps/studio/src/app/layout.tsx",
+        "apps/studio/src/app/globals.css",
+        "apps/studio/vitest.config.mts",
+        "apps/studio/src/components/StudioThemeProvider.tsx",
+        "apps/studio/src/lib/typography-tokens.ts",
+        "apps/studio/src/components/ColorModeBootstrap.tsx",
+        "apps/studio/src/components/colormodebootstrap.spec.tsx"
+      ],
+      "usage": {
+        "tokens_in": 91513,
+        "tokens_out": 16149,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-10-27"
+      }
     },
     {
       "id": "TASK-002",
