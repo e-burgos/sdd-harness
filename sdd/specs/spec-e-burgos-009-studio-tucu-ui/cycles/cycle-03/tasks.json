@@ -55,8 +55,46 @@
       "depends_on": [
         "TASK-001"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/studio/src/app/globals.css",
+        "apps/studio/src/components/ConnectionBanner.tsx",
+        "apps/studio/src/components/HelpSelect.tsx",
+        "apps/studio/src/components/StatusPill.tsx",
+        "apps/studio/src/components/StudioHeader.tsx",
+        "apps/studio/src/components/Tip.tsx",
+        "apps/studio/src/components/mission-control/AgentInspectorDrawer.tsx",
+        "apps/studio/src/components/mission-control/AgentMapCanvas.tsx",
+        "apps/studio/src/components/mission-control/ChatDialogueCard.tsx",
+        "apps/studio/src/components/mission-control/ConversationSessionInfo.tsx",
+        "apps/studio/src/components/mission-control/EcosystemDashboard.tsx",
+        "apps/studio/src/components/mission-control/GateInspectorDrawer.tsx",
+        "apps/studio/src/components/mission-control/LiveAgentChatFeed.tsx",
+        "apps/studio/src/components/mission-control/LiveSwarmComms.tsx",
+        "apps/studio/src/components/mission-control/LiveTelemetryHUD.tsx",
+        "apps/studio/src/components/no-native-select.spec.ts",
+        "apps/studio/src/components/workspace/AgentAvatar.tsx",
+        "apps/studio/src/components/workspace/ApiKeyField.tsx",
+        "apps/studio/src/components/workspace/ApprovalCard.tsx",
+        "apps/studio/src/components/workspace/AttachmentView.tsx",
+        "apps/studio/src/components/workspace/Composer.tsx",
+        "apps/studio/src/components/workspace/PanelRail.tsx",
+        "apps/studio/src/components/workspace/PendingMessages.tsx",
+        "apps/studio/src/components/workspace/QuestionForm.tsx",
+        "apps/studio/src/components/workspace/StatusBadge.tsx",
+        "apps/studio/src/components/workspace/ThreadLinkPicker.tsx",
+        "apps/studio/src/components/workspace/threadlink.spec.tsx"
+      ],
+      "usage": {
+        "tokens_in": 138718,
+        "tokens_out": 24480,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-10-27"
+      }
     },
     {
       "id": "TASK-003",
@@ -69,8 +107,24 @@
       "depends_on": [
         "TASK-001"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/GateStatusModal.tsx",
+        "apps/studio/src/components/GateStatusModal.spec.tsx",
+        "apps/studio/src/components/mission-control/DocumentViewerModal.tsx",
+        "apps/studio/src/components/mission-control/documentviewermodal.spec.tsx",
+        "apps/studio/src/components/studioheader.spec.tsx"
+      ],
+      "usage": {
+        "tokens_in": 105914,
+        "tokens_out": 18691,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-10-27"
+      }
     },
     {
       "id": "TASK-004",
@@ -85,8 +139,18 @@
         "TASK-002",
         "TASK-003"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [],
+      "usage": {
+        "tokens_in": 90000,
+        "tokens_out": 14000,
+        "provider_model": "claude/opus",
+        "effort": "medium",
+        "agent": "reviewer",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-27"
+      }
     }
   ]
 }
