@@ -26,6 +26,11 @@
   "tables_created": [],
   "endpoints_implemented": [],
   "components_created": [],
-  "issues_found": [],
+  "issues_found": [
+    "fricción tucu-ui: el colorScheme por defecto del store es macos-tahoe; layout=\"clean\" solo no alcanza, hay que pasar themeStyle=\"default\" y background=\"none\" o la app arranca con el wallpaper de Tahoe",
+    "fricción tucu-ui: el barrel raíz importa CSS de swiper; vitest/jsdom exige server.deps.inline de @e-burgos/tucu-ui y swiper, y cargar el barrel desde el i18n suma ~9 s a la suite de Studio",
+    "fricción tucu-ui: @source sobre el paquete entero lleva el CSS exportado a ~727 KB; revisar si conviene acotar @source a los módulos usados",
+    "menor: spec-e-burgos-008-studio-session-flow.spec.md está vacío (0 bytes) desde su cierre; sdd:validate no lo detecta"
+  ],
   "reviewer_report": null
 }

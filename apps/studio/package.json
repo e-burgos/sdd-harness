@@ -13,6 +13,7 @@
     "deploy": "wrangler pages deploy out --project-name sdd-studio --branch main"
   },
   "dependencies": {
+    "@e-burgos/tucu-ui": "3.4.0",
     "@fontsource-variable/jetbrains-mono": "^5.2.8",
     "@fontsource-variable/space-grotesk": "^5.2.8",
     "@sdd-studio/protocol": "workspace:*",
