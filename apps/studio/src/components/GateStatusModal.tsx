@@ -69,9 +69,13 @@ export function GateStatusModal({ open, onClose, thread, view, gate, snapshot }:
       size="lg"
       closeLabel={t('gate.modal.close')}
       data-testid="gate-status-modal"
-      className="rounded-2xl border border-foreground/15 bg-ink-950/95 text-ink-100 shadow-2xl backdrop-blur-2xl sm:max-w-2xl"
-      titleContainerClassName="border-foreground/10 [&>span]:min-w-0 [&>span]:flex-1"
-      contentClassName="max-h-[calc(85vh-8rem)] space-y-3 p-5 font-mono text-xs"
+      maxWidth="42rem"
+      maxHeight="calc(85vh - 8rem)"
+      overlayClassName="bg-ink-950/80 backdrop-blur-md"
+      closeButtonProps={{ 'data-testid': 'gate-status-close' }}
+      className="rounded-2xl border border-foreground/15 bg-ink-950/95 text-ink-100 shadow-2xl backdrop-blur-2xl"
+      headerClassName="border-foreground/10"
+      contentClassName="space-y-3 p-5 font-mono text-xs"
       header={
         <span className="flex min-w-0 items-center gap-2">
           <ShieldCheck className="h-5 w-5 shrink-0 text-emerald-400" aria-hidden />

@@ -95,23 +95,9 @@ html[data-app-shell] body {
   overscroll-behavior: none;
 }
 
-[data-tucu='table-element'] > thead {
-  background-color: color-mix(in oklab, var(--color-light-dark) 50%, var(--color-secondary));
-}
-
-[data-tucu='table-element'] > thead th {
-  padding: 0.625rem 1rem;
-  color: var(--color-muted);
-  font-size: var(--text-meta);
-}
-
-[data-tucu='table-element'] [data-tucu='table-cell'] {
-  padding: 0.75rem 1rem;
-  color: color-mix(in oklab, var(--color-foreground) 92%, var(--color-muted));
-  font-size: var(--text-ui);
-  line-height: var(--text-ui--line-height);
-}
-
-[data-tucu='table-element'] [data-tucu='table-row']:hover {
-  background-color: color-mix(in oklab, var(--color-foreground) 5%, transparent);
+:root {
+  --tucu-table-header-bg: color-mix(in oklab, var(--color-light-dark) 50%, var(--color-secondary));
+  --tucu-table-header-fg: var(--color-muted);
+  --tucu-table-cell-fg: color-mix(in oklab, var(--color-foreground) 92%, var(--color-muted));
+  --tucu-table-row-hover: color-mix(in oklab, var(--color-foreground) 5%, transparent);
 }

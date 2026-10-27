@@ -107,8 +107,11 @@ describe('DocumentViewerModal', () => {
     expect(overlay.className).toContain('justify-center');
     expect(modal.getAttribute('role')).toBe('dialog');
     expect(modal.getAttribute('aria-modal')).toBe('true');
-    expect(modal.getAttribute('aria-labelledby')).toBe('modal-title');
-    expect(modal.firstElementChild?.className).toContain('sm:max-w-4xl');
+    const titleId = modal.getAttribute('aria-labelledby');
+    expect(titleId).toBeTruthy();
+    expect(document.getElementById(titleId as string)).toBeInTheDocument();
+    expect((modal.firstElementChild as HTMLElement).style.maxWidth).toBe('56rem');
+    expect(overlay.className).toContain('backdrop-blur-md');
   });
 
   it('closes with Escape and with a click on the backdrop but not on the panel', () => {
@@ -163,7 +166,8 @@ describe('DocumentViewerModal', () => {
     const divider = screen.getByTestId('document-viewer-divider');
     expect(actions).toContainElement(divider);
     const close = screen.getByTestId('modal-close-button');
-    expect(divider.nextElementSibling).toContainElement(close);
+    expect(actions).not.toContainElement(close);
+    expect(close).toHaveAttribute('title', 'Cerrar modal (Esc)');
     expect(screen.getByTestId('document-viewer-header').className).toContain('flex-wrap');
   });
 });

@@ -308,6 +308,7 @@ export function EcosystemDashboard() {
           <span>{t('ui.eco.roadmap')}</span>
         </h3>
         <BasicTable
+          density="snug"
           resizable={false}
           mobileCards={false}
           maxRows={roadmapRows.length + 2}

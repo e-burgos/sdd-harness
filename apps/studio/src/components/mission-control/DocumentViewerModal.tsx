@@ -2,7 +2,7 @@
 
 import { Button, Modal, Skeleton, Tooltip } from '@e-burgos/tucu-ui';
 import React, { useState, useEffect } from 'react';
-import { Code2, ClipboardList, Zap, FileText, Check, Copy, Link2, X } from 'lucide-react';
+import { Code2, ClipboardList, Zap, FileText, Check, Copy, Link2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { AgentGeneratedDocument } from '@/lib/agent-documents';
@@ -85,12 +85,16 @@ export function DocumentViewerModal({ document: doc, onClose }: DocumentViewerMo
         if (!next) onClose();
       }}
       hideButtons
-      hideCloseButton
       size="xl"
+      maxWidth="56rem"
+      maxHeight="calc(85vh - 6rem)"
+      overlayClassName="bg-ink-950/80 backdrop-blur-md"
+      closeLabel={t('ui.doc.closeAria')}
+      closeButtonProps={{ 'data-testid': 'modal-close-button', title: t('ui.doc.closeHint') }}
       data-testid="document-viewer-modal"
-      className="select-text rounded-2xl border border-foreground/15 bg-ink-950/95 text-ink-100 shadow-2xl backdrop-blur-2xl sm:max-w-4xl"
-      titleContainerClassName="border-foreground/10 [&>span]:min-w-0 [&>span]:flex-1"
-      contentClassName="max-h-[calc(85vh-6rem)] bg-ink-900/30 p-6"
+      className="select-text rounded-2xl border border-foreground/15 bg-ink-950/95 text-ink-100 shadow-2xl backdrop-blur-2xl"
+      headerClassName="gap-3 border-foreground/10"
+      contentClassName="bg-ink-900/30 p-6"
       header={
         doc && (
           <div
@@ -159,7 +163,7 @@ export function DocumentViewerModal({ document: doc, onClose }: DocumentViewerMo
                 />
               )}
 
-              <Tooltip content={t('ui.doc.copyAll')} size="xs" arrow={false} contentClassName="max-w-64 text-left">
+              <Tooltip content={t('ui.doc.copyAll')} size="xs" arrow={false} maxWidth={256} contentClassName="text-left">
                 <Button type="button" onClick={handleCopyContent} variant="transparent" color="gray" size="tiny" className="font-mono whitespace-nowrap">
                   {copied ? (
                     <>
@@ -175,7 +179,7 @@ export function DocumentViewerModal({ document: doc, onClose }: DocumentViewerMo
                 </Button>
               </Tooltip>
 
-              <Tooltip content={t('ui.doc.copyPath')} size="xs" arrow={false} contentClassName="max-w-64 text-left">
+              <Tooltip content={t('ui.doc.copyPath')} size="xs" arrow={false} maxWidth={256} contentClassName="text-left">
                 <Button type="button" onClick={handleCopyPath} data-testid="copy-path-button" variant="transparent" color="gray" size="tiny" className="font-mono whitespace-nowrap">
                   {pathCopied ? (
                     <>
@@ -192,12 +196,6 @@ export function DocumentViewerModal({ document: doc, onClose }: DocumentViewerMo
               </Tooltip>
 
               <span aria-hidden="true" data-testid="document-viewer-divider" className="h-6 w-px bg-foreground/15 shrink-0" />
-
-              <Tooltip content={t('ui.doc.closeHint')} size="xs" arrow={false} contentClassName="max-w-64 text-left">
-                <Button type="button" onClick={onClose} data-testid="modal-close-button" aria-label={t('ui.doc.closeAria')} variant="transparent" color="gray" shape="circle" size="mini">
-                  <X className="w-4 h-4" />
-                </Button>
-              </Tooltip>
             </div>
           </div>
         )

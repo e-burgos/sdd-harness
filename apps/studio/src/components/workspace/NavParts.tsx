@@ -9,7 +9,7 @@ type Tone = 'success' | 'warning' | 'danger' | 'neutral' | 'info';
 
 export function Chip({ tone = 'neutral', children, testId }: { tone?: Tone; children: ReactNode; testId?: string }) {
   return (
-    <Badge variant="soft" size="tiny" shape="pill" tone={tone} data-testid={testId} className="h-auto shrink-0 px-1.5 py-0 font-mono text-micro">
+    <Badge variant="soft" size="tiny" shape="pill" tone={tone} data-testid={testId} className="shrink-0 px-1.5 py-0 font-mono text-micro">
       {children}
     </Badge>
   );

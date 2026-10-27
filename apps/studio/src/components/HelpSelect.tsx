@@ -34,7 +34,7 @@ const listboxClasses = [
   '[&_[data-tucu=select-option]_.text-muted]:text-meta',
   '[&_[data-tucu=select-option]_.text-muted]:text-ink-400',
 ].join(' ');
-const triggerClasses = 'gap-1.5 rounded-md border border-ink-700 bg-ink-950 text-ink-100 font-normal [&>svg]:size-3';
+const triggerClasses = 'gap-1.5 font-normal [&>svg]:size-3';
 
 export function HelpSelect({ label, help, options, value, onChange, disabled, searchable, wrapperClassName = '', className = 'max-w-[16rem]' }: HelpSelectProps) {
   const { t } = useT();
@@ -55,7 +55,7 @@ export function HelpSelect({ label, help, options, value, onChange, disabled, se
     <span data-testid="help-select" className={`relative inline-flex min-w-0 items-center gap-1 ${wrapperClassName}`}>
       <Select
         size="xs"
-        variant="transparent"
+        appearance="neutral"
         aria-label={label}
         aria-describedby={helpId}
         options={items}
