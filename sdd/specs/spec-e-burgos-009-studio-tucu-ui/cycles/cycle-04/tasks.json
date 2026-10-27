@@ -47,14 +47,30 @@
     },
     {
       "id": "TASK-002",
+      "title": "Sidebar según el mockup aprobado: buscador que filtra el árbol, botón + de nueva conversación, sección En curso con avatar y chip de estado, canales como chips con cantidad de conversaciones, specs con estado, chip de ciclo y flow y progreso de tareas, fixes con severidad, agentes con presencia y tarea, resúmenes en los encabezados y modo colapsado a íconos",
+      "user_stories": [
+        "US-012"
+      ],
+      "estimation_hours": 8,
+      "story_points": 8,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-003",
       "title": "Verificación y cierre: build, typecheck, test, e2e contra el bridge reconstruido, recorrida visual y fricciones nuevas a tucu-ui",
       "user_stories": [
-        "US-011"
+        "US-011",
+        "US-012"
       ],
       "estimation_hours": 2,
       "story_points": 2,
       "depends_on": [
-        "TASK-001"
+        "TASK-001",
+        "TASK-002"
       ],
       "status": "pending",
       "files": []

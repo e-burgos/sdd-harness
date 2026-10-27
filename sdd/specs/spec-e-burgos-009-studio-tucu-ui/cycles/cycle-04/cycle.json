@@ -10,7 +10,7 @@
   "flow": "lite",
   "objectives": [
     "Selectores con opciones descriptivas, check, búsqueda y menús ajustados al contenido (US-011)",
-    "Propuesta de rediseño del sidebar para aprobación del dev"
+    "Sidebar más dinámico según el mockup aprobado por el dev (US-012)"
   ],
   "status": "in-progress",
   "started_at": "2026-10-27",
