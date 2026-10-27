@@ -1,0 +1,470 @@
+{
+  "$schema": "../../../../schemas/cycle-tasks.schema.json",
+  "spec": "spec-e-burgos-010-studio-dual-sidebar",
+  "cycle": 1,
+  "module": "studio-dual-sidebar",
+  "apps": [
+    "apps/studio",
+    "apps/studio-bridge",
+    "libs/studio-protocol"
+  ],
+  "flow": "full",
+  "user_stories_generated": true,
+  "prerequisites": {
+    "tasks_generated": true
+  },
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "Protocolo: pedido bajo demanda de datos del kit y feature",
+      "user_stories": [
+        "US-7-001",
+        "US-9-001"
+      ],
+      "estimation_hours": 4,
+      "story_points": 3,
+      "depends_on": [],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-002",
+      "title": "Protocolo: escritura de sdd/tools.json y evento de cambio",
+      "user_stories": [
+        "US-8-001"
+      ],
+      "estimation_hours": 4,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-003",
+      "title": "Protocolo: ampliación del snapshot para ciclo actual, documentos y actividad de hilos",
+      "user_stories": [
+        "US-3-001",
+        "US-3-002",
+        "US-4-001",
+        "US-4-002",
+        "US-5-001"
+      ],
+      "estimation_hours": 4,
+      "story_points": 3,
+      "depends_on": [],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-004",
+      "title": "Puente: lectura del kit con lista blanca y límites de tamaño",
+      "user_stories": [
+        "US-7-001",
+        "US-9-001"
+      ],
+      "estimation_hours": 6,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-005",
+      "title": "Puente: lógica pura de escritura de sdd/tools.json",
+      "user_stories": [
+        "US-8-001"
+      ],
+      "estimation_hours": 5,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-002"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-006",
+      "title": "Puente: comandos de kit y herramientas, evento a #general y refresco por watcher",
+      "user_stories": [
+        "US-7-001",
+        "US-8-001",
+        "US-9-001"
+      ],
+      "estimation_hours": 5,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-004",
+        "TASK-005"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-007",
+      "title": "Puente: snapshot ampliado y refresco de ciclos, documentos e hilos",
+      "user_stories": [
+        "US-3-001",
+        "US-3-002",
+        "US-4-002",
+        "US-5-001"
+      ],
+      "estimation_hours": 5,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-003"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-008",
+      "title": "Web: estado de navegación, selección persistente y preferencia del riel",
+      "user_stories": [
+        "US-1-001",
+        "US-2-001"
+      ],
+      "estimation_hours": 5,
+      "story_points": 3,
+      "depends_on": [],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-009",
+      "title": "Web: componente del riel de módulos",
+      "user_stories": [
+        "US-1-001"
+      ],
+      "estimation_hours": 5,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-008"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-010",
+      "title": "Web: marco del panel de lista (título, buscador ⌘K, grupos, estados)",
+      "user_stories": [
+        "US-1-001",
+        "US-1-002",
+        "US-X-001"
+      ],
+      "estimation_hours": 6,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-008"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-011",
+      "title": "Web: shell de layout por módulo y header sin pestañas",
+      "user_stories": [
+        "US-1-001"
+      ],
+      "estimation_hours": 6,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-009",
+        "TASK-010"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-012",
+      "title": "Web: personalización del riel (Más, ocultar, reordenar, restablecer)",
+      "user_stories": [
+        "US-2-001"
+      ],
+      "estimation_hours": 5,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-009",
+        "TASK-011"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-013",
+      "title": "Web: Inicio, panel con En curso, Por aprobar, canales, conversaciones y agentes",
+      "user_stories": [
+        "US-3-001",
+        "US-1-002"
+      ],
+      "estimation_hours": 6,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-010",
+        "TASK-011",
+        "TASK-007"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-014",
+      "title": "Web: Inicio, centro de canales con resúmenes #specs y #fixes y panel derecho",
+      "user_stories": [
+        "US-3-001",
+        "US-3-002"
+      ],
+      "estimation_hours": 6,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-013",
+        "TASK-007"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-015",
+      "title": "Web: módulo Specs, panel con filtros Activas/Todas/Cerradas y grupos por estado",
+      "user_stories": [
+        "US-4-001"
+      ],
+      "estimation_hours": 4,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-010",
+        "TASK-011",
+        "TASK-007"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-016",
+      "title": "Web: ficha de spec con pestañas Resumen y Tareas",
+      "user_stories": [
+        "US-4-002"
+      ],
+      "estimation_hours": 5,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-015"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-017",
+      "title": "Web: ficha de spec, pestañas Plan, Documentos y Conversaciones y panel derecho",
+      "user_stories": [
+        "US-4-002"
+      ],
+      "estimation_hours": 5,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-016",
+        "TASK-007"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-018",
+      "title": "Web: módulo Fixes, panel, ficha y panel derecho",
+      "user_stories": [
+        "US-5-001"
+      ],
+      "estimation_hours": 4,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-010",
+        "TASK-011",
+        "TASK-007"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-019",
+      "title": "Web: ficha de agente compartida y módulo Agentes",
+      "user_stories": [
+        "US-5-002"
+      ],
+      "estimation_hours": 6,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-010",
+        "TASK-011"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-020",
+      "title": "Web: Mapa en tres columnas con nodos intactos",
+      "user_stories": [
+        "US-6-001"
+      ],
+      "estimation_hours": 6,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-019",
+        "TASK-007"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-021",
+      "title": "Web: módulo Actividad, filtros por origen y línea de tiempo",
+      "user_stories": [
+        "US-1-001"
+      ],
+      "estimation_hours": 4,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-010",
+        "TASK-011",
+        "TASK-007"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-022",
+      "title": "Web: módulo Kit, secciones Skills, Prompts, Agentes del kit y Documentación",
+      "user_stories": [
+        "US-7-001"
+      ],
+      "estimation_hours": 6,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-004",
+        "TASK-010",
+        "TASK-011"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-023",
+      "title": "Web: Kit, secciones Schemas JSON, Contexto y Memoria",
+      "user_stories": [
+        "US-7-001"
+      ],
+      "estimation_hours": 5,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-022"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-024",
+      "title": "Web: Kit, Herramientas con confirmación, registro en #general y chip del gate",
+      "user_stories": [
+        "US-8-001"
+      ],
+      "estimation_hours": 6,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-006",
+        "TASK-023",
+        "TASK-014"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-025",
+      "title": "Web: módulo Arquitectura",
+      "user_stories": [
+        "US-9-001"
+      ],
+      "estimation_hours": 5,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-004",
+        "TASK-010",
+        "TASK-011"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-026",
+      "title": "Web: módulo Métricas, Dashboard, Planificación, Ecosistema y Telemetría",
+      "user_stories": [
+        "US-10-001"
+      ],
+      "estimation_hours": 6,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-010",
+        "TASK-011",
+        "TASK-007"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-027",
+      "title": "Web: Métricas, vista Costos con RTK",
+      "user_stories": [
+        "US-10-001"
+      ],
+      "estimation_hours": 4,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-026"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-028",
+      "title": "Web: limpieza del sidebar anterior, pestañas e i18n y cierre del layout",
+      "user_stories": [
+        "US-1-001",
+        "US-X-001"
+      ],
+      "estimation_hours": 5,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-012",
+        "TASK-013",
+        "TASK-014",
+        "TASK-017",
+        "TASK-018",
+        "TASK-019",
+        "TASK-020",
+        "TASK-021",
+        "TASK-024",
+        "TASK-025",
+        "TASK-026",
+        "TASK-027"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-029",
+      "title": "Integral: verificación del workspace, recorrida visual y cierre",
+      "user_stories": [
+        "US-1-001",
+        "US-X-001"
+      ],
+      "estimation_hours": 3,
+      "story_points": 2,
+      "depends_on": [
+        "TASK-028"
+      ],
+      "status": "pending",
+      "files": []
+    }
+  ]
+}
