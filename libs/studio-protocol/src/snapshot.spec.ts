@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { AgentSummary, FixSummary, SkillSummary, WorkspaceSnapshot } from './index';
+import { AREAS, AgentSummary, FixSummary, SkillSummary, WorkspaceSnapshot } from './index';
 
 const agent = { id: 'sdd-planner', description: 'd', model: null, source: 'sdd', path: 'sdd/agents/sdd-planner.agent.md' };
 const skill = { id: 'sdd-planner', kind: 'skill', description: 'd', source: 'claude', path: '.claude/skills/x/SKILL.md' };
@@ -38,5 +38,55 @@ describe('WorkspaceSnapshot v2', () => {
     const { skills, ...withoutSkills } = snapshot;
     expect(skills).toHaveLength(1);
     expect(WorkspaceSnapshot.safeParse(withoutSkills).success).toBe(false);
+  });
+});
+
+describe('WorkspaceSnapshot kit additions', () => {
+  const snapshot = {
+    project: 'p', profile: 'team', kitVersion: null, specs: [], cycles: [], fixes: [],
+    agents: [], skills: [], gateMode: 'block', pricing: null, stale: [],
+  };
+  const tools = { status: 'ok', rtkEnabled: true, modEnabled: false, gate: 'block', modLinked: true, revision: 'a1b2c3d4e5f60718' };
+  const cycle = { specId: 's', cycle: 'cycle-01', status: 'in-progress', flow: 'full', apps: [], tasks: [], tasksTotal: 0, tasksDone: 0 };
+  const spec = { id: 's', title: 't', status: 'in-progress', folder: 'sdd/specs/s', module: null, app: null, dependsOn: [] };
+
+  it('parses a v2 snapshot without any new field', () => {
+    const parsed = WorkspaceSnapshot.parse({ ...snapshot, cycles: [cycle], specs: [spec], fixes: [fix] });
+    expect(parsed.tools).toBeUndefined();
+    expect(parsed.cycles[0]?.documents).toBeUndefined();
+    expect(parsed.specs[0]?.document).toBeUndefined();
+    expect(parsed.fixes[0]?.document).toBeUndefined();
+  });
+  it('parses tools, documents and document fields', () => {
+    const parsed = WorkspaceSnapshot.parse({
+      ...snapshot, tools,
+      cycles: [{ ...cycle, documents: ['brief.yaml', 'artifacts/a.md'] }],
+      specs: [{ ...spec, document: 'sdd/specs/s/s.spec.md' }],
+      fixes: [{ ...fix, document: 'sdd/specs/s/fixes/f.md' }],
+    });
+    expect(parsed.tools).toEqual(tools);
+    expect(parsed.cycles[0]?.documents).toEqual(['brief.yaml', 'artifacts/a.md']);
+    expect(parsed.specs[0]?.document).toBe('sdd/specs/s/s.spec.md');
+    expect(parsed.fixes[0]?.document).toBe('sdd/specs/s/fixes/f.md');
+  });
+  it('drops malformed new fields instead of failing the snapshot', () => {
+    const parsed = WorkspaceSnapshot.parse({
+      ...snapshot,
+      tools: { status: 'weird' },
+      cycles: [{ ...cycle, documents: 'brief.yaml' }],
+      specs: [{ ...spec, document: 7 }],
+      fixes: [{ ...fix, document: [] }],
+    });
+    expect(parsed.tools).toBeUndefined();
+    expect(parsed.cycles[0]?.documents).toBeUndefined();
+    expect(parsed.specs[0]?.document).toBeUndefined();
+    expect(parsed.fixes[0]?.document).toBeUndefined();
+  });
+  it('caps documents at 64 entries', () => {
+    const many = Array.from({ length: 65 }, (_, i) => `artifacts/${i}.md`);
+    expect(WorkspaceSnapshot.parse({ ...snapshot, cycles: [{ ...cycle, documents: many }] }).cycles[0]?.documents).toBeUndefined();
+  });
+  it('keeps Area closed to the known values', () => {
+    expect(AREAS).toEqual(['global', 'specs', 'fixes', 'agents', 'tools', 'pricing', 'kit']);
   });
 });

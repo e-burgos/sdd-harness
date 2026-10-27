@@ -6,6 +6,9 @@ export const MAX_PROMPT_REFS = 5;
 export const FILE_SEARCH_MAX = 50;
 export const MAX_PENDING_PER_THREAD = 10;
 export const MAX_LINK_TARGETS = 32;
+export const MAX_READ_FILE_BYTES = 2 * 1024 * 1024;
+export const MAX_KIT_ENTRIES = 2000;
+export const MAX_CYCLE_DOCUMENTS = 64;
 export const BRIDGE_FEATURES = [
   'pending-messages',
   'thread-link',
@@ -21,6 +24,9 @@ export const BRIDGE_FEATURES = [
   'questions',
   'context-usage',
   'profile-set',
+  'kit-index',
+  'kit-tools',
+  'rtk-gain',
 ] as const;
 export const TEXT_ATTACHMENT_EXTENSIONS = [
   'txt', 'md', 'mdx', 'markdown', 'json', 'jsonc', 'yaml', 'yml', 'toml', 'ini', 'csv', 'log', 'diff', 'patch',

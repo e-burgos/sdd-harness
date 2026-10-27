@@ -3,6 +3,7 @@ export * from './limits';
 export * from './domain';
 export * from './attachments';
 export * from './snapshot';
+export * from './kit';
 export * from './handshake';
 export * from './events';
 export * from './commands';

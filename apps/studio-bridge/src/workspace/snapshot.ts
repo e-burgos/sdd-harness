@@ -1,15 +1,18 @@
-import { readdir, readFile } from 'node:fs/promises';
+import { readdir, readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
-import type {
-  Area,
-  CycleSummary,
-  FixSummary,
-  SpecSummary,
-  TaskSummary,
-  WorkspaceSnapshot,
+import {
+  MAX_CYCLE_DOCUMENTS,
+  type Area,
+  type CycleSummary,
+  type FixSummary,
+  type KitToolsState,
+  type SpecSummary,
+  type TaskSummary,
+  type WorkspaceSnapshot,
 } from '@sdd-studio/protocol';
 
 import { loadCatalog } from './catalog';
+import { computeToolsRevision, effectiveToolsValues, isModLinked, loadValidator } from './kit-tools';
 
 type Json = Record<string, any>;
 type ReadResult = { ok: true; value: Json | null; missing?: boolean } | { ok: false };
@@ -56,6 +59,9 @@ const toSpec = (s: Json): SpecSummary => ({
   dependsOn: strings(s.depends_on),
 });
 
+const safeSddPath = (value: unknown): string | undefined =>
+  typeof value === 'string' && value.startsWith('sdd/') && value.length <= 512 && !value.split('/').includes('..') ? value : undefined;
+
 const toFix = (f: Json): FixSummary => ({
   id: str(f.id),
   title: str(f.title, str(f.id)),
@@ -64,7 +70,67 @@ const toFix = (f: Json): FixSummary => ({
   specId: strOrNull(f.spec_id),
   createdAt: strOrNull(f.created_at),
   closedAt: strOrNull(f.resolved_at) ?? strOrNull(f.validated_at),
+  document: safeSddPath(f.fix_document),
 });
+
+const CYCLE_DOCUMENT_NAMES = ['brief.yaml', 'functional.md', 'planner.md', 'architect.md', 'plan.md', 'cycle.json', 'tasks.json'];
+
+async function regularFileNames(dir: string): Promise<string[]> {
+  try {
+    const entries = await readdir(dir, { withFileTypes: true });
+    return entries.filter((entry) => entry.isFile() && !entry.name.startsWith('.')).map((entry) => entry.name);
+  } catch {
+    return [];
+  }
+}
+
+const MAX_CYCLE_DOCUMENT_LENGTH = 256;
+
+async function listCycleDocuments(cycleDir: string): Promise<string[]> {
+  const present = new Set(await regularFileNames(cycleDir));
+  const artifacts = (await regularFileNames(path.join(cycleDir, 'artifacts'))).sort();
+  const artifactPaths = artifacts.map((name) => `artifacts/${name}`).filter((entry) => entry.length <= MAX_CYCLE_DOCUMENT_LENGTH);
+  return [...CYCLE_DOCUMENT_NAMES.filter((name) => present.has(name)), ...artifactPaths].slice(0, MAX_CYCLE_DOCUMENTS);
+}
+
+async function specDocument(root: string, spec: SpecSummary): Promise<string | undefined> {
+  const relative = `${spec.folder}/${spec.id}.spec.md`;
+  if (!spec.folder.startsWith('sdd/') || spec.folder.split('/').includes('..')) return undefined;
+  const info = await stat(path.join(root, ...relative.split('/'))).catch(() => null);
+  return info?.isFile() ? relative : undefined;
+}
+
+export async function readToolsState(root: string): Promise<KitToolsState> {
+  const unknown = (status: 'missing' | 'invalid'): KitToolsState => ({
+    status,
+    rtkEnabled: null,
+    modEnabled: null,
+    gate: null,
+    modLinked: false,
+    revision: null,
+  });
+  let raw: Buffer;
+  try {
+    raw = await readFile(path.join(root, 'sdd', 'tools.json'));
+  } catch (error) {
+    return unknown((error as NodeJS.ErrnoException).code === 'ENOENT' ? 'missing' : 'invalid');
+  }
+  let doc: unknown;
+  try {
+    doc = JSON.parse(raw.toString('utf8'));
+  } catch {
+    return unknown('invalid');
+  }
+  if (!doc || typeof doc !== 'object' || Array.isArray(doc)) return unknown('invalid');
+  const problem = (await loadValidator(root))(doc);
+  if (problem) return unknown('invalid');
+  return {
+    status: 'ok',
+    ...effectiveToolsValues(doc as Record<string, unknown>),
+    modLinked: await isModLinked(root),
+    revision: computeToolsRevision(raw),
+  };
+}
 
 const SAFE_SPEC_ID = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
 
@@ -76,6 +142,10 @@ async function loadSpecs(root: string, sdd: string) {
   const specs = (Array.isArray(index.value?.specs) ? index.value.specs : [])
     .map(toSpec)
     .filter((sp: SpecSummary) => SAFE_SPEC_ID.test(sp.id));
+  for (const spec of specs) {
+    const document = await specDocument(root, spec);
+    if (document) spec.document = document;
+  }
   const cycles: CycleSummary[] = [];
   for (const spec of specs) {
     const segments = spec.folder.split('/');
@@ -110,6 +180,7 @@ async function loadSpecs(root: string, sdd: string) {
         tasks: list,
         tasksTotal: counted.length,
         tasksDone: counted.filter((t: TaskSummary) => t.status === 'done').length,
+        documents: await listCycleDocuments(path.join(dir, name)),
       });
     }
   }
@@ -139,6 +210,7 @@ export async function loadWorkspaceSnapshot(root: string): Promise<LoadResult> {
   const specs = await loadSpecs(root, sdd);
   if (!specs.ok) failed.push('specs');
   else if (specs.missing) missing.push('specs');
+  const toolsState = await readToolsState(root);
   const catalog = await loadCatalog(root);
   if (!catalog.ok) failed.push('agents');
   const snapshot: WorkspaceSnapshot = {
@@ -152,6 +224,7 @@ export async function loadWorkspaceSnapshot(root: string): Promise<LoadResult> {
     skills: catalog.skills,
     gateMode: tools?.claude_mod?.gate === 'warn' ? 'warn' : 'block',
     pricing: pricing && typeof pricing === 'object' ? pricing : null,
+    tools: toolsState,
     stale: [],
   };
   return { snapshot, failed, missing };
@@ -162,7 +235,7 @@ const AREA_FIELDS: Record<Area, (keyof WorkspaceSnapshot)[]> = {
   specs: ['specs', 'cycles'],
   fixes: ['fixes'],
   agents: ['agents', 'skills'],
-  tools: ['gateMode'],
+  tools: ['gateMode', 'tools'],
   pricing: ['pricing'],
   kit: ['kitVersion'],
 };
@@ -172,7 +245,9 @@ export function mergeSnapshot(prev: WorkspaceSnapshot | null, next: LoadResult):
   if (prev) for (const area of next.missing) if (!out.stale.includes(area)) out.stale.push(area);
   if (prev) {
     for (const area of [...next.failed, ...next.missing]) {
-      for (const field of AREA_FIELDS[area]) (out as Record<string, unknown>)[field] = prev[field];
+      for (const field of AREA_FIELDS[area]) {
+        if (field !== 'tools') (out as Record<string, unknown>)[field] = prev[field];
+      }
     }
   }
   return out;

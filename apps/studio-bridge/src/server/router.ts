@@ -1,6 +1,6 @@
 import { constants } from 'node:fs';
 import { open } from 'node:fs/promises';
-import { BRIDGE_FEATURES, type ClientCommand } from '@sdd-studio/protocol';
+import { BRIDGE_FEATURES, MAX_READ_FILE_BYTES, type BotEvent, type ClientCommand, type RtkGain, type ServerMessage } from '@sdd-studio/protocol';
 import type { AuthState } from '../auth-mode';
 import type { ClaudeLogin } from '../auth/claude-login';
 import type { CommandRunner } from '../commands/runner';
@@ -8,12 +8,13 @@ import type { AttachmentStore } from '../sessions/attachment-store';
 import { SessionError, type SessionManager } from '../sessions/session-manager';
 import type { ThreadStore } from '../sessions/store';
 import type { FileIndex } from '../workspace/file-index';
+import type { KitIndexer } from '../workspace/kit-index';
+import { setKitTool } from '../workspace/kit-tools';
+import { readRtkGain } from '../workspace/rtk-gain';
 import { resolveSddPath } from '../workspace/paths';
 import { ProfileError, writeProfile } from '../workspace/profile';
 import type { WorkspaceWatcher } from '../workspace/watcher';
 import type { BridgeHandlers } from './ws-server';
-
-const MAX_READ_BYTES = 2 * 1024 * 1024;
 
 export function createHandlers(d: {
   root: string;
@@ -23,9 +24,13 @@ export function createHandlers(d: {
   sessions: SessionManager;
   watcher: Pick<WorkspaceWatcher, 'current' | 'refresh'>;
   runner: Pick<CommandRunner, 'run'>;
-  store: Pick<ThreadStore, 'botHistory'>;
+  store: Pick<ThreadStore, 'botHistory' | 'appendBot'>;
   attachments: Pick<AttachmentStore, 'read'>;
   fileIndex: Pick<FileIndex, 'search'>;
+  kitIndexer: Pick<KitIndexer, 'index'>;
+  broadcast: (message: ServerMessage) => void;
+  rtkGain?: (root: string) => Promise<RtkGain>;
+  now?: () => Date;
 }): BridgeHandlers {
   return {
     welcome: () => {
@@ -53,7 +58,7 @@ export function createHandlers(d: {
           try {
             const info = await handle.stat();
             if (!info.isFile()) throw new SessionError('bad-request', 'not a regular file');
-            if (info.size > MAX_READ_BYTES) throw new SessionError('bad-request', 'file too large');
+            if (info.size > MAX_READ_FILE_BYTES) throw new SessionError('bad-request', 'file too large');
             return { path: command.path, content: await handle.readFile('utf8') };
           } finally {
             await handle.close();
@@ -91,7 +96,26 @@ export function createHandlers(d: {
         case 'thread.history':
           return d.sessions.history(command.threadId, command.sinceSeq, command.includeDocumentTouched, command.includeQuestions);
         case 'channel.botHistory':
-          return d.store.botHistory(command.channelId, command.limit);
+          return d.store.botHistory(command.channelId, command.limit, command.includeKitEvents);
+        case 'kit.index':
+          return d.kitIndexer.index();
+        case 'kit.rtkGain':
+          return (d.rtkGain ?? readRtkGain)(d.root);
+        case 'kit.tools.set': {
+          const result = await setKitTool(d.root, command.change, command.expectedRevision);
+          if (result.changed) {
+            await d.watcher.refresh().catch(() => null);
+            const event: BotEvent = {
+              channelId: 'general',
+              botKind: 'tools.changed',
+              payload: { tool: result.tool, from: result.from, to: result.to, file: 'sdd/tools.json' },
+              at: (d.now?.() ?? new Date()).toISOString(),
+            };
+            d.store.appendBot(event);
+            d.broadcast({ kind: 'bot.event', ...event });
+          }
+          return result;
+        }
         case 'approval.respond':
           d.sessions.respondApproval(command.approvalId, command.decision, command.reason, command.scope);
           return null;

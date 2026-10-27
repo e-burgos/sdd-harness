@@ -1,11 +1,13 @@
 import { AuthState } from '../auth-mode';
-import { BRIDGE_FEATURES, decodeClientMessage, defaultThreadOptions, type ClientCommand, type ServerEvent } from '@sdd-studio/protocol';
-import { readFile, rm, writeFile } from 'node:fs/promises';
+import { BRIDGE_FEATURES, decodeClientMessage, defaultThreadOptions, type ClientCommand, type RtkGain, type ServerEvent } from '@sdd-studio/protocol';
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { CommandRunner } from '../commands/runner';
 import { FakeEngine } from '../engine/fake-engine';
 import { createFileIndex } from '../workspace/file-index';
+import { KitIndexer } from '../workspace/kit-index';
+import { computeToolsRevision } from '../workspace/kit-tools';
 import { createAttachmentStore } from '../sessions/attachment-store';
 import { SessionManager } from '../sessions/session-manager';
 import { ThreadStore } from '../sessions/store';
@@ -18,7 +20,11 @@ let cleanup: () => Promise<void>;
 beforeEach(async () => ({ root, cleanup } = await copyFixture()));
 afterEach(() => cleanup());
 
-async function handlers(broadcast: (e: ServerEvent) => void = () => {}, refresh: () => Promise<unknown> = async () => null) {
+async function handlers(
+  broadcast: (e: ServerEvent) => void = () => {},
+  refresh: () => Promise<unknown> = async () => null,
+  extra: { rtkGain?: (root: string) => Promise<RtkGain>; now?: () => Date } = {},
+) {
   const snapshot = (await loadWorkspaceSnapshot(root)).snapshot;
   const store = new ThreadStore(root);
   await store.init();
@@ -30,6 +36,7 @@ async function handlers(broadcast: (e: ServerEvent) => void = () => {}, refresh:
   const login = { status: async () => account, login: async () => ({ ...account, state: 'pending' as const }), logout: async () => account };
   return createHandlers({
     root, auth, login, bridgeVersion: '0.1.0', sessions, store, attachments, fileIndex: createFileIndex(root),
+    kitIndexer: new KitIndexer({ root, onChanged: () => undefined }), broadcast: (m) => broadcast(m as ServerEvent), ...extra,
     watcher: { current: () => snapshot, refresh: async () => { await refresh(); return null; } }, runner: new CommandRunner(root, broadcast, () => 'run-1'),
   });
 }
@@ -55,6 +62,72 @@ describe('createHandlers', () => {
     const h = await handlers();
     await rm(path.join(root, 'sdd', 'global.json'));
     await expect(h.handle(cmd({ cmd: 'profile.set', profile: 'team' }))).rejects.toMatchObject({ code: 'not-found' });
+  });
+
+  it('advertises the kit features in the welcome', async () => {
+    expect((await handlers()).welcome().features).toEqual(expect.arrayContaining(['kit-index', 'kit-tools', 'rtk-gain']));
+  });
+
+  it('kit.index returns the kit index with the memory and registries sections', async () => {
+    await mkdir(path.join(root, 'sdd/memory'), { recursive: true });
+    await writeFile(path.join(root, 'sdd/memory/lessons.md'), '# lessons');
+    const index = (await (await handlers()).handle(cmd({ cmd: 'kit.index' }))) as { entries: { path: string; section: string }[]; truncated: boolean };
+    expect(index.truncated).toBe(false);
+    expect(index.entries).toContainEqual(expect.objectContaining({ path: 'sdd/memory/lessons.md', section: 'memory' }));
+  });
+
+  it('kit.rtkGain delegates to the reader with the workspace root', async () => {
+    const gain: RtkGain = { status: 'not-installed', version: null, gain: null, readAt: '2026-10-27T00:00:00.000Z' };
+    const calls: string[] = [];
+    const h = await handlers(undefined, undefined, { rtkGain: async (r) => { calls.push(r); return gain; } });
+    expect(await h.handle(cmd({ cmd: 'kit.rtkGain' }))).toEqual(gain);
+    expect(calls).toEqual([root]);
+  });
+
+  describe('kit.tools.set', () => {
+    const toolsPath = () => path.join(root, 'sdd/tools.json');
+    const revision = async () => computeToolsRevision(await readFile(toolsPath()));
+    const at = new Date('2026-10-27T12:00:00.000Z');
+
+    it('writes the change, refreshes the watcher, records tools.changed in #general and broadcasts it', async () => {
+      const events: ServerEvent[] = [];
+      let refreshed = 0;
+      const h = await handlers((e) => events.push(e), async () => { refreshed++; }, { now: () => at });
+      const result = await h.handle(cmd({ cmd: 'kit.tools.set', change: { tool: 'gate', mode: 'warn' }, expectedRevision: await revision() }));
+      expect(result).toMatchObject({ changed: true, tool: 'gate', from: 'block', to: 'warn' });
+      expect(JSON.parse(await readFile(toolsPath(), 'utf8')).claude_mod.gate).toBe('warn');
+      expect(refreshed).toBe(1);
+      const expected = { channelId: 'general', botKind: 'tools.changed', payload: { tool: 'gate', from: 'block', to: 'warn', file: 'sdd/tools.json' }, at: at.toISOString() };
+      expect(events).toEqual([{ kind: 'bot.event', ...expected }]);
+      expect(await h.handle(cmd({ cmd: 'channel.botHistory', channelId: 'general', limit: 10, includeKitEvents: true }))).toEqual([expected]);
+      expect(await h.handle(cmd({ cmd: 'channel.botHistory', channelId: 'general', limit: 10 }))).toEqual([]);
+    });
+
+    it('a no-op change neither refreshes nor records anything', async () => {
+      const events: ServerEvent[] = [];
+      let refreshed = 0;
+      const h = await handlers((e) => events.push(e), async () => { refreshed++; });
+      const result = await h.handle(cmd({ cmd: 'kit.tools.set', change: { tool: 'rtk', enabled: false }, expectedRevision: await revision() }));
+      expect(result).toMatchObject({ changed: false });
+      expect(refreshed).toBe(0);
+      expect(events).toEqual([]);
+      expect(await h.handle(cmd({ cmd: 'channel.botHistory', channelId: 'general', limit: 10, includeKitEvents: true }))).toEqual([]);
+    });
+
+    it('a stale revision is a conflict and records nothing', async () => {
+      const events: ServerEvent[] = [];
+      const h = await handlers((e) => events.push(e));
+      await expect(h.handle(cmd({ cmd: 'kit.tools.set', change: { tool: 'mod', enabled: true }, expectedRevision: '0123456789abcdef' }))).rejects.toMatchObject({ code: 'conflict' });
+      expect(events).toEqual([]);
+      expect(JSON.parse(await readFile(toolsPath(), 'utf8')).claude_mod.enabled).toBe(false);
+    });
+
+    it('a missing tools.json is not-found and is never created', async () => {
+      const h = await handlers();
+      await rm(toolsPath());
+      await expect(h.handle(cmd({ cmd: 'kit.tools.set', change: { tool: 'rtk', enabled: true }, expectedRevision: '0123456789abcdef' }))).rejects.toMatchObject({ code: 'not-found' });
+      await expect(readFile(toolsPath())).rejects.toMatchObject({ code: 'ENOENT' });
+    });
   });
 
   it('advertises the questions feature in the welcome', async () => {

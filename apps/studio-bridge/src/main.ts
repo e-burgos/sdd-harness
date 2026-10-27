@@ -15,6 +15,7 @@ import { SessionManager } from './sessions/session-manager';
 import { ThreadStore } from './sessions/store';
 import { BRIDGE_VERSION } from './version';
 import { createFileIndex } from './workspace/file-index';
+import { KitIndexer } from './workspace/kit-index';
 import { startWorkspaceWatcher } from './workspace/watcher';
 
 export class BridgeStartError extends Error {}
@@ -53,14 +54,22 @@ export async function startBridge(o: {
   let server: BridgeServer | null = null;
   const broadcast = (message: ServerMessage) => server?.broadcast(message);
 
+  const kitIndexer = new KitIndexer({
+    root,
+    onChanged: ({ sections, revision }) => broadcast({ kind: 'kit.changed', sections, revision }),
+  });
+
   const watcher = await startWorkspaceWatcher({
     root,
+    onPath: (changedPath) => kitIndexer.notifyPath(changedPath),
     onError: (error) => console.error('[sdd-studio] watcher:', error),
     onUpdate: (update) => {
       broadcast({ kind: 'workspace.changed', areas: update.areas, snapshot: update.snapshot });
+      const at = new Date().toISOString();
       for (const event of update.events) {
-        store.appendBot(event);
-        broadcast({ kind: 'bot.event', ...event });
+        const stamped = { ...event, at };
+        store.appendBot(stamped);
+        broadcast({ kind: 'bot.event', ...stamped });
       }
     },
   });
@@ -87,11 +96,12 @@ export async function startBridge(o: {
       token,
       allowedOrigins: o.allowedOrigins,
       localUiDir: o.localUiDir,
-      handlers: createHandlers({ root, auth, login: new ClaudeLogin(() => auth.cliEnv()), bridgeVersion: BRIDGE_VERSION, sessions, watcher, runner, store, attachments, fileIndex }),
+      handlers: createHandlers({ root, auth, login: new ClaudeLogin(() => auth.cliEnv()), bridgeVersion: BRIDGE_VERSION, sessions, watcher, runner, store, attachments, fileIndex, kitIndexer, broadcast }),
     });
     server = started;
   } catch (error) {
     // Partial startup (e.g. listen rejected): do not leave the watcher running.
+    kitIndexer.close();
     await watcher.close().catch(() => undefined);
     throw error;
   }
@@ -105,6 +115,7 @@ export async function startBridge(o: {
     authMode: auth.mode(),
     project: watcher.current().project,
     close: async () => {
+      kitIndexer.close();
       const results = await Promise.allSettled([
         server?.close() ?? Promise.resolve(),
         watcher.close(),

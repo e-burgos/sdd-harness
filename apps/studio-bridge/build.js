@@ -12,7 +12,7 @@ await esbuild.build({
   format: 'esm',
   outdir: fileURLToPath(distDir),
   // @sdd-studio/protocol se empaqueta adentro (es privado); el resto son dependencias reales.
-  external: ['@anthropic-ai/claude-agent-sdk', 'chokidar', 'citty', 'picocolors', 'ws', 'zod'],
+  external: ['@anthropic-ai/claude-agent-sdk', 'ajv', 'chokidar', 'citty', 'picocolors', 'ws', 'zod'],
 });
 console.log('sdd-studio build OK');
 

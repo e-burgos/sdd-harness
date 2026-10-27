@@ -150,6 +150,32 @@ describe('pending, link, search and attachment commands', () => {
   });
 });
 
+describe('kit commands', () => {
+  it('channel.botHistory defaults includeKitEvents to false', () => {
+    const cmd = { ...base, cmd: 'channel.botHistory', channelId: 'general', limit: 50 };
+    expect(ClientCommand.parse(cmd)).toEqual({ ...cmd, includeKitEvents: false });
+    expect(ClientCommand.parse({ ...cmd, includeKitEvents: true })).toMatchObject({ includeKitEvents: true });
+    expect(ClientCommand.safeParse({ ...cmd, includeKitEvents: 'yes' }).success).toBe(false);
+  });
+  it('parses kit.index and kit.rtkGain without arguments', () => {
+    for (const name of ['kit.index', 'kit.rtkGain']) {
+      const cmd = { ...base, cmd: name };
+      expect(ClientCommand.parse(cmd)).toEqual(cmd);
+    }
+  });
+  it('kit.tools.set requires a change and a revision', () => {
+    const cmd = { ...base, cmd: 'kit.tools.set', change: { tool: 'gate', mode: 'warn' }, expectedRevision: 'a1b2c3d4e5f60718' };
+    expect(ClientCommand.parse(cmd)).toEqual(cmd);
+    const { expectedRevision, ...withoutRevision } = cmd;
+    expect(expectedRevision).toBeTruthy();
+    expect(ClientCommand.safeParse(withoutRevision).success).toBe(false);
+    expect(ClientCommand.safeParse({ ...cmd, expectedRevision: 'short' }).success).toBe(false);
+    expect(ClientCommand.safeParse({ ...cmd, expectedRevision: 'A1B2C3D4E5F60718' }).success).toBe(false);
+    expect(ClientCommand.safeParse({ ...cmd, change: { tool: 'profile', value: 'solo' } }).success).toBe(false);
+    expect(ClientCommand.safeParse({ ...base, cmd: 'kit.tools.set', expectedRevision: cmd.expectedRevision }).success).toBe(false);
+  });
+});
+
 describe('result schemas', () => {
   it('SendResult discriminates started and pending', () => {
     expect(SendResult.parse({ delivery: 'started' })).toEqual({ delivery: 'started' });
