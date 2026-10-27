@@ -1,6 +1,6 @@
 # Context prompt — apps/studio
 
-> Última actualización: cycle-01 (spec-e-burgos-006-studio-auth-connect) + FIX-e-burgos-005-001..005 | Fecha: 2026-10-26
+> Última actualización: spec-e-burgos-009-studio-tucu-ui cycle-02 (consolida fragmentos de FIX-005-006..011, spec-007, spec-008 y spec-009) | Fecha: 2026-10-27
 
 > Entry point para agentes y desarrolladores trabajando en `sdd-studio-web`.
 > Leer este documento antes de realizar cambios en la UI, componentes de workspace o stores de Zustand.
@@ -20,6 +20,8 @@ Es la aplicación web frontend de **SDD Studio**: una interfaz tipo Slack que se
 - **Panel derecho (Snapshot):** `src/components/workspace/RightPanel.tsx`.
 - **Adjuntos y menú `@`/`/`:** `src/lib/attachments/`, `use-attachment-*.ts`, `use-mention-menu.ts`, `AttachmentTray`, `AttachmentView`, `MentionMenu`.
 - **Mission Control:** `src/components/StudioHeader.tsx` (vistas) y `src/components/mission-control/` (mapa del enjambre, Gates, inspector, visor de documentos, ecosistema, telemetría); modelos en `src/lib/agents.ts`, `gates.ts`, `agent-documents.ts` y `conversation.ts` (conversación elegida, sesión/proveedor reales, documentos y specs/fixes derivados de eventos; sin guiones ficticios).
+- **Tema y UI kit:** `@e-burgos/tucu-ui` 3.4.0 (`app/layout.tsx`, `app/globals.css`, `ColorModeBootstrap.tsx`); envoltorios `HelpSelect`, `Tip`, `StatusPill`, `SegmentedControl`; modo claro/oscuro desde `StudioHeader`; escala `text-micro|meta|ui|small|body|title`.
+- **Capacidades del puente y flujo de spec:** `src/lib/use-bridge-features.ts`, `CapabilityNotice.tsx`, `QuestionForm.tsx`, `ContextMeter.tsx`, `ModeSelectors.tsx` + `lib/flow-choice.ts`, `PreparedConversations.tsx` + `lib/auto-conversation.ts`, `lib/link-targets.ts`, `lib/conversation-gate.ts`, `GateStatusModal`.
 - **Stores de Zustand:** `src/lib/store/` (`timeline.ts`, `state.ts`, `activity.ts`, `selectors.ts`, `nav-tree.ts`); hooks en `src/lib/` (`use-collapsed-state.ts`, `use-stick-to-bottom.ts`, `use-panel-state.ts`).
 
 ## Cómo desarrollar y testear localmente
@@ -43,6 +45,9 @@ Comandos de verificación:
 ## Consideraciones críticas
 
 - **Modo exportación estática:** Recuerda que la build de producción (`STUDIO_EXPORT=1`) genera HTML/JS puro en `out/` para desplegarse en Cloudflare Pages o servirse mediante el bridge. Evita APIs de Node server en rutas de frontend.
+- **Tema:** colores y tamaños salen de los tokens del tema de tucu-ui y de la escala tipográfica de `globals.css`; nada de `text-[Npx]`, `text-white` ni hex sueltos. Cero `<select>` nativos (`HelpSelect`).
+- **Puentes anteriores:** cada capacidad nueva se activa con su feature de `Welcome.features`; sin ella se muestra un aviso no bloqueante.
+- **E2E:** sirve `apps/studio-bridge/dist/web`; tras cambiar UI, `build:local` → build del bridge → `e2e`.
 - **Iconografía:** solo `lucide-react`; nada de emojis ni glifos decorativos.
 - **Tipos sincronizados:** Todo cambio en la estructura de mensajes debe coordinarse con `libs/studio-protocol`.
 - **Protocolo en `next dev`:** una rama que cambia el protocolo rompe el handshake con el puente publicado vía HMR; no usarla para el Studio de uso diario.
