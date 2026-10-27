@@ -12,18 +12,151 @@
     "Selectores con opciones descriptivas, check, búsqueda y menús ajustados al contenido (US-011)",
     "Sidebar más dinámico según el mockup aprobado por el dev (US-012)"
   ],
-  "status": "in-progress",
+  "status": "completed",
   "started_at": "2026-10-27",
-  "completed_at": null,
+  "completed_at": "2026-10-27",
   "documents": {
     "plan": "sdd/specs/spec-e-burgos-009-studio-tucu-ui/cycles/cycle-04/plan.md",
     "tasks": "sdd/specs/spec-e-burgos-009-studio-tucu-ui/cycles/cycle-04/tasks.json"
   },
   "artifacts": [],
-  "metrics": null,
+  "metrics": {
+    "tasks_total": 3,
+    "tasks_completed": 3,
+    "tasks_skipped": 0,
+    "story_points": 15,
+    "files_created": [
+      "apps/studio/src/components/workspace/NavParts.tsx",
+      "apps/studio/src/components/workspace/NavSections.tsx",
+      "apps/studio/src/components/workspace/SidebarHeader.tsx",
+      "apps/studio/src/components/workspace/SidebarRail.tsx",
+      "apps/studio/src/components/workspace/SidebarSearch.tsx",
+      "apps/studio/src/lib/store/nav-filter.ts",
+      "apps/studio/src/lib/store/nav-summary.ts"
+    ],
+    "files_modified": [
+      "apps/studio/src/app/globals.css",
+      "apps/studio/src/components/HelpSelect.tsx",
+      "apps/studio/src/components/mission-control/ConversationSelector.tsx",
+      "apps/studio/src/components/mission-control/DocumentViewerModal.tsx",
+      "apps/studio/src/components/workspace/Composer.tsx",
+      "apps/studio/src/components/workspace/ModeSelectors.tsx",
+      "apps/studio/src/components/workspace/NavTree.tsx",
+      "apps/studio/src/components/workspace/Sidebar.tsx",
+      "apps/studio/src/components/workspace/ThreadLinkPicker.tsx",
+      "apps/studio/src/components/workspace/Workspace.tsx",
+      "apps/studio/src/components/workspace/composer.spec.tsx",
+      "apps/studio/src/components/workspace/sidebar-live.spec.tsx",
+      "apps/studio/src/components/workspace/sidebar.spec.tsx",
+      "apps/studio/src/components/workspace/threadlink.spec.tsx",
+      "apps/studio/src/components/workspace/workspace.spec.tsx",
+      "apps/studio/src/lib/i18n/en.ts",
+      "apps/studio/src/lib/i18n/es.ts",
+      "apps/studio/src/lib/store/nav-tree.ts",
+      "apps/studio/src/lib/test-utils/pick-option.ts",
+      "apps/studio/src/lib/typography-tokens.ts",
+      "apps/studio/src/lib/use-panel-state.ts"
+    ],
+    "files_deleted": [],
+    "usage": {
+      "tokens_in": 473985,
+      "tokens_out": 82115,
+      "approx": true,
+      "source": "declared-estimate",
+      "by_tier": {
+        "claude/opus": {
+          "tokens_in": 190000,
+          "tokens_out": 32000,
+          "approx": true,
+          "source": "declared-estimate"
+        },
+        "claude/sonnet": {
+          "tokens_in": 283985,
+          "tokens_out": 50115,
+          "approx": true,
+          "source": "declared-estimate"
+        }
+      },
+      "by_agent": [
+        {
+          "agent": "orchestrator",
+          "label": "solo",
+          "provider_model": "claude/opus",
+          "effort": "medium",
+          "tokens_in": 70000,
+          "tokens_out": 14000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-27"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-001",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 115416,
+          "tokens_out": 20368,
+          "approx": true,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-10-27"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-002",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 168569,
+          "tokens_out": 29747,
+          "approx": true,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-10-27"
+        },
+        {
+          "agent": "reviewer",
+          "label": "TASK-003",
+          "provider_model": "claude/opus",
+          "effort": "medium",
+          "tokens_in": 120000,
+          "tokens_out": 18000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-27"
+        }
+      ]
+    }
+  },
   "tables_created": [],
   "endpoints_implemented": [],
   "components_created": [],
-  "issues_found": [],
-  "reviewer_report": null
+  "issues_found": [
+    "decisión: HelpSelect suma icon/description/triggerLabel por opción y searchable; menú w-max con lista interna max-h-72 (el max-h-44 de tucu entra 4 opciones con descripción)",
+    "decisión: el permiso automático aclara que el SPEC GATE sigue activo (el bridge lo corre en PreToolUse en todos los modos)",
+    "decisión: canales muestran cantidad de conversaciones; no hay dato de no leídos y no se inventa",
+    "bug corregido: text-body generaba también color var(--color-body) de tucu-ui (el fondo); la escala renombra body a copy",
+    "bug corregido: chips de estado dentro de filas-botón cambiaban el nombre accesible y rompían el e2e; van aria-hidden con sr-only de status.*",
+    "no hecho: + por sección (no existe acción de nueva conversación por canal o spec); atajo ⌘K solo en aria-keyshortcuts, sin hint visible",
+    "fricción tucu-ui 59-63 (enviadas): Escape no cierra el listbox (resuelta en 3.6.0); menuWidth, wrapDescription, maxMenuHeight y triggerLabel (para 3.7.0)",
+    "fricción tucu-ui 64-68 (enviadas): Button sin forma cuadrada icon-only, Input sin slot kbd/suffix documentado, Badge sin tamaño menor a tiny, Tooltip deja su contenido en el DOM, --color-body choca con nombres de escala tipográfica comunes"
+  ],
+  "reviewer_report": {
+    "approved": true,
+    "date": "2026-10-27",
+    "ca_results": {
+      "US-011": "PASS - opciones con nombre, descripción (es/en), ícono en agentes, check en la elegida, búsqueda en vínculos y en listas largas; disparador sin recorte; menú ajustado al contenido y 5 opciones sin scroll; revisado en claro y oscuro",
+      "US-012": "PASS con excepciones - buscador que filtra y conserva ancestros, En curso con avatar y chip (oculta si vacía), specs con estado, ciclo, flow y progreso, fixes con severidad, agentes con presencia y tarea, resúmenes en encabezados, modo íconos persistido; revisado a 1280x700 y 1440x860 en los dos modos. Sin + por sección ni hint visible de ⌘K"
+    },
+    "tests": {
+      "sdd:validate": "OK",
+      "build": "pnpm build exit 0",
+      "typecheck": "pnpm typecheck exit 0",
+      "suite": "protocol 103/103, cli 202 pass (9 skipped), studio-bridge 675 pass (2 skipped), studio 708/708",
+      "e2e": "apps/studio e2e 8/8 PASS contra dist/web recompilado"
+    },
+    "notes": "Aprobado por el actor único del flow lite (opus/medium); TASK-001 y TASK-002 por subagentes sonnet/medium. En la revisión en navegador aparecieron y se corrigieron: título de spec recortado (pasa a dos líneas), nombre del proyecto invisible en oscuro (text-body), y 6 e2e rotos por nombres accesibles. Sin comentarios narrativos nuevos.",
+    "follow_ups": [
+      "Adoptar tucu-ui 3.6.0 y limpiar los ajustes que habilita",
+      "Migrar los dos modales a SplitModal con tucu-ui 3.7.0 y reemplazar los ajustes de HelpSelect por su API nueva",
+      "Revisar en modo claro los tres colores de identidad de agentes muy claros"
+    ]
+  }
 }

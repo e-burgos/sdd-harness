@@ -56,8 +56,39 @@
       "depends_on": [
         "TASK-001"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/studio/src/app/globals.css",
+        "apps/studio/src/components/mission-control/DocumentViewerModal.tsx",
+        "apps/studio/src/components/workspace/NavParts.tsx",
+        "apps/studio/src/components/workspace/NavSections.tsx",
+        "apps/studio/src/components/workspace/NavTree.tsx",
+        "apps/studio/src/components/workspace/Sidebar.tsx",
+        "apps/studio/src/components/workspace/SidebarHeader.tsx",
+        "apps/studio/src/components/workspace/SidebarRail.tsx",
+        "apps/studio/src/components/workspace/SidebarSearch.tsx",
+        "apps/studio/src/components/workspace/Workspace.tsx",
+        "apps/studio/src/components/workspace/sidebar-live.spec.tsx",
+        "apps/studio/src/components/workspace/sidebar.spec.tsx",
+        "apps/studio/src/components/workspace/workspace.spec.tsx",
+        "apps/studio/src/lib/i18n/en.ts",
+        "apps/studio/src/lib/i18n/es.ts",
+        "apps/studio/src/lib/store/nav-filter.ts",
+        "apps/studio/src/lib/store/nav-summary.ts",
+        "apps/studio/src/lib/store/nav-tree.ts",
+        "apps/studio/src/lib/typography-tokens.ts",
+        "apps/studio/src/lib/use-panel-state.ts"
+      ],
+      "usage": {
+        "tokens_in": 168569,
+        "tokens_out": 29747,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-10-27"
+      }
     },
     {
       "id": "TASK-003",
@@ -72,8 +103,18 @@
         "TASK-001",
         "TASK-002"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [],
+      "usage": {
+        "tokens_in": 120000,
+        "tokens_out": 18000,
+        "provider_model": "claude/opus",
+        "effort": "medium",
+        "agent": "reviewer",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-27"
+      }
     }
   ]
 }
