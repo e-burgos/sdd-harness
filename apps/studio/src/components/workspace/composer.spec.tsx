@@ -49,7 +49,7 @@ describe('ComposerView', () => {
   it('disables effort when the model is kit and enables it otherwise', () => {
     const { onOptionsChange } = setup();
     expect(screen.getByLabelText('Esfuerzo')).toBeDisabled();
-    pickOption(screen.getByLabelText('Modelo'), 'opus');
+    pickOption(screen.getByLabelText('Modelo'), 'Opus');
     expect(onOptionsChange).toHaveBeenCalledWith({ model: 'opus', effort: 'medium' });
   });
   it('locks the agent selector in DMs', () => {
@@ -136,7 +136,7 @@ describe('Composer (connected)', () => {
     const { client, store } = connected('general', 't1', async () => ({}));
     act(() => store.getState().receive({ kind: 'thread.updated', thread: info() } as never));
     await waitFor(() => expect(screen.getByLabelText('Modelo')).toBeEnabled());
-    pickOption(screen.getByLabelText('Modelo'), 'opus');
+    pickOption(screen.getByLabelText('Modelo'), 'Opus');
     const call = client.request.mock.calls.find((c) => c[0].cmd === 'thread.setOptions')![0] as unknown as { options: object };
     expect(call.options).toEqual({ model: 'opus', effort: 'medium' });
   });

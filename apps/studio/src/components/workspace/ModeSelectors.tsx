@@ -18,6 +18,7 @@ export interface ModeSelectorsProps {
 
 const PROFILES = DevProfile.options;
 const FLOWS = FlowChoice.options;
+const capitalized = (text: string): string => text.charAt(0).toUpperCase() + text.slice(1);
 
 export function ModeSelectors(p: ModeSelectorsProps) {
   const { t } = useT();
@@ -29,14 +30,24 @@ export function ModeSelectors(p: ModeSelectorsProps) {
         help={t('help.mode.dev')}
         value={p.profile}
         disabled={!p.canEditProfile}
-        options={PROFILES.map((x) => ({ value: x, label: t('mode.dev.option', { mode: t(`mode.dev.${x}`) }) }))}
+        options={PROFILES.map((x) => ({
+          value: x,
+          label: capitalized(t(`mode.dev.${x}`)),
+          description: t(`mode.dev.${x}.desc`),
+          triggerLabel: t('mode.dev.option', { mode: t(`mode.dev.${x}`) }),
+        }))}
         onChange={(value) => p.onProfileChange(DevProfile.parse(value))}
       />
       <HelpSelect
         label={t('mode.flow.label')}
         help={t('help.mode.flow')}
         value={p.flow}
-        options={FLOWS.map((x) => ({ value: x, label: t('mode.flow.option', { mode: t(`mode.flow.${x}`) }) }))}
+        options={FLOWS.map((x) => ({
+          value: x,
+          label: capitalized(t(`mode.flow.${x}`)),
+          description: t(`mode.flow.${x}.desc`),
+          triggerLabel: t('mode.flow.option', { mode: t(`mode.flow.${x}`) }),
+        }))}
         onChange={(value) => p.onFlowChange(FlowChoice.parse(value))}
       />
       <span data-testid="mode-effective" className="text-meta text-ink-400">

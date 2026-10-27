@@ -1,6 +1,6 @@
 'use client';
 
-import { useId } from 'react';
+import { useId, type ReactNode } from 'react';
 import { CircleHelp } from 'lucide-react';
 import { Select, Tooltip, type SelectOption } from '@e-burgos/tucu-ui';
 import { useT } from '@/lib/i18n/i18n';
@@ -10,6 +10,9 @@ export interface HelpSelectOption {
   label: string;
   disabled?: boolean;
   group?: string;
+  icon?: ReactNode;
+  description?: string;
+  triggerLabel?: string;
 }
 
 export interface HelpSelectProps {
@@ -19,18 +22,35 @@ export interface HelpSelectProps {
   value: string;
   onChange(value: string): void;
   disabled?: boolean;
+  searchable?: boolean;
   wrapperClassName?: string;
   className?: string;
 }
 
 const iconRing = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400';
+const listboxClasses = [
+  'w-max! min-w-40 max-w-80 max-h-80 [&>div]:max-h-72',
+  '[&_[data-tucu=select-option]_.text-muted]:whitespace-normal',
+  '[&_[data-tucu=select-option]_.text-muted]:text-meta',
+  '[&_[data-tucu=select-option]_.text-muted]:text-ink-400',
+].join(' ');
 const triggerClasses = 'gap-1.5 rounded-md border border-ink-700 bg-ink-950 text-ink-100 font-normal [&>svg]:size-3';
 
-export function HelpSelect({ label, help, options, value, onChange, disabled, wrapperClassName = '', className }: HelpSelectProps) {
+export function HelpSelect({ label, help, options, value, onChange, disabled, searchable, wrapperClassName = '', className = 'max-w-[16rem]' }: HelpSelectProps) {
   const { t } = useT();
   const helpId = useId();
-  const items = options.map((o) => ({ name: o.label, value: o.value, disabled: o.disabled, group: o.group }));
-  const selected = items.find((o) => o.value === value) ?? { name: '', value };
+  const items: SelectOption[] = options.map((o) => ({
+    name: o.label,
+    value: o.value,
+    disabled: o.disabled,
+    group: o.group,
+    icon: o.icon,
+    description: o.description,
+  }));
+  const current = options.find((o) => o.value === value);
+  const selected: SelectOption = current
+    ? { name: current.triggerLabel ?? current.label, value, icon: current.icon }
+    : { name: '', value };
   return (
     <span data-testid="help-select" className={`relative inline-flex min-w-0 items-center gap-1 ${wrapperClassName}`}>
       <Select
@@ -41,9 +61,11 @@ export function HelpSelect({ label, help, options, value, onChange, disabled, wr
         options={items}
         selectedOption={selected}
         disabled={disabled}
-        className={className}
+        className={`shrink-0 ${className}`}
         buttonClassName={triggerClasses}
-        listboxClassName="min-w-40"
+        showCheck
+        searchable={searchable}
+        listboxClassName={listboxClasses}
         onChange={(option: SelectOption) => onChange(option.value)}
       />
       <span id={helpId} className="sr-only">

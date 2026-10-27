@@ -1,6 +1,7 @@
 'use client';
 
 import type { ThreadInfo } from '@sdd-studio/protocol';
+import { agentMeta } from '@/lib/agents';
 import { useT } from '@/lib/i18n/i18n';
 import { HelpSelect } from '../HelpSelect';
 import { NewConversationButton } from '../NewConversationButton';
@@ -27,7 +28,8 @@ export function ConversationSelector({ conversations, selectedThreadId, onPick, 
           label={t('mc.conversations')}
           help={t('help.conversation.select')}
           value={selectedThreadId ?? ''}
-          options={conversations.map((conversation) => ({ value: conversation.id, label: labelOf(conversation) }))}
+          searchable={conversations.length > 8}
+          options={conversations.map((conversation) => ({ value: conversation.id, label: labelOf(conversation), description: agentMeta(conversation.agent).name }))}
           onChange={onPick}
           className="max-w-[220px] font-mono"
         />

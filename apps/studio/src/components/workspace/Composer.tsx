@@ -41,6 +41,7 @@ import { useAttachmentDraft } from '@/lib/use-attachment-draft';
 import { useMentionMenu } from '@/lib/use-mention-menu';
 import { useBridge, useStudio } from '../BridgeProvider';
 import { HelpSelect } from '../HelpSelect';
+import { AgentFace } from './AgentFace';
 import { AttachmentTray } from './AttachmentTray';
 import { MentionMenu } from './MentionMenu';
 import { ModeSelectors } from './ModeSelectors';
@@ -57,6 +58,7 @@ const BUSY_STATUSES = new Set(['running', 'waiting-approval', 'queued']);
 const MODELS: ModelChoice[] = ['kit', 'haiku', 'sonnet', 'opus', 'fable'];
 const EFFORTS: Effort[] = ['low', 'medium', 'high', 'xhigh', 'max'];
 const PERMS: PermissionModeChoice[] = ['default', 'acceptEdits', 'bypassPermissions', 'plan'];
+const MODEL_NAMES: Record<ModelChoice, string> = { kit: 'Kit', haiku: 'Haiku', sonnet: 'Sonnet', opus: 'Opus', fable: 'Fable' };
 
 export interface ComposerViewProps {
   options: ThreadOptions;
@@ -225,14 +227,20 @@ export function ComposerView(p: ComposerViewProps) {
               help={t('help.composer.agent')}
               disabled={p.agentLocked}
               value={p.options.agent}
-              options={p.agents.map((a) => ({ value: a, label: agentMeta(a).name }))}
+              searchable={p.agents.length > 8}
+              options={p.agents.map((a) => ({
+                value: a,
+                label: agentMeta(a).name,
+                description: agentMeta(a).role,
+                icon: <span className="inline-flex size-[18px] items-center justify-center"><AgentFace agent={a} size={18} /></span>,
+              }))}
               onChange={(agent) => p.onOptionsChange({ agent })}
             />
             <HelpSelect
               label={t('composer.model')}
               help={t('help.composer.model')}
               value={p.options.model}
-              options={MODELS.map((m) => ({ value: m, label: m === 'kit' ? t('model.kit') : m }))}
+              options={MODELS.map((m) => ({ value: m, label: MODEL_NAMES[m], description: t(`model.${m}.desc`) }))}
               onChange={(value) => {
                 const model = value as ModelChoice;
                 p.onOptionsChange(model === 'kit' ? { model, effort: null } : { model, effort: p.options.effort ?? 'medium' });
@@ -243,14 +251,17 @@ export function ComposerView(p: ComposerViewProps) {
               help={t('help.composer.effort')}
               disabled={p.options.model === 'kit'}
               value={p.options.effort ?? ''}
-              options={[...(p.options.model === 'kit' ? [{ value: '', label: '—' }] : []), ...EFFORTS.map((x) => ({ value: x, label: x }))]}
+              options={[
+                ...(p.options.model === 'kit' ? [{ value: '', label: '—', description: t('effort.none.desc') }] : []),
+                ...EFFORTS.map((x) => ({ value: x, label: x, description: t(`effort.${x}.desc`) })),
+              ]}
               onChange={(value) => p.onOptionsChange({ effort: value as Effort })}
             />
             <HelpSelect
               label={t('composer.permission')}
               help={t('help.composer.permission')}
               value={p.options.permissionMode}
-              options={PERMS.map((x) => ({ value: x, label: t(`perm.${x}`) }))}
+              options={PERMS.map((x) => ({ value: x, label: t(`perm.${x}`), description: t(`perm.${x}.desc`) }))}
               onChange={(value) => p.onOptionsChange({ permissionMode: value as PermissionModeChoice })}
             />
             {p.onFiles && (

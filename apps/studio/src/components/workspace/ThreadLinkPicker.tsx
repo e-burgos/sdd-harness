@@ -56,12 +56,12 @@ export function ThreadLinkPicker({ threadId }: { threadId: string }) {
 
   const options = useMemo(() => {
     const linked = new Set(entries.map((entry) => linkRefKey(toLinkRef(entry))));
-    const specs = (snapshot?.specs ?? []).map((s) => ({ value: linkRefKey({ kind: 'spec', specId: s.id }), label: s.id }));
+    const specs = (snapshot?.specs ?? []).map((s) => ({ value: linkRefKey({ kind: 'spec', specId: s.id }), label: s.id, description: s.status }));
     const cycles = (snapshot?.cycles ?? [])
-      .map((c) => ({ value: encodeLinkTarget({ kind: 'cycle', specId: c.specId, cycle: c.cycle }), label: `${c.specId} · ${c.cycle} (${c.status})` }))
+      .map((c) => ({ value: encodeLinkTarget({ kind: 'cycle', specId: c.specId, cycle: c.cycle }), label: `${c.specId} · ${c.cycle}`, description: c.status, triggerLabel: `${c.specId} · ${c.cycle} (${c.status})` }))
       .sort((a, b) => a.label.localeCompare(b.label));
-    const fixes = (snapshot?.fixes ?? []).map((f) => ({ value: encodeLinkTarget({ kind: 'fix', fixId: f.id }), label: `${f.id} (${f.status})` }));
-    const free = (list: { value: string; label: string }[]) => list.filter((o) => !linked.has(o.value));
+    const fixes = (snapshot?.fixes ?? []).map((f) => ({ value: encodeLinkTarget({ kind: 'fix', fixId: f.id }), label: f.id, description: f.status, triggerLabel: `${f.id} (${f.status})` }));
+    const free = (list: HelpSelectOption[]) => list.filter((o) => !linked.has(o.value));
     return { cycles, fixes, specs: free(specs), freeCycles: free(cycles), freeFixes: free(fixes) };
   }, [snapshot, entries]);
 
@@ -102,7 +102,7 @@ export function ThreadLinkPicker({ threadId }: { threadId: string }) {
     </span>
   );
   const errorNote = error && <p role="alert" className="basis-full text-roseish">{error}</p>;
-  const grouped = (heading: string, list: { value: string; label: string }[]): HelpSelectOption[] =>
+  const grouped = (heading: string, list: HelpSelectOption[]): HelpSelectOption[] =>
     list.map((o) => ({ ...o, group: heading }));
 
   if (!multiple) {
@@ -112,6 +112,7 @@ export function ThreadLinkPicker({ threadId }: { threadId: string }) {
         <HelpSelect
           label={t('link.label')}
           help={t('help.link.target')}
+          searchable
           className="max-w-[16rem]"
           value={current}
           disabled={saving}
@@ -162,6 +163,7 @@ export function ThreadLinkPicker({ threadId }: { threadId: string }) {
       <HelpSelect
         label={t('link.label')}
         help={t('help.link.add')}
+        searchable
         className="max-w-[16rem]"
         value=""
         disabled={saving || entries.length >= MAX_LINK_TARGETS}
