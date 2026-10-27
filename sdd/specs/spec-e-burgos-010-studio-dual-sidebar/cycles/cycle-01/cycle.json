@@ -22,7 +22,8 @@
     "brief": "sdd/specs/spec-e-burgos-010-studio-dual-sidebar/cycles/cycle-01/brief.yaml",
     "functional": "sdd/specs/spec-e-burgos-010-studio-dual-sidebar/cycles/cycle-01/functional.md",
     "planner": "sdd/specs/spec-e-burgos-010-studio-dual-sidebar/cycles/cycle-01/planner.md",
-    "tasks": "sdd/specs/spec-e-burgos-010-studio-dual-sidebar/cycles/cycle-01/tasks.json"
+    "tasks": "sdd/specs/spec-e-burgos-010-studio-dual-sidebar/cycles/cycle-01/tasks.json",
+    "architect": "sdd/specs/spec-e-burgos-010-studio-dual-sidebar/cycles/cycle-01/architect.md"
   },
   "artifacts": [],
   "metrics": null,

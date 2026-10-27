@@ -492,3 +492,11 @@ Orden: protocolo, puente, web. Las tasks que dependen de decisiones de contrato 
 - [ ] e2e de Studio verde
 - [ ] Recorrida visual de los nueve módulos hecha en claro y oscuro
 - [ ] Sin residuos en el diff
+
+## Ajustes tras architect.md (orquestador, 2026-10-27)
+
+- TASK-001..007 se reformulan con las decisiones D-01..D-06: sin valores nuevos en `Area`, `kit.index` + `KitIndexer` (las lecturas reusan `workspace.readFile`), `kit.tools.set` con revisión y escritura propia del puente (no corre los scripts), `tools.changed` con `at` e `includeKitEvents`, snapshot solo con `tools` y documentos (no hace falta actividad de hilos: `ThreadInfo.lastActivity` existe).
+- Nueva TASK-030 (puente): `kit.rtkGain`; TASK-027 (Costos con RTK) depende de ella.
+- TASK-021, TASK-022 y TASK-023 dependen además de TASK-006 (eventos y `kit.index` cableados); TASK-025 (Arquitectura) ya no depende de TASK-004, porque solo usa `workspace.readFile`.
+- TASK-005 hace explícitos el test de paridad con `sdd:rtk`/`sdd:mod` y `ajv` como dependencia externa del build del puente.
+- Orden recomendado: protocolo → (puente ‖ shell web y módulos con datos existentes) → partes web con datos nuevos (Plan/Documentos, Kit, Herramientas, Costos) → limpieza de la navegación vieja, test de escala tipográfica y e2e reescrito.

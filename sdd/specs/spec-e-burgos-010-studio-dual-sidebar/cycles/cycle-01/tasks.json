@@ -16,7 +16,7 @@
   "tasks": [
     {
       "id": "TASK-001",
-      "title": "Protocolo: pedido bajo demanda de datos del kit y feature",
+      "title": "Protocolo: comandos kit.index y kit.rtkGain, evento kit.changed, features kit-index/kit-tools/rtk-gain y MAX_READ_FILE_BYTES exportado (sin valores nuevos en Area)",
       "user_stories": [
         "US-7-001",
         "US-9-001"
@@ -29,7 +29,7 @@
     },
     {
       "id": "TASK-002",
-      "title": "Protocolo: escritura de sdd/tools.json y evento de cambio",
+      "title": "Protocolo: comando kit.tools.set con expectedRevision, bot event tools.changed con at opcional e includeKitEvents en channel.botHistory",
       "user_stories": [
         "US-8-001"
       ],
@@ -43,7 +43,7 @@
     },
     {
       "id": "TASK-003",
-      "title": "Protocolo: ampliación del snapshot para ciclo actual, documentos y actividad de hilos",
+      "title": "Protocolo: snapshot.tools con revisión y documentos por ciclo, spec y fix (ThreadInfo.lastActivity ya existe; sin campos de actividad nuevos)",
       "user_stories": [
         "US-3-001",
         "US-3-002",
@@ -59,7 +59,7 @@
     },
     {
       "id": "TASK-004",
-      "title": "Puente: lectura del kit con lista blanca y límites de tamaño",
+      "title": "Puente: kit.index y KitIndexer con lista blanca, límites y refresco por fingerprints (lecturas por workspace.readFile)",
       "user_stories": [
         "US-7-001",
         "US-9-001"
@@ -74,7 +74,7 @@
     },
     {
       "id": "TASK-005",
-      "title": "Puente: lógica pura de escritura de sdd/tools.json",
+      "title": "Puente: escritura de sdd/tools.json con conflicto por revisión, validación ajv contra el schema del repo, escritura atómica, test de paridad con sdd:rtk/sdd:mod y ajv como dependencia externa del build",
       "user_stories": [
         "US-8-001"
       ],
@@ -105,7 +105,7 @@
     },
     {
       "id": "TASK-007",
-      "title": "Puente: snapshot ampliado y refresco de ciclos, documentos e hilos",
+      "title": "Puente: snapshot con tools y documentos por ciclo, spec y fix, y su refresco",
       "user_stories": [
         "US-3-001",
         "US-3-002",
@@ -116,6 +116,20 @@
       "story_points": 3,
       "depends_on": [
         "TASK-003"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-030",
+      "title": "Puente: comando kit.rtkGain (rtk gain --project --all --format json, sin shell, timeout 8 s y caché 10 s)",
+      "user_stories": [
+        "US-10-001"
+      ],
+      "estimation_hours": 2,
+      "story_points": 2,
+      "depends_on": [
+        "TASK-001"
       ],
       "status": "pending",
       "files": []
@@ -328,7 +342,9 @@
       "depends_on": [
         "TASK-010",
         "TASK-011",
-        "TASK-007"
+        "TASK-007",
+        "TASK-002",
+        "TASK-006"
       ],
       "status": "pending",
       "files": []
@@ -344,7 +360,8 @@
       "depends_on": [
         "TASK-004",
         "TASK-010",
-        "TASK-011"
+        "TASK-011",
+        "TASK-006"
       ],
       "status": "pending",
       "files": []
@@ -358,7 +375,8 @@
       "estimation_hours": 5,
       "story_points": 3,
       "depends_on": [
-        "TASK-022"
+        "TASK-022",
+        "TASK-006"
       ],
       "status": "pending",
       "files": []
@@ -388,7 +406,6 @@
       "estimation_hours": 5,
       "story_points": 3,
       "depends_on": [
-        "TASK-004",
         "TASK-010",
         "TASK-011"
       ],
@@ -420,7 +437,8 @@
       "estimation_hours": 4,
       "story_points": 3,
       "depends_on": [
-        "TASK-026"
+        "TASK-026",
+        "TASK-030"
       ],
       "status": "pending",
       "files": []
