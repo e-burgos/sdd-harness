@@ -12,18 +12,145 @@
     "Modales con SplitModal: contenido en el cuerpo y opciones en la barra lateral (US-014)",
     "Adoptar tucu-ui 3.7.0 sin los ajustes que resuelve (US-015)"
   ],
-  "status": "in-progress",
+  "status": "completed",
   "started_at": "2026-10-27",
-  "completed_at": null,
+  "completed_at": "2026-10-27",
   "documents": {
     "plan": "sdd/specs/spec-e-burgos-009-studio-tucu-ui/cycles/cycle-06/plan.md",
     "tasks": "sdd/specs/spec-e-burgos-009-studio-tucu-ui/cycles/cycle-06/tasks.json"
   },
   "artifacts": [],
-  "metrics": null,
+  "metrics": {
+    "tasks_total": 3,
+    "tasks_completed": 3,
+    "tasks_skipped": 0,
+    "story_points": 12,
+    "files_created": [],
+    "files_modified": [
+      "apps/studio/package.json",
+      "apps/studio/src/app/globals.css",
+      "apps/studio/src/components/GateStatusModal.spec.tsx",
+      "apps/studio/src/components/GateStatusModal.tsx",
+      "apps/studio/src/components/HelpSelect.tsx",
+      "apps/studio/src/components/StudioHeader.tsx",
+      "apps/studio/src/components/mission-control/AgentInspectorDrawer.tsx",
+      "apps/studio/src/components/mission-control/AgentMapCanvas.tsx",
+      "apps/studio/src/components/mission-control/ConversationSessionInfo.tsx",
+      "apps/studio/src/components/mission-control/DocumentViewerModal.tsx",
+      "apps/studio/src/components/mission-control/EcosystemDashboard.tsx",
+      "apps/studio/src/components/mission-control/GateInspectorDrawer.tsx",
+      "apps/studio/src/components/mission-control/LiveAgentChatFeed.tsx",
+      "apps/studio/src/components/mission-control/LiveSwarmComms.tsx",
+      "apps/studio/src/components/mission-control/LiveTelemetryHUD.tsx",
+      "apps/studio/src/components/mission-control/RelatedDocuments.tsx",
+      "apps/studio/src/components/mission-control/documentviewermodal.spec.tsx",
+      "apps/studio/src/components/workspace/AgentAvatar.tsx",
+      "apps/studio/src/components/workspace/Composer.tsx",
+      "apps/studio/src/components/workspace/PanelRail.tsx",
+      "apps/studio/src/components/workspace/QuestionForm.tsx",
+      "apps/studio/src/components/workspace/ThreadLinkPicker.tsx",
+      "apps/studio/src/lib/i18n/en.ts",
+      "apps/studio/src/lib/i18n/es.ts",
+      "pnpm-lock.yaml"
+    ],
+    "files_deleted": [
+      "apps/studio/src/types/tucu-ui-next.d.ts"
+    ],
+    "usage": {
+      "tokens_in": 335502,
+      "tokens_out": 58266,
+      "approx": true,
+      "source": "declared-estimate",
+      "by_tier": {
+        "claude/opus": {
+          "tokens_in": 130000,
+          "tokens_out": 22000,
+          "approx": true,
+          "source": "declared-estimate"
+        },
+        "claude/sonnet": {
+          "tokens_in": 205502,
+          "tokens_out": 36266,
+          "approx": true,
+          "source": "declared-estimate"
+        }
+      },
+      "by_agent": [
+        {
+          "agent": "orchestrator",
+          "label": "solo",
+          "provider_model": "claude/opus",
+          "effort": "medium",
+          "tokens_in": 50000,
+          "tokens_out": 10000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-27"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-001",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 90964,
+          "tokens_out": 16053,
+          "approx": true,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-10-27"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-002",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 114538,
+          "tokens_out": 20213,
+          "approx": true,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-10-27"
+        },
+        {
+          "agent": "reviewer",
+          "label": "TASK-003",
+          "provider_model": "claude/opus",
+          "effort": "medium",
+          "tokens_in": 80000,
+          "tokens_out": 12000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-27"
+        }
+      ]
+    }
+  },
   "tables_created": [],
   "endpoints_implemented": [],
   "components_created": [],
-  "issues_found": [],
-  "reviewer_report": null
+  "issues_found": [
+    "decisión: SplitModal en los dos modales; el visor lleva vista y otros documentos en la barra y las copias en sidebarFooter; el modal del enjambre abre en Gate",
+    "decisión: sin vista diff en el visor (no hay fuente de datos de diff); queda como pendiente con soporte del puente",
+    "decisión: SegmentedControl sigue siendo de Studio (el de tucu-ui es solo radio)",
+    "fricción tucu-ui 76-83 (enviadas): SplitModal con un solo activeItemId, sin lista de acciones ni ítems no navegables, maxHeight por defecto distinto; SegmentedControl sin tabs/nav ni testId/ariaLabel por opción; Badge micro sin padding propio; Tooltip lazy sin default global; tablas sin line-height por densidad"
+  ],
+  "reviewer_report": {
+    "approved": true,
+    "date": "2026-10-27",
+    "ca_results": {
+      "US-014": "PASS con excepciones - visor y modal del enjambre sobre SplitModal, revisados en el navegador en claro y oscuro con un documento real del bridge de prueba; Escape cierra; sin vista diff (no hay datos); tabs en mobile sin verificar visualmente",
+      "US-015": "PASS con excepciones - 3.7.0 exacta, sin declare module, HelpSelect con la API nueva de Select, Badge micro, Tooltip lazy y tokens de tabla; SegmentedControl se mantiene propio con motivo"
+    },
+    "tests": {
+      "sdd:validate": "OK",
+      "build": "pnpm build exit 0",
+      "typecheck": "pnpm typecheck exit 0",
+      "suite": "protocol 103/103, cli 202 pass (9 skipped), studio-bridge 675 pass (2 skipped), studio 709/709",
+      "e2e": "apps/studio e2e 8/8 PASS contra dist/web recompilado"
+    },
+    "notes": "Aprobado por el actor único del flow lite (opus/medium); TASK-001 y TASK-002 por subagentes sonnet/medium en paralelo sin archivos en común; en paralelo corrían los documentos de spec-e-burgos-010 (solo sdd/).",
+    "follow_ups": [
+      "spec-e-burgos-010: sidebar doble sobre 3.7.0",
+      "Vista diff del visor con soporte del puente",
+      "Reemplazar SegmentedControl cuando tucu-ui sume tabs/nav"
+    ]
+  }
 }

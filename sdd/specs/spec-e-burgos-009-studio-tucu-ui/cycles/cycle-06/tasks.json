@@ -21,8 +21,38 @@
       "estimation_hours": 4,
       "story_points": 5,
       "depends_on": [],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/studio/package.json",
+        "apps/studio/src/app/globals.css",
+        "apps/studio/src/components/HelpSelect.tsx",
+        "apps/studio/src/components/StudioHeader.tsx",
+        "apps/studio/src/components/mission-control/AgentInspectorDrawer.tsx",
+        "apps/studio/src/components/mission-control/AgentMapCanvas.tsx",
+        "apps/studio/src/components/mission-control/ConversationSessionInfo.tsx",
+        "apps/studio/src/components/mission-control/EcosystemDashboard.tsx",
+        "apps/studio/src/components/mission-control/GateInspectorDrawer.tsx",
+        "apps/studio/src/components/mission-control/LiveAgentChatFeed.tsx",
+        "apps/studio/src/components/mission-control/LiveSwarmComms.tsx",
+        "apps/studio/src/components/mission-control/LiveTelemetryHUD.tsx",
+        "apps/studio/src/components/workspace/AgentAvatar.tsx",
+        "apps/studio/src/components/workspace/Composer.tsx",
+        "apps/studio/src/components/workspace/PanelRail.tsx",
+        "apps/studio/src/components/workspace/QuestionForm.tsx",
+        "apps/studio/src/components/workspace/ThreadLinkPicker.tsx",
+        "apps/studio/src/types/tucu-ui-next.d.ts",
+        "pnpm-lock.yaml"
+      ],
+      "usage": {
+        "tokens_in": 90964,
+        "tokens_out": 16053,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-10-27"
+      }
     },
     {
       "id": "TASK-002",
@@ -33,8 +63,26 @@
       "estimation_hours": 5,
       "story_points": 5,
       "depends_on": [],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/GateStatusModal.spec.tsx",
+        "apps/studio/src/components/GateStatusModal.tsx",
+        "apps/studio/src/components/mission-control/DocumentViewerModal.tsx",
+        "apps/studio/src/components/mission-control/RelatedDocuments.tsx",
+        "apps/studio/src/components/mission-control/documentviewermodal.spec.tsx",
+        "apps/studio/src/lib/i18n/en.ts",
+        "apps/studio/src/lib/i18n/es.ts"
+      ],
+      "usage": {
+        "tokens_in": 114538,
+        "tokens_out": 20213,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-10-27"
+      }
     },
     {
       "id": "TASK-003",
@@ -49,8 +97,18 @@
         "TASK-001",
         "TASK-002"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [],
+      "usage": {
+        "tokens_in": 80000,
+        "tokens_out": 12000,
+        "provider_model": "claude/opus",
+        "effort": "medium",
+        "agent": "reviewer",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-27"
+      }
     }
   ]
 }

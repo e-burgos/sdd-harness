@@ -1,6 +1,6 @@
 # SPEC-e-burgos-009: Studio adopta tucu-ui (tema y primitivas)
 
-> Estado: **in-progress** — `cycle-01` a `cycle-05` cerrados el 2026-10-27; `cycle-06` abierto el 2026-10-27 (flow `lite`): tucu-ui 3.7.0 y modales con `SplitModal`.
+> Estado: **completed** — `cycle-01` a `cycle-06` cerrados el 2026-10-27 (flow `lite`). La navegación de doble sidebar sigue en spec-e-burgos-010.
 
 ## Resumen Ejecutivo
 
