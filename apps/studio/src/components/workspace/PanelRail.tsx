@@ -13,8 +13,8 @@ export function PanelRail({ side, label, onExpand }: { side: 'left' | 'right'; l
 
 export function PanelToggle({ label, side, onClick }: { label: string; side: 'left' | 'right'; onClick(): void }) {
   return (
-    <Tooltip lazy size="xs" arrow={false} content={label} placement={side === 'right' ? 'left' : 'right'}>
-      <Button type="button" variant="transparent" color="gray" shape="circle" size="mini" aria-label={label} onClick={onClick}>
+    <Tooltip size="xs" arrow={false} contentClassName="text-meta" content={label} placement={side === 'right' ? 'left' : 'right'}>
+      <Button type="button" variant="transparent" color="gray" shape="circle" size="mini" className="text-ui" aria-label={label} onClick={onClick}>
         {side === 'right' ? <PanelRight size={16} /> : <PanelLeft size={16} />}
       </Button>
     </Tooltip>

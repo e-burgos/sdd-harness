@@ -138,26 +138,43 @@ describe('DocumentViewerModal', () => {
     expect(await screen.findByTestId('document-load-error')).toHaveTextContent(sampleDoc.path);
   });
 
-  it('keeps the path and the copy actions in the sidebar and the close button with its hint in the header', () => {
+  it('shows the path as an info item and the copy actions in the sidebar, with the close button and its hint in the header', async () => {
+    mockClient.request.mockResolvedValue({ path: sampleDoc.path, content: '# x' });
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+    render(
+      <I18nProvider initial="es"><BridgeContext.Provider value={mockBridgeValue}>
+        <DocumentViewerModal document={sampleDoc} onClose={() => {}} />
+      </BridgeContext.Provider></I18nProvider>,
+    );
+    const dialog = screen.getByTestId('document-viewer-modal');
+    const path = screen.getByTestId('document-viewer-path');
+    expect(path).toHaveAttribute('title', sampleDoc.path);
+    expect(path.className).toContain('truncate');
+    expect(dialog).toContainElement(path);
+    await screen.findByText('x');
+    fireEvent.click(within(dialog).getByRole('button', { name: /Copiar ruta/ }));
+    expect(writeText).toHaveBeenCalledWith(sampleDoc.path);
+    fireEvent.click(within(dialog).getByRole('button', { name: /^Copiar$/ }));
+    expect(writeText).toHaveBeenCalledWith('# x');
+    expect(screen.getByTestId('modal-close-button')).toBeInTheDocument();
+  });
+
+  it('exposes the view section as a radio group independent from the documents navigation', () => {
     mockClient.request.mockResolvedValue({ path: sampleDoc.path, content: '# x' });
     render(
       <I18nProvider initial="es"><BridgeContext.Provider value={mockBridgeValue}>
         <DocumentViewerModal document={sampleDoc} onClose={() => {}} />
       </BridgeContext.Provider></I18nProvider>,
     );
-    const path = screen.getByTestId('document-viewer-path');
-    expect(path).toHaveAttribute('title', sampleDoc.path);
-    expect(path.className).toContain('truncate');
-    const actions = screen.getByTestId('document-viewer-actions');
-    expect(actions).not.toContainElement(path);
-    expect(actions).toContainElement(screen.getByTestId('copy-path-button'));
-    expect(screen.getByTestId('copy-path-button')).toHaveTextContent('Copiar ruta');
-    expect(actions).toContainElement(screen.getByText('Copiar'));
-    expect(screen.getByTestId('document-viewer-modal')).toContainElement(screen.getByText('Renderizado'));
-    expect(screen.getByTestId('modal-close-button')).toBeInTheDocument();
+    const dialog = screen.getByTestId('document-viewer-modal');
+    expect(within(dialog).getByRole('radio', { name: 'Renderizado' })).toHaveAttribute('aria-checked', 'true');
+    fireEvent.click(within(dialog).getByRole('radio', { name: /Crudo/ }));
+    expect(within(dialog).getByRole('radio', { name: /Crudo/ })).toHaveAttribute('aria-checked', 'true');
+    expect(within(dialog).getByRole('radio', { name: 'Renderizado' })).toHaveAttribute('aria-checked', 'false');
   });
 
-  it('lists the other documents in the sidebar and navigates to one without closing', () => {
+  it('lists every document including the open one as active and navigates to another without closing', () => {
     mockClient.request.mockResolvedValue({ path: sampleDoc.path, content: '# x' });
     const other: AgentGeneratedDocument = { id: 'o', name: 'brief.yaml', path: 'sdd/specs/s/brief.yaml', type: 'spec', status: 'generated' };
     const onNavigate = vi.fn();
@@ -168,7 +185,10 @@ describe('DocumentViewerModal', () => {
       </BridgeContext.Provider></I18nProvider>,
     );
     const dialog = screen.getByTestId('document-viewer-modal');
-    expect(within(dialog).queryByRole('button', { name: /^plan\.md/ })).toBeNull();
+    const current = within(dialog).getAllByRole('button', { name: /plan\.md/ })[0];
+    expect(current).toHaveAttribute('aria-current', 'page');
+    fireEvent.click(current);
+    expect(onNavigate).not.toHaveBeenCalled();
     fireEvent.click(within(dialog).getAllByRole('button', { name: /brief\.yaml/ })[0]);
     expect(onNavigate).toHaveBeenCalledWith(other);
     expect(onClose).not.toHaveBeenCalled();

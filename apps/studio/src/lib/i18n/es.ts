@@ -1,4 +1,25 @@
+import { shellEs } from './modules/shell';
+import { homeEs } from './modules/home';
+import { specsEs } from './modules/specs';
+import { fixesEs } from './modules/fixes';
+import { agentsEs } from './modules/agents';
+import { activityEs } from './modules/activity';
+import { mapEs } from './modules/map';
+import { kitEs } from './modules/kit';
+import { architectureEs } from './modules/architecture';
+import { metricsEs } from './modules/metrics';
+
 export const es = {
+  ...shellEs,
+  ...homeEs,
+  ...specsEs,
+  ...fixesEs,
+  ...agentsEs,
+  ...activityEs,
+  ...mapEs,
+  ...kitEs,
+  ...architectureEs,
+  ...metricsEs,
   'connect.title': 'Conectá tu repo',
   'connect.steps': 'Pasos para conectar tu repo',
   'connect.step1.title': 'Instalá el kit SDD en tu repo',
@@ -472,6 +493,8 @@ export const es = {
   'ui.doc.closeAria': 'Cerrar modal de documento',
   'ui.doc.view': 'Vista',
   'ui.doc.related': 'Otros documentos',
+  'ui.doc.documents': 'Documentos',
+  'ui.doc.path': 'Ruta',
   'ui.doc.closeHint': 'Cerrar modal (Esc)',
   'ui.eco.title': 'Ecosistema del Repositorio',
   'ui.eco.subtitle': 'Monitoreo dinámico de subproyectos, contratos, roadmap de specs y salud del SPEC GATE.',

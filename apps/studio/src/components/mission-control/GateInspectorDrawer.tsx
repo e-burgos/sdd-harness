@@ -62,7 +62,7 @@ export function GateInspectorDrawer({
             <p className="text-xs text-ink-300 font-sans mt-0.5">{gate.subtitle}</p>
           </div>
         </div>
-        <Tooltip lazy size="xs" arrow={false} content={t('ui.gate.close')}>
+        <Tooltip size="xs" arrow={false} content={t('ui.gate.close')}>
           <Button type="button" variant="transparent" color="gray" shape="circle" size="tiny" onClick={onClose} aria-label={t('ui.gate.close')}>
             <X className="w-4 h-4" />
           </Button>

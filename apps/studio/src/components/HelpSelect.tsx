@@ -66,7 +66,7 @@ export function HelpSelect({ label, help, options, value, onChange, disabled, se
       <span id={helpId} className="sr-only">
         {help}
       </span>
-      <Tooltip lazy content={help} size="xs" arrow={false}>
+      <Tooltip content={help} size="xs" arrow={false}>
         <button
           type="button"
           data-testid="help-select-icon"

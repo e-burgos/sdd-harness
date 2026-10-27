@@ -1,6 +1,26 @@
 import type { Dict } from './es';
+import { shellEn } from './modules/shell';
+import { homeEn } from './modules/home';
+import { specsEn } from './modules/specs';
+import { fixesEn } from './modules/fixes';
+import { agentsEn } from './modules/agents';
+import { activityEn } from './modules/activity';
+import { mapEn } from './modules/map';
+import { kitEn } from './modules/kit';
+import { architectureEn } from './modules/architecture';
+import { metricsEn } from './modules/metrics';
 
 export const en = {
+  ...shellEn,
+  ...homeEn,
+  ...specsEn,
+  ...fixesEn,
+  ...agentsEn,
+  ...activityEn,
+  ...mapEn,
+  ...kitEn,
+  ...architectureEn,
+  ...metricsEn,
   'connect.title': 'Connect your repo',
   'connect.steps': 'Steps to connect your repo',
   'connect.step1.title': 'Install the SDD kit in your repo',
@@ -474,6 +494,8 @@ export const en = {
   'ui.doc.closeAria': 'Close document modal',
   'ui.doc.view': 'View',
   'ui.doc.related': 'Other documents',
+  'ui.doc.documents': 'Documents',
+  'ui.doc.path': 'Path',
   'ui.doc.closeHint': 'Close modal (Esc)',
   'ui.eco.title': 'Repository ecosystem',
   'ui.eco.subtitle': 'Live monitoring of subprojects, contracts, spec roadmap and SPEC GATE health.',

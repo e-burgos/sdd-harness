@@ -6,7 +6,7 @@ import type { ReactNode } from 'react';
 
 export function StudioThemeProvider({ children }: { children: ReactNode }) {
   return (
-    <NextThemeProvider layout="clean" defaultMode="system" menuItems={[]} showSettings={false}>
+    <NextThemeProvider layout="clean" defaultMode="system" menuItems={[]} showSettings={false} tooltipDefaults={{ lazy: true }}>
       {children}
     </NextThemeProvider>
   );

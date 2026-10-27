@@ -161,7 +161,7 @@ export function SwarmCommsConsole({
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          <Tooltip lazy size="xs" arrow={false} content={isPlaying ? t('ui.comms.pauseHint') : t('ui.comms.resumeHint')}>
+          <Tooltip size="xs" arrow={false} content={isPlaying ? t('ui.comms.pauseHint') : t('ui.comms.resumeHint')}>
             <Button type="button" variant="transparent" color="gray" size="tiny" className="font-mono" onClick={onTogglePlay}>
               {isPlaying ? (
                 <span className="flex items-center gap-1.5"><Pause className="w-3 h-3" /> {t('ui.comms.pause')}</span>
@@ -170,7 +170,7 @@ export function SwarmCommsConsole({
               )}
             </Button>
           </Tooltip>
-          <Tooltip lazy size="xs" arrow={false} content={t('ui.comms.nextHint')}>
+          <Tooltip size="xs" arrow={false} content={t('ui.comms.nextHint')}>
             <Button type="button" variant="transparent" color="gray" size="tiny" className="font-mono" onClick={onNext}>
               <span className="flex items-center gap-1.5"><SkipForward className="w-3 h-3" /> {t('ui.comms.next')}</span>
             </Button>

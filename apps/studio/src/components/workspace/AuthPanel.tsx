@@ -1,13 +1,12 @@
 'use client';
 
-import { Button } from '@e-burgos/tucu-ui';
+import { Button, SegmentedControl, segmentedControlPanelId, segmentedControlTabId } from '@e-burgos/tucu-ui';
 import { useId, useState } from 'react';
 import { KeyRound, LogIn, LogOut, RefreshCw, ExternalLink } from 'lucide-react';
 import type { AuthPreference } from '@sdd-studio/protocol';
 import { useT } from '@/lib/i18n/i18n';
 import { useSubscription } from '@/lib/use-subscription';
 import { useBridge } from '../BridgeProvider';
-import { SegmentedControl } from '../SegmentedControl';
 import { ApiKeyField } from './ApiKeyField';
 
 const ring = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400';
@@ -63,10 +62,10 @@ function SubscriptionTab({ active }: { active: boolean }) {
   );
 }
 
-export function AuthPanel() {
+export function AuthPanel({ defaultOpen = false }: { defaultOpen?: boolean } = {}) {
   const { t } = useT();
   const { authMode, authPreference, setAuthPreference, connection } = useBridge();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   const [error, setError] = useState<string | null>(null);
   const baseId = useId();
   const supported = connection.status !== 'open' || !!connection.welcome?.features?.includes('auth-subscription');
@@ -90,17 +89,18 @@ export function AuthPanel() {
         <SegmentedControl
           semantics="tabs"
           idBase={baseId}
-          ariaLabel={t('auth.panel.title')}
+          aria-label={t('auth.panel.title')}
+          size="sm"
           value={selected}
           onChange={select}
-          options={TABS.map((tab) => ({ id: tab, label: t(tab === 'subscription' ? 'auth.tab.subscription' : 'auth.tab.apikey') }))}
+          options={TABS.map((tab) => ({ value: tab, label: t(tab === 'subscription' ? 'auth.tab.subscription' : 'auth.tab.apikey') }))}
         />
         <div className="ml-auto">
           <Button type="button" variant="transparent" color="gray" size="tiny" onClick={() => setOpen(false)}>{t('auth.panel.close')}</Button>
         </div>
       </div>
       {error && <p role="alert" className="mb-2 text-meta text-roseish">{error}</p>}
-      <div role="tabpanel" id={`${baseId}-panel-${selected}`} aria-labelledby={`${baseId}-tab-${selected}`}>
+      <div role="tabpanel" id={segmentedControlPanelId(baseId, selected)} aria-labelledby={segmentedControlTabId(baseId, selected)}>
         {selected === 'subscription' ? (supported ? <SubscriptionTab active /> : <p className="text-meta text-ink-300">{t('auth.sub.unsupported')}</p>) : <ApiKeyField />}
       </div>
     </section>

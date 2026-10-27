@@ -1,27 +1,20 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { channelForDm } from '@sdd-studio/protocol';
+import { useEffect, useMemo, useState } from 'react';
 import { clearPairing, resolvePairing, type PairingInfo } from '@/lib/bridge/pairing';
 import { I18nProvider, useT } from '@/lib/i18n/i18n';
-import { useStudioView } from '@/lib/use-studio-view';
+import { NavProvider, type KnownEntities } from '@/lib/nav/use-nav';
 import { AppShell } from './AppShell';
 import { ErrorBoundary } from './ErrorBoundary';
-import { BridgeProvider, useBridge } from './BridgeProvider';
+import { BridgeProvider, useBridge, useStudio } from './BridgeProvider';
 import { ConnectScreen } from './ConnectScreen';
 import { ConnectionBanner } from './ConnectionBanner';
 import { StudioHeader } from './StudioHeader';
-import { Workspace } from './workspace/Workspace';
-import { AgentMapCanvas } from './mission-control/AgentMapCanvas';
-import { EcosystemDashboard } from './mission-control/EcosystemDashboard';
-import { LiveTelemetryHUD } from './mission-control/LiveTelemetryHUD';
+import { StudioShell } from './shell/StudioShell';
 
 export function Connected() {
-  const { connection, pairing, syncError, retrySync } = useBridge();
+  const { connection, pairing } = useBridge();
   const { t } = useT();
-  const { activeView, setActiveView } = useStudioView();
-  const [selectedChannelId, setSelectedChannelId] = useState<string | undefined>(undefined);
-  const [newConversationSignal, setNewConversationSignal] = useState(0);
   const failedReason = connection.status === 'failed' ? connection.reason : null;
   const mismatchHint = connection.status === 'failed' ? connection.hint : undefined;
   const staleToken = failedReason === 'bad-token' || failedReason === 'bad-message';
@@ -40,39 +33,29 @@ export function Connected() {
     return <ConnectScreen error={message} />;
   }
 
-  const handleOpenDm = (agent: string) => {
-    setSelectedChannelId(channelForDm(agent));
-    setActiveView('workspace');
-  };
+  return <ConnectedShell />;
+}
 
-  const handleNewConversation = () => {
-    setNewConversationSignal((signal) => signal + 1);
-    setActiveView('workspace');
-  };
-
+function ConnectedShell() {
+  const { connection, syncError, retrySync } = useBridge();
+  const snapshot = useStudio((s) => s.snapshot);
+  const welcomeProject = connection.status === 'open' ? connection.welcome?.workspace.project : undefined;
+  const project = snapshot?.project ?? welcomeProject ?? '';
+  const known = useMemo<KnownEntities | null>(
+    () =>
+      snapshot
+        ? { specs: snapshot.specs.map((spec) => spec.id), fixes: snapshot.fixes.map((fix) => fix.id), agents: snapshot.agents.map((agent) => agent.id) }
+        : null,
+    [snapshot],
+  );
   return (
-    <AppShell>
-      <StudioHeader activeView={activeView} onSelectView={setActiveView} />
-      <ConnectionBanner connection={connection} syncError={syncError} onRetry={retrySync} />
-      <div className={`min-h-0 flex-1 ${activeView === 'workspace' ? 'flex' : 'hidden'}`}>
-        <Workspace selectedChannelId={selectedChannelId} newConversationSignal={newConversationSignal} />
-      </div>
-      {activeView === 'agent-map' && (
-        <div className="flex flex-1 min-h-0 overflow-hidden">
-          <AgentMapCanvas onOpenDm={handleOpenDm} onNewConversation={handleNewConversation} />
-        </div>
-      )}
-      {activeView === 'ecosystem' && (
-        <div className="flex flex-1 min-h-0 overflow-hidden">
-          <EcosystemDashboard />
-        </div>
-      )}
-      {activeView === 'telemetry' && (
-        <div className="flex flex-1 min-h-0 overflow-hidden">
-          <LiveTelemetryHUD />
-        </div>
-      )}
-    </AppShell>
+    <NavProvider project={project} known={known}>
+      <AppShell>
+        <StudioHeader />
+        <ConnectionBanner connection={connection} syncError={syncError} onRetry={retrySync} />
+        <StudioShell />
+      </AppShell>
+    </NavProvider>
   );
 }
 

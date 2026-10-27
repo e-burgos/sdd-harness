@@ -1,8 +1,8 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import type { Presence, ThreadInfo, ThreadEvent } from '@sdd-studio/protocol';
 import { AgentMapCanvas } from './AgentMapCanvas';
 import { BridgeContext } from '../BridgeProvider';
-import { pickOption } from '@/lib/test-utils/pick-option';
+import { SwarmPlaybackProvider } from '../modules/map/swarm-playback';
 import { I18nProvider } from '@/lib/i18n/i18n';
 import { createStudioStore } from '@/lib/store/store';
 
@@ -79,12 +79,14 @@ const twoConversations: Fixture = {
   ],
 };
 
-function renderCanvas(fixture: Fixture = {}, handlers: { onOpenDm?: () => void; onNewConversation?: () => void } = {}) {
+function renderCanvas(fixture: Fixture = {}, handlers: { onSelectAgent?: (id: string) => void; selectedAgent?: string | null } = {}) {
   const value = bridgeWith(fixture);
   const utils = render(
     <I18nProvider initial="es">
       <BridgeContext.Provider value={value}>
-        <AgentMapCanvas onOpenDm={handlers.onOpenDm ?? (() => {})} onNewConversation={handlers.onNewConversation ?? (() => {})} />
+        <SwarmPlaybackProvider>
+          <AgentMapCanvas selectedAgent={handlers.selectedAgent ?? null} onSelectAgent={handlers.onSelectAgent ?? (() => {})} />
+        </SwarmPlaybackProvider>
       </BridgeContext.Provider>
     </I18nProvider>,
   );
@@ -111,54 +113,33 @@ describe('AgentMapCanvas', () => {
     expect(screen.getByTestId('gate-card-fix-gate')).toBeInTheDocument();
   });
 
-  it('shows the empty state with the new conversation button when there are no conversations', () => {
-    const onNewConversation = vi.fn();
-    renderCanvas({}, { onNewConversation });
-    expect(screen.getByTestId('conversation-selector-empty')).toHaveTextContent('Todavía no hay conversaciones');
-    expect(screen.getByTestId('swarm-comms-empty')).toHaveTextContent('Sin actividad todavía');
+  it('no longer carries its own conversation selector, swarm console or inspector drawer', () => {
+    renderCanvas(twoConversations);
+    expect(screen.queryByTestId('conversation-selector')).toBeNull();
+    expect(screen.queryByTestId('new-conversation-button')).toBeNull();
+    expect(screen.queryByTestId('swarm-comms-console')).toBeNull();
+    expect(screen.queryByTestId('agent-inspector-drawer')).toBeNull();
+    expect(screen.queryByTestId('open-panel-button')).toBeNull();
+  });
+
+  it('shows no speech bubble when there are no conversations', () => {
+    renderCanvas();
     expect(screen.queryByTestId('swarm-dialogue-bubble')).toBeNull();
-    fireEvent.click(screen.getByTestId('new-conversation-button'));
-    expect(onNewConversation).toHaveBeenCalledTimes(1);
   });
 
-  it('places the conversation selector in the topology header beside the new conversation button', () => {
-    renderCanvas(twoConversations);
-    const header = screen.getByText('Topología del Enjambre').closest('div.flex.items-center.justify-between')!;
-    expect(within(header as HTMLElement).getByRole('combobox', { name: 'Conversaciones' })).toBeInTheDocument();
-    expect(within(header as HTMLElement).getByTestId('new-conversation-button')).toBeInTheDocument();
-    expect(screen.queryByRole('navigation')).toBeNull();
-  });
-
-  it('follows the most recent conversation and shows its real session', () => {
-    renderCanvas(twoConversations);
-    expect(screen.getByRole('combobox', { name: 'Conversaciones' })).toHaveTextContent('Conversación A');
-    expect(screen.getByTestId('conversation-session')).toHaveTextContent('session-a-real');
-    expect(screen.getByTestId('swarm-comms-console')).toHaveTextContent('plan de alfa');
-  });
-
-  it('switches between two conversations and changes dialogues, participants, session and related specs', () => {
-    const { container } = renderCanvas(twoConversations);
-    fireEvent.click(screen.getByText('Ver info'));
-    fireEvent.click(within(screen.getByTestId('agent-inspector-drawer')).getByText('Enjambre'));
-    expect(within(screen.getByTestId('agent-inspector-drawer')).getByTestId('related-spec-spec-alpha-1')).toBeInTheDocument();
-    const dimmedInA = dimmedNodes(container);
-    expect(dimmedInA).toBeGreaterThan(0);
+  it('dims non-participants of the followed conversation and re-dims when another is picked', () => {
+    const { container, value } = renderCanvas(twoConversations);
+    expect(dimmedNodes(container)).toBeGreaterThan(0);
     expect(container.querySelector('[data-participating="true"]')).not.toBeNull();
-
-    pickOption(screen.getByRole('combobox', { name: 'Conversaciones' }), 'Conversación B');
-
-    expect(screen.getByRole('combobox', { name: 'Conversaciones' })).toHaveTextContent('Conversación B');
-    expect(screen.getByTestId('conversation-session')).toHaveTextContent('session-b-real');
-    expect(screen.getByTestId('swarm-comms-console')).toHaveTextContent('diseño de beta');
-    expect(screen.getByTestId('swarm-comms-console')).not.toHaveTextContent('plan de alfa');
-    expect(within(screen.getByTestId('agent-inspector-drawer')).queryByTestId('related-spec-spec-alpha-1')).toBeNull();
-    expect(within(screen.getByTestId('agent-inspector-drawer')).getByTestId('related-spec-spec-beta-2')).toBeInTheDocument();
+    act(() => value.store.getState().selectThread('t-b'));
+    expect(container.querySelector('[data-participating="true"]')).not.toBeNull();
+    expect(dimmedNodes(container)).toBeGreaterThan(0);
   });
 
   it('does not dim nodes when the conversation has no events', () => {
     const { container } = renderCanvas({ threads: [{ info: info('t-empty', 'Vacía'), events: [] }] });
     expect(dimmedNodes(container)).toBe(0);
-    expect(screen.getByTestId('swarm-comms-empty')).toBeInTheDocument();
+    expect(screen.queryByTestId('swarm-dialogue-bubble')).toBeNull();
   });
 
   it('only uses the presence of the selected conversation', () => {
@@ -167,9 +148,8 @@ describe('AgentMapCanvas', () => {
       { agent: 'sdd-architect', state: 'working', threadId: 't-b', specId: null, tool: 'Write' },
     ];
     renderCanvas({ ...twoConversations, presence });
-    expect(screen.getByText('COMMS EN VIVO')).toBeInTheDocument();
-    expect(screen.getAllByText('Read').length).toBeGreaterThanOrEqual(1);
-    expect(screen.queryByText('Write')).toBeNull();
+    expect(screen.getByText('1 en ejecución')).toBeInTheDocument();
+    expect(screen.getByTestId('swarm-dialogue-bubble')).toBeInTheDocument();
   });
 
   it('keeps no demo controls or fabricated content', () => {
@@ -180,21 +160,14 @@ describe('AgentMapCanvas', () => {
   });
 
   it('switches gate filters between cycle, transversal and all', () => {
-    const onOpenDm = vi.fn();
-    render(
-      <I18nProvider initial="es"><BridgeContext.Provider value={mockBridgeValue}>
-        <AgentMapCanvas onOpenDm={onOpenDm} onNewConversation={() => {}} />
-      </BridgeContext.Provider></I18nProvider>
-    );
+    renderCanvas();
 
-    const transversalBtn = screen.getByText('Transversales (2)');
-    fireEvent.click(transversalBtn);
+    fireEvent.click(screen.getByText('Transversales (2)'));
     expect(screen.getByTestId('gate-card-regla-cero')).toBeInTheDocument();
     expect(screen.getByTestId('gate-card-memoria-gate')).toBeInTheDocument();
     expect(screen.queryByTestId('gate-card-gate-a')).not.toBeInTheDocument();
 
-    const allBtn = screen.getByText('Todas (6)');
-    fireEvent.click(allBtn);
+    fireEvent.click(screen.getByText('Todas (6)'));
     expect(screen.getByTestId('gate-card-regla-cero')).toBeInTheDocument();
     expect(screen.getByTestId('gate-card-gate-a')).toBeInTheDocument();
     expect(screen.getByTestId('gate-card-gate-b')).toBeInTheDocument();
@@ -204,15 +177,8 @@ describe('AgentMapCanvas', () => {
   });
 
   it('opens gate inspector drawer on gate card click', () => {
-    const onOpenDm = vi.fn();
-    render(
-      <I18nProvider initial="es"><BridgeContext.Provider value={mockBridgeValue}>
-        <AgentMapCanvas onOpenDm={onOpenDm} onNewConversation={() => {}} />
-      </BridgeContext.Provider></I18nProvider>
-    );
-
-    const gateACard = screen.getByTestId('gate-card-gate-a');
-    fireEvent.click(gateACard);
+    renderCanvas();
+    fireEvent.click(screen.getByTestId('gate-card-gate-a'));
 
     expect(screen.getByTestId('gate-inspector-drawer')).toBeInTheDocument();
     expect(screen.getAllByText('SPEC GATE A').length).toBeGreaterThanOrEqual(1);
@@ -220,33 +186,22 @@ describe('AgentMapCanvas', () => {
     expect(screen.getByText('Reglas & Checklist Canónica')).toBeInTheDocument();
   });
 
-  it('opens drawer on node selection and triggers DM callback', () => {
-    const onOpenDm = vi.fn();
-    render(
-      <I18nProvider initial="es"><BridgeContext.Provider value={mockBridgeValue}>
-        <AgentMapCanvas onOpenDm={onOpenDm} onNewConversation={() => {}} />
-      </BridgeContext.Provider></I18nProvider>
-    );
-
-    expect(screen.getByTestId('agent-inspector-drawer')).toBeInTheDocument();
-    const dmButton = screen.getByText(/Abrir nuevo chat con Clara/);
-    fireEvent.click(dmButton);
-    expect(onOpenDm).toHaveBeenCalledWith('sdd-orchestrator');
+  it('reports the agent chosen on a node through onSelectAgent', () => {
+    const onSelectAgent = vi.fn();
+    const { container } = renderCanvas({}, { onSelectAgent });
+    const node = container.querySelector('[data-participating]') as Element;
+    fireEvent.click(node);
+    expect(onSelectAgent).toHaveBeenCalledTimes(1);
+    expect(typeof onSelectAgent.mock.calls[0][0]).toBe('string');
   });
 
   it('provides zoom in, zoom out, and reset controls in the floating toolbar', () => {
-    const onOpenDm = vi.fn();
-    render(
-      <I18nProvider initial="es"><BridgeContext.Provider value={mockBridgeValue}>
-        <AgentMapCanvas onOpenDm={onOpenDm} onNewConversation={() => {}} />
-      </BridgeContext.Provider></I18nProvider>
-    );
+    renderCanvas();
 
     expect(screen.getByTestId('zoom-toolbar')).toBeInTheDocument();
     expect(screen.getByText('100%')).toBeInTheDocument();
 
-    const zoomInBtn = screen.getByRole('button', { name: '+' });
-    fireEvent.click(zoomInBtn);
+    fireEvent.click(screen.getByRole('button', { name: '+' }));
     expect(screen.getByText('115%')).toBeInTheDocument();
 
     const zoomOutBtn = screen.getByRole('button', { name: '-' });
@@ -256,28 +211,7 @@ describe('AgentMapCanvas', () => {
     fireEvent.click(zoomOutBtn);
     expect(screen.getByText('85%')).toBeInTheDocument();
 
-    const resetBtn = screen.getByRole('button', { name: /Ajustar/ });
-    fireEvent.click(resetBtn);
+    fireEvent.click(screen.getByRole('button', { name: /Ajustar/ }));
     expect(screen.getByText('100%')).toBeInTheDocument();
-  });
-
-  it('collapses and expands the side drawer to adjust diagram space', () => {
-    const onOpenDm = vi.fn();
-    render(
-      <I18nProvider initial="es"><BridgeContext.Provider value={mockBridgeValue}>
-        <AgentMapCanvas onOpenDm={onOpenDm} onNewConversation={() => {}} />
-      </BridgeContext.Provider></I18nProvider>
-    );
-
-    expect(screen.getByTestId('agent-inspector-drawer')).toBeInTheDocument();
-
-    const closeBtn = screen.getByRole('button', { name: 'Contraer panel' });
-    fireEvent.click(closeBtn);
-
-    expect(screen.queryByTestId('agent-inspector-drawer')).not.toBeInTheDocument();
-    expect(screen.getByTestId('open-panel-button')).toBeInTheDocument();
-
-    fireEvent.click(screen.getByTestId('open-panel-button'));
-    expect(screen.getByTestId('agent-inspector-drawer')).toBeInTheDocument();
   });
 });

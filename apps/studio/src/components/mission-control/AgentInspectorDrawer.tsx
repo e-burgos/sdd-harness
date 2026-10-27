@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, Tooltip } from '@e-burgos/tucu-ui';
+import { Button, SegmentedControl, Tooltip } from '@e-burgos/tucu-ui';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Bot, MessageSquare, Moon, User, Users, X, Zap } from 'lucide-react';
 import type { Presence } from '@sdd-studio/protocol';
@@ -10,7 +10,6 @@ import { useT } from '@/lib/i18n/i18n';
 import { useCollapsedState } from '@/lib/use-collapsed-state';
 import { AgentAvatar } from '../workspace/AgentAvatar';
 import { useStudio } from '../BridgeProvider';
-import { SegmentedControl } from '../SegmentedControl';
 import { ChatDialogueCard } from './ChatDialogueCard';
 import { ConversationSessionInfo } from './ConversationSessionInfo';
 import { LiveAgentChatFeed } from './LiveAgentChatFeed';
@@ -98,7 +97,8 @@ export function AgentInspectorDrawer({
       <div className="flex items-center justify-between pb-3 border-b border-foreground/10 shrink-0">
         <SegmentedControl
           semantics="tabs"
-          ariaLabel={t('segment.inspector')}
+          aria-label={t('segment.inspector')}
+          size="sm"
           className="font-mono"
           value={activeTab}
           onChange={(tab) => {
@@ -108,20 +108,20 @@ export function AgentInspectorDrawer({
             } else if (agentId) setActiveTab('agent');
           }}
           options={[
-            { id: 'swarm', label: t('ui.swarm'), icon: <Bot className="h-3.5 w-3.5" /> },
-            { id: 'agent', label: meta ? meta.name : t('ui.inspector.agent'), icon: <User className="h-3.5 w-3.5" />, disabled: !agentId },
+            { value: 'swarm', label: t('ui.swarm'), icon: <Bot className="h-3.5 w-3.5" /> },
+            { value: 'agent', label: meta ? meta.name : t('ui.inspector.agent'), icon: <User className="h-3.5 w-3.5" />, disabled: !agentId },
           ]}
         />
 
         <div className="flex items-center gap-1">
           {activeTab === 'agent' && meta && (
-            <Tooltip lazy size="xs" arrow={false} content={t('ui.inspector.toggleProfile')}>
+            <Tooltip size="xs" arrow={false} content={t('ui.inspector.toggleProfile')}>
               <Button type="button" variant="transparent" color="gray" size="tiny" className="font-mono" onClick={toggleAgentInfo}>
                 {showFullProfile ? t('map.hideInfo') : t('map.showInfo')}
               </Button>
             </Tooltip>
           )}
-          <Tooltip lazy size="xs" arrow={false} content={t('ui.inspector.collapse')}>
+          <Tooltip size="xs" arrow={false} content={t('ui.inspector.collapse')}>
             <Button type="button" variant="transparent" color="gray" shape="circle" size="tiny" onClick={onClose} aria-label={t('ui.inspector.collapse')}>
               <X className="w-3.5 h-3.5" />
             </Button>
@@ -223,7 +223,7 @@ export function AgentInspectorDrawer({
                 {t('ui.inspector.swarmComms', { n: conversation?.dialogues.length ?? 0 })}
               </span>
             </div>
-            <Tooltip lazy size="xs" arrow={false} content={t('ui.inspector.scrollBottom')}>
+            <Tooltip size="xs" arrow={false} content={t('ui.inspector.scrollBottom')}>
               <Button type="button" variant="transparent" color="success" size="tiny" className="font-mono text-meta" onClick={scrollToBottom}>
                 {t('ui.inspector.down')}
               </Button>

@@ -142,7 +142,7 @@ export function QuestionForm({ item, onAnswer }: { item: QuestionItem; onAnswer:
             {t('question.send')}
           </Button>
           <div className="ml-auto">
-            <Tooltip lazy size="xs" arrow={false} content={t('help.question.decline')}>
+            <Tooltip size="xs" arrow={false} content={t('help.question.decline')}>
               <Button type="button" variant="ghost" color="gray" size="mini" disabled={sending} onClick={() => void submit(true)}>
                 {t('question.decline')}
               </Button>

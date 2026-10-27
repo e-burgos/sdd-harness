@@ -5,7 +5,7 @@ import { Search } from 'lucide-react';
 import { useEffect, useRef, type KeyboardEvent } from 'react';
 import { useT } from '@/lib/i18n/i18n';
 
-export function SidebarSearch({ value, onChange }: { value: string; onChange(next: string): void }) {
+export function SidebarSearch({ value, onChange, label, onLeave }: { value: string; onChange(next: string): void; label?: string; onLeave?(): void }) {
   const { t } = useT();
   const input = useRef<HTMLInputElement>(null);
 
@@ -28,6 +28,7 @@ export function SidebarSearch({ value, onChange }: { value: string; onChange(nex
       onChange('');
     } else {
       input.current?.blur();
+      onLeave?.();
     }
   };
 
@@ -37,10 +38,11 @@ export function SidebarSearch({ value, onChange }: { value: string; onChange(nex
       type="text"
       size="xs"
       variant="ghost"
-      className="min-w-0 flex-1"
+      className="min-w-0 flex-1 text-small sm:text-small"
+      inputClassName="text-small"
       icon={<Search aria-hidden size={13} />}
-      placeholder={t('sidebar.search')}
-      aria-label={t('sidebar.search')}
+      placeholder={label ?? t('sidebar.search')}
+      aria-label={label ?? t('sidebar.search')}
       aria-keyshortcuts="Meta+K Control+K"
       autoComplete="off"
       spellCheck={false}

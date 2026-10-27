@@ -23,7 +23,7 @@ export function AgentAvatar({
   const isRunning = status === 'running';
 
   return (
-    <Tooltip lazy size="xs" arrow={false} content={`${meta.name} (${meta.title}) · ${meta.personality}`}>
+    <Tooltip size="xs" arrow={false} contentClassName="text-ui" content={`${meta.name} (${meta.title}) · ${meta.personality}`}>
       <span className="relative inline-flex shrink-0 select-none group">
         <span
           className={`relative inline-flex items-center justify-center rounded-xl transition-all duration-300 shadow-sm border border-foreground/20 overflow-hidden ${
@@ -38,7 +38,7 @@ export function AgentAvatar({
         >
           <AgentFace agent={agent} size={size} />
           {isLeader && size >= 24 && (
-            <Tooltip lazy size="xs" arrow={false} content={t('ui.agent.leader')}>
+            <Tooltip size="xs" arrow={false} contentClassName="text-ui" content={t('ui.agent.leader')}>
               <span
                 aria-hidden
                 data-testid="agent-leader-crown"

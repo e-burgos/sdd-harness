@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, Skeleton, SplitModal, Tooltip, type SplitModalSection } from '@e-burgos/tucu-ui';
+import { Skeleton, SplitModal, type SplitModalAction, type SplitModalSection } from '@e-burgos/tucu-ui';
 import React, { useState, useEffect } from 'react';
 import { Code2, ClipboardList, Zap, FileText, Check, Copy, Link2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
@@ -18,7 +18,7 @@ export interface DocumentViewerModalProps {
 
 type ViewMode = 'rendered' | 'raw';
 
-const RELATED_PREFIX = 'related:';
+const DOCUMENT_PREFIX = 'document:';
 
 const TYPE_BADGE_CLASS: Record<string, string> = {
   spec: 'border-sky-500/40 bg-sky-500/20 text-sky-300',
@@ -94,13 +94,16 @@ export function DocumentViewerModal({ document: doc, onClose, related = [], onNa
   const isMarkdown = path.endsWith('.md');
   const isCodeOrJson = path.endsWith('.json') || path.endsWith('.ts') || path.endsWith('.tsx');
 
-  const others = related.filter((item) => item.path !== path);
+  const documents = doc && !related.some((item) => item.path === path) ? [doc, ...related] : related;
   const sections: SplitModalSection[] = [
     ...(isMarkdown
       ? [
           {
             id: 'view',
             label: t('ui.doc.view'),
+            selectionMode: 'option' as const,
+            activeItemId: viewMode,
+            onActiveItemChange: (id: string) => setViewMode(id as ViewMode),
             items: [
               { id: 'rendered', label: t('ui.doc.rendered') },
               { id: 'raw', label: t('ui.doc.raw') },
@@ -108,13 +111,13 @@ export function DocumentViewerModal({ document: doc, onClose, related = [], onNa
           },
         ]
       : []),
-    ...(others.length > 0
+    ...(documents.length > 1
       ? [
           {
-            id: 'related',
-            label: t('ui.doc.related'),
-            items: others.map((item) => ({
-              id: `${RELATED_PREFIX}${item.path}`,
+            id: 'documents',
+            label: t('ui.doc.documents'),
+            items: documents.map((item) => ({
+              id: `${DOCUMENT_PREFIX}${item.path}`,
               label: item.name,
               icon: <DocumentTypeIcon type={item.type} />,
               description: item.type,
@@ -122,28 +125,50 @@ export function DocumentViewerModal({ document: doc, onClose, related = [], onNa
           },
         ]
       : []),
+    {
+      id: 'info',
+      items: [
+        {
+          id: 'path',
+          kind: 'info' as const,
+          label: t('ui.doc.path'),
+          value: (
+            <span data-testid="document-viewer-path" className="block max-w-full truncate font-mono text-meta" title={path}>
+              {path}
+            </span>
+          ),
+        },
+      ],
+    },
   ];
 
   const handleSelect = (id: string) => {
-    if (id.startsWith(RELATED_PREFIX)) {
-      const target = others.find((item) => item.path === id.slice(RELATED_PREFIX.length));
-      if (target) onNavigate?.(target);
-      return;
-    }
-    setViewMode(id as ViewMode);
+    if (!id.startsWith(DOCUMENT_PREFIX)) return;
+    const target = documents.find((item) => item.path === id.slice(DOCUMENT_PREFIX.length));
+    if (target && target.path !== path) onNavigate?.(target);
   };
 
-  const handleCopyContent = () => {
-    void navigator.clipboard.writeText(content);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const copyToClipboard = (value: string, flag: (copied: boolean) => void) => {
+    void navigator.clipboard.writeText(value);
+    flag(true);
+    setTimeout(() => flag(false), 2000);
   };
 
-  const handleCopyPath = () => {
-    void navigator.clipboard.writeText(path);
-    setPathCopied(true);
-    setTimeout(() => setPathCopied(false), 2000);
-  };
+  const sidebarActions: SplitModalAction[] = [
+    {
+      id: 'copy-content',
+      label: copied ? t('ui.copied') : t('ui.copy'),
+      tooltip: t('ui.doc.copyAll'),
+      icon: copied ? <Check className="h-4 w-4 text-emerald-400" aria-hidden /> : <Copy className="h-4 w-4" aria-hidden />,
+      onClick: () => copyToClipboard(content, setCopied),
+    },
+    {
+      id: 'copy-path',
+      label: pathCopied ? t('ui.doc.pathCopied') : t('ui.doc.copyPath'),
+      icon: pathCopied ? <Check className="h-4 w-4 text-emerald-400" aria-hidden /> : <Link2 className="h-4 w-4" aria-hidden />,
+      onClick: () => copyToClipboard(path, setPathCopied),
+    },
+  ];
 
   const typeBadge = doc && (
     <span
@@ -167,49 +192,9 @@ export function DocumentViewerModal({ document: doc, onClose, related = [], onNa
         )
       }
       sections={sections}
-      activeItemId={isMarkdown ? viewMode : undefined}
+      activeItemId={`${DOCUMENT_PREFIX}${path}`}
       onActiveItemChange={handleSelect}
-      sidebarHeader={
-        doc && (
-          <p data-testid="document-viewer-path" className="truncate font-mono text-meta text-ink-500" title={doc.path}>
-            {doc.path}
-          </p>
-        )
-      }
-      sidebarFooter={
-        <div data-testid="document-viewer-actions" className="flex flex-wrap items-center gap-2">
-          <Tooltip content={t('ui.doc.copyAll')} size="xs" arrow={false} maxWidth={256} contentClassName="text-left">
-            <Button type="button" onClick={handleCopyContent} variant="transparent" color="gray" size="tiny" className="whitespace-nowrap font-mono">
-              {copied ? (
-                <>
-                  <Check className="h-3 w-3 text-emerald-400" />
-                  <span className="text-emerald-400">{t('ui.copied')}</span>
-                </>
-              ) : (
-                <>
-                  <Copy className="h-3 w-3" />
-                  <span>{t('ui.copy')}</span>
-                </>
-              )}
-            </Button>
-          </Tooltip>
-          <Tooltip content={t('ui.doc.copyPath')} size="xs" arrow={false} maxWidth={256} contentClassName="text-left">
-            <Button type="button" onClick={handleCopyPath} data-testid="copy-path-button" variant="transparent" color="gray" size="tiny" className="whitespace-nowrap font-mono">
-              {pathCopied ? (
-                <>
-                  <Check className="h-3 w-3 text-emerald-400" />
-                  <span className="text-emerald-400">{t('ui.doc.pathCopied')}</span>
-                </>
-              ) : (
-                <>
-                  <Link2 className="h-3 w-3" />
-                  <span>{t('ui.doc.copyPath')}</span>
-                </>
-              )}
-            </Button>
-          </Tooltip>
-        </div>
-      }
+      sidebarActions={sidebarActions}
       maxWidth="64rem"
       overlayClassName="bg-ink-950/80 backdrop-blur-md"
       closeLabel={t('ui.doc.closeAria')}

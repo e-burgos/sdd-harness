@@ -20,7 +20,7 @@ test('pairs, chats with subagents, approves a tool, sees sdd-bot and runs /valid
   await page.keyboard.press('Enter');
   await expect(page.getByText('Chronos started working')).toBeVisible();
   await expect(page.getByTestId('thread-scroller').getByText('planned')).toBeVisible();
-  await page.getByRole('button', { name: 'Approve' }).click();
+  await page.getByTestId('thread-scroller').getByRole('button', { name: 'Approve' }).click();
   await expect(page.getByText('Approved')).toBeVisible();
   await expect(page.getByTestId('thread-scroller').getByText('echo: hola #sub #tool')).toBeVisible();
 
@@ -28,9 +28,10 @@ test('pairs, chats with subagents, approves a tool, sees sdd-bot and runs /valid
   const json = JSON.parse(await readFile(tasks, 'utf8'));
   json.tasks[1].status = 'done';
   await writeFile(tasks, JSON.stringify(json));
-  await page.getByRole('button', { name: /^spec-dev-001-pagos , / }).click();
-  await expect(page.getByText(/TASK-BE-002 “Tests de pagos”: pending → done/)).toBeVisible({ timeout: 10_000 });
-  await expect(page.getByText('2/2 tasks').first()).toBeVisible();
+  await page.getByRole('button', { name: /^specs/ }).click();
+  await expect(page.getByTestId('module-center').getByText(/TASK-BE-002 “Tests de pagos”: pending → done/)).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByTestId('mini-progress').first()).toContainText('2/2');
+  await page.getByRole('button', { name: /^general/ }).click();
 
   await page.getByPlaceholder('Type a message… (/ for commands)').fill('/validate');
   await page.keyboard.press('Enter');

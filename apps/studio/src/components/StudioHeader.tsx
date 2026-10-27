@@ -1,23 +1,16 @@
 'use client';
 
 import { Badge, Button, Tooltip, useTheme } from '@e-burgos/tucu-ui';
-import React, { useState } from 'react';
-import { MessageSquare, Network, Globe, Activity, Sun, Moon } from 'lucide-react';
+import { useState } from 'react';
+import { Sun, Moon } from 'lucide-react';
 import { deriveConversationGate, gateLabel, type ConversationGate } from '@/lib/conversation-gate';
 import { useT } from '@/lib/i18n/i18n';
 import { useSelectedConversation } from '@/lib/use-selected-conversation';
-import type { StudioView } from '@/lib/use-studio-view';
 import { useStudio } from './BridgeProvider';
 import { GateStatusModal } from './GateStatusModal';
-import { SegmentedControl } from './SegmentedControl';
 import { AgentAvatar } from './workspace/AgentAvatar';
 
-interface StudioHeaderProps {
-  activeView: StudioView;
-  onSelectView: (view: StudioView) => void;
-}
-
-export function StudioHeader({ activeView, onSelectView }: StudioHeaderProps) {
+export function StudioHeader() {
   const { t, lang, setLang } = useT();
   const mode = useTheme((s) => s.mode);
   const setMode = useTheme((s) => s.setMode);
@@ -36,13 +29,6 @@ export function StudioHeader({ activeView, onSelectView }: StudioHeaderProps) {
   const [statusOpen, setStatusOpen] = useState(false);
   const thread = useStudio((s) => (selectedThreadId ? (s.threads[selectedThreadId]?.info ?? null) : null));
 
-  const views: { id: StudioView; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
-    { id: 'workspace', label: t('view.workspace'), icon: MessageSquare },
-    { id: 'agent-map', label: t('view.agentMap'), icon: Network },
-    { id: 'ecosystem', label: t('view.ecosystem'), icon: Globe },
-    { id: 'telemetry', label: t('view.telemetry'), icon: Activity },
-  ];
-
   return (
     <header className="flex h-12 shrink-0 items-center justify-between border-b border-foreground/10 bg-ink-950/90 px-4 backdrop-blur-md z-30 select-none">
       {/* Brand & Active Project */}
@@ -60,22 +46,6 @@ export function StudioHeader({ activeView, onSelectView }: StudioHeaderProps) {
           </span>
         )}
       </div>
-
-      {/* Main View Switcher Segmented Control */}
-      <SegmentedControl
-        semantics="nav"
-        emphasis="neutral"
-        ariaLabel={t('segment.views')}
-        value={activeView}
-        onChange={onSelectView}
-        options={views.map((v) => ({
-          id: v.id,
-          label: v.label,
-          ariaLabel: v.label,
-          icon: <v.icon className="h-3.5 w-3.5 shrink-0" />,
-          labelClassName: 'hidden md:inline',
-        }))}
-      />
 
       {/* Right Telemetry Pills & Language */}
       <div className="flex items-center gap-2.5">
@@ -100,7 +70,7 @@ export function StudioHeader({ activeView, onSelectView }: StudioHeaderProps) {
         </button>
 
         {/* Working Swarm Presence Counter */}
-        <Tooltip lazy size="xs" arrow={false} content={t('ui.header.activeHint', { n: workingAgents.length })}>
+        <Tooltip size="xs" arrow={false} content={t('ui.header.activeHint', { n: workingAgents.length })}>
           <Badge variant="soft" size="micro" shape="pill" tone={workingAgents.length > 0 ? 'info' : 'neutral'} data-testid="presence-pill" className={`gap-1.5 px-2.5 py-1 font-mono text-meta ${workingAgents.length > 0 ? 'animate-pulse' : ''}`}>
             <span className={`h-1.5 w-1.5 rounded-full ${workingAgents.length > 0 ? 'bg-sky-400' : 'bg-emerald-400'}`} />
             <span>{workingAgents.length > 0 ? t('ui.header.activeCount', { n: workingAgents.length }) : t('ui.header.ready')}</span>
@@ -108,13 +78,13 @@ export function StudioHeader({ activeView, onSelectView }: StudioHeaderProps) {
         </Tooltip>
 
         {/* Language Toggle */}
-        <Tooltip lazy size="xs" arrow={false} content={t('ui.header.langToggle')}>
+        <Tooltip size="xs" arrow={false} content={t('ui.header.langToggle')}>
           <Button type="button" onClick={() => setLang(lang === 'es' ? 'en' : 'es')} variant="transparent" color="gray" size="tiny" className="font-mono uppercase">
             {lang}
           </Button>
         </Tooltip>
 
-        <Tooltip lazy size="xs" arrow={false} content={mode === 'dark' ? t('mode.toLight') : t('mode.toDark')}>
+        <Tooltip size="xs" arrow={false} content={mode === 'dark' ? t('mode.toLight') : t('mode.toDark')}>
           <Button
             type="button"
             data-testid="mode-toggle"

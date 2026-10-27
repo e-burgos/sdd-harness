@@ -33,7 +33,7 @@ export interface SidebarHeaderProps {
 export function NewConversationIconButton({ onClick }: { onClick(): void }) {
   const { t } = useT();
   return (
-    <Tooltip size="xs" arrow={false} content={t('mc.newConversation')} placement="bottom">
+    <Tooltip size="xs" arrow={false} contentClassName="text-meta" content={t('mc.newConversation')} placement="bottom">
       <Button
         type="button"
         data-testid="new-conversation-button"
@@ -41,7 +41,7 @@ export function NewConversationIconButton({ onClick }: { onClick(): void }) {
         color="gray"
         size="mini"
         aria-label={t('mc.newConversation')}
-        className="h-7 w-7 shrink-0 p-0"
+        className="h-7 w-7 shrink-0 p-0 text-ui"
         onClick={onClick}
       >
         <Plus aria-hidden size={14} />

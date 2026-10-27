@@ -40,7 +40,7 @@ function mount(store = createStudioStore()) {
   render(
     <I18nProvider initial="es">
       <BridgeContext.Provider value={value}>
-        <StudioHeader activeView="workspace" onSelectView={() => {}} />
+        <StudioHeader />
       </BridgeContext.Provider>
     </I18nProvider>,
   );
