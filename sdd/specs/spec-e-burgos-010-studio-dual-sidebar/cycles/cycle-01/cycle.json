@@ -19,7 +19,8 @@
   "started_at": "2026-10-27",
   "completed_at": null,
   "documents": {
-    "brief": "sdd/specs/spec-e-burgos-010-studio-dual-sidebar/cycles/cycle-01/brief.yaml"
+    "brief": "sdd/specs/spec-e-burgos-010-studio-dual-sidebar/cycles/cycle-01/brief.yaml",
+    "functional": "sdd/specs/spec-e-burgos-010-studio-dual-sidebar/cycles/cycle-01/functional.md"
   },
   "artifacts": [],
   "metrics": null,
