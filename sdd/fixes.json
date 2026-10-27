@@ -265,7 +265,7 @@
       "severity": "low",
       "created_at": "2026-10-26",
       "resolved_at": "2026-10-26",
-      "validated_at": null,
+      "validated_at": "2026-10-26",
       "title": "SDD Studio: erradicar emojis y unificar iconografía con LucideIcons",
       "estimation_hours": 1.5,
       "description": "Erradicar todos los emojis de la app studio e instalar lucide-react para unificar la iconografía técnica del sitio (StudioHeader, Mission Control, GateCards, drawers, HUD, avatar y vistas de workspace).",
@@ -312,7 +312,7 @@
         "sdd/fixes/fix-e-burgos-003.md"
       ],
       "test_reference": "pnpm --filter sdd-studio-web test (58 files, 439 tests green) && pnpm --filter sdd-studio-web typecheck",
-      "status": "implemented",
+      "status": "validated",
       "cycle": null,
       "usage": {
         "provider_model": "gemini/flash",
