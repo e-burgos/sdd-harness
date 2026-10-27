@@ -220,39 +220,39 @@ export function ComposerView(p: ComposerViewProps) {
             }}
           />
           <div className="flex flex-wrap items-center gap-2 border-t border-ink-800 px-2 py-1.5">
-            <label className="sr-only" htmlFor="composer-agent">{t('composer.agent')}</label>
-            <HelpSelect help={t('help.composer.agent')} id="composer-agent" className={select} disabled={p.agentLocked} value={p.options.agent} onChange={(e) => p.onOptionsChange({ agent: e.target.value })}>
-              {p.agents.map((a) => <option key={a} value={a}>{agentMeta(a).name}</option>)}
-            </HelpSelect>
-            <label className="sr-only" htmlFor="composer-model">{t('composer.model')}</label>
             <HelpSelect
+              label={t('composer.agent')}
+              help={t('help.composer.agent')}
+              disabled={p.agentLocked}
+              value={p.options.agent}
+              options={p.agents.map((a) => ({ value: a, label: agentMeta(a).name }))}
+              onChange={(agent) => p.onOptionsChange({ agent })}
+            />
+            <HelpSelect
+              label={t('composer.model')}
               help={t('help.composer.model')}
-              id="composer-model"
-              className={select}
               value={p.options.model}
-              onChange={(e) => {
-                const model = e.target.value as ModelChoice;
+              options={MODELS.map((m) => ({ value: m, label: m === 'kit' ? t('model.kit') : m }))}
+              onChange={(value) => {
+                const model = value as ModelChoice;
                 p.onOptionsChange(model === 'kit' ? { model, effort: null } : { model, effort: p.options.effort ?? 'medium' });
               }}
-            >
-              {MODELS.map((m) => <option key={m} value={m}>{m === 'kit' ? t('model.kit') : m}</option>)}
-            </HelpSelect>
-            <label className="sr-only" htmlFor="composer-effort">{t('composer.effort')}</label>
+            />
             <HelpSelect
+              label={t('composer.effort')}
               help={t('help.composer.effort')}
-              id="composer-effort"
-              className={select}
               disabled={p.options.model === 'kit'}
               value={p.options.effort ?? ''}
-              onChange={(e) => p.onOptionsChange({ effort: e.target.value as Effort })}
-            >
-              {p.options.model === 'kit' && <option value="">—</option>}
-              {EFFORTS.map((x) => <option key={x} value={x}>{x}</option>)}
-            </HelpSelect>
-            <label className="sr-only" htmlFor="composer-perm">{t('composer.permission')}</label>
-            <HelpSelect help={t('help.composer.permission')} id="composer-perm" className={select} value={p.options.permissionMode} onChange={(e) => p.onOptionsChange({ permissionMode: e.target.value as PermissionModeChoice })}>
-              {PERMS.map((x) => <option key={x} value={x}>{t(`perm.${x}`)}</option>)}
-            </HelpSelect>
+              options={[...(p.options.model === 'kit' ? [{ value: '', label: '—' }] : []), ...EFFORTS.map((x) => ({ value: x, label: x }))]}
+              onChange={(value) => p.onOptionsChange({ effort: value as Effort })}
+            />
+            <HelpSelect
+              label={t('composer.permission')}
+              help={t('help.composer.permission')}
+              value={p.options.permissionMode}
+              options={PERMS.map((x) => ({ value: x, label: t(`perm.${x}`) }))}
+              onChange={(value) => p.onOptionsChange({ permissionMode: value as PermissionModeChoice })}
+            />
             {p.onFiles && (
               <>
                 <input

@@ -8,6 +8,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { AgentGeneratedDocument } from '@/lib/agent-documents';
 import { useT } from '@/lib/i18n/i18n';
+import { SegmentedControl } from '../SegmentedControl';
 import { useBridge } from '../BridgeProvider';
 
 export interface DocumentViewerModalProps {
@@ -152,30 +153,17 @@ export function DocumentViewerModal({ document: doc, onClose }: DocumentViewerMo
             className="flex flex-wrap items-center justify-end gap-2 shrink-0 ml-auto"
           >
             {isMarkdown && (
-              <div className="flex items-center bg-foreground/10 p-0.5 rounded-lg border border-foreground/10 text-micro font-mono shrink-0 whitespace-nowrap">
-                <button
-                  type="button"
-                  onClick={() => setViewMode('rendered')}
-                  className={`px-2.5 py-1 rounded transition-all whitespace-nowrap ${
-                    viewMode === 'rendered'
-                      ? 'bg-emerald-500 text-ink-950 font-bold shadow'
-                      : 'text-ink-300 hover:text-ink-100'
-                  }`}
-                >
-                  Renderizado
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setViewMode('raw')}
-                  className={`px-2.5 py-1 rounded transition-all whitespace-nowrap ${
-                    viewMode === 'raw'
-                      ? 'bg-emerald-500 text-ink-950 font-bold shadow'
-                      : 'text-ink-300 hover:text-ink-100'
-                  }`}
-                >
-                  Crudo / Fuente
-                </button>
-              </div>
+              <SegmentedControl<'rendered' | 'raw'>
+                semantics="radio"
+                ariaLabel={t('segment.docMode')}
+                className="font-mono"
+                value={viewMode}
+                onChange={setViewMode}
+                options={[
+                  { id: 'rendered', label: 'Renderizado' },
+                  { id: 'raw', label: 'Crudo / Fuente' },
+                ]}
+              />
             )}
 
             <Button

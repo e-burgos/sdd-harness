@@ -1,5 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import type { ThreadInfo } from '@sdd-studio/protocol';
+import { optionNames, pickOption } from '@/lib/test-utils/pick-option';
 import { I18nProvider } from '@/lib/i18n/i18n';
 import { ConversationSelector } from './ConversationSelector';
 
@@ -30,13 +31,13 @@ const renderSelector = (props: Partial<Parameters<typeof ConversationSelector>[0
 describe('ConversationSelector', () => {
   it('lists the conversations in a dropdown and marks the selected one', () => {
     renderSelector({ conversations: [thread('a', 'Primera'), thread('b', 'Segunda')], selectedThreadId: 'b' });
-    expect(screen.getByTestId('conversation-select')).toHaveValue('b');
-    expect(screen.getByRole('option', { name: 'Primera' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Conversaciones' })).toHaveTextContent('Segunda');
+    expect(optionNames(screen.getByRole('combobox', { name: 'Conversaciones' }))).toEqual(['Primera', 'Segunda']);
   });
 
   it('reports the picked conversation', () => {
     const { onPick } = renderSelector({ conversations: [thread('a', 'Primera'), thread('b', 'Segunda')], selectedThreadId: 'a' });
-    fireEvent.change(screen.getByTestId('conversation-select'), { target: { value: 'b' } });
+    pickOption(screen.getByRole('combobox', { name: 'Conversaciones' }), 'Segunda');
     expect(onPick).toHaveBeenCalledWith('b');
   });
 
@@ -54,7 +55,7 @@ describe('ConversationSelector', () => {
   });
 
   it('falls back to the id for an untitled conversation', () => {
-    renderSelector({ conversations: [thread('abc', '')] });
-    expect(screen.getByRole('option', { name: 'abc' })).toBeInTheDocument();
+    renderSelector({ conversations: [thread('abc', '')], selectedThreadId: 'abc' });
+    expect(screen.getByRole('combobox', { name: 'Conversaciones' })).toHaveTextContent('abc');
   });
 });

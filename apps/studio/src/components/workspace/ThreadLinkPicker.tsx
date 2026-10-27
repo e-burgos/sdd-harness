@@ -11,7 +11,7 @@ import { isLinkEntryAvailable, linkEntriesOf, linkRefKey, linkRefLabel, toLinkRe
 import { useBridgeFeatures } from '@/lib/use-bridge-features';
 import { useBridge, useStudio } from '../BridgeProvider';
 import { CapabilityNotice } from '../mission-control/CapabilityNotice';
-import { HelpSelect } from '../HelpSelect';
+import { HelpSelect, groupHeader, type HelpSelectOption } from '../HelpSelect';
 
 const NONE = 'none';
 const ring = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400';
@@ -101,26 +101,27 @@ export function ThreadLinkPicker({ threadId }: { threadId: string }) {
     </span>
   );
   const errorNote = error && <p role="alert" className="basis-full text-roseish">{error}</p>;
-  const selectClass = `max-w-[16rem] truncate rounded-md border border-ink-700 bg-ink-950 px-2 py-1 text-xs text-ink-100 disabled:opacity-40 ${ring}`;
+  const grouped = (heading: string, list: { value: string; label: string }[]): HelpSelectOption[] =>
+    list.length > 0 ? [groupHeader(heading), ...list] : [];
 
   if (!multiple) {
     return (
       <div className="flex min-w-0 flex-wrap items-center gap-2 text-xs text-ink-300">
-        <label htmlFor="thread-link">{t('link.label')}</label>
-        <HelpSelect help={t('help.link.target')} id="thread-link" className={selectClass} value={current} disabled={saving} onChange={(e) => void change(e.target.value)}>
-          <option value={NONE}>{t('link.none')}</option>
-          {!known && <option value={current}>{labelOf(link.target)}</option>}
-          {options.cycles.length > 0 && (
-            <optgroup label={t('link.cycles')}>
-              {options.cycles.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </optgroup>
-          )}
-          {options.fixes.length > 0 && (
-            <optgroup label={t('link.fixes')}>
-              {options.fixes.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </optgroup>
-          )}
-        </HelpSelect>
+        <span aria-hidden>{t('link.label')}</span>
+        <HelpSelect
+          label={t('link.label')}
+          help={t('help.link.target')}
+          className="max-w-[16rem]"
+          value={current}
+          disabled={saving}
+          options={[
+            { value: NONE, label: t('link.none') },
+            ...(known ? [] : [{ value: current, label: labelOf(link.target) }]),
+            ...grouped(t('link.cycles'), options.cycles),
+            ...grouped(t('link.fixes'), options.fixes),
+          ]}
+          onChange={(value) => void change(value)}
+        />
         {detectedNote}
         <CapabilityNotice capabilities={['link-targets']} />
         {errorNote}
@@ -130,7 +131,7 @@ export function ThreadLinkPicker({ threadId }: { threadId: string }) {
 
   return (
     <div className="flex min-w-0 flex-wrap items-center gap-2 text-xs text-ink-300">
-      <label htmlFor="thread-link-add">{t('link.label')}</label>
+      <span aria-hidden>{t('link.label')}</span>
       <ul data-testid="link-chips" className="flex min-w-0 flex-wrap items-center gap-1.5">
         {entries.length === 0 && <li className="text-ink-400">{t('link.none')}</li>}
         {entries.map((entry) => {
@@ -157,30 +158,19 @@ export function ThreadLinkPicker({ threadId }: { threadId: string }) {
         })}
       </ul>
       <HelpSelect
+        label={t('link.label')}
         help={t('help.link.add')}
-        id="thread-link-add"
-        className={selectClass}
+        className="max-w-[16rem]"
         value=""
         disabled={saving || entries.length >= MAX_LINK_TARGETS}
-        onChange={(e) => void add(e.target.value)}
-      >
-        <option value="">{entries.length >= MAX_LINK_TARGETS ? t('link.max') : t('link.add')}</option>
-        {options.specs.length > 0 && (
-          <optgroup label={t('link.specs')}>
-            {options.specs.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-          </optgroup>
-        )}
-        {options.freeCycles.length > 0 && (
-          <optgroup label={t('link.cycles')}>
-            {options.freeCycles.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-          </optgroup>
-        )}
-        {options.freeFixes.length > 0 && (
-          <optgroup label={t('link.fixes')}>
-            {options.freeFixes.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-          </optgroup>
-        )}
-      </HelpSelect>
+        options={[
+          { value: '', label: entries.length >= MAX_LINK_TARGETS ? t('link.max') : t('link.add') },
+          ...grouped(t('link.specs'), options.specs),
+          ...grouped(t('link.cycles'), options.freeCycles),
+          ...grouped(t('link.fixes'), options.freeFixes),
+        ]}
+        onChange={(value) => void add(value)}
+      />
       {detectedNote}
       {errorNote}
     </div>

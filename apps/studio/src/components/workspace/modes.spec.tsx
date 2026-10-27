@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { defaultThreadOptions, type WorkspaceSnapshot } from '@sdd-studio/protocol';
+import { optionNames, pickOption } from '@/lib/test-utils/pick-option';
 import { I18nProvider } from '@/lib/i18n/i18n';
 import { createStudioStore } from '@/lib/store/store';
 import { BridgeContext, type BridgeContextValue } from '../BridgeProvider';
@@ -22,8 +23,8 @@ describe('ModeSelectors', () => {
     const p = props();
     mount(p);
     expect(screen.getAllByTestId('help-select')).toHaveLength(2);
-    fireEvent.change(screen.getByLabelText('Modo de desarrollo'), { target: { value: 'solo' } });
-    fireEvent.change(screen.getByLabelText('Modo de implementación'), { target: { value: 'lite' } });
+    pickOption(screen.getByLabelText('Modo de desarrollo'), /solo/i);
+    pickOption(screen.getByLabelText('Modo de implementación'), /lite/i);
     expect(p.onProfileChange).toHaveBeenCalledWith('solo');
     expect(p.onFlowChange).toHaveBeenCalledWith('lite');
   });
@@ -82,27 +83,27 @@ describe('Composer modes (connected)', () => {
 
   it('prefixes a free request with the chosen implementation mode', async () => {
     const { client, box } = connected('general', null, 'team', ['profile-set'], async () => created());
-    fireEvent.change(screen.getByLabelText('Modo de implementación'), { target: { value: 'lite' } });
+    pickOption(screen.getByLabelText('Modo de implementación'), /lite/i);
     enter(box, 'abrí la spec');
     await waitFor(() => expect(textSent(client)).toBe('[LITE] abrí la spec'));
   });
 
   it('puts the prefix on the arguments of a prompt command', async () => {
     const { client, box } = connected('general', null, 'solo', ['profile-set'], async (c) => (c.cmd === 'workspace.readFile' ? { path: 'p', content: 'PROMPT' } : created()));
-    fireEvent.change(screen.getByLabelText('Modo de implementación'), { target: { value: 'full' } });
+    pickOption(screen.getByLabelText('Modo de implementación'), /full/i);
     enter(box, '/open-cycle spec-a');
     await waitFor(() => expect(textSent(client)).toBe('PROMPT\n\n---\n[FULL] spec-a'));
   });
 
   it('writes the development mode through the bridge', async () => {
     const { client } = connected('general', null, 'team', ['profile-set'], async () => ({ profile: 'solo' }));
-    fireEvent.change(screen.getByLabelText('Modo de desarrollo'), { target: { value: 'solo' } });
+    pickOption(screen.getByLabelText('Modo de desarrollo'), /solo/i);
     await waitFor(() => expect(client.request).toHaveBeenCalledWith({ cmd: 'profile.set', profile: 'solo' }));
   });
 
   it('shows the bridge error when the profile cannot be saved', async () => {
     connected('general', null, 'team', ['profile-set'], async () => { throw new Error('sin permiso'); });
-    fireEvent.change(screen.getByLabelText('Modo de desarrollo'), { target: { value: 'solo' } });
+    pickOption(screen.getByLabelText('Modo de desarrollo'), /solo/i);
     expect(await screen.findByRole('alert')).toHaveTextContent('No se pudo cambiar el modo de desarrollo: sin permiso');
   });
 

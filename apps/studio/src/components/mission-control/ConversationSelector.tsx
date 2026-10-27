@@ -24,19 +24,13 @@ export function ConversationSelector({ conversations, selectedThreadId, onPick, 
         </span>
       ) : (
         <HelpSelect
+          label={t('mc.conversations')}
           help={t('help.conversation.select')}
-          data-testid="conversation-select"
-          aria-label={t('mc.conversations')}
           value={selectedThreadId ?? ''}
-          onChange={(event) => onPick(event.target.value)}
-          className="max-w-[220px] cursor-pointer truncate rounded-lg border border-foreground/10 bg-foreground/5 py-1 pl-2.5 pr-2 font-mono text-meta text-ink-100 focus:border-emerald-400 focus:outline-none"
-        >
-          {conversations.map((conversation) => (
-            <option key={conversation.id} value={conversation.id} data-testid={`conversation-option-${conversation.id}`} className="bg-ink-950 text-ink-100">
-              {labelOf(conversation)}
-            </option>
-          ))}
-        </HelpSelect>
+          options={conversations.map((conversation) => ({ value: conversation.id, label: labelOf(conversation) }))}
+          onChange={onPick}
+          className="max-w-[220px] font-mono"
+        />
       )}
       <NewConversationButton onNewConversation={onNewConversation} className="shrink-0" />
     </div>

@@ -213,7 +213,9 @@ describe('AgentInspectorDrawer', () => {
     expect(screen.getByTestId('live-agent-chat-feed')).toBeInTheDocument();
     fireEvent.click(screen.getByText('Enjambre'));
     expect(screen.getByText('Último mensaje')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Clara' }));
+    expect(screen.getByRole('tab', { name: 'Enjambre' })).toHaveAttribute('aria-selected', 'true');
+    fireEvent.click(screen.getByRole('tab', { name: 'Clara' }));
+    expect(screen.getByRole('tab', { name: 'Clara' })).toHaveAttribute('aria-selected', 'true');
     expect(screen.getByTestId('live-agent-chat-feed')).toBeInTheDocument();
   });
 

@@ -9,6 +9,7 @@ import { useSelectedConversation } from '@/lib/use-selected-conversation';
 import type { StudioView } from '@/lib/use-studio-view';
 import { useStudio } from './BridgeProvider';
 import { GateStatusModal } from './GateStatusModal';
+import { SegmentedControl } from './SegmentedControl';
 import { AgentAvatar } from './workspace/AgentAvatar';
 
 interface StudioHeaderProps {
@@ -63,27 +64,20 @@ export function StudioHeader({ activeView, onSelectView }: StudioHeaderProps) {
       </div>
 
       {/* Main View Switcher Segmented Control */}
-      <nav className="flex items-center rounded-xl bg-ink-900/80 p-1 border border-foreground/10 shadow-inner">
-        {views.map((v) => {
-          const isActive = activeView === v.id;
-          const Icon = v.icon;
-          return (
-            <button
-              key={v.id}
-              type="button"
-              onClick={() => onSelectView(v.id)}
-              className={`flex items-center gap-1.5 rounded-lg px-3 py-1 text-xs font-medium transition-all duration-200 ${
-                isActive
-                  ? 'bg-ink-800 text-ink-100 shadow-sm border border-foreground/15'
-                  : 'text-ink-300 hover:text-ink-100 hover:bg-foreground/5'
-              }`}
-            >
-              <Icon className="w-3.5 h-3.5 shrink-0" />
-              <span className="hidden md:inline">{v.label}</span>
-            </button>
-          );
-        })}
-      </nav>
+      <SegmentedControl
+        semantics="nav"
+        emphasis="neutral"
+        ariaLabel={t('segment.views')}
+        value={activeView}
+        onChange={onSelectView}
+        options={views.map((v) => ({
+          id: v.id,
+          label: v.label,
+          ariaLabel: v.label,
+          icon: <v.icon className="h-3.5 w-3.5 shrink-0" />,
+          labelClassName: 'hidden md:inline',
+        }))}
+      />
 
       {/* Right Telemetry Pills & Language */}
       <div className="flex items-center gap-2.5">

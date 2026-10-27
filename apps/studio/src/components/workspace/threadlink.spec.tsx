@@ -1,6 +1,7 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ThreadInfo, WorkspaceSnapshot } from '@sdd-studio/protocol';
 import { BridgeError } from '@/lib/bridge/client';
+import { optionNames, pickOption } from '@/lib/test-utils/pick-option';
 import { I18nProvider } from '@/lib/i18n/i18n';
 import { createStudioStore } from '@/lib/store/store';
 import { BridgeContext, type BridgeContextValue } from '../BridgeProvider';
@@ -30,7 +31,7 @@ function mount(request: (cmd: { cmd: string; link?: unknown }) => Promise<unknow
       </BridgeContext.Provider>
     </I18nProvider>,
   );
-  return { store, client, select: screen.getByLabelText('Asociado a') as HTMLSelectElement };
+  return { store, client, select: screen.getByLabelText('Asociado a') };
 }
 
 function mountMulti(request: (cmd: { cmd: string; add?: unknown[]; remove?: unknown[] }) => Promise<unknown>, link: ThreadInfo['link']) {
@@ -46,15 +47,15 @@ function mountMulti(request: (cmd: { cmd: string; add?: unknown[]; remove?: unkn
       </BridgeContext.Provider>
     </I18nProvider>,
   );
-  return { store, client, add: screen.getByLabelText('Asociado a') as HTMLSelectElement };
+  return { store, client, add: screen.getByLabelText('Asociado a') };
 }
 
 describe('ThreadLinkPicker', () => {
   it('offers every cycle, every fix and no link, with the current link selected', () => {
     const { select } = mount(() => Promise.resolve(null));
-    expect(select.value).toBe('cycle:s1/cycle-02');
-    expect([...select.options].map((o) => o.textContent)).toEqual([
-      'Sin asociar', 's1 · cycle-01 (completed)', 's1 · cycle-02 (in-progress)', 'FIX-a-001 (pending)',
+    expect(select).toHaveTextContent('s1 · cycle-02 (in-progress)');
+    expect(optionNames(select)).toEqual([
+      'Sin asociar', 'Ciclos', 's1 · cycle-01 (completed)', 's1 · cycle-02 (in-progress)', 'Fixes', 'FIX-a-001 (pending)',
     ]);
   });
 
@@ -62,27 +63,27 @@ describe('ThreadLinkPicker', () => {
     const { select, client, store } = mount((cmd) =>
       Promise.resolve({ ...thread({ target: cmd.link as never, source: 'manual' }) }),
     );
-    fireEvent.change(select, { target: { value: 'cycle:s1/cycle-01' } });
+    pickOption(select, 's1 · cycle-01 (completed)');
     await waitFor(() => expect(store.getState().threads['t1']?.info?.link).toEqual({ target: { kind: 'cycle', specId: 's1', cycle: 'cycle-01' }, source: 'manual' }));
     expect(client.request).toHaveBeenCalledWith({ cmd: 'thread.setLink', threadId: 't1', link: { kind: 'cycle', specId: 's1', cycle: 'cycle-01' } });
-    expect(select.value).toBe('cycle:s1/cycle-01');
+    expect(select).toHaveTextContent('s1 · cycle-01 (completed)');
   });
 
   it('reassigns to a fix and clears the link', async () => {
     const { select, client } = mount((cmd) => Promise.resolve(thread({ target: cmd.link as never, source: 'manual' })));
-    fireEvent.change(select, { target: { value: 'fix:FIX-a-001' } });
-    await waitFor(() => expect(select.value).toBe('fix:FIX-a-001'));
+    pickOption(select, 'FIX-a-001 (pending)');
+    await waitFor(() => expect(select).toHaveTextContent('FIX-a-001 (pending)'));
     expect(client.request).toHaveBeenLastCalledWith({ cmd: 'thread.setLink', threadId: 't1', link: { kind: 'fix', fixId: 'FIX-a-001' } });
-    fireEvent.change(select, { target: { value: 'none' } });
-    await waitFor(() => expect(select.value).toBe('none'));
+    pickOption(select, 'Sin asociar');
+    await waitFor(() => expect(select).toHaveTextContent('Sin asociar'));
     expect(client.request).toHaveBeenLastCalledWith({ cmd: 'thread.setLink', threadId: 't1', link: { kind: 'none' } });
   });
 
   it('keeps the previous link and shows the error when the reassignment fails', async () => {
     const { select, store } = mount(() => Promise.reject(new BridgeError('not-found', 'the link target does not exist')));
-    fireEvent.change(select, { target: { value: 'fix:FIX-a-001' } });
+    pickOption(select, 'FIX-a-001 (pending)');
     expect(await screen.findByRole('alert')).toHaveTextContent('No se pudo reasignar el hilo: the link target does not exist');
-    expect(select.value).toBe('cycle:s1/cycle-02');
+    expect(select).toHaveTextContent('s1 · cycle-02 (in-progress)');
     expect(store.getState().threads['t1']?.info?.link.target).toEqual({ kind: 'cycle', specId: 's1', cycle: 'cycle-02' });
     expect(select).toBeEnabled();
   });
@@ -90,12 +91,12 @@ describe('ThreadLinkPicker', () => {
   it('follows a link changed from another tab through thread.updated', () => {
     const { select, store } = mount(() => Promise.resolve(null));
     act(() => store.getState().receive({ kind: 'thread.updated', thread: thread({ target: { kind: 'fix', fixId: 'FIX-a-001' }, source: 'manual' }) }));
-    expect(select.value).toBe('fix:FIX-a-001');
+    expect(select).toHaveTextContent('FIX-a-001 (pending)');
   });
 
   it('keeps showing a link whose target is not in the snapshot', () => {
     const { select } = mount(() => Promise.resolve(null), { target: { kind: 'fix', fixId: 'FIX-old-009' }, source: 'legacy' });
-    expect(select.value).toBe('fix:FIX-old-009');
+    expect(select).toHaveTextContent('FIX-old-009');
   });
 });
 
@@ -125,7 +126,7 @@ describe('ThreadLinkPicker detected target', () => {
   it('shows the detected fix as read-only text when the thread has no link', () => {
     mountDetected({ target: { kind: 'none' }, source: 'auto' }, [fixWrite]);
     expect(screen.getByTestId('link-detected')).toHaveTextContent('Detectado: FIX-a-001');
-    expect(screen.getByLabelText('Asociado a')).toHaveValue('none');
+    expect(screen.getByLabelText('Asociado a')).toHaveTextContent('Sin asociar');
   });
 
   it('shows nothing detected without events or when a link already exists', () => {
@@ -166,8 +167,8 @@ describe('ThreadLinkPicker with link-targets', () => {
       (cmd) => Promise.resolve(thread({ ...withTargets, targets: [...(withTargets.targets ?? []), { kind: 'fix', fixId: 'FIX-a-001', origin: 'manual' }] })),
       withTargets,
     );
-    expect([...add.options].map((o) => o.textContent)).toEqual(['Agregar asociación…', 's1', 's1 · cycle-01 (completed)', 'FIX-a-001 (pending)']);
-    fireEvent.change(add, { target: { value: 'fix:FIX-a-001' } });
+    expect(optionNames(add)).toEqual(['Agregar asociación…', 'Specs', 's1', 'Ciclos', 's1 · cycle-01 (completed)', 'Fixes', 'FIX-a-001 (pending)']);
+    pickOption(add, 'FIX-a-001 (pending)');
     await waitFor(() => expect(screen.getByTestId('link-chip-fix:FIX-a-001')).toBeInTheDocument());
     expect(client.request).toHaveBeenCalledWith({ cmd: 'thread.updateLinks', threadId: 't1', add: [{ kind: 'fix', fixId: 'FIX-a-001' }], remove: [] });
     expect(store.getState().threads['t1']?.info?.link.targets).toHaveLength(3);

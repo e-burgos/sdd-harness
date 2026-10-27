@@ -33,7 +33,12 @@
     "decisión: tokens mode-aware sky/purple/amber/rose/yellow en @theme inline; ink-500 = --color-muted; ink-400 e ink-50 estaban sin definir (25 y 1 usos) y ahora existen",
     "menor: la primera visita con preferencia clara puede mostrar un frame oscuro; las visitas siguientes no (script inline en <head> + ColorModeBootstrap)",
     "menor: colores de identidad de agentes muy claros (#e2e8f0, #a1a1aa, #94a3b8 en lib/agents.ts) quedan pálidos como texto en modo claro; se mantienen por ser identidad",
-    "fricción tucu-ui: SwitchMode tiene la etiqueta \"Mode\" fija y sin aria-label; ThemeWrapper recarga mode desde themeConfigs al montar, así que un estado persistido parcial no sobrevive; labels de Input/Textarea con tracking-widest"
+    "fricción tucu-ui: SwitchMode tiene la etiqueta \"Mode\" fija y sin aria-label; ThemeWrapper recarga mode desde themeConfigs al montar, así que un estado persistido parcial no sobrevive; labels de Input/Textarea con tracking-widest",
+    "decisión: HelpSelect envuelve tucu Select (size sm, options como datos, label y helperText ocultos por CSS para el nombre y la descripción accesibles); no-native-select.spec exige cero <select>/<option>/<optgroup>; los grupos de ThreadLinkPicker son opciones deshabilitadas",
+    "decisión: SegmentedControl propio de Studio (tabs/radio/nav) para el header, AuthPanel, el drawer del inspector, el filtro de gates y el modo del visor; tucu Tab no conserva densidad, roles ni testids",
+    "excepción: los colapsables (NavTree, RelatedDocuments, Timeline, ApprovalCard) siguen custom; tucu Collapse no es controlado, solo acepta label string, no tiene aria-expanded y su header es una tarjeta de 54px",
+    "menor: data-testid conversation-select y conversation-option-* desaparecen porque tucu Select 3.4.0 no reenvía data-*; los specs usan el combobox por nombre",
+    "fricción tucu-ui: Select sin id/aria-label/aria-labelledby/data-* en el trigger, sin aria-describedby externo ni optgroup, size sm sigue en h-8 sm:h-10 text-sm, listbox con text-sm/py-2 fijos, onChange al re-elegir la misma opción y label del trigger sin ellipsis; Tooltip sin prop de tamaño (tailwind-merge confunde text-meta con color); Tab/TabSelect con text-sm/px-4 fijos, TabItem acoplado a TabPanels y sin testids; Collapse no controlado, label string, sin aria-expanded, header de 54px sin variante compacta"
   ],
   "reviewer_report": null
 }

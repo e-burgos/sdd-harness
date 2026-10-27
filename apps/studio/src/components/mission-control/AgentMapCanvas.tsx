@@ -4,7 +4,9 @@ import { Button } from '@e-burgos/tucu-ui';
 import { useState, useEffect, useMemo } from 'react';
 import { Bot } from 'lucide-react';
 import { agentMeta } from '@/lib/agents';
+import { useT } from '@/lib/i18n/i18n';
 import { useStudio } from '../BridgeProvider';
+import { SegmentedControl } from '../SegmentedControl';
 import { useConversationSelection } from '@/lib/use-conversation-selection';
 import { AgentNode } from './AgentNode';
 import { AgentInspectorDrawer } from './AgentInspectorDrawer';
@@ -77,6 +79,7 @@ export function AgentMapCanvas({ onOpenDm, onNewConversation }: { onOpenDm: (age
 
   const [selectedAgent, setSelectedAgent] = useState<string | null>('sdd-orchestrator');
   const [selectedGate, setSelectedGate] = useState<GateId | null>(null);
+  const { t } = useT();
   const [gateFilter, setGateFilter] = useState<'cycle' | 'transversal' | 'all'>('cycle');
 
   const [zoom, setZoom] = useState(1);
@@ -262,41 +265,18 @@ export function AgentMapCanvas({ onOpenDm, onNewConversation }: { onOpenDm: (age
 
           <div className="h-4 w-[1px] bg-foreground/10" />
 
-          <div className="flex items-center bg-foreground/5 p-0.5 rounded-lg border border-foreground/10 text-micro font-mono">
-            <button
-              type="button"
-              onClick={() => setGateFilter('cycle')}
-              className={`px-2 py-0.5 rounded-md transition-all ${
-                gateFilter === 'cycle'
-                  ? 'bg-emerald-500 text-ink-950 font-bold shadow'
-                  : 'text-ink-300 hover:text-ink-100'
-              }`}
-            >
-              Ciclo (4)
-            </button>
-            <button
-              type="button"
-              onClick={() => setGateFilter('transversal')}
-              className={`px-2 py-0.5 rounded-md transition-all ${
-                gateFilter === 'transversal'
-                  ? 'bg-emerald-500 text-ink-950 font-bold shadow'
-                  : 'text-ink-300 hover:text-ink-100'
-              }`}
-            >
-              Transversales (2)
-            </button>
-            <button
-              type="button"
-              onClick={() => setGateFilter('all')}
-              className={`px-2 py-0.5 rounded-md transition-all ${
-                gateFilter === 'all'
-                  ? 'bg-emerald-500 text-ink-950 font-bold shadow'
-                  : 'text-ink-300 hover:text-ink-100'
-              }`}
-            >
-              Todas (6)
-            </button>
-          </div>
+          <SegmentedControl<'cycle' | 'transversal' | 'all'>
+            semantics="radio"
+            ariaLabel={t('segment.gateFilter')}
+            className="font-mono"
+            value={gateFilter}
+            onChange={setGateFilter}
+            options={[
+              { id: 'cycle', label: 'Ciclo (4)' },
+              { id: 'transversal', label: 'Transversales (2)' },
+              { id: 'all', label: 'Todas (6)' },
+            ]}
+          />
 
           <div className="h-4 w-[1px] bg-foreground/10" />
 

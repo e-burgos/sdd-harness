@@ -1,12 +1,13 @@
 'use client';
 
 import { Button } from '@e-burgos/tucu-ui';
-import { useId, useState, type KeyboardEvent } from 'react';
+import { useId, useState } from 'react';
 import { KeyRound, LogIn, LogOut, RefreshCw, ExternalLink } from 'lucide-react';
 import type { AuthPreference } from '@sdd-studio/protocol';
 import { useT } from '@/lib/i18n/i18n';
 import { useSubscription } from '@/lib/use-subscription';
 import { useBridge } from '../BridgeProvider';
+import { SegmentedControl } from '../SegmentedControl';
 import { ApiKeyField } from './ApiKeyField';
 
 const ring = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400';
@@ -76,14 +77,6 @@ export function AuthPanel() {
     if (next === selected) return;
     setAuthPreference(next).catch((e: unknown) => setError(e instanceof Error ? e.message : String(e)));
   };
-  const onKeyDown = (e: KeyboardEvent<HTMLButtonElement>) => {
-    if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
-    e.preventDefault();
-    const next = TABS[(TABS.indexOf(selected) + 1) % TABS.length];
-    select(next);
-    document.getElementById(`${baseId}-tab-${next}`)?.focus();
-  };
-
   if (!open) {
     return (
       <Button type="button" variant="transparent" color="gray" size="tiny" onClick={() => setOpen(true)}>
@@ -93,23 +86,15 @@ export function AuthPanel() {
   }
   return (
     <section aria-label={t('auth.panel.title')} className="mt-2 rounded-md border border-ink-800 p-2">
-      <div role="tablist" aria-label={t('auth.panel.title')} className="mb-2 flex gap-1 text-meta">
-        {TABS.map((tab) => (
-          <button
-            key={tab}
-            id={`${baseId}-tab-${tab}`}
-            role="tab"
-            type="button"
-            aria-selected={selected === tab}
-            aria-controls={`${baseId}-panel-${tab}`}
-            tabIndex={selected === tab ? 0 : -1}
-            onClick={() => select(tab)}
-            onKeyDown={onKeyDown}
-            className={`rounded px-2 py-1 ${ring} ${selected === tab ? 'bg-accent-dim text-accent-300' : 'text-ink-300 hover:text-ink-100'}`}
-          >
-            {t(tab === 'subscription' ? 'auth.tab.subscription' : 'auth.tab.apikey')}
-          </button>
-        ))}
+      <div className="mb-2 flex items-center gap-1">
+        <SegmentedControl
+          semantics="tabs"
+          idBase={baseId}
+          ariaLabel={t('auth.panel.title')}
+          value={selected}
+          onChange={select}
+          options={TABS.map((tab) => ({ id: tab, label: t(tab === 'subscription' ? 'auth.tab.subscription' : 'auth.tab.apikey') }))}
+        />
         <div className="ml-auto">
           <Button type="button" variant="transparent" color="gray" size="tiny" onClick={() => setOpen(false)}>{t('auth.panel.close')}</Button>
         </div>

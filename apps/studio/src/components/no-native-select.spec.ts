@@ -12,8 +12,13 @@ function sourceFiles(dir: string): string[] {
 }
 
 describe('selectors', () => {
-  it('uses HelpSelect everywhere instead of a native select', () => {
-    const offenders = sourceFiles(SRC).filter((f) => !f.endsWith('HelpSelect.tsx') && /<select[\s>]/.test(readFileSync(f, 'utf8')));
+  it('has no native select or option element anywhere in the components', () => {
+    const offenders = sourceFiles(SRC).filter((f) => /<(select|option|optgroup)[\s>]/.test(readFileSync(f, 'utf8')));
+    expect(offenders).toEqual([]);
+  });
+
+  it('routes every selector through HelpSelect', () => {
+    const offenders = sourceFiles(SRC).filter((f) => !f.endsWith('HelpSelect.tsx') && /<Select[\s>]/.test(readFileSync(f, 'utf8')));
     expect(offenders).toEqual([]);
   });
 });

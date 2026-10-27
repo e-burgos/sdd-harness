@@ -2,6 +2,7 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import type { Presence, ThreadInfo, ThreadEvent } from '@sdd-studio/protocol';
 import { AgentMapCanvas } from './AgentMapCanvas';
 import { BridgeContext } from '../BridgeProvider';
+import { pickOption } from '@/lib/test-utils/pick-option';
 import { I18nProvider } from '@/lib/i18n/i18n';
 import { createStudioStore } from '@/lib/store/store';
 
@@ -123,14 +124,14 @@ describe('AgentMapCanvas', () => {
   it('places the conversation selector in the topology header beside the new conversation button', () => {
     renderCanvas(twoConversations);
     const header = screen.getByText('Topología del Enjambre').closest('div.flex.items-center.justify-between')!;
-    expect(within(header as HTMLElement).getByTestId('conversation-select')).toBeInTheDocument();
+    expect(within(header as HTMLElement).getByRole('combobox', { name: 'Conversaciones' })).toBeInTheDocument();
     expect(within(header as HTMLElement).getByTestId('new-conversation-button')).toBeInTheDocument();
     expect(screen.queryByRole('navigation')).toBeNull();
   });
 
   it('follows the most recent conversation and shows its real session', () => {
     renderCanvas(twoConversations);
-    expect(screen.getByTestId('conversation-select')).toHaveValue('t-a');
+    expect(screen.getByRole('combobox', { name: 'Conversaciones' })).toHaveTextContent('Conversación A');
     expect(screen.getByTestId('conversation-session')).toHaveTextContent('session-a-real');
     expect(screen.getByTestId('swarm-comms-console')).toHaveTextContent('plan de alfa');
   });
@@ -144,9 +145,9 @@ describe('AgentMapCanvas', () => {
     expect(dimmedInA).toBeGreaterThan(0);
     expect(container.querySelector('[data-participating="true"]')).not.toBeNull();
 
-    fireEvent.change(screen.getByTestId('conversation-select'), { target: { value: 't-b' } });
+    pickOption(screen.getByRole('combobox', { name: 'Conversaciones' }), 'Conversación B');
 
-    expect(screen.getByTestId('conversation-select')).toHaveValue('t-b');
+    expect(screen.getByRole('combobox', { name: 'Conversaciones' })).toHaveTextContent('Conversación B');
     expect(screen.getByTestId('conversation-session')).toHaveTextContent('session-b-real');
     expect(screen.getByTestId('swarm-comms-console')).toHaveTextContent('diseño de beta');
     expect(screen.getByTestId('swarm-comms-console')).not.toHaveTextContent('plan de alfa');

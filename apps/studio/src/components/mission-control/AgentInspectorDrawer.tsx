@@ -10,6 +10,7 @@ import { useT } from '@/lib/i18n/i18n';
 import { useCollapsedState } from '@/lib/use-collapsed-state';
 import { AgentAvatar } from '../workspace/AgentAvatar';
 import { useStudio } from '../BridgeProvider';
+import { SegmentedControl } from '../SegmentedControl';
 import { ChatDialogueCard } from './ChatDialogueCard';
 import { ConversationSessionInfo } from './ConversationSessionInfo';
 import { LiveAgentChatFeed } from './LiveAgentChatFeed';
@@ -96,38 +97,22 @@ export function AgentInspectorDrawer({
       className="absolute top-4 right-4 bottom-4 w-96 lg:w-[420px] rounded-2xl border border-foreground/15 bg-ink-950/95 p-4 shadow-2xl backdrop-blur-xl flex flex-col z-20 animate-in fade-in slide-in-from-right duration-300 select-none overflow-hidden"
     >
       <div className="flex items-center justify-between pb-3 border-b border-foreground/10 shrink-0">
-        <div className="flex items-center bg-foreground/5 p-0.5 rounded-xl border border-foreground/10 text-xs font-mono">
-          <button
-            type="button"
-            onClick={() => {
+        <SegmentedControl
+          semantics="tabs"
+          ariaLabel={t('segment.inspector')}
+          className="font-mono"
+          value={activeTab}
+          onChange={(tab) => {
+            if (tab === 'swarm') {
               setActiveTab('swarm');
               setTimeout(scrollToBottom, 60);
-            }}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition-all ${
-              activeTab === 'swarm' ? 'bg-emerald-500 text-ink-950 font-bold shadow' : 'text-ink-300 hover:text-ink-100'
-            }`}
-          >
-            <Bot className="w-3.5 h-3.5" />
-            <span>Enjambre</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              if (agentId) setActiveTab('agent');
-            }}
-            disabled={!agentId}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-lg transition-all ${
-              activeTab === 'agent'
-                ? 'bg-emerald-500 text-ink-950 font-bold shadow'
-                : !agentId
-                  ? 'text-ink-500 cursor-not-allowed'
-                  : 'text-ink-300 hover:text-ink-100'
-            }`}
-          >
-            <User className="w-3.5 h-3.5" />
-            <span>{meta ? meta.name : 'Agente'}</span>
-          </button>
-        </div>
+            } else if (agentId) setActiveTab('agent');
+          }}
+          options={[
+            { id: 'swarm', label: 'Enjambre', icon: <Bot className="h-3.5 w-3.5" /> },
+            { id: 'agent', label: meta ? meta.name : 'Agente', icon: <User className="h-3.5 w-3.5" />, disabled: !agentId },
+          ]}
+        />
 
         <div className="flex items-center gap-1">
           {activeTab === 'agent' && meta && (

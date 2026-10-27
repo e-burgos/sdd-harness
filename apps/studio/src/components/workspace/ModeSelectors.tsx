@@ -16,7 +16,6 @@ export interface ModeSelectorsProps {
   onFlowChange(flow: FlowChoice): void;
 }
 
-const select = 'rounded-md border border-ink-700 bg-ink-950 px-2 py-1 text-xs text-ink-100 disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400';
 const PROFILES = DevProfile.options;
 const FLOWS = FlowChoice.options;
 
@@ -25,27 +24,21 @@ export function ModeSelectors(p: ModeSelectorsProps) {
   const warn = p.exception !== null && effectiveFlow(p.profile, p.flow) === 'lite';
   return (
     <div data-testid="mode-selectors" className="mt-1.5 flex flex-wrap items-center gap-2 px-1">
-      <label className="sr-only" htmlFor="mode-dev">{t('mode.dev.label')}</label>
       <HelpSelect
-        id="mode-dev"
+        label={t('mode.dev.label')}
         help={t('help.mode.dev')}
-        className={select}
         value={p.profile}
         disabled={!p.canEditProfile}
-        onChange={(e) => p.onProfileChange(DevProfile.parse(e.target.value))}
-      >
-        {PROFILES.map((x) => <option key={x} value={x}>{t('mode.dev.option', { mode: t(`mode.dev.${x}`) })}</option>)}
-      </HelpSelect>
-      <label className="sr-only" htmlFor="mode-flow">{t('mode.flow.label')}</label>
+        options={PROFILES.map((x) => ({ value: x, label: t('mode.dev.option', { mode: t(`mode.dev.${x}`) }) }))}
+        onChange={(value) => p.onProfileChange(DevProfile.parse(value))}
+      />
       <HelpSelect
-        id="mode-flow"
+        label={t('mode.flow.label')}
         help={t('help.mode.flow')}
-        className={select}
         value={p.flow}
-        onChange={(e) => p.onFlowChange(FlowChoice.parse(e.target.value))}
-      >
-        {FLOWS.map((x) => <option key={x} value={x}>{t('mode.flow.option', { mode: t(`mode.flow.${x}`) })}</option>)}
-      </HelpSelect>
+        options={FLOWS.map((x) => ({ value: x, label: t('mode.flow.option', { mode: t(`mode.flow.${x}`) }) }))}
+        onChange={(value) => p.onFlowChange(FlowChoice.parse(value))}
+      />
       <span data-testid="mode-effective" className="text-meta text-ink-400">
         {t('mode.effective', { flow: effectiveFlow(p.profile, p.flow).toUpperCase() })}
       </span>

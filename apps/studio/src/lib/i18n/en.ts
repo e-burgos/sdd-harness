@@ -361,4 +361,8 @@ export const en = {
   'prepared.hint': 'The minimal context is already loaded; review it and send it when you want.',
   'prepared.open': 'Open',
   'prepared.dismiss': 'Dismiss prepared conversation',
+  'segment.views': 'Studio views',
+  'segment.inspector': 'Panel view',
+  'segment.gateFilter': 'Gate filter',
+  'segment.docMode': 'Document mode',
 } satisfies Record<keyof Dict, string>;

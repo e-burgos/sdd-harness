@@ -359,5 +359,9 @@ export const es = {
   'prepared.hint': 'Ya tiene el contexto mínimo cargado; revisala y enviala cuando quieras.',
   'prepared.open': 'Abrir',
   'prepared.dismiss': 'Descartar conversación preparada',
+  'segment.views': 'Vistas de Studio',
+  'segment.inspector': 'Vista del panel',
+  'segment.gateFilter': 'Filtro de gates',
+  'segment.docMode': 'Modo del documento',
 };
 export type Dict = typeof es;

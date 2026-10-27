@@ -182,8 +182,34 @@
       "depends_on": [
         "TASK-003"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "pps/studio/src/app/globals.css",
+        "apps/studio/src/components/HelpSelect.tsx",
+        "apps/studio/src/components/helpselect.spec.tsx",
+        "apps/studio/src/components/mission-control/ConversationSelector.spec.tsx",
+        "apps/studio/src/components/mission-control/ConversationSelector.tsx",
+        "apps/studio/src/components/mission-control/agentmap.spec.tsx",
+        "apps/studio/src/components/no-native-select.spec.ts",
+        "apps/studio/src/components/workspace/Composer.tsx",
+        "apps/studio/src/components/workspace/ModeSelectors.tsx",
+        "apps/studio/src/components/workspace/ThreadLinkPicker.tsx",
+        "apps/studio/src/components/workspace/composer.spec.tsx",
+        "apps/studio/src/components/workspace/modes.spec.tsx",
+        "apps/studio/src/components/workspace/threadlink.spec.tsx",
+        "apps/studio/vitest.setup.ts",
+        "apps/studio/src/lib/test-utils/pick-option.ts"
+      ],
+      "usage": {
+        "tokens_in": 117110,
+        "tokens_out": 20666,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-10-27"
+      }
     },
     {
       "id": "TASK-005",
@@ -196,8 +222,29 @@
       "depends_on": [
         "TASK-003"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/StudioHeader.tsx",
+        "apps/studio/src/components/mission-control/AgentInspectorDrawer.tsx",
+        "apps/studio/src/components/mission-control/AgentMapCanvas.tsx",
+        "apps/studio/src/components/mission-control/DocumentViewerModal.tsx",
+        "apps/studio/src/components/mission-control/inspectordrawer.spec.tsx",
+        "apps/studio/src/components/workspace/AuthPanel.tsx",
+        "apps/studio/src/lib/i18n/en.ts",
+        "apps/studio/src/lib/i18n/es.ts",
+        "apps/studio/src/components/SegmentedControl.tsx",
+        "apps/studio/src/components/segmentedcontrol.spec.tsx"
+      ],
+      "usage": {
+        "tokens_in": 58554,
+        "tokens_out": 10334,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-10-27"
+      }
     },
     {
       "id": "TASK-006",
