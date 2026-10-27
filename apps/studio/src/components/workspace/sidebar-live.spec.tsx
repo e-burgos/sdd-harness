@@ -34,7 +34,7 @@ function mount(snapshot: WorkspaceSnapshot | null, threads: ThreadInfo[] = [], s
   );
   return { store, onOpenThread, onSelectChannel };
 }
-const activeSection = () => screen.getByRole('button', { name: /^Hilos activos/ }).closest('section')!;
+const activeSection = () => screen.getByRole('button', { name: /^En curso/ }).closest('section')!;
 
 describe('Sidebar connected to the store', () => {
   it('updates the tree live when a new cycle appears in the workspace snapshot', () => {
@@ -57,7 +57,7 @@ describe('Sidebar connected to the store', () => {
     ] };
     const link = (cycle: string): ThreadInfo['link'] => ({ target: { kind: 'cycle', specId: 's1', cycle }, source: 'manual' });
     const { store } = mount(snap, [thread({ id: 'mv', title: 'Movable', channelId: 'spec:s1', link: link('cycle-01') })]);
-    const cycleRegion = (name: string) => screen.getByRole('button', { name }).closest('div')!;
+    const cycleRegion = (name: string) => screen.getByRole('button', { name }).closest<HTMLElement>('[data-node-id]')!;
     expect(within(cycleRegion('cycle-01')).getByRole('button', { name: 'Movable' })).toBeInTheDocument();
     act(() => store.getState().receive({ kind: 'thread.updated', thread: thread({ id: 'mv', title: 'Movable', channelId: 'spec:s1', link: link('cycle-02') }) }));
     expect(within(cycleRegion('cycle-02')).getByRole('button', { name: 'Movable' })).toBeInTheDocument();
@@ -66,11 +66,11 @@ describe('Sidebar connected to the store', () => {
 
   it('adds and removes threads from the active list as their status changes', () => {
     const { store } = mount(base, [thread({ id: 'a', title: 'Alpha' })]);
-    expect(within(activeSection()).getByText('Sin hilos activos')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^En curso/ })).toBeNull();
     act(() => store.getState().receive({ kind: 'thread.updated', thread: thread({ id: 'a', title: 'Alpha', status: 'running' }) }));
     expect(within(activeSection()).getByText('Alpha')).toBeInTheDocument();
     act(() => store.getState().receive({ kind: 'thread.updated', thread: thread({ id: 'a', title: 'Alpha', status: 'idle', lastActivity: '2026-02-01' }) }));
-    expect(within(activeSection()).queryByText('Alpha')).toBeNull();
+    expect(screen.queryByRole('button', { name: /^En curso/ })).toBeNull();
   });
 
   it('rebuilds the active list from threads already in the store after a reload', () => {

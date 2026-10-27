@@ -1,25 +1,21 @@
 'use client';
 
-import { useMemo, type ReactNode } from 'react';
-import { LayoutGrid } from 'lucide-react';
+import { PanelLeftClose } from 'lucide-react';
+import { useMemo, useState, type ReactNode } from 'react';
 import type { AuthMode, Presence } from '@sdd-studio/protocol';
-import { useT } from '@/lib/i18n/i18n';
+import { useT, type TFunction } from '@/lib/i18n/i18n';
+import { filterNavTree } from '@/lib/store/nav-filter';
+import { currentTaskOf, summarizeNavTree, type NavSummary } from '@/lib/store/nav-summary';
 import { buildNavTree, type NavSection, type NavThread, type NavView } from '@/lib/store/nav-tree';
-import { useCollapsedState } from '@/lib/use-collapsed-state';
+import { useCollapsedState, type CollapsedState } from '@/lib/use-collapsed-state';
 import type { ConnectionState } from '@/lib/bridge/client';
 import { useBridge, useStudio } from '../BridgeProvider';
-import { NewConversationButton } from '../NewConversationButton';
 import { AuthPanel } from './AuthPanel';
-import { PanelToggle } from './PanelRail';
-import { SectionView, type NavTreeHandlers } from './NavTree';
+import { SectionView } from './NavSections';
+import { focusRing, type NavTreeHandlers } from './NavTree';
+import { SidebarHeader } from './SidebarHeader';
+import { SidebarRail } from './SidebarRail';
 
-const CONN_DOT = {
-  open: { cls: 'bg-accent-400', key: 'conn.dot.open' },
-  connecting: { cls: 'bg-amberish motion-safe:animate-pulse', key: 'conn.dot.connecting' },
-  reconnecting: { cls: 'bg-amberish motion-safe:animate-pulse', key: 'conn.dot.connecting' },
-  failed: { cls: 'bg-roseish', key: 'conn.dot.down' },
-  idle: { cls: 'bg-roseish', key: 'conn.dot.down' },
-} as const;
 export interface SidebarViewProps {
   project: string;
   kitVersion: string | null;
@@ -32,47 +28,106 @@ export interface SidebarViewProps {
   onNewConversation?(): void;
   authSlot?: ReactNode;
   onCollapse?(): void;
+  iconsOnly?: boolean;
+  onToggleIcons?(): void;
+}
+
+const ALWAYS_OPEN: CollapsedState['isCollapsed'] = () => false;
+
+function summaryOf(section: NavSection, stats: NavSummary, t: TFunction): string | null {
+  switch (section.key) {
+    case 'active':
+      return String(stats.active);
+    case 'specs':
+      return stats.specsTotal === 0 ? null : t(stats.specsActive === 1 ? 'sidebar.summary.specsOne' : 'sidebar.summary.specs', { active: stats.specsActive, total: stats.specsTotal });
+    case 'fixes':
+      return stats.fixesOpen === 0 ? null : t(stats.fixesOpen === 1 ? 'sidebar.summary.fixesOne' : 'sidebar.summary.fixes', { count: stats.fixesOpen });
+    case 'agents':
+      return stats.agentsWorking === 0 ? null : t('sidebar.summary.agents', { count: stats.agentsWorking });
+    default:
+      return null;
+  }
 }
 
 export function SidebarView(p: SidebarViewProps) {
   const { t } = useT();
   const collapse = useCollapsedState(p.project);
+  const [query, setQuery] = useState('');
+  const searching = query.trim() !== '';
+  const stats = useMemo(() => summarizeNavTree(p.tree, p.presence), [p.tree, p.presence]);
+  const visible = useMemo(
+    () => filterNavTree(p.tree, query).filter((section) => section.key !== 'active' || section.threads.length > 0),
+    [p.tree, query],
+  );
   const dmState = (agent: string) => p.presence.find((x) => x.agent === agent)?.state ?? 'idle';
-  const handlers: NavTreeHandlers = { collapse, stale: p.connection !== 'open', onSelectChannel: p.onSelectChannel, onOpenThread: p.onOpenThread };
+
+  if (p.iconsOnly) {
+    return (
+      <SidebarRail
+        tree={p.tree.filter((section) => section.key !== 'active' || section.threads.length > 0)}
+        dmState={dmState}
+        onSelectChannel={p.onSelectChannel}
+        onOpenThread={p.onOpenThread}
+        onNewConversation={p.onNewConversation}
+        onCollapse={p.onCollapse}
+        onExpand={() => p.onToggleIcons?.()}
+      />
+    );
+  }
+
+  const handlers: NavTreeHandlers = {
+    collapse: searching ? { ...collapse, isCollapsed: ALWAYS_OPEN } : collapse,
+    stale: p.connection !== 'open',
+    agentTask: (agent) => currentTaskOf(p.tree, agent),
+    onSelectChannel: p.onSelectChannel,
+    onOpenThread: p.onOpenThread,
+  };
   return (
     <nav className="flex h-full min-h-0 flex-col overflow-hidden border-r border-ink-800 bg-ink-900">
-      <header className="max-h-[55%] shrink-0 overflow-y-auto p-3 pb-2">
-        <div className="flex items-center gap-2">
-          <div className="min-w-0 flex-1 truncate text-base font-semibold">{p.project}</div>
-          {p.onCollapse && <PanelToggle label={t('panel.sidebar.collapse')} side="left" onClick={p.onCollapse} />}
-        </div>
-        <div className="mt-0.5 flex items-center gap-2 text-meta text-ink-300">
-          <span data-testid="conn-dot" aria-hidden className={`h-2 w-2 rounded-full ${CONN_DOT[p.connection].cls}`} />
-          <span className="sr-only">{t(CONN_DOT[p.connection].key)}</span>
-          {p.authMode ? t(`auth.${p.authMode}`) : '…'}
-          {p.kitVersion && <span>· kit {p.kitVersion}</span>}
-        </div>
-        {p.onNewConversation && <NewConversationButton onNewConversation={p.onNewConversation} className="mt-2" fullWidth />}
-        {p.authSlot}
-      </header>
-      <div data-testid="sidebar-tree" className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-3 py-2">
-        {p.tree.map((section) => (
-          <SectionView key={section.id} section={section} h={handlers} dmState={dmState} />
+      <SidebarHeader
+        project={p.project}
+        kitVersion={p.kitVersion}
+        authMode={p.authMode}
+        connection={p.connection}
+        query={query}
+        onQueryChange={setQuery}
+        onNewConversation={p.onNewConversation}
+        onCollapse={p.onCollapse}
+        authSlot={p.authSlot}
+      />
+      <div data-testid="sidebar-tree" className="min-h-0 flex-1 space-y-4 overflow-y-auto overscroll-contain px-3 py-2">
+        {visible.map((section) => (
+          <SectionView key={section.id} section={section} h={handlers} dmState={dmState} summary={searching ? null : summaryOf(section, stats, t)} />
         ))}
+        {searching && visible.length === 0 && (
+          <p data-testid="sidebar-no-results" className="px-2 py-1 text-xs text-ink-500">
+            {t('sidebar.noResults', { query: query.trim() })}
+          </p>
+        )}
       </div>
-      <footer className="shrink-0 border-t border-ink-800 p-3">
-        <section>
-          <h2 className="mb-1 px-2 text-meta uppercase tracking-wider text-ink-500">{t('sidebar.views')}</h2>
-          <div className="flex items-center gap-2 px-2 text-xs text-ink-500">
-            <LayoutGrid size={14} /> {t('sidebar.viewsSoon')}
-          </div>
-        </section>
+      <footer className="shrink-0 border-t border-ink-800 p-2">
+        {p.onToggleIcons && (
+          <button type="button" className={`${focusRing} flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-ui text-ink-400 hover:bg-ink-800 hover:text-ink-100`} onClick={p.onToggleIcons}>
+            <PanelLeftClose aria-hidden size={14} />
+            {t('sidebar.collapseIcons')}
+          </button>
+        )}
       </footer>
     </nav>
   );
 }
 
-export function Sidebar({ view, onSelectChannel, onOpenThread, onNewConversation, onCollapse }: { view: NavView; onSelectChannel(channelId: string): void; onOpenThread(thread: NavThread): void; onNewConversation?(): void; onCollapse?(): void }) {
+export interface SidebarProps {
+  view: NavView;
+  onSelectChannel(channelId: string): void;
+  onOpenThread(thread: NavThread): void;
+  onNewConversation?(): void;
+  onCollapse?(): void;
+  iconsOnly?: boolean;
+  onToggleIcons?(): void;
+}
+
+export function Sidebar({ view, onSelectChannel, onOpenThread, onNewConversation, onCollapse, iconsOnly, onToggleIcons }: SidebarProps) {
   const { connection, authMode } = useBridge();
   const snapshot = useStudio((s) => s.snapshot);
   const presence = useStudio((s) => s.presence);
@@ -95,6 +150,8 @@ export function Sidebar({ view, onSelectChannel, onOpenThread, onNewConversation
       onOpenThread={onOpenThread}
       onNewConversation={onNewConversation}
       onCollapse={onCollapse}
+      iconsOnly={iconsOnly}
+      onToggleIcons={onToggleIcons}
     />
   );
 }

@@ -88,12 +88,25 @@ describe('Workspace layout', () => {
       fireEvent.click(screen.getByRole('button', { name: 'Colapsar menú' }));
       expect(screen.queryByRole('navigation')).toBeNull();
       expect(columns(container)).toBe('44px minmax(0,1fr) 320px');
-      expect(JSON.parse(window.localStorage.getItem(PANEL_STATE_KEY)!)).toEqual({ sidebarCollapsed: true, rightCollapsed: false });
+      expect(JSON.parse(window.localStorage.getItem(PANEL_STATE_KEY)!)).toEqual({ sidebarCollapsed: true, rightCollapsed: false, sidebarIcons: false });
       unmount();
       const again = mount();
       expect(screen.queryByRole('navigation')).toBeNull();
       fireEvent.click(screen.getByRole('button', { name: 'Expandir menú' }));
       expect(screen.getByRole('navigation')).toBeInTheDocument();
+      expect(columns(again.container)).toBe('260px minmax(0,1fr) 320px');
+    });
+
+    it('collapses the sidebar to icons, narrows the column and remembers the choice', () => {
+      const { container, unmount } = mount();
+      fireEvent.click(screen.getByRole('button', { name: 'Colapsar a íconos' }));
+      expect(screen.getByTestId('sidebar-rail')).toBeInTheDocument();
+      expect(columns(container)).toBe('52px minmax(0,1fr) 320px');
+      unmount();
+      const again = mount();
+      expect(screen.getByTestId('sidebar-rail')).toBeInTheDocument();
+      fireEvent.click(screen.getByRole('button', { name: 'Expandir sidebar' }));
+      expect(screen.queryByTestId('sidebar-rail')).toBeNull();
       expect(columns(again.container)).toBe('260px minmax(0,1fr) 320px');
     });
 

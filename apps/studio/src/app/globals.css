@@ -13,8 +13,8 @@
   --text-ui--line-height: 1.33;
   --text-small: 0.8125rem;
   --text-small--line-height: 1.45;
-  --text-body: 0.875rem;
-  --text-body--line-height: 1.5;
+  --text-copy: 0.875rem;
+  --text-copy--line-height: 1.5;
   --text-title: 1rem;
   --text-title--line-height: 1.5;
 }

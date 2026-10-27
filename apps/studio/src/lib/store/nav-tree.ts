@@ -34,6 +34,13 @@ export interface NavThread {
   tool: string | null;
 }
 
+export interface NavProgress {
+  cycle: string;
+  flow: string;
+  done: number;
+  total: number;
+}
+
 export interface NavNode {
   id: string;
   kind: NavNodeKind;
@@ -48,13 +55,15 @@ export interface NavNode {
   selected: boolean;
   containsSelection: boolean;
   needsAttention: boolean;
+  progress: NavProgress | null;
+  severity: string | null;
 }
 
 export type NavSection = NavNode & { kind: 'section'; key: NavSectionKey };
 
 const ACTIVE_STATUSES: ReadonlySet<SessionStatus> = new Set(['waiting-approval', 'running', 'queued']);
 const ACTIVE_RANK: Partial<Record<SessionStatus, number>> = { 'waiting-approval': 0, running: 1, queued: 2 };
-const OPEN_FIX_STATUSES = new Set(['pending', 'in-progress']);
+export const OPEN_FIX_STATUSES: ReadonlySet<string> = new Set(['pending', 'in-progress']);
 const IN_PROGRESS = 'in-progress';
 
 const byRecency = (a: ThreadInfo, b: ThreadInfo) => b.lastActivity.localeCompare(a.lastActivity);
@@ -79,6 +88,8 @@ function draft(init: Pick<NavNode, 'id' | 'kind' | 'label'> & Partial<Omit<NavNo
       selected: false,
       containsSelection: false,
       needsAttention: false,
+      progress: null,
+      severity: null,
       ...init,
     },
   };
@@ -128,6 +139,12 @@ function byClosedRecency(a: FixSummary, b: FixSummary) {
     (b.createdAt ?? '').localeCompare(a.createdAt ?? '') ||
     b.id.localeCompare(a.id)
   );
+}
+
+function latestCycleProgress(cycles: NavNode[]): NavProgress | null {
+  const withProgress = cycles.filter((c) => c.progress !== null);
+  const current = withProgress.find((c) => c.status === IN_PROGRESS) ?? withProgress[0];
+  return current?.progress ?? null;
 }
 
 export function buildNavTree(snapshot: WorkspaceSnapshot | null, threads: ThreadInfo[], view: NavView, presence: Presence[] = []): NavSection[] {
@@ -184,12 +201,15 @@ export function buildNavTree(snapshot: WorkspaceSnapshot | null, threads: Thread
     entry.spec.node.status = spec.status;
     entry.spec.node.defaultCollapsed = spec.status !== IN_PROGRESS;
   }
-  for (const c of snapshot?.cycles ?? []) cycleDraft(c.specId, c.cycle, c.status);
+  for (const c of snapshot?.cycles ?? []) {
+    cycleDraft(c.specId, c.cycle, c.status).node.progress = { cycle: c.cycle, flow: c.flow, done: c.tasksDone, total: c.tasksTotal };
+  }
   for (const f of snapshot?.fixes ?? []) {
     const d = fixDraft(f.id);
     d.node.title = f.title;
     d.node.status = f.status;
     d.node.defaultCollapsed = !OPEN_FIX_STATUSES.has(f.status);
+    d.node.severity = f.severity;
   }
   for (const a of snapshot?.agents ?? []) dmDraft(a.id);
   channelDraft('general');
@@ -250,6 +270,7 @@ export function buildNavTree(snapshot: WorkspaceSnapshot | null, threads: Thread
         .map((d) => finalize(d, view, presence));
       const none = entry.none.infos.length > 0 ? [finalize(entry.none, view, presence)] : [];
       entry.spec.node.children = [...cycles, ...none];
+      entry.spec.node.progress = latestCycleProgress(cycles);
       return finalize(entry.spec, view, presence);
     });
   section('specs', specChildren);

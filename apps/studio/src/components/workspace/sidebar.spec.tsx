@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import type { ThreadInfo, WorkspaceSnapshot } from '@sdd-studio/protocol';
 import { I18nProvider } from '@/lib/i18n/i18n';
 import { buildNavTree, type NavView } from '@/lib/store/nav-tree';
@@ -36,6 +36,8 @@ interface Setup {
   props?: Partial<SidebarViewProps>;
 }
 
+const defaultPresence: SidebarViewProps['presence'] = [{ agent: 'sdd-planner', state: 'working', threadId: 't', specId: null, tool: 'Read' }];
+
 function renderSidebar({ threads = [], view = { channelId: 'general', threadId: null }, snap = snapshot, props = {} }: Setup = {}) {
   const onSelectChannel = vi.fn();
   const onOpenThread = vi.fn();
@@ -43,8 +45,8 @@ function renderSidebar({ threads = [], view = { channelId: 'general', threadId: 
     <I18nProvider initial="es">
       <SidebarView
         project="studio fixture" kitVersion="0.16.0" authMode="local-claude-login" connection="open"
-        tree={buildNavTree(snap, threads, v)}
-        presence={[{ agent: 'sdd-planner', state: 'working', threadId: 't', specId: null, tool: 'Read' }]}
+        tree={buildNavTree(snap, threads, v, props.presence ?? defaultPresence)}
+        presence={defaultPresence}
         onSelectChannel={onSelectChannel} onOpenThread={onOpenThread}
         {...props}
       />
@@ -111,10 +113,16 @@ describe('Sidebar tree', () => {
     expect(screen.getByRole('button', { name: 'Plan chat' })).toHaveAttribute('aria-current', 'true');
   });
 
-  it('shows an empty text for cycles and fixes without conversations', () => {
+  it('summarises the conversations of a spec in a single line instead of repeating an empty text per node', () => {
     renderSidebar();
     fireEvent.click(screen.getByRole('button', { name: 'Expandir o colapsar s2' }));
-    expect(screen.getAllByText('Sin conversaciones').length).toBeGreaterThanOrEqual(2);
+    expect(screen.getAllByTestId('conversations-line')).toHaveLength(2);
+    expect(screen.getAllByText('Sin conversaciones')).toHaveLength(2);
+    const withThreads = [thread({ id: 'p', title: 'Plan', channelId: 'spec:s1', link: cycleLink('s1', 'cycle-01') }), thread({ id: 'q', title: 'Other', channelId: 'spec:s1', link: cycleLink('s1', 'cycle-01') })];
+    cleanup();
+    renderSidebar({ threads: withThreads });
+    expect(screen.getByText('2 conversaciones')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Plan' })).toBeInTheDocument();
   });
 
   it('shows the empty text when there are no specs and no fixes', () => {
@@ -179,11 +187,11 @@ describe('Sidebar collapsing', () => {
   it('opens a channel from its name without collapsing it', () => {
     const { onSelectChannel, rerenderView } = renderSidebar({ threads: [thread({ id: 'g1' })], view: { channelId: 'fixes', threadId: null } });
     const tree = screen.getByTestId('sidebar-tree');
-    const caret = within(tree).getByRole('button', { name: 'Expandir o colapsar # general' });
-    fireEvent.click(within(tree).getByRole('button', { name: '# general' }));
+    expect(within(tree).queryByRole('button', { name: 'g1' })).toBeNull();
+    fireEvent.click(within(tree).getByRole('button', { name: /^# general/ }));
     expect(onSelectChannel).toHaveBeenCalledWith('general');
     rerenderView({ channelId: 'general', threadId: null });
-    expect(caret).toHaveAttribute('aria-expanded', 'true');
+    expect(within(tree).getByRole('button', { name: /^# general/ })).toHaveAttribute('aria-current', 'page');
     expect(within(tree).getByRole('button', { name: 'g1' })).toBeInTheDocument();
   });
 
@@ -232,15 +240,16 @@ describe('Sidebar active threads', () => {
     thread({ id: 'w', title: 'Waiting chat', status: 'waiting-approval', channelId: 'spec:s1', link: cycleLink('s1', 'cycle-01') }),
     thread({ id: 'done', title: 'Done chat', status: 'idle' }),
   ];
-  const rows = () => within(screen.getByRole('button', { name: 'Hilos activos' }).closest('section')!).getAllByRole('button').slice(1);
+  const activeSectionEl = () => screen.getByRole('button', { name: /^En curso/ }).closest('section')!;
+  const rows = () => within(screen.getByRole('button', { name: 'En curso' }).closest('section')!).getAllByRole('button').slice(1);
 
   it('lists only running, waiting-approval and queued threads with attention first, showing title, agent and status', () => {
     renderSidebar({ threads: active });
-    expect(rows().map((b) => b.textContent)).toEqual([
-      'Waiting chatChronos · esperando aprobación',
-      'Running chatDaedalus · trabajando2 pendientes',
-      'Queued chatChronos · en cola',
-    ]);
+    const [waiting, running, queued] = rows();
+    expect(rows()).toHaveLength(3);
+    expect(waiting).toHaveTextContent(/Waiting chat.*Chronos.*aprobar/);
+    expect(running).toHaveTextContent(/Running chat.*Daedalus.*2 pendientes.*trabajando/);
+    expect(queued).toHaveTextContent(/Queued chat.*Chronos.*en cola/);
   });
 
   it('opens a thread that belongs to another channel', () => {
@@ -249,9 +258,25 @@ describe('Sidebar active threads', () => {
     expect(onOpenThread).toHaveBeenCalledWith(expect.objectContaining({ id: 'w', channelId: 'spec:s1' }));
   });
 
-  it('shows the empty state without active threads', () => {
+  it('hides the whole section without active threads', () => {
     renderSidebar({ threads: [active[3]!] });
-    expect(screen.getByText('Sin hilos activos')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^En curso/ })).toBeNull();
+    expect(screen.queryByText('Sin hilos activos')).toBeNull();
+  });
+
+  it('shows a status chip per row and a warning accent only on the waiting one', () => {
+    renderSidebar({ threads: active });
+    const [waiting, running, queued] = rows();
+    expect(within(waiting!).getByTestId('thread-status-chip')).toHaveTextContent('aprobar');
+    expect(within(running!).getByTestId('thread-status-chip')).toHaveTextContent('trabajando');
+    expect(within(queued!).getByTestId('thread-status-chip')).toHaveTextContent('en cola');
+    expect(waiting).toHaveClass('border-l-2', 'border-amberish', 'rounded-l-none');
+    expect(running).not.toHaveClass('border-l-2');
+  });
+
+  it('shows the active thread count in the header', () => {
+    renderSidebar({ threads: active });
+    expect(within(activeSectionEl()).getByTestId('section-summary')).toHaveTextContent('3');
   });
 
   it('warns that the list may be stale when the connection is down', () => {
@@ -266,8 +291,8 @@ describe('Sidebar active threads', () => {
 
   it('keeps the attention signal on the collapsed section and still lists the thread in the tree section', () => {
     renderSidebar({ threads: active });
-    fireEvent.click(screen.getByRole('button', { name: 'Hilos activos' }));
-    expect(within(screen.getByRole('button', { name: /^Hilos activos/ })).getByText(/requiere tu aprobación/)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /^En curso/ }));
+    expect(within(screen.getByRole('button', { name: /^En curso/ })).getByText(/requiere tu aprobación/)).toBeInTheDocument();
   });
 });
 
@@ -279,7 +304,7 @@ describe('Sidebar indicators', () => {
       thread({ id: 'i', title: 'Idle', status: 'idle' }),
     ];
     renderSidebar({ threads });
-    const statusOf = (name: RegExp) => within(screen.getAllByRole('button', { name })[0]!).getByTestId('activity-indicator').getAttribute('data-status');
+    const statusOf = (name: RegExp) => within(screen.getAllByRole('button', { name }).at(-1)!).getByTestId('activity-indicator').getAttribute('data-status');
     expect(statusOf(/^Run/)).toBe('running');
     expect(statusOf(/^Wait/)).toBe('waiting-approval');
     expect(statusOf(/^Idle/)).toBe('none');
@@ -288,9 +313,9 @@ describe('Sidebar indicators', () => {
 
   it('does not pulse the presence dot without the motion-safe variant', () => {
     renderSidebar();
-    const dot = screen.getByRole('button', { name: 'Chronos, trabajando' }).querySelector('span[aria-hidden]')!;
-    expect(dot.className.split(/\s+/).filter((c) => /^animate-/.test(c))).toEqual([]);
-    expect(dot).toHaveClass('motion-safe:animate-pulse');
+    const ring = within(screen.getByRole('button', { name: 'Chronos, trabajando' })).getByTestId('presence-ring');
+    expect(ring.className.split(/\s+/).filter((c) => /^animate-/.test(c))).toEqual([]);
+    expect(ring).toHaveClass('motion-safe:animate-pulse', 'ring-emerald-400');
   });
 });
 
@@ -315,7 +340,7 @@ describe('Sidebar layout', () => {
   it('keeps every section reachable inside the scrolling tree', () => {
     renderSidebar({ threads: manyThreads });
     const tree = screen.getByTestId('sidebar-tree');
-    for (const name of [/^Hilos activos/, /^Canales/, /^Specs/, /^Fixes/, /^Agentes/]) {
+    for (const name of [/^En curso/, /^Canales/, /^Specs/, /^Fixes/, /^Agentes/]) {
       expect(within(tree).getByRole('button', { name })).toBeInTheDocument();
     }
   });
@@ -338,11 +363,148 @@ describe('Sidebar active threads', () => {
       [thread({ id: 'a1', status: 'running', agent: 'sdd-orchestrator' })],
       [{ agent: 'sdd-implementor-back', state: 'working', threadId: 'a1', specId: null, tool: 'Edit' }],
     );
-    expect(screen.getByTestId('active-thread-agents')).toHaveTextContent('Vulcan · trabajando · Edit');
+    expect(screen.getByTestId('active-thread-agents')).toHaveTextContent('Vulcan · Edit');
   });
 
   it('falls back to the thread owner when presence has nobody on it', () => {
     renderActive([thread({ id: 'a1', status: 'running', agent: 'sdd-orchestrator' })], []);
     expect(screen.getByTestId('active-thread-agents')).toHaveTextContent('Clara');
+  });
+});
+
+describe('Sidebar search', () => {
+  const searchBox = () => screen.getByRole('textbox', { name: 'Buscar' });
+  const type = (value: string) => fireEvent.change(searchBox(), { target: { value } });
+
+  it('filters specs, keeps matching ancestors and hides sections without matches', () => {
+    const threads = [thread({ id: 'plan-chat', title: 'Plan chat', channelId: 'spec:s1', link: cycleLink('s1', 'cycle-01') })];
+    renderSidebar({ threads });
+    type('plan');
+    const tree = screen.getByTestId('sidebar-tree');
+    expect(within(tree).getByRole('button', { name: /^Specs/ })).toBeInTheDocument();
+    expect(within(tree).getByRole('button', { name: 's1, en curso' })).toBeInTheDocument();
+    expect(within(tree).getByRole('button', { name: 'cycle-01' })).toBeInTheDocument();
+    expect(within(tree).getByRole('button', { name: 'Plan chat' })).toBeInTheDocument();
+    expect(within(tree).queryByRole('button', { name: 'Expandir o colapsar s2' })).toBeNull();
+    for (const hidden of [/^Canales/, /^Fixes/]) expect(within(tree).queryByRole('button', { name: hidden })).toBeNull();
+  });
+
+  it('matches case-insensitively on fixes, agents and channels', () => {
+    renderSidebar();
+    type('FIX-2');
+    expect(screen.getByRole('button', { name: 'FIX-2' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'FIX-1' })).toBeNull();
+    type('chronos');
+    expect(screen.getByRole('button', { name: 'Chronos, trabajando' })).toBeInTheDocument();
+    type('GENERAL');
+    expect(screen.getByRole('button', { name: /^# general/ })).toBeInTheDocument();
+  });
+
+  it('expands collapsed nodes while searching', () => {
+    renderSidebar({ threads: [thread({ id: 'old', title: 'Old chat', channelId: 'spec:s2', link: cycleLink('s2', 'cycle-01') })] });
+    expect(screen.queryByRole('button', { name: 'Old chat' })).toBeNull();
+    type('old chat');
+    expect(screen.getByRole('button', { name: 'Old chat' })).toBeInTheDocument();
+  });
+
+  it('shows an empty-result line, and Escape clears the query', () => {
+    renderSidebar();
+    type('zzz');
+    expect(screen.getByTestId('sidebar-no-results')).toHaveTextContent('Sin resultados para «zzz»');
+    fireEvent.keyDown(searchBox(), { key: 'Escape' });
+    expect(searchBox()).toHaveValue('');
+    expect(screen.queryByTestId('sidebar-no-results')).toBeNull();
+    expect(screen.getByRole('button', { name: /^Canales/ })).toBeInTheDocument();
+  });
+
+  it('focuses the search with Cmd+K and Ctrl+K', () => {
+    renderSidebar();
+    fireEvent.keyDown(window, { key: 'k', metaKey: true });
+    expect(searchBox()).toHaveFocus();
+    (document.activeElement as HTMLElement).blur();
+    fireEvent.keyDown(window, { key: 'k', ctrlKey: true });
+    expect(searchBox()).toHaveFocus();
+  });
+});
+
+describe('Sidebar section headers and rows', () => {
+  const rich: WorkspaceSnapshot = {
+    ...snapshot,
+    cycles: [
+      { specId: 's1', cycle: 'cycle-01', status: 'completed', flow: 'full', apps: [], tasks: [], tasksTotal: 4, tasksDone: 4 },
+      { specId: 's1', cycle: 'cycle-02', status: 'in-progress', flow: 'lite', apps: [], tasks: [], tasksTotal: 7, tasksDone: 3 },
+    ],
+    fixes: [
+      { id: 'FIX-1', title: 'one', status: 'in-progress', severity: 'high', specId: null, createdAt: '1', closedAt: null },
+      { id: 'FIX-2', title: 'two', status: 'pending', severity: 'media', specId: null, createdAt: '1', closedAt: null },
+      { id: 'FIX-3', title: 'three', status: 'pending', severity: 'baja', specId: null, createdAt: '1', closedAt: null },
+      { id: 'FIX-4', title: 'four', status: 'pending', severity: null, specId: null, createdAt: '1', closedAt: null },
+      { id: 'FIX-5', title: 'five', status: 'closed', severity: 'high', specId: null, createdAt: '1', closedAt: '2' },
+    ],
+  };
+  const summaryOf = (name: RegExp) => within(screen.getByRole('button', { name }).closest('section')!).getByTestId('section-summary');
+
+  it('summarises specs, fixes and agents in the headers', () => {
+    renderSidebar({ snap: rich });
+    expect(summaryOf(/^Specs/)).toHaveTextContent('1 activa · 2');
+    expect(summaryOf(/^Fixes/)).toHaveTextContent('4 abiertos');
+    expect(summaryOf(/^Agentes/)).toHaveTextContent('1 trabajando');
+  });
+
+  it('shows the latest cycle chip and task progress on a spec and in its cycles', () => {
+    renderSidebar({ snap: rich });
+    const specRow = screen.getByRole('button', { name: 's1, en curso' }).parentElement!;
+    expect(within(specRow).getByTestId('cycle-chip')).toHaveTextContent('c02 · lite');
+    expect(within(specRow).getByTestId('mini-progress')).toHaveTextContent('3/7');
+    expect(within(specRow).getByTestId('spec-status-dot')).toHaveAttribute('data-status', 'in-progress');
+    const cycleRow = screen.getByRole('button', { name: 'cycle-02' }).parentElement!;
+    expect(within(cycleRow).getByTestId('cycle-chip')).toHaveTextContent('lite');
+  });
+
+  it('colours fix severity and shows none when unknown', () => {
+    renderSidebar({ snap: rich });
+    const chipOf = (id: string) => screen.getByRole('button', { name: id }).parentElement!.querySelector('[data-testid="severity-chip"]');
+    expect(chipOf('FIX-1')).toHaveTextContent('alta');
+    expect(chipOf('FIX-2')).toHaveTextContent('media');
+    expect(chipOf('FIX-3')).toHaveTextContent('baja');
+    expect(chipOf('FIX-4')).toBeNull();
+  });
+
+  it('shows the task or the role-and-free text under an agent', () => {
+    const threads = [thread({ id: 'r', title: 'Run', status: 'running' })];
+    renderSidebar({
+      threads,
+      props: { presence: [{ agent: 'sdd-planner', state: 'working', threadId: 'r', specId: null, tool: 'Read' }] },
+    });
+    expect(within(screen.getByRole('button', { name: 'Chronos, trabajando' })).getByTestId('agent-subline')).toHaveTextContent('Read');
+    cleanup();
+    renderSidebar({ props: { presence: [] } });
+    expect(within(screen.getByRole('button', { name: 'Chronos, inactivo' })).getByTestId('agent-subline')).toHaveTextContent('Planner · libre');
+  });
+
+  it('keeps the channel count and shows channels as chips', () => {
+    renderSidebar({ threads: [thread({ id: 'g1' }), thread({ id: 'g2' })] });
+    const chips = screen.getByTestId('channel-chips');
+    expect(within(chips).getByRole('button', { name: /^# general, 2 conversaciones/ })).toBeInTheDocument();
+  });
+});
+
+describe('Sidebar icons mode', () => {
+  it('shows a footer toggle that collapses to icons and a rail that expands again', () => {
+    const onToggleIcons = vi.fn();
+    const { unmount } = renderSidebar({ props: { onToggleIcons } });
+    fireEvent.click(screen.getByRole('button', { name: 'Colapsar a íconos' }));
+    expect(onToggleIcons).toHaveBeenCalledTimes(1);
+    unmount();
+    const { onSelectChannel } = renderSidebar({ props: { onToggleIcons, iconsOnly: true, onNewConversation: vi.fn() } });
+    expect(screen.getByTestId('sidebar-rail')).toBeInTheDocument();
+    expect(screen.queryByRole('textbox', { name: 'Buscar' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: '# general' }));
+    expect(onSelectChannel).toHaveBeenCalledWith('general');
+    fireEvent.click(screen.getByRole('button', { name: 'Chronos' }));
+    expect(onSelectChannel).toHaveBeenCalledWith('dm:sdd-planner');
+    fireEvent.click(screen.getByRole('button', { name: 'Expandir sidebar' }));
+    expect(onToggleIcons).toHaveBeenCalledTimes(2);
+    expect(screen.getByRole('button', { name: 'Nueva conversación' })).toBeInTheDocument();
   });
 });

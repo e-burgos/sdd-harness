@@ -5,10 +5,10 @@ import { z } from 'zod';
 
 export const PANEL_STATE_KEY = 'sdd-studio.panels.v1';
 
-const PanelState = z.object({ sidebarCollapsed: z.boolean(), rightCollapsed: z.boolean() });
+const PanelState = z.object({ sidebarCollapsed: z.boolean(), rightCollapsed: z.boolean(), sidebarIcons: z.boolean().default(false) });
 export type PanelStateValue = z.infer<typeof PanelState>;
 
-const EXPANDED: PanelStateValue = { sidebarCollapsed: false, rightCollapsed: false };
+const EXPANDED: PanelStateValue = { sidebarCollapsed: false, rightCollapsed: false, sidebarIcons: false };
 
 export function readPanelState(): PanelStateValue {
   try {
@@ -39,6 +39,7 @@ export function usePanelState() {
   return {
     ...state,
     setSidebarCollapsed: (collapsed: boolean) => update({ sidebarCollapsed: collapsed }),
+    setSidebarIcons: (icons: boolean) => update({ sidebarIcons: icons }),
     setRightCollapsed: (collapsed: boolean) => update({ rightCollapsed: collapsed }),
   };
 }

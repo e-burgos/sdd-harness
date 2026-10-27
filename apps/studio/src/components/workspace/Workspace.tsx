@@ -13,6 +13,7 @@ import { PreparedConversations } from './PreparedConversations';
 import { RightPanel } from './RightPanel';
 import { RunOutput } from './RunOutput';
 import { Sidebar } from './Sidebar';
+import { RAIL_ICONS_WIDTH } from './SidebarRail';
 import { ThreadView } from './ThreadView';
 
 export interface View {
@@ -69,13 +70,15 @@ export function Workspace({ selectedChannelId, newConversationSignal = 0 }: Work
   return (
     <div
       className="grid min-h-0 flex-1 grid-rows-[minmax(0,1fr)]"
-      style={{ gridTemplateColumns: `${panels.sidebarCollapsed ? RAIL_WIDTH : '260px'} minmax(0,1fr) ${panels.rightCollapsed ? RAIL_WIDTH : '320px'}` }}
+      style={{ gridTemplateColumns: `${panels.sidebarCollapsed ? RAIL_WIDTH : panels.sidebarIcons ? RAIL_ICONS_WIDTH : '260px'} minmax(0,1fr) ${panels.rightCollapsed ? RAIL_WIDTH : '320px'}` }}
     >
       {panels.sidebarCollapsed ? (
         <PanelRail side="left" label={t('panel.sidebar.expand')} onExpand={() => panels.setSidebarCollapsed(false)} />
       ) : (
         <Sidebar
           onCollapse={() => panels.setSidebarCollapsed(true)}
+          iconsOnly={panels.sidebarIcons}
+          onToggleIcons={() => panels.setSidebarIcons(!panels.sidebarIcons)}
           view={view}
           onSelectChannel={(channelId) => setView({ channelId, threadId: null })}
           onOpenThread={(thread) => setView({ channelId: thread.channelId, threadId: thread.id })}
