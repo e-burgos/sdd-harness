@@ -1,6 +1,7 @@
 'use client';
 
 import { MAX_LINK_TARGETS, ThreadInfo, type ThreadLinkRef, type ThreadLinkTarget } from '@sdd-studio/protocol';
+import { Tooltip } from '@e-burgos/tucu-ui';
 import { X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { bridgeErrorText } from '@/lib/bridge/error-text';
@@ -11,8 +12,7 @@ import { isLinkEntryAvailable, linkEntriesOf, linkRefKey, linkRefLabel, toLinkRe
 import { useBridgeFeatures } from '@/lib/use-bridge-features';
 import { useBridge, useStudio } from '../BridgeProvider';
 import { CapabilityNotice } from '../mission-control/CapabilityNotice';
-import { HelpSelect, groupHeader, type HelpSelectOption } from '../HelpSelect';
-import { Tip } from '../Tip';
+import { HelpSelect, type HelpSelectOption } from '../HelpSelect';
 
 const NONE = 'none';
 const ring = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400';
@@ -103,7 +103,7 @@ export function ThreadLinkPicker({ threadId }: { threadId: string }) {
   );
   const errorNote = error && <p role="alert" className="basis-full text-roseish">{error}</p>;
   const grouped = (heading: string, list: { value: string; label: string }[]): HelpSelectOption[] =>
-    list.length > 0 ? [groupHeader(heading), ...list] : [];
+    list.map((o) => ({ ...o, group: heading }));
 
   if (!multiple) {
     return (
@@ -144,7 +144,7 @@ export function ThreadLinkPicker({ threadId }: { threadId: string }) {
               <span className={`truncate font-mono text-meta ${available ? 'text-ink-100' : 'text-ink-400 line-through'}`} title={label}>{label}</span>
               <span data-testid="link-origin" className="shrink-0 text-micro uppercase text-ink-500">{t(`link.origin.${entry.origin}`)}</span>
               {!available && <span data-testid="link-unavailable" className="shrink-0 text-micro text-amberish">{t('link.unavailable')}</span>}
-              <Tip text={t('link.remove', { target: label })}>
+              <Tooltip size="xs" arrow={false} content={t('link.remove', { target: label })}>
                 <button
                   type="button"
                   aria-label={t('link.remove', { target: label })}
@@ -154,7 +154,7 @@ export function ThreadLinkPicker({ threadId }: { threadId: string }) {
                 >
                   <X size={12} aria-hidden />
                 </button>
-              </Tip>
+              </Tooltip>
             </li>
           );
         })}

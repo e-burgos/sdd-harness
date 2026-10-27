@@ -145,7 +145,7 @@ export function ChatDialogueCard({
             variant="transparent"
             color="success"
             size="tiny"
-            className="font-mono text-meta!"
+            className="font-mono text-meta"
             onClick={(e) => {
               e.stopPropagation();
               setIsExpanded(!isExpanded);

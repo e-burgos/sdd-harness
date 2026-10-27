@@ -35,7 +35,7 @@ function ImageAttachment({ attachment }: { attachment: AttachmentRef }) {
           <img src={content.url} alt={attachment.name} width={attachment.width} height={attachment.height} className="h-full w-full object-contain" />
         </a>
       ) : (
-        <Skeleton animation="pulse" shape="rectangle" height="100%" className="bg-ink-800!" aria-hidden />
+        <Skeleton animation="pulse" shape="rectangle" height="100%" className="bg-ink-800" aria-hidden />
       )}
     </div>
   );

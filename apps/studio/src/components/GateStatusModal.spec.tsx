@@ -116,9 +116,11 @@ describe('GateStatusModal', () => {
 
   it('closes with Escape, the close button and a backdrop click, but not from inside the panel', () => {
     const onClose = renderModal();
-    fireEvent.keyDown(window, { key: 'Escape' });
-    fireEvent.click(screen.getByTestId('gate-status-close'));
-    fireEvent.click(screen.getByTestId('gate-status-modal'));
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
+    fireEvent.click(screen.getByRole('button', { name: 'Cerrar resumen del estado' }));
+    const overlay = document.querySelector('[data-tucu="modal-overlay"]') as HTMLElement;
+    fireEvent.mouseDown(overlay);
+    fireEvent.click(overlay);
     expect(onClose).toHaveBeenCalledTimes(3);
     fireEvent.click(screen.getByTestId('gate-status-conversation'));
     expect(onClose).toHaveBeenCalledTimes(3);

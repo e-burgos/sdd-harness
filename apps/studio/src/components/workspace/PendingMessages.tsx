@@ -67,12 +67,12 @@ export function PendingMessages({ threadId }: { threadId: string }) {
           const isEditing = editing?.id === item.id;
           return (
             <li key={item.id} className="flex items-start gap-2 rounded-md border border-ink-800 bg-ink-950 px-2 py-1.5 text-sm">
-              <Badge variant="soft" color="warning" shape="rounded" className="mt-0.5 shrink-0 text-meta!">{t('pending.badge')}</Badge>
+              <Badge variant="soft" color="warning" shape="rounded" className="mt-0.5 shrink-0 text-meta">{t('pending.badge')}</Badge>
               {isEditing ? (
                 <div className="flex min-w-0 flex-1 flex-col gap-1">
                   <Textarea
                     aria-label={t('pending.editLabel')}
-                    inputClassName="min-h-[44px]! sm:min-h-[44px]! resize-y rounded-md! px-2! py-1!"
+                    inputClassName="min-h-[44px] sm:min-h-[44px] resize-y rounded-md px-2 py-1"
                     value={editing.text}
                     autoFocus
                     onChange={(e) => setEditing({ id: item.id, text: e.target.value })}

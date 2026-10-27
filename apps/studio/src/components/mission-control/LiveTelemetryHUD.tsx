@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, type ReactNode } from 'react';
-import { Card } from '@e-burgos/tucu-ui';
+import { Badge, Card } from '@e-burgos/tucu-ui';
 import {
   Activity,
   ArrowDownToLine,
@@ -13,7 +13,6 @@ import {
 import { useBridge, useStudio } from '../BridgeProvider';
 import { agentMeta } from '@/lib/agents';
 import { useT } from '@/lib/i18n/i18n';
-import { StatusPill } from '../StatusPill';
 
 function KpiPanel({ glyph, glyphClass, label, value, valueClass, children }: { glyph: string; glyphClass: string; label: string; value: ReactNode; valueClass: string; children: ReactNode }) {
   return (
@@ -229,10 +228,10 @@ export function LiveTelemetryHUD() {
           </p>
         </div>
         {telemetry && (
-          <StatusPill tone="success" size="meta" className="gap-2! px-3! py-1.5! font-bold">
+          <Badge variant="soft" size="tiny" shape="pill" tone="success" className="h-auto gap-2 px-3 py-1.5 font-mono text-meta font-bold">
             <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
             <span>{t('ui.tel.streaming')}</span>
-          </StatusPill>
+          </Badge>
         )}
       </div>
       {telemetry ? (
@@ -316,9 +315,9 @@ export function LiveTelemetryHUD() {
               <p className="text-ui text-ink-300 font-mono">{t('ui.tel.shieldBody')}</p>
             </div>
           </div>
-          <StatusPill tone="success" size="meta" className="px-3! py-1.5! font-bold">
+          <Badge variant="soft" size="tiny" shape="pill" tone="success" className="h-auto gap-1.5 px-3 py-1.5 font-mono text-meta font-bold">
             {t('ui.tel.protection')}
-          </StatusPill>
+          </Badge>
         </div>
       </Card>
     </div>

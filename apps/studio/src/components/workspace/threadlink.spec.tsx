@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ThreadInfo, WorkspaceSnapshot } from '@sdd-studio/protocol';
 import { BridgeError } from '@/lib/bridge/client';
-import { optionNames, pickOption } from '@/lib/test-utils/pick-option';
+import { openSelect, optionNames, pickOption } from '@/lib/test-utils/pick-option';
 import { I18nProvider } from '@/lib/i18n/i18n';
 import { createStudioStore } from '@/lib/store/store';
 import { BridgeContext, type BridgeContextValue } from '../BridgeProvider';
@@ -54,9 +54,10 @@ describe('ThreadLinkPicker', () => {
   it('offers every cycle, every fix and no link, with the current link selected', () => {
     const { select } = mount(() => Promise.resolve(null));
     expect(select).toHaveTextContent('s1 · cycle-02 (in-progress)');
-    expect(optionNames(select)).toEqual([
-      'Sin asociar', 'Ciclos', 's1 · cycle-01 (completed)', 's1 · cycle-02 (in-progress)', 'Fixes', 'FIX-a-001 (pending)',
-    ]);
+    expect(optionNames(select)).toEqual(['Sin asociar', 's1 · cycle-01 (completed)', 's1 · cycle-02 (in-progress)', 'FIX-a-001 (pending)']);
+    openSelect(select);
+    expect(screen.getByRole('group', { name: 'Ciclos' })).toHaveTextContent('s1 · cycle-01 (completed)');
+    expect(screen.getByRole('group', { name: 'Fixes' })).toHaveTextContent('FIX-a-001 (pending)');
   });
 
   it('reassigns to another cycle with thread.setLink and updates the store', async () => {
@@ -167,7 +168,7 @@ describe('ThreadLinkPicker with link-targets', () => {
       (cmd) => Promise.resolve(thread({ ...withTargets, targets: [...(withTargets.targets ?? []), { kind: 'fix', fixId: 'FIX-a-001', origin: 'manual' }] })),
       withTargets,
     );
-    expect(optionNames(add)).toEqual(['Agregar asociación…', 'Specs', 's1', 'Ciclos', 's1 · cycle-01 (completed)', 'Fixes', 'FIX-a-001 (pending)']);
+    expect(optionNames(add)).toEqual(['Agregar asociación…', 's1', 's1 · cycle-01 (completed)', 'FIX-a-001 (pending)']);
     pickOption(add, 'FIX-a-001 (pending)');
     await waitFor(() => expect(screen.getByTestId('link-chip-fix:FIX-a-001')).toBeInTheDocument());
     expect(client.request).toHaveBeenCalledWith({ cmd: 'thread.updateLinks', threadId: 't1', add: [{ kind: 'fix', fixId: 'FIX-a-001' }], remove: [] });

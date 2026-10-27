@@ -1,8 +1,8 @@
 import { Crown } from 'lucide-react';
+import { Tooltip } from '@e-burgos/tucu-ui';
 import type { SessionStatus } from '@sdd-studio/protocol';
 import { agentMeta } from '@/lib/agents';
 import { useT } from '@/lib/i18n/i18n';
-import { Tip } from '../Tip';
 import { ActivityIndicator } from './ActivityIndicator';
 import { AgentFace } from './AgentFace';
 
@@ -23,7 +23,7 @@ export function AgentAvatar({
   const isRunning = status === 'running';
 
   return (
-    <Tip text={`${meta.name} (${meta.title}) · ${meta.personality}`}>
+    <Tooltip size="xs" arrow={false} content={`${meta.name} (${meta.title}) · ${meta.personality}`}>
       <span className="relative inline-flex shrink-0 select-none group">
         <span
           className={`relative inline-flex items-center justify-center rounded-xl transition-all duration-300 shadow-sm border border-foreground/20 overflow-hidden ${
@@ -38,7 +38,7 @@ export function AgentAvatar({
         >
           <AgentFace agent={agent} size={size} />
           {isLeader && size >= 24 && (
-            <Tip text={t('ui.agent.leader')}>
+            <Tooltip size="xs" arrow={false} content={t('ui.agent.leader')}>
               <span
                 aria-hidden
                 data-testid="agent-leader-crown"
@@ -46,11 +46,11 @@ export function AgentAvatar({
               >
                 <Crown className="w-2.5 h-2.5 fill-amber-400 text-amber-400" />
               </span>
-            </Tip>
+            </Tooltip>
           )}
         </span>
         {status !== undefined && showBadge && <ActivityIndicator status={status} placement="avatar" />}
       </span>
-    </Tip>
+    </Tooltip>
   );
 }

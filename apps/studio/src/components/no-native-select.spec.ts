@@ -21,4 +21,9 @@ describe('selectors', () => {
     const offenders = sourceFiles(SRC).filter((f) => !f.endsWith('HelpSelect.tsx') && /<Select[\s>]/.test(readFileSync(f, 'utf8')));
     expect(offenders).toEqual([]);
   });
+
+  it('never opts into the native mode of the tucu Select', () => {
+    const offenders = sourceFiles(SRC).filter((f) => /<Select[\s>][^>]*\bnative\b/s.test(readFileSync(f, 'utf8')));
+    expect(offenders).toEqual([]);
+  });
 });

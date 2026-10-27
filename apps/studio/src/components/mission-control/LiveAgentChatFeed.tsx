@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, Input } from '@e-burgos/tucu-ui';
+import { Button, Input, Tooltip } from '@e-burgos/tucu-ui';
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { ArrowUp, Moon } from 'lucide-react';
 import { ThreadInfo, channelForDm, defaultThreadOptions } from '@sdd-studio/protocol';
@@ -8,7 +8,6 @@ import { agentMeta } from '@/lib/agents';
 import type { ConversationView } from '@/lib/conversation';
 import { useT } from '@/lib/i18n/i18n';
 import { useBridge } from '../BridgeProvider';
-import { Tip } from '../Tip';
 import { ChatDialogueCard } from './ChatDialogueCard';
 
 interface LiveAgentChatFeedProps {
@@ -98,7 +97,7 @@ export function LiveAgentChatFeed({ agentId, conversation, onPickConversation }:
           <>
             {hiddenCount > 0 && (
               <div className="flex justify-center pb-1">
-                <Button type="button" variant="transparent" color="success" size="tiny" className="font-mono text-meta!" onClick={() => setVisibleLimit((v) => v + PAGE_SIZE)}>
+                <Button type="button" variant="transparent" color="success" size="tiny" className="font-mono text-meta" onClick={() => setVisibleLimit((v) => v + PAGE_SIZE)}>
                   <ArrowUp className="w-3 h-3" />
                   <span>{t('ui.feed.loadMore', { n: PAGE_SIZE })}</span>
                   <span className="text-ink-500">{t('ui.feed.remaining', { n: hiddenCount })}</span>
@@ -141,9 +140,9 @@ export function LiveAgentChatFeed({ agentId, conversation, onPickConversation }:
             placeholder={t('map.chat.placeholder', { name: meta.name })}
             disabled={isSending}
             className="flex-1"
-            inputClassName="h-auto! sm:h-auto! rounded-lg! px-2.5! py-1.5! text-ui!"
+            inputClassName="h-auto sm:h-auto rounded-lg px-2.5 py-1.5 text-ui"
           />
-          <Tip text={t('ui.feed.sendTo', { name: meta.name })}>
+          <Tooltip size="xs" arrow={false} content={t('ui.feed.sendTo', { name: meta.name })}>
             <Button type="submit" size="tiny" disabled={isSending || !quickInput.trim()}>
               {isSending ? (
                 <>
@@ -154,7 +153,7 @@ export function LiveAgentChatFeed({ agentId, conversation, onPickConversation }:
                 <span>{t('map.chat.send')}</span>
               )}
             </Button>
-          </Tip>
+          </Tooltip>
         </div>
       </form>
     </div>

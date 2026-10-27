@@ -1,11 +1,10 @@
 'use client';
 
-import { Button } from '@e-burgos/tucu-ui';
+import { Button, Tooltip } from '@e-burgos/tucu-ui';
 import { useState, useEffect, useMemo } from 'react';
 import { Bot } from 'lucide-react';
 import { agentMeta } from '@/lib/agents';
 import { useT } from '@/lib/i18n/i18n';
-import { Tip } from '../Tip';
 import { useStudio } from '../BridgeProvider';
 import { SegmentedControl } from '../SegmentedControl';
 import { useConversationSelection } from '@/lib/use-conversation-selection';
@@ -449,31 +448,31 @@ export function AgentMapCanvas({ onOpenDm, onNewConversation }: { onOpenDm: (age
           data-testid="zoom-toolbar"
           className="absolute bottom-6 left-6 z-20 flex items-center gap-1.5 rounded-xl border border-foreground/15 bg-ink-950/85 p-1.5 shadow-xl backdrop-blur-xl select-none"
         >
-          <Tip text={t('ui.map.zoomIn')}>
+          <Tooltip size="xs" arrow={false} content={t('ui.map.zoomIn')}>
             <Button type="button" variant="transparent" color="gray" shape="circle" size="tiny" className="font-mono" onClick={handleZoomIn}>
               +
             </Button>
-          </Tip>
+          </Tooltip>
           <span className="min-w-[42px] text-center font-mono text-meta font-semibold text-emerald-400">
             {Math.round(zoom * 100)}%
           </span>
-          <Tip text={t('ui.map.zoomOut')}>
+          <Tooltip size="xs" arrow={false} content={t('ui.map.zoomOut')}>
             <Button type="button" variant="transparent" color="gray" shape="circle" size="tiny" className="font-mono" onClick={handleZoomOut}>
               -
             </Button>
-          </Tip>
+          </Tooltip>
           <div className="h-4 w-[1px] bg-foreground/10 mx-0.5" />
-          <Tip text={t('ui.map.zoomReset')}>
-            <Button type="button" variant="transparent" color="gray" size="tiny" className="font-mono text-meta!" onClick={handleResetZoom}>
+          <Tooltip size="xs" arrow={false} content={t('ui.map.zoomReset')}>
+            <Button type="button" variant="transparent" color="gray" size="tiny" className="font-mono text-meta" onClick={handleResetZoom}>
               <span>⟲</span>
               <span>{t('ui.map.fit')}</span>
             </Button>
-          </Tip>
+          </Tooltip>
         </div>
 
         {isPanelCollapsed && (
           <div className="absolute top-4 right-4 z-20">
-            <Tip text={t('ui.map.expandPanel')} placement="left">
+            <Tooltip size="xs" arrow={false} content={t('ui.map.expandPanel')} placement="left">
               <Button type="button" data-testid="open-panel-button" variant="solid" color="gray" size="mini" onClick={() => setIsPanelCollapsed(false)}>
                 <Bot className="w-4 h-4 text-emerald-400" />
                 <span className="font-semibold text-ink-100">{t('ui.map.panel')}</span>
@@ -481,7 +480,7 @@ export function AgentMapCanvas({ onOpenDm, onNewConversation }: { onOpenDm: (age
                   {selectedAgent ? agentMeta(selectedAgent).name : t('ui.swarm')}
                 </span>
               </Button>
-            </Tip>
+            </Tooltip>
           </div>
         )}
 

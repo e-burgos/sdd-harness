@@ -16,7 +16,7 @@ const COLORS: Record<SessionStatus, BadgeColor> = {
 export function StatusBadge({ status }: { status: SessionStatus }) {
   const { t } = useT();
   return (
-    <Badge variant="soft" color={COLORS[status]} className="text-meta!">
+    <Badge variant="soft" color={COLORS[status]} className="text-meta">
       {t(`status.${status}`)}
     </Badge>
   );

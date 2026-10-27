@@ -99,13 +99,16 @@ describe('DocumentViewerModal', () => {
     );
     const modal = screen.getByTestId('document-viewer-modal');
     expect(container.contains(modal)).toBe(false);
-    expect(modal.parentElement).toBe(document.body);
-    expect(modal.className).toContain('fixed');
-    expect(modal.className).toContain('inset-0');
-    expect(modal.className).toContain('items-center');
-    expect(modal.className).toContain('justify-center');
-    expect(modal.firstElementChild?.className).toContain('max-w-4xl');
-    expect(modal.firstElementChild?.className).toContain('max-h-[85vh]');
+    const overlay = modal.parentElement as HTMLElement;
+    expect(overlay.parentElement).toBe(document.body);
+    expect(overlay.className).toContain('fixed');
+    expect(overlay.className).toContain('inset-0');
+    expect(overlay.className).toContain('items-center');
+    expect(overlay.className).toContain('justify-center');
+    expect(modal.getAttribute('role')).toBe('dialog');
+    expect(modal.getAttribute('aria-modal')).toBe('true');
+    expect(modal.getAttribute('aria-labelledby')).toBe('modal-title');
+    expect(modal.firstElementChild?.className).toContain('sm:max-w-4xl');
   });
 
   it('closes with Escape and with a click on the backdrop but not on the panel', () => {
@@ -119,9 +122,11 @@ describe('DocumentViewerModal', () => {
     const modal = screen.getByTestId('document-viewer-modal');
     fireEvent.click(modal.firstElementChild as HTMLElement);
     expect(onClose).not.toHaveBeenCalled();
-    fireEvent.click(modal);
+    const overlay = modal.parentElement as HTMLElement;
+    fireEvent.mouseDown(overlay);
+    fireEvent.click(overlay);
     expect(onClose).toHaveBeenCalledTimes(1);
-    fireEvent.keyDown(window, { key: 'Escape' });
+    fireEvent.keyDown(modal, { key: 'Escape' });
     expect(onClose).toHaveBeenCalledTimes(2);
   });
 

@@ -131,7 +131,7 @@ export function ApprovalCard({ item, onRespond }: { item: Approval; onRespond: R
             </div>
           </div>
           <Input
-            inputClassName="h-auto! sm:h-auto! rounded-md! px-2! py-1.5! text-ui!"
+            inputClassName="h-auto sm:h-auto rounded-md px-2 py-1.5 text-ui"
             placeholder={t('approval.reason')}
             value={reason}
             maxLength={2000}

@@ -1,14 +1,15 @@
 'use client';
 
+import { useId } from 'react';
 import { CircleHelp } from 'lucide-react';
-import { Select, type SelectOption } from '@e-burgos/tucu-ui';
+import { Select, Tooltip, type SelectOption } from '@e-burgos/tucu-ui';
 import { useT } from '@/lib/i18n/i18n';
-import { Tip } from './Tip';
 
 export interface HelpSelectOption {
   value: string;
   label: string;
   disabled?: boolean;
+  group?: string;
 }
 
 export interface HelpSelectProps {
@@ -23,28 +24,32 @@ export interface HelpSelectProps {
 }
 
 const iconRing = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400';
-
-export const groupHeader = (label: string): HelpSelectOption => ({ value: `group:${label}`, label, disabled: true });
+const triggerClasses = 'gap-1.5 rounded-md border border-ink-700 bg-ink-950 text-ink-100 font-normal [&>svg]:size-3';
 
 export function HelpSelect({ label, help, options, value, onChange, disabled, wrapperClassName = '', className }: HelpSelectProps) {
   const { t } = useT();
-  const items = options.map((o) => ({ name: o.label, value: o.value, disabled: o.disabled }));
+  const helpId = useId();
+  const items = options.map((o) => ({ name: o.label, value: o.value, disabled: o.disabled, group: o.group }));
   const selected = items.find((o) => o.value === value) ?? { name: '', value };
   return (
-    <span data-testid="help-select" data-help-select="" className={`relative inline-flex min-w-0 items-center gap-1 ${wrapperClassName}`}>
+    <span data-testid="help-select" className={`relative inline-flex min-w-0 items-center gap-1 ${wrapperClassName}`}>
       <Select
-        size="sm"
-        label={label}
-        helperText={help}
+        size="xs"
+        variant="transparent"
+        aria-label={label}
+        aria-describedby={helpId}
         options={items}
         selectedOption={selected}
         disabled={disabled}
         className={className}
-        onChange={(option: SelectOption) => {
-          if (option.value !== value) onChange(option.value);
-        }}
+        buttonClassName={triggerClasses}
+        listboxClassName="min-w-40"
+        onChange={(option: SelectOption) => onChange(option.value)}
       />
-      <Tip text={help}>
+      <span id={helpId} className="sr-only">
+        {help}
+      </span>
+      <Tooltip content={help} size="xs" arrow={false}>
         <button
           type="button"
           data-testid="help-select-icon"
@@ -53,7 +58,7 @@ export function HelpSelect({ label, help, options, value, onChange, disabled, wr
         >
           <CircleHelp size={14} aria-hidden />
         </button>
-      </Tip>
+      </Tooltip>
     </span>
   );
 }

@@ -1,11 +1,10 @@
 'use client';
 
 import { useEffect, useState, type ReactNode } from 'react';
-import { Card, BasicTable, type TableColumn } from '@e-burgos/tucu-ui';
+import { Badge, Card, BasicTable, type TableColumn } from '@e-burgos/tucu-ui';
 import { Globe, Folder, ScrollText } from 'lucide-react';
 import { useT } from '@/lib/i18n/i18n';
 import { useBridge, useStudio } from '../BridgeProvider';
-import { StatusPill, type PillTone } from '../StatusPill';
 import { SubprojectIcon, classifySubproject, type SubprojectClassification } from './SubprojectIcon';
 
 export interface DiscoveredSubproject extends SubprojectClassification {
@@ -29,7 +28,7 @@ const typeKey = {
 
 type RoadmapRow = { id: string; title: string; module: string; status: string };
 
-const statusTone = (status: string): PillTone => (status === 'completed' ? 'success' : status === 'in-progress' ? 'info' : 'neutral');
+const statusTone = (status: string): 'success' | 'info' | 'neutral' => (status === 'completed' ? 'success' : status === 'in-progress' ? 'info' : 'neutral');
 
 function KpiCard({ label, value, sub, subClass }: { label: string; value: ReactNode; sub: string; subClass: string }) {
   return (
@@ -178,9 +177,9 @@ export function EcosystemDashboard() {
       key: 'status',
       label: t('ui.eco.col.status'),
       render: (v) => (
-        <StatusPill tone={statusTone(String(v))} className={`uppercase ${v === 'in-progress' ? 'animate-pulse' : ''}`}>
+        <Badge variant="soft" size="tiny" shape="pill" tone={statusTone(String(v))} className={`h-auto gap-1.5 px-2 py-0.5 font-mono text-micro uppercase ${v === 'in-progress' ? 'animate-pulse' : ''}`}>
           {String(v)}
-        </StatusPill>
+        </Badge>
       ),
     },
   ];

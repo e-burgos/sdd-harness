@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, useTheme } from '@e-burgos/tucu-ui';
+import { Badge, Button, Tooltip, useTheme } from '@e-burgos/tucu-ui';
 import React, { useState } from 'react';
 import { MessageSquare, Network, Globe, Activity, Sun, Moon } from 'lucide-react';
 import { deriveConversationGate, gateLabel, type ConversationGate } from '@/lib/conversation-gate';
@@ -10,8 +10,6 @@ import type { StudioView } from '@/lib/use-studio-view';
 import { useStudio } from './BridgeProvider';
 import { GateStatusModal } from './GateStatusModal';
 import { SegmentedControl } from './SegmentedControl';
-import { StatusPill } from './StatusPill';
-import { Tip } from './Tip';
 import { AgentAvatar } from './workspace/AgentAvatar';
 
 interface StudioHeaderProps {
@@ -53,7 +51,7 @@ export function StudioHeader({ activeView, onSelectView }: StudioHeaderProps) {
           <AgentAvatar agent="sdd-orchestrator" size={24} showBadge={false} />
           <span className="font-semibold text-sm tracking-tight text-ink-100 flex items-center gap-1.5">
             SDD Studio
-            <StatusPill tone="success">v0.16</StatusPill>
+            <Badge variant="soft" size="tiny" shape="pill" tone="success" className="h-auto gap-1.5 px-2 py-0.5 font-mono text-micro">v0.16</Badge>
           </span>
         </div>
         {snapshot?.project && (
@@ -102,21 +100,21 @@ export function StudioHeader({ activeView, onSelectView }: StudioHeaderProps) {
         </button>
 
         {/* Working Swarm Presence Counter */}
-        <Tip text={t('ui.header.activeHint', { n: workingAgents.length })}>
-          <StatusPill tone={workingAgents.length > 0 ? 'info' : 'neutral'} size="meta" data-testid="presence-pill" className={`px-2.5! py-1! ${workingAgents.length > 0 ? 'animate-pulse' : ''}`}>
+        <Tooltip size="xs" arrow={false} content={t('ui.header.activeHint', { n: workingAgents.length })}>
+          <Badge variant="soft" size="tiny" shape="pill" tone={workingAgents.length > 0 ? 'info' : 'neutral'} data-testid="presence-pill" className={`h-auto gap-1.5 px-2.5 py-1 font-mono text-meta ${workingAgents.length > 0 ? 'animate-pulse' : ''}`}>
             <span className={`h-1.5 w-1.5 rounded-full ${workingAgents.length > 0 ? 'bg-sky-400' : 'bg-emerald-400'}`} />
             <span>{workingAgents.length > 0 ? t('ui.header.activeCount', { n: workingAgents.length }) : t('ui.header.ready')}</span>
-          </StatusPill>
-        </Tip>
+          </Badge>
+        </Tooltip>
 
         {/* Language Toggle */}
-        <Tip text={t('ui.header.langToggle')}>
+        <Tooltip size="xs" arrow={false} content={t('ui.header.langToggle')}>
           <Button type="button" onClick={() => setLang(lang === 'es' ? 'en' : 'es')} variant="transparent" color="gray" size="tiny" className="font-mono uppercase">
             {lang}
           </Button>
-        </Tip>
+        </Tooltip>
 
-        <Tip text={mode === 'dark' ? t('mode.toLight') : t('mode.toDark')}>
+        <Tooltip size="xs" arrow={false} content={mode === 'dark' ? t('mode.toLight') : t('mode.toDark')}>
           <Button
             type="button"
             data-testid="mode-toggle"
@@ -129,7 +127,7 @@ export function StudioHeader({ activeView, onSelectView }: StudioHeaderProps) {
           >
             {mode === 'dark' ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
           </Button>
-        </Tip>
+        </Tooltip>
       </div>
       <GateStatusModal open={statusOpen} onClose={() => setStatusOpen(false)} thread={thread} view={view} gate={gate} snapshot={snapshot} />
     </header>

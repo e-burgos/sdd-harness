@@ -45,7 +45,7 @@ export function ApiKeyField() {
           value={value}
           onChange={(e) => setValue(e.target.value)}
           placeholder="sk-ant-…"
-          inputClassName="h-auto! sm:h-auto! rounded-md! px-2! py-1! pr-9! text-ui!"
+          inputClassName="h-auto sm:h-auto rounded-md px-2 py-1 pr-9 text-ui"
         />
       </label>
       <Checkbox
@@ -53,7 +53,7 @@ export function ApiKeyField() {
         checked={remember}
         onChange={(e) => setRemember(e.target.checked)}
         label={t('apikey.remember')}
-        labelClassName="text-meta! text-ink-300"
+        labelClassName="text-meta text-ink-300"
       />
       {apiKeySource && <p>{t(apiKeySource === 'saved' ? 'apikey.stored.saved' : 'apikey.stored.tab')}</p>}
       <p>{t('apikey.privacy')}</p>

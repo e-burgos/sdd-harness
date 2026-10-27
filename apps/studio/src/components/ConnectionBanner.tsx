@@ -16,7 +16,7 @@ export function ConnectionBanner({
   const { t } = useT();
   if (syncError) {
     return (
-      <Alert variant="error" className="flex items-center justify-center gap-3 rounded-none! border-x-0! border-t-0! px-4! py-1.5! text-xs! shadow-none!">
+      <Alert variant="error" className="flex items-center justify-center gap-3 rounded-none border-x-0 border-t-0 px-4! py-1.5! text-xs shadow-none">
         <span>{t('conn.syncError', { message: syncError })}</span>
         {onRetry && (
           <Button type="button" variant="ghost" color="danger" size="tiny" onClick={onRetry}>

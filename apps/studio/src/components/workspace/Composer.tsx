@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, Textarea } from '@e-burgos/tucu-ui';
+import { Button, Textarea, Tooltip } from '@e-burgos/tucu-ui';
 import { Clock, Paperclip, Send } from 'lucide-react';
 import {
   DEFAULT_AGENT,
@@ -41,7 +41,6 @@ import { useAttachmentDraft } from '@/lib/use-attachment-draft';
 import { useMentionMenu } from '@/lib/use-mention-menu';
 import { useBridge, useStudio } from '../BridgeProvider';
 import { HelpSelect } from '../HelpSelect';
-import { Tip } from '../Tip';
 import { AttachmentTray } from './AttachmentTray';
 import { MentionMenu } from './MentionMenu';
 import { ModeSelectors } from './ModeSelectors';
@@ -200,7 +199,7 @@ export function ComposerView(p: ComposerViewProps) {
           <Textarea
             {...(mentionsOn ? menu.comboboxProps : {})}
             variant="transparent"
-            inputClassName="min-h-[44px]! sm:min-h-[44px]! resize-none overflow-y-auto rounded-none! px-3! py-2! focus-visible:outline-0!"
+            inputClassName="min-h-[44px] sm:min-h-[44px] resize-none overflow-y-auto rounded-none px-3 py-2 focus-visible:outline-0"
             aria-label={t('composer.placeholder')}
             placeholder={t('composer.placeholder')}
             ref={box}
@@ -269,7 +268,7 @@ export function ComposerView(p: ComposerViewProps) {
                     if (files.length > 0) p.onFiles?.(files);
                   }}
                 />
-                <Tip text={t('attach.add')}>
+                <Tooltip size="xs" arrow={false} content={t('attach.add')}>
                   <Button
                     type="button"
                     variant="transparent"
@@ -282,11 +281,11 @@ export function ComposerView(p: ComposerViewProps) {
                   >
                     <Paperclip size={16} />
                   </Button>
-                </Tip>
+                </Tooltip>
               </>
             )}
             <div className="ml-auto">
-              <Tip text={p.queueing ? t('composer.queueHint') : t('composer.send')}>
+              <Tooltip size="xs" arrow={false} content={p.queueing ? t('composer.queueHint') : t('composer.send')}>
                 <Button
                   type="button"
                   shape={p.queueing ? 'rounded' : 'circle'}
@@ -298,7 +297,7 @@ export function ComposerView(p: ComposerViewProps) {
                   {p.queueing ? <Clock size={16} /> : <Send size={16} />}
                   {p.queueing && <span className="pr-1 text-xs font-medium">{t('composer.queue')}</span>}
                 </Button>
-              </Tip>
+              </Tooltip>
             </div>
           </div>
         </div>

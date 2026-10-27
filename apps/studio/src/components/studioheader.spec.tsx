@@ -84,7 +84,7 @@ describe('StudioHeader gate chip', () => {
     expect(screen.queryByTestId('gate-status-modal')).toBeNull();
     fireEvent.click(screen.getByTestId('gate-chip'));
     expect(screen.getByTestId('gate-status-gate-label')).toHaveTextContent('FIX GATE FIX-e-burgos-005-006');
-    fireEvent.keyDown(window, { key: 'Escape' });
+    fireEvent.keyDown(screen.getByTestId('gate-status-modal'), { key: 'Escape' });
     expect(screen.queryByTestId('gate-status-modal')).toBeNull();
   });
 

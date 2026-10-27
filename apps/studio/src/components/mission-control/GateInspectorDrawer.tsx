@@ -1,12 +1,11 @@
 'use client';
 
-import { Button } from '@e-burgos/tucu-ui';
+import { Button, Tooltip } from '@e-burgos/tucu-ui';
 import React, { useState } from 'react';
 import { X, Check, ArrowRight } from 'lucide-react';
 import { getGateMeta, type GateId } from '@/lib/gates';
 import { agentMeta } from '@/lib/agents';
 import { useT } from '@/lib/i18n/i18n';
-import { Tip } from '../Tip';
 import { AgentAvatar } from '../workspace/AgentAvatar';
 import { GateIcon } from './GateIcon';
 
@@ -63,11 +62,11 @@ export function GateInspectorDrawer({
             <p className="text-xs text-ink-300 font-sans mt-0.5">{gate.subtitle}</p>
           </div>
         </div>
-        <Tip text={t('ui.gate.close')}>
+        <Tooltip size="xs" arrow={false} content={t('ui.gate.close')}>
           <Button type="button" variant="transparent" color="gray" shape="circle" size="tiny" onClick={onClose} aria-label={t('ui.gate.close')}>
             <X className="w-4 h-4" />
           </Button>
-        </Tip>
+        </Tooltip>
       </div>
 
       <div className="py-3 space-y-4 flex-1">

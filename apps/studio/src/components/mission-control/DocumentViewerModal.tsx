@@ -1,15 +1,13 @@
 'use client';
 
-import { Button, Skeleton } from '@e-burgos/tucu-ui';
+import { Button, Modal, Skeleton, Tooltip } from '@e-burgos/tucu-ui';
 import React, { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import { Code2, ClipboardList, Zap, FileText, Check, Copy, Link2, X } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { AgentGeneratedDocument } from '@/lib/agent-documents';
 import { useT } from '@/lib/i18n/i18n';
 import { SegmentedControl } from '../SegmentedControl';
-import { Tip } from '../Tip';
 import { useBridge } from '../BridgeProvider';
 
 export interface DocumentViewerModalProps {
@@ -64,18 +62,9 @@ export function DocumentViewerModal({ document: doc, onClose }: DocumentViewerMo
     };
   }, [doc, client]);
 
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
-
-  if (!doc) return null;
-
-  const isMarkdown = doc.path.endsWith('.md');
-  const isCodeOrJson = doc.path.endsWith('.json') || doc.path.endsWith('.ts') || doc.path.endsWith('.tsx');
+  const path = doc?.path ?? '';
+  const isMarkdown = path.endsWith('.md');
+  const isCodeOrJson = path.endsWith('.json') || path.endsWith('.ts') || path.endsWith('.tsx');
 
   const handleCopyContent = () => {
     void navigator.clipboard.writeText(content);
@@ -84,139 +73,145 @@ export function DocumentViewerModal({ document: doc, onClose }: DocumentViewerMo
   };
 
   const handleCopyPath = () => {
-    void navigator.clipboard.writeText(doc.path);
+    void navigator.clipboard.writeText(path);
     setPathCopied(true);
     setTimeout(() => setPathCopied(false), 2000);
   };
 
-  return createPortal(
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label={doc.name}
-      data-testid="document-viewer-modal"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
+  return (
+    <Modal
+      isOpen={!!doc}
+      setIsOpen={(next) => {
+        if (!next) onClose();
       }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-ink-950/80 backdrop-blur-md animate-in fade-in duration-200"
-    >
-      <div className="relative w-full max-w-4xl max-h-[85vh] rounded-2xl border border-foreground/15 bg-ink-950/95 shadow-2xl backdrop-blur-2xl flex flex-col overflow-hidden select-text text-ink-100">
-        <div
-          data-testid="document-viewer-header"
-          className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3 px-5 py-4 border-b border-foreground/10 shrink-0 bg-foreground/5"
-        >
-          <div className="flex items-start gap-3 min-w-0 flex-1 basis-64">
-            <div className="h-10 w-10 rounded-xl bg-foreground/5 border border-foreground/10 flex items-center justify-center shrink-0">
-              {doc.type === 'code' ? (
-                <Code2 className="w-5 h-5 text-emerald-400" />
-              ) : doc.type === 'plan' || doc.type === 'wbs' ? (
-                <ClipboardList className="w-5 h-5 text-purple-400" />
-              ) : doc.type === 'fix' ? (
-                <Zap className="w-5 h-5 text-amber-400" />
-              ) : (
-                <FileText className="w-5 h-5 text-sky-400" />
-              )}
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2 min-w-0">
-                <h2 className="text-base font-bold text-ink-100 truncate font-sans min-w-0">{doc.name}</h2>
-                <span
-                  className={`px-1.5 py-0.5 rounded text-micro font-mono font-extrabold uppercase shrink-0 ${
-                    doc.type === 'spec'
-                      ? 'bg-sky-500/20 text-sky-300 border border-sky-500/40'
-                      : doc.type === 'plan' || doc.type === 'wbs'
-                        ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
-                        : doc.type === 'code'
-                          ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                          : doc.type === 'context'
-                            ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-                            : 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
-                  }`}
-                >
-                  {doc.type}
-                </span>
-                <span className="text-micro font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20 shrink-0">
-                  {doc.status}
-                </span>
-              </div>
-              <p
-                data-testid="document-viewer-path"
-                className="mt-0.5 truncate text-xs text-ink-500 font-mono"
-                title={doc.path}
-              >
-                {doc.path}
-              </p>
-            </div>
-          </div>
-
+      hideButtons
+      hideCloseButton
+      size="xl"
+      data-testid="document-viewer-modal"
+      className="select-text rounded-2xl border border-foreground/15 bg-ink-950/95 text-ink-100 shadow-2xl backdrop-blur-2xl sm:max-w-4xl"
+      titleContainerClassName="border-foreground/10 [&>span]:min-w-0 [&>span]:flex-1"
+      contentClassName="max-h-[calc(85vh-6rem)] bg-ink-900/30 p-6"
+      header={
+        doc && (
           <div
-            data-testid="document-viewer-actions"
-            className="flex flex-wrap items-center justify-end gap-2 shrink-0 ml-auto"
+            data-testid="document-viewer-header"
+            className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3"
           >
-            {isMarkdown && (
-              <SegmentedControl<'rendered' | 'raw'>
-                semantics="radio"
-                ariaLabel={t('segment.docMode')}
-                className="font-mono"
-                value={viewMode}
-                onChange={setViewMode}
-                options={[
-                  { id: 'rendered', label: t('ui.doc.rendered') },
-                  { id: 'raw', label: t('ui.doc.raw') },
-                ]}
-              />
-            )}
-
-            <Tip text={t('ui.doc.copyAll')}>
-              <Button type="button" onClick={handleCopyContent} variant="transparent" color="gray" size="tiny" className="font-mono whitespace-nowrap">
-                {copied ? (
-                  <>
-                    <Check className="w-3 h-3 text-emerald-400" />
-                    <span className="text-emerald-400">{t('ui.copied')}</span>
-                  </>
+            <div className="flex items-start gap-3 min-w-0 flex-1 basis-64">
+              <div className="h-10 w-10 rounded-xl bg-foreground/5 border border-foreground/10 flex items-center justify-center shrink-0">
+                {doc.type === 'code' ? (
+                  <Code2 className="w-5 h-5 text-emerald-400" />
+                ) : doc.type === 'plan' || doc.type === 'wbs' ? (
+                  <ClipboardList className="w-5 h-5 text-purple-400" />
+                ) : doc.type === 'fix' ? (
+                  <Zap className="w-5 h-5 text-amber-400" />
                 ) : (
-                  <>
-                    <Copy className="w-3 h-3" />
-                    <span>{t('ui.copy')}</span>
-                  </>
+                  <FileText className="w-5 h-5 text-sky-400" />
                 )}
-              </Button>
-            </Tip>
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 min-w-0">
+                  <h2 className="text-base font-bold text-ink-100 truncate font-sans min-w-0">{doc.name}</h2>
+                  <span
+                    className={`px-1.5 py-0.5 rounded text-micro font-mono font-extrabold uppercase shrink-0 ${
+                      doc.type === 'spec'
+                        ? 'bg-sky-500/20 text-sky-300 border border-sky-500/40'
+                        : doc.type === 'plan' || doc.type === 'wbs'
+                          ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
+                          : doc.type === 'code'
+                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                            : doc.type === 'context'
+                              ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                              : 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
+                    }`}
+                  >
+                    {doc.type}
+                  </span>
+                  <span className="text-micro font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20 shrink-0">
+                    {doc.status}
+                  </span>
+                </div>
+                <p
+                  data-testid="document-viewer-path"
+                  className="mt-0.5 truncate text-xs text-ink-500 font-mono"
+                  title={doc.path}
+                >
+                  {doc.path}
+                </p>
+              </div>
+            </div>
 
-            <Tip text={t('ui.doc.copyPath')}>
-              <Button type="button" onClick={handleCopyPath} data-testid="copy-path-button" variant="transparent" color="gray" size="tiny" className="font-mono whitespace-nowrap">
-                {pathCopied ? (
-                  <>
-                    <Check className="w-3 h-3 text-emerald-400" />
-                    <span className="text-emerald-400">{t('ui.doc.pathCopied')}</span>
-                  </>
-                ) : (
-                  <>
-                    <Link2 className="w-3 h-3" />
-                    <span>{t('ui.doc.copyPath')}</span>
-                  </>
-                )}
-              </Button>
-            </Tip>
+            <div
+              data-testid="document-viewer-actions"
+              className="flex flex-wrap items-center justify-end gap-2 shrink-0 ml-auto"
+            >
+              {isMarkdown && (
+                <SegmentedControl<'rendered' | 'raw'>
+                  semantics="radio"
+                  ariaLabel={t('segment.docMode')}
+                  className="font-mono"
+                  value={viewMode}
+                  onChange={setViewMode}
+                  options={[
+                    { id: 'rendered', label: t('ui.doc.rendered') },
+                    { id: 'raw', label: t('ui.doc.raw') },
+                  ]}
+                />
+              )}
 
-            <span aria-hidden="true" data-testid="document-viewer-divider" className="h-6 w-px bg-foreground/15 shrink-0" />
+              <Tooltip content={t('ui.doc.copyAll')} size="xs" arrow={false} contentClassName="max-w-64 text-left">
+                <Button type="button" onClick={handleCopyContent} variant="transparent" color="gray" size="tiny" className="font-mono whitespace-nowrap">
+                  {copied ? (
+                    <>
+                      <Check className="w-3 h-3 text-emerald-400" />
+                      <span className="text-emerald-400">{t('ui.copied')}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3 h-3" />
+                      <span>{t('ui.copy')}</span>
+                    </>
+                  )}
+                </Button>
+              </Tooltip>
 
-            <Tip text={t('ui.doc.closeHint')}>
-              <Button type="button" onClick={onClose} data-testid="modal-close-button" aria-label={t('ui.doc.closeAria')} variant="transparent" color="gray" shape="circle" size="mini">
-                <X className="w-4 h-4" />
-              </Button>
-            </Tip>
+              <Tooltip content={t('ui.doc.copyPath')} size="xs" arrow={false} contentClassName="max-w-64 text-left">
+                <Button type="button" onClick={handleCopyPath} data-testid="copy-path-button" variant="transparent" color="gray" size="tiny" className="font-mono whitespace-nowrap">
+                  {pathCopied ? (
+                    <>
+                      <Check className="w-3 h-3 text-emerald-400" />
+                      <span className="text-emerald-400">{t('ui.doc.pathCopied')}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Link2 className="w-3 h-3" />
+                      <span>{t('ui.doc.copyPath')}</span>
+                    </>
+                  )}
+                </Button>
+              </Tooltip>
+
+              <span aria-hidden="true" data-testid="document-viewer-divider" className="h-6 w-px bg-foreground/15 shrink-0" />
+
+              <Tooltip content={t('ui.doc.closeHint')} size="xs" arrow={false} contentClassName="max-w-64 text-left">
+                <Button type="button" onClick={onClose} data-testid="modal-close-button" aria-label={t('ui.doc.closeAria')} variant="transparent" color="gray" shape="circle" size="mini">
+                  <X className="w-4 h-4" />
+                </Button>
+              </Tooltip>
+            </div>
           </div>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-6 bg-ink-900/30">
+        )
+      }
+    >
+      {doc && (
+        <>
           {isLoading ? (
             <div className="space-y-3 py-6">
-              <Skeleton animation="pulse" height="1.5rem" width="33%" className="bg-foreground/10!" />
-              <Skeleton animation="pulse" height="1rem" className="bg-foreground/5!" />
-              <Skeleton animation="pulse" height="1rem" width="83%" className="bg-foreground/5!" />
-              <Skeleton animation="pulse" height="1rem" width="66%" className="bg-foreground/5!" />
-              <Skeleton animation="pulse" height="8rem" className="mt-4 bg-foreground/5!" />
+              <Skeleton animation="pulse" height="1.5rem" width="33%" className="bg-foreground/10" />
+              <Skeleton animation="pulse" height="1rem" className="bg-foreground/5" />
+              <Skeleton animation="pulse" height="1rem" width="83%" className="bg-foreground/5" />
+              <Skeleton animation="pulse" height="1rem" width="66%" className="bg-foreground/5" />
+              <Skeleton animation="pulse" height="8rem" className="mt-4 bg-foreground/5" />
             </div>
           ) : loadFailed ? (
             <p data-testid="document-load-error" className="rounded-xl border border-rose-500/30 bg-rose-950/30 p-4 font-mono text-xs text-rose-200">
@@ -231,9 +226,8 @@ export function DocumentViewerModal({ document: doc, onClose }: DocumentViewerMo
               <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
             </div>
           )}
-        </div>
-      </div>
-    </div>,
-    document.body,
+        </>
+      )}
+    </Modal>
   );
 }

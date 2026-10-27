@@ -1,13 +1,12 @@
 'use client';
 
-import { Badge, Button, Checkbox, Input, Radio } from '@e-burgos/tucu-ui';
+import { Badge, Button, Checkbox, Input, Radio, Tooltip } from '@e-burgos/tucu-ui';
 import { MessageCircleQuestion } from 'lucide-react';
 import { useState } from 'react';
 import type { QuestionAnswer } from '@sdd-studio/protocol';
 import { agentMeta } from '@/lib/agents';
 import { bridgeErrorText } from '@/lib/bridge/error-text';
 import { useT } from '@/lib/i18n/i18n';
-import { Tip } from '../Tip';
 import type { TimelineItem } from '@/lib/store/timeline';
 
 type QuestionItem = Extract<TimelineItem, { kind: 'question' }>;
@@ -23,7 +22,7 @@ interface Choice {
 }
 
 const EMPTY: Choice = { labels: [], otherOn: false, otherText: '' };
-const choiceRow = 'cursor-pointer items-start! rounded-md px-2 py-1 hover:bg-ink-800';
+const choiceRow = 'cursor-pointer items-start rounded-md px-2 py-1 hover:bg-ink-800';
 
 export const valuesOf = (choice: Choice): string[] => [...choice.labels, ...(choice.otherOn && choice.otherText.trim() ? [choice.otherText.trim()] : [])];
 
@@ -66,7 +65,7 @@ export function QuestionForm({ item, onAnswer }: { item: QuestionItem; onAnswer:
           return (
             <fieldset key={group} disabled={!pending || sending} className="min-w-0 space-y-2">
               <legend className="mb-1 text-sm text-ink-100">
-                {q.header && <Badge variant="soft" color="gray" className="mr-2 text-micro! uppercase tracking-wide">{q.header}</Badge>}
+                {q.header && <Badge variant="soft" color="gray" className="mr-2 text-micro uppercase tracking-wide">{q.header}</Badge>}
                 {q.question}
                 {q.multiSelect && <span className="ml-2 text-xs text-ink-400">{t('question.multiHint')}</span>}
               </legend>
@@ -120,7 +119,7 @@ export function QuestionForm({ item, onAnswer }: { item: QuestionItem; onAnswer:
                                 value={choice.otherText}
                                 onChange={(e) => change(index, (c) => ({ ...c, otherText: e.target.value }))}
                                 className="mt-1 w-full"
-                                inputClassName="h-auto! sm:h-auto! rounded-md! px-2! py-1! text-ui!"
+                                inputClassName="h-auto sm:h-auto rounded-md px-2 py-1 text-ui"
                               />
                             )}
                           </>
@@ -143,11 +142,11 @@ export function QuestionForm({ item, onAnswer }: { item: QuestionItem; onAnswer:
             {t('question.send')}
           </Button>
           <div className="ml-auto">
-            <Tip text={t('help.question.decline')}>
+            <Tooltip size="xs" arrow={false} content={t('help.question.decline')}>
               <Button type="button" variant="ghost" color="gray" size="mini" disabled={sending} onClick={() => void submit(true)}>
                 {t('question.decline')}
               </Button>
-            </Tip>
+            </Tooltip>
           </div>
         </div>
       ) : (
