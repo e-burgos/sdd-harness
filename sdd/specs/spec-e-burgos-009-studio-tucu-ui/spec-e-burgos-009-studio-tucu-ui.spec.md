@@ -1,6 +1,6 @@
 # SPEC-e-burgos-009: Studio adopta tucu-ui (tema y primitivas)
 
-> Estado: **in-progress** — `cycle-01` a `cycle-04` cerrados el 2026-10-27; `cycle-05` abierto el 2026-10-27 (flow `lite`): adopción de tucu-ui 3.6.0 y base del sidebar doble.
+> Estado: **completed** — `cycle-01` a `cycle-05` cerrados el 2026-10-27 (flow `lite`). Pendiente: sidebar doble estilo Slack y adopción de tucu-ui 3.7.0 (SplitModal).
 
 ## Resumen Ejecutivo
 

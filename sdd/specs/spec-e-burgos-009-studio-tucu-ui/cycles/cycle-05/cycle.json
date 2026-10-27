@@ -10,20 +10,123 @@
   "flow": "lite",
   "objectives": [
     "Adoptar tucu-ui 3.6.0 sin ajustes propios que la versión resuelve (US-013)",
-    "Base para el sidebar doble estilo Slack"
+    "Base para el sidebar doble estilo Slack (su implementación pasa a un ciclo propio)"
   ],
-  "status": "in-progress",
+  "status": "completed",
   "started_at": "2026-10-27",
-  "completed_at": null,
+  "completed_at": "2026-10-27",
   "documents": {
     "plan": "sdd/specs/spec-e-burgos-009-studio-tucu-ui/cycles/cycle-05/plan.md",
     "tasks": "sdd/specs/spec-e-burgos-009-studio-tucu-ui/cycles/cycle-05/tasks.json"
   },
   "artifacts": [],
-  "metrics": null,
+  "metrics": {
+    "tasks_total": 2,
+    "tasks_completed": 2,
+    "tasks_skipped": 0,
+    "story_points": 7,
+    "files_created": [
+      "apps/studio/src/types/tucu-ui-next.d.ts"
+    ],
+    "files_modified": [
+      "apps/studio/package.json",
+      "apps/studio/src/app/globals.css",
+      "apps/studio/src/app/layout.tsx",
+      "apps/studio/src/components/ConnectionBanner.tsx",
+      "apps/studio/src/components/GateStatusModal.tsx",
+      "apps/studio/src/components/HelpSelect.tsx",
+      "apps/studio/src/components/StudioThemeProvider.tsx",
+      "apps/studio/src/components/mission-control/DocumentViewerModal.tsx",
+      "apps/studio/src/components/mission-control/EcosystemDashboard.tsx",
+      "apps/studio/src/components/mission-control/documentviewermodal.spec.tsx",
+      "apps/studio/src/components/workspace/NavParts.tsx",
+      "pnpm-lock.yaml"
+    ],
+    "files_deleted": [],
+    "usage": {
+      "tokens_in": 244209,
+      "tokens_out": 46155,
+      "approx": true,
+      "source": "declared-estimate",
+      "by_tier": {
+        "claude/opus": {
+          "tokens_in": 130000,
+          "tokens_out": 26000,
+          "approx": true,
+          "source": "declared-estimate"
+        },
+        "claude/sonnet": {
+          "tokens_in": 114209,
+          "tokens_out": 20155,
+          "approx": true,
+          "source": "declared-estimate"
+        }
+      },
+      "by_agent": [
+        {
+          "agent": "orchestrator",
+          "label": "solo",
+          "provider_model": "claude/opus",
+          "effort": "medium",
+          "tokens_in": 70000,
+          "tokens_out": 16000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-27"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-001",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 114209,
+          "tokens_out": 20155,
+          "approx": true,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-10-27"
+        },
+        {
+          "agent": "reviewer",
+          "label": "TASK-002",
+          "provider_model": "claude/opus",
+          "effort": "medium",
+          "tokens_in": 60000,
+          "tokens_out": 10000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-27"
+        }
+      ]
+    }
+  },
   "tables_created": [],
   "endpoints_implemented": [],
   "components_created": [],
-  "issues_found": [],
-  "reviewer_report": null
+  "issues_found": [
+    "decisión: ThemeModeScript defaultMode system en el head reemplaza el script propio; StudioThemeProvider queda solo para cargar typography-tokens",
+    "decisión: el sidebar doble estilo Slack se diseña en este ciclo (mockups mostrados al dev) pero se implementa en un ciclo propio cuando el dev cierre dos decisiones",
+    "diferencia visual aceptada: BasicTable snug (13px, padding menor), Select neutral (radio y borde del tema), hint de cierre del visor como title nativo",
+    "flaky: watcher.spec.ts del bridge (catálogo .claude) cortó por tiempo una vez con builds en paralelo; pasa al re-correr, sin cambios en el bridge",
+    "fricción tucu-ui 69-75 (enviadas): ThemeModeScript sin tipo en next/index.d.ts, contenido de Modal con p-[8px] mt-[16px] por defecto, cierre de Modal sin Tooltip y fuera del área de acciones del header, BasicTable snug sin tokens de padding y fuente, Select neutral sin token de borde"
+  ],
+  "reviewer_report": {
+    "approved": true,
+    "date": "2026-10-27",
+    "ca_results": {
+      "US-013": "PASS con excepciones - 3.6.0 exacta; ThemeModeScript y defaultMode system; modales con overlayClassName (fondo oscuro con blur verificado), closeButtonProps, headerClassName, maxWidth/maxHeight; Alert compact sin !; BasicTable snug con tokens --tucu-table-* (sin reglas data-tucu); Select neutral y Escape que cierra; diferencias menores de tabla y select aceptadas y reportadas"
+    },
+    "tests": {
+      "sdd:validate": "OK",
+      "build": "pnpm build exit 0",
+      "typecheck": "pnpm typecheck exit 0",
+      "suite": "protocol 103/103, cli 202 pass (9 skipped), studio-bridge 675 pass (2 skipped, re-corrida tras un timeout intermitente del watcher), studio 708/708",
+      "e2e": "apps/studio e2e 8/8 PASS contra dist/web recompilado"
+    },
+    "notes": "Aprobado por el actor único del flow lite (opus/medium); TASK-001 por subagente sonnet/medium. Revisión visual en oscuro del modal de gates y de Ecosistema. En paralelo se investigó el sidebar de Slack en su sitio y se mostraron dos mockups del sidebar doble.",
+    "follow_ups": [
+      "Ciclo del sidebar doble estilo Slack con canales #general, #specs y #fixes con resumen",
+      "Adoptar tucu-ui 3.7.0: SplitModal y API nueva de Select",
+      "Borrar src/types/tucu-ui-next.d.ts cuando tucu-ui publique el tipo de ThemeModeScript"
+    ]
+  }
 }
