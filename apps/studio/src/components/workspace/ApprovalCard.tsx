@@ -1,5 +1,6 @@
 'use client';
 
+import { Button } from '@e-burgos/tucu-ui';
 import { ShieldAlert } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { agentMeta } from '@/lib/agents';
@@ -77,9 +78,9 @@ export function ApprovalCard({ item, onRespond }: { item: Approval; onRespond: R
         {item.summary}
       </code>
       {longSummary && (
-        <button type="button" aria-expanded={summaryExpanded} className="mt-1 text-xs text-ink-300 hover:text-ink-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" onClick={() => setSummaryExpanded((v) => !v)}>
+        <Button type="button" variant="transparent" color="gray" size="tiny" aria-expanded={summaryExpanded} onClick={() => setSummaryExpanded((v) => !v)}>
           {summaryExpanded ? t('approval.summary.less') : t('approval.summary.more')}
-        </button>
+        </Button>
       )}
       {item.gateWarning && <p className="mt-2 rounded-md bg-roseish/10 p-2 text-xs text-roseish">{item.gateWarning}</p>}
       {item.diff && (
@@ -108,25 +109,27 @@ export function ApprovalCard({ item, onRespond }: { item: Approval; onRespond: R
       {pending ? (
         <div className="mt-3 space-y-2">
           <div className="flex flex-wrap items-center gap-2">
-            <button className={`rounded-md bg-accent-500 ${ring} px-3 py-1.5 text-sm font-medium text-ink-950 hover:bg-accent-400`} disabled={sending} onClick={() => void send('allow', 'once', undefined)}>
+            <Button type="button" size="mini" disabled={sending} onClick={() => void send('allow', 'once', undefined)}>
               {t('approval.allow')}
-            </button>
+            </Button>
             {rule && (
-              <button
-                className={`rounded-md border border-ink-700 px-3 py-1.5 text-sm hover:bg-ink-800 ${ring}`}
+              <Button
+                type="button"
+                variant="ghost"
+                color="gray"
+                size="mini"
                 aria-describedby={ruleHintId}
                 disabled={sending}
                 onClick={() => void send('allow', 'thread', undefined)}
               >
                 {t('approval.always')}
-              </button>
+              </Button>
             )}
-            <button
-              className={`ml-auto rounded-md border border-roseish/50 px-3 py-1.5 text-sm text-roseish hover:bg-roseish/10 ${ring}`}
-              disabled={sending} onClick={deny}
-            >
-              {t('approval.deny')}
-            </button>
+            <div className="ml-auto">
+              <Button type="button" variant="ghost" color="danger" size="mini" disabled={sending} onClick={deny}>
+                {t('approval.deny')}
+              </Button>
+            </div>
           </div>
           <input
             className={`block w-full min-w-0 rounded-md border border-ink-700 bg-ink-950 px-2 py-1.5 text-sm ${ring}`}

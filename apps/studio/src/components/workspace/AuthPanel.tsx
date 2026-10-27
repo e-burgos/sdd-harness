@@ -1,5 +1,6 @@
 'use client';
 
+import { Button } from '@e-burgos/tucu-ui';
 import { useId, useState, type KeyboardEvent } from 'react';
 import { KeyRound, LogIn, LogOut, RefreshCw, ExternalLink } from 'lucide-react';
 import type { AuthPreference } from '@sdd-studio/protocol';
@@ -38,21 +39,21 @@ function SubscriptionTab({ active }: { active: boolean }) {
         <div className="flex flex-col gap-2 rounded border border-ink-700 p-2">
           <p>{t('auth.sub.confirmLogout')}</p>
           <div className="flex gap-2">
-            <button type="button" disabled={busy} className={`rounded bg-accent-dim px-2 py-1 text-accent-300 ${ring}`} onClick={() => { setConfirming(false); void logout(); }}>{t('auth.sub.confirm')}</button>
-            <button type="button" className={`rounded px-2 py-1 hover:text-ink-100 ${ring}`} onClick={() => setConfirming(false)}>{t('apikey.cancel')}</button>
+            <Button type="button" size="tiny" disabled={busy} onClick={() => { setConfirming(false); void logout(); }}>{t('auth.sub.confirm')}</Button>
+            <Button type="button" variant="transparent" color="gray" size="tiny" onClick={() => setConfirming(false)}>{t('apikey.cancel')}</Button>
           </div>
         </div>
       ) : (
         <div className="flex flex-wrap gap-2">
           {state !== 'pending' && (
-            <button type="button" disabled={busy} className={`inline-flex items-center gap-1 rounded bg-accent-dim px-2 py-1 text-accent-300 ${ring}`} onClick={() => void login()}>
+            <Button type="button" size="tiny" disabled={busy} onClick={() => void login()}>
               {state === 'connected' ? <RefreshCw size={12} aria-hidden /> : <LogIn size={12} aria-hidden />} {connectLabel}
-            </button>
+            </Button>
           )}
           {state === 'connected' && (
-            <button type="button" disabled={busy} className={`inline-flex items-center gap-1 rounded px-2 py-1 hover:text-ink-100 ${ring}`} onClick={() => setConfirming(true)}>
+            <Button type="button" variant="transparent" color="gray" size="tiny" disabled={busy} onClick={() => setConfirming(true)}>
               <LogOut size={12} aria-hidden /> {t('auth.sub.disconnect')}
-            </button>
+            </Button>
           )}
         </div>
       )}
@@ -85,9 +86,9 @@ export function AuthPanel() {
 
   if (!open) {
     return (
-      <button className={`mt-1 inline-flex items-center gap-1 rounded px-1 text-[11px] text-ink-300 hover:text-ink-100 ${ring}`} onClick={() => setOpen(true)}>
+      <Button type="button" variant="transparent" color="gray" size="tiny" onClick={() => setOpen(true)}>
         <KeyRound size={12} aria-hidden /> {t('auth.panel.open')}
-      </button>
+      </Button>
     );
   }
   return (
@@ -109,7 +110,9 @@ export function AuthPanel() {
             {t(tab === 'subscription' ? 'auth.tab.subscription' : 'auth.tab.apikey')}
           </button>
         ))}
-        <button type="button" className={`ml-auto rounded px-2 py-1 text-ink-300 hover:text-ink-100 ${ring}`} onClick={() => setOpen(false)}>{t('auth.panel.close')}</button>
+        <div className="ml-auto">
+          <Button type="button" variant="transparent" color="gray" size="tiny" onClick={() => setOpen(false)}>{t('auth.panel.close')}</Button>
+        </div>
       </div>
       {error && <p role="alert" className="mb-2 text-[11px] text-roseish">{error}</p>}
       <div role="tabpanel" id={`${baseId}-panel-${selected}`} aria-labelledby={`${baseId}-tab-${selected}`}>

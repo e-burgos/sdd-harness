@@ -1,5 +1,6 @@
 'use client';
 
+import { Button } from '@e-burgos/tucu-ui';
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Code2, ClipboardList, Zap, FileText, Check, Copy, Link2, X } from 'lucide-react';
@@ -177,10 +178,13 @@ export function DocumentViewerModal({ document: doc, onClose }: DocumentViewerMo
               </div>
             )}
 
-            <button
+            <Button
               type="button"
               onClick={handleCopyContent}
-              className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white/80 hover:text-white text-xs font-mono font-medium transition-colors flex items-center gap-1.5 shrink-0 whitespace-nowrap"
+              variant="transparent"
+              color="gray"
+              size="tiny"
+              className="font-mono whitespace-nowrap"
               title="Copiar todo el contenido"
             >
               {copied ? (
@@ -194,13 +198,16 @@ export function DocumentViewerModal({ document: doc, onClose }: DocumentViewerMo
                   <span>Copiar</span>
                 </>
               )}
-            </button>
+            </Button>
 
-            <button
+            <Button
               type="button"
               onClick={handleCopyPath}
               data-testid="copy-path-button"
-              className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white/80 hover:text-white text-xs font-mono font-medium transition-colors flex items-center gap-1.5 shrink-0 whitespace-nowrap"
+              variant="transparent"
+              color="gray"
+              size="tiny"
+              className="font-mono whitespace-nowrap"
               title="Copiar ruta"
             >
               {pathCopied ? (
@@ -214,20 +221,23 @@ export function DocumentViewerModal({ document: doc, onClose }: DocumentViewerMo
                   <span>Copiar ruta</span>
                 </>
               )}
-            </button>
+            </Button>
 
             <span aria-hidden="true" data-testid="document-viewer-divider" className="h-6 w-px bg-white/15 shrink-0" />
 
-            <button
+            <Button
               type="button"
               onClick={onClose}
               data-testid="modal-close-button"
               aria-label="Cerrar modal de documento"
-              className="h-8 w-8 flex items-center justify-center rounded-lg text-white/50 hover:text-white hover:bg-white/10 transition-colors shrink-0"
+              variant="transparent"
+              color="gray"
+              shape="circle"
+              size="mini"
               title="Cerrar modal (Esc)"
             >
               <X className="w-4 h-4" />
-            </button>
+            </Button>
           </div>
         </div>
 

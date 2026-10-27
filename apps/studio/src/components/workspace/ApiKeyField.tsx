@@ -1,5 +1,6 @@
 'use client';
 
+import { Button } from '@e-burgos/tucu-ui';
 import { useState } from 'react';
 import { isPlausibleApiKey } from '@/lib/api-key';
 import { useT } from '@/lib/i18n/i18n';
@@ -57,8 +58,8 @@ export function ApiKeyField() {
       {authMode === 'api-key' && apiKeySource === null && <p>{t('apikey.fromEnv')}</p>}
       {error && <p role="alert" className="text-roseish">{error}</p>}
       <div className="flex gap-2">
-        <button type="submit" disabled={busy} className={`rounded bg-accent-dim px-2 py-1 text-accent-300 ${ring}`}>{t('apikey.save')}</button>
-        {apiKeySource && <button type="button" disabled={busy} className={`rounded px-2 py-1 hover:text-ink-100 ${ring}`} onClick={() => void submit(null)}>{t('apikey.remove')}</button>}
+        <Button type="submit" size="tiny" disabled={busy}>{t('apikey.save')}</Button>
+        {apiKeySource && <Button type="button" variant="transparent" color="gray" size="tiny" disabled={busy} onClick={() => void submit(null)}>{t('apikey.remove')}</Button>}
       </div>
     </form>
   );

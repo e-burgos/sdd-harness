@@ -1,5 +1,6 @@
 'use client';
 
+import { Button } from '@e-burgos/tucu-ui';
 import React, { useState } from 'react';
 import { X, Check, ArrowRight } from 'lucide-react';
 import { getGateMeta, type GateId } from '@/lib/gates';
@@ -59,14 +60,9 @@ export function GateInspectorDrawer({
             <p className="text-xs text-white/60 font-sans mt-0.5">{gate.subtitle}</p>
           </div>
         </div>
-        <button
-          type="button"
-          onClick={onClose}
-          className="rounded-lg p-1.5 text-white/50 hover:bg-white/10 hover:text-white transition-colors"
-          title="Cerrar inspector de gate"
-        >
+        <Button type="button" variant="transparent" color="gray" shape="circle" size="tiny" onClick={onClose} title="Cerrar inspector de gate">
           <X className="w-4 h-4" />
-        </button>
+        </Button>
       </div>
 
       <div className="py-3 space-y-4 flex-1">
@@ -147,25 +143,17 @@ export function GateInspectorDrawer({
           </h4>
           <div className="flex items-center justify-between p-2.5 rounded-xl border border-white/10 bg-black/60 font-mono text-xs text-emerald-300">
             <span className="truncate mr-2">{gate.cliCommand}</span>
-            <button
-              type="button"
-              onClick={handleCopyCli}
-              className="px-2 py-1 rounded bg-white/10 hover:bg-white/20 text-[10px] text-white shrink-0 transition-colors"
-            >
+            <Button type="button" variant="transparent" color="gray" size="tiny" onClick={handleCopyCli}>
               {copied ? 'Copiado!' : 'Copiar'}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
 
       <div className="pt-3 border-t border-white/10 shrink-0">
-        <button
-          type="button"
-          onClick={onClose}
-          className="w-full flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/15 text-white py-2 text-xs font-mono font-medium transition-colors"
-        >
+        <Button type="button" variant="solid" color="gray" size="mini" fullWidth className="font-mono" onClick={onClose}>
           Cerrar Ficha Técnica
-        </button>
+        </Button>
       </div>
     </aside>
   );

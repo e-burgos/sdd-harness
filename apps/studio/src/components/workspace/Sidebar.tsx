@@ -1,5 +1,6 @@
 'use client';
 
+import { Button } from '@e-burgos/tucu-ui';
 import { useMemo, type ReactNode } from 'react';
 import { LayoutGrid } from 'lucide-react';
 import type { AuthMode, Presence } from '@sdd-studio/protocol';
@@ -51,9 +52,11 @@ export function SidebarView(p: SidebarViewProps) {
           <span className="sr-only">{t(CONN_DOT[p.connection].key)}</span>
           {p.authMode ? t(`auth.${p.authMode}`) : '…'}
           {p.kitVersion && <span>· kit {p.kitVersion}</span>}
-          <button className="ml-auto rounded hover:text-ink-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400" onClick={() => setLang(lang === 'es' ? 'en' : 'es')}>{t('lang.switch')}</button>
+          <div className="ml-auto">
+            <Button type="button" variant="transparent" color="gray" size="tiny" onClick={() => setLang(lang === 'es' ? 'en' : 'es')}>{t('lang.switch')}</Button>
+          </div>
         </div>
-        {p.onNewConversation && <NewConversationButton onNewConversation={p.onNewConversation} className="mt-2 w-full justify-center" />}
+        {p.onNewConversation && <NewConversationButton onNewConversation={p.onNewConversation} className="mt-2" fullWidth />}
         {p.authSlot}
       </header>
       <div data-testid="sidebar-tree" className="min-h-0 flex-1 space-y-5 overflow-y-auto overscroll-contain px-3 py-2">

@@ -1,5 +1,6 @@
 'use client';
 
+import { Button } from '@e-burgos/tucu-ui';
 import { useEffect, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { ListChecks, MessageSquare, ShieldCheck, Users, Wrench, X } from 'lucide-react';
@@ -87,15 +88,18 @@ export function GateStatusModal({ open, onClose, thread, view, gate, snapshot }:
             <ShieldCheck className="h-5 w-5 shrink-0 text-emerald-400" aria-hidden />
             <h2 className="truncate text-base font-bold">{t('gate.modal.title')}</h2>
           </div>
-          <button
+          <Button
             type="button"
             data-testid="gate-status-close"
             aria-label={t('gate.modal.close')}
             onClick={onClose}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white/50 transition-colors hover:bg-white/10 hover:text-white"
+            variant="transparent"
+            color="gray"
+            shape="circle"
+            size="mini"
           >
             <X className="h-4 w-4" aria-hidden />
-          </button>
+          </Button>
         </div>
 
         <div className="flex-1 space-y-3 overflow-y-auto p-5 font-mono text-xs">

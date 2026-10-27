@@ -158,7 +158,7 @@ describe('DocumentViewerModal', () => {
     const divider = screen.getByTestId('document-viewer-divider');
     expect(actions).toContainElement(divider);
     const close = screen.getByTestId('modal-close-button');
-    expect(divider.nextElementSibling).toBe(close);
+    expect(divider.nextElementSibling).toContainElement(close);
     expect(screen.getByTestId('document-viewer-header').className).toContain('flex-wrap');
   });
 });

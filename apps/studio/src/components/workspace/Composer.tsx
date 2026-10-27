@@ -1,5 +1,6 @@
 'use client';
 
+import { Button } from '@e-burgos/tucu-ui';
 import { Clock, Paperclip, Send } from 'lucide-react';
 import {
   DEFAULT_AGENT,
@@ -266,28 +267,35 @@ export function ComposerView(p: ComposerViewProps) {
                     if (files.length > 0) p.onFiles?.(files);
                   }}
                 />
-                <button
+                <Button
                   type="button"
+                  variant="transparent"
+                  color="gray"
+                  shape="circle"
+                  size="mini"
                   aria-label={t('attach.add')}
                   title={t('attach.add')}
-                  className="rounded-md p-1.5 text-ink-300 hover:bg-ink-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-40"
                   disabled={pending}
                   onClick={() => fileInput.current?.click()}
                 >
                   <Paperclip size={16} />
-                </button>
+                </Button>
               </>
             )}
-            <button
-              aria-label={p.queueing ? t('composer.queue') : t('composer.send')}
-              title={p.queueing ? t('composer.queueHint') : undefined}
-              className="ml-auto inline-flex items-center gap-1 rounded-md bg-accent-500 p-1.5 text-ink-950 hover:bg-accent-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-50"
-              disabled={pending}
-              onClick={() => void submit()}
-            >
-              {p.queueing ? <Clock size={16} /> : <Send size={16} />}
-              {p.queueing && <span className="pr-1 text-xs font-medium">{t('composer.queue')}</span>}
-            </button>
+            <div className="ml-auto">
+              <Button
+                type="button"
+                shape={p.queueing ? 'rounded' : 'circle'}
+                size="mini"
+                aria-label={p.queueing ? t('composer.queue') : t('composer.send')}
+                title={p.queueing ? t('composer.queueHint') : undefined}
+                disabled={pending}
+                onClick={() => void submit()}
+              >
+                {p.queueing ? <Clock size={16} /> : <Send size={16} />}
+                {p.queueing && <span className="pr-1 text-xs font-medium">{t('composer.queue')}</span>}
+              </Button>
+            </div>
           </div>
         </div>
         {p.modes}

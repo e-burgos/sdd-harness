@@ -1,5 +1,6 @@
 'use client';
 
+import { Button } from '@e-burgos/tucu-ui';
 import { useState, useEffect, useMemo } from 'react';
 import { Bot } from 'lucide-react';
 import { agentMeta } from '@/lib/agents';
@@ -467,51 +468,40 @@ export function AgentMapCanvas({ onOpenDm, onNewConversation }: { onOpenDm: (age
           data-testid="zoom-toolbar"
           className="absolute bottom-6 left-6 z-20 flex items-center gap-1.5 rounded-xl border border-white/15 bg-ink-950/85 p-1.5 shadow-xl backdrop-blur-xl select-none"
         >
-          <button
-            type="button"
-            onClick={handleZoomIn}
-            className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/5 font-mono text-xs font-bold text-white/80 hover:bg-white/15 hover:text-white transition-all active:scale-95"
-            title="Acercar (+)"
-          >
+          <Button type="button" variant="transparent" color="gray" shape="circle" size="tiny" className="font-mono" onClick={handleZoomIn} title="Acercar (+)">
             +
-          </button>
+          </Button>
           <span className="min-w-[42px] text-center font-mono text-[11px] font-semibold text-emerald-400">
             {Math.round(zoom * 100)}%
           </span>
-          <button
-            type="button"
-            onClick={handleZoomOut}
-            className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/5 font-mono text-xs font-bold text-white/80 hover:bg-white/15 hover:text-white transition-all active:scale-95"
-            title="Alejar (-)"
-          >
+          <Button type="button" variant="transparent" color="gray" shape="circle" size="tiny" className="font-mono" onClick={handleZoomOut} title="Alejar (-)">
             -
-          </button>
+          </Button>
           <div className="h-4 w-[1px] bg-white/10 mx-0.5" />
-          <button
-            type="button"
-            onClick={handleResetZoom}
-            className="flex items-center gap-1 rounded-lg bg-white/5 px-2 py-1 font-mono text-[10px] text-white/70 hover:bg-white/15 hover:text-white transition-all active:scale-95"
-            title="Restablecer posición y zoom (100%)"
-          >
+          <Button type="button" variant="transparent" color="gray" size="tiny" className="font-mono" onClick={handleResetZoom} title="Restablecer posición y zoom (100%)">
             <span>⟲</span>
             <span>Ajustar</span>
-          </button>
+          </Button>
         </div>
 
         {isPanelCollapsed && (
-          <button
-            type="button"
-            data-testid="open-panel-button"
-            onClick={() => setIsPanelCollapsed(false)}
-            className="absolute top-4 right-4 z-20 flex items-center gap-2 rounded-xl border border-white/15 bg-ink-950/90 px-3.5 py-2 font-mono text-xs text-emerald-400 shadow-2xl backdrop-blur-md hover:bg-ink-900 hover:border-emerald-500/50 transition-all hover:scale-105 active:scale-95"
-            title="Expandir panel lateral"
-          >
-            <Bot className="w-4 h-4 text-emerald-400" />
-            <span className="font-semibold text-white">Panel</span>
-            <span className="rounded bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/30">
-              {selectedAgent ? agentMeta(selectedAgent).name : 'Enjambre'}
-            </span>
-          </button>
+          <div className="absolute top-4 right-4 z-20">
+            <Button
+              type="button"
+              data-testid="open-panel-button"
+              variant="solid"
+              color="gray"
+              size="mini"
+              onClick={() => setIsPanelCollapsed(false)}
+              title="Expandir panel lateral"
+            >
+              <Bot className="w-4 h-4 text-emerald-400" />
+              <span className="font-semibold text-white">Panel</span>
+              <span className="rounded bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/30">
+                {selectedAgent ? agentMeta(selectedAgent).name : 'Enjambre'}
+              </span>
+            </Button>
+          </div>
         )}
 
         <SwarmCommsConsole

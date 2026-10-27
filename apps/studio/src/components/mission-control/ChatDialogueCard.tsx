@@ -1,5 +1,6 @@
 'use client';
 
+import { Button } from '@e-burgos/tucu-ui';
 import { useState } from 'react';
 import { ArrowRight } from 'lucide-react';
 import type { GateId } from '@/lib/gates';
@@ -137,17 +138,20 @@ export function ChatDialogueCard({
 
       {isLong && (
         <div className="mt-1.5 pt-1 border-t border-white/5 flex items-center justify-between select-none">
-          <button
+          <Button
             type="button"
+            variant="transparent"
+            color="success"
+            size="tiny"
+            className="font-mono"
             onClick={(e) => {
               e.stopPropagation();
               setIsExpanded(!isExpanded);
             }}
-            className="flex items-center gap-1 text-[10px] font-mono font-medium text-emerald-400 hover:text-emerald-300 transition-colors"
           >
             <span>{isExpanded ? '⌃' : '⌄'}</span>
             <span>{isExpanded ? 'Mostrar menos' : 'Mostrar más'}</span>
-          </button>
+          </Button>
           <span className="text-[9px] font-mono text-white/30">
             {text.length} caracteres
           </span>

@@ -33,7 +33,13 @@
     "menor: spec-e-burgos-008-studio-session-flow.spec.md está vacío (0 bytes) desde su cierre; sdd:validate no lo detecta",
     "proceso: el e2e de Studio corre contra apps/studio-bridge/dist/web, una copia de studio/out que solo se refresca con el build del bridge; el e2e de TASK-001 corrió contra la UI vieja y se repitió en TASK-002 tras pnpm --filter sdd-studio build (8/8 con la UI nueva)",
     "menor: emerald-* (113 usos en Mission Control y header) se mapea a --color-success para conservar la semántica de estado; los CTA verdes pasan al color de marca al migrarse a Button en TASK-003",
-    "menor: los colores por agente en lib/agents.ts y lib/gates.ts (#10b981 y otros) son identidad de cada agente y quedan fuera del puente"
+    "menor: los colores por agente en lib/agents.ts y lib/gates.ts (#10b981 y otros) son identidad de cada agente y quedan fuera del puente",
+    "fricción tucu-ui: Button siempre envuelve en un <div> y className cae en el <button> interno; ml-auto/absolute/shrink-0 requieren un wrapper propio (falta wrapperClassName o no envolver sin tooltip/drip); rompió un spec que usaba nextElementSibling",
+    "fricción tucu-ui: no hay tamaño menor que tiny (h-6) ni texto xs; los botones icono densos de Studio crecen a 24px y text-sm",
+    "fricción tucu-ui: className sin tailwind-merge; overrides de h-*/bg-*/text-xs no son confiables",
+    "fricción tucu-ui: variant transparent agrega siempre bg-gray-100/25 (en oscuro se ve como píldora gris); Studio lo neutraliza en globals.css con [data-tucu=button][data-variant=transparent]",
+    "fricción tucu-ui: ghost tiene border-2 fijo; gray solid es gray-600 sin un tono de superficie oscura; no hay type por defecto",
+    "CA-002 excepciones (24 <button> nativos): carets/filas/headers de NavTree, tabs del header y segmented controls (AgentInspectorDrawer, AgentMapCanvas, DocumentViewerModal), tab con roving tabindex de AuthPanel, filas de ChannelView/RightPanel/RelatedDocuments, chips de GateInspectorDrawer y ThreadLinkPicker, gate-chip del header e icono de ayuda de HelpSelect"
   ],
   "reviewer_report": null
 }

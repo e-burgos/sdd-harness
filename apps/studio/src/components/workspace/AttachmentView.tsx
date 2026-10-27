@@ -1,5 +1,6 @@
 'use client';
 
+import { Button } from '@e-burgos/tucu-ui';
 import { AlertTriangle, FileText } from 'lucide-react';
 import type { AttachmentRef } from '@sdd-studio/protocol';
 import { useEffect, useState } from 'react';
@@ -89,9 +90,9 @@ function TextAttachment({ attachment }: { attachment: AttachmentRef }) {
           <span className="block truncate text-ink-100">{attachment.name}</span>
           <span className="block text-[11px] text-ink-400">{formatBytes(attachment.size)}</span>
         </span>
-        <button type="button" aria-expanded={expanded} className={`rounded-md border border-ink-700 px-2 py-0.5 hover:bg-ink-800 ${ring}`} onClick={() => setExpanded((v) => !v)}>
+        <Button type="button" variant="ghost" color="gray" size="tiny" aria-expanded={expanded} onClick={() => setExpanded((v) => !v)}>
           {expanded ? t('attach.collapse') : t('attach.expand')}
-        </button>
+        </Button>
       </div>
       {expanded && <TextBody attachment={attachment} />}
     </div>

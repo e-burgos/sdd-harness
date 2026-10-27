@@ -1,5 +1,6 @@
 'use client';
 
+import { Button } from '@e-burgos/tucu-ui';
 import { ArrowRight, Pause, Play, SkipForward } from 'lucide-react';
 import { agentMeta } from '@/lib/agents';
 import type { ConversationDialogue } from '@/lib/conversation';
@@ -157,26 +158,16 @@ export function SwarmCommsConsole({
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          <button
-            type="button"
-            onClick={onTogglePlay}
-            className="rounded-lg bg-white/10 px-2.5 py-1 text-xs font-mono font-medium hover:bg-white/20 transition-colors"
-            title={isPlaying ? 'Pausar diálogo' : 'Reanudar diálogo'}
-          >
+          <Button type="button" variant="transparent" color="gray" size="tiny" className="font-mono" onClick={onTogglePlay} title={isPlaying ? 'Pausar diálogo' : 'Reanudar diálogo'}>
             {isPlaying ? (
               <span className="flex items-center gap-1.5"><Pause className="w-3 h-3" /> Pausa</span>
             ) : (
               <span className="flex items-center gap-1.5"><Play className="w-3 h-3" /> Play</span>
             )}
-          </button>
-          <button
-            type="button"
-            onClick={onNext}
-            className="rounded-lg bg-white/10 px-2.5 py-1 text-xs font-mono font-medium hover:bg-white/20 transition-colors"
-            title="Siguiente mensaje"
-          >
+          </Button>
+          <Button type="button" variant="transparent" color="gray" size="tiny" className="font-mono" onClick={onNext} title="Siguiente mensaje">
             <span className="flex items-center gap-1.5"><SkipForward className="w-3 h-3" /> Siguiente</span>
-          </button>
+          </Button>
         </div>
       </div>
     </div>

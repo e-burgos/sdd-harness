@@ -1,5 +1,6 @@
 'use client';
 
+import { Button } from '@e-burgos/tucu-ui';
 import { ArrowDown, ArrowLeft, StopCircle } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { openThread } from '@/lib/bootstrap';
@@ -14,7 +15,6 @@ import { Timeline } from './Timeline';
 
 const BUSY = new Set(['running', 'waiting-approval', 'queued']);
 const msg = (e: unknown) => (e instanceof Error ? e.message : String(e));
-const ring = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400';
 
 export function ThreadView({ threadId, onBack, composer, onNewConversation }: { threadId: string; onBack(): void; composer: ReactNode; onNewConversation?(): void }) {
   const { t } = useT();
@@ -53,20 +53,17 @@ export function ThreadView({ threadId, onBack, composer, onNewConversation }: { 
   return (
     <section className="flex h-full min-w-0 flex-col">
       <header className="flex flex-wrap items-center gap-3 border-b border-ink-800 px-5 py-3">
-        <button aria-label={t('thread.back')} className={`rounded-md p-1 text-ink-300 hover:bg-ink-800 ${ring}`} onClick={onBack}>
+        <Button type="button" variant="transparent" color="gray" shape="circle" size="mini" aria-label={t('thread.back')} onClick={onBack}>
           <ArrowLeft size={18} />
-        </button>
+        </Button>
         <h1 className="min-w-0 flex-1 truncate text-base font-semibold">{info?.title ?? '…'}</h1>
         <ThreadLinkPicker threadId={threadId} />
         {info && <ContextMeter usage={info.contextUsage} onNewConversation={onNewConversation} />}
         {info && <StatusBadge status={info.status} />}
         {info && BUSY.has(info.status) && (
-          <button
-            className={`inline-flex items-center gap-1 rounded-md border border-roseish/50 px-2 py-1 text-xs text-roseish hover:bg-roseish/10 ${ring}`}
-            onClick={interrupt}
-          >
+          <Button type="button" variant="ghost" color="danger" size="tiny" onClick={interrupt}>
             <StopCircle size={14} /> {t('thread.interrupt')}
-          </button>
+          </Button>
         )}
         {interruptError && (
           <p role="alert" className="basis-full text-xs text-roseish">
@@ -80,9 +77,9 @@ export function ThreadView({ threadId, onBack, composer, onNewConversation }: { 
             {loadError && (
               <div role="alert" className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-roseish/40 bg-roseish/10 p-3 text-xs text-roseish">
                 <span className="min-w-0 break-words">{t('conn.syncError', { message: loadError })}</span>
-                <button className={`rounded-md border border-roseish/50 px-2 py-1 hover:bg-roseish/10 ${ring}`} onClick={load}>
+                <Button type="button" variant="ghost" color="danger" size="tiny" onClick={load}>
                   {t('conn.retry')}
-                </button>
+                </Button>
               </div>
             )}
             <Timeline
@@ -100,12 +97,11 @@ export function ThreadView({ threadId, onBack, composer, onNewConversation }: { 
           </div>
         </div>
         {!atBottom && (
-          <button
-            className={`absolute bottom-3 right-5 inline-flex items-center gap-1 rounded-full border border-ink-700 bg-ink-800 px-3 py-1 text-xs text-ink-100 shadow hover:bg-ink-700 ${ring}`}
-            onClick={scrollToBottom}
-          >
-            <ArrowDown size={12} /> {t('thread.jumpToLatest')}
-          </button>
+          <div className="absolute bottom-3 right-5">
+            <Button type="button" variant="solid" color="gray" shape="pill" size="tiny" onClick={scrollToBottom}>
+              <ArrowDown size={12} /> {t('thread.jumpToLatest')}
+            </Button>
+          </div>
         )}
       </div>
       {composer}

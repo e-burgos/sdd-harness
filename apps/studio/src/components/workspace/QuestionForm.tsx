@@ -1,5 +1,6 @@
 'use client';
 
+import { Button } from '@e-burgos/tucu-ui';
 import { MessageCircleQuestion } from 'lucide-react';
 import { useState } from 'react';
 import type { QuestionAnswer } from '@sdd-studio/protocol';
@@ -127,12 +128,14 @@ export function QuestionForm({ item, onAnswer }: { item: QuestionItem; onAnswer:
       {error && <p role="alert" className="mt-2 text-xs text-roseish">{error}</p>}
       {pending ? (
         <div className="mt-4 flex flex-wrap items-center gap-2">
-          <button type="button" disabled={!complete || sending} onClick={() => void submit(false)} className={`rounded-md bg-accent-500 px-3 py-1.5 text-sm font-medium text-ink-950 hover:bg-accent-400 ${ring}`}>
+          <Button type="button" size="mini" disabled={!complete || sending} onClick={() => void submit(false)}>
             {t('question.send')}
-          </button>
-          <button type="button" disabled={sending} title={t('help.question.decline')} onClick={() => void submit(true)} className={`ml-auto rounded-md border border-ink-700 px-3 py-1.5 text-sm text-ink-300 hover:bg-ink-800 ${ring}`}>
-            {t('question.decline')}
-          </button>
+          </Button>
+          <div className="ml-auto">
+            <Button type="button" variant="ghost" color="gray" size="mini" disabled={sending} title={t('help.question.decline')} onClick={() => void submit(true)}>
+              {t('question.decline')}
+            </Button>
+          </div>
         </div>
       ) : (
         <p className="mt-3 text-xs text-ink-300">{t(summaryKey)}</p>

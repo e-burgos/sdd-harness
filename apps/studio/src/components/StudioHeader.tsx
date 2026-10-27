@@ -1,5 +1,6 @@
 'use client';
 
+import { Button } from '@e-burgos/tucu-ui';
 import React, { useState } from 'react';
 import { MessageSquare, Network, Globe, Activity } from 'lucide-react';
 import { deriveConversationGate, gateLabel, type ConversationGate } from '@/lib/conversation-gate';
@@ -118,14 +119,17 @@ export function StudioHeader({ activeView, onSelectView }: StudioHeaderProps) {
         </div>
 
         {/* Language Toggle */}
-        <button
+        <Button
           type="button"
           onClick={() => setLang(lang === 'es' ? 'en' : 'es')}
-          className="rounded-lg border border-white/10 bg-white/5 px-2 py-1 font-mono text-[11px] font-medium text-white/70 hover:bg-white/10 hover:text-white transition-colors uppercase"
+          variant="transparent"
+          color="gray"
+          size="tiny"
+          className="font-mono uppercase"
           title="Cambiar idioma / Toggle language"
         >
           {lang}
-        </button>
+        </Button>
       </div>
       <GateStatusModal open={statusOpen} onClose={() => setStatusOpen(false)} thread={thread} view={view} gate={gate} snapshot={snapshot} />
     </header>

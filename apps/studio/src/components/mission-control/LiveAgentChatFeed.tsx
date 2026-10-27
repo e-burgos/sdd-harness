@@ -1,5 +1,6 @@
 'use client';
 
+import { Button } from '@e-burgos/tucu-ui';
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { ArrowUp, Moon } from 'lucide-react';
 import { ThreadInfo, channelForDm, defaultThreadOptions } from '@sdd-studio/protocol';
@@ -98,15 +99,11 @@ export function LiveAgentChatFeed({ agentId, conversation, onPickConversation }:
           <>
             {hiddenCount > 0 && (
               <div className="flex justify-center pb-1">
-                <button
-                  type="button"
-                  onClick={() => setVisibleLimit((v) => v + PAGE_SIZE)}
-                  className="rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 px-3 py-1 font-mono text-[10px] text-emerald-400 hover:text-emerald-300 transition-all flex items-center gap-1.5 shadow-sm"
-                >
+                <Button type="button" variant="transparent" color="success" size="tiny" className="font-mono" onClick={() => setVisibleLimit((v) => v + PAGE_SIZE)}>
                   <ArrowUp className="w-3 h-3" />
                   <span>Cargar más mensajes (+{PAGE_SIZE})</span>
                   <span className="text-white/40">({hiddenCount} restantes)</span>
-                </button>
+                </Button>
               </div>
             )}
             {visibleDialogues.map((dialogue) => {
@@ -146,21 +143,21 @@ export function LiveAgentChatFeed({ agentId, conversation, onPickConversation }:
             disabled={isSending}
             className="flex-1 bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-white/40 focus:outline-none focus:border-emerald-400 focus:bg-white/10 transition-colors font-sans disabled:opacity-50"
           />
-          <button
+          <Button
             type="submit"
+            size="tiny"
             disabled={isSending || !quickInput.trim()}
-            className="bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-ink-950 font-bold px-3 py-1.5 rounded-lg text-xs transition-all shadow-md shadow-emerald-500/20 shrink-0 disabled:opacity-40 disabled:scale-100 flex items-center gap-1.5"
             title={`Enviar mensaje a ${meta.name}`}
           >
             {isSending ? (
               <>
-                <span className="h-2.5 w-2.5 rounded-full border border-ink-950 border-t-transparent animate-spin" />
+                <span className="h-2.5 w-2.5 rounded-full border border-white border-t-transparent animate-spin" />
                 <span>Enviando</span>
               </>
             ) : (
               <span>{t('map.chat.send')}</span>
             )}
-          </button>
+          </Button>
         </div>
       </form>
     </div>

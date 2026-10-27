@@ -1,5 +1,6 @@
 'use client';
 
+import { Button } from '@e-burgos/tucu-ui';
 import { Pencil, Trash2 } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { bridgeErrorText } from '@/lib/bridge/error-text';
@@ -8,7 +9,6 @@ import { useBridge, useStudio } from '../BridgeProvider';
 
 const BUSY = new Set(['running', 'waiting-approval', 'queued']);
 const ring = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-50';
-const ghost = `rounded-md border border-ink-700 px-2 py-0.5 text-xs hover:bg-ink-800 ${ring}`;
 
 export function PendingMessages({ threadId }: { threadId: string }) {
   const { t } = useT();
@@ -57,9 +57,9 @@ export function PendingMessages({ threadId }: { threadId: string }) {
         <span className="font-medium">{t('pending.title')} ({items.length})</span>
         <span className="min-w-0 flex-1">{busy ? t('pending.hintBusy') : t('pending.hintIdle')}</span>
         {!busy && items.length > 0 && (
-          <button className={ghost} disabled={busyId !== null} onClick={() => void flush()}>
+          <Button type="button" variant="ghost" color="gray" size="tiny" disabled={busyId !== null} onClick={() => void flush()}>
             {t('pending.flush')}
-          </button>
+          </Button>
         )}
       </div>
       {error && <p role="alert" className="mb-1 text-xs text-roseish">{error}</p>}
@@ -80,12 +80,12 @@ export function PendingMessages({ threadId }: { threadId: string }) {
                   />
                   {emptyBlocked && <p className="text-xs text-amberish">{t('pending.emptyHint')}</p>}
                   <div className="flex gap-2">
-                    <button className={ghost} disabled={emptyBlocked || busyId !== null} onClick={() => void save()}>
+                    <Button type="button" variant="ghost" color="gray" size="tiny" disabled={emptyBlocked || busyId !== null} onClick={() => void save()}>
                       {t('pending.save')}
-                    </button>
-                    <button className={ghost} disabled={busyId !== null} onClick={() => setEditing(null)}>
+                    </Button>
+                    <Button type="button" variant="ghost" color="gray" size="tiny" disabled={busyId !== null} onClick={() => setEditing(null)}>
                       {t('pending.cancel')}
-                    </button>
+                    </Button>
                   </div>
                 </div>
               ) : (
@@ -100,12 +100,12 @@ export function PendingMessages({ threadId }: { threadId: string }) {
                       </ul>
                     )}
                   </div>
-                  <button aria-label={t('pending.edit')} className={`rounded-md p-1 text-ink-300 hover:bg-ink-800 ${ring}`} disabled={busyId !== null} onClick={() => setEditing({ id: item.id, text: item.text })}>
+                  <Button type="button" variant="transparent" color="gray" shape="circle" size="tiny" aria-label={t('pending.edit')} disabled={busyId !== null} onClick={() => setEditing({ id: item.id, text: item.text })}>
                     <Pencil size={14} />
-                  </button>
-                  <button aria-label={t('pending.remove')} className={`rounded-md p-1 text-roseish hover:bg-roseish/10 ${ring}`} disabled={busyId !== null} onClick={() => void remove(item.id)}>
+                  </Button>
+                  <Button type="button" variant="transparent" color="danger" shape="circle" size="tiny" aria-label={t('pending.remove')} disabled={busyId !== null} onClick={() => void remove(item.id)}>
                     <Trash2 size={14} />
-                  </button>
+                  </Button>
                 </>
               )}
             </li>

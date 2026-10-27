@@ -52,3 +52,7 @@ html[data-app-shell] body {
   overflow: hidden;
   overscroll-behavior: none;
 }
+
+[data-tucu='button'][data-variant='transparent']:not(:disabled):not(:hover):not(:focus-visible) {
+  background-color: transparent;
+}

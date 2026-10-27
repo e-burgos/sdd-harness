@@ -1,5 +1,6 @@
 'use client';
 
+import { Button } from '@e-burgos/tucu-ui';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Bot, MessageSquare, Moon, User, Users, X, Zap } from 'lucide-react';
 import type { Presence } from '@sdd-studio/protocol';
@@ -130,23 +131,13 @@ export function AgentInspectorDrawer({
 
         <div className="flex items-center gap-1">
           {activeTab === 'agent' && meta && (
-            <button
-              type="button"
-              onClick={toggleAgentInfo}
-              className="rounded-lg px-2 py-1 text-[10px] font-mono text-white/60 hover:bg-white/10 hover:text-white transition-colors"
-              title="Alternar vista de perfil completo"
-            >
+            <Button type="button" variant="transparent" color="gray" size="tiny" className="font-mono" onClick={toggleAgentInfo} title="Alternar vista de perfil completo">
               {showFullProfile ? t('map.hideInfo') : t('map.showInfo')}
-            </button>
+            </Button>
           )}
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg p-1 text-white/50 hover:bg-white/10 hover:text-white transition-colors text-xs"
-            title="Contraer panel"
-          >
+          <Button type="button" variant="transparent" color="gray" shape="circle" size="tiny" onClick={onClose} title="Contraer panel">
             <X className="w-3.5 h-3.5" />
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -206,17 +197,18 @@ export function AgentInspectorDrawer({
             </div>
 
             <div className="pt-2 border-t border-white/10 shrink-0">
-              <button
+              <Button
                 type="button"
+                fullWidth
+                size="mini"
                 onClick={() => {
                   onOpenDm(agentId);
                   onClose();
                 }}
-                className="w-full flex items-center justify-center gap-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-ink-950 py-2 px-3 font-semibold text-xs tracking-wide shadow-lg shadow-emerald-500/20 transition-all active:scale-[0.98]"
               >
                 <MessageSquare className="w-3.5 h-3.5" />
                 <span>{t('map.openNewChat', { name: meta.name })}</span>
-              </button>
+              </Button>
             </div>
           </>
         ) : (
@@ -243,14 +235,9 @@ export function AgentInspectorDrawer({
                 Comms del Enjambre ({conversation?.dialogues.length ?? 0})
               </span>
             </div>
-            <button
-              type="button"
-              onClick={scrollToBottom}
-              className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 transition-colors"
-              title="Bajar al último mensaje"
-            >
+            <Button type="button" variant="transparent" color="success" size="tiny" className="font-mono" onClick={scrollToBottom} title="Bajar al último mensaje">
               ↓ Abajo
-            </button>
+            </Button>
           </div>
 
           <div
@@ -266,14 +253,10 @@ export function AgentInspectorDrawer({
               <>
                 {conversation.dialogues.length > displayedDialogues.length && (
                   <div className="flex justify-center pb-1">
-                    <button
-                      type="button"
-                      onClick={() => setSwarmLimit((v) => v + PAGE_SIZE)}
-                      className="rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 px-3 py-1 font-mono text-[10px] text-emerald-400 hover:text-emerald-300 transition-all flex items-center gap-1.5 shadow-sm"
-                    >
+                    <Button type="button" variant="transparent" color="success" size="tiny" className="font-mono" onClick={() => setSwarmLimit((v) => v + PAGE_SIZE)}>
                       <span>↑</span>
                       <span>Cargar mensajes anteriores (+{PAGE_SIZE})</span>
-                    </button>
+                    </Button>
                   </div>
                 )}
 

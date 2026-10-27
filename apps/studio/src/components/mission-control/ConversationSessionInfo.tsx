@@ -1,5 +1,6 @@
 'use client';
 
+import { Button } from '@e-burgos/tucu-ui';
 import { useState } from 'react';
 import { Check, Copy, Cpu, Fingerprint, Tag, TriangleAlert } from 'lucide-react';
 import { providerLabel } from '@/lib/conversation';
@@ -71,16 +72,19 @@ export function ConversationSessionInfo({ sessionTitle, engineSessionId, provide
             <span data-testid="conversation-session" className="min-w-0 flex-1 break-all text-sky-300">
               {engineSessionId}
             </span>
-            <button
+            <Button
               type="button"
               data-testid="copy-session-button"
               onClick={copySessionId}
               aria-label={t('mc.copySession')}
               title={t('mc.copySession')}
-              className="shrink-0 rounded p-0.5 text-white/60 transition-colors hover:bg-white/10 hover:text-white"
+              variant="transparent"
+              color="gray"
+              shape="circle"
+              size="tiny"
             >
               {copied ? <Check className="h-3 w-3 text-emerald-400" aria-hidden /> : <Copy className="h-3 w-3" aria-hidden />}
-            </button>
+            </Button>
           </dd>
         )}
       </div>

@@ -1,5 +1,6 @@
 'use client';
 
+import { Button } from '@e-burgos/tucu-ui';
 import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { useT } from '@/lib/i18n/i18n';
 
@@ -10,13 +11,9 @@ function ErrorFallback({ error, onReload }: { error: Error; onReload(): void }) 
       <h1 className="text-lg font-semibold">{t('error.boundary.title')}</h1>
       <p className="max-w-md text-sm text-ink-300">{t('error.boundary.body')}</p>
       <code className="max-w-md break-words rounded-md bg-ink-900 px-3 py-2 font-mono text-xs text-roseish">{error.message}</code>
-      <button
-        type="button"
-        className="rounded-md bg-accent-500 px-4 py-2 text-sm font-medium text-ink-950 hover:bg-accent-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"
-        onClick={onReload}
-      >
+      <Button type="button" size="mini" onClick={onReload}>
         {t('error.boundary.reload')}
-      </button>
+      </Button>
     </div>
   );
 }
