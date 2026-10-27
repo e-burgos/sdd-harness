@@ -1,0 +1,31 @@
+{
+  "$schema": "../../../../schemas/cycle.schema.json",
+  "cycle": 1,
+  "module": "studio-dual-sidebar",
+  "spec": "spec-e-burgos-010-studio-dual-sidebar",
+  "apps": [
+    "apps/studio",
+    "apps/studio-bridge",
+    "libs/studio-protocol"
+  ],
+  "phase": "dual-sidebar",
+  "flow": "full",
+  "objectives": [
+    "Riel de módulos personalizable y panel de lista por módulo, con el header sin pestañas (US-1, US-2)",
+    "Inicio con canales #general/#specs/#fixes con resumen, ficha de spec con pestañas, Fixes, Agentes y Mapa en tres columnas (US-3..US-6)",
+    "Módulos Kit, Arquitectura y Métricas y control de sdd/tools.json desde Studio (US-7..US-10)"
+  ],
+  "status": "in-progress",
+  "started_at": "2026-10-27",
+  "completed_at": null,
+  "documents": {
+    "brief": "sdd/specs/spec-e-burgos-010-studio-dual-sidebar/cycles/cycle-01/brief.yaml"
+  },
+  "artifacts": [],
+  "metrics": null,
+  "tables_created": [],
+  "endpoints_implemented": [],
+  "components_created": [],
+  "issues_found": [],
+  "reviewer_report": null
+}

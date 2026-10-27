@@ -1,0 +1,112 @@
+# sdd/specs/spec-e-burgos-010-studio-dual-sidebar/cycles/cycle-01/brief.yaml
+# Generado por: sdd-orchestrator
+# Al: iniciar el ciclo
+
+cycle: 1
+module: studio-dual-sidebar
+phase: dual-sidebar
+flow: full
+date: 2026-10-27
+estimated_weeks: 2
+app_context: sdd/context/apps/studio/context_prompt.md
+
+objective: |
+  Reemplazar la navegación de Studio (pestañas en el header + sidebar único) por un doble sidebar
+  estilo Slack: riel de módulos personalizable y panel de lista por módulo, con módulos Inicio,
+  Specs (ficha con pestañas), Fixes, Agentes, Actividad, Mapa (tres columnas, nodos intactos), Kit,
+  Arquitectura y Métricas. El puente expone los datos del kit que hoy solo ve el visor sdd:docs y
+  permite cambiar sdd/tools.json desde Studio.
+
+scope:
+  - US-1 riel de módulos + panel de lista; header sin pestañas de vistas
+  - US-2 riel personalizable (ocultar/reordenar, "Más"), persistido por proyecto
+  - US-3 Inicio con En curso, Por aprobar, canales #general/#specs/#fixes con resumen, conversaciones con filtro de activas, agentes
+  - US-4 ficha de spec con pestañas Resumen · Plan · Tareas · Documentos · Conversaciones
+  - US-5 módulos Fixes y Agentes (ficha de agente con chat directo, la misma que el mapa)
+  - US-6 Mapa en tres columnas conservando los nodos actuales
+  - US-7 módulo Kit (skills, prompts, agentes del kit, herramientas, documentación, schemas JSON, contexto, memoria)
+  - US-8 prender/apagar rtk y el mod y cambiar el modo del SPEC GATE desde Studio, con confirmación y registro en #general
+  - US-9 módulo Arquitectura (schema de base de datos, API, componentes)
+  - US-10 módulo Métricas (Dashboard, Planificación, Costos con RTK, Ecosistema, Telemetría)
+
+out_of_scope:
+  - Editar documentos, schemas, contexto o memoria desde Studio (solo sdd/tools.json se escribe)
+  - Migrar los modales a SplitModal (salvo que tucu-ui 3.7.0 esté publicada y entre sin riesgo)
+  - Mensajes sin leer
+  - Vista mobile dedicada
+
+dependencies_required:
+  - spec-e-burgos-009-studio-tucu-ui (completed)
+
+design_constraints:
+  - Escala tipográfica armónica estilo Slack con los tokens de Studio (micro 10 · meta 11 · ui 12 · small 13 · copy 14 · title 16): título de panel 16 semibold, encabezados de grupo 13, ítems 14 en filas de 28px con ícono 16, metadatos 11, etiquetas del riel 11
+  - Nodos del mapa de agentes (AgentNode, AgentMapCanvas) intactos salvo mejoras claras
+  - Panel derecho en Inicio, Specs, Fixes, Agentes y Mapa; sin panel derecho en Kit, Arquitectura y Métricas
+  - tucu-ui (hoy 3.6.0; 3.7.0 inminente con SegmentedControl, FilterBar, AnimatedTabs, vistas de estado y SplitModal); fricciones a la sesión «tucu-ui spec 002»
+  - Sin PR hasta completar la adopción; solo commits en feat/studio-tucu-ui
+
+agent_contexts:
+  functional:
+    goal: Convertir US-1..US-10 en historias con criterios verificables y reglas de negocio (qué muestra cada módulo y cada panel, qué filtra el buscador, qué es "activo", cómo se arma el resumen de #specs/#fixes, qué hace la ficha de spec en cada pestaña, reglas de confirmación y registro al cambiar herramientas, persistencia del riel, estados vacíos y de error)
+    business_context: |
+      SDD Studio es la UI web (apps/studio, Next 16 + tucu-ui) que habla por WebSocket con un puente
+      local (apps/studio-bridge) que lee el repo y corre agentes. El snapshot del puente trae specs,
+      ciclos, fixes, agentes, skills, gateMode y pricing. El visor del kit (sdd/docs, pnpm sdd:docs)
+      además muestra documentación, schemas JSON, contexto, memoria y arquitectura. El dev aprobó
+      mockups de un doble sidebar estilo Slack, la ficha de spec con pestañas, el mapa en tres
+      columnas y los interruptores de herramientas del kit.
+    relevant_spec_sections:
+      - Historias de usuario
+      - Restricciones de diseño
+      - Criterios de aceptación
+      - Fuera de alcance
+    output_file: sdd/specs/spec-e-burgos-010-studio-dual-sidebar/cycles/cycle-01/functional.md
+
+  planner:
+    goal: Tasks ordenadas por subproyecto (protocolo, puente, web) de no más de 1 día cada una, con dependencias explícitas y validación visual en las de UI; tasks.json del ciclo con flow full
+    note: Recibe el output del Funcional; no necesita la spec completa
+    output_file: sdd/specs/spec-e-burgos-010-studio-dual-sidebar/cycles/cycle-01/planner.md
+
+  architect:
+    goal: |
+      Definir el delta de contrato en libs/studio-protocol: cómo llegan a la web los datos del kit
+      (prompts y agentes ya están en el snapshot; documentación, schemas JSON, contexto, memoria,
+      tools.json, schema.json, api.json y components.json no): snapshot ampliado vs. pedido bajo
+      demanda (lectura de documento por path con lista blanca, como el visor de documentos), tamaños
+      y límites de frame, refresco por watcher; y el mensaje de escritura de sdd/tools.json
+      (validación con sdd/schemas/tools.schema.json, misma semántica que pnpm sdd:rtk / pnpm sdd:mod,
+      evento en #general, feature en BRIDGE_FEATURES para degradar a solo lectura). Decidir
+      compatibilidad (opcionales + feature o bump de PROTOCOL_VERSION). En la web: arquitectura del
+      layout (riel, panel, centro, panel derecho por módulo), estado de navegación y persistencia del
+      riel por proyecto, reemplazo de las vistas del header, reutilización de Sidebar/NavTree,
+      Mission Control y la ficha de agente; componentes nuevos en sdd/components.json.
+    existing_tables: []
+    existing_endpoints: []
+    existing_contracts:
+      - libs/studio-protocol/src/snapshot.ts (WorkspaceSnapshot, Area)
+      - libs/studio-protocol/src/limits.ts (BRIDGE_FEATURES)
+      - libs/studio-protocol/src/version.ts (PROTOCOL_VERSION)
+      - apps/studio-bridge/src/workspace/snapshot.ts y watcher.ts
+      - apps/studio-bridge (lectura de documentos para DocumentViewerModal)
+      - sdd/scripts (setup-rtk.mjs, mod) y sdd/schemas/tools.schema.json
+    existing_components:
+      - sdd/components.json apps/studio (Sidebar, NavTree, StudioHeader, WorkspaceApp, Mission Control, AgentInspectorDrawer, DocumentViewerModal)
+    output_file: sdd/specs/spec-e-burgos-010-studio-dual-sidebar/cycles/cycle-01/architect.md
+
+  implementor_back:
+    goal: Protocolo y puente (datos del kit, escritura validada de sdd/tools.json, feature) con tests
+    app: apps/studio-bridge
+    also: libs/studio-protocol
+    app_context: sdd/context/apps/studio-bridge/context_prompt.md
+    note: Recibe una task a la vez del Planner
+
+  implementor_front:
+    goal: Riel, panel y módulos con la escala tipográfica; ficha de spec; mapa en tres columnas sin tocar los nodos; Kit, Arquitectura y Métricas; herramientas con confirmación
+    app: apps/studio
+    app_context: sdd/context/apps/studio/context_prompt.md
+    note: Recibe una task a la vez del Planner; las que usan datos nuevos, después del contrato
+
+  reviewer:
+    goal: Validar CA-1..CA-9, recorrida visual en claro y oscuro, telemetría por unidad y fragmentos de contexto en los tres subproyectos
+    checklist: sdd/skills/sdd-reviewer/checklist.md
+    output_file: sdd/specs/spec-e-burgos-010-studio-dual-sidebar/cycles/cycle-01/cycle.json
