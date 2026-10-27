@@ -1,6 +1,6 @@
 # 🧠 Memoria del proyecto — lecciones destiladas
 
-> Versión 1.0 | Última destilación: (seed del kit v0.11.0)
+> Versión 1.1 | Última destilación: 2026-10-26 (journal de spec-e-burgos-001, 005, 007 y 008)
 > **Cap duro: 120 líneas.** Este archivo se lee COMPLETO al inicio de cada sesión de agente —
 > cada línea acá cuesta tokens en todas las sesiones futuras. Si al destilar se supera el cap,
 > primero podar lecciones obsoletas o absorbidas por constitutions/skills.
@@ -19,14 +19,17 @@ Reglas de este archivo (ver sección 🧠 MEMORIA GATE del dual-harness):
 
 - Citar la evidencia y las decisiones desde `harness.idea.md` en las specs en vez de
   copiarlas a mano.
+- Crear a mano con `git worktree add` el worktree de un subagente que tiene que commitear y
+  pasarle la ruta: con `isolation: "worktree"` del Agent tool git queda bloqueado adentro.
 
 ## Técnica (stack, herramientas, gotchas transversales)
 
-- Verificar `NX_WORKSPACE_ROOT_PATH` antes de cualquier `nx …`: si apunta a otro repo,
-  Nx ejecuta los targets de ESE repo sin error visible (pasó en Claude Code con otro
-  directorio primario).
-- No dar por verde un `init` sin correr `nx run-many -t lint test build`: `sdd:validate`
-  no compila nada.
+- No tratar este repo como workspace Nx: es la fuente del kit (CLI `harness`) sobre pnpm
+  workspaces y usa el kit solo para sus propios flujos de desarrollo. Que falten `nx.json`,
+  `.nxignore` y `.npmrc` es lo esperado; no invocar `init-nx-workspace` ni correr `pnpm nx`.
+- Verificar con `pnpm build && pnpm typecheck && pnpm test`: `sdd:validate` no compila nada.
+- Si `pnpm test` raíz falla por un timeout, correr cada paquete con `pnpm --filter <pkg> test`
+  antes de concluir que algo se rompió: el primer paquete que falla oculta el resultado del resto.
 
 ## Costo (qué gastó tokens/tiempo de más y cómo evitarlo)
 

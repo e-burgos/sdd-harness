@@ -93,6 +93,8 @@
 2. **Exportación Estática Obligatoria:** La aplicación web debe mantenerse compatible con `next export` (`output: 'export'`). No utilizar Server Components que dependan de runtime de servidor Node.js dinámico en runtime de producción.
 3. **Consistencia de Protocolo:** Toda interfaz de datos consumida desde el bridge debe provenir de `@sdd-studio/protocol`. Prohibido definir esquemas paralelos ad-hoc en el frontend.
 4. **Protocolo y `next dev`:** no operar el Studio de uso diario con `next dev` desde una rama que cambia el protocolo: el HMR carga el protocolo nuevo y rompe el handshake con el puente publicado.
+5. **E2E fuera de la verificación fuerte:** `pnpm build && pnpm typecheck && pnpm test` no corre Playwright. Si un cambio toca textos, personas o flujos de la UI, correr también `pnpm --filter sdd-studio-web e2e`.
+6. **Selectores Playwright exactos:** usar `exact: true` en `getByRole(..., { name })`. Sin él, el nombre matchea por substring y toma controles cuyo `aria-label` contiene el mismo texto (p. ej. el caret de un canal).
 
 ## 6. Qué sigue
 
