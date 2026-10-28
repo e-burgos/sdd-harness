@@ -1022,8 +1022,34 @@
         "TASK-002",
         "TASK-006"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/modules/activity/ActivityCenter.tsx",
+        "apps/studio/src/components/modules/activity/ActivityPanel.tsx",
+        "apps/studio/src/components/modules/activity/ActivityTimeline.tsx",
+        "apps/studio/src/components/modules/activity/activity-model.spec.ts",
+        "apps/studio/src/components/modules/activity/activity-model.ts",
+        "apps/studio/src/components/modules/activity/activity-module.spec.tsx",
+        "apps/studio/src/components/modules/activity/activity-scope.tsx",
+        "apps/studio/src/components/modules/activity/activity-text.ts",
+        "apps/studio/src/components/modules/activity/index.ts",
+        "apps/studio/src/components/modules/activity/use-activity-feed.ts",
+        "apps/studio/src/lib/bootstrap.spec.ts",
+        "apps/studio/src/lib/bootstrap.ts",
+        "apps/studio/src/lib/i18n/modules/activity.ts",
+        "apps/studio/src/lib/nav/use-nav.spec.tsx",
+        "apps/studio/src/lib/nav/use-nav.ts"
+      ],
+      "usage": {
+        "tokens_in": 333692,
+        "tokens_out": 58887,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-10-27"
+      }
     },
     {
       "id": "TASK-022",
@@ -1039,8 +1065,38 @@
         "TASK-011",
         "TASK-006"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/StudioHeader.tsx",
+        "apps/studio/src/components/modules/kit/KitCapabilitiesView.tsx",
+        "apps/studio/src/components/modules/kit/KitCenter.tsx",
+        "apps/studio/src/components/modules/kit/KitPanel.tsx",
+        "apps/studio/src/components/modules/kit/KitParts.tsx",
+        "apps/studio/src/components/modules/kit/KitProvider.tsx",
+        "apps/studio/src/components/modules/kit/KitToolsView.tsx",
+        "apps/studio/src/components/modules/kit/index.ts",
+        "apps/studio/src/components/modules/kit/kit-model.spec.ts",
+        "apps/studio/src/components/modules/kit/kit-model.ts",
+        "apps/studio/src/components/modules/kit/kit-module.spec.tsx",
+        "apps/studio/src/components/modules/kit/use-kit-file.ts",
+        "apps/studio/src/components/modules/kit/use-kit-tools.ts",
+        "apps/studio/src/lib/format.spec.ts",
+        "apps/studio/src/lib/format.ts",
+        "apps/studio/src/lib/i18n/en.ts",
+        "apps/studio/src/lib/i18n/es.ts",
+        "apps/studio/src/lib/i18n/modules/kit.ts",
+        "apps/studio/src/lib/tools-text.ts"
+      ],
+      "usage": {
+        "tokens_in": 278077,
+        "tokens_out": 49072,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-10-27"
+      }
     },
     {
       "id": "TASK-023",
@@ -1054,8 +1110,38 @@
         "TASK-022",
         "TASK-006"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/StudioHeader.tsx",
+        "apps/studio/src/components/modules/kit/KitCapabilitiesView.tsx",
+        "apps/studio/src/components/modules/kit/KitCenter.tsx",
+        "apps/studio/src/components/modules/kit/KitPanel.tsx",
+        "apps/studio/src/components/modules/kit/KitParts.tsx",
+        "apps/studio/src/components/modules/kit/KitProvider.tsx",
+        "apps/studio/src/components/modules/kit/KitToolsView.tsx",
+        "apps/studio/src/components/modules/kit/index.ts",
+        "apps/studio/src/components/modules/kit/kit-model.spec.ts",
+        "apps/studio/src/components/modules/kit/kit-model.ts",
+        "apps/studio/src/components/modules/kit/kit-module.spec.tsx",
+        "apps/studio/src/components/modules/kit/use-kit-file.ts",
+        "apps/studio/src/components/modules/kit/use-kit-tools.ts",
+        "apps/studio/src/lib/format.spec.ts",
+        "apps/studio/src/lib/format.ts",
+        "apps/studio/src/lib/i18n/en.ts",
+        "apps/studio/src/lib/i18n/es.ts",
+        "apps/studio/src/lib/i18n/modules/kit.ts",
+        "apps/studio/src/lib/tools-text.ts"
+      ],
+      "usage": {
+        "tokens_in": 278077,
+        "tokens_out": 49072,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-10-27"
+      }
     },
     {
       "id": "TASK-024",
@@ -1070,8 +1156,38 @@
         "TASK-023",
         "TASK-014"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/StudioHeader.tsx",
+        "apps/studio/src/components/modules/kit/KitCapabilitiesView.tsx",
+        "apps/studio/src/components/modules/kit/KitCenter.tsx",
+        "apps/studio/src/components/modules/kit/KitPanel.tsx",
+        "apps/studio/src/components/modules/kit/KitParts.tsx",
+        "apps/studio/src/components/modules/kit/KitProvider.tsx",
+        "apps/studio/src/components/modules/kit/KitToolsView.tsx",
+        "apps/studio/src/components/modules/kit/index.ts",
+        "apps/studio/src/components/modules/kit/kit-model.spec.ts",
+        "apps/studio/src/components/modules/kit/kit-model.ts",
+        "apps/studio/src/components/modules/kit/kit-module.spec.tsx",
+        "apps/studio/src/components/modules/kit/use-kit-file.ts",
+        "apps/studio/src/components/modules/kit/use-kit-tools.ts",
+        "apps/studio/src/lib/format.spec.ts",
+        "apps/studio/src/lib/format.ts",
+        "apps/studio/src/lib/i18n/en.ts",
+        "apps/studio/src/lib/i18n/es.ts",
+        "apps/studio/src/lib/i18n/modules/kit.ts",
+        "apps/studio/src/lib/tools-text.ts"
+      ],
+      "usage": {
+        "tokens_in": 278077,
+        "tokens_out": 49072,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-10-27"
+      }
     },
     {
       "id": "TASK-025",
@@ -1085,8 +1201,26 @@
         "TASK-010",
         "TASK-011"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/modules/architecture/ArchitectureCenter.tsx",
+        "apps/studio/src/components/modules/architecture/ArchitecturePanel.tsx",
+        "apps/studio/src/components/modules/architecture/architecture-model.ts",
+        "apps/studio/src/components/modules/architecture/architecture.spec.tsx",
+        "apps/studio/src/components/modules/architecture/index.ts",
+        "apps/studio/src/components/modules/architecture/use-registries.tsx",
+        "apps/studio/src/lib/i18n/modules/architecture.ts"
+      ],
+      "usage": {
+        "tokens_in": 333692,
+        "tokens_out": 58887,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-10-27"
+      }
     },
     {
       "id": "TASK-026",
@@ -1101,8 +1235,39 @@
         "TASK-011",
         "TASK-007"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/studio/package.json",
+        "apps/studio/src/components/mission-control/AgentMapCanvas.tsx",
+        "apps/studio/src/components/mission-control/agentmap.spec.tsx",
+        "apps/studio/src/components/modules/metrics/CostsView.tsx",
+        "apps/studio/src/components/modules/metrics/MetricsCenter.tsx",
+        "apps/studio/src/components/modules/metrics/MetricsDashboard.tsx",
+        "apps/studio/src/components/modules/metrics/MetricsPanel.tsx",
+        "apps/studio/src/components/modules/metrics/MetricsParts.tsx",
+        "apps/studio/src/components/modules/metrics/PlanningView.tsx",
+        "apps/studio/src/components/modules/metrics/RtkSavings.tsx",
+        "apps/studio/src/components/modules/metrics/costs-model.spec.ts",
+        "apps/studio/src/components/modules/metrics/costs-model.ts",
+        "apps/studio/src/components/modules/metrics/index.ts",
+        "apps/studio/src/components/modules/metrics/metrics-model.spec.ts",
+        "apps/studio/src/components/modules/metrics/metrics-model.ts",
+        "apps/studio/src/components/modules/metrics/metrics-module.spec.tsx",
+        "apps/studio/src/components/modules/metrics/use-cycle-records.ts",
+        "apps/studio/src/components/modules/metrics/use-rtk-gain.ts",
+        "apps/studio/src/lib/i18n/modules/metrics.ts",
+        "pnpm-lock.yaml"
+      ],
+      "usage": {
+        "tokens_in": 250269,
+        "tokens_out": 44165,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-10-27"
+      }
     },
     {
       "id": "TASK-027",
@@ -1116,8 +1281,39 @@
         "TASK-026",
         "TASK-030"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/studio/package.json",
+        "apps/studio/src/components/mission-control/AgentMapCanvas.tsx",
+        "apps/studio/src/components/mission-control/agentmap.spec.tsx",
+        "apps/studio/src/components/modules/metrics/CostsView.tsx",
+        "apps/studio/src/components/modules/metrics/MetricsCenter.tsx",
+        "apps/studio/src/components/modules/metrics/MetricsDashboard.tsx",
+        "apps/studio/src/components/modules/metrics/MetricsPanel.tsx",
+        "apps/studio/src/components/modules/metrics/MetricsParts.tsx",
+        "apps/studio/src/components/modules/metrics/PlanningView.tsx",
+        "apps/studio/src/components/modules/metrics/RtkSavings.tsx",
+        "apps/studio/src/components/modules/metrics/costs-model.spec.ts",
+        "apps/studio/src/components/modules/metrics/costs-model.ts",
+        "apps/studio/src/components/modules/metrics/index.ts",
+        "apps/studio/src/components/modules/metrics/metrics-model.spec.ts",
+        "apps/studio/src/components/modules/metrics/metrics-model.ts",
+        "apps/studio/src/components/modules/metrics/metrics-module.spec.tsx",
+        "apps/studio/src/components/modules/metrics/use-cycle-records.ts",
+        "apps/studio/src/components/modules/metrics/use-rtk-gain.ts",
+        "apps/studio/src/lib/i18n/modules/metrics.ts",
+        "pnpm-lock.yaml"
+      ],
+      "usage": {
+        "tokens_in": 250269,
+        "tokens_out": 44165,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-10-27"
+      }
     },
     {
       "id": "TASK-028",
