@@ -95,6 +95,19 @@ describe('StudioHeader gate chip', () => {
   });
 });
 
+describe('StudioHeader gate mode', () => {
+  it('shows the SPEC GATE mode and follows a change made from the Kit tools', () => {
+    const store = createStudioStore();
+    store.getState().setSnapshot({ ...snapshot, tools: { status: 'ok', rtkEnabled: true, modEnabled: true, gate: 'block', modLinked: true, revision: 'aaaaaaaaaaaaaaaa' } });
+    mount(store);
+    expect(screen.getByTestId('gate-chip')).toHaveAttribute('data-gate-mode', 'block');
+    expect(screen.getByTestId('gate-mode')).toHaveTextContent('Bloquear');
+    act(() => store.getState().setSnapshot({ ...snapshot, tools: { status: 'ok', rtkEnabled: true, modEnabled: true, gate: 'warn', modLinked: true, revision: 'bbbbbbbbbbbbbbbb' } }));
+    expect(screen.getByTestId('gate-chip')).toHaveAttribute('data-gate-mode', 'warn');
+    expect(screen.getByTestId('gate-mode')).toHaveTextContent('Avisar');
+  });
+});
+
 describe('StudioHeader mode toggle', () => {
   beforeEach(() => {
     localStorage.clear();

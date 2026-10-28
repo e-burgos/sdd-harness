@@ -4,15 +4,15 @@ import { Bot } from 'lucide-react';
 import type { BotEvent, ThreadInfo } from '@sdd-studio/protocol';
 import { agentMeta } from '@/lib/agents';
 import { botText } from '@/lib/format';
-import { useT } from '@/lib/i18n/i18n';
+import { useT, type Lang } from '@/lib/i18n/i18n';
 import { PANEL_TYPE } from '@/lib/typography-tokens';
 import { AgentAvatar } from '../../workspace/AgentAvatar';
 import { StatusBadge } from '../../workspace/StatusBadge';
 
-export function formatWhen(iso: string | undefined): string {
+export function formatWhen(iso: string | undefined, lang: Lang): string {
   if (!iso) return '';
   const time = Date.parse(iso);
-  return Number.isFinite(time) ? new Date(time).toLocaleString(undefined, { dateStyle: 'short', timeStyle: 'short' }) : '';
+  return Number.isFinite(time) ? new Date(time).toLocaleString(lang, { dateStyle: 'short', timeStyle: 'short' }) : '';
 }
 
 export function SectionTitle({ children }: { children: string }) {
@@ -44,7 +44,7 @@ export function ThreadRows({ threads, onOpen, emptyText }: { threads: ThreadInfo
 }
 
 export function EventRows({ events, emptyText, withChannel = false }: { events: BotEvent[]; emptyText: string; withChannel?: boolean }) {
-  const { t } = useT();
+  const { t, lang } = useT();
   if (events.length === 0) return <p className={`${PANEL_TYPE.item} text-ink-300`}>{emptyText}</p>;
   return (
     <ul className="space-y-1">
@@ -53,7 +53,7 @@ export function EventRows({ events, emptyText, withChannel = false }: { events: 
           <Bot aria-hidden size={16} className="shrink-0 translate-y-0.5 text-ink-400" />
           <span className={`${PANEL_TYPE.item} min-w-0 flex-1 text-ink-200`}>{botText(t, event)}</span>
           {withChannel && <span className={`${PANEL_TYPE.meta} shrink-0 text-ink-400`}>{event.channelId.replace(/^spec:/, '')}</span>}
-          {event.at && <span className={`${PANEL_TYPE.meta} shrink-0 text-ink-400`}>{formatWhen(event.at)}</span>}
+          {event.at && <span className={`${PANEL_TYPE.meta} shrink-0 text-ink-400`}>{formatWhen(event.at, lang)}</span>}
         </li>
       ))}
     </ul>

@@ -12,12 +12,21 @@ export const LEGACY_VIEW_KEY = 'sdd-studio.active-view';
 export const METRICS_VIEWS = ['dashboard', 'planning', 'costs', 'ecosystem', 'telemetry'] as const;
 export const ARCHITECTURE_SECTIONS = ['db', 'api', 'components'] as const;
 export const SPEC_TABS = ['summary', 'plan', 'tasks', 'documents', 'conversations'] as const;
-export const ACTIVITY_ORIGINS = ['spec', 'fix', 'agent', 'tools'] as const;
+export const ACTIVITY_ORIGINS = ['approval', 'question', 'task', 'spec', 'fix', 'tools'] as const;
+const LEGACY_ACTIVITY_ORIGINS = ['spec', 'fix', 'agent', 'tools'];
 
 export type MetricsView = (typeof METRICS_VIEWS)[number];
 export type ArchitectureSection = (typeof ARCHITECTURE_SECTIONS)[number];
 export type SpecTab = (typeof SPEC_TABS)[number];
 export type ActivityOrigin = (typeof ACTIVITY_ORIGINS)[number];
+
+export function migrateActivityFilter(stored: unknown): unknown {
+  if (!Array.isArray(stored)) return stored;
+  const isLegacyAll = stored.length === LEGACY_ACTIVITY_ORIGINS.length && LEGACY_ACTIVITY_ORIGINS.every((origin) => stored.includes(origin));
+  if (isLegacyAll) return [];
+  const known: readonly unknown[] = ACTIVITY_ORIGINS;
+  return stored.filter((origin, position) => known.includes(origin) && stored.indexOf(origin) === position);
+}
 
 const nullable = <T extends z.ZodType>(schema: T) => schema.nullable();
 
@@ -45,7 +54,7 @@ const PersistedNav = z.object({
     homeConversations: z.enum(['active', 'all']),
     specs: z.enum(['active', 'all', 'closed']),
     map: z.enum(['all', 'transversal', 'cycle', 'running', 'ready']),
-    activity: z.array(z.enum(ACTIVITY_ORIGINS)).max(ACTIVITY_ORIGINS.length),
+    activity: z.preprocess(migrateActivityFilter, z.array(z.enum(ACTIVITY_ORIGINS)).max(ACTIVITY_ORIGINS.length)),
   }),
 });
 
@@ -89,7 +98,7 @@ export const defaultNav = (): PersistedNavValue => ({
   specTab: 'summary',
   specCycle: null,
   home: { kind: 'channel', channelId: 'general' },
-  filters: { homeConversations: 'active', specs: 'active', map: 'all', activity: [...ACTIVITY_ORIGINS] },
+  filters: { homeConversations: 'active', specs: 'active', map: 'all', activity: [] },
 });
 
 const storageKey = (project: string) => `${NAV_KEY_PREFIX}${project}`;

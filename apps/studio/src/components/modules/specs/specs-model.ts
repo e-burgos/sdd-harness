@@ -47,14 +47,17 @@ export interface SpecGroupModel {
   rows: SpecRowModel[];
 }
 
-export function matchesSpecQuery(query: string, spec: SpecSummary): boolean {
-  return matchesQuery(query, spec.title, spec.id, spec.module, spec.app);
+export function matchesSpecQuery(query: string, spec: SpecSummary, cycle: CycleSummary | null, statusLabel = ''): boolean {
+  return matchesQuery(query, spec.title, spec.id, spec.module, spec.app, spec.status, statusLabel, cycle?.cycle);
 }
 
-export function buildSpecGroups(snapshot: WorkspaceSnapshot, filter: SpecFilter, query: string): SpecGroupModel[] {
+export type SpecStatusLabeler = (status: string) => string;
+
+export function buildSpecGroups(snapshot: WorkspaceSnapshot, filter: SpecFilter, query: string, statusLabelOf: SpecStatusLabeler = () => ''): SpecGroupModel[] {
   const rows = snapshot.specs
-    .filter((spec) => passesFilter(spec, snapshot.cycles, filter) && matchesSpecQuery(query, spec))
-    .map((spec): SpecRowModel & { group: SpecGroupKey } => ({ spec, cycle: currentCycleOf(snapshot.cycles, spec.id), group: groupKeyOf(spec, snapshot.cycles) }))
+    .map((spec) => ({ spec, cycle: currentCycleOf(snapshot.cycles, spec.id) }))
+    .filter(({ spec, cycle }) => passesFilter(spec, snapshot.cycles, filter) && matchesSpecQuery(query, spec, cycle, statusLabelOf(spec.status)))
+    .map(({ spec, cycle }): SpecRowModel & { group: SpecGroupKey } => ({ spec, cycle, group: groupKeyOf(spec, snapshot.cycles) }))
     .sort((a, b) => a.spec.title.localeCompare(b.spec.title));
   return SPEC_GROUP_ORDER.flatMap((key) => {
     const own = rows.filter((row) => row.group === key).map(({ spec, cycle }) => ({ spec, cycle }));

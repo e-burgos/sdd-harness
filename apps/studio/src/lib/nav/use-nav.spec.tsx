@@ -11,8 +11,22 @@ describe('navigation store', () => {
     const state = store.getState();
     expect(state.module).toBe('home');
     expect(state.home).toEqual({ kind: 'channel', channelId: 'general' });
-    expect(state.filters.activity).toEqual(['spec', 'fix', 'agent', 'tools']);
+    expect(state.filters.activity).toEqual([]);
     expect(state.selection).toEqual({ specs: null, fixes: null, agents: null, kit: null, architecture: null, metrics: null });
+  });
+
+  it('persists the activity filter per project', () => {
+    createNavStore('alpha').getState().setFilter('activity', ['approval', 'tools']);
+    expect(createNavStore('alpha').getState().filters.activity).toEqual(['approval', 'tools']);
+  });
+
+  it('migrates the stored legacy activity filter without losing the rest of the state', () => {
+    const base = defaultNav();
+    window.localStorage.setItem(key('p'), JSON.stringify({ ...base, module: 'kit', filters: { ...base.filters, activity: ['spec', 'fix', 'agent', 'tools'] } }));
+    expect(readNav('p').filters.activity).toEqual([]);
+    expect(readNav('p').module).toBe('kit');
+    window.localStorage.setItem(key('p'), JSON.stringify({ ...base, filters: { ...base.filters, activity: ['fix', 'agent', 'bogus', 'fix'] } }));
+    expect(readNav('p').filters.activity).toEqual(['fix']);
   });
 
   it('persists module and selection per project, never the search text', () => {

@@ -14,4 +14,8 @@ describe('format', () => {
   it('renders bot events', () => {
     expect(botText(t, { channelId: 'spec:s', botKind: 'task.status', payload: { taskId: 'T1', title: 'Tests', from: 'pending', to: 'done' } })).toBe('T1 «Tests»: pending → done');
   });
+  it('renders tools.changed with localized tool and values', () => {
+    expect(botText(t, { channelId: 'general', botKind: 'tools.changed', payload: { tool: 'gate', from: 'block', to: 'warn' } })).toBe('SPEC GATE: Bloquear → Avisar (sdd/tools.json)');
+    expect(botText(t, { channelId: 'general', botKind: 'tools.changed', payload: { tool: 'rtk', from: null, to: true } })).toBe('rtk: — → Activado (sdd/tools.json)');
+  });
 });

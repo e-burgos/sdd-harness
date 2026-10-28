@@ -273,6 +273,7 @@ export const es = {
   'bot.task.status': '{taskId} «{title}»: {from} → {to}',
   'bot.fix.created': 'Fix nuevo: {fixId}',
   'bot.fix.status': '{fixId}: {from} → {to}',
+  'bot.tools.changed': '{tool}: {from} → {to} (sdd/tools.json)',
   'mention.label': 'Sugerencias',
   'mention.files': 'Archivos',
   'mention.agents': 'Agentes',

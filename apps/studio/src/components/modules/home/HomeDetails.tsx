@@ -16,7 +16,7 @@ import { approvalThreads, isFixOpen, isSpecActive, isSpecClosed, runningCycles, 
 type Entry = [label: string, value: ReactNode];
 
 export function HomeDetails() {
-  const { t } = useT();
+  const { t, lang } = useT();
   const home = useNav((s) => s.home);
   const snapshot = useStudio((s) => s.snapshot);
   const threads = useStudio((s) => s.threads);
@@ -58,8 +58,8 @@ export function HomeDetails() {
         [t('home.details.agent'), agentMeta(info.agent).name],
         [t('home.details.status'), t(`status.${info.status}`)],
         [t('home.details.channel'), info.channelId],
-        [t('home.details.created'), formatWhen(info.createdAt) || none],
-        [t('home.details.lastActivity'), formatWhen(info.lastActivity) || none],
+        [t('home.details.created'), formatWhen(info.createdAt, lang) || none],
+        [t('home.details.lastActivity'), formatWhen(info.lastActivity, lang) || none],
       ];
     }
     const dm = dmAgentOfChannel(home.channelId);

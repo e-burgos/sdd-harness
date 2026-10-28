@@ -274,6 +274,7 @@ export const en = {
   'bot.task.status': '{taskId} “{title}”: {from} → {to}',
   'bot.fix.created': 'New fix: {fixId}',
   'bot.fix.status': '{fixId}: {from} → {to}',
+  'bot.tools.changed': '{tool}: {from} → {to} (sdd/tools.json)',
   'mention.label': 'Suggestions',
   'mention.files': 'Files',
   'mention.agents': 'Agents',

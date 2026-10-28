@@ -101,10 +101,13 @@ describe('WorkspaceApp / Connected Navigation', () => {
     expect(screen.getAllByText('Clara').length).toBeGreaterThan(0);
 
     fireEvent.click(screen.getByRole('button', { name: 'Métricas' }));
+    expect(screen.getByRole('heading', { name: 'Dashboard' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ecosistema' }));
     expect(screen.getByTestId('ecosystem-dashboard')).toBeInTheDocument();
     expect(screen.getByText('Ecosistema del Repositorio')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('radio', { name: 'Telemetría' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Telemetría' }));
     expect(screen.getByTestId('live-telemetry-hud')).toBeInTheDocument();
     expect(screen.getByText('Telemetría de Misión & Tokens')).toBeInTheDocument();
 

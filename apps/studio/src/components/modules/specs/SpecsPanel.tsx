@@ -11,6 +11,7 @@ import { ModulePanel } from '../../shell/ModulePanel';
 import { PanelGroup } from '../../shell/PanelGroup';
 import { PanelNotice } from '../../shell/PanelNotice';
 import { PanelRow } from '../../shell/PanelRow';
+import { statusLabelOf } from './SpecCard';
 import { buildSpecGroups, countByFilter, type SpecFilter, type SpecRowModel } from './specs-model';
 
 const FILTERS: readonly SpecFilter[] = ['active', 'all', 'closed'];
@@ -39,7 +40,7 @@ export function SpecsPanel() {
   const selected = useNav((s) => s.selection.specs);
   const select = useNav((s) => s.select);
 
-  const groups = useMemo(() => (snapshot ? buildSpecGroups(snapshot, filter, query) : []), [snapshot, filter, query]);
+  const groups = useMemo(() => (snapshot ? buildSpecGroups(snapshot, filter, query, (status) => statusLabelOf(t, status)) : []), [snapshot, filter, query, t]);
   const counts = useMemo(() => (snapshot ? countByFilter(snapshot) : null), [snapshot]);
 
   if (!snapshot || !counts) return <ModulePanel moduleId="specs" status="loading" />;

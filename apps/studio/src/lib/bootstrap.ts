@@ -23,7 +23,8 @@ export async function openThread(client: Requester, store: StudioStore, threadId
 }
 
 export async function loadBotHistory(client: Requester, store: StudioStore, channelId: string): Promise<void> {
-  const events = z.array(BotEvent).parse(await client.request({ cmd: 'channel.botHistory', channelId, limit: 100 }));
+  const includeKitEvents = channelId === 'general' && client.supports?.('kit-tools') === true;
+  const events = z.array(BotEvent).parse(await client.request({ cmd: 'channel.botHistory', channelId, limit: 100, ...(includeKitEvents ? { includeKitEvents } : {}) }));
   store.getState().setBotHistory(channelId, events);
 }
 

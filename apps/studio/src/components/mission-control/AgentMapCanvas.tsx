@@ -209,21 +209,24 @@ export function AgentMapCanvas({ selectedAgent, onSelectAgent, onSelectGate }: A
         }}
       />
 
-      <div className="flex items-center justify-between px-6 py-3 border-b border-foreground/5 bg-ink-950/40 backdrop-blur-md z-10">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between gap-4 px-6 py-3 border-b border-foreground/5 bg-ink-950/40 backdrop-blur-md z-10">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex shrink-0 items-center gap-2 whitespace-nowrap">
             <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
-            <h2 className="text-sm font-semibold text-ink-100 tracking-tight">{t('ui.map.title')}</h2>
+            <h2 className="text-small font-semibold text-ink-100 tracking-tight whitespace-nowrap">{t('ui.map.title')}</h2>
             <span className="rounded bg-foreground/10 px-1.5 py-0.5 font-mono text-micro text-emerald-400 font-bold border border-emerald-500/20">
               GATES
             </span>
           </div>
-          <span className="text-xs text-ink-500 font-mono">
+          <span
+            className="min-w-0 truncate text-meta text-ink-500 font-mono"
+            title={snapshot?.project ? t('ui.map.project', { name: snapshot.project }) : undefined}
+          >
             {snapshot?.project ? t('ui.map.project', { name: snapshot.project }) : t('ui.map.agentsCount', { n: NODES.length })}
           </span>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex shrink-0 items-center gap-3 whitespace-nowrap">
           <SegmentedControl<'cycle' | 'transversal' | 'all'>
             semantics="radio"
             aria-label={t('segment.gateFilter')}
@@ -240,7 +243,7 @@ export function AgentMapCanvas({ selectedAgent, onSelectAgent, onSelectGate }: A
 
           <div className="h-4 w-[1px] bg-foreground/10" />
 
-          <div className="flex items-center gap-4 text-xs font-mono text-ink-300">
+          <div className="flex items-center gap-4 text-meta font-mono text-ink-300">
             <span className="flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full bg-sky-400" />
               <span>{t('ui.map.running', { n: activePresenceCount })}</span>

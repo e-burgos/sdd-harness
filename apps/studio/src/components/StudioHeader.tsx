@@ -26,6 +26,7 @@ export function StudioHeader() {
       ? { kind: 'spec', specId: activeCycle.specId, cycle: activeCycle.cycle }
       : { kind: 'idle' };
   const label = gateLabel(gate, t);
+  const gateMode = snapshot?.tools?.gate ?? snapshot?.gateMode ?? null;
   const [statusOpen, setStatusOpen] = useState(false);
   const thread = useStudio((s) => (selectedThreadId ? (s.threads[selectedThreadId]?.info ?? null) : null));
 
@@ -53,6 +54,7 @@ export function StudioHeader() {
           type="button"
           data-testid="gate-chip"
           data-gate={gate.kind}
+          data-gate-mode={gateMode ?? undefined}
           title={label}
           aria-label={t('gate.modal.open')}
           aria-haspopup="dialog"
@@ -67,6 +69,11 @@ export function StudioHeader() {
         >
           {gate.kind !== 'idle' && <span className="h-1.5 w-1.5 shrink-0 animate-ping rounded-full bg-current" />}
           <span className="truncate">{label}</span>
+          {gateMode && (
+            <span data-testid="gate-mode" className={`shrink-0 rounded-full px-1.5 text-micro uppercase ${gateMode === 'warn' ? 'bg-amber-500/20 text-amber-300' : 'bg-foreground/10 text-ink-400'}`}>
+              {t(gateMode === 'warn' ? 'module.kit.tools.warn' : 'module.kit.tools.block')}
+            </span>
+          )}
         </button>
 
         {/* Working Swarm Presence Counter */}

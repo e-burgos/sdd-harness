@@ -40,6 +40,9 @@ describe('spec rules', () => {
     expect(buildSpecGroups(snap, 'closed', '').map((g) => g.key)).toEqual(['completed']);
     expect(buildSpecGroups(snap, 'all', '').map((g) => g.key)).toEqual(['active', 'planned', 'completed']);
     expect(buildSpecGroups(snap, 'all', 'COBRANZA').flatMap((g) => g.rows.map((r) => r.spec.id))).toEqual(['done']);
+    expect(buildSpecGroups(snap, 'all', 'in-progress').flatMap((g) => g.rows.map((r) => r.spec.id))).toEqual(['act']);
+    expect(buildSpecGroups(snap, 'all', 'CYCLE-01').flatMap((g) => g.rows.map((r) => r.spec.id))).toEqual(['act']);
+    expect(buildSpecGroups(snap, 'all', 'concluida', (status) => (status === 'completed' ? 'Concluida' : '')).flatMap((g) => g.rows.map((r) => r.spec.id))).toEqual(['done']);
     expect(buildSpecGroups(snap, 'all', 'pagos').flatMap((g) => g.rows.map((r) => r.spec.id))).toEqual(['done']);
   });
 });

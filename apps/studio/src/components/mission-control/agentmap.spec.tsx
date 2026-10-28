@@ -113,6 +113,13 @@ describe('AgentMapCanvas', () => {
     expect(screen.getByTestId('gate-card-fix-gate')).toBeInTheDocument();
   });
 
+  it('keeps the header on one line with the project name truncated and titled', () => {
+    renderCanvas();
+    const project = screen.getByText(/test-monorepo/);
+    expect(project).toHaveClass('truncate');
+    expect(project).toHaveAttribute('title', project.textContent ?? '');
+  });
+
   it('no longer carries its own conversation selector, swarm console or inspector drawer', () => {
     renderCanvas(twoConversations);
     expect(screen.queryByTestId('conversation-selector')).toBeNull();
