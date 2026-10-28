@@ -213,9 +213,9 @@
             "apps/studio-bridge",
             "libs/studio-protocol"
           ],
-          "status": "in-progress",
+          "status": "completed",
           "tasks_total": 30,
-          "tasks_done": 28
+          "tasks_done": 30
         }
       }
     }
