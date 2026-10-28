@@ -5,5 +5,4 @@ export interface ModuleSlots {
   Center: ComponentType;
   Right: ComponentType | null;
   Scope?: ComponentType<{ children: ReactNode }>;
-  legacyCenter?: boolean;
 }

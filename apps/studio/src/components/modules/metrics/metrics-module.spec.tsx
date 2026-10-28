@@ -55,9 +55,8 @@ const renderMetrics = (view: string | null, over: Parameters<typeof client>[0] =
 describe('Metrics module', () => {
   beforeEach(() => window.localStorage.clear());
 
-  it('is registered without a right panel and without the legacy center', () => {
+  it('is registered without a right panel', () => {
     expect(MODULES.metrics.Right).toBeNull();
-    expect(MODULES.metrics.legacyCenter).toBeUndefined();
   });
 
   it('lists the five views in the panel and marks the selected one', () => {

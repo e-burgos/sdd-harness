@@ -14,7 +14,6 @@ export const shellEs = {
   'shell.rail.custom.moveUp': 'Subir {name}',
   'shell.rail.custom.moveDown': 'Bajar {name}',
   'shell.rail.custom.reset': 'Restablecer riel',
-  'shell.rail.custom.close': 'Cerrar',
   'shell.rail.custom.noneHidden': 'No hay módulos ocultos',
   'shell.panel.search': 'Buscar en {module}',
   'shell.panel.clearFilter': 'Limpiar filtro',
@@ -28,10 +27,6 @@ export const shellEs = {
   'shell.right.title': 'Detalles',
   'shell.module.error': 'Este módulo falló al mostrarse',
   'shell.module.retry': 'Reintentar',
-  'shell.stub.title': 'Este módulo todavía no tiene contenido',
-  'shell.stub.metrics.ecosystem': 'Ecosistema',
-  'shell.stub.metrics.telemetry': 'Telemetría',
-  'shell.stub.metrics.views': 'Vistas de métricas',
 };
 
 export const shellEn = {
@@ -50,7 +45,6 @@ export const shellEn = {
   'shell.rail.custom.moveUp': 'Move {name} up',
   'shell.rail.custom.moveDown': 'Move {name} down',
   'shell.rail.custom.reset': 'Reset rail',
-  'shell.rail.custom.close': 'Close',
   'shell.rail.custom.noneHidden': 'No hidden modules',
   'shell.panel.search': 'Search {module}',
   'shell.panel.clearFilter': 'Clear filter',
@@ -64,8 +58,4 @@ export const shellEn = {
   'shell.right.title': 'Details',
   'shell.module.error': 'This module failed to render',
   'shell.module.retry': 'Retry',
-  'shell.stub.title': 'This module has no content yet',
-  'shell.stub.metrics.ecosystem': 'Ecosystem',
-  'shell.stub.metrics.telemetry': 'Telemetry',
-  'shell.stub.metrics.views': 'Metrics views',
 } satisfies Record<keyof typeof shellEs, string>;

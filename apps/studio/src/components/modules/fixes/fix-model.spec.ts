@@ -1,5 +1,6 @@
 import type { BotEvent, FixSummary, ThreadInfo } from '@sdd-studio/protocol';
-import { activityOfFix, documentOfFix, groupFixesByStatus, matchesFix, normalizeSeverity, shortFixId, threadsOfFix } from './fix-model';
+import { activityOfFix, documentOfFix, groupFixesByStatus, matchesFix, shortFixId, threadsOfFix } from './fix-model';
+import { normalizeSeverity } from '@/lib/sdd-status';
 
 const fix = (over: Partial<FixSummary> & { id: string }): FixSummary => ({ title: over.id, status: 'pending', severity: null, specId: null, createdAt: null, closedAt: null, ...over });
 

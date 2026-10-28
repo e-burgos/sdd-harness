@@ -8,7 +8,7 @@ import { activityModule } from './index';
 const { Panel, Center, Right, Scope } = activityModule;
 const ActivityScope = Scope!;
 
-const now = Date.now();
+const now = new Date().setHours(12, 0, 0, 0);
 const iso = (offsetMs: number) => new Date(now - offsetMs).toISOString();
 const HOUR = 3_600_000;
 
@@ -45,10 +45,10 @@ function Probe() {
   return <output data-testid="nav">{`${module}|${specs ?? ''}|${fixes ?? ''}|${home.kind === 'thread' ? home.threadId : ''}|${kit ?? ''}`}</output>;
 }
 
-function setup(options: { history?: Record<string, BotEvent[]>; withThread?: boolean; request?: (command: { channelId: string }) => unknown } = {}) {
+function setup(options: { history?: Record<string, BotEvent[]>; withThread?: boolean; features?: string[]; request?: (command: { channelId: string }) => unknown } = {}) {
   const history = options.history ?? HISTORY;
   const value = bridgeValue({
-    client: { request: async (command: { channelId: string }) => (options.request ? options.request(command) : (history[command.channelId] ?? [])), supports: (feature: string) => feature === 'kit-tools' } as never,
+    client: { request: async (command: { channelId: string }) => (options.request ? options.request(command) : (history[command.channelId] ?? [])), supports: (feature: string) => (options.features ?? ['kit-tools']).includes(feature) } as never,
   });
   if (options.withThread !== false) {
     value.store.setState({
@@ -89,6 +89,21 @@ describe('Activity module', () => {
     expect(order[3]).toBeLessThan(order[4]!);
     expect(order[4]).toBeLessThan(order[5]!);
     expect(lines.findIndex((line) => line.includes('cycle-02'))).toBe(lines.length - 1);
+  });
+
+  it('does not ask for kit events and still renders the timeline when the bridge lacks kit-tools', async () => {
+    const requests: Record<string, unknown>[] = [];
+    setup({
+      features: [],
+      request: (command) => {
+        requests.push(command);
+        return HISTORY[command.channelId] ?? [];
+      },
+    });
+    await screen.findByText(/FIX-dev-001/);
+    expect(requests.length).toBeGreaterThan(0);
+    expect(requests.some((request) => 'includeKitEvents' in request)).toBe(false);
+    expect(screen.getByText('Bash: $ pnpm test')).toBeInTheDocument();
   });
 
   it('shows a count per origin on each pill', async () => {

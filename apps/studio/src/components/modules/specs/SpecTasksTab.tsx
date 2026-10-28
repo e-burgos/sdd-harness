@@ -6,7 +6,8 @@ import { useT } from '@/lib/i18n/i18n';
 import { useNav } from '@/lib/nav/use-nav';
 import { useStudio } from '../../BridgeProvider';
 import { CycleSelector, Item, Section } from './SpecParts';
-import { currentCycleOf, effectiveCycle, TASK_STATUS_ORDER, taskStatusKeyOf, type TaskStatusKey } from './specs-model';
+import { effectiveCycle, TASK_STATUS_ORDER, taskStatusKeyOf, type TaskStatusKey } from './specs-model';
+import { currentCycleOf } from '@/lib/sdd-status';
 
 const GROUP_ORDER: readonly TaskStatusKey[] = [...TASK_STATUS_ORDER, 'other'];
 

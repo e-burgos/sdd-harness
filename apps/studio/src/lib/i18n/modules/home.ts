@@ -20,8 +20,6 @@ export const homeEs = {
   'home.title.dm': 'Mensaje directo con {name}',
   'home.title.running': 'En curso',
   'home.title.approvals': 'Por aprobar',
-  'home.title.thread': 'Conversación',
-  'home.back': 'Volver',
   'home.specs.summary': 'Resumen de specs',
   'home.specs.counters': 'Specs por estado',
   'home.specs.none': 'No hay specs todavía',
@@ -70,7 +68,6 @@ export const homeEs = {
   'home.details.channel': 'Canal',
   'home.details.created': 'Creada',
   'home.details.lastActivity': 'Última actividad',
-  'home.details.threads': 'Conversaciones',
   'home.details.none': '—',
 };
 
@@ -96,8 +93,6 @@ export const homeEn = {
   'home.title.dm': 'Direct message with {name}',
   'home.title.running': 'In progress',
   'home.title.approvals': 'To approve',
-  'home.title.thread': 'Conversation',
-  'home.back': 'Back',
   'home.specs.summary': 'Specs summary',
   'home.specs.counters': 'Specs by state',
   'home.specs.none': 'No specs yet',
@@ -146,6 +141,5 @@ export const homeEn = {
   'home.details.channel': 'Channel',
   'home.details.created': 'Created',
   'home.details.lastActivity': 'Last activity',
-  'home.details.threads': 'Conversations',
   'home.details.none': '—',
 } satisfies Record<keyof typeof homeEs, string>;

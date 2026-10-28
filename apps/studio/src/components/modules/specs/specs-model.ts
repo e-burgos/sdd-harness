@@ -3,28 +3,12 @@ import type { AgentGeneratedDocument } from '@/lib/agent-documents';
 import { linkEntriesOf } from '@/lib/link-targets';
 import { matchesQuery } from '@/lib/nav/search';
 import type { NavFilters } from '@/lib/nav/use-nav';
+import { currentCycleOf, cyclesOf, isSpecActive, isSpecClosed } from '@/lib/sdd-status';
 
 export type SpecFilter = NavFilters['specs'];
 export type SpecGroupKey = 'active' | 'planned' | 'completed';
 
 export const SPEC_GROUP_ORDER: readonly SpecGroupKey[] = ['active', 'planned', 'completed'];
-
-const IN_PROGRESS = 'in-progress';
-const COMPLETED = 'completed';
-const cycleNumber = (cycle: string) => Number(cycle.slice(6));
-
-export const cyclesOf = (cycles: readonly CycleSummary[], specId: string): CycleSummary[] =>
-  cycles.filter((c) => c.specId === specId).sort((a, b) => cycleNumber(a.cycle) - cycleNumber(b.cycle));
-
-export function currentCycleOf(cycles: readonly CycleSummary[], specId: string): CycleSummary | null {
-  const own = cyclesOf(cycles, specId);
-  return own.find((c) => c.status === IN_PROGRESS) ?? own.at(-1) ?? null;
-}
-
-export const isSpecActive = (spec: SpecSummary, cycles: readonly CycleSummary[]): boolean =>
-  spec.status === IN_PROGRESS || cycles.some((c) => c.specId === spec.id && c.status === IN_PROGRESS);
-
-export const isSpecClosed = (spec: SpecSummary): boolean => spec.status === COMPLETED;
 
 export function groupKeyOf(spec: SpecSummary, cycles: readonly CycleSummary[]): SpecGroupKey {
   if (isSpecClosed(spec)) return 'completed';

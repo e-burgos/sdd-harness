@@ -10,7 +10,7 @@ import type { useRailPreferences } from '@/lib/nav/use-rail-preferences';
 import { PANEL_TYPE } from '@/lib/typography-tokens';
 import type { ConnectionState } from '@/lib/bridge/client';
 import { AuthPanel } from '../workspace/AuthPanel';
-import { NewConversationIconButton } from '../workspace/SidebarHeader';
+import { NewConversationIconButton } from './NewConversationIconButton';
 import { RailCustomizeMenu } from './RailCustomizeMenu';
 import { RailPopover } from './RailPopover';
 import { focusRing } from './shell-context';

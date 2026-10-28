@@ -8,7 +8,8 @@ import { useNav } from '@/lib/nav/use-nav';
 import { useStudio } from '../../BridgeProvider';
 import { Chip } from '../../workspace/NavParts';
 import { CycleSelector, Item, Muted } from './SpecParts';
-import { currentCycleOf, effectiveCycle, planItemsOf } from './specs-model';
+import { effectiveCycle, planItemsOf } from './specs-model';
+import { currentCycleOf } from '@/lib/sdd-status';
 import { useDocumentViewer } from './use-document-viewer';
 
 export function SpecPlanTab({ spec }: { spec: SpecSummary }) {

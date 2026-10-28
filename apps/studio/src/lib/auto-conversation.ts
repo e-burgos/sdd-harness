@@ -1,5 +1,6 @@
 import { channelForSpec, type BotEvent, type CycleSummary, type ThreadInfo, type ThreadLinkTarget, type WorkspaceSnapshot } from '@sdd-studio/protocol';
 import { linkEntriesOf } from './link-targets';
+import { OPEN_FIX_STATUSES } from './sdd-status';
 
 export type PreparedTarget =
   | { kind: 'spec'; specId: string }
@@ -15,7 +16,6 @@ export interface PreparedConversation {
 
 export const MAX_PREPARED = 3;
 const OPEN_SPEC_STATUSES = new Set(['draft', 'in-progress']);
-const OPEN_FIX_STATUSES = new Set(['pending', 'in-progress']);
 const SPEC_FILE = (specId: string) => `sdd/specs/${specId}/${specId}.spec.md`;
 const GLOBAL_CONTEXT = 'sdd/context/context_prompt.md';
 const LESSONS = 'sdd/memory/lessons.md';

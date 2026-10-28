@@ -3,9 +3,7 @@ import { emptyThread, type ThreadState } from '@/lib/store/timeline';
 import {
   ACTIVE_WINDOW_MS,
   countBy,
-  currentCycleOf,
   homeChannelKind,
-  isSpecActive,
   isThreadActive,
   recentEvents,
   needsApproval,
@@ -43,18 +41,6 @@ describe('home derivations', () => {
     expect(homeChannelKind('fixes')).toBe('fixes');
     expect(homeChannelKind('spec:spec-a')).toBe('specs');
     expect(homeChannelKind('dm:sdd-planner')).toBe('dm');
-  });
-
-  it('treats a spec as active when its status or any cycle is in progress', () => {
-    expect(isSpecActive(spec('a', 'in-progress'), [])).toBe(true);
-    expect(isSpecActive(spec('a', 'draft'), [cycle('a', 1, 'in-progress')])).toBe(true);
-    expect(isSpecActive(spec('a', 'completed'), [cycle('a', 1, 'completed')])).toBe(false);
-  });
-
-  it('picks the in-progress cycle, else the highest number', () => {
-    expect(currentCycleOf([cycle('a', 1, 'in-progress'), cycle('a', 2, 'completed')], 'a')?.cycle).toBe('cycle-01');
-    expect(currentCycleOf([cycle('a', 1, 'completed'), cycle('a', 2, 'completed')], 'a')?.cycle).toBe('cycle-02');
-    expect(currentCycleOf([], 'a')).toBeNull();
   });
 
   it('lists active specs first', () => {

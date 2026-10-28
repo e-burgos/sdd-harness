@@ -3,7 +3,8 @@
 import { Badge, StateBadge, type StateBadgeTone } from '@e-burgos/tucu-ui';
 import { useT } from '@/lib/i18n/i18n';
 import type { Dict } from '@/lib/i18n/es';
-import { isFixStatus, normalizeSeverity, type FixStatus, type Severity } from './fix-model';
+import { normalizeSeverity, type Severity } from '@/lib/sdd-status';
+import { isFixStatus, type FixStatus } from './fix-model';
 
 const SEVERITY_TONE: Record<Severity, 'danger' | 'warning' | 'info' | 'neutral'> = {
   critical: 'danger',

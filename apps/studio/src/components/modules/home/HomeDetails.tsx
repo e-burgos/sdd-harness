@@ -11,7 +11,8 @@ import { PANEL_TYPE } from '@/lib/typography-tokens';
 import { useStudio } from '../../BridgeProvider';
 import { RelatedDocuments } from '../../mission-control/RelatedDocuments';
 import { formatWhen } from './channel-sections';
-import { approvalThreads, isFixOpen, isSpecActive, isSpecClosed, runningCycles, runningThreads } from './derive';
+import { approvalThreads, runningCycles, runningThreads } from './derive';
+import { isFixOpen, isSpecActive, isSpecClosed } from '@/lib/sdd-status';
 
 type Entry = [label: string, value: ReactNode];
 

@@ -6,7 +6,7 @@ import type { CycleSummary } from '@sdd-studio/protocol';
 import type { ReactNode } from 'react';
 import { useT } from '@/lib/i18n/i18n';
 import { PANEL_TYPE, ROW_ICON } from '@/lib/typography-tokens';
-import { cyclesOf } from './specs-model';
+import { cyclesOf } from '@/lib/sdd-status';
 
 const STATUS_TONE: Record<string, StateBadgeTone> = {
   'in-progress': 'teal',

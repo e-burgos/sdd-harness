@@ -9,7 +9,7 @@ import { useRailPreferences } from '@/lib/nav/use-rail-preferences';
 import { MODULE_LABEL_KEY } from '@/lib/nav/module-labels';
 import { usePanelState } from '@/lib/use-panel-state';
 import { useBridge, useStudio } from '../BridgeProvider';
-import { PanelRail } from '../workspace/PanelRail';
+import { PanelRail } from './PanelRail';
 import { ModuleBoundary } from './ModuleBoundary';
 import { ModuleRail } from './ModuleRail';
 import { ShellActionsContext } from './shell-context';
@@ -35,7 +35,6 @@ export function StudioShell() {
 
   const definition = MODULES[activeModule];
   const { Scope = Fragment, Panel, Center, Right } = definition;
-  const legacy = definition.legacyCenter === true;
   const narrow = tier === 'narrow';
   const rightCollapsed = tier === 'wide' ? panels.rightCollapsed : !rightOpenWhenNarrow;
   const panelCollapsed = !narrow && panels.sidebarCollapsed;
@@ -61,9 +60,9 @@ export function StudioShell() {
   const expandRight = () => (tier === 'wide' ? panels.setRightCollapsed(false) : setRightOpenWhenNarrow(true));
 
   const columns: string[] = [];
-  if (!legacy && !narrow) columns.push(panelCollapsed ? `${COLLAPSED_WIDTH_PX}px` : `${PANEL_WIDTH_PX}px`);
+  if (!narrow) columns.push(panelCollapsed ? `${COLLAPSED_WIDTH_PX}px` : `${PANEL_WIDTH_PX}px`);
   columns.push('minmax(0,1fr)');
-  if (!legacy && Right) columns.push(rightCollapsed ? `${COLLAPSED_WIDTH_PX}px` : `${RIGHT_WIDTH_PX}px`);
+  if (Right) columns.push(rightCollapsed ? `${COLLAPSED_WIDTH_PX}px` : `${RIGHT_WIDTH_PX}px`);
   const gridStyle: CSSProperties = { gridTemplateColumns: columns.join(' ') };
 
   const panelNode = (
@@ -87,7 +86,7 @@ export function StudioShell() {
         />
         <Scope>
           <div data-testid="shell-body" data-module={activeModule} className="relative grid min-h-0 min-w-0 flex-1 grid-rows-[minmax(0,1fr)]" style={gridStyle}>
-            {!legacy && !narrow &&
+            {!narrow &&
               (panelCollapsed ? (
                 <PanelRail side="left" label={t('panel.sidebar.expand')} onExpand={() => panels.setSidebarCollapsed(false)} />
               ) : (
@@ -98,8 +97,7 @@ export function StudioShell() {
                 <Center />
               </ModuleBoundary>
             </main>
-            {!legacy &&
-              Right &&
+            {Right &&
               (rightCollapsed ? (
                 <PanelRail side="right" label={t('panel.right.expand')} onExpand={expandRight} />
               ) : (
@@ -109,7 +107,7 @@ export function StudioShell() {
                   </ModuleBoundary>
                 </div>
               ))}
-            {!legacy && narrow && overlayOpen && (
+            {narrow && overlayOpen && (
               <>
                 <button type="button" aria-label={t('shell.panel.close')} className="absolute inset-0 z-10 bg-black/40" onClick={() => setOverlayOpen(false)} />
                 <div data-testid="panel-overlay" aria-label={t('shell.panel.open', { module: t(MODULE_LABEL_KEY[activeModule]) })} className="absolute inset-y-0 left-0 z-20 w-[min(280px,calc(100%-24px))] shadow-xl">

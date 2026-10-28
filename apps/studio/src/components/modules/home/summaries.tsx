@@ -4,10 +4,10 @@ import { useMemo, type ReactNode } from 'react';
 import type { FixSummary, WorkspaceSnapshot } from '@sdd-studio/protocol';
 import { useT } from '@/lib/i18n/i18n';
 import { useNav } from '@/lib/nav/use-nav';
-import type { NavProgress } from '@/lib/store/nav-tree';
 import { PANEL_TYPE } from '@/lib/typography-tokens';
-import { Chip, CycleTrail, SeverityChip, SpecStatusDot } from '../../workspace/NavParts';
-import { countBy, isFixOpen, normalizeSeverity, sortFixes, specRows, type Counter } from './derive';
+import { Chip, CycleTrail, SeverityChip, SpecStatusDot, type NavProgress } from '../../workspace/NavParts';
+import { countBy, severityBucketOf, sortFixes, specRows, type Counter } from './derive';
+import { isFixOpen } from '@/lib/sdd-status';
 
 const rowClass =
   'flex min-h-9 w-full items-center gap-2 rounded-md px-2 py-1 text-left text-copy hover:bg-ink-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400';
@@ -99,7 +99,7 @@ export function FixesSummary({ fixes }: { fixes: FixSummary[] }) {
   const { t } = useT();
   const sorted = useMemo(() => sortFixes(fixes), [fixes]);
   const byState = useMemo(() => countBy(fixes, (fix) => fix.status), [fixes]);
-  const bySeverity = useMemo(() => countBy(sortFixes(fixes), (fix) => normalizeSeverity(fix.severity)), [fixes]);
+  const bySeverity = useMemo(() => countBy(sortFixes(fixes), (fix) => severityBucketOf(fix.severity)), [fixes]);
   const severityLabel = (key: string) => (key === 'none' ? t('home.fixes.noSeverity') : key);
   return (
     <SummarySection title={t('home.fixes.summary')} label={t('home.fixes.summary')}>

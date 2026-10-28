@@ -6,7 +6,7 @@ import { useMemo, useState } from 'react';
 import { useT } from '@/lib/i18n/i18n';
 import { ROW_ICON } from '@/lib/typography-tokens';
 import { useStudio } from '../../BridgeProvider';
-import { CLOSED_FIX_STATUSES } from '../fixes/fix-model';
+import { CLOSED_FIX_STATUSES } from '@/lib/sdd-status';
 import { percentOf, planningSpecs, type PlanningCycle, type PlanningSpec } from './metrics-model';
 import { ProgressBar, Section, ViewFrame, useStatusLabel } from './MetricsParts';
 

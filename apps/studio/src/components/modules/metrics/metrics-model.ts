@@ -1,5 +1,5 @@
 import type { CycleSummary, FixSummary, SpecSummary, TaskSummary, WorkspaceSnapshot } from '@sdd-studio/protocol';
-import { CLOSED_FIX_STATUSES } from '../fixes/fix-model';
+import { CLOSED_FIX_STATUSES } from '@/lib/sdd-status';
 
 export interface StatusCount {
   status: string;

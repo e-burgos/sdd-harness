@@ -13,7 +13,7 @@ import { StatusBadge } from './SpecParts';
 import { SpecPlanTab } from './SpecPlanTab';
 import { SpecSummaryTab } from './SpecSummaryTab';
 import { SpecTasksTab } from './SpecTasksTab';
-import { currentCycleOf } from './specs-model';
+import { currentCycleOf } from '@/lib/sdd-status';
 
 const TAB_VIEW: Record<SpecTab, (props: { spec: SpecSummary }) => React.JSX.Element | null> = {
   summary: SpecSummaryTab,

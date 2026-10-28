@@ -75,6 +75,7 @@ describe('ThreadLinkPicker', () => {
     pickOption(select, 'FIX-a-001');
     await waitFor(() => expect(select).toHaveTextContent('FIX-a-001 (pending)'));
     expect(client.request).toHaveBeenLastCalledWith({ cmd: 'thread.setLink', threadId: 't1', link: { kind: 'fix', fixId: 'FIX-a-001' } });
+    await waitFor(() => expect(select).toBeEnabled());
     pickOption(select, 'Sin asociar');
     await waitFor(() => expect(select).toHaveTextContent('Sin asociar'));
     expect(client.request).toHaveBeenLastCalledWith({ cmd: 'thread.setLink', threadId: 't1', link: { kind: 'none' } });

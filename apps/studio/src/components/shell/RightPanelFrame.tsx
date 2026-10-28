@@ -3,7 +3,7 @@
 import type { ReactNode } from 'react';
 import { useT } from '@/lib/i18n/i18n';
 import { PANEL_TYPE } from '@/lib/typography-tokens';
-import { PanelToggle } from '../workspace/PanelRail';
+import { PanelToggle } from './PanelRail';
 import { useShellActions } from './shell-context';
 
 export function RightPanelFrame({ title, actions, children }: { title?: string; actions?: ReactNode; children?: ReactNode }) {

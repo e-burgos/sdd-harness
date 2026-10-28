@@ -1,4 +1,5 @@
 import type { BotEvent, CycleSummary, FixSummary, SessionStatus, SpecSummary, ThreadInfo, WorkspaceSnapshot } from '@sdd-studio/protocol';
+import { currentCycleOf, isFixOpen, isSpecActive, severityRank } from '@/lib/sdd-status';
 import { pendingApprovals } from '@/lib/store/selectors';
 import type { ThreadState } from '@/lib/store/timeline';
 
@@ -6,8 +7,6 @@ export const ACTIVE_WINDOW_MS = 24 * 60 * 60 * 1000;
 
 const BUSY: ReadonlySet<SessionStatus> = new Set(['queued', 'running', 'waiting-approval']);
 const RUNNING: ReadonlySet<SessionStatus> = new Set(['queued', 'running']);
-const OPEN_FIX: ReadonlySet<string> = new Set(['pending', 'in-progress']);
-const SEVERITY_RANK: Record<string, number> = { critical: 0, high: 1, alta: 1, medium: 2, media: 2, low: 3, baja: 3 };
 
 export type HomeChannelKind = 'general' | 'specs' | 'fixes' | 'dm' | 'other';
 
@@ -17,20 +16,6 @@ export const homeChannelKind = (channelId: string): HomeChannelKind => {
   if (channelId.startsWith('dm:')) return 'dm';
   return 'other';
 };
-
-export const isSpecClosed = (spec: SpecSummary): boolean => spec.status === 'completed';
-
-export const isSpecActive = (spec: SpecSummary, cycles: readonly CycleSummary[]): boolean =>
-  spec.status === 'in-progress' || cycles.some((cycle) => cycle.specId === spec.id && cycle.status === 'in-progress');
-
-const cycleNumber = (cycle: CycleSummary): number => Number(cycle.cycle.slice(6));
-
-export function currentCycleOf(cycles: readonly CycleSummary[], specId: string): CycleSummary | null {
-  const own = cycles.filter((cycle) => cycle.specId === specId);
-  const running = own.find((cycle) => cycle.status === 'in-progress');
-  if (running) return running;
-  return own.reduce<CycleSummary | null>((best, cycle) => (best === null || cycleNumber(cycle) > cycleNumber(best) ? cycle : best), null);
-}
 
 export interface SpecRow {
   spec: SpecSummary;
@@ -54,11 +39,7 @@ export function countBy<T>(items: readonly T[], keyOf: (item: T) => string): Cou
   return [...counters].map(([key, count]) => ({ key, count }));
 }
 
-export const isFixOpen = (fix: FixSummary): boolean => OPEN_FIX.has(fix.status);
-
-export const severityRank = (severity: string | null): number => (severity === null ? 4 : (SEVERITY_RANK[severity.toLowerCase()] ?? 4));
-
-export const normalizeSeverity = (severity: string | null): string => (severity === null ? 'none' : severity.toLowerCase());
+export const severityBucketOf = (severity: string | null): string => (severity === null ? 'none' : severity.toLowerCase());
 
 export function sortFixes(fixes: readonly FixSummary[]): FixSummary[] {
   return [...fixes].sort((a, b) => severityRank(a.severity) - severityRank(b.severity) || (b.createdAt ?? '').localeCompare(a.createdAt ?? ''));

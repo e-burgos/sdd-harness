@@ -1,39 +1,14 @@
 import type { BotEvent, FixSummary, ThreadInfo } from '@sdd-studio/protocol';
 import { linkEntriesOf } from '@/lib/link-targets';
 import { matchesQuery } from '@/lib/nav/search';
-
-export const SEVERITIES = ['critical', 'high', 'medium', 'low'] as const;
-export type Severity = (typeof SEVERITIES)[number];
+import { severityRank } from '@/lib/sdd-status';
 
 export const FIX_STATUSES = ['in-progress', 'pending', 'implemented', 'validated', 'absorbed'] as const;
 export type FixStatus = (typeof FIX_STATUSES)[number];
 
 export const FIXES_CHANNEL = 'fixes';
 
-const SEVERITY_ALIASES: Record<string, Severity> = {
-  critical: 'critical',
-  critica: 'critical',
-  crítica: 'critical',
-  high: 'high',
-  alta: 'high',
-  medium: 'medium',
-  media: 'medium',
-  low: 'low',
-  baja: 'low',
-};
-
 export const isFixStatus = (status: string): status is FixStatus => (FIX_STATUSES as readonly string[]).includes(status);
-
-export const CLOSED_FIX_STATUSES: ReadonlySet<string> = new Set(['validated', 'absorbed']);
-
-export function normalizeSeverity(severity: string | null): Severity | null {
-  return severity === null ? null : (SEVERITY_ALIASES[severity.trim().toLowerCase()] ?? null);
-}
-
-export function severityRank(severity: string | null): number {
-  const normalized = normalizeSeverity(severity);
-  return normalized === null ? SEVERITIES.length : SEVERITIES.indexOf(normalized);
-}
 
 const timeOf = (iso: string | null | undefined): number => {
   if (!iso) return Number.NEGATIVE_INFINITY;

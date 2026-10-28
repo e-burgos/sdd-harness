@@ -57,7 +57,6 @@ describe('Map module', () => {
 
   it('registers a swarm scope and lets the shell render the three columns', () => {
     expect(mapModule.Scope).toBe(SwarmPlaybackProvider);
-    expect(mapModule.legacyCenter).toBeUndefined();
     expect(mapModule.Right).not.toBeNull();
   });
 

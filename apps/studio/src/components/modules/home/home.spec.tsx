@@ -78,7 +78,6 @@ describe('Inicio module', () => {
 
   it('registers the three slots without the legacy workspace', () => {
     expect(MODULES.home.Right).not.toBeNull();
-    expect(MODULES.home.legacyCenter).toBeUndefined();
   });
 
   describe('panel', () => {

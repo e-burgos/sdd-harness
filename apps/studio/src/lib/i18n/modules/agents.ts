@@ -3,7 +3,6 @@ export const agentsEs = {
   'module.agents.group.project': 'Agentes del proyecto',
   'module.agents.group.kit': 'Agentes del kit',
   'module.agents.empty': 'Este proyecto todavía no tiene agentes',
-  'module.agents.emptyHint': 'Los agentes aparecen cuando el workspace define sus definiciones.',
   'module.agents.presence.working': 'Trabajando',
   'module.agents.presence.waiting': 'Esperando',
   'module.agents.presence.active': 'Activo',
@@ -30,7 +29,6 @@ export const agentsEs = {
   'module.agents.card.documents': 'Documentos de la conversación',
   'module.agents.chat.title': 'Chat directo',
   'module.agents.chat.empty': 'Escribile a {name} para empezar una conversación.',
-  'module.agents.chat.new': 'Nueva conversación',
   'module.agents.chat.offline': 'El chat directo no está disponible mientras no haya conexión con el puente.',
   'module.agents.chat.unavailable': 'El chat directo no está disponible para este agente.',
 };
@@ -40,7 +38,6 @@ export const agentsEn = {
   'module.agents.group.project': 'Project agents',
   'module.agents.group.kit': 'Kit agents',
   'module.agents.empty': 'This project has no agents yet',
-  'module.agents.emptyHint': 'Agents show up once the workspace defines them.',
   'module.agents.presence.working': 'Working',
   'module.agents.presence.waiting': 'Waiting',
   'module.agents.presence.active': 'Active',
@@ -67,7 +64,6 @@ export const agentsEn = {
   'module.agents.card.documents': 'Conversation documents',
   'module.agents.chat.title': 'Direct chat',
   'module.agents.chat.empty': 'Write to {name} to start a conversation.',
-  'module.agents.chat.new': 'New conversation',
   'module.agents.chat.offline': 'Direct chat is unavailable while the bridge is not connected.',
   'module.agents.chat.unavailable': 'Direct chat is not available for this agent.',
 } satisfies Record<keyof typeof agentsEs, string>;

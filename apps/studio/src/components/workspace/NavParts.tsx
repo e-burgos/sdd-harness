@@ -2,8 +2,14 @@ import { Badge } from '@e-burgos/tucu-ui';
 import type { ReactNode } from 'react';
 import type { Presence, SessionStatus } from '@sdd-studio/protocol';
 import { useT } from '@/lib/i18n/i18n';
-import type { NavProgress } from '@/lib/store/nav-tree';
 import { AgentAvatar } from './AgentAvatar';
+
+export interface NavProgress {
+  cycle: string;
+  flow: string;
+  done: number;
+  total: number;
+}
 
 type Tone = 'success' | 'warning' | 'danger' | 'neutral' | 'info';
 

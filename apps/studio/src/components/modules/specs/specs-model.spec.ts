@@ -2,11 +2,9 @@ import type { CycleSummary, SpecSummary, ThreadInfo, WorkspaceSnapshot } from '@
 import {
   activityEventsOf,
   buildSpecGroups,
-  currentCycleOf,
   documentGroupsOf,
   expectedPlanDocuments,
   groupKeyOf,
-  isSpecActive,
   planItemsOf,
   threadsOfSpec,
 } from './specs-model';
@@ -18,15 +16,7 @@ const snapshot = (specs: SpecSummary[], cycles: CycleSummary[]): WorkspaceSnapsh
   ({ project: 'p', profile: 'team', kitVersion: null, specs, cycles, fixes: [], agents: [], skills: [], gateMode: 'block', pricing: null, stale: [] }) as WorkspaceSnapshot;
 
 describe('spec rules', () => {
-  it('RN-8: current cycle is the in-progress one, else the highest', () => {
-    expect(currentCycleOf([cycle('a', 1, 'in-progress'), cycle('a', 2, 'completed')], 'a')?.cycle).toBe('cycle-01');
-    expect(currentCycleOf([cycle('a', 1, 'completed'), cycle('a', 2, 'completed')], 'a')?.cycle).toBe('cycle-02');
-    expect(currentCycleOf([], 'a')).toBeNull();
-  });
-
   it('RN-5: active by own status or by an in-progress cycle; completed is closed', () => {
-    expect(isSpecActive(spec('a', 'planned'), [cycle('a', 1, 'in-progress')])).toBe(true);
-    expect(isSpecActive(spec('a', 'planned'), [])).toBe(false);
     expect(groupKeyOf(spec('a', 'completed'), [])).toBe('completed');
     expect(groupKeyOf(spec('a', 'draft'), [])).toBe('planned');
   });

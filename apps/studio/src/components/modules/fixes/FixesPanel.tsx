@@ -9,7 +9,8 @@ import { PanelGroup } from '../../shell/PanelGroup';
 import { PanelNotice } from '../../shell/PanelNotice';
 import { PanelRow } from '../../shell/PanelRow';
 import { SeverityChip, useFixLabels } from './FixBadges';
-import { CLOSED_FIX_STATUSES, groupFixesByStatus, matchesFix, shortFixId } from './fix-model';
+import { CLOSED_FIX_STATUSES } from '@/lib/sdd-status';
+import { groupFixesByStatus, matchesFix, shortFixId } from './fix-model';
 import { useFixes } from './use-fixes';
 
 export function FixesPanel() {

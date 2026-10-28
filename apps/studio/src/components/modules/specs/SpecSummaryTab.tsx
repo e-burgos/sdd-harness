@@ -6,7 +6,8 @@ import { useNav } from '@/lib/nav/use-nav';
 import { useStudio } from '../../BridgeProvider';
 import { Chip } from '../../workspace/NavParts';
 import { Item, Muted, Section, StatusBadge, shortCycleLabel } from './SpecParts';
-import { currentCycleOf, cyclesOf, fixesOfSpec, effectiveCycle } from './specs-model';
+import { fixesOfSpec, effectiveCycle } from './specs-model';
+import { currentCycleOf, cyclesOf } from '@/lib/sdd-status';
 
 function Fact({ label, children }: { label: string; children: React.ReactNode }) {
   return (
