@@ -159,14 +159,24 @@
         "TASK-004",
         "TASK-005"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/cli/src/types/config.types.ts",
         "apps/cli/src/config/schema.ts",
         "apps/cli/src/commands/init.ts",
         "apps/cli/src/commands/add/app.ts",
         "apps/cli/src/commands/configure/sdd-apps.ts"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 151225,
+        "tokens_out": 26687,
+        "approx": true,
+        "recorded_at": "2026-11-03",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "source": "agent-usage-notification"
+      }
     },
     {
       "id": "TASK-007",

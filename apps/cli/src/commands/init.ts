@@ -11,6 +11,7 @@ import {
   toStandaloneOptions,
   toWorkspaceOptions,
 } from "../config/load.js";
+import { isWorkspaceOnlyAppType } from "../generators/app-types.js";
 import { IDEA_FILENAME } from "../generators/idea.generator.js";
 import { parseProfile } from "../generators/sdd.generator.js";
 import type { SddProfile } from "../generators/sdd.generator.js";
@@ -111,9 +112,24 @@ const APP_TYPE_OPTIONS = [
     hint: "Full-stack React framework",
   },
   {
+    value: "next-bff",
+    label: "Next.js BFF",
+    hint: "app/api routes over an upstream service (monorepo only)",
+  },
+  {
+    value: "mfe-shell",
+    label: "Microfrontend shell",
+    hint: "Vite shell with path-based mfes (monorepo only)",
+  },
+  {
+    value: "mfe",
+    label: "Microfrontend",
+    hint: "Vite app served under /<name>/ (monorepo only)",
+  },
+  {
     value: "python",
     label: "Python Agent",
-    hint: "Python 3.11+ service",
+    hint: "FastAPI + LangGraph with uv",
   },
   {
     value: "fastify",
@@ -132,6 +148,10 @@ const APP_TYPE_OPTIONS = [
   },
 ];
 
+const STANDALONE_APP_TYPE_OPTIONS = APP_TYPE_OPTIONS.filter(
+  (option) => !isWorkspaceOnlyAppType(option.value),
+);
+
 const SERVICE_OPTIONS = [
   { value: "postgres", label: "PostgreSQL", hint: "Relational DB" },
   { value: "redis", label: "Redis", hint: "Cache & queues" },
@@ -146,6 +166,10 @@ const DEFAULT_APP_NAMES: Record<string, string> = {
   fastify: "api",
   springboot: "service",
   hono: "api",
+  "next-bff": "bff",
+  "mfe-shell": "shell",
+  mfe: "catalog",
+  python: "agent",
 };
 
 /** Closing pointer shown by every init path: real generated repos to compare against. */
@@ -409,7 +433,7 @@ async function runStandaloneFlow(
 ): Promise<void> {
   const appType = await p.select({
     message: "App type (code lives at the repo root):",
-    options: APP_TYPE_OPTIONS,
+    options: STANDALONE_APP_TYPE_OPTIONS,
   });
 
   if (p.isCancel(appType)) {
@@ -511,7 +535,12 @@ async function runNxFlow(
     process.exit(0);
   }
 
-  const apps: Array<{ name: string; type: string }> = [];
+  const apps: Array<{
+    name: string;
+    type: string;
+    shell?: string;
+    ml?: boolean;
+  }> = [];
   for (const type of appTypes as string[]) {
     const defaultName = DEFAULT_APP_NAMES[type] ?? type;
     const appName = await p.text({
@@ -532,6 +561,35 @@ async function runNxFlow(
     }
 
     apps.push({ name: appName as string, type });
+  }
+
+  for (const app of apps) {
+    if (app.type === "python") {
+      const wantsMl = await p.confirm({
+        message: `Add TensorFlow (ml) to "${app.name}" as a default dependency?`,
+        initialValue: false,
+      });
+      if (p.isCancel(wantsMl)) {
+        p.cancel("Operation cancelled.");
+        process.exit(0);
+      }
+      if (wantsMl) app.ml = true;
+    }
+  }
+
+  const shells = apps.filter((a) => a.type === "mfe-shell");
+  if (shells.length > 1) {
+    for (const app of apps.filter((a) => a.type === "mfe")) {
+      const picked = await p.select({
+        message: `Which mfe-shell serves "${app.name}"?`,
+        options: shells.map((s) => ({ value: s.name, label: s.name })),
+      });
+      if (p.isCancel(picked)) {
+        p.cancel("Operation cancelled.");
+        process.exit(0);
+      }
+      app.shell = picked as string;
+    }
   }
 
   const libTypes = await p.multiselect({

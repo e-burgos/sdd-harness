@@ -38,6 +38,31 @@ reparación.
 Node menor que 20), el interruptor queda como estaba y el mensaje dice cómo seguir. Lo que ya se
 escribió en disco es seguro: otro `--enable` lo completa y `--disable` lo limpia.
 
+## Apps de frontend generadas: tucu-ui por defecto
+
+La CLI genera las apps `react`, `nextjs`, `next-bff`, `mfe-shell` y `mfe` **con tucu-ui** ya
+cableado: la dependencia fijada, Tailwind v4 importando sus estilos, `ThemeProvider` (apps Vite) o
+`NextThemeProvider` de `@e-burgos/tucu-ui/next` (apps Next) y una pantalla de ejemplo. Generar una
+también prende esta integración. `--no-tucu-ui` (o `apps[].tucuUi: false` en `init --config`)
+genera una app plana y deja la integración apagada.
+
+| Tipo de app | Qué es                                                                                       | Campos del config              |
+| ----------- | -------------------------------------------------------------------------------------------- | ------------------------------ |
+| `react`     | SPA Vite + React                                                                             | `tucuUi`                       |
+| `nextjs`    | Next 16 App Router                                                                           | `tucuUi`                       |
+| `next-bff`  | Next App Router cuyas rutas `app/api/*` llaman a un servicio en `<APP>_UPSTREAM_URL` (solo monorepo) | `tucuUi`               |
+| `mfe-shell` | Shell Vite: proxy de dev, menú, `nginx.conf` y un `Dockerfile` combinado de sus mfes (solo monorepo) | `tucuUi`               |
+| `mfe`       | App Vite con `base: '/<nombre>/'` servida detrás de un shell (solo monorepo)                 | `tucuUi`, `shell`              |
+| `python`    | FastAPI + LangGraph gestionado con uv; TensorFlow detrás de `ml` (no es frontend)            | `ml`                           |
+
+- `next-bff`, `mfe-shell` y `mfe` existen solo en modo monorepo Nx; en standalone fallan con un
+  mensaje claro. Un `mfe` necesita `shell` cuando el workspace tiene más de un `mfe-shell`.
+- Puertos por defecto: `next-bff` 3001, `mfe-shell` 4200, `mfe` 4201 (+1 por cada mfe extra),
+  `python` 8000; `apps[].port` los pisa y cada app lee `<APP>_PORT`.
+- `harness add app mfe --name <mfe> --shell <shell>` agrega un mfe a un shell existente y actualiza
+  el proxy, el menú, el `nginx.conf` y el `Dockerfile` del shell de forma idempotente;
+  `harness add app python --ml` agrega TensorFlow.
+
 ## Desde la CLI
 
 ```bash
@@ -51,10 +76,12 @@ pnpm sdd:tucu -- --enable         # repo que ya tiene el kit: este es el camino
 **reiniciar todo el directorio** (specs, ciclos y fixes incluidos) y con `-y` lo reinicia sin
 preguntar. Para prender tucu-ui en un repo con el kit instalado usá `pnpm sdd:tucu -- --enable`.
 
-- Sin flag, la CLI **pregunta solo si hay una app `react` o `nextjs`** y la terminal es
-  interactiva. Sin flag, sin `sdd.tucu_ui` en `--config` y sin un `tucu_ui` previo prendido, no
-  pregunta y queda apagado (también con `--yes` o sin TTY). `configure sdd` conserva un `tucu_ui`
-  que ya estaba prendido cuando reinicia el kit.
+- `harness init` sin flag prende tucu-ui **por defecto** cuando hay una app de frontend (`react`,
+  `nextjs`, `next-bff`, `mfe-shell`, `mfe`): las apps se generan con tucu-ui y se prende la
+  integración del kit. `--no-tucu-ui`, `sdd.tucu_ui: false` en `--config` o `tucuUi: false` en todas
+  las apps de frontend lo dejan apagado. `configure sdd` sin flag **pregunta solo si hay una app
+  `react` o `nextjs`** y la terminal es interactiva; con `--yes` o sin TTY queda apagado, y conserva
+  un `tucu_ui` prendido cuando resetea el kit.
 - `--tucu-ui` junto con `--no-tucu-ui` falla antes de generar nada.
 - En `init --config`, `sdd.tucu_ui: true | false` hace de valor por defecto; el flag gana.
 - Si la instalación falla durante `init` (por ejemplo sin red), `init` no aborta: termina la

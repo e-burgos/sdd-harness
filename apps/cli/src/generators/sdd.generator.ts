@@ -6,6 +6,7 @@ import { logger } from '../utils/logger.js';
 import { writeManifest } from './kit-manifest.js';
 import type { WorkspaceOptions } from './workspace.generator.js';
 import type { AppSpec } from './app.generator.js';
+import { APP_STACK_DESCRIPTIONS } from './app-types.js';
 
 /**
  * Cómo se instala el kit según la forma del repo destino:
@@ -111,6 +112,7 @@ export async function registerSubprojectInSDD(
   category: 'apps' | 'libs' | 'tools',
   name: string,
   type: string,
+  shell?: string,
 ): Promise<void> {
   const globalPath = resolve(root, 'sdd/global.json');
   if (await fs.pathExists(globalPath)) {
@@ -118,7 +120,8 @@ export async function registerSubprojectInSDD(
     if (typeof globalJson.monorepo[category] !== 'object') {
       globalJson.monorepo[category] = {};
     }
-    globalJson.monorepo[category][name] = `${category}/${name} — ${type}`;
+    globalJson.monorepo[category][name] =
+      `${category}/${name} — ${type}${shell ? ` (shell: ${shell})` : ''}`;
     await fs.writeJSON(globalPath, globalJson, { spaces: 2 });
   }
   await createSubprojectContext(root, category, name, type, 'nx');
@@ -397,7 +400,7 @@ export function describeAppEntry(
   }
   const codePath = app.path ?? `apps/${app.name}`;
   return codePath === `apps/${app.name}`
-    ? `apps/${app.name} — ${app.type}`
+    ? `apps/${app.name} — ${app.type}${app.shell ? ` (shell: ${app.shell})` : ''}`
     : `${codePath} — ${app.type} (código en ${codePath}; id lógico apps/${app.name})`;
 }
 
@@ -421,6 +424,11 @@ async function createSubprojectContext(
         ? `> ⚠ **Ubicación:** el código de este subproyecto vive en \`${codePath}/\`, no en \`${category}/${name}/\`. El identificador \`${category}/${name}\` es la convención con la que los registros SDD (global.json, specs, ciclos) refieren a él.\n\n`
         : '';
 
+  const stackDescription =
+    category === 'apps' ? APP_STACK_DESCRIPTIONS[type] : undefined;
+  const stackLine =
+    stackDescription ?? '[Framework / librerías principales y versión]';
+
   const constitutionPath = resolve(dir, 'constitution.md');
   if (!(await fs.pathExists(constitutionPath))) {
     await fs.writeFile(
@@ -437,7 +445,7 @@ ${locationNote}## 1. Propósito
 
 ## 2. Stack tecnológico
 
-- [Framework / librerías principales y versión]
+- ${stackLine}
 
 ## 3. Estructura y patrones
 
@@ -463,7 +471,7 @@ ${locationNote}## 1. Propósito
 > Entry point para agentes que trabajen sobre \`${category}/${name}\`.
 > Leer junto con \`constitution.md\` de este directorio **+ \`updates/*.md\` en orden de nombre**.
 
-${locationNote}- **Tipo:** ${type}
+${locationNote}- **Tipo:** ${type}${stackDescription ? `\n- **Stack:** ${stackDescription}` : ''}
 - **Estado:** recién generado — sin ciclos SDD completados todavía.
 - [Completar en el primer ciclo: módulos existentes, endpoints/componentes clave, cómo correr y testear.]
 `,

@@ -13,7 +13,7 @@ export interface MfeRef {
   portEnvVar: string;
 }
 
-const NEXT_BFF_DEFAULT_UPSTREAM = "http://localhost:3000/api/v1";
+export const NEXT_BFF_DEFAULT_UPSTREAM = "http://localhost:3000/api/v1";
 
 function render(template: string, values: Record<string, string>): string {
   return Object.entries(values).reduce(
@@ -181,6 +181,51 @@ export async function applyMfeShell(
       }),
     );
   }
+}
+
+export async function refreshMfeShell(
+  appDir: string,
+  name: string,
+  mfes: MfeRef[],
+): Promise<void> {
+  const viteConfigPath = resolve(appDir, "vite.config.ts");
+  if (await fs.pathExists(viteConfigPath)) {
+    const content = await fs.readFile(viteConfigPath, "utf-8");
+    await fs.writeFile(viteConfigPath, replaceMfeProxy(content, mfes), "utf-8");
+  }
+
+  await write(resolve(appDir, "nginx.conf"), shellNginxConf(mfes));
+  await write(resolve(appDir, "Dockerfile"), shellDockerfile(name, mfes));
+  await write(resolve(appDir, "README.md"), shellReadme(name, mfes));
+
+  const appTsxPath = resolve(appDir, "src/app/app.tsx");
+  if (await fs.pathExists(appTsxPath)) {
+    const content = await fs.readFile(appTsxPath, "utf-8");
+    await fs.writeFile(appTsxPath, replaceMfeList(content, mfes), "utf-8");
+  }
+}
+
+const MFE_PROXY_BLOCK = /const mfeProxy = \{[\s\S]*?\n\};\n/;
+const MFE_LIST_LINE = /^const mfes: (Array<\{ name: string; label: string \}>|string\[\]) = [\s\S]*?;$/m;
+
+function replaceMfeProxy(viteConfig: string, mfes: MfeRef[]): string {
+  if (!MFE_PROXY_BLOCK.test(viteConfig)) return withMfeProxy(viteConfig, mfes);
+  const block = withMfeProxy("export default defineConfig(", mfes).split("export default defineConfig(")[0];
+  return viteConfig.replace(MFE_PROXY_BLOCK, block.trimEnd() + "\n");
+}
+
+function replaceMfeList(appTsx: string, mfes: MfeRef[]): string {
+  return appTsx.replace(MFE_LIST_LINE, (_, type: string) => {
+    const value =
+      type === "string[]"
+        ? JSON.stringify(mfes.map((mfe) => mfe.name))
+        : JSON.stringify(
+            mfes.map((mfe) => ({ name: mfe.name, label: mfe.name })),
+            null,
+            2,
+          );
+    return `const mfes: ${type} = ${value};`;
+  });
 }
 
 function withMfeProxy(viteConfig: string, mfes: MfeRef[]): string {

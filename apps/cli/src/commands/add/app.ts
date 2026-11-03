@@ -5,7 +5,10 @@ import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { logger } from '../../utils/logger.js';
 import { warnIfNxRootMismatch } from '../../utils/env.js';
-import { generateApp } from '../../generators/app.generator.js';
+import { generateApp, type AppSpec } from '../../generators/app.generator.js';
+import { resolveMfeShell, validateAppTopology } from '../../generators/app-types.js';
+import { syncMfeShell } from '../../generators/mfe-sync.js';
+import { readRegisteredApps } from '../../utils/workspace-apps.js';
 import {
   TUCU_UI_CONFLICT_MESSAGE,
   appUsesTucuUi,
@@ -51,6 +54,40 @@ function registerAppInRootPackageJson(
   writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n', 'utf-8');
 }
 
+export const ADD_APP_TYPE_OPTIONS = [
+  { value: 'nestjs', label: 'NestJS API' },
+  { value: 'react', label: 'React SPA (blueprint sdd/templates)' },
+  { value: 'nextjs', label: 'Next.js' },
+  { value: 'next-bff', label: 'Next.js BFF (app/api routes over an upstream service)' },
+  { value: 'mfe-shell', label: 'Microfrontend shell (Vite + React, proxy/nginx for mfes)' },
+  { value: 'mfe', label: 'Microfrontend (Vite + React under /<name>/)' },
+  { value: 'python', label: 'Python Agent (FastAPI + LangGraph, uv)' },
+  { value: 'fastify', label: 'Fastify API' },
+  { value: 'springboot', label: 'Spring Boot 3 (blueprint sdd/templates, Maven)' },
+  { value: 'hono', label: 'Hono API' },
+];
+
+export function topologyErrorsForNewApp(
+  existing: readonly AppSpec[],
+  added: AppSpec,
+): string[] {
+  return validateAppTopology([...existing, added], 'nx').filter((error) =>
+    error.includes(`"${added.name}"`),
+  );
+}
+
+async function refreshOwningShell(
+  cwd: string,
+  added: AppSpec,
+  allApps: readonly AppSpec[],
+): Promise<void> {
+  if (added.type !== 'mfe') return;
+  const shell = resolveMfeShell(added, allApps);
+  if (shell && (await syncMfeShell(cwd, shell, allApps))) {
+    logger.success(`Updated mfe-shell "${shell.name}": proxy, menu, nginx.conf and Dockerfile now include "${added.name}"`);
+  }
+}
+
 export const addAppCommand = defineCommand({
   meta: {
     name: 'app',
@@ -59,7 +96,8 @@ export const addAppCommand = defineCommand({
   args: {
     type: {
       type: 'positional',
-      description: 'App type (nestjs, react, python, nextjs, fastify)',
+      description:
+        'App type (nestjs, react, nextjs, next-bff, mfe-shell, mfe, python, fastify, springboot, hono)',
       required: false,
     },
     name: {
@@ -70,6 +108,14 @@ export const addAppCommand = defineCommand({
       type: 'boolean',
       description:
         'react/nextjs apps are scaffolded with tucu-ui and turn on its design skill + MCP (default). --no-tucu-ui generates a plain app',
+    },
+    shell: {
+      type: 'string',
+      description: 'mfe only: name of the mfe-shell app that serves it (default: the only mfe-shell)',
+    },
+    ml: {
+      type: 'boolean',
+      description: 'python only: add TensorFlow as a default dependency',
     },
   },
   async run({ args, rawArgs }) {
@@ -93,19 +139,12 @@ export const addAppCommand = defineCommand({
       ? pkg.name.split('/')[0]
       : `@${pkg.name || 'app'}`;
 
+    const typeFromPrompt = args.type === undefined;
     const appType =
       args.type ??
       (await p.select({
         message: 'App type:',
-        options: [
-          { value: 'nestjs', label: 'NestJS API' },
-          { value: 'react', label: 'React SPA (blueprint sdd/templates)' },
-          { value: 'nextjs', label: 'Next.js' },
-          { value: 'python', label: 'Python Agent' },
-          { value: 'fastify', label: 'Fastify API' },
-          { value: 'springboot', label: 'Spring Boot 3 (blueprint sdd/templates, Maven)' },
-          { value: 'hono', label: 'Hono API' },
-        ],
+        options: ADD_APP_TYPE_OPTIONS,
       }));
 
     if (p.isCancel(appType)) {
@@ -139,15 +178,64 @@ export const addAppCommand = defineCommand({
     }
 
     const tucuUi = appUsesTucuUi({ type: appType as string }, args['tucu-ui']);
+    const existingApps = readRegisteredApps(cwd);
+
+    let shell = args.shell;
+    if (shell && appType !== 'mfe') {
+      logger.error('--shell only applies to apps of type "mfe".');
+      process.exit(1);
+    }
+    if (args.ml && appType !== 'python') {
+      logger.error('--ml only applies to apps of type "python".');
+      process.exit(1);
+    }
+    if (appType === 'mfe' && !shell) {
+      const shells = existingApps.filter((app) => app.type === 'mfe-shell');
+      if (shells.length > 1) {
+        const picked = await p.select({
+          message: 'Which mfe-shell serves this mfe?',
+          options: shells.map((s) => ({ value: s.name, label: s.name })),
+        });
+        if (p.isCancel(picked)) {
+          p.cancel('Operation cancelled.');
+          process.exit(0);
+        }
+        shell = picked as string;
+      }
+    }
+
+    let ml = args.ml;
+    if (appType === 'python' && ml === undefined && typeFromPrompt) {
+      const wantsMl = await p.confirm({
+        message: 'Add TensorFlow (ml) as a default dependency?',
+        initialValue: false,
+      });
+      if (p.isCancel(wantsMl)) {
+        p.cancel('Operation cancelled.');
+        process.exit(0);
+      }
+      ml = wantsMl as boolean;
+    }
+
+    const newApp: AppSpec = {
+      name: appName as string,
+      type: appType as string,
+      tucuUi,
+      ...(shell ? { shell } : {}),
+      ...(ml ? { ml: true } : {}),
+    };
+
+    const topologyErrors = topologyErrorsForNewApp(existingApps, newApp);
+    if (topologyErrors.length > 0) {
+      logger.error(topologyErrors.join('\n'));
+      process.exit(1);
+    }
+    const allApps = [...existingApps, newApp];
 
     logger.step(`Adding ${appType} app: ${appName}`);
 
     try {
-      await generateApp(
-        cwd,
-        { name: appName as string, type: appType as string, tucuUi },
-        packageScope,
-      );
+      await generateApp(cwd, newApp, packageScope, { apps: allApps });
       logger.success(`App "${appName}" generated at apps/${appName}`);
 
       await registerSubprojectInSDD(
@@ -155,10 +243,13 @@ export const addAppCommand = defineCommand({
         'apps',
         appName as string,
         appType as string,
+        appType === 'mfe' ? resolveMfeShell(newApp, allApps)?.name : undefined,
       );
       logger.success(
         `Registered in sdd/global.json and sdd/context/apps/${appName}/`,
       );
+
+      await refreshOwningShell(cwd, newApp, allApps);
 
       registerAppInRootPackageJson(cwd, appName as string, appType as string, tucuUi);
       logger.success(

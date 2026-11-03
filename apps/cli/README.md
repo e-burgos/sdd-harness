@@ -162,7 +162,7 @@ does not already exist, and `.env.example` **always** — one `<APP>_PORT=` line
 2. **Description** — brief project description
 3. **Mode** — Nx monorepo | Standalone app (skipped if `--mode`/`--standalone` given)
 4. **Package scope** — npm org scope (e.g. `@my-saas`)
-5. **Apps** — multi-select from the app catalog
+5. **Apps** — multi-select from the app catalog (`next-bff`, `mfe-shell` and `mfe` are offered only in monorepo mode; choosing `python` asks whether to add TensorFlow, and with several `mfe-shell` apps each `mfe` asks which one serves it)
 6. **App names** — name each selected app (with smart defaults)
 7. **Libraries** — multi-select from the lib catalog
 8. **Lib names** — name each selected library
@@ -289,13 +289,16 @@ harness config schema --out harness.config.schema.json # file
 Add a new application to an existing workspace.
 
 ```bash
-harness add app [type] [--name <name>]
+harness add app [type] [--name <name>] [--shell <mfe-shell>] [--ml] [--tucu-ui|--no-tucu-ui]
 ```
 
 | Argument | Description                                                                                           |
 | -------- | ----------------------------------------------------------------------------------------------------- |
-| `type`   | (positional, optional) One of: `nestjs`, `react`, `nextjs`, `python`, `fastify`, `hono`, `springboot` |
+| `type`   | (positional, optional) One of: `nestjs`, `react`, `nextjs`, `next-bff`, `mfe-shell`, `mfe`, `python`, `fastify`, `hono`, `springboot` |
 | `--name` | App name in kebab-case                                                                                |
+| `--shell` | `mfe` only: the `mfe-shell` that serves it. Optional when the workspace has exactly one shell; the interactive flow asks when there are several. Validated against the apps already registered in `sdd/global.json` |
+| `--ml`   | `python` only: add TensorFlow as a default dependency (the interactive flow asks)                     |
+| `--tucu-ui` / `--no-tucu-ui` | `react`, `nextjs`, `next-bff`, `mfe-shell` and `mfe` start with [tucu-ui](#tucu-ui-by-default) unless `--no-tucu-ui` is given. Both flags together fail |
 
 If arguments are omitted, interactive prompts will guide you.
 
@@ -305,12 +308,26 @@ convenience scripts (`<name>`, `build:<name>`, `test:<name>`, `lint:<name>`) plu
 runtime dependencies (additive — existing versions are never overwritten). Run your package
 manager install afterwards.
 
+The command reads the apps already in the workspace from `sdd/global.json` (`monorepo.apps`), so
+topology rules hold in an existing workspace too:
+
+- Adding an `mfe` to an existing `mfe-shell` regenerates that shell's mfe list in place — the Vite
+  `server.proxy` entries, the menu (`src/app/app.tsx`), `nginx.conf`, `Dockerfile` and `README.md`
+  — idempotently (running it again changes nothing). The mfe is registered as
+  `apps/<mfe> — mfe (shell: <shell>)`.
+- Adding an `mfe-shell` picks up the existing `mfe` apps that point to it (or that have no `shell`
+  while it is the only shell).
+- An `mfe` without any `mfe-shell`, or pointing to a missing app, fails before anything is written.
+
 ```bash
 # Interactive
 harness add app
 
 # Non-interactive
 harness add app nestjs --name payments-api
+harness add app mfe-shell --name portal
+harness add app mfe --name orders --shell portal
+harness add app python --name agent --ml
 ```
 
 ---
@@ -508,7 +525,7 @@ harness configure sdd [--name <project>] [--description <text>] [--profile team|
 | `--description` | Project description — skips the prompt                                             |
 | `--profile`     | Working profile written to `sdd/global.json`: `team` (full cycles, default) or `solo` (lite cycles) |
 | `--apps`        | Applications to register as `name=path` pairs, comma-separated (`--apps api=src/api,web=src/web`). Skips detection. Paths are relative to the repo root and must exist |
-| `--tucu-ui` / `--no-tucu-ui` | Turn on (or keep off) the tucu-ui design skill + MCP without prompting. Without a flag the CLI asks only when a `react`/`nextjs` app exists and the terminal is interactive. The two flags together fail. See [tucu-ui](#tucu-ui-design-skill--mcp) |
+| `--tucu-ui` / `--no-tucu-ui` | Turn on (or keep off) the tucu-ui design skill + MCP without prompting. Without a flag the CLI asks only when a `react`/`nextjs` app exists (detection is conservative: a Next app is always detected as `nextjs`, a Vite app as `react` — never as `next-bff`, `mfe-shell` or `mfe`) and the terminal is interactive. The two flags together fail. See [tucu-ui](#tucu-ui-design-skill--mcp) |
 | `-y`, `--yes`   | Skip the reset confirmation. **Destructive** when `sdd/` already exists            |
 
 - **Shape detection**: Nx monorepo (`nx.json`/`apps/`) → registers every app in `apps/` **plus** every `project.json` with `projectType: "application"` found elsewhere (`src/<name>`, `packages/<name>`...; `node_modules`, build outputs and `sdd/` are skipped, and a nested workspace is not descended into). Otherwise the repo registers as a single logical app (standalone convention). App types are inferred from stack markers (`pom.xml`, `nest-cli.json`, `vite.config.ts`, ...)
@@ -548,6 +565,25 @@ Selecting `tucu-ui` here writes only `.mcp.json` and does not touch the `tucu_ui
 
 ---
 
+### tucu-ui by default
+
+Frontend apps (`react`, `nextjs`, `next-bff`, `mfe-shell`, `mfe`) are generated with
+[`@e-burgos/tucu-ui`](https://www.npmjs.com/package/@e-burgos/tucu-ui) out of the box: the
+dependency pinned in one place (`apps/cli/src/generators/versions.ts`), Tailwind v4 importing the
+tucu-ui styles, `ThemeProvider` (Vite apps) or `NextThemeProvider` from `@e-burgos/tucu-ui/next`
+(Next apps), and an example screen built with its components. Generating them also turns on the
+kit integration below (skill + MCP) unless you opt out.
+
+```bash
+harness init                  # tucu-ui on for every frontend app
+harness init --no-tucu-ui     # plain apps, integration stays off
+harness add app react --no-tucu-ui
+```
+
+Per-app, `apps[].tucuUi: false` in `init --config` opts a single app out; `--tucu-ui`/`--no-tucu-ui`
+and `sdd.tucu_ui` are the global fallbacks. `--tucu-ui` together with `--no-tucu-ui` fails. Next
+apps now use Next 16 (tucu-ui requires `next >= 16`).
+
 ### tucu-ui (design skill + MCP)
 
 Optional integration for repos with a React or Next frontend. It installs the `tucu-ui-design`
@@ -563,7 +599,7 @@ pnpm sdd:tucu -- --enable [--parts=skill,mcp] [--force]
 pnpm sdd:tucu -- --disable [--purge]
 ```
 
-- Without a flag, `init` and `configure sdd` ask only when a `react`/`nextjs` app exists and the terminal is interactive; with no flag, no `sdd.tucu_ui` in `init --config` and no earlier `tucu_ui` that was on, there is no prompt and it stays off (also with `--yes` or no TTY). `init --config` accepts `sdd.tucu_ui`, and `configure sdd` keeps an existing `tucu_ui` on when it resets the kit.
+- `init` and `add app` turn the integration on whenever they generate a tucu-ui app (`react`, `nextjs`, `next-bff`, `mfe-shell`, `mfe`) unless `--no-tucu-ui` / `apps[].tucuUi: false` says otherwise. `configure sdd` (which generates nothing) asks only when a `react`/`nextjs` app exists and the terminal is interactive; with no flag, no `sdd.tucu_ui` and no earlier `tucu_ui` that was on, there is no prompt and it stays off (also with `--yes` or no TTY). `init --config` accepts `sdd.tucu_ui`, and `configure sdd` keeps an existing `tucu_ui` on when it resets the kit.
 - `configure sdd` asks to reset the whole `sdd/` directory (specs, cycles and fixes included) when the kit is already installed, and `-y` resets without asking. For a repo that already has the kit, turn tucu-ui on with `pnpm sdd:tucu -- --enable`.
 - `--tucu-ui` together with `--no-tucu-ui` fails before generating anything.
 - If the install fails during `init` (for example offline) the command does not abort: tucu-ui stays off and the retry command is printed.
@@ -644,12 +680,18 @@ Example output:
 | ------------ | ------------ | -------------------------- | ------------ | ----------------------------------------------------- | ------------------------------------------------------------------------- |
 | `nestjs`     | `api`        | NestJS 11                  | `@nx/webpack/plugin` (build inference) + `@nx/jest:jest` | build (inferred), serve, lint, test  | `main.ts`, `app.module.ts`, `app.controller.ts`, `app.service.ts`, `webpack.config.js`, `jest.config.js` |
 | `react`      | `webapp`     | React 19 + Vite (blueprint `react-app`) | `@nx/react`  | build, serve, lint, test                 | `main.tsx`, `app/` + `pages/` with react-router, `vite.config.ts`, `Dockerfile`, `nginx.conf` |
-| `nextjs`     | `web`        | Next.js (App Router)       | `@nx/next`   | build, serve, start (inferred by `@nx/next/plugin`), lint | `app/layout.tsx`, `app/page.tsx`, `next.config.js`, `public/`             |
+| `nextjs`     | `web`        | Next.js 16 (App Router) + tucu-ui | `@nx/next`   | build, serve, start (inferred by `@nx/next/plugin`), lint | `app/layout.tsx` (`NextThemeProvider`), `app/page.tsx`, `next.config.js`, `public/` |
+| `next-bff`   | `bff`        | Next.js 16 (App Router) + tucu-ui, **monorepo only** | `@nx/next`   | build, serve, start, lint, test | `app/api/health/route.ts` (calls `<APP>_UPSTREAM_URL`), `lib/upstream.ts`, a route test; types from `libs/shared-types` when present |
+| `mfe-shell`  | `shell`      | Vite + React + tucu-ui, **monorepo only** | `@nx/react`, `@nx/vite` | build, serve, lint, test | `vite.config.ts` (`server.proxy` to each mfe), menu in `app.tsx`, `nginx.conf`, combined `Dockerfile`, `README.md` |
+| `mfe`        | `catalog`    | Vite + React + tucu-ui under `base: '/<name>/'`, **monorepo only** | `@nx/react`, `@nx/vite` | build, serve, lint, test | `vite.config.ts` with `base`, `app.tsx` with `architecturalPatterns="mfe"` |
 | `fastify`    | `api`        | Fastify + esbuild          | `@nx/node`   | build, serve, lint                                    | `main.ts` with health endpoint                                            |
 | `hono`       | `api`        | Hono 4 + @hono/node-server | `@nx/node`   | build, serve, lint, test                              | `main.ts`, `vite.config.ts`, tsconfig files                               |
 | `springboot` | `service`    | Spring Boot 3.5 + Java 21 (blueprint `java-api`) | — (Maven vía `nx:run-commands`) | build, test, serve, lint, coverage | Hexagonal architecture (`domain/`, `infrastructure/`), `pom.xml`, `Dockerfile` |
-| `python`     | (same)       | Python 3.11+               | —            | serve, lint, test                                     | `__main__.py`, `pyproject.toml`, `tests/`                                 |
+| `python`     | (same)       | Python 3.12+ · FastAPI + LangGraph · uv | —            | serve, lint, test, build (via `uv`)                   | `pyproject.toml` (uv), `src/<pkg>/` with FastAPI app + example LangGraph graph, `tests/`, `Dockerfile` |
 
+> **Default ports**: `nestjs`/`fastify`/`hono`/`nextjs` 3000, `next-bff` 3001, `react`/`mfe-shell` 4200, `mfe` 4201 (staggered +1 per extra mfe: 4202, ...), `python` 8000, `springboot` 8080. `apps[].port` overrides them; each app reads `<APP>_PORT`.
+> **next-bff / mfe-shell / mfe**: monorepo only — `init` in standalone mode and a standalone config fail with a clear message. `.env.example` lists `<APP>_UPSTREAM_URL` for every `next-bff` (default `http://localhost:3000/api/v1`) and `<APP>_HOST` for every `python` app. The `mfe-shell` ships its own combined nginx `Dockerfile` (it builds the shell and every mfe); the `python` app ships its own `Dockerfile` with uv — `docker-compose.yml` only carries infrastructure services, so neither is duplicated there.
+> **Python**: FastAPI + uvicorn + LangGraph managed with `uv` (`uv sync`, `uv run pytest`, `uv run ruff check`); the Nx targets wrap those commands. `apps[].ml: true` (or `--ml`) adds TensorFlow to the dependencies and caps `requires-python` to `<3.14`; without it TensorFlow is only the optional `ml` extra.
 > **Spring Boot**: el blueprint `sdd/templates/apps/java-api` integra Maven a Nx vía `nx:run-commands` (`build`/`test`/`serve`/`lint`/`coverage` → `mvn`): la app queda visible para `nx affected` y `nx run-many` sin plugin de Gradle/Maven. Requiere Java 21 y Maven instalados.
 > **Hono**: usa `@nx/vite:build` en modo librería con `target: node18`. Las dependencias `hono` y `@hono/node-server` se añaden a `dependencies` del workspace.
 > **NestJS** (Nx mode): `build` is inferred — `@nx/webpack/plugin` registered in `nx.json` plus each app's `webpack.config.js` with `NxAppWebpackPlugin` (the `@nx/webpack:webpack` executor is deprecated, and without an explicit `webpackConfig` it used to fail with "Can't resolve './src'"). Tests run via `@nx/jest:jest` with a CommonJS `jest.config.js` (a `.ts` config would need `ts-node`, which the workspace does not install) + a root `jest.preset.js` + `tsconfig.spec.json`. `serve` runs node over the built bundle and depends on `build`.
@@ -858,7 +900,10 @@ Key constraints:
 - `project.name` — lowercase kebab-case
 - `project.packageScope` — npm scope like `@my-project`
 - `apps[].name` — lowercase kebab-case
-- `apps[].type` — one of: `nestjs`, `react`, `nextjs`, `python`, `fastify`, `springboot`, `hono` (the same seven the wizard offers)
+- `apps[].type` — one of: `nestjs`, `react`, `nextjs`, `next-bff`, `mfe-shell`, `mfe`, `python`, `fastify`, `springboot`, `hono` (the same ten the wizard offers; `next-bff`, `mfe-shell` and `mfe` need `mode: nx`)
+- `apps[].tucuUi` — optional boolean; `react`, `nextjs`, `next-bff`, `mfe-shell` and `mfe` default to `true` (see [tucu-ui by default](#tucu-ui-by-default)); `false` generates the app without tucu-ui. Falls back to `sdd.tucu_ui` when unset
+- `apps[].shell` — optional, only on `mfe`: the name of the `mfe-shell` app that serves it. Required when the config has more than one `mfe-shell`; with exactly one it is implied. The shell's dev proxy, menu, `nginx.conf` and `Dockerfile` list the mfes that point to it
+- `apps[].ml` — optional boolean, only meaningful on `python`: adds TensorFlow as a default dependency
 - `apps[].port` — optional; when set it flows into the app's own default
   (`Number(process.env['<APP>_PORT'] ?? process.env['PORT'] ?? <port>)`, `server.port` for Vite
   apps), into `.env.example` and into the root `README.md`. The per-app env var is derived from
