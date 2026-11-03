@@ -78,10 +78,20 @@
       "depends_on": [
         "TASK-002"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/cli/src/generators/app.generator.ts"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 80000,
+        "tokens_out": 14000,
+        "approx": true,
+        "recorded_at": "2026-11-03",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "source": "declared-estimate"
+      }
     },
     {
       "id": "TASK-004",
@@ -94,10 +104,20 @@
       "depends_on": [
         "TASK-002"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/cli/src/generators/app.generator.ts"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 120000,
+        "tokens_out": 21000,
+        "approx": true,
+        "recorded_at": "2026-11-03",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "source": "declared-estimate"
+      }
     },
     {
       "id": "TASK-005",

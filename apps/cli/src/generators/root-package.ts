@@ -59,6 +59,8 @@ export function addAppTypeDepsToRootPkg(
 
   switch (type) {
     case "react":
+    case "mfe-shell":
+    case "mfe":
       addMissingFromReference("dependencies", [
         "react",
         "react-dom",
@@ -103,6 +105,7 @@ export function addAppTypeDepsToRootPkg(
       });
       break;
     case "nextjs":
+    case "next-bff":
       pkg.dependencies["next"] = FRONTEND_VERSIONS.next;
       pkg.devDependencies["@nx/next"] = NX_VERSION;
       addMissingFromReference("dependencies", ["react", "react-dom"]);
@@ -111,6 +114,13 @@ export function addAppTypeDepsToRootPkg(
         "@types/react-dom",
       ]);
       addTucuUi("nextjs");
+      if (type === "next-bff") {
+        addMissingFromReference("devDependencies", [
+          "vite",
+          "vitest",
+          "@vitest/coverage-v8",
+        ]);
+      }
       break;
     case "fastify":
       pkg.dependencies["fastify"] = "^5.0.0";

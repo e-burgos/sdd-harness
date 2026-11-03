@@ -65,11 +65,12 @@ export function toWorkspaceOptions(
     projectName: config.project.name,
     description: config.project.description,
     packageScope: config.project.packageScope,
-    apps: config.apps.map(({ name, type, port, tucuUi }) => ({
+    apps: config.apps.map(({ name, type, port, tucuUi, shell }) => ({
       name,
       type,
       port,
       tucuUi: tucuUi ?? overrides.tucuUi,
+      shell,
     })),
     libs: config.libs.map(({ name, type }) => ({ name, type })),
     services: config.services.map(({ type }) => type),

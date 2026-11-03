@@ -22,6 +22,7 @@ import {
   type AppSpec,
 } from "./app.generator.js";
 import { generateLib } from "./lib.generator.js";
+import { assertValidAppTopology } from "./app-types.js";
 import { seedModules } from "./spec.generator.js";
 import type { ModuleSeed, NpmScope } from "../types/config.types.js";
 
@@ -115,6 +116,7 @@ export async function resolveTargetDir(
  *  3. Finalización  — gate (sdd:validate + lint/test/build) + git commit
  */
 export async function generateWorkspace(opts: WorkspaceOptions): Promise<void> {
+  assertValidAppTopology(opts.apps, "nx");
   const root = await resolveTargetDir(opts);
   const inPlace = root === resolve(process.cwd());
   if (inPlace) {
@@ -167,14 +169,14 @@ export async function generateWorkspace(opts: WorkspaceOptions): Promise<void> {
   logger.step("Configuring SDD (Spec-Driven Development)...");
   await generateSDD(root, opts);
 
-  for (const app of opts.apps) {
-    logger.step(`Generating app: ${app.name} (${app.type}, port ${resolveAppPort(app)})...`);
-    await generateApp(root, app, opts.packageScope);
-  }
-
   for (const lib of opts.libs) {
     logger.step(`Generating lib: ${lib.name} (${lib.type})...`);
     await generateLib(root, lib, opts.packageScope);
+  }
+
+  for (const app of opts.apps) {
+    logger.step(`Generating app: ${app.name} (${app.type}, port ${resolveAppPort(app, opts.apps)})...`);
+    await generateApp(root, app, opts.packageScope, { apps: opts.apps });
   }
 
   if (opts.modules?.length) {
@@ -339,7 +341,7 @@ async function writeReadme(root: string, opts: WorkspaceOptions): Promise<void> 
   const appRows = opts.apps
     .map(
       (a) =>
-        `| \`apps/${a.name}\` | ${a.type} | ${resolveAppPort(a)} (\`${portEnvVar(a.name)}\`) | \`pnpm ${a.name}\` |`,
+        `| \`apps/${a.name}\` | ${a.type} | ${resolveAppPort(a, opts.apps)} (\`${portEnvVar(a.name)}\`) | \`pnpm ${a.name}\` |`,
     )
     .join("\n");
   const libRows = opts.libs.map((l) => `- \`libs/${l.name}\` — ${l.type}`).join("\n");
@@ -409,7 +411,7 @@ async function writeRootPackageJson(
   pkg.devDependencies["typescript-eslint"] = "^8.40.0";
 
   const has = (type: string) => opts.apps.some((a) => a.type === type);
-  const hasReactFamily = has("react") || has("nextjs");
+  const hasReactFamily = ["react", "nextjs", "next-bff", "mfe-shell", "mfe"].some(has);
   const hasUiLib = opts.libs.some((l) => l.type === "ui-kit");
 
   if (!hasReactFamily && !hasUiLib) {
@@ -502,10 +504,13 @@ function getNxPlugins(apps: AppSpec[]): NxPluginEntry[] {
         add(nxWebpackPluginEntry());
         break;
       case "react":
+      case "mfe-shell":
+      case "mfe":
         add({ plugin: "@nx/react" });
         add({ plugin: "@nx/vite" });
         break;
       case "nextjs":
+      case "next-bff":
         // build/serve/start inferidos desde apps/<name>/next.config.js (ver app.generator)
         add(nxNextPluginEntry());
         add({ plugin: "@nx/react" });

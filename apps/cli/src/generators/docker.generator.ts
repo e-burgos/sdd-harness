@@ -174,7 +174,7 @@ function generateEnvExample(services: string[], apps: AppSpec[]): string {
   if (apps.length > 0) {
     lines.push('# App ports (harness.config.json apps[].port — the code falls back to these defaults)');
     for (const app of apps) {
-      lines.push(`${portEnvVar(app.name)}=${resolveAppPort(app)}`);
+      lines.push(`${portEnvVar(app.name)}=${resolveAppPort(app, apps)}`);
     }
     lines.push('');
   }

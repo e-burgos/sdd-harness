@@ -7,6 +7,13 @@ import {
   toPascalCase,
 } from "../utils/blueprint.js";
 import { writeNextTucuUiFiles, writeViteTucuUiFiles } from "./tucu-ui-app.js";
+import { appEnvPrefix, mfesOfShell, resolveMfeShell } from "./app-types.js";
+import {
+  applyMfe,
+  applyMfeShell,
+  applyNextBff,
+  type SharedTypesLib,
+} from "./frontend-apps.js";
 
 export interface AppSpec {
   name: string;
@@ -22,6 +29,8 @@ export interface AppSpec {
   path?: string;
   /** react/nextjs: scaffold con tucu-ui (default true). `false` genera la app plana. */
   tucuUi?: boolean;
+  /** mfe: nombre de su mfe-shell. Ausente = el único mfe-shell del workspace. */
+  shell?: string;
 }
 
 export const DEFAULT_APP_PORTS: Record<string, number> = {
@@ -32,15 +41,28 @@ export const DEFAULT_APP_PORTS: Record<string, number> = {
   python: 8000,
   springboot: 8080,
   react: 4200,
+  "next-bff": 3001,
+  "mfe-shell": 4200,
+  mfe: 4201,
 };
 
 /** `catalog-api` → `CATALOG_API_PORT`: variable de entorno por app (un PORT único es ambiguo en un monorepo). */
 export function portEnvVar(appName: string): string {
-  return `${appName.toUpperCase().replace(/[^A-Z0-9]+/g, "_")}_PORT`;
+  return `${appEnvPrefix(appName)}_PORT`;
 }
 
-export function resolveAppPort(app: AppSpec): number {
-  return app.port ?? DEFAULT_APP_PORTS[app.type] ?? 3000;
+/** Los mfe sin puerto declarado se escalonan (4201, 4202, …) para no chocar entre sí. */
+export function resolveAppPort(app: AppSpec, apps: readonly AppSpec[] = []): number {
+  if (app.port) return app.port;
+  const base = DEFAULT_APP_PORTS[app.type] ?? 3000;
+  if (app.type !== "mfe") return base;
+  const index = apps.filter((a) => a.type === "mfe").findIndex((a) => a.name === app.name);
+  return base + Math.max(index, 0);
+}
+
+export interface GenerateAppContext {
+  /** Todas las apps del workspace: el mfe-shell las usa para descubrir sus mfes. */
+  apps?: readonly AppSpec[];
 }
 
 /**
@@ -54,10 +76,12 @@ export async function generateApp(
   root: string,
   app: AppSpec,
   packageScope: string,
+  context: GenerateAppContext = {},
 ): Promise<void> {
   const appDir = resolve(root, "apps", app.name);
   await fs.ensureDir(appDir);
-  const port = resolveAppPort(app);
+  const allApps = context.apps ?? [app];
+  const port = resolveAppPort(app, allApps);
 
   switch (app.type) {
     case "nestjs":
@@ -69,6 +93,33 @@ export async function generateApp(
       break;
     case "nextjs":
       await generateNextApp(appDir, app.name, port, app.tucuUi !== false);
+      break;
+    case "next-bff":
+      await generateNextApp(appDir, app.name, port, app.tucuUi !== false);
+      await applyNextBff(appDir, app.name, {
+        tucuUi: app.tucuUi !== false,
+        sharedTypes: await findSharedTypesLib(root),
+      });
+      break;
+    case "mfe":
+      await generateReactApp(root, appDir, app.name, port, app.tucuUi !== false);
+      await applyMfe(appDir, app.name, {
+        tucuUi: app.tucuUi !== false,
+        shellName: resolveMfeShell(app, allApps)?.name,
+      });
+      break;
+    case "mfe-shell":
+      await generateReactApp(root, appDir, app.name, port, app.tucuUi !== false);
+      await applyMfeShell(
+        appDir,
+        app.name,
+        mfesOfShell(app, allApps).map((mfe) => ({
+          name: mfe.name,
+          port: resolveAppPort(mfe, allApps),
+          portEnvVar: portEnvVar(mfe.name),
+        })),
+        { tucuUi: app.tucuUi !== false },
+      );
       break;
     case "fastify":
       await generateFastifyApp(appDir, app.name, port);
@@ -83,6 +134,18 @@ export async function generateApp(
       await generateHonoApp(appDir, app.name, port);
       break;
   }
+}
+
+async function findSharedTypesLib(root: string): Promise<SharedTypesLib | undefined> {
+  const libsDir = resolve(root, "libs");
+  if (!(await fs.pathExists(libsDir))) return undefined;
+  for (const entry of (await fs.readdir(libsDir)).sort()) {
+    const projectJson = resolve(libsDir, entry, "project.json");
+    if (!(await fs.pathExists(projectJson))) continue;
+    const { tags = [] } = await fs.readJSON(projectJson);
+    if (tags.includes("type:types")) return { name: entry, alias: `@${entry}` };
+  }
+  return undefined;
 }
 
 /** Expresión TS que resuelve el puerto: variable por app → PORT genérico → default del config. */

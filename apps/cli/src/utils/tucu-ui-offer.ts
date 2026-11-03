@@ -1,7 +1,9 @@
+import { TUCU_UI_APP_TYPES } from '../generators/app-types.js';
+
 export type TucuUiState = 'off' | 'complete' | 'incomplete';
 export type TucuUiChoice = 'enable' | 'skip' | 'ask-enable' | 'ask-repair';
 
-const FRONTEND_APP_TYPES = ['react', 'nextjs'];
+const FRONTEND_APP_TYPES: readonly string[] = TUCU_UI_APP_TYPES;
 
 export function resolveTucuUiChoice(input: {
   flag: boolean | undefined;

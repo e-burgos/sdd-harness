@@ -5,7 +5,10 @@ export type AppType =
   | 'nextjs'
   | 'fastify'
   | 'springboot'
-  | 'hono';
+  | 'hono'
+  | 'next-bff'
+  | 'mfe-shell'
+  | 'mfe';
 export type ServiceType = 'postgres' | 'redis' | 'rabbitmq' | 'minio';
 export type InfraProvider = 'digitalocean' | 'aws' | 'gcp' | 'vercel' | 'railway';
 
@@ -15,6 +18,7 @@ export interface AppConfig {
   port?: number;
   features: string[];
   tucuUi?: boolean;
+  shell?: string;
 }
 
 export interface ServiceConfig {

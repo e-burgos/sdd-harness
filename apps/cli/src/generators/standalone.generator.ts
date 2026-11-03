@@ -25,6 +25,7 @@ import {
   writeViteTucuUiFiles,
 } from "./tucu-ui-app.js";
 import { FRONTEND_VERSIONS } from "./versions.js";
+import { assertValidAppTopology } from "./app-types.js";
 import type { ModuleSeed, NpmScope } from "../types/config.types.js";
 
 export interface StandaloneOptions {
@@ -62,6 +63,7 @@ export interface StandaloneOptions {
 export async function generateStandalone(
   opts: StandaloneOptions,
 ): Promise<void> {
+  assertValidAppTopology([{ name: opts.projectName, type: opts.appType }], "standalone");
   const root = await resolveTargetDir(opts);
   await fs.ensureDir(root);
   const port = resolveAppPort({ name: opts.projectName, type: opts.appType, port: opts.port });

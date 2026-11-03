@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import type { HarnessConfig } from '../types/config.types.js';
+import { validateAppTopology } from '../generators/app-types.js';
 
 // Debe cubrir los mismos tipos que el wizard (APP_TYPE_OPTIONS en commands/init.ts)
 // y que `add app`: si no, la vía no interactiva genera menos que la interactiva.
@@ -11,6 +12,9 @@ const AppTypeSchema = z.enum([
   'fastify',
   'springboot',
   'hono',
+  'next-bff',
+  'mfe-shell',
+  'mfe',
 ]);
 const ServiceTypeSchema = z.enum(['postgres', 'redis', 'rabbitmq', 'minio']);
 const InfraProviderSchema = z.enum([
@@ -29,6 +33,10 @@ const AppConfigSchema = z.object({
   port: z.number().min(1000).max(65535).optional(),
   features: z.array(z.string()).default([]),
   tucuUi: z.boolean().optional(),
+  shell: z
+    .string()
+    .regex(/^[a-z][a-z0-9-]*$/, 'Shell must be a lowercase kebab-case app name')
+    .optional(),
 });
 
 const ServiceConfigSchema = z.object({
@@ -145,6 +153,10 @@ export const HarnessConfigSchema = z.object({
       provider: InfraProviderSchema.optional(),
     })
     .optional(),
+}).superRefine((config, ctx) => {
+  for (const message of validateAppTopology(config.apps, config.mode)) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['apps'], message });
+  }
 });
 
 export type HarnessConfigInput = z.input<typeof HarnessConfigSchema>;
