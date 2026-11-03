@@ -228,6 +228,21 @@
           "tasks_done": 30
         }
       }
+    },
+    "spec-e-burgos-011-kit-tucu-ui": {
+      "cycles": {
+        "cycle-01": {
+          "file": "sdd/specs/spec-e-burgos-011-kit-tucu-ui/cycles/cycle-01/tasks.json",
+          "module": "kit-tucu-ui",
+          "apps": [
+            "apps/cli",
+            "apps/studio-bridge"
+          ],
+          "status": "in-progress",
+          "tasks_total": 26,
+          "tasks_done": 0
+        }
+      }
     }
   }
 }

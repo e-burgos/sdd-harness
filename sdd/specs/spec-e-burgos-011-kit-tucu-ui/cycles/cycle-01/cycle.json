@@ -4,7 +4,8 @@
   "module": "kit-tucu-ui",
   "spec": "spec-e-burgos-011-kit-tucu-ui",
   "apps": [
-    "apps/cli"
+    "apps/cli",
+    "apps/studio-bridge"
   ],
   "phase": "tucu-ui-integration",
   "flow": "full",
@@ -17,10 +18,70 @@
   "started_at": "2026-11-02",
   "completed_at": null,
   "documents": {
-    "brief": "sdd/specs/spec-e-burgos-011-kit-tucu-ui/cycles/cycle-01/brief.yaml"
+    "brief": "sdd/specs/spec-e-burgos-011-kit-tucu-ui/cycles/cycle-01/brief.yaml",
+    "functional": "sdd/specs/spec-e-burgos-011-kit-tucu-ui/cycles/cycle-01/functional.md",
+    "planner": "sdd/specs/spec-e-burgos-011-kit-tucu-ui/cycles/cycle-01/planner.md",
+    "architect": "sdd/specs/spec-e-burgos-011-kit-tucu-ui/cycles/cycle-01/architect.md"
   },
   "artifacts": [],
-  "metrics": null,
+  "metrics": {
+    "tasks_total": 26,
+    "tasks_completed": 0,
+    "story_points": 86,
+    "files_created": [],
+    "files_modified": [],
+    "files_deleted": [],
+    "usage": {
+      "tokens_in": 315000,
+      "tokens_out": 60000,
+      "by_agent": [
+        {
+          "agent": "functional",
+          "label": "functional.md",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 60000,
+          "tokens_out": 14000,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-02"
+        },
+        {
+          "agent": "planner",
+          "label": "planner.md",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 70000,
+          "tokens_out": 16000,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-02"
+        },
+        {
+          "agent": "architect",
+          "label": "architect.md",
+          "provider_model": "claude/opus",
+          "effort": "high",
+          "tokens_in": 140000,
+          "tokens_out": 16000,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-02"
+        },
+        {
+          "agent": "planner",
+          "label": "planner.md (reconciliación con architect.md)",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 45000,
+          "tokens_out": 14000,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-02"
+        }
+      ]
+    }
+  },
   "tables_created": [],
   "endpoints_implemented": [],
   "components_created": [],

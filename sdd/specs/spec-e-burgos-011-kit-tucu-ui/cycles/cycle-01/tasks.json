@@ -1,0 +1,538 @@
+{
+  "$schema": "../../../../schemas/cycle-tasks.schema.json",
+  "spec": "spec-e-burgos-011-kit-tucu-ui",
+  "cycle": 1,
+  "module": "kit-tucu-ui",
+  "apps": [
+    "apps/cli",
+    "apps/studio-bridge"
+  ],
+  "flow": "full",
+  "user_stories_generated": true,
+  "prerequisites": {
+    "tasks_generated": true
+  },
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "Esquema: clave opcional tucu_ui, default apagado en el template e integrations/ como dato del kit",
+      "user_stories": [
+        "US-1-004",
+        "US-2-004"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [],
+      "status": "pending",
+      "files": [
+        "apps/cli/templates/sdd/schemas/tools.schema.json",
+        "apps/cli/templates/sdd/tools.json",
+        "apps/cli/src/generators/kit-manifest.ts",
+        "apps/cli/src/generators/__tests__/sdd.generator.integration.spec.ts",
+        "apps/cli/src/generators/__tests__/update.generator.spec.ts"
+      ]
+    },
+    {
+      "id": "TASK-002",
+      "title": "Helper compartido de merge de archivos MCP (mcp-config.mjs)",
+      "user_stories": [
+        "US-3-001",
+        "US-3-002"
+      ],
+      "estimation_hours": 6,
+      "story_points": 5,
+      "depends_on": [],
+      "status": "pending",
+      "files": [
+        "apps/cli/templates/sdd/scripts/mcp-config.mjs",
+        "apps/cli/src/utils/__tests__/mcp-config.spec.ts"
+      ]
+    },
+    {
+      "id": "TASK-003",
+      "title": "sdd-tucu.mjs base: parseo de argumentos y --status",
+      "user_stories": [
+        "US-1-001",
+        "US-1-004"
+      ],
+      "estimation_hours": 3,
+      "story_points": 2,
+      "depends_on": [
+        "TASK-001",
+        "TASK-023"
+      ],
+      "status": "pending",
+      "files": [
+        "apps/cli/templates/sdd/scripts/sdd-tucu.mjs"
+      ]
+    },
+    {
+      "id": "TASK-004",
+      "title": "Instalación de la skill desde @e-burgos/tucu-ui-mcp (versión fija, atómica, sin red)",
+      "user_stories": [
+        "US-2-001",
+        "US-2-004"
+      ],
+      "estimation_hours": 6,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-003"
+      ],
+      "status": "pending",
+      "files": [
+        "apps/cli/templates/sdd/scripts/sdd-tucu.mjs"
+      ]
+    },
+    {
+      "id": "TASK-005",
+      "title": "sdd-tucu.mjs --enable: orquestación, todo o nada, partes y reparación",
+      "user_stories": [
+        "US-1-002",
+        "US-3-001",
+        "US-3-002"
+      ],
+      "estimation_hours": 6,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-002",
+        "TASK-004",
+        "TASK-024"
+      ],
+      "status": "pending",
+      "files": [
+        "apps/cli/templates/sdd/scripts/sdd-tucu.mjs"
+      ]
+    },
+    {
+      "id": "TASK-006",
+      "title": "sdd-tucu.mjs --disable: quitar enlaces y entradas MCP sin borrar datos del dev",
+      "user_stories": [
+        "US-1-003",
+        "US-2-003",
+        "US-3-002"
+      ],
+      "estimation_hours": 4,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-005"
+      ],
+      "status": "pending",
+      "files": [
+        "apps/cli/templates/sdd/scripts/sdd-tucu.mjs"
+      ]
+    },
+    {
+      "id": "TASK-007",
+      "title": "setup-agents.sh: delegar el enlazado de tucu-ui-design en sdd-tucu.mjs --sync",
+      "user_stories": [
+        "US-2-002",
+        "US-5-003"
+      ],
+      "estimation_hours": 2,
+      "story_points": 2,
+      "depends_on": [
+        "TASK-024"
+      ],
+      "status": "pending",
+      "files": [
+        "apps/cli/templates/sdd/scripts/setup-agents.sh"
+      ]
+    },
+    {
+      "id": "TASK-008",
+      "title": "setup-agents.ps1: paridad Windows de la delegación a sdd-tucu.mjs --sync",
+      "user_stories": [
+        "US-2-002"
+      ],
+      "estimation_hours": 2,
+      "story_points": 1,
+      "depends_on": [
+        "TASK-007"
+      ],
+      "status": "pending",
+      "files": [
+        "apps/cli/templates/sdd/scripts/setup-agents.ps1"
+      ]
+    },
+    {
+      "id": "TASK-009",
+      "title": "Script sdd:tucu en el package.json de workspaces nuevos y existentes",
+      "user_stories": [
+        "US-1-002",
+        "US-5-001"
+      ],
+      "estimation_hours": 2,
+      "story_points": 2,
+      "depends_on": [
+        "TASK-003"
+      ],
+      "status": "pending",
+      "files": [
+        "apps/cli/templates/sdd/templates/nx-workspace/package.json",
+        "apps/cli/src/generators/__tests__/root-package.spec.ts",
+        "apps/cli/src/generators/__tests__/standalone.generator.spec.ts"
+      ]
+    },
+    {
+      "id": "TASK-010",
+      "title": "validate-sdd: avisos de tucu-ui por arnés, por archivo MCP, por clave y por versión",
+      "user_stories": [
+        "US-5-002"
+      ],
+      "estimation_hours": 4,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-001",
+        "TASK-023"
+      ],
+      "status": "pending",
+      "files": [
+        "apps/cli/templates/sdd/scripts/validate-sdd.mjs"
+      ]
+    },
+    {
+      "id": "TASK-011",
+      "title": "Playbook del sdd-steward: operar sdd:tucu a pedido del dev",
+      "user_stories": [
+        "US-5-001"
+      ],
+      "estimation_hours": 1,
+      "story_points": 1,
+      "depends_on": [
+        "TASK-003"
+      ],
+      "status": "pending",
+      "files": [
+        "apps/cli/templates/sdd/skills/sdd-steward/SKILL.md"
+      ]
+    },
+    {
+      "id": "TASK-012",
+      "title": "Specs de integración del kit para sdd:tucu (POSIX y Windows)",
+      "user_stories": [
+        "US-1-001",
+        "US-1-002",
+        "US-1-003",
+        "US-2-002",
+        "US-3-002",
+        "US-5-002"
+      ],
+      "estimation_hours": 9,
+      "story_points": 8,
+      "depends_on": [
+        "TASK-006",
+        "TASK-007",
+        "TASK-008",
+        "TASK-010"
+      ],
+      "status": "pending",
+      "files": [
+        "apps/cli/src/generators/__tests__/tucu-ui.integration.spec.ts",
+        "apps/cli/src/generators/__tests__/sdd.generator.windows.spec.ts"
+      ]
+    },
+    {
+      "id": "TASK-013",
+      "title": "Utilidades CLI de tucu-ui: wrapper de scripts del kit, decisión de oferta y ejecución",
+      "user_stories": [
+        "US-4-001",
+        "US-4-002",
+        "US-4-003"
+      ],
+      "estimation_hours": 6,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-002",
+        "TASK-005",
+        "TASK-023"
+      ],
+      "status": "pending",
+      "files": [
+        "apps/cli/src/utils/kit-scripts.ts",
+        "apps/cli/src/utils/tucu-ui-offer.ts",
+        "apps/cli/src/utils/tucu-ui-run.ts",
+        "apps/cli/src/utils/__tests__/tucu-ui-offer.spec.ts",
+        "apps/cli/src/utils/__tests__/kit-scripts.spec.ts"
+      ]
+    },
+    {
+      "id": "TASK-014",
+      "title": "harness init: oferta de tucu-ui, flags y tolerancia a fallo de red",
+      "user_stories": [
+        "US-4-001",
+        "US-4-003"
+      ],
+      "estimation_hours": 5,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-013",
+        "TASK-025"
+      ],
+      "status": "pending",
+      "files": [
+        "apps/cli/src/commands/init.ts",
+        "apps/cli/src/commands/__tests__/init-target.spec.ts"
+      ]
+    },
+    {
+      "id": "TASK-015",
+      "title": "harness configure sdd: oferta sobre proyectos existentes y flags",
+      "user_stories": [
+        "US-4-002",
+        "US-4-003"
+      ],
+      "estimation_hours": 5,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-013"
+      ],
+      "status": "pending",
+      "files": [
+        "apps/cli/src/commands/configure/sdd.ts",
+        "apps/cli/src/commands/configure/sdd-apps.ts",
+        "apps/cli/src/commands/__tests__/configure-sdd-apps.spec.ts"
+      ]
+    },
+    {
+      "id": "TASK-016",
+      "title": "configure mcp y configure memory con merge compartido, y tucu-ui en el catálogo",
+      "user_stories": [
+        "US-3-003"
+      ],
+      "estimation_hours": 6,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-002",
+        "TASK-013"
+      ],
+      "status": "pending",
+      "files": [
+        "apps/cli/src/commands/configure/mcp.ts",
+        "apps/cli/src/commands/configure/memory.ts",
+        "apps/cli/src/commands/__tests__/configure-mcp.spec.ts"
+      ]
+    },
+    {
+      "id": "TASK-017",
+      "title": "harness update sdd: conservar tucu-ui y verificar la frontera de datos",
+      "user_stories": [
+        "US-5-003"
+      ],
+      "estimation_hours": 3,
+      "story_points": 2,
+      "depends_on": [
+        "TASK-001",
+        "TASK-007",
+        "TASK-008",
+        "TASK-009"
+      ],
+      "status": "pending",
+      "files": [
+        "apps/cli/src/generators/__tests__/update.generator.spec.ts"
+      ]
+    },
+    {
+      "id": "TASK-018",
+      "title": "Specs de la CLI: init, configure sdd, configure mcp y update con tucu-ui",
+      "user_stories": [
+        "US-3-003",
+        "US-4-001",
+        "US-4-002",
+        "US-4-003",
+        "US-5-003"
+      ],
+      "estimation_hours": 6,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-014",
+        "TASK-015",
+        "TASK-016",
+        "TASK-017"
+      ],
+      "status": "pending",
+      "files": [
+        "apps/cli/src/commands/__tests__/tucu-ui-flow.spec.ts",
+        "apps/cli/src/__e2e__/"
+      ]
+    },
+    {
+      "id": "TASK-019",
+      "title": "Documentación bilingüe del kit y README de la CLI",
+      "user_stories": [
+        "US-5-001"
+      ],
+      "estimation_hours": 4,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-018"
+      ],
+      "status": "pending",
+      "files": [
+        "apps/cli/templates/sdd/documentation/es/README.md",
+        "apps/cli/templates/sdd/documentation/es/HOW-TO-USE-SDD.md",
+        "apps/cli/templates/sdd/documentation/es/INSTALL.md",
+        "apps/cli/templates/sdd/documentation/en/README.md",
+        "apps/cli/templates/sdd/documentation/en/HOW-TO-USE-SDD.md",
+        "apps/cli/templates/sdd/documentation/en/INSTALL.md",
+        "apps/cli/README.md",
+        "apps/cli/templates/sdd/docs/app.js"
+      ]
+    },
+    {
+      "id": "TASK-020",
+      "title": "Textos de AGENTS, CLAUDE, GEMINI y copilot-instructions sobre la herramienta auxiliar tucu-ui",
+      "user_stories": [
+        "US-5-001"
+      ],
+      "estimation_hours": 2,
+      "story_points": 2,
+      "depends_on": [
+        "TASK-011"
+      ],
+      "status": "pending",
+      "files": [
+        "apps/cli/templates/sdd/dual-harness/AGENTS.md",
+        "apps/cli/templates/sdd/dual-harness/CLAUDE.md",
+        "apps/cli/templates/sdd/dual-harness/GEMINI.md",
+        "apps/cli/templates/sdd/dual-harness/copilot-instructions.md"
+      ]
+    },
+    {
+      "id": "TASK-021",
+      "title": "Generación real en examples/ con red real: init, enable, disable, update",
+      "user_stories": [
+        "US-1-002",
+        "US-1-003",
+        "US-2-002",
+        "US-3-001",
+        "US-4-001",
+        "US-5-002",
+        "US-5-003"
+      ],
+      "estimation_hours": 4,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-019",
+        "TASK-020",
+        "TASK-026"
+      ],
+      "status": "pending",
+      "files": [
+        "examples/"
+      ]
+    },
+    {
+      "id": "TASK-022",
+      "title": "Verificación integral del ciclo",
+      "user_stories": [
+        "US-1-001",
+        "US-1-002",
+        "US-1-003",
+        "US-1-004",
+        "US-2-001",
+        "US-2-002",
+        "US-2-003",
+        "US-2-004",
+        "US-3-001",
+        "US-3-002",
+        "US-3-003",
+        "US-4-001",
+        "US-4-002",
+        "US-4-003",
+        "US-5-001",
+        "US-5-002",
+        "US-5-003"
+      ],
+      "estimation_hours": 3,
+      "story_points": 2,
+      "depends_on": [
+        "TASK-021"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-023",
+      "title": "tucu-ui-common.mjs: constantes, entrada MCP canónica, estado y reglas de versión",
+      "user_stories": [
+        "US-1-001",
+        "US-1-004",
+        "US-2-001",
+        "US-3-001"
+      ],
+      "estimation_hours": 4,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002"
+      ],
+      "status": "pending",
+      "files": [
+        "apps/cli/templates/sdd/scripts/tucu-ui-common.mjs",
+        "apps/cli/src/utils/__tests__/tucu-ui-common.spec.ts"
+      ]
+    },
+    {
+      "id": "TASK-024",
+      "title": "sdd-tucu.mjs: enlazado de tucu-ui-design en los tres lugares, conversión de .claude/skills y --sync",
+      "user_stories": [
+        "US-2-002",
+        "US-2-003",
+        "US-5-003"
+      ],
+      "estimation_hours": 6,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-003",
+        "TASK-004"
+      ],
+      "status": "pending",
+      "files": [
+        "apps/cli/templates/sdd/scripts/sdd-tucu.mjs"
+      ]
+    },
+    {
+      "id": "TASK-025",
+      "title": "Config de init --config: clave opcional sdd.tucu_ui",
+      "user_stories": [
+        "US-4-001",
+        "US-4-003"
+      ],
+      "estimation_hours": 2,
+      "story_points": 2,
+      "depends_on": [],
+      "status": "pending",
+      "files": [
+        "apps/cli/src/config/schema.ts",
+        "apps/cli/src/config/json-schema.ts",
+        "apps/cli/src/config/__tests__/load.spec.ts",
+        "apps/cli/src/config/__tests__/json-schema.spec.ts"
+      ]
+    },
+    {
+      "id": "TASK-026",
+      "title": "Sincronizar el dogfood sdd/ con el template y cubrir tucu_ui en los tests del puente",
+      "user_stories": [
+        "US-1-004"
+      ],
+      "estimation_hours": 4,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-012"
+      ],
+      "status": "pending",
+      "files": [
+        "sdd/schemas/tools.schema.json",
+        "sdd/scripts/mcp-config.mjs",
+        "sdd/scripts/tucu-ui-common.mjs",
+        "sdd/scripts/sdd-tucu.mjs",
+        "sdd/scripts/setup-agents.sh",
+        "sdd/scripts/setup-agents.ps1",
+        "sdd/scripts/validate-sdd.mjs",
+        "package.json",
+        "apps/studio-bridge/src/workspace/kit-tools.parity.spec.ts",
+        "apps/studio-bridge/src/workspace/kit-tools.spec.ts"
+      ]
+    }
+  ]
+}
