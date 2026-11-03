@@ -109,7 +109,7 @@ export function kitLinkPath(root, linkDir) {
 
 function safeRealpath(path) {
   try {
-    return realpathSync(path);
+    return realpathSync.native(path);
   } catch {
     return null;
   }

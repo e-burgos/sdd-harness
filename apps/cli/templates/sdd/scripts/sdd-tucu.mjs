@@ -239,11 +239,11 @@ function prepareLinkParent(linkDir) {
   if (!entry.isSymbolicLink()) return { ok: true, changed: false };
   let resolved = null;
   try {
-    resolved = realpathSync(parent);
+    resolved = realpathSync.native(parent);
   } catch {
     resolved = null;
   }
-  const skills = existsSync(SKILLS_SOURCE) ? realpathSync(SKILLS_SOURCE) : null;
+  const skills = existsSync(SKILLS_SOURCE) ? realpathSync.native(SKILLS_SOURCE) : null;
   if (resolved !== null && skills !== null && resolved === skills) {
     const count = convertSkillsDirectory(parent, linkDir === '.claude/skills');
     log(`converted dir    : ${linkDir} (symlink to sdd/skills → real directory with ${count} kit links)`);
