@@ -1,0 +1,29 @@
+{
+  "$schema": "../../../../schemas/cycle.schema.json",
+  "cycle": 1,
+  "module": "kit-tucu-ui",
+  "spec": "spec-e-burgos-011-kit-tucu-ui",
+  "apps": [
+    "apps/cli"
+  ],
+  "phase": "tucu-ui-integration",
+  "flow": "full",
+  "objectives": [
+    "Interruptor tucu_ui con pnpm sdd:tucu (US-1)",
+    "Skill y MCP de tucu-ui en los cuatro arneses sin pisar config ajena (US-2, US-3)",
+    "Oferta en init/configure sdd, docs y avisos del validador (US-4, US-5)"
+  ],
+  "status": "in-progress",
+  "started_at": "2026-11-02",
+  "completed_at": null,
+  "documents": {
+    "brief": "sdd/specs/spec-e-burgos-011-kit-tucu-ui/cycles/cycle-01/brief.yaml"
+  },
+  "artifacts": [],
+  "metrics": null,
+  "tables_created": [],
+  "endpoints_implemented": [],
+  "components_created": [],
+  "issues_found": [],
+  "reviewer_report": null
+}

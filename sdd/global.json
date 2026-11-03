@@ -120,7 +120,17 @@
       "completed_at": "2026-11-02"
     }
   ],
-  "in_progress_modules": [],
+  "in_progress_modules": [
+    {
+      "module": "kit-tucu-ui",
+      "spec": "spec-e-burgos-011-kit-tucu-ui",
+      "apps": [
+        "apps/cli"
+      ],
+      "cycles_completed": 0,
+      "description": "Integración opcional de tucu-ui en el kit: skill de diseño y servidor MCP en los cuatro arneses, con interruptor en sdd/tools.json."
+    }
+  ],
   "pending_modules": [],
   "monorepo": {
     "tool": "none (multi-app repo)",

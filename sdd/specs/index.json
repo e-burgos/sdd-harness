@@ -156,6 +156,22 @@
       "depends_on": [
         "spec-e-burgos-009-studio-tucu-ui"
       ]
+    },
+    {
+      "id": "spec-e-burgos-011-kit-tucu-ui",
+      "author": "e-burgos",
+      "slug": "kit-tucu-ui",
+      "folder": "sdd/specs/spec-e-burgos-011-kit-tucu-ui",
+      "file": "sdd/specs/spec-e-burgos-011-kit-tucu-ui/spec-e-burgos-011-kit-tucu-ui.spec.md",
+      "module": "kit-tucu-ui",
+      "app": "apps/cli",
+      "status": "in-progress",
+      "title": "Kit: integración opcional de tucu-ui (skill de diseño + MCP) en los cuatro arneses",
+      "created_at": "2026-11-02",
+      "completed_at": null,
+      "depends_on": [
+        "spec-e-burgos-009-studio-tucu-ui"
+      ]
     }
   ]
 }
