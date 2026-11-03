@@ -15,6 +15,13 @@ const inputs: Record<string, unknown> = {
   'mod enabled': { rtk: { enabled: true }, claude_mod: { enabled: true, gate: 'block' } },
   'mod partial': { rtk: { enabled: true }, claude_mod: { enabled: false } },
   'mod warn': { rtk: { enabled: true }, claude_mod: { enabled: true, gate: 'warn' } },
+  'tucu enabled': {
+    $schema: './schemas/tools.schema.json',
+    rtk: { enabled: true, auto_install: true },
+    claude_mod: { enabled: false, gate: 'block' },
+    tucu_ui: { enabled: true, skill: true, mcp: true, version: '0.16.0' },
+  },
+  'tucu with unknown key': { rtk: { enabled: true }, tucu_ui: { enabled: true, extra: 1 } },
 };
 
 const cases: Array<{ label: string; change: ToolsChange; script: string; args: string[] }> = [

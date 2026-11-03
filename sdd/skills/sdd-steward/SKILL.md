@@ -42,6 +42,7 @@ description: Conserje del kit SDD - puerta de entrada para status del harness, a
 | ¿Cuánto se gastó y en qué proveedor?  | `cycle.json → metrics.usage` + `tasks.json → usage` + fixes `usage` + `sdd/pricing.json` |
 | ¿rtk está activo / instalado?         | `node sdd/scripts/setup-rtk.mjs --status` (JSON: switch + binario) |
 | ¿Cuánto ahorró rtk?                   | `rtk gain --project` — o el visor: Costos → pestaña **RTK**      |
+| ¿tucu-ui (skill + MCP) está activo?   | `node sdd/scripts/sdd-tucu.mjs --status` (JSON: estado por arnés, sin red) |
 | ¿Qué contiene el kit (índice)?        | `sdd/catalog.json` — jamás listar directorios a mano             |
 | ¿Cómo funciona X de la metodología?   | `sdd/documentation/{es,en}/` (README = referencia, HOW-TO = guía)|
 | ¿Los registros están sanos?           | `pnpm sdd:validate`                                              |
@@ -65,6 +66,9 @@ Reporte compacto, en este orden, leyendo solo las fuentes del mapa:
    `pnpm sdd:rtk`.
 9. **Mod de Claude Code**: `pnpm sdd:mod -- --status` → prendido/apagado, modo del
    gate y si `.claude/skills/sdd-mod` existe (si no, ofrecer `pnpm setup:agents`).
+10. **tucu-ui**: `node sdd/scripts/sdd-tucu.mjs --status` → `off`, `complete` o
+    `incomplete` (si es `incomplete`, ofrecer el `repair` que trae el JSON). Solo informar:
+    prenderlo o apagarlo es decisión del dev.
 
 Nada de análisis no pedido: el status es un tablero, no un ensayo.
 
@@ -172,6 +176,24 @@ resto siguen las mismas reglas desde los arneses y `pnpm sdd:validate`, que no c
 4. El gate del mod es un chequeo grueso (hay trabajo autorizado en curso); el gate fino
    sigue siendo `pnpm sdd:gate <spec> [cycle-XX]`. No cubre comandos de shell.
 
+## Playbook 8 — tucu-ui (herramienta auxiliar opcional)
+
+`@e-burgos/tucu-ui` es la librería de UI de los frontends React/Next. El kit puede dejarla
+operativa para los agentes: la skill `tucu-ui-design` (instalada en
+`sdd/integrations/skills/tucu-ui-design/` y enlazada en Claude Code, Copilot y Gemini/
+Antigravity) y el servidor MCP `tucu-ui` en `.mcp.json`, `.vscode/mcp.json` y
+`.gemini/settings.json`. Viene **apagada**; la decisión es del dev. Instalar la skill
+necesita red (una sola vez, con Node >= 20); el resto funciona sin red.
+
+1. **Estado**: `node sdd/scripts/sdd-tucu.mjs --status` (o `pnpm sdd:tucu -- --status`).
+2. **Prender / apagar — solo a pedido del dev**: `pnpm sdd:tucu -- --enable` y
+   `pnpm sdd:tucu -- --disable` (`--parts=skill,mcp` elige las partes, `--force` sube a la
+   versión que fija el kit, `--purge` borra además la skill instalada). Nunca prenderla por
+   iniciativa propia ni editar `tucu_ui` en `sdd/tools.json` a mano.
+3. **Incompleto o con avisos de `sdd:validate`**: `pnpm sdd:tucu -- --enable` repara lo que
+   falte; `pnpm setup:agents` solo vuelve a enlazar la skill.
+4. **Sin red al prender**: el comando falla sin cambiar `sdd/tools.json`; reintentar con red.
+
 ## Ruteo (pedidos que NO son del steward)
 
 | Pedido                                  | Destino                                        |
@@ -191,9 +213,10 @@ Ninguno en operación normal. Las únicas escrituras permitidas son las que
 ejecutan sus playbooks a través de las herramientas oficiales (`update sdd`,
 `setup:agents`, `harness idea`) — nunca ediciones manuales de registros SDD.
 
-Única excepción: `sdd/tools.json` (interruptores de rtk y del mod de Claude Code), y
-solo a pedido explícito del dev — preferentemente vía `pnpm sdd:rtk -- --disable|--enable`
-y `pnpm sdd:mod -- --enable|--disable|--gate=…`.
+Única excepción: `sdd/tools.json` (interruptores de rtk, del mod de Claude Code y de
+tucu-ui), y solo a pedido explícito del dev — preferentemente vía
+`pnpm sdd:rtk -- --disable|--enable`, `pnpm sdd:mod -- --enable|--disable|--gate=…` y
+`pnpm sdd:tucu -- --enable|--disable`.
 
 ## Registro de consumo (obligatorio)
 

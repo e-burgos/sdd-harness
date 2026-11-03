@@ -383,6 +383,13 @@ if (Get-Command node -ErrorAction SilentlyContinue) {
     Write-Host "skipped (no node): rtk hooks - run pnpm sdd:rtk once node is available"
 }
 
+# tucu-ui (optional): keeps the tucu-ui-design skill linked while sdd/tools.json has it on and
+# unlinks it when off; no network, never fatal.
+$tucuScript = Join-Path $root "sdd\scripts\sdd-tucu.mjs"
+if ((Get-Command node -ErrorAction SilentlyContinue) -and (Test-Path -LiteralPath $tucuScript)) {
+    try { & node $tucuScript --sync } catch { Write-Host "! skipped         : tucu-ui sync - $($_.Exception.Message)" }
+}
+
 # The root instruction files are what every harness reads first. `harness configure sdd` removes
 # the originals after absorbing them into sdd/dual-harness/ and relies on this script to link
 # them back; if linking failed for any reason, a real copy is worse than a link but infinitely

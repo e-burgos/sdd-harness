@@ -226,3 +226,79 @@ describe.skipIf(process.platform !== 'win32')('setup-agents.ps1 (integration, Wi
     expect(git('status', '--porcelain').trim()).toBe('');
   });
 });
+
+const KIT_DIR = resolve(__dirname, '../../../templates/sdd');
+const TUCU_STUB = `
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+const dir = process.argv[process.argv.indexOf('--dir') + 1];
+mkdirSync(join(dir, 'references'), { recursive: true });
+writeFileSync(join(dir, 'SKILL.md'), '# tucu-ui-design\\n');
+writeFileSync(join(dir, 'references', 'checklist.md'), 'checklist\\n');
+writeFileSync(join(dir, 'references', 'design-guide.md'), 'guide\\n');
+`;
+
+describe.skipIf(process.platform !== 'win32')('sdd:tucu (integration, Windows)', () => {
+  let root: string;
+  let aux: string;
+  let stub: string;
+  let claudeStub: string;
+  const LINK_DIRS = ['.claude/skills', '.github/skills', '.agents/skills'];
+
+  const tucu = (...args: string[]) =>
+    spawnSync(process.execPath, ['sdd/scripts/sdd-tucu.mjs', ...args], {
+      cwd: root,
+      encoding: 'utf-8',
+      env: { ...process.env, SDD_RTK_SKIP_INSTALL: '1', SDD_TUCU_NPX: stub, SDD_TUCU_CLAUDE: claudeStub },
+    });
+  const linkTarget = (dir: string) => fs.realpathSync(resolve(root, dir, 'tucu-ui-design'));
+
+  beforeEach(async () => {
+    root = mkdtempSync(resolve(tmpdir(), 'harness-win-tucu-'));
+    aux = mkdtempSync(resolve(tmpdir(), 'harness-win-tucu-aux-'));
+    stub = resolve(aux, 'stub.mjs');
+    await fs.writeFile(stub, TUCU_STUB);
+    claudeStub = resolve(aux, 'claude-stub.mjs');
+    await fs.writeFile(claudeStub, 'process.exit(0);\n');
+    await fs.copy(KIT_DIR, resolve(root, 'sdd'));
+    expect(runSetupAgents(root).status).toBe(0);
+  });
+  afterEach(() => {
+    rmSync(root, { recursive: true, force: true });
+    rmSync(aux, { recursive: true, force: true });
+  });
+
+  it('--enable enlaza junctions en los tres lugares, convierte .claude/skills y deja los MCP', () => {
+    const out = tucu('--enable');
+    expect(out.status).toBe(0);
+    expect(isLink(resolve(root, '.claude/skills'))).toBe(false);
+    expect(fs.existsSync(resolve(root, '.claude/skills/sdd-steward/SKILL.md'))).toBe(true);
+    expect(fs.existsSync(resolve(root, '.claude/skills/sdd-mod/.claude-plugin/plugin.json'))).toBe(true);
+    for (const dir of LINK_DIRS) {
+      expect(isLink(resolve(root, dir, 'tucu-ui-design'))).toBe(true);
+      expect(linkTarget(dir).toLowerCase()).toBe(
+        fs.realpathSync(resolve(root, 'sdd/integrations/skills/tucu-ui-design')).toLowerCase(),
+      );
+    }
+    for (const file of ['.mcp.json', '.vscode/mcp.json', '.gemini/settings.json']) {
+      expect(JSON.stringify(fs.readJSONSync(resolve(root, file)))).toContain('@e-burgos/tucu-ui-mcp@');
+    }
+  });
+
+  it('--sync por setup-agents.ps1 es idempotente y --disable limpia solo lo propio', () => {
+    expect(tucu('--enable').status).toBe(0);
+    const first = runSetupAgents(root);
+    expect(first.status).toBe(0);
+    const second = runSetupAgents(root);
+    expect(second.status).toBe(0);
+    expect(second.stdout).toContain('kept     symlink : .github/skills/tucu-ui-design');
+    expect(second.stdout).not.toContain('created  symlink : .github/skills/tucu-ui-design');
+
+    expect(tucu('--disable').status).toBe(0);
+    for (const dir of LINK_DIRS) {
+      expect(fs.existsSync(resolve(root, dir, 'tucu-ui-design'))).toBe(false);
+    }
+    expect(fs.existsSync(resolve(root, 'sdd/integrations/skills/tucu-ui-design/SKILL.md'))).toBe(true);
+    expect(fs.existsSync(resolve(root, '.claude/skills/sdd-steward/SKILL.md'))).toBe(true);
+  });
+});

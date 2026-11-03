@@ -254,6 +254,12 @@ else
   echo "skipped (no node): rtk hooks — run pnpm sdd:rtk once node is available"
 fi
 
+# tucu-ui (optional): keeps the tucu-ui-design skill linked while sdd/tools.json has it on and
+# unlinks it when off; no network, never fatal.
+if command -v node >/dev/null 2>&1 && [ -f "$ROOT/sdd/scripts/sdd-tucu.mjs" ]; then
+  node "$ROOT/sdd/scripts/sdd-tucu.mjs" --sync || true
+fi
+
 echo ""
 if [ "${#CONFLICTS[@]}" -gt 0 ]; then
   echo "⚠ ${#CONFLICTS[@]} item(s) kept as yours — the kit version is next to each as *.new:"

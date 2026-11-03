@@ -7,6 +7,7 @@ import fs from 'fs-extra';
 
 import { generateSDD } from '../sdd.generator.js';
 import { updateSDD } from '../update.generator.js';
+import { isKitOwned } from '../kit-manifest.js';
 
 vi.mock('../../utils/exec.js', () => ({
   exec: vi.fn(() => ''),
@@ -297,11 +298,24 @@ describe('update.generator', () => {
     expect(manifest.files['tools.json']).toBeUndefined();
   });
 
+  it('sdd/integrations es dato del usuario: update no la toca, no la manifiesta ni deja .new', async () => {
+    const skill = resolve(ws, 'sdd/integrations/skills/tucu-ui-design/SKILL.md');
+    await fs.outputFile(skill, '# skill instalada\n');
+    const report = await updateSDD(ws);
+    expect(await fs.readFile(skill, 'utf-8')).toBe('# skill instalada\n');
+    expect(report.conflicts).toEqual([]);
+    expect(await fs.pathExists(`${skill}.new`)).toBe(false);
+    const manifest = await fs.readJSON(resolve(ws, 'sdd/kit.json'));
+    expect(Object.keys(manifest.files).some((k) => k.startsWith('integrations/'))).toBe(false);
+    expect(isKitOwned('integrations/skills/tucu-ui-design/SKILL.md')).toBe(false);
+  });
+
   it('package.json recibe sdd:rtk y postinstall, y respeta un postinstall propio', async () => {
     await updateSDD(ws);
     const pkg = await fs.readJSON(resolve(ws, 'package.json'));
     expect(pkg.scripts['sdd:rtk']).toBe('node sdd/scripts/setup-rtk.mjs');
     expect(pkg.scripts['sdd:gate']).toBe('node sdd/scripts/spec-gate.mjs');
+    expect(pkg.scripts['sdd:tucu']).toBe('node sdd/scripts/sdd-tucu.mjs');
     expect(pkg.scripts.postinstall).toContain('setup-rtk.mjs');
 
     pkg.scripts.postinstall = 'echo mine';

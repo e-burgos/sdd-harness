@@ -630,7 +630,60 @@ if (existsSync(join(SDD, 'pricing.json'))) {
 
 // ---- 12. Tools (rtk switch) — ships with the kit since v0.12; absence is not an error ----
 if (existsSync(join(SDD, 'tools.json'))) {
-  validate('tools.json', 'tools.schema.json');
+  const toolsDoc = validate('tools.json', 'tools.schema.json');
+  let tucu = null;
+  try {
+    tucu = await import(new URL('./tucu-ui-common.mjs', import.meta.url));
+  } catch {
+    tucu = null;
+  }
+  const section = toolsDoc?.tucu_ui;
+  if (tucu && section && typeof section === 'object' && !Array.isArray(section)) {
+    try {
+      const repair = 'run pnpm sdd:tucu -- --enable';
+      const linkHarness = { '.claude/skills': 'Claude Code', '.github/skills': 'Copilot', '.agents/skills': 'Gemini CLI, Antigravity' };
+      const mcpHarness = { '.mcp.json': 'Claude Code', '.vscode/mcp.json': 'Copilot', '.gemini/settings.json': 'Gemini CLI, Antigravity' };
+      const mcpProblem = {
+        missing: 'has no tucu-ui entry',
+        'no-file': 'does not exist',
+        broken: 'is not valid JSON',
+        'invalid-container': 'has a servers section that is not an object',
+      };
+      const status = tucu.tucuUiStatus(REPO, toolsDoc);
+      for (const key of status.unknown_keys) {
+        warn('tools.json', `tucu_ui.${key} is not a known setting (${tucu.TUCU_UI_KNOWN_KEYS.join(', ')}) — ignored`);
+      }
+      if (status.enabled && status.state !== 'off') {
+        if (status.parts.skill) {
+          if (!status.skill.installed) {
+            warn('tools.json', `tucu_ui on but ${status.skill.dir} is missing or incomplete — ${repair}`);
+          }
+          for (const [dir, state] of Object.entries(status.skill.links)) {
+            if (state === 'missing') {
+              warn('tools.json', `tucu_ui on but ${dir}/${tucu.TUCU_UI_SKILL_NAME} is not linked (${linkHarness[dir]}) — ${repair}`);
+            } else if (state === 'foreign') {
+              warn('tools.json', `tucu_ui on but ${dir}/${tucu.TUCU_UI_SKILL_NAME} is not the kit's link (kept as is)`);
+            }
+          }
+        }
+        if (status.parts.mcp) {
+          for (const [file, state] of Object.entries(status.mcp)) {
+            if (mcpProblem[state]) {
+              warn('tools.json', `tucu_ui on but ${file} ${mcpProblem[state]} (${mcpHarness[file]}) — ${repair}`);
+            }
+          }
+        }
+        if (status.update_available) {
+          warn(
+            'tools.json',
+            `tucu_ui uses ${tucu.TUCU_UI_PACKAGE} ${status.version}, the kit pins ${status.kit_version} — pnpm sdd:tucu -- --enable --force to upgrade`,
+          );
+        }
+      }
+    } catch {
+      tucu = null;
+    }
+  }
 }
 
 // ---- 12b. Rule zero (model/effort/context) — warning only: repos from before v0.17 lack it ----

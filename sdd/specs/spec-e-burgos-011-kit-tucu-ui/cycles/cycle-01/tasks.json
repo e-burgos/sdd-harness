@@ -169,7 +169,7 @@
       "status": "pending",
       "files": [
         "apps/cli/templates/sdd/templates/nx-workspace/package.json",
-        "apps/cli/src/generators/__tests__/root-package.spec.ts",
+        "apps/cli/src/generators/__tests__/update.generator.spec.ts",
         "apps/cli/src/generators/__tests__/standalone.generator.spec.ts"
       ]
     },
@@ -529,6 +529,8 @@
         "sdd/scripts/setup-agents.sh",
         "sdd/scripts/setup-agents.ps1",
         "sdd/scripts/validate-sdd.mjs",
+        "sdd/skills/sdd-steward/SKILL.md",
+        "sdd/templates/nx-workspace/package.json",
         "package.json",
         "apps/studio-bridge/src/workspace/kit-tools.parity.spec.ts",
         "apps/studio-bridge/src/workspace/kit-tools.spec.ts"

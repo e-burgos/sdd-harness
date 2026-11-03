@@ -128,6 +128,30 @@ describe('setKitTool', () => {
     });
   });
 
+  it('accepts a tucu_ui section (even with an unknown key inside) and keeps it byte for byte', async () => {
+    const tucu = { enabled: true, skill: true, mcp: false, version: '0.16.0', extra: 1 };
+    await writeTools(JSON.stringify({ ...baseDoc, tucu_ui: tucu }));
+    const result = await setKitTool(root, { tool: 'rtk', enabled: false }, await revisionOnDisk());
+    expect(result).toMatchObject({ changed: true, tool: 'rtk', to: false });
+    const doc = await readDoc();
+    expect(doc.tucu_ui).toEqual(tucu);
+    expect(Object.keys(doc)).toEqual(['$schema', 'rtk', 'tucu_ui']);
+  });
+
+  it('still rejects an unknown root key next to tucu_ui', async () => {
+    await writeTools(JSON.stringify({ ...baseDoc, tucu_ui: { enabled: false }, surprise: true }));
+    await expect(setKitTool(root, { tool: 'rtk', enabled: false }, await revisionOnDisk())).rejects.toMatchObject({
+      code: 'bad-request',
+    });
+  });
+
+  it('rejects a wrongly typed tucu_ui.enabled', async () => {
+    await writeTools(JSON.stringify({ ...baseDoc, tucu_ui: { enabled: 'yes' } }));
+    await expect(setKitTool(root, { tool: 'rtk', enabled: false }, await revisionOnDisk())).rejects.toMatchObject({
+      code: 'bad-request',
+    });
+  });
+
   it('falls back to a structural check when the repo has no schema', async () => {
     await rm(path.join(root, 'sdd', 'schemas'), { recursive: true });
     await writeTools(JSON.stringify({ rtk: { enabled: true }, extra: 1 }));

@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "sdd/schemas/tools.schema.json",
   "title": "SDD Tools (sdd/tools.json)",
-  "description": "Interruptores de las herramientas auxiliares que el kit deja operativas por defecto. Es un archivo de DATOS del proyecto: `harness update sdd` jamás lo pisa. Gobierna rtk (compresión de la salida de comandos que leen los agentes) y el mod de Claude Code (claude_mod); el sdd-steward lo apaga o prende a pedido del dev.",
+  "description": "Interruptores de las herramientas auxiliares que el kit deja operativas por defecto. Es un archivo de DATOS del proyecto: `harness update sdd` jamás lo pisa. Gobierna rtk (compresión de la salida de comandos que leen los agentes), el mod de Claude Code (claude_mod) y la integración opcional con tucu-ui (tucu_ui); el sdd-steward lo apaga o prende a pedido del dev.",
   "type": "object",
   "required": ["rtk"],
   "additionalProperties": false,
@@ -43,6 +43,30 @@
           "type": "string",
           "enum": ["block", "warn"],
           "description": "block (default) → sin ciclo in-progress ni fix abierto, Edit/Write/NotebookEdit sobre código se rechazan. warn → se permiten con un aviso."
+        }
+      }
+    },
+    "tucu_ui": {
+      "type": "object",
+      "additionalProperties": true,
+      "description": "Integración opcional con @e-burgos/tucu-ui para frontends React/Next: skill de diseño instalada en sdd/integrations/skills/tucu-ui-design y servidor MCP en .mcp.json, .vscode/mcp.json y .gemini/settings.json. Apagada si la clave falta o enabled es false; se opera con `pnpm sdd:tucu`.",
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "description": "false (default) → el kit no enlaza la skill ni escribe entradas MCP de tucu-ui."
+        },
+        "skill": {
+          "type": "boolean",
+          "description": "false → no se instala ni se enlaza la skill tucu-ui-design. Default true."
+        },
+        "mcp": {
+          "type": "boolean",
+          "description": "false → no se escribe la entrada tucu-ui en los archivos MCP. Default true."
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^\\d+\\.\\d+\\.\\d+$",
+          "description": "Versión de @e-burgos/tucu-ui-mcp que usa el proyecto. La escribe sdd:tucu al prender; el kit la sube solo con `pnpm sdd:tucu -- --enable --force`."
         }
       }
     }
