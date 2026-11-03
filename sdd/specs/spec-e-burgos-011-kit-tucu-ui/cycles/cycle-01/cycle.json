@@ -155,7 +155,7 @@
           "recorded_at": "2026-11-03"
         },
         {
-          "agent": "explorer",
+          "agent": "custom",
           "label": "kit map + tucu-ui-mcp inspection",
           "provider_model": "claude/sonnet",
           "effort": "medium",
