@@ -89,7 +89,7 @@ describe('python app generator (FastAPI + LangGraph + uv)', () => {
     expect(targets.serve.command).toBe('cd apps/agent-api && uv run python -m agent_api');
     expect(targets.lint.command).toBe('cd apps/agent-api && uv run ruff check src tests');
     expect(targets.test.command).toBe('cd apps/agent-api && uv run pytest');
-    expect(targets.build.command).toBe('cd apps/agent-api && uv build');
+    expect(targets.build.command).toBe('cd apps/agent-api && uv build --wheel');
     expect(targets.build.outputs).toEqual(['{projectRoot}/dist']);
   });
 
@@ -140,7 +140,7 @@ describe('python app generator (FastAPI + LangGraph + uv)', () => {
       expect(fs.existsSync(resolve(dir, 'src/agent_py/ml.py'))).toBe(true);
       expect(read(dir, 'Dockerfile')).toContain('ghcr.io/astral-sh/uv');
       expect(pkg.scripts.test).toBe('uv run pytest');
-      expect(pkg.scripts.build).toBe('uv build');
+      expect(pkg.scripts.build).toBe('uv build --wheel');
       expect(read(dir, '.gitignore')).toContain('.venv/');
     } finally {
       process.chdir(cwd);

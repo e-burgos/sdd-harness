@@ -58,7 +58,7 @@ export function App() {
   return (
     <ThemeProvider
       logo={{ name: '${name}' }}
-      layout="minimal"
+      layout="admin"
       brandColor="Blue"
       menuItems={menuItems}
       isAuthenticated
@@ -159,7 +159,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 
   await fs.writeFile(
     resolve(appDir, "app/page.tsx"),
-    `import { Button, Card, StatCard } from '@e-burgos/tucu-ui';
+    `'use client';
+
+import { Button, Card, StatCard } from '@e-burgos/tucu-ui';
 
 export default function Home() {
   return (

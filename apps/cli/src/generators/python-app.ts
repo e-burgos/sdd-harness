@@ -26,7 +26,7 @@ export function pythonUvCommands(pkg: string): Record<string, string> {
     serve: `uv run python -m ${pkg}`,
     lint: "uv run ruff check src tests",
     test: "uv run pytest",
-    build: "uv build",
+    build: "uv build --wheel",
   };
 }
 

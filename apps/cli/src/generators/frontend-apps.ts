@@ -512,7 +512,7 @@ export function App() {
       basePath={basePath}
       appRoutesConfig={appRoutesConfig}
       logo={{ name: '%NAME%' }}
-      layout="minimal"
+      layout="clean"
       brandColor="Blue"
       menuItems={menuItems}
       isAuthenticated
@@ -548,7 +548,7 @@ export function App() {
   return (
     <ThemeProvider
       logo={{ name: '%NAME%' }}
-      layout="minimal"
+      layout="admin"
       brandColor="Blue"
       menuItems={menuItems}
       isAuthenticated
