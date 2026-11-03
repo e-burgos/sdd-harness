@@ -1,0 +1,28 @@
+{
+  "$schema": "../../../../schemas/cycle.schema.json",
+  "cycle": 7,
+  "module": "studio-tucu-ui",
+  "spec": "spec-e-burgos-009-studio-tucu-ui",
+  "apps": [
+    "apps/studio"
+  ],
+  "phase": "tucu-ui-3.10-adoption",
+  "flow": "lite",
+  "objectives": [
+    "Adoptar tucu-ui 3.10.0 y quitar los overrides de color que resuelven sus tokens (US-016)"
+  ],
+  "status": "in-progress",
+  "started_at": "2026-11-02",
+  "completed_at": null,
+  "documents": {
+    "plan": "sdd/specs/spec-e-burgos-009-studio-tucu-ui/cycles/cycle-07/plan.md",
+    "tasks": "sdd/specs/spec-e-burgos-009-studio-tucu-ui/cycles/cycle-07/tasks.json"
+  },
+  "artifacts": [],
+  "metrics": null,
+  "tables_created": [],
+  "endpoints_implemented": [],
+  "components_created": [],
+  "issues_found": [],
+  "reviewer_report": null
+}
