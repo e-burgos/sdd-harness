@@ -1,6 +1,6 @@
 # 🧠 Memoria del proyecto — lecciones destiladas
 
-> Versión 1.1 | Última destilación: 2026-10-26 (journal de spec-e-burgos-001, 005, 007 y 008)
+> Versión 1.2 | Última destilación: 2026-11-03 (journal de spec-e-burgos-009 cycle-01/03/04, 010 cycle-01 y 012 cycle-01)
 > **Cap duro: 120 líneas.** Este archivo se lee COMPLETO al inicio de cada sesión de agente —
 > cada línea acá cuesta tokens en todas las sesiones futuras. Si al destilar se supera el cap,
 > primero podar lecciones obsoletas o absorbidas por constitutions/skills.
@@ -21,6 +21,8 @@ Reglas de este archivo (ver sección 🧠 MEMORIA GATE del dual-harness):
   copiarlas a mano.
 - Crear a mano con `git worktree add` el worktree de un subagente que tiene que commitear y
   pasarle la ruta: con `isolation: "worktree"` del Agent tool git queda bloqueado adentro.
+- Depreciar o reapuntar en `sdd/components.json` todo componente que una task borra o mueve,
+  en el mismo cambio: Studio lee ese registro y muestra como vivos los archivos que ya no existen.
 
 ## Técnica (stack, herramientas, gotchas transversales)
 
@@ -30,6 +32,11 @@ Reglas de este archivo (ver sección 🧠 MEMORIA GATE del dual-harness):
 - Verificar con `pnpm build && pnpm typecheck && pnpm test`: `sdd:validate` no compila nada.
 - Si `pnpm test` raíz falla por un timeout, correr cada paquete con `pnpm --filter <pkg> test`
   antes de concluir que algo se rompió: el primer paquete que falla oculta el resultado del resto.
+- Verificar props y tipos de una librería contra el paquete publicado en `node_modules`, no
+  contra su fuente local (tucu-ui local va por delante del npm); y no cerrar un generador sin
+  una generación real en `examples/` con `lint test build`: los tests unitarios no lo detectan.
+- Revisar en modo claro y oscuro todo override sobre un componente con variantes `dark:`:
+  revisar uno solo esconde la regresión del otro.
 
 ## Costo (qué gastó tokens/tiempo de más y cómo evitarlo)
 
