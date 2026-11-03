@@ -220,6 +220,20 @@
       "depends_on": [
         "spec-e-burgos-013-studio-project-wizard"
       ]
+    },
+    {
+      "id": "spec-e-burgos-015-studio-framework-vision",
+      "author": "e-burgos",
+      "slug": "studio-framework-vision",
+      "folder": "sdd/specs/spec-e-burgos-015-studio-framework-vision",
+      "file": "sdd/specs/spec-e-burgos-015-studio-framework-vision/spec-e-burgos-015-studio-framework-vision.spec.md",
+      "module": "studio-framework-vision",
+      "app": "apps/studio",
+      "status": "draft",
+      "title": "Visión: Studio como framework de trabajo sobre un kit independiente",
+      "created_at": "2026-11-03",
+      "completed_at": null,
+      "depends_on": []
     }
   ]
 }
