@@ -138,6 +138,7 @@ describe('config/load', () => {
       services: ['postgres', 'redis'],
       npmScopes: [],
       sddAuthor: undefined,
+      sddProfile: undefined,
       modules: [],
     });
   });
@@ -164,6 +165,48 @@ describe('config/load', () => {
       { name: 'catalog', depends_on: [] },
       { name: 'search', depends_on: ['catalog'] },
     ]);
+  });
+
+  it('precedencia de tucu-ui en las opciones: flag > apps[].tucuUi > sdd.tucu_ui', async () => {
+    const config = await loadHarnessConfig(
+      await writeConfig(
+        {
+          ...VALID_CONFIG,
+          apps: [
+            { name: 'core-api', type: 'nestjs' },
+            { name: 'web', type: 'react', tucuUi: true },
+            { name: 'site', type: 'nextjs' },
+            { name: 'blog', type: 'nextjs', tucuUi: false },
+          ],
+          sdd: { tucu_ui: false },
+        },
+        'precedence.json',
+      ),
+    );
+    const resolved = (flag?: boolean) =>
+      toWorkspaceOptions(config, { tucuUi: flag }).apps.map((a) => a.tucuUi);
+    expect(resolved()).toEqual([undefined, true, false, false]);
+    expect(resolved(false)).toEqual([undefined, false, false, false]);
+    expect(resolved(true)).toEqual([undefined, true, true, true]);
+  });
+
+  it('rechaza ml fuera de python y tucuUi fuera de apps frontend', async () => {
+    await expect(
+      loadHarnessConfig(
+        await writeConfig(
+          { ...VALID_CONFIG, apps: [{ name: 'core-api', type: 'nestjs', ml: true }] },
+          'bad-ml.json',
+        ),
+      ),
+    ).rejects.toThrow(/"ml" is only valid/);
+    await expect(
+      loadHarnessConfig(
+        await writeConfig(
+          { ...VALID_CONFIG, apps: [{ name: 'core-api', type: 'nestjs', tucuUi: false }] },
+          'bad-ui.json',
+        ),
+      ),
+    ).rejects.toThrow(/"tucuUi" is only valid/);
   });
 
   it('rechaza scopes npm sin @ y módulos que no sean kebab-case', async () => {
@@ -203,7 +246,7 @@ describe('config/load', () => {
     ).rejects.toThrow(/sdd\.tucu_ui/);
   });
 
-  it('apps[].tucuUi es opcional, booleano y baja a las opciones con el override como fallback', async () => {
+  it('apps[].tucuUi es opcional, booleano y el flag de CLI gana sobre el valor de la app', async () => {
     const absent = await loadHarnessConfig(await writeConfig(VALID_CONFIG));
     expect(absent.apps[1].tucuUi).toBeUndefined();
 
@@ -222,9 +265,14 @@ describe('config/load', () => {
     );
     expect(toWorkspaceOptions(config).apps.map((a) => a.tucuUi)).toEqual([undefined, true, undefined]);
     expect(toWorkspaceOptions(config, { tucuUi: false }).apps.map((a) => a.tucuUi)).toEqual([
+      undefined,
       false,
+      false,
+    ]);
+    expect(toWorkspaceOptions(config, { tucuUi: true }).apps.map((a) => a.tucuUi)).toEqual([
+      undefined,
       true,
-      false,
+      true,
     ]);
 
     await expect(

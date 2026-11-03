@@ -1,6 +1,7 @@
 import { resolve } from "node:path";
 import fs from "fs-extra";
 import { appEnvPrefix, upstreamEnvVar } from "./app-types.js";
+import { logger } from "../utils/logger.js";
 
 export interface SharedTypesLib {
   name: string;
@@ -194,15 +195,70 @@ export async function refreshMfeShell(
     await fs.writeFile(viteConfigPath, replaceMfeProxy(content, mfes), "utf-8");
   }
 
-  await write(resolve(appDir, "nginx.conf"), shellNginxConf(mfes));
-  await write(resolve(appDir, "Dockerfile"), shellDockerfile(name, mfes));
-  await write(resolve(appDir, "README.md"), shellReadme(name, mfes));
+  await refreshMarkedFile(appDir, name, "nginx.conf", NGINX_MARKERS, nginxMfeBlocks(mfes), mfes);
+  await refreshMarkedFile(appDir, name, "Dockerfile", DOCKERFILE_MARKERS, dockerfileMfeBlocks(name, mfes), mfes);
+  await refreshMarkedFile(appDir, name, "README.md", README_MARKERS, readmeMfeBlocks(mfes), mfes);
 
   const appTsxPath = resolve(appDir, "src/app/app.tsx");
   if (await fs.pathExists(appTsxPath)) {
     const content = await fs.readFile(appTsxPath, "utf-8");
     await fs.writeFile(appTsxPath, replaceMfeList(content, mfes), "utf-8");
   }
+}
+
+interface MfeMarkers {
+  start: string;
+  end: string;
+}
+
+const NGINX_MARKERS: MfeMarkers = { start: "# harness:mfe-start", end: "# harness:mfe-end" };
+const DOCKERFILE_MARKERS: MfeMarkers = NGINX_MARKERS;
+const README_MARKERS: MfeMarkers = {
+  start: "<!-- harness:mfe-start -->",
+  end: "<!-- harness:mfe-end -->",
+};
+
+function markedBlock(markers: MfeMarkers, inner: string): string {
+  return inner ? `${markers.start}\n${inner}\n${markers.end}` : `${markers.start}\n${markers.end}`;
+}
+
+function escapeRegExp(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+export function replaceMarkedBlocks(
+  content: string,
+  markers: MfeMarkers,
+  blocks: string[],
+): string | undefined {
+  const pattern = new RegExp(
+    `${escapeRegExp(markers.start)}\\n[\\s\\S]*?${escapeRegExp(markers.end)}`,
+    "g",
+  );
+  if ((content.match(pattern) ?? []).length !== blocks.length) return undefined;
+  let index = 0;
+  return content.replace(pattern, () => blocks[index++]);
+}
+
+async function refreshMarkedFile(
+  appDir: string,
+  shellName: string,
+  file: string,
+  markers: MfeMarkers,
+  blocks: string[],
+  mfes: MfeRef[],
+): Promise<void> {
+  const path = resolve(appDir, file);
+  if (!(await fs.pathExists(path))) return;
+  const current = await fs.readFile(path, "utf-8");
+  const next = replaceMarkedBlocks(current, markers, blocks);
+  if (next === undefined) {
+    logger.warn(
+      `apps/${shellName}/${file} has no ${markers.start} / ${markers.end} markers, so it was left untouched. Add the entries for ${mfes.map((mfe) => mfe.name).join(", ") || "(no mfes)"} manually.`,
+    );
+    return;
+  }
+  if (next !== current) await fs.writeFile(path, next, "utf-8");
 }
 
 const MFE_PROXY_BLOCK = /const mfeProxy = \{[\s\S]*?\n\};\n/;
@@ -244,11 +300,10 @@ function withMfeProxy(viteConfig: string, mfes: MfeRef[]): string {
     .replace(/(server:\s*\{[^}]*?)host:\s*'localhost'\s*\}/, "$1host: 'localhost', proxy: mfeProxy }");
 }
 
-function shellNginxConf(mfes: MfeRef[]): string {
+function nginxMfeBlocks(mfes: MfeRef[]): string[] {
   const locations = mfes
     .map(
-      (mfe) => `
-    location /${mfe.name}/assets/ {
+      (mfe) => `    location /${mfe.name}/assets/ {
         expires 1y;
         add_header Cache-Control "public, immutable";
     }
@@ -258,14 +313,21 @@ function shellNginxConf(mfes: MfeRef[]): string {
     }
 `,
     )
-    .join("");
+    .join("\n");
+  return [markedBlock(NGINX_MARKERS, locations.replace(/\n$/, ""))];
+}
+
+function shellNginxConf(mfes: MfeRef[]): string {
+  const [locations] = nginxMfeBlocks(mfes);
   return `server {
     listen 80;
     server_name _;
 
     root /usr/share/nginx/html;
     index index.html;
+
 ${locations}
+
     location / {
         try_files $uri $uri/ /index.html;
     }
@@ -281,7 +343,7 @@ ${locations}
 `;
 }
 
-function shellDockerfile(name: string, mfes: MfeRef[]): string {
+function dockerfileMfeBlocks(name: string, mfes: MfeRef[]): string[] {
   const projects = [name, ...mfes.map((mfe) => mfe.name)].join(",");
   const copies = mfes
     .map(
@@ -289,6 +351,17 @@ function shellDockerfile(name: string, mfes: MfeRef[]): string {
         `COPY --from=builder /workspace/dist/apps/${mfe.name} /usr/share/nginx/html/${mfe.name}`,
     )
     .join("\n");
+  return [
+    markedBlock(
+      DOCKERFILE_MARKERS,
+      `RUN pnpm exec nx run-many -t build -p ${projects} --configuration=production`,
+    ),
+    markedBlock(DOCKERFILE_MARKERS, copies),
+  ];
+}
+
+function shellDockerfile(name: string, mfes: MfeRef[]): string {
+  const [build, copies] = dockerfileMfeBlocks(name, mfes);
   return `FROM node:20-alpine AS builder
 WORKDIR /workspace
 
@@ -298,7 +371,7 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
 
 COPY . .
-RUN pnpm exec nx run-many -t build -p ${projects} --configuration=production
+${build}
 
 FROM nginx:1.27-alpine
 
@@ -312,8 +385,8 @@ HEALTHCHECK CMD wget -q --spider http://localhost/ || exit 1
 `;
 }
 
-function shellReadme(name: string, mfes: MfeRef[]): string {
-  const table = mfes.length
+function readmeMfeBlocks(mfes: MfeRef[]): string[] {
+  const rows = mfes.length
     ? mfes
         .map(
           (mfe) =>
@@ -321,14 +394,22 @@ function shellReadme(name: string, mfes: MfeRef[]): string {
         )
         .join("\n")
     : "| (none yet) | | |";
+  return [
+    markedBlock(
+      README_MARKERS,
+      `| mfe | Path | Dev port |\n| --- | --- | --- |\n${rows}`,
+    ),
+  ];
+}
+
+function shellReadme(name: string, mfes: MfeRef[]): string {
+  const [table] = readmeMfeBlocks(mfes);
   const env = appEnvPrefix(name);
   return `# ${name} (mfe-shell)
 
 Shell of a path-based microfrontend setup (no Module Federation): each \`mfe\` app is an
 independent Vite build served under \`/<mfe>/\`; this shell links to them from its menu.
 
-| mfe | Path | Dev port |
-| --- | --- | --- |
 ${table}
 
 ## Development

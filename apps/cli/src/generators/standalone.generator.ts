@@ -35,9 +35,7 @@ export interface StandaloneOptions {
   appType: string;
   /** Puerto declarado en harness.config.json (apps[0].port). */
   port?: number;
-  /** react/nextjs: scaffold con tucu-ui (default true). */
   tucuUi?: boolean;
-  /** python: TensorFlow como dependencia por defecto. */
   ml?: boolean;
   services: string[];
   npmScopes?: NpmScope[];
@@ -190,7 +188,6 @@ async function scaffoldStandaloneApp(
   }
 }
 
-/** Pins de frontend desde versions.ts; el resto (types, typescript) desde el package.json del kit. */
 async function kitVersions(): Promise<Record<string, string>> {
   const kitPkg = await fs.readJSON(
     resolve(getTemplatesDir(), "sdd/templates/nx-workspace/package.json"),

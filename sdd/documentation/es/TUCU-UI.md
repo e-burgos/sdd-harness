@@ -43,8 +43,8 @@ escribió en disco es seguro: otro `--enable` lo completa y `--disable` lo limpi
 La CLI genera las apps `react`, `nextjs`, `next-bff`, `mfe-shell` y `mfe` **con tucu-ui** ya
 cableado: la dependencia fijada, Tailwind v4 importando sus estilos, `ThemeProvider` (apps Vite) o
 `NextThemeProvider` de `@e-burgos/tucu-ui/next` (apps Next) y una pantalla de ejemplo. Generar una
-también prende esta integración. `--no-tucu-ui` (o `apps[].tucuUi: false` en `init --config`)
-genera una app plana y deja la integración apagada.
+también prende esta integración. `--no-tucu-ui` genera apps planas y deja la integración apagada
+(gana sobre todo `apps[].tucuUi`); `apps[].tucuUi: false` en `init --config` saca una sola app.
 
 | Tipo de app | Qué es                                                                                       | Campos del config              |
 | ----------- | -------------------------------------------------------------------------------------------- | ------------------------------ |
@@ -57,7 +57,7 @@ genera una app plana y deja la integración apagada.
 
 - `next-bff`, `mfe-shell` y `mfe` existen solo en modo monorepo Nx; en standalone fallan con un
   mensaje claro. Un `mfe` necesita `shell` cuando el workspace tiene más de un `mfe-shell`.
-- Puertos por defecto: `next-bff` 3001, `mfe-shell` 4200, `mfe` 4201 (+1 por cada mfe extra),
+- Puertos por defecto: `next-bff` 3001, `mfe-shell` 4300, `mfe` 4301 (+1 por cada mfe extra),
   `python` 8000; `apps[].port` los pisa y cada app lee `<APP>_PORT`.
 - `harness add app mfe --name <mfe> --shell <shell>` agrega un mfe a un shell existente y actualiza
   el proxy, el menú, el `nginx.conf` y el `Dockerfile` del shell de forma idempotente;
@@ -83,7 +83,9 @@ preguntar. Para prender tucu-ui en un repo con el kit instalado usá `pnpm sdd:t
   `react` o `nextjs`** y la terminal es interactiva; con `--yes` o sin TTY queda apagado, y conserva
   un `tucu_ui` prendido cuando resetea el kit.
 - `--tucu-ui` junto con `--no-tucu-ui` falla antes de generar nada.
-- En `init --config`, `sdd.tucu_ui: true | false` hace de valor por defecto; el flag gana.
+- Precedencia, por app: flag de CLI (`--tucu-ui` / `--no-tucu-ui`) > `apps[].tucuUi` > `sdd.tucu_ui` >
+  default (prendido). La integración del kit queda prendida si y solo si alguna app de frontend termina
+  con tucu-ui, salvo que el flag de CLI diga otra cosa.
 - Si la instalación falla durante `init` (por ejemplo sin red), `init` no aborta: termina la
   generación, deja tucu-ui apagado y muestra el comando para reintentar.
 - `harness configure mcp` tiene `tucu-ui` en su catálogo y **mergea**: los servidores fuera del

@@ -580,8 +580,9 @@ harness init --no-tucu-ui     # plain apps, integration stays off
 harness add app react --no-tucu-ui
 ```
 
-Per-app, `apps[].tucuUi: false` in `init --config` opts a single app out; `--tucu-ui`/`--no-tucu-ui`
-and `sdd.tucu_ui` are the global fallbacks. `--tucu-ui` together with `--no-tucu-ui` fails. Next
+Precedence, per app: CLI flag (`--tucu-ui`/`--no-tucu-ui`) > `apps[].tucuUi` > `sdd.tucu_ui` > default
+(on). `--no-tucu-ui` wins even over `apps[].tucuUi: true`; the kit integration is on only if some frontend
+app ends up with tucu-ui. `--tucu-ui` together with `--no-tucu-ui` fails. Next
 apps now use Next 16 (tucu-ui requires `next >= 16`).
 
 ### tucu-ui (design skill + MCP)
@@ -689,7 +690,7 @@ Example output:
 | `springboot` | `service`    | Spring Boot 3.5 + Java 21 (blueprint `java-api`) | — (Maven vía `nx:run-commands`) | build, test, serve, lint, coverage | Hexagonal architecture (`domain/`, `infrastructure/`), `pom.xml`, `Dockerfile` |
 | `python`     | (same)       | Python 3.12+ · FastAPI + LangGraph · uv | —            | serve, lint, test, build (via `uv`)                   | `pyproject.toml` (uv), `src/<pkg>/` with FastAPI app + example LangGraph graph, `tests/`, `Dockerfile` |
 
-> **Default ports**: `nestjs`/`fastify`/`hono`/`nextjs` 3000, `next-bff` 3001, `react`/`mfe-shell` 4200, `mfe` 4201 (staggered +1 per extra mfe: 4202, ...), `python` 8000, `springboot` 8080. `apps[].port` overrides them; each app reads `<APP>_PORT`.
+> **Default ports**: `nestjs`/`fastify`/`hono`/`nextjs` 3000, `next-bff` 3001, `react` 4200, `mfe-shell` 4300, `mfe` 4301 (staggered +1 per extra mfe: 4302, ...), `python` 8000, `springboot` 8080. A default that another app already uses moves up by one; `apps[].port` wins and overrides them; each app reads `<APP>_PORT`.
 > **next-bff / mfe-shell / mfe**: monorepo only — `init` in standalone mode and a standalone config fail with a clear message. `.env.example` lists `<APP>_UPSTREAM_URL` for every `next-bff` (default `http://localhost:3000/api/v1`) and `<APP>_HOST` for every `python` app. The `mfe-shell` ships its own combined nginx `Dockerfile` (it builds the shell and every mfe); the `python` app ships its own `Dockerfile` with uv — `docker-compose.yml` only carries infrastructure services, so neither is duplicated there.
 > **Python**: FastAPI + uvicorn + LangGraph managed with `uv` (`uv sync`, `uv run pytest`, `uv run ruff check`); the Nx targets wrap those commands. `apps[].ml: true` (or `--ml`) adds TensorFlow to the dependencies and caps `requires-python` to `<3.14`; without it TensorFlow is only the optional `ml` extra.
 > **Spring Boot**: el blueprint `sdd/templates/apps/java-api` integra Maven a Nx vía `nx:run-commands` (`build`/`test`/`serve`/`lint`/`coverage` → `mvn`): la app queda visible para `nx affected` y `nx run-many` sin plugin de Gradle/Maven. Requiere Java 21 y Maven instalados.
@@ -901,7 +902,7 @@ Key constraints:
 - `project.packageScope` — npm scope like `@my-project`
 - `apps[].name` — lowercase kebab-case
 - `apps[].type` — one of: `nestjs`, `react`, `nextjs`, `next-bff`, `mfe-shell`, `mfe`, `python`, `fastify`, `springboot`, `hono` (the same ten the wizard offers; `next-bff`, `mfe-shell` and `mfe` need `mode: nx`)
-- `apps[].tucuUi` — optional boolean; `react`, `nextjs`, `next-bff`, `mfe-shell` and `mfe` default to `true` (see [tucu-ui by default](#tucu-ui-by-default)); `false` generates the app without tucu-ui. Falls back to `sdd.tucu_ui` when unset
+- `apps[].tucuUi` — optional boolean; `react`, `nextjs`, `next-bff`, `mfe-shell` and `mfe` default to `true` (see [tucu-ui by default](#tucu-ui-by-default)); `false` generates the app without tucu-ui. Falls back to `sdd.tucu_ui` when unset; the CLI flag overrides both
 - `apps[].shell` — optional, only on `mfe`: the name of the `mfe-shell` app that serves it. Required when the config has more than one `mfe-shell`; with exactly one it is implied. The shell's dev proxy, menu, `nginx.conf` and `Dockerfile` list the mfes that point to it
 - `apps[].ml` — optional boolean, only meaningful on `python`: adds TensorFlow as a default dependency
 - `apps[].port` — optional; when set it flows into the app's own default

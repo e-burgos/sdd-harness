@@ -1,4 +1,5 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import { logger } from '../../utils/logger.js';
 import {
   addAppScriptsToRootPkg,
   addAppTypeDepsToRootPkg,
@@ -12,6 +13,8 @@ const emptyPkg = () => ({
 });
 
 describe('generators/root-package', () => {
+  afterEach(() => vi.restoreAllMocks());
+
   it('registra los cuatro scripts nx de una app', () => {
     const pkg = emptyPkg();
     addAppScriptsToRootPkg(pkg, 'orders-api');
@@ -84,6 +87,27 @@ describe('generators/root-package', () => {
     addAppTypeDepsToRootPkg(pkg, 'nextjs');
     expect(pkg.dependencies['next']).toBe(FRONTEND_VERSIONS.next);
     expect(pkg.dependencies['next']).toMatch(/^\^16\./);
+  });
+
+  it('next existente no se pisa y avisa si es menor a 16 con tucu-ui', () => {
+    const warn = vi.spyOn(logger, 'warn').mockImplementation(() => undefined);
+    const old = emptyPkg();
+    old.dependencies['next'] = '^15.2.0';
+    addAppTypeDepsToRootPkg(old, 'nextjs');
+    expect(old.dependencies['next']).toBe('^15.2.0');
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(warn.mock.calls[0][0]).toContain('Next 16');
+
+    warn.mockClear();
+    const plain = emptyPkg();
+    plain.dependencies['next'] = '^15.2.0';
+    addAppTypeDepsToRootPkg(plain, 'nextjs', undefined, { tucuUi: false });
+    expect(warn).not.toHaveBeenCalled();
+
+    const current = emptyPkg();
+    current.dependencies['next'] = '^16.1.0';
+    addAppTypeDepsToRootPkg(current, 'nextjs');
+    expect(warn).not.toHaveBeenCalled();
   });
 
   it('es aditivo: nunca pisa una versión ya presente', () => {

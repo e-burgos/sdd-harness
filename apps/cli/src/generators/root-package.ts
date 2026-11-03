@@ -1,5 +1,11 @@
 import { tucuUiPackageDeps } from "./tucu-ui-app.js";
+import { logger } from "../utils/logger.js";
 import { FRONTEND_VERSIONS, NX_VERSION } from "./versions.js";
+
+function nextMajor(range: string): number {
+  const match = /\d+/.exec(range);
+  return match ? Number(match[0]) : Number.POSITIVE_INFINITY;
+}
 
 type PackageJson = {
   scripts: Record<string, string>;
@@ -106,7 +112,13 @@ export function addAppTypeDepsToRootPkg(
       break;
     case "nextjs":
     case "next-bff":
-      pkg.dependencies["next"] = FRONTEND_VERSIONS.next;
+      if (!pkg.dependencies["next"]) {
+        pkg.dependencies["next"] = FRONTEND_VERSIONS.next;
+      } else if (options.tucuUi !== false && nextMajor(pkg.dependencies["next"]) < 16) {
+        logger.warn(
+          `Root package.json pins next ${pkg.dependencies["next"]}, but tucu-ui needs Next 16 — upgrade it manually.`,
+        );
+      }
       pkg.devDependencies["@nx/next"] = NX_VERSION;
       addMissingFromReference("dependencies", ["react", "react-dom"]);
       addMissingFromReference("devDependencies", [

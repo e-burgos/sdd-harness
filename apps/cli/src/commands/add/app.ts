@@ -6,7 +6,7 @@ import { resolve } from 'node:path';
 import { logger } from '../../utils/logger.js';
 import { warnIfNxRootMismatch } from '../../utils/env.js';
 import { generateApp, type AppSpec } from '../../generators/app.generator.js';
-import { resolveMfeShell, validateAppTopology } from '../../generators/app-types.js';
+import { TUCU_UI_APP_TYPES, resolveMfeShell, validateAppTopology } from '../../generators/app-types.js';
 import { syncMfeShell } from '../../generators/mfe-sync.js';
 import { readRegisteredApps } from '../../utils/workspace-apps.js';
 import {
@@ -15,7 +15,8 @@ import {
   hasConflictingTucuUiFlags,
 } from '../../utils/tucu-ui-offer.js';
 import { readTucuUiState, runTucuUiOffer } from '../../utils/tucu-ui-run.js';
-import { registerSubprojectInSDD } from '../../generators/sdd.generator.js';
+import { pinMfeShellsInRegistry, registerSubprojectInSDD } from '../../generators/sdd.generator.js';
+import { appendAppToEnvExample } from '../../generators/docker.generator.js';
 import {
   addAppScriptsToRootPkg,
   addAppTypeDepsToRootPkg,
@@ -54,6 +55,9 @@ function registerAppInRootPackageJson(
   writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n', 'utf-8');
 }
 
+const isFrontendAppType = (type: string): boolean =>
+  (TUCU_UI_APP_TYPES as readonly string[]).includes(type);
+
 export const ADD_APP_TYPE_OPTIONS = [
   { value: 'nestjs', label: 'NestJS API' },
   { value: 'react', label: 'React SPA (blueprint sdd/templates)' },
@@ -67,13 +71,24 @@ export const ADD_APP_TYPE_OPTIONS = [
   { value: 'hono', label: 'Hono API' },
 ];
 
+export function pinImplicitShells(
+  existing: readonly AppSpec[],
+  added: AppSpec,
+): AppSpec[] {
+  const shells = existing.filter((app) => app.type === 'mfe-shell');
+  if (added.type !== 'mfe-shell' || shells.length !== 1) return [...existing];
+  return existing.map((app) =>
+    app.type === 'mfe' && !app.shell ? { ...app, shell: shells[0].name } : app,
+  );
+}
+
 export function topologyErrorsForNewApp(
   existing: readonly AppSpec[],
   added: AppSpec,
 ): string[] {
-  return validateAppTopology([...existing, added], 'nx').filter((error) =>
-    error.includes(`"${added.name}"`),
-  );
+  const base = pinImplicitShells(existing, added);
+  const before = validateAppTopology(base, 'nx');
+  return validateAppTopology([...base, added], 'nx').filter((error) => !before.includes(error));
 }
 
 async function refreshOwningShell(
@@ -220,7 +235,7 @@ export const addAppCommand = defineCommand({
     const newApp: AppSpec = {
       name: appName as string,
       type: appType as string,
-      tucuUi,
+      ...(isFrontendAppType(appType as string) ? { tucuUi } : {}),
       ...(shell ? { shell } : {}),
       ...(ml ? { ml: true } : {}),
     };
@@ -230,7 +245,8 @@ export const addAppCommand = defineCommand({
       logger.error(topologyErrors.join('\n'));
       process.exit(1);
     }
-    const allApps = [...existingApps, newApp];
+    const pinnedApps = pinImplicitShells(existingApps, newApp);
+    const allApps = [...pinnedApps, newApp];
 
     logger.step(`Adding ${appType} app: ${appName}`);
 
@@ -244,7 +260,14 @@ export const addAppCommand = defineCommand({
         appName as string,
         appType as string,
         appType === 'mfe' ? resolveMfeShell(newApp, allApps)?.name : undefined,
+        tucuUi,
       );
+      if (newApp.type === 'mfe-shell') {
+        await pinMfeShellsInRegistry(cwd, pinnedApps.filter((app) => app.type === 'mfe'));
+      }
+      if (await appendAppToEnvExample(cwd, newApp, allApps)) {
+        logger.success(`.env.example updated with the ${appName} variables`);
+      }
       logger.success(
         `Registered in sdd/global.json and sdd/context/apps/${appName}/`,
       );

@@ -5,6 +5,7 @@ import { HarnessConfigSchema } from './schema.js';
 import type { HarnessConfig, ModuleSeed } from '../types/config.types.js';
 import type { WorkspaceOptions } from '../generators/workspace.generator.js';
 import type { StandaloneOptions } from '../generators/standalone.generator.js';
+import { resolveAppTucuUi } from '../utils/tucu-ui-offer.js';
 
 /**
  * Carga y valida un archivo de configuración de harness para `init --config`,
@@ -69,7 +70,10 @@ export function toWorkspaceOptions(
       name,
       type,
       port,
-      tucuUi: tucuUi ?? overrides.tucuUi,
+      tucuUi: resolveAppTucuUi(
+        { type, tucuUi },
+        { cliFlag: overrides.tucuUi, configDefault: config.sdd?.tucu_ui },
+      ),
       ml,
       shell,
     })),
@@ -96,7 +100,10 @@ export function toStandaloneOptions(
     description: config.project.description,
     appType: config.apps[0].type,
     port: config.apps[0].port,
-    tucuUi: config.apps[0].tucuUi ?? overrides.tucuUi,
+    tucuUi: resolveAppTucuUi(config.apps[0], {
+      cliFlag: overrides.tucuUi,
+      configDefault: config.sdd?.tucu_ui,
+    }),
     ml: config.apps[0].ml,
     services: config.services.map(({ type }) => type),
     npmScopes: config.npm?.scopes ?? [],

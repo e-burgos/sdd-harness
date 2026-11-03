@@ -6,7 +6,7 @@ import { logger } from '../utils/logger.js';
 import { writeManifest } from './kit-manifest.js';
 import type { WorkspaceOptions } from './workspace.generator.js';
 import type { AppSpec } from './app.generator.js';
-import { APP_STACK_DESCRIPTIONS } from './app-types.js';
+import { describeAppStack, resolveMfeShell } from './app-types.js';
 
 /**
  * Cómo se instala el kit según la forma del repo destino:
@@ -76,7 +76,7 @@ export async function generateSDD(
   await writeGlobalJson(root, opts, layout, usesNx);
 
   for (const app of opts.apps) {
-    await createSubprojectContext(root, 'apps', app.name, app.type, layout, app.path);
+    await createSubprojectContext(root, 'apps', app.name, app.type, layout, app.path, app.tucuUi);
   }
   for (const lib of opts.libs) {
     await createSubprojectContext(root, 'libs', lib.name, lib.type, layout);
@@ -113,6 +113,7 @@ export async function registerSubprojectInSDD(
   name: string,
   type: string,
   shell?: string,
+  tucuUi?: boolean,
 ): Promise<void> {
   const globalPath = resolve(root, 'sdd/global.json');
   if (await fs.pathExists(globalPath)) {
@@ -124,7 +125,25 @@ export async function registerSubprojectInSDD(
       `${category}/${name} — ${type}${shell ? ` (shell: ${shell})` : ''}`;
     await fs.writeJSON(globalPath, globalJson, { spaces: 2 });
   }
-  await createSubprojectContext(root, category, name, type, 'nx');
+  await createSubprojectContext(root, category, name, type, 'nx', undefined, tucuUi);
+}
+
+export async function pinMfeShellsInRegistry(
+  root: string,
+  mfes: ReadonlyArray<{ name: string; shell?: string }>,
+): Promise<void> {
+  const globalPath = resolve(root, 'sdd/global.json');
+  if (!(await fs.pathExists(globalPath))) return;
+  const globalJson = await fs.readJSON(globalPath);
+  const registered: Record<string, unknown> = globalJson?.monorepo?.apps ?? {};
+  let changed = false;
+  for (const mfe of mfes) {
+    const entry = registered[mfe.name];
+    if (!mfe.shell || typeof entry !== 'string' || !/—\s*mfe\s*$/.test(entry)) continue;
+    registered[mfe.name] = `${entry} (shell: ${mfe.shell})`;
+    changed = true;
+  }
+  if (changed) await fs.writeJSON(globalPath, globalJson, { spaces: 2 });
 }
 
 /** `Mi_Proyecto` → `mi-proyecto`: npm rechaza mayúsculas y caracteres fuera de [a-z0-9._-]. */
@@ -350,7 +369,8 @@ async function writeGlobalJson(
 ): Promise<void> {
   const apps: Record<string, string> = {};
   for (const app of opts.apps) {
-    apps[app.name] = describeAppEntry(app, layout);
+    const shell = app.type === 'mfe' ? resolveMfeShell(app, opts.apps)?.name : app.shell;
+    apps[app.name] = describeAppEntry({ ...app, shell }, layout);
   }
 
   const libs: Record<string, string> = {};
@@ -411,6 +431,7 @@ async function createSubprojectContext(
   type: string,
   layout: 'nx' | 'standalone',
   codePath?: string,
+  tucuUi?: boolean,
 ): Promise<void> {
   const dir = resolve(root, 'sdd/context', category, name);
   await fs.ensureDir(resolve(dir, 'updates'));
@@ -425,7 +446,7 @@ async function createSubprojectContext(
         : '';
 
   const stackDescription =
-    category === 'apps' ? APP_STACK_DESCRIPTIONS[type] : undefined;
+    category === 'apps' ? describeAppStack(type, tucuUi) : undefined;
   const stackLine =
     stackDescription ?? '[Framework / librerías principales y versión]';
 

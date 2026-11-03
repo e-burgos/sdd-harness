@@ -3,6 +3,7 @@ import {
   appUsesTucuUi,
   hasConflictingTucuUiFlags,
   hasFrontendApp,
+  resolveAppTucuUi,
   resolveKitTucuUiFlag,
   resolveTucuUiChoice,
   type TucuUiState,
@@ -96,7 +97,71 @@ describe('appUsesTucuUi y resolveKitTucuUiFlag', () => {
     ).toBe(false);
   });
 
+  it('sin frontend respeta sdd.tucu_ui del config', () => {
+    expect(resolveKitTucuUiFlag([{ type: 'nestjs' }], undefined, true)).toBe(true);
+    expect(resolveKitTucuUiFlag([{ type: 'nestjs' }], undefined, false)).toBe(false);
+    expect(resolveKitTucuUiFlag([{ type: 'nestjs' }], false, true)).toBe(false);
+  });
+
   it('sin frontend no hay flag', () => {
     expect(resolveKitTucuUiFlag([{ type: 'nestjs' }, { type: 'python' }], undefined)).toBeUndefined();
+  });
+});
+
+describe('precedencia: flag de CLI > apps[].tucuUi > sdd.tucu_ui > default (prendido)', () => {
+  type Case = {
+    cliFlag?: boolean;
+    appValue?: boolean;
+    configDefault?: boolean;
+    app: boolean | undefined;
+  };
+  const cases: Case[] = [
+    { app: undefined },
+    { configDefault: true, app: true },
+    { configDefault: false, app: false },
+    { appValue: true, configDefault: false, app: true },
+    { appValue: false, configDefault: true, app: false },
+    { cliFlag: false, appValue: true, configDefault: true, app: false },
+    { cliFlag: false, app: false },
+    { cliFlag: true, appValue: false, configDefault: false, app: true },
+    { cliFlag: true, app: true },
+  ];
+
+  it.each(cases)('resuelve %j', ({ app, ...sources }) => {
+    const { appValue, ...rest } = sources;
+    expect(resolveAppTucuUi({ type: 'react', tucuUi: appValue }, rest)).toBe(app);
+  });
+
+  it('no resuelve nada para tipos que no son frontend', () => {
+    expect(resolveAppTucuUi({ type: 'nestjs', tucuUi: true }, { cliFlag: true })).toBeUndefined();
+    expect(resolveAppTucuUi({ type: 'python' })).toBeUndefined();
+  });
+
+  const kit = (
+    apps: Array<{ type: string; tucuUi?: boolean }>,
+    sources: { cliFlag?: boolean; configDefault?: boolean },
+  ) =>
+    resolveKitTucuUiFlag(
+      apps.map((app) => ({ type: app.type, tucuUi: resolveAppTucuUi(app, sources) })),
+      sources.cliFlag,
+    );
+
+  it('el kit queda prendido si alguna app frontend termina con tucu-ui', () => {
+    expect(kit([{ type: 'react', tucuUi: false }, { type: 'nextjs' }], {})).toBe(true);
+    expect(kit([{ type: 'react', tucuUi: false }], { configDefault: true })).toBe(false);
+    expect(kit([{ type: 'react' }], { configDefault: false })).toBe(false);
+    expect(kit([{ type: 'react', tucuUi: true }], { configDefault: false })).toBe(true);
+  });
+
+  it('--no-tucu-ui gana aunque una app pida tucuUi: true', () => {
+    expect(kit([{ type: 'react', tucuUi: true }], { cliFlag: false, configDefault: true })).toBe(false);
+  });
+
+  it('--tucu-ui prende el kit aunque las apps lo rechacen', () => {
+    expect(kit([{ type: 'react', tucuUi: false }], { cliFlag: true })).toBe(true);
+  });
+
+  it('sin apps frontend y sin flag no hay decisión', () => {
+    expect(kit([{ type: 'nestjs' }], { configDefault: true })).toBeUndefined();
   });
 });

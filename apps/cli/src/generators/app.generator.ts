@@ -28,11 +28,8 @@ export interface AppSpec {
    * lo exigen); esto solo documenta dónde vive el código. Ausente = `apps/<name>`.
    */
   path?: string;
-  /** react/nextjs: scaffold con tucu-ui (default true). `false` genera la app plana. */
   tucuUi?: boolean;
-  /** mfe: nombre de su mfe-shell. Ausente = el único mfe-shell del workspace. */
   shell?: string;
-  /** python: agrega TensorFlow como dependencia por defecto (default false). */
   ml?: boolean;
 }
 
@@ -45,8 +42,8 @@ export const DEFAULT_APP_PORTS: Record<string, number> = {
   springboot: 8080,
   react: 4200,
   "next-bff": 3001,
-  "mfe-shell": 4200,
-  mfe: 4201,
+  "mfe-shell": 4300,
+  mfe: 4301,
 };
 
 /** `catalog-api` → `CATALOG_API_PORT`: variable de entorno por app (un PORT único es ambiguo en un monorepo). */
@@ -54,17 +51,31 @@ export function portEnvVar(appName: string): string {
   return `${appEnvPrefix(appName)}_PORT`;
 }
 
-/** Los mfe sin puerto declarado se escalonan (4201, 4202, …) para no chocar entre sí. */
+export function resolveAppPorts(apps: readonly AppSpec[]): Map<string, number> {
+  const resolved = new Map<string, number>();
+  const taken = new Set<number>();
+  for (const app of apps) {
+    if (!app.port) continue;
+    resolved.set(app.name, app.port);
+    taken.add(app.port);
+  }
+  for (const app of apps) {
+    if (app.port) continue;
+    let port = DEFAULT_APP_PORTS[app.type] ?? 3000;
+    while (taken.has(port)) port += 1;
+    taken.add(port);
+    resolved.set(app.name, port);
+  }
+  return resolved;
+}
+
 export function resolveAppPort(app: AppSpec, apps: readonly AppSpec[] = []): number {
   if (app.port) return app.port;
-  const base = DEFAULT_APP_PORTS[app.type] ?? 3000;
-  if (app.type !== "mfe") return base;
-  const index = apps.filter((a) => a.type === "mfe").findIndex((a) => a.name === app.name);
-  return base + Math.max(index, 0);
+  const known = apps.some((a) => a.name === app.name) ? apps : [...apps, app];
+  return resolveAppPorts(known).get(app.name) as number;
 }
 
 export interface GenerateAppContext {
-  /** Todas las apps del workspace: el mfe-shell las usa para descubrir sus mfes. */
   apps?: readonly AppSpec[];
 }
 

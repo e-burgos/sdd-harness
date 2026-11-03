@@ -31,12 +31,26 @@ export function appUsesTucuUi(
   return FRONTEND_APP_TYPES.includes(app.type) && (app.tucuUi ?? flag ?? true);
 }
 
+export interface TucuUiSources {
+  cliFlag?: boolean;
+  configDefault?: boolean;
+}
+
+export function resolveAppTucuUi(
+  app: { type: string; tucuUi?: boolean },
+  sources: TucuUiSources = {},
+): boolean | undefined {
+  if (!FRONTEND_APP_TYPES.includes(app.type)) return undefined;
+  return sources.cliFlag ?? app.tucuUi ?? sources.configDefault;
+}
+
 export function resolveKitTucuUiFlag(
   apps: ReadonlyArray<{ type: string; tucuUi?: boolean }>,
   flag: boolean | undefined,
+  configDefault?: boolean,
 ): boolean | undefined {
   if (flag !== undefined) return flag;
-  if (!hasFrontendApp(apps.map((app) => app.type))) return undefined;
+  if (!hasFrontendApp(apps.map((app) => app.type))) return configDefault;
   return apps.some((app) => appUsesTucuUi(app));
 }
 

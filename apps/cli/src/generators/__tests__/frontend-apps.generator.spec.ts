@@ -123,17 +123,39 @@ describe('frontend-apps generators', () => {
     });
 
     it('staggers default mfe ports and respects explicit ones', () => {
-      expect(resolveAppPort(apps[0], apps)).toBe(4200);
-      expect(resolveAppPort(apps[1], apps)).toBe(4201);
+      expect(resolveAppPort(apps[0], apps)).toBe(4300);
+      expect(resolveAppPort(apps[1], apps)).toBe(4301);
       expect(resolveAppPort(apps[2], apps)).toBe(5100);
-      expect(resolveAppPort(apps[4], apps)).toBe(4203);
+      expect(resolveAppPort(apps[4], apps)).toBe(4303);
+    });
+
+    it('resolves unique default ports and lets explicit ports win', () => {
+      const mono: AppSpec[] = [
+        { name: 'core-api', type: 'nestjs', port: 3000 },
+        { name: 'web', type: 'react' },
+        { name: 'site', type: 'nextjs', port: 3100 },
+        { name: 'portal-bff', type: 'next-bff' },
+        { name: 'portal', type: 'mfe-shell' },
+        { name: 'billing', type: 'mfe' },
+        { name: 'reports', type: 'mfe' },
+        { name: 'agent-api', type: 'python' },
+        { name: 'other-api', type: 'fastify' },
+      ];
+      const ports = mono.map((app) => resolveAppPort(app, mono));
+      expect(new Set(ports).size).toBe(mono.length);
+      expect(resolveAppPort(mono[1], mono)).toBe(4200);
+      expect(resolveAppPort(mono[4], mono)).toBe(4300);
+      expect(resolveAppPort(mono[5], mono)).toBe(4301);
+      expect(resolveAppPort(mono[6], mono)).toBe(4302);
+      expect(resolveAppPort(mono[0], mono)).toBe(3000);
+      expect(resolveAppPort(mono[8], mono)).toBe(3002);
     });
 
     it('shell proxies /<mfe>/ only for the mfes that declare it as their shell', async () => {
       await generate('shell');
       const vite = read(root, 'apps/shell/vite.config.ts');
       expect(vite).toContain("'/cart/': {");
-      expect(vite).toContain("process.env['CART_PORT'] ?? 4201");
+      expect(vite).toContain("process.env['CART_PORT'] ?? 4301");
       expect(vite).toContain("'/orders-ui/': {");
       expect(vite).toContain("process.env['ORDERS_UI_PORT'] ?? 5100");
       expect(vite).not.toContain('/stray/');
@@ -321,7 +343,7 @@ describe('frontend-apps generators', () => {
       );
       expect(plugins).toContain('@nx/vite');
       expect(plugins).toContain('@nx/next/plugin');
-      expect(read(ws, '.env.example')).toContain('CART_PORT=4201');
+      expect(read(ws, '.env.example')).toContain('CART_PORT=4301');
     });
   });
 });

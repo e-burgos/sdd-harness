@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import fs from 'fs-extra';
 import { generateApp, type AppSpec } from '../app.generator.js';
 import { syncMfeShell } from '../mfe-sync.js';
+import { logger } from '../../utils/logger.js';
 
 vi.mock('../../utils/exec.js', () => ({
   exec: vi.fn(() => ''),
@@ -80,5 +81,77 @@ describe('syncMfeShell', () => {
   it('returns false when the shell has no folder', async () => {
     const shell: AppSpec = { name: 'ghost', type: 'mfe-shell' };
     expect(await syncMfeShell(root, shell, [shell])).toBe(false);
+  });
+
+  it('keeps the explicit port of an existing mfe, read back from the shell proxy', async () => {
+    const shell: AppSpec = { name: 'portal', type: 'mfe-shell' };
+    const billing: AppSpec = { name: 'billing', type: 'mfe', port: 5001 };
+    await generateApp(root, shell, '@t', { apps: [shell, billing] });
+    expect(read(root, 'apps/portal/vite.config.ts')).toContain("BILLING_PORT'] ?? 5001");
+
+    const registered: AppSpec[] = [shell, { name: 'billing', type: 'mfe' }, { name: 'audit', type: 'mfe' }];
+    await syncMfeShell(root, shell, registered);
+
+    const vite = read(root, 'apps/portal/vite.config.ts');
+    expect(vite).toContain("BILLING_PORT'] ?? 5001");
+    expect(vite).toContain("AUDIT_PORT'] ?? 4301");
+    expect(read(root, 'apps/portal/README.md')).toContain('(default 5001)');
+  });
+
+  it('gives a new mfe a port that collides with no known port', async () => {
+    const shell: AppSpec = { name: 'portal', type: 'mfe-shell' };
+    const billing: AppSpec = { name: 'billing', type: 'mfe', port: 4301 };
+    await generateApp(root, shell, '@t', { apps: [shell, billing] });
+    await syncMfeShell(root, shell, [shell, { name: 'billing', type: 'mfe' }, { name: 'audit', type: 'mfe' }]);
+    const vite = read(root, 'apps/portal/vite.config.ts');
+    expect(vite).toContain("BILLING_PORT'] ?? 4301");
+    expect(vite).toContain("AUDIT_PORT'] ?? 4302");
+  });
+
+  describe('hand-edited generated files', () => {
+    const shell: AppSpec = { name: 'portal', type: 'mfe-shell' };
+    const orders: AppSpec = { name: 'orders', type: 'mfe' };
+    const billing: AppSpec = { name: 'billing', type: 'mfe' };
+
+    it('wraps the mfe-specific parts in markers and keeps edits made outside them', async () => {
+      await generateApp(root, shell, '@t', { apps: [shell, orders] });
+      const nginx = read(root, 'apps/portal/nginx.conf');
+      expect(nginx).toContain('# harness:mfe-start');
+      expect(nginx).toContain('# harness:mfe-end');
+      expect(read(root, 'apps/portal/Dockerfile').match(/# harness:mfe-start/g)).toHaveLength(2);
+      expect(read(root, 'apps/portal/README.md')).toContain('<!-- harness:mfe-start -->');
+
+      fs.writeFileSync(
+        resolve(root, 'apps/portal/nginx.conf'),
+        nginx.replace('gzip on;', 'gzip on;\n    client_max_body_size 50m;'),
+      );
+      fs.appendFileSync(resolve(root, 'apps/portal/README.md'), '\nTeam notes.\n');
+      fs.appendFileSync(resolve(root, 'apps/portal/Dockerfile'), '\nLABEL team=portal\n');
+
+      await syncMfeShell(root, shell, [shell, orders, billing]);
+
+      expect(read(root, 'apps/portal/nginx.conf')).toContain('client_max_body_size 50m;');
+      expect(read(root, 'apps/portal/nginx.conf')).toContain('location /billing/');
+      expect(read(root, 'apps/portal/README.md')).toContain('Team notes.');
+      expect(read(root, 'apps/portal/README.md')).toContain('`billing`');
+      expect(read(root, 'apps/portal/Dockerfile')).toContain('LABEL team=portal');
+      expect(read(root, 'apps/portal/Dockerfile')).toContain('-p portal,orders,billing');
+    });
+
+    it('warns and leaves a file without markers untouched', async () => {
+      await generateApp(root, shell, '@t', { apps: [shell, orders] });
+      const handWritten = 'server { listen 80; }\n';
+      fs.writeFileSync(resolve(root, 'apps/portal/nginx.conf'), handWritten);
+      const warn = vi.spyOn(logger, 'warn').mockImplementation(() => undefined);
+
+      await syncMfeShell(root, shell, [shell, orders, billing]);
+
+      expect(read(root, 'apps/portal/nginx.conf')).toBe(handWritten);
+      expect(warn).toHaveBeenCalledTimes(1);
+      expect(warn.mock.calls[0][0]).toContain('apps/portal/nginx.conf');
+      expect(warn.mock.calls[0][0]).toContain('orders, billing');
+      expect(read(root, 'apps/portal/Dockerfile')).toContain('-p portal,orders,billing');
+      warn.mockRestore();
+    });
   });
 });

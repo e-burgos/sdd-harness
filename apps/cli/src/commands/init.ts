@@ -20,6 +20,7 @@ import {
   TUCU_UI_CONFLICT_MESSAGE,
   hasConflictingTucuUiFlags,
   hasFrontendApp,
+  resolveAppTucuUi,
   resolveKitTucuUiFlag,
 } from "../utils/tucu-ui-offer.js";
 import {
@@ -47,10 +48,11 @@ export interface TucuUiPlan {
 export async function planTucuUi(
   flags: TargetFlags,
   appsOrTypes: ReadonlyArray<string | { type: string; tucuUi?: boolean }>,
+  configDefault?: boolean,
 ): Promise<TucuUiPlan> {
   const apps = appsOrTypes.map((a) => (typeof a === "string" ? { type: a } : a));
   const decision = await decideTucuUiOffer({
-    flag: resolveKitTucuUiFlag(apps, flags.tucuUi),
+    flag: resolveKitTucuUiFlag(apps, flags.tucuUi, configDefault),
     hasFrontend: hasFrontendApp(apps.map((a) => a.type)),
     interactive: flags.interactive ?? false,
     current: "off",
@@ -365,10 +367,13 @@ async function runConfigFlow(
     configPath,
   );
   const modules = config.sdd?.modules ?? [];
-  const appTucuUi = flags.tucuUi ?? config.sdd?.tucu_ui;
   const tucuUi = await planTucuUi(
-    { ...flags, tucuUi: appTucuUi },
-    config.apps.map((a) => ({ type: a.type, tucuUi: a.tucuUi ?? appTucuUi })),
+    flags,
+    config.apps.map((a) => ({
+      type: a.type,
+      tucuUi: resolveAppTucuUi(a, { cliFlag: flags.tucuUi, configDefault: config.sdd?.tucu_ui }),
+    })),
+    config.sdd?.tucu_ui,
   );
 
   p.note(
@@ -397,7 +402,7 @@ async function runConfigFlow(
   try {
     if (config.mode === "standalone") {
       await generateStandalone({
-        ...toStandaloneOptions(config, { tucuUi: appTucuUi }),
+        ...toStandaloneOptions(config, { tucuUi: flags.tucuUi }),
         sddProfile: config.sdd?.profile ?? flags.profile,
         targetDir,
         harnessFiles,
@@ -406,7 +411,7 @@ async function runConfigFlow(
       });
     } else {
       await generateWorkspace({
-        ...toWorkspaceOptions(config, { tucuUi: appTucuUi }),
+        ...toWorkspaceOptions(config, { tucuUi: flags.tucuUi }),
         sddProfile: config.sdd?.profile ?? flags.profile,
         targetDir,
         harnessFiles,
@@ -696,7 +701,7 @@ async function runNxFlow(
       projectName,
       description,
       packageScope: packageScope as string,
-      apps: apps.map((a) => ({ ...a, tucuUi: flags.tucuUi })),
+      apps: apps.map((a) => ({ ...a, tucuUi: resolveAppTucuUi(a, { cliFlag: flags.tucuUi }) })),
       libs,
       services: services as string[],
       sddProfile: flags.profile,

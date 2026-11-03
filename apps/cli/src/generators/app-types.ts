@@ -12,6 +12,8 @@ export interface TopologyApp {
   name: string;
   type: string;
   shell?: string;
+  ml?: boolean;
+  tucuUi?: boolean;
 }
 
 export function appEnvPrefix(appName: string): string {
@@ -22,18 +24,24 @@ export function hostEnvVar(appName: string): string {
   return `${appEnvPrefix(appName)}_HOST`;
 }
 
-export const APP_STACK_DESCRIPTIONS: Record<string, string> = {
+const APP_STACK_BASE: Record<string, string> = {
   nestjs: "NestJS (Webpack build, Jest)",
-  react: "React + Vite + Tailwind v4 (tucu-ui by default)",
-  nextjs: "Next.js App Router (tucu-ui by default)",
-  "next-bff": "Next.js App Router BFF: app/api routes proxying an upstream service, tucu-ui by default",
-  "mfe-shell": "Vite + React shell of a path-based microfrontend setup (proxy and nginx for /<mfe>/), tucu-ui by default",
-  mfe: "Vite + React microfrontend served under /<mfe>/ behind an mfe-shell, tucu-ui by default",
+  react: "React + Vite + Tailwind v4",
+  nextjs: "Next.js App Router",
+  "next-bff": "Next.js App Router BFF: app/api routes proxying an upstream service",
+  "mfe-shell": "Vite + React shell of a path-based microfrontend setup (proxy and nginx for /<mfe>/)",
+  mfe: "Vite + React microfrontend served under /<mfe>/ behind an mfe-shell",
   python: "Python 3.12 + FastAPI + LangGraph managed with uv (pytest, ruff); TensorFlow behind the ml extra",
   fastify: "Fastify (esbuild)",
   hono: "Hono on Node",
   springboot: "Spring Boot 3, Java 21, Maven (hexagonal)",
 };
+
+export function describeAppStack(type: string, tucuUi?: boolean): string | undefined {
+  const base = APP_STACK_BASE[type];
+  if (!base || !(TUCU_UI_APP_TYPES as readonly string[]).includes(type)) return base;
+  return `${base}, ${tucuUi === false ? "plain (no tucu-ui)" : "tucu-ui"}`;
+}
 
 export function upstreamEnvVar(appName: string): string {
   return `${appEnvPrefix(appName)}_UPSTREAM_URL`;
@@ -66,6 +74,19 @@ export function validateAppTopology(
   mode: "nx" | "standalone",
 ): string[] {
   const errors: string[] = [];
+
+  for (const app of apps) {
+    if (app.ml !== undefined && app.type !== "python") {
+      errors.push(
+        `App "${app.name}": "ml" is only valid on apps of type "python" (got type "${app.type}").`,
+      );
+    }
+    if (app.tucuUi !== undefined && !(TUCU_UI_APP_TYPES as readonly string[]).includes(app.type)) {
+      errors.push(
+        `App "${app.name}": "tucuUi" is only valid on frontend apps (${TUCU_UI_APP_TYPES.join(", ")}), got type "${app.type}".`,
+      );
+    }
+  }
 
   if (mode === "standalone") {
     for (const app of apps.filter((a) => isWorkspaceOnlyAppType(a.type))) {
