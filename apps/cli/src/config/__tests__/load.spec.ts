@@ -203,6 +203,40 @@ describe('config/load', () => {
     ).rejects.toThrow(/sdd\.tucu_ui/);
   });
 
+  it('apps[].tucuUi es opcional, booleano y baja a las opciones con el override como fallback', async () => {
+    const absent = await loadHarnessConfig(await writeConfig(VALID_CONFIG));
+    expect(absent.apps[1].tucuUi).toBeUndefined();
+
+    const config = await loadHarnessConfig(
+      await writeConfig(
+        {
+          ...VALID_CONFIG,
+          apps: [
+            { name: 'core-api', type: 'nestjs' },
+            { name: 'web', type: 'react', tucuUi: true },
+            { name: 'site', type: 'nextjs' },
+          ],
+        },
+        'tucu.json',
+      ),
+    );
+    expect(toWorkspaceOptions(config).apps.map((a) => a.tucuUi)).toEqual([undefined, true, undefined]);
+    expect(toWorkspaceOptions(config, { tucuUi: false }).apps.map((a) => a.tucuUi)).toEqual([
+      false,
+      true,
+      false,
+    ]);
+
+    await expect(
+      loadHarnessConfig(
+        await writeConfig(
+          { ...VALID_CONFIG, apps: [{ name: 'web', type: 'react', tucuUi: 'yes' }] },
+          'bad-tucu.json',
+        ),
+      ),
+    ).rejects.toThrow(/apps\.0\.tucuUi/);
+  });
+
   it('standalone exige exactamente una app', async () => {
     const config = await loadHarnessConfig(
       await writeConfig({

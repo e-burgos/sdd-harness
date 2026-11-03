@@ -22,6 +22,22 @@ export function hasFrontendApp(types: readonly string[]): boolean {
   return types.some((type) => FRONTEND_APP_TYPES.includes(type));
 }
 
+export function appUsesTucuUi(
+  app: { type: string; tucuUi?: boolean },
+  flag?: boolean,
+): boolean {
+  return FRONTEND_APP_TYPES.includes(app.type) && (app.tucuUi ?? flag ?? true);
+}
+
+export function resolveKitTucuUiFlag(
+  apps: ReadonlyArray<{ type: string; tucuUi?: boolean }>,
+  flag: boolean | undefined,
+): boolean | undefined {
+  if (flag !== undefined) return flag;
+  if (!hasFrontendApp(apps.map((app) => app.type))) return undefined;
+  return apps.some((app) => appUsesTucuUi(app));
+}
+
 export function hasConflictingTucuUiFlags(rawArgs: readonly string[]): boolean {
   const names = new Set(rawArgs.filter((arg) => arg.startsWith('--')).map((arg) => arg.split('=')[0]));
   return names.has('--tucu-ui') && names.has('--no-tucu-ui');

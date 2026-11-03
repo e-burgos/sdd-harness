@@ -87,12 +87,27 @@ describe('init: oferta de tucu-ui', () => {
     }
   });
 
-  it('con frontend y sin terminal ni flags queda apagado e indica cómo prenderlo', async () => {
+  it('con frontend y sin flags la integración se prende sin preguntar', async () => {
+    const plan = await planTucuUi({ ...base, interactive: true }, ['nextjs']);
+    expect(plan.beforeGate).toBeTypeOf('function');
+  });
+
+  it('una app con tucuUi=false no prende la integración', async () => {
     const lines = captureLogs();
-    const plan = await planTucuUi({ ...base, interactive: false }, ['nextjs']);
-    expect(plan.beforeGate).toBeUndefined();
+    const plan = await planTucuUi({ ...base, interactive: true }, [
+      { type: 'react', tucuUi: false },
+    ]);
     plan.report();
-    expect(lines.join('\n')).toContain('tucu-ui: off — pnpm sdd:tucu -- --enable');
+    expect(plan.beforeGate).toBeUndefined();
+    expect(lines).toEqual([]);
+  });
+
+  it('basta una app frontend con tucuUi para prender la integración', async () => {
+    const plan = await planTucuUi({ ...base, interactive: false }, [
+      { type: 'react', tucuUi: false },
+      { type: 'nextjs' },
+    ]);
+    expect(plan.beforeGate).toBeTypeOf('function');
   });
 
   it('sin frontend no menciona tucu-ui', async () => {

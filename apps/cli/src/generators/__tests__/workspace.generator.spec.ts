@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import fs from 'fs-extra';
 
 import { generateWorkspace } from '../workspace.generator.js';
+import { FRONTEND_VERSIONS } from '../versions.js';
 
 // Mock exec para evitar ejecutar git init y pnpm install en tests
 vi.mock('../../utils/exec.js', () => ({
@@ -155,6 +156,116 @@ describe('workspace.generator', () => {
     const viteConfig = fs.readFileSync(resolve(appDir, 'vite.config.ts'), 'utf-8');
     expect(viteConfig).toContain('dist/apps/portal');
     expect(viteConfig).not.toContain('example-app');
+  });
+
+  it('react con tucu-ui por defecto: deps raíz, estilos, ThemeProvider y pantalla de ejemplo', async () => {
+    await generateWorkspace({
+      projectName: 'tucu-react',
+      description: 'React tucu-ui',
+      packageScope: '@test',
+      apps: [{ name: 'portal', type: 'react' }],
+      libs: [],
+      services: [],
+    });
+    const root = resolve(parentDir, 'tucu-react');
+    const appDir = resolve(root, 'apps/portal');
+
+    const pkg = fs.readJSONSync(resolve(root, 'package.json'));
+    expect(pkg.dependencies['@e-burgos/tucu-ui']).toBe(FRONTEND_VERSIONS['@e-burgos/tucu-ui']);
+    expect(pkg.dependencies['react']).toBe(FRONTEND_VERSIONS.react);
+    expect(pkg.devDependencies['vite']).toBe(FRONTEND_VERSIONS.vite);
+    expect(pkg.devDependencies['vitest']).toBe(FRONTEND_VERSIONS.vitest);
+    expect(pkg.devDependencies['@vitest/coverage-v8']).toBe(FRONTEND_VERSIONS['@vitest/coverage-v8']);
+
+    const css = fs.readFileSync(resolve(appDir, 'src/index.css'), 'utf-8');
+    expect(css).toContain("@import 'tailwindcss';");
+    expect(css).toContain("@import '@e-burgos/tucu-ui/theme';");
+    expect(css).toContain("@source '../../../node_modules/@e-burgos/tucu-ui/**/*.mjs';");
+
+    const app = fs.readFileSync(resolve(appDir, 'src/app/app.tsx'), 'utf-8');
+    expect(app).toContain('ThemeProvider');
+    expect(app).toContain("logo={{ name: 'portal' }}");
+    expect(app).not.toContain('BrowserRouter');
+
+    const home = fs.readFileSync(resolve(appDir, 'src/pages/HomePage.tsx'), 'utf-8');
+    expect(home).toContain("from '@e-burgos/tucu-ui'");
+    expect(home).toContain('<Card');
+  });
+
+  it('react con tucuUi=false queda como el blueprint plano', async () => {
+    await generateWorkspace({
+      projectName: 'plain-react',
+      description: 'React plano',
+      packageScope: '@test',
+      apps: [{ name: 'portal', type: 'react', tucuUi: false }],
+      libs: [],
+      services: [],
+    });
+    const root = resolve(parentDir, 'plain-react');
+    const appDir = resolve(root, 'apps/portal');
+
+    const pkg = fs.readJSONSync(resolve(root, 'package.json'));
+    expect(pkg.dependencies).not.toHaveProperty('@e-burgos/tucu-ui');
+    expect(fs.readFileSync(resolve(appDir, 'src/index.css'), 'utf-8')).toBe("@import 'tailwindcss';\n");
+    const app = fs.readFileSync(resolve(appDir, 'src/app/app.tsx'), 'utf-8');
+    expect(app).toContain('BrowserRouter');
+    expect(app).not.toContain('tucu-ui');
+  });
+
+  it('nextjs con tucu-ui por defecto: Next 16, NextThemeProvider, postcss y estilos', async () => {
+    await generateWorkspace({
+      projectName: 'tucu-next',
+      description: 'Next tucu-ui',
+      packageScope: '@test',
+      apps: [{ name: 'site', type: 'nextjs' }],
+      libs: [],
+      services: [],
+    });
+    const root = resolve(parentDir, 'tucu-next');
+    const appDir = resolve(root, 'apps/site');
+
+    const pkg = fs.readJSONSync(resolve(root, 'package.json'));
+    expect(pkg.dependencies['next']).toBe(FRONTEND_VERSIONS.next);
+    expect(pkg.dependencies['@e-burgos/tucu-ui']).toBe(FRONTEND_VERSIONS['@e-burgos/tucu-ui']);
+    expect(pkg.devDependencies['@tailwindcss/postcss']).toBe(FRONTEND_VERSIONS['@tailwindcss/postcss']);
+
+    const layout = fs.readFileSync(resolve(appDir, 'app/layout.tsx'), 'utf-8');
+    expect(layout).toContain("from '@e-burgos/tucu-ui/next'");
+    expect(layout).toContain('NextThemeProvider');
+    expect(layout).toContain('ThemeModeScript');
+    expect(layout).toContain("import './globals.css';");
+
+    const css = fs.readFileSync(resolve(appDir, 'app/globals.css'), 'utf-8');
+    expect(css).toContain("@import '@e-burgos/tucu-ui/theme';");
+    expect(css).toContain("@source '../../../node_modules/@e-burgos/tucu-ui/**/*.mjs';");
+    expect(fs.readFileSync(resolve(appDir, 'postcss.config.mjs'), 'utf-8')).toContain(
+      '@tailwindcss/postcss',
+    );
+    expect(fs.readFileSync(resolve(appDir, 'app/page.tsx'), 'utf-8')).toContain('<Card');
+  });
+
+  it('nextjs con tucuUi=false queda plano: Next 16 sin tucu-ui ni postcss', async () => {
+    await generateWorkspace({
+      projectName: 'plain-next',
+      description: 'Next plano',
+      packageScope: '@test',
+      apps: [{ name: 'site', type: 'nextjs', tucuUi: false }],
+      libs: [],
+      services: [],
+    });
+    const root = resolve(parentDir, 'plain-next');
+    const appDir = resolve(root, 'apps/site');
+
+    const pkg = fs.readJSONSync(resolve(root, 'package.json'));
+    expect(pkg.dependencies['next']).toBe(FRONTEND_VERSIONS.next);
+    expect(pkg.dependencies).not.toHaveProperty('@e-burgos/tucu-ui');
+    expect(pkg.devDependencies).not.toHaveProperty('@tailwindcss/postcss');
+    expect(fs.existsSync(resolve(appDir, 'postcss.config.mjs'))).toBe(false);
+    expect(fs.existsSync(resolve(appDir, 'app/globals.css'))).toBe(false);
+    const layout = fs.readFileSync(resolve(appDir, 'app/layout.tsx'), 'utf-8');
+    expect(layout).not.toContain('tucu-ui');
+    const tsconfig = fs.readJSONSync(resolve(appDir, 'tsconfig.json'));
+    expect(tsconfig.compilerOptions.jsx).toBe('react-jsx');
   });
 
   it('genera app springboot desde el blueprint java-api (Maven, sin Gradle)', async () => {

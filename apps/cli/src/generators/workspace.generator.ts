@@ -4,7 +4,7 @@ import { copyTemplate, getTemplatesDir } from "../utils/fs.js";
 import { exec } from "../utils/exec.js";
 import { initGitRepo } from "../utils/git.js";
 import { logger } from "../utils/logger.js";
-import { NX_VERSION } from "./versions.js";
+import { FRONTEND_VERSIONS, NX_VERSION } from "./versions.js";
 import {
   addAppScriptsToRootPkg,
   addAppTypeDepsToRootPkg,
@@ -432,8 +432,15 @@ async function writeRootPackageJson(
     }
   }
 
+  for (const section of [pkg.dependencies, pkg.devDependencies]) {
+    for (const [name, version] of Object.entries(FRONTEND_VERSIONS)) {
+      if (name in section) section[name] = version;
+    }
+  }
+
   for (const type of new Set(opts.apps.map((a) => a.type))) {
-    addAppTypeDepsToRootPkg(pkg, type);
+    const tucuUi = opts.apps.some((a) => a.type === type && a.tucuUi !== false);
+    addAppTypeDepsToRootPkg(pkg, type, undefined, { tucuUi });
   }
 
   pkg.dependencies = sortKeys(pkg.dependencies);

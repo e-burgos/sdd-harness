@@ -1,7 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import {
+  appUsesTucuUi,
   hasConflictingTucuUiFlags,
   hasFrontendApp,
+  resolveKitTucuUiFlag,
   resolveTucuUiChoice,
   type TucuUiState,
 } from '../tucu-ui-offer.js';
@@ -62,5 +64,39 @@ describe('hasConflictingTucuUiFlags', () => {
     expect(hasConflictingTucuUiFlags(['--tucu-ui'])).toBe(false);
     expect(hasConflictingTucuUiFlags(['--no-tucu-ui', '--yes'])).toBe(false);
     expect(hasConflictingTucuUiFlags([])).toBe(false);
+  });
+});
+
+describe('appUsesTucuUi y resolveKitTucuUiFlag', () => {
+  it('react y nextjs usan tucu-ui por defecto; otros tipos nunca', () => {
+    expect(appUsesTucuUi({ type: 'react' })).toBe(true);
+    expect(appUsesTucuUi({ type: 'nextjs' })).toBe(true);
+    expect(appUsesTucuUi({ type: 'nestjs' })).toBe(false);
+    expect(appUsesTucuUi({ type: 'nestjs', tucuUi: true })).toBe(false);
+  });
+
+  it('el valor de la app gana al flag y el flag gana al default', () => {
+    expect(appUsesTucuUi({ type: 'react', tucuUi: false }, true)).toBe(false);
+    expect(appUsesTucuUi({ type: 'react' }, false)).toBe(false);
+    expect(appUsesTucuUi({ type: 'react' }, true)).toBe(true);
+  });
+
+  it('el flag explícito manda sobre las apps', () => {
+    expect(resolveKitTucuUiFlag([{ type: 'react', tucuUi: false }], true)).toBe(true);
+    expect(resolveKitTucuUiFlag([{ type: 'react' }], false)).toBe(false);
+  });
+
+  it('sin flag: prende si alguna app frontend usa tucu-ui, apaga si todas lo rechazan', () => {
+    expect(resolveKitTucuUiFlag([{ type: 'react' }], undefined)).toBe(true);
+    expect(
+      resolveKitTucuUiFlag([{ type: 'react', tucuUi: false }, { type: 'nextjs' }], undefined),
+    ).toBe(true);
+    expect(
+      resolveKitTucuUiFlag([{ type: 'react', tucuUi: false }], undefined),
+    ).toBe(false);
+  });
+
+  it('sin frontend no hay flag', () => {
+    expect(resolveKitTucuUiFlag([{ type: 'nestjs' }, { type: 'python' }], undefined)).toBeUndefined();
   });
 });

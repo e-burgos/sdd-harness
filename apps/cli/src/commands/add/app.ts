@@ -6,6 +6,12 @@ import { resolve } from 'node:path';
 import { logger } from '../../utils/logger.js';
 import { warnIfNxRootMismatch } from '../../utils/env.js';
 import { generateApp } from '../../generators/app.generator.js';
+import {
+  TUCU_UI_CONFLICT_MESSAGE,
+  appUsesTucuUi,
+  hasConflictingTucuUiFlags,
+} from '../../utils/tucu-ui-offer.js';
+import { readTucuUiState, runTucuUiOffer } from '../../utils/tucu-ui-run.js';
 import { registerSubprojectInSDD } from '../../generators/sdd.generator.js';
 import {
   addAppScriptsToRootPkg,
@@ -24,6 +30,7 @@ function registerAppInRootPackageJson(
   cwd: string,
   appName: string,
   appType: string,
+  tucuUi: boolean,
 ): void {
   const pkgPath = resolve(cwd, 'package.json');
   const pkg = JSON.parse(readFileSync(pkgPath, 'utf-8'));
@@ -37,7 +44,7 @@ function registerAppInRootPackageJson(
   const referencePkg = existsSync(referencePath)
     ? JSON.parse(readFileSync(referencePath, 'utf-8'))
     : undefined;
-  addAppTypeDepsToRootPkg(pkg, appType, referencePkg);
+  addAppTypeDepsToRootPkg(pkg, appType, referencePkg, { tucuUi });
 
   pkg.dependencies = sortKeys(pkg.dependencies);
   pkg.devDependencies = sortKeys(pkg.devDependencies);
@@ -59,9 +66,18 @@ export const addAppCommand = defineCommand({
       type: 'string',
       description: 'App name',
     },
+    'tucu-ui': {
+      type: 'boolean',
+      description:
+        'react/nextjs apps are scaffolded with tucu-ui and turn on its design skill + MCP (default). --no-tucu-ui generates a plain app',
+    },
   },
-  async run({ args }) {
+  async run({ args, rawArgs }) {
     warnIfNxRootMismatch();
+    if (hasConflictingTucuUiFlags(rawArgs)) {
+      logger.error(TUCU_UI_CONFLICT_MESSAGE);
+      process.exit(1);
+    }
     p.intro(pc.bgCyan(pc.black(' harness add app ')));
 
     const cwd = process.cwd();
@@ -122,12 +138,14 @@ export const addAppCommand = defineCommand({
       process.exit(1);
     }
 
+    const tucuUi = appUsesTucuUi({ type: appType as string }, args['tucu-ui']);
+
     logger.step(`Adding ${appType} app: ${appName}`);
 
     try {
       await generateApp(
         cwd,
-        { name: appName as string, type: appType as string },
+        { name: appName as string, type: appType as string, tucuUi },
         packageScope,
       );
       logger.success(`App "${appName}" generated at apps/${appName}`);
@@ -142,10 +160,19 @@ export const addAppCommand = defineCommand({
         `Registered in sdd/global.json and sdd/context/apps/${appName}/`,
       );
 
-      registerAppInRootPackageJson(cwd, appName as string, appType as string);
+      registerAppInRootPackageJson(cwd, appName as string, appType as string, tucuUi);
       logger.success(
         `Root package.json updated: nx scripts + ${appType} dependencies — run your package manager install`,
       );
+
+      if (tucuUi && readTucuUiState(cwd) !== 'complete') {
+        await runTucuUiOffer(cwd, {
+          flag: true,
+          hasFrontend: true,
+          interactive: false,
+          current: readTucuUiState(cwd),
+        });
+      }
     } catch (err) {
       logger.error((err as Error).message);
       process.exit(1);

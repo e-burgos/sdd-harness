@@ -53,12 +53,24 @@ export function normalizeModuleSeeds(config: HarnessConfig): ModuleSeed[] {
   );
 }
 
-export function toWorkspaceOptions(config: HarnessConfig): WorkspaceOptions {
+export interface ConfigOptionOverrides {
+  tucuUi?: boolean;
+}
+
+export function toWorkspaceOptions(
+  config: HarnessConfig,
+  overrides: ConfigOptionOverrides = {},
+): WorkspaceOptions {
   return {
     projectName: config.project.name,
     description: config.project.description,
     packageScope: config.project.packageScope,
-    apps: config.apps.map(({ name, type, port }) => ({ name, type, port })),
+    apps: config.apps.map(({ name, type, port, tucuUi }) => ({
+      name,
+      type,
+      port,
+      tucuUi: tucuUi ?? overrides.tucuUi,
+    })),
     libs: config.libs.map(({ name, type }) => ({ name, type })),
     services: config.services.map(({ type }) => type),
     npmScopes: config.npm?.scopes ?? [],
@@ -68,7 +80,10 @@ export function toWorkspaceOptions(config: HarnessConfig): WorkspaceOptions {
   };
 }
 
-export function toStandaloneOptions(config: HarnessConfig): StandaloneOptions {
+export function toStandaloneOptions(
+  config: HarnessConfig,
+  overrides: ConfigOptionOverrides = {},
+): StandaloneOptions {
   if (config.apps.length !== 1) {
     throw new Error(
       `Standalone mode requires exactly one app in "apps" (got ${config.apps.length}).`,
@@ -79,6 +94,7 @@ export function toStandaloneOptions(config: HarnessConfig): StandaloneOptions {
     description: config.project.description,
     appType: config.apps[0].type,
     port: config.apps[0].port,
+    tucuUi: config.apps[0].tucuUi ?? overrides.tucuUi,
     services: config.services.map(({ type }) => type),
     npmScopes: config.npm?.scopes ?? [],
     sddAuthor: config.sdd?.author,

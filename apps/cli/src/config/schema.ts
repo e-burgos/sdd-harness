@@ -28,6 +28,7 @@ const AppConfigSchema = z.object({
   type: AppTypeSchema,
   port: z.number().min(1000).max(65535).optional(),
   features: z.array(z.string()).default([]),
+  tucuUi: z.boolean().optional(),
 });
 
 const ServiceConfigSchema = z.object({

@@ -1,4 +1,5 @@
-import { NX_VERSION } from "./versions.js";
+import { tucuUiPackageDeps } from "./tucu-ui-app.js";
+import { FRONTEND_VERSIONS, NX_VERSION } from "./versions.js";
 
 type PackageJson = {
   scripts: Record<string, string>;
@@ -33,15 +34,25 @@ export function addAppTypeDepsToRootPkg(
   pkg: PackageJson,
   type: string,
   referencePkg?: PackageJson,
+  options: { tucuUi?: boolean } = {},
 ): void {
   const addMissingFromReference = (
     section: "dependencies" | "devDependencies",
     names: string[],
   ) => {
-    if (!referencePkg) return;
     for (const name of names) {
-      if (!(name in pkg[section]) && referencePkg[section][name]) {
-        pkg[section][name] = referencePkg[section][name];
+      if (name in pkg[section]) continue;
+      const pinned = (FRONTEND_VERSIONS as Record<string, string>)[name];
+      const version = pinned ?? referencePkg?.[section][name];
+      if (version) pkg[section][name] = version;
+    }
+  };
+  const addTucuUi = (appType: "react" | "nextjs") => {
+    if (options.tucuUi === false) return;
+    const extra = tucuUiPackageDeps(appType);
+    for (const section of ["dependencies", "devDependencies"] as const) {
+      for (const [name, version] of Object.entries(extra[section])) {
+        if (!(name in pkg[section])) pkg[section][name] = version;
       }
     }
   };
@@ -65,6 +76,7 @@ export function addAppTypeDepsToRootPkg(
         "vitest",
         "@vitest/coverage-v8",
       ]);
+      addTucuUi("react");
       break;
     case "nestjs":
       Object.assign(pkg.dependencies, {
@@ -91,13 +103,14 @@ export function addAppTypeDepsToRootPkg(
       });
       break;
     case "nextjs":
-      pkg.dependencies["next"] = "^15.0.0";
+      pkg.dependencies["next"] = FRONTEND_VERSIONS.next;
       pkg.devDependencies["@nx/next"] = NX_VERSION;
       addMissingFromReference("dependencies", ["react", "react-dom"]);
       addMissingFromReference("devDependencies", [
         "@types/react",
         "@types/react-dom",
       ]);
+      addTucuUi("nextjs");
       break;
     case "fastify":
       pkg.dependencies["fastify"] = "^5.0.0";
@@ -113,8 +126,8 @@ export function addAppTypeDepsToRootPkg(
       });
       Object.assign(pkg.devDependencies, {
         "@nx/node": NX_VERSION,
-        vite: pkg.devDependencies["vite"] ?? "^8.0.0",
-        vitest: pkg.devDependencies["vitest"] ?? "^4.1.10",
+        vite: pkg.devDependencies["vite"] ?? FRONTEND_VERSIONS.vite,
+        vitest: pkg.devDependencies["vitest"] ?? FRONTEND_VERSIONS.vitest,
       });
       break;
   }

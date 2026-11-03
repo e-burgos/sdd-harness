@@ -6,6 +6,7 @@ import {
   toFlatCase,
   toPascalCase,
 } from "../utils/blueprint.js";
+import { writeNextTucuUiFiles, writeViteTucuUiFiles } from "./tucu-ui-app.js";
 
 export interface AppSpec {
   name: string;
@@ -19,6 +20,8 @@ export interface AppSpec {
    * lo exigen); esto solo documenta dónde vive el código. Ausente = `apps/<name>`.
    */
   path?: string;
+  /** react/nextjs: scaffold con tucu-ui (default true). `false` genera la app plana. */
+  tucuUi?: boolean;
 }
 
 export const DEFAULT_APP_PORTS: Record<string, number> = {
@@ -62,10 +65,10 @@ export async function generateApp(
       await generateNestApp(appDir, app.name, port);
       break;
     case "react":
-      await generateReactApp(root, appDir, app.name, port);
+      await generateReactApp(root, appDir, app.name, port, app.tucuUi !== false);
       break;
     case "nextjs":
-      await generateNextApp(appDir, app.name, port);
+      await generateNextApp(appDir, app.name, port, app.tucuUi !== false);
       break;
     case "fastify":
       await generateFastifyApp(appDir, app.name, port);
@@ -385,10 +388,12 @@ async function generateReactApp(
   dir: string,
   name: string,
   port: number,
+  tucuUi: boolean,
 ): Promise<void> {
   const blueprint = resolveBlueprintDir(root, "apps/react-app");
   await copyBlueprint(blueprint, dir, { "example-app": name });
   await applyVitePort(resolve(dir, "vite.config.ts"), name, port);
+  if (tucuUi) await writeViteTucuUiFiles(dir, name, "../../../node_modules");
 }
 
 /** El blueprint trae `server: { port: 4200 }`; el config manda (apps[].port) con override por env. */
@@ -430,6 +435,7 @@ async function generateNextApp(
   dir: string,
   name: string,
   port: number,
+  tucuUi: boolean,
 ): Promise<void> {
   await fs.ensureDir(resolve(dir, "app"));
   // Next sirve lo que haya acá; vacío es válido, ausente no (`next build` lo lista).
@@ -503,7 +509,7 @@ module.exports = nextConfig;
       {
         extends: "../../tsconfig.base.json",
         compilerOptions: {
-          jsx: "preserve",
+          jsx: "react-jsx",
           lib: ["dom", "dom.iterable", "esnext"],
           module: "esnext",
           moduleResolution: "bundler",
@@ -516,6 +522,8 @@ module.exports = nextConfig;
     ),
     "utf-8",
   );
+
+  if (tucuUi) await writeNextTucuUiFiles(dir, name, "../../../node_modules");
 }
 
 // ─── Fastify ────────────────────────────────────────────────────────────────

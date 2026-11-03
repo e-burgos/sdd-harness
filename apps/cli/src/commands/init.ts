@@ -19,6 +19,7 @@ import {
   TUCU_UI_CONFLICT_MESSAGE,
   hasConflictingTucuUiFlags,
   hasFrontendApp,
+  resolveKitTucuUiFlag,
 } from "../utils/tucu-ui-offer.js";
 import {
   applyTucuUi,
@@ -44,11 +45,12 @@ export interface TucuUiPlan {
 
 export async function planTucuUi(
   flags: TargetFlags,
-  appTypes: string[],
+  appsOrTypes: ReadonlyArray<string | { type: string; tucuUi?: boolean }>,
 ): Promise<TucuUiPlan> {
+  const apps = appsOrTypes.map((a) => (typeof a === "string" ? { type: a } : a));
   const decision = await decideTucuUiOffer({
-    flag: flags.tucuUi,
-    hasFrontend: hasFrontendApp(appTypes),
+    flag: resolveKitTucuUiFlag(apps, flags.tucuUi),
+    hasFrontend: hasFrontendApp(apps.map((a) => a.type)),
     interactive: flags.interactive ?? false,
     current: "off",
   });
@@ -205,7 +207,7 @@ export const initCommand = defineCommand({
     "tucu-ui": {
       type: "boolean",
       description:
-        "Turn on the tucu-ui design skill + MCP (React/Next apps). --no-tucu-ui keeps it off. With --config, sdd.tucu_ui is the fallback",
+        "Scaffold react/nextjs apps with tucu-ui and turn on its design skill + MCP (default). --no-tucu-ui generates plain apps and keeps it off. With --config, sdd.tucu_ui is the fallback",
     },
     profile: {
       type: "string",
@@ -339,9 +341,10 @@ async function runConfigFlow(
     configPath,
   );
   const modules = config.sdd?.modules ?? [];
+  const appTucuUi = flags.tucuUi ?? config.sdd?.tucu_ui;
   const tucuUi = await planTucuUi(
-    { ...flags, tucuUi: flags.tucuUi ?? config.sdd?.tucu_ui },
-    config.apps.map((a) => a.type),
+    { ...flags, tucuUi: appTucuUi },
+    config.apps.map((a) => ({ type: a.type, tucuUi: a.tucuUi ?? appTucuUi })),
   );
 
   p.note(
@@ -370,7 +373,7 @@ async function runConfigFlow(
   try {
     if (config.mode === "standalone") {
       await generateStandalone({
-        ...toStandaloneOptions(config),
+        ...toStandaloneOptions(config, { tucuUi: appTucuUi }),
         sddProfile: config.sdd?.profile ?? flags.profile,
         targetDir,
         harnessFiles,
@@ -379,7 +382,7 @@ async function runConfigFlow(
       });
     } else {
       await generateWorkspace({
-        ...toWorkspaceOptions(config),
+        ...toWorkspaceOptions(config, { tucuUi: appTucuUi }),
         sddProfile: config.sdd?.profile ?? flags.profile,
         targetDir,
         harnessFiles,
@@ -448,7 +451,7 @@ async function runStandaloneFlow(
     process.exit(0);
   }
 
-  const tucuUi = await planTucuUi(flags, [appType as string]);
+  const tucuUi = await planTucuUi(flags, [{ type: appType as string }]);
 
   logger.title("Generating standalone repo...");
 
@@ -457,6 +460,7 @@ async function runStandaloneFlow(
       projectName,
       description,
       appType: appType as string,
+      tucuUi: flags.tucuUi,
       services: services as string[],
       sddProfile: flags.profile,
       ...resolveInitTarget(process.cwd(), projectName, flags),
@@ -625,10 +629,7 @@ async function runNxFlow(
     process.exit(0);
   }
 
-  const tucuUi = await planTucuUi(
-    flags,
-    apps.map((a) => a.type),
-  );
+  const tucuUi = await planTucuUi(flags, apps);
 
   logger.title("Generating workspace...");
 
@@ -637,7 +638,7 @@ async function runNxFlow(
       projectName,
       description,
       packageScope: packageScope as string,
-      apps,
+      apps: apps.map((a) => ({ ...a, tucuUi: flags.tucuUi })),
       libs,
       services: services as string[],
       sddProfile: flags.profile,

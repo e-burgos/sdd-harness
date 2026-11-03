@@ -14,6 +14,7 @@ export interface AppConfig {
   type: AppType;
   port?: number;
   features: string[];
+  tucuUi?: boolean;
 }
 
 export interface ServiceConfig {

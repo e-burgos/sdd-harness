@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import fs from 'fs-extra';
 
 import { generateStandalone } from '../standalone.generator.js';
+import { FRONTEND_VERSIONS } from '../versions.js';
 
 vi.mock('../../utils/exec.js', () => ({
   exec: vi.fn(() => ''),
@@ -69,6 +70,78 @@ describe('standalone.generator', () => {
     expect(pkg.scripts['setup:agents']).toBeDefined();
     expect(pkg.devDependencies['ajv']).toBeDefined();
     expect(pkg.devDependencies['ajv-formats']).toBeDefined();
+  });
+
+  it('react standalone: tucu-ui por defecto con pins de versions.ts', async () => {
+    await generateStandalone({
+      projectName: 'tucu-portal',
+      description: 'Standalone react tucu-ui',
+      appType: 'react',
+      services: [],
+    });
+    const root = resolve(parentDir, 'tucu-portal');
+
+    const pkg = fs.readJSONSync(resolve(root, 'package.json'));
+    expect(pkg.dependencies['@e-burgos/tucu-ui']).toBe(FRONTEND_VERSIONS['@e-burgos/tucu-ui']);
+    expect(pkg.dependencies['react']).toBe(FRONTEND_VERSIONS.react);
+    expect(pkg.devDependencies['vite']).toBe(FRONTEND_VERSIONS.vite);
+    expect(pkg.devDependencies['vitest']).toBe(FRONTEND_VERSIONS.vitest);
+    expect(pkg.devDependencies['tailwindcss']).toBe(FRONTEND_VERSIONS.tailwindcss);
+
+    const css = fs.readFileSync(resolve(root, 'src/index.css'), 'utf-8');
+    expect(css).toContain("@import '@e-burgos/tucu-ui/theme';");
+    expect(css).toContain("@source '../node_modules/@e-burgos/tucu-ui/**/*.mjs';");
+    expect(fs.readFileSync(resolve(root, 'src/app/app.tsx'), 'utf-8')).toContain('ThemeProvider');
+  });
+
+  it('react standalone con tucuUi=false queda plano', async () => {
+    await generateStandalone({
+      projectName: 'plain-portal',
+      description: 'Standalone react plano',
+      appType: 'react',
+      tucuUi: false,
+      services: [],
+    });
+    const root = resolve(parentDir, 'plain-portal');
+
+    const pkg = fs.readJSONSync(resolve(root, 'package.json'));
+    expect(pkg.dependencies).not.toHaveProperty('@e-burgos/tucu-ui');
+    expect(fs.readFileSync(resolve(root, 'src/index.css'), 'utf-8')).toBe("@import 'tailwindcss';\n");
+    expect(fs.readFileSync(resolve(root, 'src/app/app.tsx'), 'utf-8')).toContain('BrowserRouter');
+  });
+
+  it('nextjs standalone: Next 16 con tucu-ui por defecto y plano con tucuUi=false', async () => {
+    await generateStandalone({
+      projectName: 'tucu-next',
+      description: 'Standalone next tucu-ui',
+      appType: 'nextjs',
+      services: [],
+    });
+    const root = resolve(parentDir, 'tucu-next');
+    const pkg = fs.readJSONSync(resolve(root, 'package.json'));
+    expect(pkg.dependencies['next']).toBe(FRONTEND_VERSIONS.next);
+    expect(pkg.dependencies['@e-burgos/tucu-ui']).toBe(FRONTEND_VERSIONS['@e-burgos/tucu-ui']);
+    expect(pkg.devDependencies['@tailwindcss/postcss']).toBe(FRONTEND_VERSIONS['@tailwindcss/postcss']);
+    expect(pkg.devDependencies['tailwindcss']).toBe(FRONTEND_VERSIONS.tailwindcss);
+    expect(fs.readFileSync(resolve(root, 'app/layout.tsx'), 'utf-8')).toContain('NextThemeProvider');
+    expect(fs.readFileSync(resolve(root, 'app/globals.css'), 'utf-8')).toContain(
+      "@source '../node_modules/@e-burgos/tucu-ui/**/*.mjs';",
+    );
+    expect(fs.existsSync(resolve(root, 'postcss.config.mjs'))).toBe(true);
+
+    await generateStandalone({
+      projectName: 'plain-next',
+      description: 'Standalone next plano',
+      appType: 'nextjs',
+      tucuUi: false,
+      services: [],
+    });
+    const plain = resolve(parentDir, 'plain-next');
+    const plainPkg = fs.readJSONSync(resolve(plain, 'package.json'));
+    expect(plainPkg.dependencies['next']).toBe(FRONTEND_VERSIONS.next);
+    expect(plainPkg.dependencies).not.toHaveProperty('@e-burgos/tucu-ui');
+    expect(fs.existsSync(resolve(plain, 'postcss.config.mjs'))).toBe(false);
+    expect(fs.readFileSync(resolve(plain, 'app/layout.tsx'), 'utf-8')).not.toContain('tucu-ui');
   });
 
   it('genera app springboot en la raíz con pom renombrado y scripts mvn', async () => {

@@ -21,12 +21,22 @@
       "estimation_hours": 2,
       "story_points": 2,
       "depends_on": [],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/cli/src/generators/versions.ts",
         "apps/cli/src/generators/root-package.ts",
         "apps/cli/src/generators/standalone.generator.ts"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 60000,
+        "tokens_out": 9000,
+        "approx": true,
+        "recorded_at": "2026-11-03",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "source": "declared-estimate"
+      }
     },
     {
       "id": "TASK-002",
@@ -39,13 +49,23 @@
       "depends_on": [
         "TASK-001"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/cli/src/generators/app.generator.ts",
         "apps/cli/src/generators/standalone.generator.ts",
         "apps/cli/templates/sdd/templates/apps/react-app/src/main.tsx",
         "apps/cli/templates/sdd/templates/apps/react-app/src/index.css"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 140000,
+        "tokens_out": 24000,
+        "approx": true,
+        "recorded_at": "2026-11-03",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "source": "declared-estimate"
+      }
     },
     {
       "id": "TASK-003",
