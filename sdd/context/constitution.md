@@ -75,7 +75,7 @@ Para el detalle técnico de cada subproyecto, ver su constitución específica:
 
 | Subproyecto | Stack base | Última actualización |
 | ----------- | ---------- | -------------------- |
-| `apps/cli` | Node, TypeScript, citty, @clack/prompts, zod, Vitest; integración opcional tucu-ui (`sdd:tucu`, skill en `sdd/integrations/`, merge MCP compartido en `.mcp.json`/`.vscode/mcp.json`/`.gemini/settings.json`) | 2026-11-03 |
+| `apps/cli` | Node, TypeScript, citty, @clack/prompts, zod, Vitest; integración opcional tucu-ui (`sdd:tucu`); generadores con tucu-ui por defecto, `next-bff`, `mfe-shell`/`mfe` por path y Python FastAPI + LangGraph con uv (versiones en `versions.ts`) | 2026-11-03 |
 | `apps/documentation` | React, Vite, Tailwind v4 | 2026-10-23 |
 | `apps/studio` | Next.js 16, React 19, tucu-ui 3.10.0 sin wrappers; shell estilo Slack (riel de módulos personalizable + panel de lista por módulo, `lib/nav` persistido por proyecto) con módulos Inicio, Specs, Fixes, Agentes, Actividad, Mapa, Kit, Arquitectura y Métricas; interruptores de `sdd/tools.json` desde Kit; estados SDD compartidos en `lib/sdd-status.ts`; escala tipográfica micro…title; zustand, Playwright | 2026-11-02 |
 | `apps/studio-bridge` | Node, TypeScript, claude-agent-sdk 0.3.292 (prompt streaming), ws, chokidar, ajv; `KitIndexer`, escritura de `sdd/tools.json` con `expectedRevision` y evento `tools.changed`, ahorro de rtk; `DocumentChangeTracker`, asociaciones múltiples y título de sesión | 2026-10-28 |

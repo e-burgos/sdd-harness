@@ -1,6 +1,6 @@
 # SPEC-e-burgos-012: Generadores — frontends listos con tucu-ui, BFF y microfrontends por path
 
-> Estado: **in-progress** (2026-11-03). cycle-01 abierto (flow lite) con las decisiones del dev de abajo.
+> Estado: **completed** (2026-11-03). cycle-01 (flow lite) cerrado con las decisiones del dev de abajo.
 > Sucesora de spec-e-burgos-011 (tucu-ui en el kit). Paso 2 del plan del dev: tucu-ui en el kit →
 > **generadores** → wizard en Studio → GitHub.
 

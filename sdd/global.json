@@ -128,19 +128,19 @@
       "cycles_completed": 2,
       "description": "Navegación de Studio estilo Slack: riel de módulos y panel de lista, con módulos de Kit, Arquitectura y Métricas y control de las herramientas del kit.",
       "completed_at": "2026-11-03"
-    }
-  ],
-  "in_progress_modules": [
+    },
     {
       "module": "generators-tucu-ui",
       "spec": "spec-e-burgos-012-generators-tucu-ui",
       "apps": [
         "apps/cli"
       ],
-      "cycles_completed": 0,
-      "description": "Generadores de frontend con tucu-ui, BFF, microfrontends por path y FastAPI con LangGraph."
+      "cycles_completed": 1,
+      "description": "Generadores de frontend con tucu-ui, BFF, microfrontends por path y FastAPI con LangGraph.",
+      "completed_at": "2026-11-03"
     }
   ],
+  "in_progress_modules": [],
   "pending_modules": [
     {
       "module": "studio-project-wizard",

@@ -28,14 +28,14 @@
         "apps/cli/src/generators/standalone.generator.ts"
       ],
       "usage": {
-        "tokens_in": 60000,
-        "tokens_out": 9000,
+        "tokens_in": 49387,
+        "tokens_out": 8715,
         "approx": true,
         "recorded_at": "2026-11-03",
         "provider_model": "claude/sonnet",
         "effort": "medium",
         "agent": "implementor-back",
-        "source": "declared-estimate"
+        "source": "agent-usage-notification"
       }
     },
     {
@@ -57,14 +57,14 @@
         "apps/cli/templates/sdd/templates/apps/react-app/src/index.css"
       ],
       "usage": {
-        "tokens_in": 140000,
-        "tokens_out": 24000,
+        "tokens_in": 115235,
+        "tokens_out": 20336,
         "approx": true,
         "recorded_at": "2026-11-03",
         "provider_model": "claude/sonnet",
         "effort": "medium",
         "agent": "implementor-back",
-        "source": "declared-estimate"
+        "source": "agent-usage-notification"
       }
     },
     {
@@ -83,14 +83,14 @@
         "apps/cli/src/generators/app.generator.ts"
       ],
       "usage": {
-        "tokens_in": 80000,
-        "tokens_out": 14000,
+        "tokens_in": 65930,
+        "tokens_out": 11635,
         "approx": true,
         "recorded_at": "2026-11-03",
         "provider_model": "claude/sonnet",
         "effort": "medium",
         "agent": "implementor-back",
-        "source": "declared-estimate"
+        "source": "agent-usage-notification"
       }
     },
     {
@@ -109,14 +109,14 @@
         "apps/cli/src/generators/app.generator.ts"
       ],
       "usage": {
-        "tokens_in": 120000,
-        "tokens_out": 21000,
+        "tokens_in": 98896,
+        "tokens_out": 17452,
         "approx": true,
         "recorded_at": "2026-11-03",
         "provider_model": "claude/sonnet",
         "effort": "medium",
         "agent": "implementor-back",
-        "source": "declared-estimate"
+        "source": "agent-usage-notification"
       }
     },
     {
@@ -193,8 +193,25 @@
       "depends_on": [
         "TASK-006"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/cli/src/commands/add/app.ts",
+        "apps/cli/src/utils/workspace-apps.ts",
+        "apps/cli/src/generators/mfe-sync.ts",
+        "apps/cli/src/commands/configure/sdd-apps.ts",
+        "apps/cli/src/generators/app.generator.ts",
+        "apps/cli/src/utils/tucu-ui-offer.ts"
+      ],
+      "usage": {
+        "tokens_in": 200650,
+        "tokens_out": 35409,
+        "approx": true,
+        "recorded_at": "2026-11-03",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "source": "agent-usage-notification"
+      }
     }
   ]
 }
