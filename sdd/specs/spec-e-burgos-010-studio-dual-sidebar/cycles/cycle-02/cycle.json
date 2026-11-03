@@ -12,18 +12,142 @@
     "Refresco de la skill abierta y lecturas selectivas de Arquitectura (US-11, US-12)",
     "Actividad de conversaciones en el módulo Actividad (US-13)"
   ],
-  "status": "in-progress",
+  "status": "completed",
   "started_at": "2026-11-03",
-  "completed_at": null,
+  "completed_at": "2026-11-03",
   "documents": {
     "plan": "sdd/specs/spec-e-burgos-010-studio-dual-sidebar/cycles/cycle-02/plan.md",
     "tasks": "sdd/specs/spec-e-burgos-010-studio-dual-sidebar/cycles/cycle-02/tasks.json"
   },
   "artifacts": [],
-  "metrics": null,
+  "metrics": {
+    "tasks_total": 3,
+    "tasks_completed": 3,
+    "tasks_skipped": 0,
+    "story_points": 8,
+    "files_created": [],
+    "files_modified": [
+      "apps/studio/src/lib/store/state.ts",
+      "apps/studio/src/lib/store/state.spec.ts",
+      "apps/studio/src/components/modules/kit/KitParts.tsx",
+      "apps/studio/src/components/modules/kit/KitCapabilitiesView.tsx",
+      "apps/studio/src/components/modules/kit/kit-module.spec.tsx",
+      "apps/studio/src/components/modules/architecture/use-registries.tsx",
+      "apps/studio/src/components/modules/architecture/architecture.spec.tsx",
+      "apps/studio/src/lib/nav/use-nav.ts",
+      "apps/studio/src/lib/i18n/modules/activity.ts",
+      "apps/studio/src/components/modules/activity/activity-model.ts",
+      "apps/studio/src/components/modules/activity/activity-model.spec.ts",
+      "apps/studio/src/components/modules/activity/activity-text.ts",
+      "apps/studio/src/components/modules/activity/ActivityTimeline.tsx",
+      "apps/studio/src/components/modules/activity/activity-module.spec.tsx"
+    ],
+    "files_deleted": [],
+    "usage": {
+      "tokens_in": 427392,
+      "tokens_out": 74952,
+      "approx": true,
+      "source": "agent-usage-notification",
+      "by_tier": {
+        "claude/opus": {
+          "tokens_in": 185450,
+          "tokens_out": 32256,
+          "approx": true,
+          "source": "agent-usage-notification"
+        },
+        "claude/sonnet": {
+          "tokens_in": 241942,
+          "tokens_out": 42696,
+          "approx": true,
+          "source": "agent-usage-notification"
+        }
+      },
+      "by_agent": [
+        {
+          "agent": "orchestrator",
+          "label": "solo",
+          "provider_model": "claude/opus",
+          "effort": "medium",
+          "tokens_in": 40000,
+          "tokens_out": 7000,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-03"
+        },
+        {
+          "agent": "reviewer",
+          "label": "review",
+          "provider_model": "claude/opus",
+          "effort": "high",
+          "tokens_in": 120450,
+          "tokens_out": 21256,
+          "source": "agent-usage-notification",
+          "approx": true,
+          "recorded_at": "2026-11-03"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-001",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 120971,
+          "tokens_out": 21348,
+          "source": "agent-usage-notification",
+          "approx": true,
+          "recorded_at": "2026-11-03"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-002",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 120971,
+          "tokens_out": 21348,
+          "source": "agent-usage-notification",
+          "approx": true,
+          "recorded_at": "2026-11-03"
+        },
+        {
+          "agent": "reviewer",
+          "label": "TASK-003",
+          "provider_model": "claude/opus",
+          "effort": "medium",
+          "tokens_in": 25000,
+          "tokens_out": 4000,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-03"
+        }
+      ]
+    }
+  },
   "tables_created": [],
   "endpoints_implemented": [],
   "components_created": [],
-  "issues_found": [],
-  "reviewer_report": null
+  "issues_found": [
+    "decisión: US-11 acotada a cambios del catálogo; el cuerpo de una skill no emite eventos (fuera de KIT_WATCH_ROOTS) y su refresco requiere un ciclo full",
+    "decisión: la revisión del visor se deriva del ítem abierto, no de un contador global, para no releer ante cambios de otras skills",
+    "corregido en review: faltaban los tests de lecturas selectivas de Arquitectura; índice truncado; skill borrada; filtro guardado de seis orígenes"
+  ],
+  "reviewer_report": {
+    "approved": true,
+    "date": "2026-11-03",
+    "ca_results": {
+      "US-11": "PASS con excepciones - relee ante cambios del resumen de la propia skill, sin pedidos ante cambios ajenos, aviso al borrarla; el cuerpo editado en disco queda fuera (sin eventos del puente)",
+      "US-12": "PASS - relectura selectiva por size:mtime, errores aislados por registro, fallback con índice truncado o ilegible, 5 tests",
+      "US-13": "PASS - origen Conversaciones con contador, inicio/fin por hilo, vínculo a spec/fix, filtro persistido y migrado, i18n es/en"
+    },
+    "tests": {
+      "sdd:validate": "OK",
+      "build": "pnpm build exit 0",
+      "typecheck": "pnpm typecheck exit 0",
+      "suite": "studio 903/903",
+      "e2e": "apps/studio e2e 8/8 PASS (E2E_PORT=4417)"
+    },
+    "notes": "Implementador sonnet/medium, reviewer opus/high y pasada de fix; orquestador opus/medium.",
+    "follow_ups": [
+      "Refresco del cuerpo de skills con protocolo y puente",
+      "Horas exactas de aprobaciones/preguntas, vista diff del visor e interruptor de tucu-ui en Kit"
+    ]
+  }
 }

@@ -233,9 +233,9 @@
           "apps": [
             "apps/studio"
           ],
-          "status": "in-progress",
+          "status": "completed",
           "tasks_total": 3,
-          "tasks_done": 0
+          "tasks_done": 3
         }
       }
     },
