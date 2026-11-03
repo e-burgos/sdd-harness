@@ -131,7 +131,37 @@
       "description": "Navegación de Studio estilo Slack: riel de módulos y panel de lista, con módulos de Kit, Arquitectura y Métricas y control de las herramientas del kit."
     }
   ],
-  "pending_modules": [],
+  "pending_modules": [
+    {
+      "module": "generators-tucu-ui",
+      "spec": "spec-e-burgos-012-generators-tucu-ui",
+      "apps": [
+        "apps/cli"
+      ],
+      "cycles_completed": 0,
+      "description": "Generadores de frontend con tucu-ui, BFF, microfrontends por path y FastAPI con LangGraph."
+    },
+    {
+      "module": "studio-project-wizard",
+      "spec": "spec-e-burgos-013-studio-project-wizard",
+      "apps": [
+        "apps/studio",
+        "apps/studio-bridge",
+        "libs/studio-protocol"
+      ],
+      "cycles_completed": 0,
+      "description": "Wizard de arquitectura en Studio que genera el proyecto con harness init."
+    },
+    {
+      "module": "github-integration",
+      "spec": "spec-e-burgos-014-github-integration",
+      "apps": [
+        "apps/cli"
+      ],
+      "cycles_completed": 0,
+      "description": "Repo en GitHub, CI del kit y ramas/PRs por ciclo SDD."
+    }
+  ],
   "monorepo": {
     "tool": "none (multi-app repo)",
     "package_manager": "pnpm",
