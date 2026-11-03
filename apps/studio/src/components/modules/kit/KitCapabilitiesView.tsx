@@ -77,22 +77,27 @@ export function KitCapabilitiesView({ which }: { which: CapabilityKind }) {
       ? kitAgents(snapshot).map((agent) => ({ id: agent.id, description: agent.description, command: `@${agent.id}`, path: agent.path, model: agent.model }))
       : kitSkills(snapshot, which === 'skills' ? 'skill' : 'prompt').map((skill) => ({ id: skill.id, description: skill.description, command: `/${skill.id}`, path: skill.path }));
   const visible = items.filter((item) => matchesQuery(query, item.id, item.description));
-  const current = visible.find((item) => item.id === chosen) ?? visible[0];
+  const removed = chosen !== null && !items.some((item) => item.id === chosen);
+  const current = removed ? undefined : (visible.find((item) => item.id === chosen) ?? visible[0]);
   return (
     <CenterFrame title={title}>
       {items.length === 0 ? (
         <EmptyState size="sm" title={t('module.kit.cap.empty')} />
-      ) : !current ? (
+      ) : !current && !removed ? (
         <NoMatches />
       ) : (
         <div className="flex min-h-0 flex-col gap-3 md:flex-row">
           <ul className="flex shrink-0 flex-col gap-2 md:w-80">
             {visible.map((item) => (
-              <CapabilityRow key={item.id} item={item} selected={item.id === current.id} onSelect={() => setChosen(item.id)} />
+              <CapabilityRow key={item.id} item={item} selected={item.id === current?.id} onSelect={() => setChosen(item.id)} />
             ))}
           </ul>
           <div className="min-w-0 flex-1">
-            <FileViewer key={current.path} path={current.path} mode="markdown" />
+            {current ? (
+              <FileViewer key={current.path} path={current.path} mode="markdown" revision={`${current.path}:${current.description}:${current.model ?? ''}`} />
+            ) : (
+              <EmptyState size="sm" title={t('module.kit.cap.removed')} />
+            )}
           </div>
         </div>
       )}

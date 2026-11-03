@@ -81,14 +81,15 @@ describe('Activity module', () => {
     await screen.findByText('rtk: Desactivado → Activado (sdd/tools.json)');
     const labels = within(screen.getByRole('region', { name: 'Actividad del proyecto' })).getAllByRole('heading', { level: 2 }).map((heading) => heading.textContent);
     expect(labels[0]).toBe('Hoy');
-    expect(labels).toHaveLength(2);
+    expect(labels).toHaveLength(3);
     const lines = screen.getAllByRole('listitem').map((item) => item.textContent ?? '');
     const order = ['Bash: $ pnpm test', '¿Aplicamos el cambio?', 'rtk: Desactivado → Activado (sdd/tools.json)', 'FIX-dev-001', 'TASK-001', 'cycle-02'].map((needle) => lines.findIndex((line) => line.includes(needle)));
     expect(order.every((index) => index >= 0)).toBe(true);
     expect(order[2]).toBeLessThan(order[3]!);
     expect(order[3]).toBeLessThan(order[4]!);
     expect(order[4]).toBeLessThan(order[5]!);
-    expect(lines.findIndex((line) => line.includes('cycle-02'))).toBe(lines.length - 1);
+    expect(lines.findIndex((line) => line.includes('cycle-02'))).toBe(lines.length - 2);
+    expect(lines[lines.length - 1]).toContain('Conversación «Revisión de pagos» iniciada');
   });
 
   it('does not ask for kit events and still renders the timeline when the bridge lacks kit-tools', async () => {
@@ -115,6 +116,44 @@ describe('Activity module', () => {
     expect(pill(/Eventos de specs/)).toHaveTextContent('1');
     expect(pill(/Eventos de fixes/)).toHaveTextContent('1');
     expect(pill(/Cambios de herramientas/)).toHaveTextContent('1');
+    expect(pill(/Conversaciones/)).toHaveTextContent('2');
+  });
+
+  it('shows when each conversation started and ended with its title', async () => {
+    setup();
+    await screen.findByText('Conversación «Revisión de pagos» iniciada');
+    expect(screen.getByText('Conversación «Revisión de pagos» terminada')).toBeInTheDocument();
+    fireEvent.click(pill(/Conversaciones/));
+    expect(screen.queryByText(/FIX-dev-001/)).not.toBeInTheDocument();
+    expect(screen.getAllByRole('listitem')).toHaveLength(2);
+  });
+
+  it('shows the linked spec on the conversation entries and opens it', async () => {
+    const linked = { ...info, link: { target: { kind: 'cycle' as const, specId: 'spec-dev-001-pagos', cycle: 'cycle-01' as const }, source: 'auto' as const } };
+    const { value } = setup({ history: {}, withThread: false });
+    act(() => value.store.setState({ threads: { 'th-1': { ...emptyThread(), info: linked } } }));
+    const started = (await screen.findByText('Conversación «Revisión de pagos» iniciada')).closest('button') as HTMLElement;
+    expect(within(started).getByText(/spec-dev-001-pagos/)).toBeInTheDocument();
+    fireEvent.click(started);
+    expect(screen.getByTestId('nav')).toHaveTextContent('specs|spec-dev-001-pagos');
+  });
+
+  it('opens the thread of an unlinked conversation entry', async () => {
+    setup();
+    fireEvent.click((await screen.findByText('Conversación «Revisión de pagos» terminada')).closest('button') as HTMLElement);
+    expect(screen.getByTestId('nav')).toHaveTextContent('home|||th-1');
+  });
+
+  it('restores the conversations origin from the persisted filter', async () => {
+    const first = setup();
+    await screen.findByText('Conversación «Revisión de pagos» iniciada');
+    fireEvent.click(pill(/Conversaciones/));
+    await waitFor(() => expect(window.localStorage.getItem('sdd-studio.nav.v1:fixture-project')).toContain('"activity":["conversation"]'));
+    first.unmount();
+    setup();
+    await screen.findByText('Conversación «Revisión de pagos» iniciada');
+    expect(screen.queryByText(/FIX-dev-001/)).not.toBeInTheDocument();
+    window.localStorage.clear();
   });
 
   it('limits the timeline to the chosen origins and restores it with Todo', async () => {

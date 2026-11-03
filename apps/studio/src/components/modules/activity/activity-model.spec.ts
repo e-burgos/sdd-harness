@@ -26,7 +26,7 @@ const thread = (lastActivity: string): ThreadState => ({
 });
 
 describe('activity model', () => {
-  it('classifies bot events into the six origins and drops the rest', () => {
+  it('classifies bot events into their origins and drops the rest', () => {
     expect(kindOfBotEvent(bot('task.status', 'spec:s', { to: 'done' }))).toBe('task');
     expect(kindOfBotEvent(bot('task.status', 'spec:s', { to: 'in-progress' }))).toBeNull();
     expect(kindOfBotEvent(bot('cycle.opened', 'spec:s', {}))).toBe('spec');
@@ -47,8 +47,10 @@ describe('activity model', () => {
       'bot:fixes:0',
       'thread:t1:q1',
       'thread:t1:p1',
+      'conversation:t1:ended',
       'bot:spec:s:1',
       'bot:general:0',
+      'conversation:t1:started',
       'bot:general:1',
       'bot:spec:s:0',
     ]);
@@ -65,9 +67,9 @@ describe('activity model', () => {
 
   it('counts, filters by origin and query, and toggles origins in a stable order', () => {
     const entries = buildActivity({ fixes: [bot('fix.created', 'fixes', { fixId: 'F1' }, '2026-03-04T10:00:00Z')], general: [bot('tools.changed', 'general', { tool: 'rtk' }, '2026-03-01T10:00:00Z')] }, { t1: thread('2026-03-03T10:00:00Z') });
-    expect(countByKind(entries)).toEqual({ approval: 1, question: 1, task: 0, spec: 0, fix: 1, tools: 1 });
+    expect(countByKind(entries)).toEqual({ approval: 1, question: 1, task: 0, spec: 0, fix: 1, tools: 1, conversation: 2 });
     expect(filterByKinds(entries, ['fix', 'tools'])).toHaveLength(2);
-    expect(filterByKinds(entries, [])).toHaveLength(4);
+    expect(filterByKinds(entries, [])).toHaveLength(6);
     expect(filterByQuery(entries, ' SEGUIMOS ', (entry) => (entry.detail.type === 'question' ? entry.detail.question : ''))).toHaveLength(1);
     expect(filterByQuery(entries, 'SEGUIMOS', () => 'Aprobación pendiente')).toHaveLength(0);
     expect(filterByQuery(entries, 'aprobacion', () => 'Aprobación pendiente')).toHaveLength(entries.length);
@@ -84,5 +86,41 @@ describe('activity model', () => {
     expect(days.map((day) => day.entries.length)).toEqual([2, 1, 1]);
     expect(days[0]?.key).toBe(dayKeyOf('2026-03-04T12:00:00Z'));
     expect(days[2]?.key).toBe('undated');
+  });
+
+  describe('conversations', () => {
+    const withInfo = (patch: Partial<NonNullable<ThreadState['info']>>): Record<string, ThreadState> => {
+      const base = thread('2026-03-03T10:00:00Z');
+      return { t1: { ...base, items: [], info: { ...base.info!, ...patch } } };
+    };
+
+    it('derives a start and an end entry from a finished thread', () => {
+      const entries = buildActivity({}, withInfo({}));
+      expect(entries.map((entry) => [entry.id, entry.at, entry.approx])).toEqual([
+        ['conversation:t1:ended', '2026-03-03T10:00:00Z', false],
+        ['conversation:t1:started', '2026-03-01T00:00:00Z', false],
+      ]);
+      expect(entries[0]).toMatchObject({ kind: 'conversation', target: { kind: 'thread', threadId: 't1' }, detail: { type: 'conversation', phase: 'idle', title: 'Conversación', reference: null } });
+    });
+
+    it('reports interrupted and failed endings and nothing while the thread is busy', () => {
+      expect(buildActivity({}, withInfo({ status: 'interrupted' }))[0]?.detail).toMatchObject({ phase: 'interrupted' });
+      expect(buildActivity({}, withInfo({ status: 'error' }))[0]?.detail).toMatchObject({ phase: 'error' });
+      for (const status of ['queued', 'running', 'waiting-approval'] as const) {
+        expect(buildActivity({}, withInfo({ status })).map((entry) => entry.id)).toEqual(['conversation:t1:started']);
+      }
+    });
+
+    it('does not emit an end entry for a thread that never ran', () => {
+      expect(buildActivity({}, withInfo({ lastActivity: '2026-03-01T00:00:00Z' })).map((entry) => entry.id)).toEqual(['conversation:t1:started']);
+    });
+
+    it('links the entries to the spec or fix the thread is linked to', () => {
+      const cycle = buildActivity({}, withInfo({ link: { target: { kind: 'cycle', specId: 'spec-dev-001', cycle: 'cycle-01' }, source: 'auto' } }));
+      expect(cycle.every((entry) => entry.target?.kind === 'spec' && entry.target.specId === 'spec-dev-001')).toBe(true);
+      expect(cycle[0]?.detail).toMatchObject({ reference: 'spec-dev-001' });
+      const fix = buildActivity({}, withInfo({ link: { target: { kind: 'fix', fixId: 'FIX-dev-001' }, source: 'manual' } }));
+      expect(fix[0]).toMatchObject({ target: { kind: 'fix', fixId: 'FIX-dev-001' }, detail: { reference: 'FIX-dev-001' } });
+    });
   });
 });

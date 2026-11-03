@@ -1,6 +1,6 @@
 'use client';
 
-import { Bot, CircleCheck, CircleHelp, ShieldQuestion, Wrench, FileText, type LucideIcon } from 'lucide-react';
+import { Bot, CircleCheck, CircleHelp, MessageSquare, ShieldQuestion, Wrench, FileText, type LucideIcon } from 'lucide-react';
 import { useT, type Lang, type TFunction } from '@/lib/i18n/i18n';
 import { PANEL_TYPE, ROW_ICON } from '@/lib/typography-tokens';
 import { focusRing } from '../../shell/shell-context';
@@ -14,6 +14,7 @@ const KIND_ICON: Record<ActivityKind, LucideIcon> = {
   spec: FileText,
   fix: Wrench,
   tools: Bot,
+  conversation: MessageSquare,
 };
 
 export function dayLabel(t: TFunction, lang: Lang, day: ActivityDay, now: number = Date.now()): string {

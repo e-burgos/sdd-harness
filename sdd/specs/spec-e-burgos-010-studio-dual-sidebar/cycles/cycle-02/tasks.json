@@ -23,7 +23,15 @@
       "story_points": 3,
       "depends_on": [],
       "status": "pending",
-      "files": []
+      "files": [
+        "apps/studio/src/lib/store/state.ts",
+        "apps/studio/src/lib/store/state.spec.ts",
+        "apps/studio/src/components/modules/kit/KitParts.tsx",
+        "apps/studio/src/components/modules/kit/KitCapabilitiesView.tsx",
+        "apps/studio/src/components/modules/kit/kit-module.spec.tsx",
+        "apps/studio/src/components/modules/architecture/use-registries.tsx",
+        "apps/studio/src/components/modules/architecture/architecture.spec.tsx"
+      ]
     },
     {
       "id": "TASK-002",
@@ -35,7 +43,15 @@
       "story_points": 3,
       "depends_on": [],
       "status": "pending",
-      "files": []
+      "files": [
+        "apps/studio/src/lib/nav/use-nav.ts",
+        "apps/studio/src/lib/i18n/modules/activity.ts",
+        "apps/studio/src/components/modules/activity/activity-model.ts",
+        "apps/studio/src/components/modules/activity/activity-model.spec.ts",
+        "apps/studio/src/components/modules/activity/activity-text.ts",
+        "apps/studio/src/components/modules/activity/ActivityTimeline.tsx",
+        "apps/studio/src/components/modules/activity/activity-module.spec.tsx"
+      ]
     },
     {
       "id": "TASK-003",

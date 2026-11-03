@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { KitIndex } from '@sdd-studio/protocol';
 import { z } from 'zod';
 import { BridgeError } from '@/lib/bridge/client';
 import { useBridge } from '../../BridgeProvider';
@@ -51,32 +52,75 @@ async function loadRegistry<K extends RegistryKey>(request: Request, key: K) {
   return { status: 'ready', items: COLLECT[key](registry) } as const;
 }
 
+const KEYS = Object.keys(REGISTRY_PATH) as RegistryKey[];
+
+type Fingerprints = Partial<Record<RegistryKey, string>>;
+
+function fingerprintsOf(data: unknown): Fingerprints | null {
+  const parsed = KitIndex.safeParse(data);
+  if (!parsed.success || parsed.data.truncated) return null;
+  const byPath = new Map(parsed.data.entries.filter((entry) => entry.section === 'registries').map((entry) => [entry.path, `${entry.size}:${entry.mtime}`]));
+  return Object.fromEntries(KEYS.flatMap((key) => (byPath.has(REGISTRY_PATH[key]) ? [[key, byPath.get(REGISTRY_PATH[key])]] : []))) as Fingerprints;
+}
+
+const changedKeys = (before: Fingerprints | null, after: Fingerprints): RegistryKey[] =>
+  before === null ? KEYS : KEYS.filter((key) => after[key] === undefined || before[key] !== after[key]);
+
 export function RegistriesProvider({ children }: { children: ReactNode }) {
   const { client, connection } = useBridge();
   const open = connection.status === 'open';
+  const indexed = open && client.supports('kit-index');
   const [state, setState] = useState<Omit<Registries, 'reload'>>(LOADING);
-  const run = useRef(0);
+  const runs = useRef<Record<RegistryKey, number>>({ db: 0, api: 0, components: 0 });
+  const fingerprints = useRef<Fingerprints | null>(null);
+
+  const loadKeys = useCallback(
+    (keys: RegistryKey[]) => {
+      const request: Request = (command) => client.request(command);
+      for (const key of keys) {
+        const current = ++runs.current[key];
+        loadRegistry(request, key).then((next) => {
+          if (current === runs.current[key]) setState((previous) => ({ ...previous, [key]: next }));
+        });
+      }
+    },
+    [client],
+  );
 
   const load = useCallback(() => {
-    const current = ++run.current;
-    const request: Request = (command) => client.request(command);
-    Promise.all([loadRegistry(request, 'db'), loadRegistry(request, 'api'), loadRegistry(request, 'components')]).then(([db, api, components]) => {
-      if (current === run.current) setState({ db, api, components } as Omit<Registries, 'reload'>);
-    });
-  }, [client]);
+    fingerprints.current = null;
+    loadKeys(KEYS);
+    if (indexed) client.request({ cmd: 'kit.index' }).then((data) => (fingerprints.current ??= fingerprintsOf(data)), () => undefined);
+  }, [client, indexed, loadKeys]);
+
+  const reloadChanged = useCallback(() => {
+    client.request({ cmd: 'kit.index' }).then(
+      (data) => {
+        const after = fingerprintsOf(data);
+        if (after === null) return loadKeys(KEYS);
+        const keys = changedKeys(fingerprints.current, after);
+        fingerprints.current = after;
+        if (keys.length > 0) loadKeys(keys);
+      },
+      () => loadKeys(KEYS),
+    );
+  }, [client, loadKeys]);
 
   useEffect(() => {
     if (!open) return;
     load();
     const stop =
       typeof client.onEvent === 'function'
-        ? client.onEvent((event) => (event.kind === 'workspace.changed' || event.kind === 'kit.changed' ? load() : undefined))
+        ? client.onEvent((event) => {
+            if (!indexed) return event.kind === 'workspace.changed' || event.kind === 'kit.changed' ? load() : undefined;
+            if (event.kind === 'kit.changed' && event.sections.includes('registries')) reloadChanged();
+          })
         : undefined;
     return () => {
-      run.current += 1;
+      for (const key of KEYS) runs.current[key] += 1;
       stop?.();
     };
-  }, [client, open, load]);
+  }, [client, open, indexed, load, reloadChanged]);
 
   const value = useMemo<Registries>(() => ({ ...state, reload: load }), [state, load]);
   return <RegistriesContext.Provider value={value}>{children}</RegistriesContext.Provider>;

@@ -60,10 +60,10 @@ export function Notice({
 
 export type FileMode = 'markdown' | 'json';
 
-export function FileViewer({ path, mode }: { path: string; mode: FileMode }) {
+export function FileViewer({ path, mode, revision }: { path: string; mode: FileMode; revision?: string }) {
   const { t } = useT();
   const { index } = useKitIndex();
-  const file = useKitFile(path, index?.revision ?? null);
+  const file = useKitFile(path, revision ?? index?.revision ?? null);
   if (file.status === 'idle' || file.status === 'loading') {
     return (
       <div role="status" aria-label={t('module.kit.doc.loading')} className="flex flex-col gap-2 py-2">

@@ -155,6 +155,53 @@ describe('Kit center content', () => {
     expect(requests).toContainEqual({ cmd: 'workspace.readFile', path: 'sdd/skills/sdd-steward/SKILL.md' });
   });
 
+  describe('open skill refresh', () => {
+    const reads = (requests: Record<string, unknown>[]) => requests.filter((r) => r.cmd === 'workspace.readFile' && r.path === 'sdd/skills/sdd-steward/SKILL.md');
+    const STEWARD = { id: 'sdd-steward', kind: 'skill', description: 'Conserje del kit', source: 'sdd', path: 'sdd/skills/sdd-steward/SKILL.md' } as const;
+    const OTHER = { id: 'sdd-other', kind: 'skill', description: 'Otra skill', source: 'sdd', path: 'sdd/skills/sdd-other/SKILL.md' } as const;
+    const skillsChanged = (value: ReturnType<typeof setup>['value'], skills: WorkspaceSnapshot['skills'], areas: ('agents' | 'specs')[] = ['agents']) =>
+      act(() => value.store.getState().receive({ kind: 'workspace.changed', areas, snapshot: { ...snapshot(TOOLS), skills } }));
+
+    it('asks for the skill again when its own summary changes and keeps the document mounted', async () => {
+      const { requests, value } = setup('skills');
+      const heading = await screen.findByRole('heading', { name: 'Steward definition' });
+      expect(reads(requests)).toHaveLength(1);
+      skillsChanged(value, [{ ...STEWARD, description: 'Conserje actualizado' }]);
+      await waitFor(() => expect(reads(requests)).toHaveLength(2));
+      expect(screen.getByRole('heading', { name: 'Steward definition' })).toBe(heading);
+      expect(screen.queryByRole('status', { name: 'Cargando documento' })).not.toBeInTheDocument();
+    });
+
+    it('does not ask again when another skill changes, is added, or the change is outside the catalog', async () => {
+      const { requests, value, emit } = setup('skills');
+      await screen.findByRole('heading', { name: 'Steward definition' });
+      skillsChanged(value, [STEWARD, OTHER]);
+      skillsChanged(value, [STEWARD, { ...OTHER, description: 'Otra skill editada' }]);
+      skillsChanged(value, [STEWARD, OTHER], ['specs']);
+      emit({ kind: 'kit.changed', sections: ['docs'], revision: 'r2' });
+      await waitFor(() => expect(requests.filter((r) => r.cmd === 'kit.index')).toHaveLength(2));
+      expect(reads(requests)).toHaveLength(1);
+    });
+
+    it('shows the empty state when the catalog no longer has any skill', async () => {
+      const { value } = setup('skills');
+      await screen.findByRole('heading', { name: 'Steward definition' });
+      skillsChanged(value, []);
+      expect(await screen.findByText('Este workspace todavía no tiene elementos del kit en esta sección')).toBeInTheDocument();
+      expect(screen.queryByRole('heading', { name: 'Steward definition' })).not.toBeInTheDocument();
+    });
+
+    it('shows a removed notice instead of another skill when the open one is deleted while others remain', async () => {
+      const { value } = setup('skills');
+      await screen.findByRole('heading', { name: 'Steward definition' });
+      skillsChanged(value, [STEWARD, OTHER]);
+      fireEvent.click(await screen.findByRole('button', { name: 'Ver definición de sdd-other' }));
+      skillsChanged(value, [STEWARD]);
+      expect(await screen.findByText('El elemento que estabas leyendo ya no existe en el kit')).toBeInTheDocument();
+      expect(screen.queryByRole('heading', { name: 'Steward definition' })).not.toBeInTheDocument();
+    });
+  });
+
   it('opens the definition of a prompt when it is picked', async () => {
     const { requests } = setup('prompts');
     fireEvent.click(await screen.findByRole('button', { name: 'Ver definición de start-sdd-cycle.prompt' }));

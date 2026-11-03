@@ -1,4 +1,4 @@
-import { specIdOfChannel, type BotEvent } from '@sdd-studio/protocol';
+import { specIdOfChannel, type BotEvent, type SessionStatus, type ThreadInfo } from '@sdd-studio/protocol';
 import { matchesQuery } from '@/lib/nav/search';
 import { ACTIVITY_ORIGINS, type ActivityOrigin } from '@/lib/nav/use-nav';
 import type { ThreadState } from '@/lib/store/timeline';
@@ -15,7 +15,10 @@ export type ActivityTarget =
 export type ActivityDetail =
   | { type: 'approval'; tool: string; summary: string; decision: 'pending' | 'allow' | 'deny'; threadTitle: string }
   | { type: 'question'; question: string; outcome: 'pending' | 'answered' | 'declined' | 'cancelled'; threadTitle: string }
-  | { type: 'bot'; event: BotEvent };
+  | { type: 'bot'; event: BotEvent }
+  | { type: 'conversation'; phase: ConversationPhase; title: string; reference: string | null };
+
+export type ConversationPhase = 'started' | 'idle' | 'interrupted' | 'error';
 
 export interface ActivityEntry {
   id: string;
@@ -37,6 +40,8 @@ export const UNDATED_DAY = 'undated';
 
 const SPEC_BOT_KINDS: ReadonlySet<string> = new Set(['spec.created', 'spec.status', 'cycle.opened', 'cycle.status']);
 const FIX_BOT_KINDS: ReadonlySet<string> = new Set(['fix.created', 'fix.status']);
+
+const endPhaseOf = (status: SessionStatus): ConversationPhase | null => (status === 'idle' || status === 'interrupted' || status === 'error' ? status : null);
 
 const text = (value: unknown): string | null => (typeof value === 'string' && value !== '' ? value : null);
 
@@ -93,6 +98,32 @@ function threadEntries(threads: Record<string, ThreadState>): ActivityEntry[] {
   });
 }
 
+function conversationLink(info: ThreadInfo): { target: ActivityTarget; reference: string } | null {
+  const target = info.link.target;
+  if (target.kind === 'cycle') return { target: { kind: 'spec', specId: target.specId }, reference: target.specId };
+  if (target.kind === 'fix') return { target: { kind: 'fix', fixId: target.fixId }, reference: target.fixId };
+  return null;
+}
+
+function conversationEntries(threads: Record<string, ThreadState>): ActivityEntry[] {
+  return Object.values(threads).flatMap((state) => {
+    const info = state.info;
+    if (!info) return [];
+    const link = conversationLink(info);
+    const entry = (phase: ConversationPhase, at: string, rank: number): ActivityEntry => ({
+      id: `conversation:${info.id}:${phase === 'started' ? 'started' : 'ended'}`,
+      kind: 'conversation',
+      at: at || null,
+      approx: false,
+      rank,
+      target: link?.target ?? { kind: 'thread', threadId: info.id },
+      detail: { type: 'conversation', phase, title: info.title, reference: link?.reference ?? null },
+    });
+    const endPhase = info.lastActivity !== info.createdAt ? endPhaseOf(info.status) : null;
+    return [entry('started', info.createdAt, 0), ...(endPhase ? [entry(endPhase, info.lastActivity, 1)] : [])];
+  });
+}
+
 const timeOf = (at: string | null): number | null => {
   if (at === null) return null;
   const time = Date.parse(at);
@@ -109,7 +140,7 @@ export function compareEntries(a: ActivityEntry, b: ActivityEntry): number {
 }
 
 export function buildActivity(bot: Record<string, readonly BotEvent[]>, threads: Record<string, ThreadState>): ActivityEntry[] {
-  return [...botEntries(bot), ...threadEntries(threads)].sort(compareEntries);
+  return [...botEntries(bot), ...threadEntries(threads), ...conversationEntries(threads)].sort(compareEntries);
 }
 
 export function countByKind(entries: readonly ActivityEntry[]): Record<ActivityKind, number> {

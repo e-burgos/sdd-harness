@@ -12,8 +12,11 @@ export const LEGACY_VIEW_KEY = 'sdd-studio.active-view';
 export const METRICS_VIEWS = ['dashboard', 'planning', 'costs', 'ecosystem', 'telemetry'] as const;
 export const ARCHITECTURE_SECTIONS = ['db', 'api', 'components'] as const;
 export const SPEC_TABS = ['summary', 'plan', 'tasks', 'documents', 'conversations'] as const;
-export const ACTIVITY_ORIGINS = ['approval', 'question', 'task', 'spec', 'fix', 'tools'] as const;
+export const ACTIVITY_ORIGINS = ['approval', 'question', 'task', 'spec', 'fix', 'tools', 'conversation'] as const;
 const LEGACY_ACTIVITY_ORIGINS = ['spec', 'fix', 'agent', 'tools'];
+const PRE_CONVERSATION_ORIGINS = ['approval', 'question', 'task', 'spec', 'fix', 'tools'];
+
+const isExactSet = (stored: unknown[], expected: readonly string[]) => stored.length === expected.length && expected.every((origin) => stored.includes(origin));
 
 export type MetricsView = (typeof METRICS_VIEWS)[number];
 export type ArchitectureSection = (typeof ARCHITECTURE_SECTIONS)[number];
@@ -22,8 +25,7 @@ export type ActivityOrigin = (typeof ACTIVITY_ORIGINS)[number];
 
 export function migrateActivityFilter(stored: unknown): unknown {
   if (!Array.isArray(stored)) return stored;
-  const isLegacyAll = stored.length === LEGACY_ACTIVITY_ORIGINS.length && LEGACY_ACTIVITY_ORIGINS.every((origin) => stored.includes(origin));
-  if (isLegacyAll) return [];
+  if (isExactSet(stored, LEGACY_ACTIVITY_ORIGINS) || isExactSet(stored, PRE_CONVERSATION_ORIGINS)) return [];
   const known: readonly unknown[] = ACTIVITY_ORIGINS;
   return stored.filter((origin, position) => known.includes(origin) && stored.indexOf(origin) === position);
 }

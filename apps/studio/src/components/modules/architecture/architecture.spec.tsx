@@ -1,7 +1,8 @@
-import { fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
+import type { ServerEvent } from '@sdd-studio/protocol';
 import { BridgeError } from '@/lib/bridge/client';
 import { MODULES } from '@/lib/nav/modules';
-import { bridgeValue, renderShell } from '../../shell/shell-test-utils';
+import { bridgeValue, renderShell, shellSnapshot } from '../../shell/shell-test-utils';
 import { collectComponents, collectEndpoints, collectTables, parseRegistry } from './architecture-model';
 
 const schema = {
@@ -135,5 +136,96 @@ describe('architecture module', () => {
   it('renders in English', async () => {
     setup(Object.keys(files), 'en');
     await screen.findByText('2 tables');
+  });
+});
+
+describe('architecture selective reads', () => {
+  const fingerprint = (path: string, mtime: string) => ({ section: 'registries', role: 'registry', group: null, path, size: 10, mtime });
+  const indexOf = (mtimes: Record<string, string>, truncated = false) => ({
+    revision: 'r',
+    truncated,
+    entries: Object.keys(files).map((path) => fingerprint(path, mtimes[path] ?? 't0')),
+  });
+
+  function setupIndexed(initial: () => unknown, missing: string[] = []) {
+    window.localStorage.clear();
+    const requests: { cmd: string; path?: string }[] = [];
+    const listeners = new Set<(event: ServerEvent) => void>();
+    let index = initial;
+    const client = {
+      supports: (feature: string) => feature === 'kit-index',
+      onEvent: (fn: (event: ServerEvent) => void) => {
+        listeners.add(fn);
+        return () => listeners.delete(fn);
+      },
+      request: async (command: { cmd: string; path?: string }) => {
+        requests.push(command);
+        if (command.cmd === 'kit.index') return index();
+        if (command.cmd === 'workspace.readFile' && command.path && command.path in files && !missing.includes(command.path)) return { path: command.path, content: JSON.stringify(files[command.path]) };
+        throw new BridgeError('not-found', 'no existe');
+      },
+    };
+    const Wrap = Scope!;
+    const view = renderShell(
+      <Wrap>
+        <Panel />
+        <Center />
+      </Wrap>,
+      { value: bridgeValue({ client: client as never }) },
+    );
+    const reads = () => requests.filter((r) => r.cmd === 'workspace.readFile').map((r) => r.path);
+    const emit = (event: ServerEvent) => act(() => listeners.forEach((fn) => fn(event)));
+    return { ...view, requests, reads, emit, setIndex: (next: () => unknown) => (index = next) };
+  }
+
+  const settled = async (reads: () => (string | undefined)[], indexRequests: () => number) => {
+    await waitFor(() => expect(reads()).toHaveLength(3));
+    await waitFor(() => expect(indexRequests()).toBeGreaterThanOrEqual(1));
+  };
+
+  it('rereads only the registry whose fingerprint changed', async () => {
+    const harness = setupIndexed(() => indexOf({}));
+    await settled(harness.reads, () => harness.requests.filter((r) => r.cmd === 'kit.index').length);
+    harness.setIndex(() => indexOf({ 'sdd/api.json': 't1' }));
+    harness.emit({ kind: 'kit.changed', sections: ['registries'], revision: 'r2' });
+    await waitFor(() => expect(harness.reads()).toHaveLength(4));
+    expect(harness.reads()[3]).toBe('sdd/api.json');
+  });
+
+  it('does not read anything for other kit sections or for workspace changes', async () => {
+    const harness = setupIndexed(() => indexOf({}));
+    await settled(harness.reads, () => harness.requests.filter((r) => r.cmd === 'kit.index').length);
+    harness.emit({ kind: 'kit.changed', sections: ['docs'], revision: 'r2' });
+    harness.emit({ kind: 'workspace.changed', areas: ['specs'], snapshot: shellSnapshot });
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    expect(harness.reads()).toHaveLength(3);
+    expect(harness.requests.filter((r) => r.cmd === 'kit.index')).toHaveLength(1);
+  });
+
+  it('keeps the other registries ready when one is missing', async () => {
+    setupIndexed(() => indexOf({}), ['sdd/schema.json']);
+    expect(await screen.findByText('No se pudo leer el registro')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /^API/ }));
+    expect(await screen.findByText('/accounts')).toBeTruthy();
+  });
+
+  it('rereads all three registries when the index cannot be read', async () => {
+    let fail = false;
+    const harness = setupIndexed(() => {
+      if (fail) throw new BridgeError('internal', 'boom');
+      return indexOf({});
+    });
+    await settled(harness.reads, () => harness.requests.filter((r) => r.cmd === 'kit.index').length);
+    fail = true;
+    harness.emit({ kind: 'kit.changed', sections: ['registries'], revision: 'r2' });
+    await waitFor(() => expect(harness.reads()).toHaveLength(6));
+  });
+
+  it('rereads all three registries when the index is truncated', async () => {
+    const harness = setupIndexed(() => indexOf({}));
+    await settled(harness.reads, () => harness.requests.filter((r) => r.cmd === 'kit.index').length);
+    harness.setIndex(() => indexOf({}, true));
+    harness.emit({ kind: 'kit.changed', sections: ['registries'], revision: 'r2' });
+    await waitFor(() => expect(harness.reads()).toHaveLength(6));
   });
 });

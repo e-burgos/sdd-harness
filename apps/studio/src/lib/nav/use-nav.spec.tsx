@@ -29,6 +29,14 @@ describe('navigation store', () => {
     expect(readNav('p').filters.activity).toEqual(['fix']);
   });
 
+  it('treats a stored selection of all six pre-conversation origins as no filter', () => {
+    const base = defaultNav();
+    window.localStorage.setItem(key('p'), JSON.stringify({ ...base, filters: { ...base.filters, activity: ['tools', 'fix', 'spec', 'task', 'question', 'approval'] } }));
+    expect(readNav('p').filters.activity).toEqual([]);
+    window.localStorage.setItem(key('p'), JSON.stringify({ ...base, filters: { ...base.filters, activity: ['tools', 'fix', 'spec', 'task', 'question', 'approval', 'conversation'] } }));
+    expect(readNav('p').filters.activity).toHaveLength(7);
+  });
+
   it('persists module and selection per project, never the search text', () => {
     const store = createNavStore('alpha');
     store.getState().open('specs', 'spec-1');
