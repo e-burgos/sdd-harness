@@ -182,6 +182,27 @@ describe('config/load', () => {
     ).rejects.toThrow(/sdd\.modules\.0/);
   });
 
+  it('sdd.tucu_ui es opcional y booleano', async () => {
+    const absent = await loadHarnessConfig(await writeConfig(VALID_CONFIG));
+    expect(absent.sdd?.tucu_ui).toBeUndefined();
+
+    const on = await loadHarnessConfig(
+      await writeConfig({ ...VALID_CONFIG, sdd: { tucu_ui: true } }, 'on.json'),
+    );
+    expect(on.sdd?.tucu_ui).toBe(true);
+
+    const off = await loadHarnessConfig(
+      await writeConfig({ ...VALID_CONFIG, sdd: { tucu_ui: false } }, 'off.json'),
+    );
+    expect(off.sdd?.tucu_ui).toBe(false);
+
+    await expect(
+      loadHarnessConfig(
+        await writeConfig({ ...VALID_CONFIG, sdd: { tucu_ui: 'yes' } }, 'bad.json'),
+      ),
+    ).rejects.toThrow(/sdd\.tucu_ui/);
+  });
+
   it('standalone exige exactamente una app', async () => {
     const config = await loadHarnessConfig(
       await writeConfig({

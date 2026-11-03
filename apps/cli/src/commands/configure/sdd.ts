@@ -9,6 +9,17 @@ import type { WorkspaceOptions } from '../../generators/workspace.generator.js';
 import type { AppSpec } from '../../generators/app.generator.js';
 import { parseProfile } from '../../generators/sdd.generator.js';
 import {
+  TUCU_UI_CONFLICT_MESSAGE,
+  hasConflictingTucuUiFlags,
+  hasFrontendApp,
+} from '../../utils/tucu-ui-offer.js';
+import {
+  readTucuUiSection,
+  readTucuUiState,
+  restoreTucuUiSection,
+  runTucuUiOffer,
+} from '../../utils/tucu-ui-run.js';
+import {
   SUBPROJECT_NAME_RE,
   describeApp,
   detectAppType,
@@ -57,14 +68,24 @@ export const configureSddCommand = defineCommand({
       description:
         'Working profile written to sdd/global.json: team (full cycles, default) | solo (lite cycles, single actor)',
     },
+    'tucu-ui': {
+      type: 'boolean',
+      description:
+        'Turn on the tucu-ui design skill + MCP (React/Next apps). --no-tucu-ui keeps it off',
+    },
     apps: {
       type: 'string',
       description:
         'Applications to register, as name=path pairs separated by commas (e.g. api=src/api,web=src/web). Skips detection; the logical id stays apps/<name>',
     },
   },
-  async run({ args }) {
+  async run({ args, rawArgs }) {
     p.intro(pc.bgCyan(pc.black(' harness configure sdd ')));
+
+    if (hasConflictingTucuUiFlags(rawArgs)) {
+      logger.error(TUCU_UI_CONFLICT_MESSAGE);
+      process.exit(1);
+    }
 
     const cwd = process.cwd();
 
@@ -195,6 +216,8 @@ export const configureSddCommand = defineCommand({
       sddProfile: profile,
     };
 
+    const previousTucuUi = readTucuUiState(cwd) === 'off' ? undefined : readTucuUiSection(cwd);
+
     try {
       await generateSDD(cwd, opts, {
         layout: isMonorepo ? 'nx' : 'standalone',
@@ -225,6 +248,15 @@ export const configureSddCommand = defineCommand({
       logger.error((err as Error).message);
       process.exit(1);
     }
+
+    if (previousTucuUi) restoreTucuUiSection(cwd, previousTucuUi);
+
+    await runTucuUiOffer(cwd, {
+      flag: args['tucu-ui'] ?? (previousTucuUi ? true : undefined),
+      hasFrontend: hasFrontendApp(apps.map((app) => app.type)),
+      interactive: Boolean(process.stdin.isTTY) && !args.yes,
+      current: readTucuUiState(cwd),
+    });
 
     p.outro(pc.green('SDD configured.'));
   },

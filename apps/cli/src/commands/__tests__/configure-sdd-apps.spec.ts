@@ -7,6 +7,7 @@ import fs from 'fs-extra';
 import {
   SUBPROJECT_NAME_RE,
   describeApp,
+  detectAppType,
   discoverNxApplications,
   parseAppsFlag,
   toSubprojectName,
@@ -141,5 +142,36 @@ describe('configure sdd: qué apps registra', () => {
     expect(describeApp({ name: 'legacy', type: 'nestjs', path: 'apps/legacy' })).toBe('legacy (nestjs)');
     expect(describeApp({ name: 'api', type: 'springboot', path: 'src/api' })).toBe('api (springboot @ src/api)');
     expect(describeApp({ name: 'solo', type: 'app' })).toBe('solo (app)');
+  });
+});
+
+describe('configure sdd: detección de frontend para la oferta de tucu-ui', () => {
+  let dir: string;
+
+  beforeEach(() => {
+    dir = mkdtempSync(resolve(tmpdir(), 'harness-detect-'));
+  });
+
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true });
+  });
+
+  it.each(['next.config.js', 'next.config.ts', 'next.config.mjs', 'next.config.cjs'])(
+    '%s marca nextjs',
+    async (file) => {
+      await fs.writeFile(resolve(dir, file), '');
+      expect(detectAppType(dir)).toBe('nextjs');
+    },
+  );
+
+  it('vite.config.ts marca react y un repo sin marcadores no es frontend', async () => {
+    expect(detectAppType(dir)).toBe('app');
+    await fs.writeFile(resolve(dir, 'vite.config.ts'), '');
+    expect(detectAppType(dir)).toBe('react');
+  });
+
+  it('un backend NestJS no es frontend', async () => {
+    await fs.writeFile(resolve(dir, 'nest-cli.json'), '{}');
+    expect(detectAppType(dir)).toBe('nestjs');
   });
 });

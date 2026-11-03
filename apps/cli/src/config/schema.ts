@@ -89,6 +89,7 @@ const SDDConfigSchema = z.object({
   modules: z.array(ModuleSeedSchema).default([]),
   /** Perfil de trabajo → sdd/global.json.profile: team (ciclos full, default) | solo (ciclos lite, un solo actor). */
   profile: z.enum(['team', 'solo']).optional(),
+  tucu_ui: z.boolean().optional(),
   cycles: z.array(CycleConfigSchema).optional(),
   skills: z
     .object({

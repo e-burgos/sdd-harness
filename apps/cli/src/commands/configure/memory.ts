@@ -1,10 +1,11 @@
 import { defineCommand } from 'citty';
 import * as p from '@clack/prompts';
 import pc from 'picocolors';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { logger } from '../../utils/logger.js';
 import { parseListFlag } from '../../utils/flags.js';
+import { readMcpServerNames, syncMcpServers } from '../../utils/mcp-sync.js';
+import type { McpEntry } from '../../utils/kit-scripts.js';
 
 interface McpServerConfig {
   command: string;
@@ -71,16 +72,11 @@ export const configureMemoryCommand = defineCommand({
     const cwd = process.cwd();
     const mcpPath = resolve(cwd, '.mcp.json');
 
-    let existing: { mcpServers?: Record<string, McpServerConfig> } = {};
-    if (existsSync(mcpPath)) {
-      try {
-        existing = JSON.parse(readFileSync(mcpPath, 'utf-8'));
-      } catch {
-        logger.error('.mcp.json exists but is not valid JSON — fix it first.');
-        process.exit(1);
-      }
+    const existing = await readMcpServerNames(mcpPath);
+    if (!existing.ok) {
+      logger.error(existing.error);
+      process.exit(1);
     }
-    const existingServers = existing.mcpServers ?? {};
 
     const providers = args.providers
       ? parseListFlag(args.providers, Object.keys(MEMORY_CATALOG), '--providers')
@@ -91,9 +87,7 @@ export const configureMemoryCommand = defineCommand({
             label: val.label,
             hint: val.hint,
           })),
-          initialValues: Object.keys(existingServers).filter(
-            (s) => s in MEMORY_CATALOG,
-          ),
+          initialValues: existing.names.filter((s) => s in MEMORY_CATALOG),
           required: false,
         });
 
@@ -104,20 +98,19 @@ export const configureMemoryCommand = defineCommand({
 
     const selected = providers as string[];
 
-    const mcpServers = { ...existingServers };
-    for (const key of Object.keys(MEMORY_CATALOG)) {
-      if (selected.includes(key)) {
-        mcpServers[key] = MEMORY_CATALOG[key].config;
-      } else {
-        delete mcpServers[key];
-      }
+    const result = await syncMcpServers({
+      mcpPath,
+      catalog: Object.fromEntries(
+        Object.entries(MEMORY_CATALOG).map(([key, val]) => [key, val.config as McpEntry]),
+      ),
+      selected,
+      isOwn: () => true,
+    });
+    if (!result.ok) {
+      logger.error(result.error);
+      process.exit(1);
     }
 
-    writeFileSync(
-      mcpPath,
-      `${JSON.stringify({ ...existing, mcpServers }, null, 2)}\n`,
-      'utf-8',
-    );
     logger.success(
       selected.length
         ? `.mcp.json updated (${selected.join(', ')}) — other MCP servers preserved`

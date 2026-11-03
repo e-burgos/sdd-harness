@@ -4,6 +4,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { tmpdir } from 'node:os';
 import fs from 'fs-extra';
+import Ajv from 'ajv';
 
 import { generateSDD } from '../sdd.generator.js';
 import { updateSDD } from '../update.generator.js';
@@ -308,6 +309,49 @@ describe('update.generator', () => {
     const manifest = await fs.readJSON(resolve(ws, 'sdd/kit.json'));
     expect(Object.keys(manifest.files).some((k) => k.startsWith('integrations/'))).toBe(false);
     expect(isKitOwned('integrations/skills/tucu-ui-design/SKILL.md')).toBe(false);
+  });
+
+  it('tucu_ui prendido en tools.json sobrevive al update: ni versión ni claves cambian', async () => {
+    const tools = {
+      $schema: './schemas/tools.schema.json',
+      rtk: { enabled: true },
+      tucu_ui: { enabled: true, skill: true, mcp: false, version: '0.15.0', extra: 1 },
+    };
+    await fs.writeJSON(resolve(ws, 'sdd/tools.json'), tools);
+    const report = await updateSDD(ws);
+    expect(report.added).not.toContain('tools.json');
+    expect(report.conflicts).not.toContain('tools.json');
+    expect(await fs.readJSON(resolve(ws, 'sdd/tools.json'))).toEqual(tools);
+    expect(await fs.pathExists(resolve(ws, 'sdd/tools.json.new'))).toBe(false);
+  });
+
+  it('el schema nuevo valida un repo viejo sin tucu_ui y rechaza tipos equivocados', async () => {
+    await updateSDD(ws);
+    const schema = await fs.readJSON(resolve(ws, 'sdd/schemas/tools.schema.json'));
+    const validate = new Ajv({ strict: false }).compile(schema);
+    expect(validate({ rtk: { enabled: true } })).toBe(true);
+    expect(validate({ rtk: { enabled: true }, tucu_ui: { enabled: true, extra: 1 } })).toBe(true);
+    expect(validate({ rtk: { enabled: true }, tucu_ui: { enabled: 'yes' } })).toBe(false);
+    expect(validate({ rtk: { enabled: true }, surprise: true })).toBe(false);
+  });
+
+  it('un update con la skill instalada y el interruptor prendido no deja .new ni toca integrations/', async () => {
+    const skillDir = resolve(ws, 'sdd/integrations/skills/tucu-ui-design');
+    await fs.outputFile(resolve(skillDir, 'SKILL.md'), '# s\n');
+    await fs.outputFile(resolve(skillDir, 'references/checklist.md'), '# c\n');
+    await fs.outputFile(resolve(skillDir, 'references/design-guide.md'), '# g\n');
+    const tools = await fs.readJSON(resolve(ws, 'sdd/tools.json'));
+    const tucu_ui = { enabled: true, skill: true, mcp: false, version: '0.16.0' };
+    await fs.writeJSON(resolve(ws, 'sdd/tools.json'), { ...tools, tucu_ui });
+    const first = await updateSDD(ws);
+    const second = await updateSDD(ws);
+    expect((await fs.readJSON(resolve(ws, 'sdd/tools.json'))).tucu_ui).toEqual(tucu_ui);
+    for (const report of [first, second]) {
+      expect(report.conflicts).toEqual([]);
+      expect(report.added.some((f) => f.startsWith('integrations/'))).toBe(false);
+      expect(report.updated.some((f) => f.startsWith('integrations/'))).toBe(false);
+    }
+    expect(await fs.readFile(resolve(skillDir, 'SKILL.md'), 'utf-8')).toBe('# s\n');
   });
 
   it('package.json recibe sdd:rtk y postinstall, y respeta un postinstall propio', async () => {

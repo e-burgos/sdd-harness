@@ -15,6 +15,17 @@ import { IDEA_FILENAME } from "../generators/idea.generator.js";
 import { parseProfile } from "../generators/sdd.generator.js";
 import type { SddProfile } from "../generators/sdd.generator.js";
 import { CONFIG_SCHEMA_FILENAME } from "../config/json-schema.js";
+import {
+  TUCU_UI_CONFLICT_MESSAGE,
+  hasConflictingTucuUiFlags,
+  hasFrontendApp,
+} from "../utils/tucu-ui-offer.js";
+import {
+  applyTucuUi,
+  decideTucuUiOffer,
+  logTucuUiSummary,
+  type TucuUiOfferOutcome,
+} from "../utils/tucu-ui-run.js";
 
 /** Flags de destino compartidos por las tres vías de init. */
 interface TargetFlags {
@@ -22,6 +33,35 @@ interface TargetFlags {
   profile?: SddProfile;
   dir?: string;
   skipVerify: boolean;
+  tucuUi?: boolean;
+  interactive?: boolean;
+}
+
+export interface TucuUiPlan {
+  beforeGate?: (root: string) => void;
+  report: () => void;
+}
+
+export async function planTucuUi(
+  flags: TargetFlags,
+  appTypes: string[],
+): Promise<TucuUiPlan> {
+  const decision = await decideTucuUiOffer({
+    flag: flags.tucuUi,
+    hasFrontend: hasFrontendApp(appTypes),
+    interactive: flags.interactive ?? false,
+    current: "off",
+  });
+  let outcome: TucuUiOfferOutcome = decision === "enable" ? "failed" : decision;
+  return {
+    beforeGate:
+      decision === "enable"
+        ? (root) => {
+            outcome = applyTucuUi(root);
+          }
+        : undefined,
+    report: () => logTucuUiSummary(outcome),
+  };
 }
 
 /**
@@ -162,15 +202,25 @@ export const initCommand = defineCommand({
         "Skip the FASE 3 gate (sdd:validate + nx run-many -t lint test build) that init runs and fails on",
       default: false,
     },
+    "tucu-ui": {
+      type: "boolean",
+      description:
+        "Turn on the tucu-ui design skill + MCP (React/Next apps). --no-tucu-ui keeps it off. With --config, sdd.tucu_ui is the fallback",
+    },
     profile: {
       type: "string",
       description:
         "Working profile written to sdd/global.json: team (full cycles, default) | solo (lite cycles, single actor). With --config, sdd.profile wins when set",
     },
   },
-  async run({ args }) {
+  async run({ args, rawArgs }) {
     warnIfNxRootMismatch();
     p.intro(pc.bgCyan(pc.black(" harness init ")));
+
+    if (hasConflictingTucuUiFlags(rawArgs)) {
+      logger.error(TUCU_UI_CONFLICT_MESSAGE);
+      process.exit(1);
+    }
 
     let profile: SddProfile | undefined;
     try {
@@ -185,6 +235,8 @@ export const initCommand = defineCommand({
       dir: args.dir,
       skipVerify: args.skipVerify,
       profile,
+      tucuUi: args["tucu-ui"],
+      interactive: Boolean(process.stdin.isTTY) && !args.yes && !args.config,
     };
 
     if (args.config) {
@@ -287,6 +339,10 @@ async function runConfigFlow(
     configPath,
   );
   const modules = config.sdd?.modules ?? [];
+  const tucuUi = await planTucuUi(
+    { ...flags, tucuUi: flags.tucuUi ?? config.sdd?.tucu_ui },
+    config.apps.map((a) => a.type),
+  );
 
   p.note(
     [
@@ -319,6 +375,7 @@ async function runConfigFlow(
         targetDir,
         harnessFiles,
         skipVerify: flags.skipVerify,
+        beforeGate: tucuUi.beforeGate,
       });
     } else {
       await generateWorkspace({
@@ -327,6 +384,7 @@ async function runConfigFlow(
         targetDir,
         harnessFiles,
         skipVerify: flags.skipVerify,
+        beforeGate: tucuUi.beforeGate,
       });
     }
   } catch (err) {
@@ -334,6 +392,7 @@ async function runConfigFlow(
     process.exit(1);
   }
 
+  tucuUi.report();
   outroReady("Done! Your workspace is ready.");
 }
 
@@ -389,6 +448,8 @@ async function runStandaloneFlow(
     process.exit(0);
   }
 
+  const tucuUi = await planTucuUi(flags, [appType as string]);
+
   logger.title("Generating standalone repo...");
 
   try {
@@ -401,12 +462,14 @@ async function runStandaloneFlow(
       ...resolveInitTarget(process.cwd(), projectName, flags),
       harnessFiles: harnessFilesNextTo(undefined, process.cwd()),
       skipVerify: flags.skipVerify,
+      beforeGate: tucuUi.beforeGate,
     });
   } catch (err) {
     logger.error((err as Error).message);
     process.exit(1);
   }
 
+  tucuUi.report();
   outroReady("Done! Your standalone repo is ready.");
 }
 
@@ -562,6 +625,11 @@ async function runNxFlow(
     process.exit(0);
   }
 
+  const tucuUi = await planTucuUi(
+    flags,
+    apps.map((a) => a.type),
+  );
+
   logger.title("Generating workspace...");
 
   try {
@@ -576,11 +644,13 @@ async function runNxFlow(
       ...resolveInitTarget(process.cwd(), projectName, flags),
       harnessFiles: harnessFilesNextTo(undefined, process.cwd()),
       skipVerify: flags.skipVerify,
+      beforeGate: tucuUi.beforeGate,
     });
   } catch (err) {
     logger.error((err as Error).message);
     process.exit(1);
   }
 
+  tucuUi.report();
   outroReady("Done! Your workspace is ready.");
 }

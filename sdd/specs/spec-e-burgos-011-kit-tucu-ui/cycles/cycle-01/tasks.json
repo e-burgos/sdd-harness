@@ -271,6 +271,8 @@
       "status": "pending",
       "files": [
         "apps/cli/src/commands/init.ts",
+        "apps/cli/src/generators/workspace.generator.ts",
+        "apps/cli/src/generators/standalone.generator.ts",
         "apps/cli/src/commands/__tests__/init-target.spec.ts"
       ]
     },
@@ -309,6 +311,7 @@
       "files": [
         "apps/cli/src/commands/configure/mcp.ts",
         "apps/cli/src/commands/configure/memory.ts",
+        "apps/cli/src/utils/mcp-sync.ts",
         "apps/cli/src/commands/__tests__/configure-mcp.spec.ts"
       ]
     },
@@ -351,8 +354,7 @@
       ],
       "status": "pending",
       "files": [
-        "apps/cli/src/commands/__tests__/tucu-ui-flow.spec.ts",
-        "apps/cli/src/__e2e__/"
+        "apps/cli/src/commands/__tests__/tucu-ui-flow.spec.ts"
       ]
     },
     {
@@ -505,6 +507,7 @@
       "files": [
         "apps/cli/src/config/schema.ts",
         "apps/cli/src/config/json-schema.ts",
+        "apps/cli/src/types/config.types.ts",
         "apps/cli/src/config/__tests__/load.spec.ts",
         "apps/cli/src/config/__tests__/json-schema.spec.ts"
       ]

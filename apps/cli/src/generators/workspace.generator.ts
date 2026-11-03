@@ -52,6 +52,7 @@ export interface WorkspaceOptions {
   harnessFiles?: string[];
   /** Omite el gate de FASE 3 (sdd:validate + nx run-many -t lint test build). */
   skipVerify?: boolean;
+  beforeGate?: (root: string) => void | Promise<void>;
 }
 
 /**
@@ -186,6 +187,8 @@ export async function generateWorkspace(opts: WorkspaceOptions): Promise<void> {
   }
 
   await writeReadme(root, opts);
+
+  await opts.beforeGate?.(root);
 
   // ─── FASE 3: Finalización ──────────────────────────────────────────────────
 
