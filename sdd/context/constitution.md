@@ -77,7 +77,7 @@ Para el detalle técnico de cada subproyecto, ver su constitución específica:
 | ----------- | ---------- | -------------------- |
 | `apps/cli` | Node, TypeScript, citty, @clack/prompts, zod, Vitest | 2026-10-23 |
 | `apps/documentation` | React, Vite, Tailwind v4 | 2026-10-23 |
-| `apps/studio` | Next.js 16, React 19, tucu-ui 3.9.1 sin wrappers; shell estilo Slack (riel de módulos personalizable + panel de lista por módulo, `lib/nav` persistido por proyecto) con módulos Inicio, Specs, Fixes, Agentes, Actividad, Mapa, Kit, Arquitectura y Métricas; interruptores de `sdd/tools.json` desde Kit; estados SDD compartidos en `lib/sdd-status.ts`; escala tipográfica micro…title; zustand, Playwright | 2026-10-28 |
+| `apps/studio` | Next.js 16, React 19, tucu-ui 3.10.0 sin wrappers; shell estilo Slack (riel de módulos personalizable + panel de lista por módulo, `lib/nav` persistido por proyecto) con módulos Inicio, Specs, Fixes, Agentes, Actividad, Mapa, Kit, Arquitectura y Métricas; interruptores de `sdd/tools.json` desde Kit; estados SDD compartidos en `lib/sdd-status.ts`; escala tipográfica micro…title; zustand, Playwright | 2026-11-02 |
 | `apps/studio-bridge` | Node, TypeScript, claude-agent-sdk 0.3.292 (prompt streaming), ws, chokidar, ajv; `KitIndexer`, escritura de `sdd/tools.json` con `expectedRevision` y evento `tools.changed`, ahorro de rtk; `DocumentChangeTracker`, asociaciones múltiples y título de sesión | 2026-10-28 |
 | `libs/studio-protocol` | TypeScript, zod 4, Vitest (PROTOCOL_VERSION 2); features `kit-index`/`kit-tools`/`rtk-gain`, comandos `kit.*`, evento `kit.changed`, bot event `tools.changed`, `snapshot.tools` | 2026-10-28 |
 

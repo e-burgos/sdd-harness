@@ -21,8 +21,21 @@
         "US-016"
       ],
       "depends_on": [],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/studio/package.json",
+        "pnpm-lock.yaml"
+      ],
+      "usage": {
+        "tokens_in": 85371,
+        "tokens_out": 15066,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-02"
+      }
     },
     {
       "id": "TASK-002",
@@ -35,8 +48,18 @@
       "depends_on": [
         "TASK-001"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [],
+      "usage": {
+        "tokens_in": 40000,
+        "tokens_out": 6000,
+        "provider_model": "claude/opus",
+        "effort": "medium",
+        "agent": "reviewer",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-11-02"
+      }
     }
   ]
 }

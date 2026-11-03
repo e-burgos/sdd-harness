@@ -11,18 +11,113 @@
   "objectives": [
     "Adoptar tucu-ui 3.10.0 y quitar los overrides de color que resuelven sus tokens (US-016)"
   ],
-  "status": "in-progress",
+  "status": "completed",
   "started_at": "2026-11-02",
-  "completed_at": null,
+  "completed_at": "2026-11-02",
   "documents": {
     "plan": "sdd/specs/spec-e-burgos-009-studio-tucu-ui/cycles/cycle-07/plan.md",
     "tasks": "sdd/specs/spec-e-burgos-009-studio-tucu-ui/cycles/cycle-07/tasks.json"
   },
   "artifacts": [],
-  "metrics": null,
+  "metrics": {
+    "tasks_total": 2,
+    "tasks_completed": 2,
+    "tasks_skipped": 0,
+    "story_points": 5,
+    "files_created": [],
+    "files_modified": [
+      "apps/studio/package.json",
+      "pnpm-lock.yaml"
+    ],
+    "files_deleted": [],
+    "usage": {
+      "tokens_in": 288292,
+      "tokens_out": 48228,
+      "approx": true,
+      "source": "agent-usage-notification",
+      "by_tier": {
+        "claude/opus": {
+          "tokens_in": 100000,
+          "tokens_out": 15000,
+          "approx": true,
+          "source": "agent-usage-notification"
+        },
+        "claude/sonnet": {
+          "tokens_in": 188292,
+          "tokens_out": 33228,
+          "approx": true,
+          "source": "agent-usage-notification"
+        }
+      },
+      "by_agent": [
+        {
+          "agent": "orchestrator",
+          "label": "solo",
+          "provider_model": "claude/opus",
+          "effort": "medium",
+          "tokens_in": 60000,
+          "tokens_out": 9000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-11-02"
+        },
+        {
+          "agent": "orchestrator",
+          "label": "context consolidation",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 102921,
+          "tokens_out": 18162,
+          "approx": true,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-11-02"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-001",
+          "tokens_in": 85371,
+          "tokens_out": 15066,
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "approx": true,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-11-02"
+        },
+        {
+          "agent": "reviewer",
+          "label": "TASK-002",
+          "tokens_in": 40000,
+          "tokens_out": 6000,
+          "provider_model": "claude/opus",
+          "effort": "medium",
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-11-02"
+        }
+      ]
+    }
+  },
   "tables_created": [],
   "endpoints_implemented": [],
   "components_created": [],
-  "issues_found": [],
-  "reviewer_report": null
+  "issues_found": [
+    "decisión: sin overrides que borrar; Studio ya no usaba ! ni dark: sobre los componentes que 3.10.0 pasa a tokens",
+    "decisión: un tono propio de Studio se pisa con el token «Tones» en globals.css"
+  ],
+  "reviewer_report": {
+    "approved": true,
+    "date": "2026-11-02",
+    "ca_results": {
+      "US-016": "PASS - 3.10.0 exacta; sin overrides con ! ni dark: (verificado con grep: los ! restantes son negaciones de JS); HelpSelect neutral sin color; ConfirmDialog, botones, badges y chips revisados en el navegador en claro y oscuro"
+    },
+    "tests": {
+      "sdd:validate": "OK",
+      "build": "pnpm build exit 0",
+      "typecheck": "pnpm typecheck exit 0",
+      "suite": "cli 202 pass (9 skipped), studio-bridge 782 pass (2 skipped), studio 885/885",
+      "e2e": "apps/studio e2e 8/8 PASS (E2E_PORT=4417)"
+    },
+    "notes": "Actor único del flow lite (opus/medium); TASK-001 por subagente sonnet/medium y la consolidación del contexto en paralelo por otro subagente sonnet/medium.",
+    "follow_ups": []
+  }
 }
