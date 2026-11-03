@@ -127,6 +127,14 @@ antes de que el agente la lea: 60–90% menos texto, sin tocar la lectura de arc
 está, el comando corre igual, sin comprimir. El ahorro se ve con `rtk gain --project` o en
 `pnpm sdd:docs` → Costos → pestaña **RTK** (números por máquina y estimados).
 
+### tucu-ui — skill de diseño y MCP (opcional, apagado por defecto)
+
+Para repos con un frontend React o Next. `pnpm sdd:tucu -- --enable` instala la skill
+`tucu-ui-design` y el MCP `tucu-ui` en los cuatro arneses, sin pisar tus archivos MCP;
+`--status` informa el estado sin red y `--disable` limpia solo lo que escribió el kit. Prenderlo
+o apagarlo es decisión del dev (también `harness init --tucu-ui` al generar el proyecto; `harness configure sdd
+--tucu-ui` es solo para repos sin kit y reinicia `sdd/` si existe). Detalle en [TUCU-UI.md](TUCU-UI.md).
+
 ### sdd-mod — el SDD dentro de Claude Code (opcional, apagado por defecto)
 
 Solo para quien usa Claude Code. `sdd/skills/sdd-mod/` es un mod que Claude Code carga solo
@@ -666,6 +674,8 @@ Y si el punto 4 es NO, hay un error: los base solo los toca la consolidación (v
 - **rtk viene activo** y comprime la salida de los comandos: no lo prefijes a mano, usá
   `rtk proxy <cmd>` si necesitás la salida cruda y no lo apagues por tu cuenta
   (`pnpm sdd:rtk -- --disable` es decisión del dev).
+- **tucu-ui es opcional** (`pnpm sdd:tucu`): prenderlo o apagarlo es decisión del dev; no lo
+  cambies por tu cuenta.
 - **Invariantes del workspace** (los garantiza la skill `init-nx-workspace`, y romperlos falla en
   silencio): pnpm es el único package manager; los proyectos viven en `apps/`, `libs/` y `tools/`
   —nunca en `packages/`—; si el repo usa el TS solution setup, `customConditions` de

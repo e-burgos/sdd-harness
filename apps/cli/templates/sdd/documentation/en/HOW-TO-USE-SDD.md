@@ -128,6 +128,14 @@ it with a `git pull`. The switch lives in `sdd/tools.json` and is operated with
 just uncompressed. Savings show up in `rtk gain --project` or in `pnpm sdd:docs` → Costs → **RTK**
 tab (per-machine, estimated numbers).
 
+### tucu-ui — design skill and MCP (optional, off by default)
+
+For repos with a React or Next frontend. `pnpm sdd:tucu -- --enable` installs the `tucu-ui-design`
+skill and the `tucu-ui` MCP on all four harnesses without overwriting your MCP files; `--status`
+reports the state with no network and `--disable` cleans up only what the kit wrote. Turning it on
+or off is the developer's call (also `harness init --tucu-ui` while generating the project; `harness configure sdd
+--tucu-ui` is only for repos without the kit and resets `sdd/` if it exists). Details in [TUCU-UI.md](TUCU-UI.md).
+
 ### sdd-mod — SDD inside Claude Code (optional, off by default)
 
 Claude Code only. `sdd/skills/sdd-mod/` is a mod Claude Code loads on its own from
@@ -670,6 +678,8 @@ And if point 4 is NO, something is wrong: only consolidation touches the bases (
 - **rtk is on** and compresses command output: never prefix commands with `rtk` by hand, use
   `rtk proxy <cmd>` when you need the raw output, and never turn it off on your own
   (`pnpm sdd:rtk -- --disable` is the developer's call).
+- **tucu-ui is optional** (`pnpm sdd:tucu`): turning it on or off is the developer's call; do not
+  change it on your own.
 - **Workspace invariants** (guaranteed by the `init-nx-workspace` skill; breaking them fails
   silently): pnpm is the only package manager; projects live in `apps/`, `libs/` and `tools/`
   — never in `packages/` —; if the repo uses the TS solution setup, `customConditions` in

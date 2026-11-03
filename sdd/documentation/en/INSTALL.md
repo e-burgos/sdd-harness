@@ -126,9 +126,10 @@ The key is only written to `sdd/global.json` when you pass it; without it the re
 | `prompts/`         | Gate prompts (SPEC GATE, FIX GATE, cycle open/close, hermes-resume)                             |
 | `memory/`          | Project memory: distilled `lessons.md` + episodic `journal/` (MEMORIA GATE)                     |
 | `pricing.json`     | Editable per-provider rates for the viewer's Costs dashboard (`claude/*`, `gemini/*`, `copilot/*`) |
-| `tools.json`       | Switches for rtk (`enabled`, `auto_install`) and the Claude Code mod (`claude_mod`) — project data: `update sdd` never overwrites it |
+| `tools.json`       | Switches for rtk (`enabled`, `auto_install`), the Claude Code mod (`claude_mod`) and tucu-ui (`tucu_ui`) — project data: `update sdd` never overwrites it |
+| `integrations/`    | Developer-installed integrations (`integrations/skills/tucu-ui-design/`): project data, `update sdd` does not touch it |
 | `schemas/`         | Strict JSON Schemas for every registry                                                          |
-| `scripts/`         | validate, spec-gate (`sdd:gate`), rebuild-tasks-index, rebuild-catalog, setup-agents (bash + PowerShell) the three rtk ones: `setup-rtk.mjs`, `rtk-hook.mjs`, `rtk-common.mjs`, `rule-zero-hook.mjs` (SessionStart hook that re-injects rule zero: model/effort/context, installed by `setup-rtk.mjs` even with rtk off), and `sdd-mod.mjs` (Claude Code mod switch) |
+| `scripts/`         | validate, spec-gate (`sdd:gate`), rebuild-tasks-index, rebuild-catalog, setup-agents (bash + PowerShell) the three rtk ones: `setup-rtk.mjs`, `rtk-hook.mjs`, `rtk-common.mjs`, `rule-zero-hook.mjs` (SessionStart hook that re-injects rule zero: model/effort/context, installed by `setup-rtk.mjs` even with rtk off), `sdd-mod.mjs` (Claude Code mod switch) and `sdd-tucu.mjs` + `tucu-ui-common.mjs` + `mcp-config.mjs` (tucu-ui switch and MCP merge) |
 | `docs/`            | Portable, bilingual documentation viewer (vanilla JS, zero deps)                                |
 | `dual-harness/`    | CLAUDE.md / AGENTS.md / GEMINI.md to link at the repo root, `copilot-instructions.md` (seed for `.github/`) plus `rules/` (canonical gates and telemetry) |
 | `context/`         | Constitution and context prompt templates (global + example)                                    |
@@ -152,6 +153,16 @@ pnpm sdd:rtk -- --enable    # turn it back on
 ```
 
 The switch lives in `sdd/tools.json`; with `auto_install: false` the binary is never downloaded.
+
+### tucu-ui (optional, off)
+
+In a repo with the kit installed, `pnpm sdd:tucu -- --enable` turns on the design skill and the MCP
+of `@e-burgos/tucu-ui` (React/Next). `harness init --tucu-ui` turns it on while generating the
+project and `harness configure sdd --tucu-ui` is only for adding the kit to a repo that does not
+have it yet (if `sdd/` exists it asks to reset it entirely); with no flag the CLI only asks when there is a `react` or
+`nextjs` app and the terminal is interactive. Afterwards: `pnpm sdd:tucu -- --status | --enable |
+--disable`. Only `--enable` without the skill installed needs network and requires Node 20+.
+`update sdd` does not touch `sdd/tools.json` or `sdd/integrations/`. See [TUCU-UI.md](TUCU-UI.md).
 
 ### Claude Code mod (optional, off)
 

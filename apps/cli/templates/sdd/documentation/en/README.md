@@ -51,11 +51,11 @@ Before writing code, a team of **specialized agents** reviews the specification,
 ```
 sdd/
 ├── README.md                          ← Documentation index (es/en)
-├── documentation/                     ← This document + HOW-TO + INSTALL, in es/ and en/
+├── documentation/                     ← This document + HOW-TO + INSTALL + TUCU-UI, in es/ and en/
 ├── global.json                        ← Central project state (modules, stack)
 ├── tasks.json                         ← Tasks INDEX (generated — detail lives in each cycle)
 ├── schemas/                           ← Strict JSON Schemas for ALL registries (machine source)
-│   └── tools.schema.json              ← Shape of sdd/tools.json (rtk switch)
+│   └── tools.schema.json              ← Shape of sdd/tools.json (rtk, claude_mod and tucu_ui switches)
 ├── schema.json                        ← Database schema (updated by the Architect)
 ├── api.json                           ← Implemented API contracts
 ├── components.json                    ← Frontend components created
@@ -107,7 +107,8 @@ sdd/
 │       └── YYYY-MM-DD-[spec-id]-cycle-XX.md
 │
 ├── pricing.json                       ← Costs dashboard rates (traditional hourly + $/MTok per tier)
-├── tools.json                         ← rtk switch (user data — update sdd never touches it)
+├── tools.json                         ← rtk, claude_mod and tucu_ui switches (user data — update sdd never touches it)
+├── integrations/                      ← Installed tucu-ui skill (project data, created on first enable; update sdd never touches it)
 │
 ├── agents/                            ← SDD agent definitions (centralized)
 │   ├── sdd-orchestrator.agent.md
@@ -129,6 +130,9 @@ sdd/
 │   ├── setup-rtk.mjs                  ← Installs/merges the rtk hooks (pnpm sdd:rtk)
 │   ├── rtk-hook.mjs                   ← Bridge the hooks call; on any failure the command passes through
 │   ├── rtk-common.mjs                 ← rtk helpers (pinned version, binary resolution)
+│   ├── sdd-tucu.mjs                   ← tucu-ui switch (pnpm sdd:tucu)
+│   ├── tucu-ui-common.mjs             ← tucu-ui helpers (pinned version, skill links)
+│   ├── mcp-config.mjs                 ← MCP entry merge across the three harness files
 │   └── rule-zero-hook.mjs             ← SessionStart hook (Claude Code): re-injects rule zero (model/effort/context)
 │
 ├── templates/                         ← Scaffolding blueprints (NOT Nx projects)
@@ -1093,6 +1097,25 @@ reading is untouched. It ships **on by default since kit v0.12.0**, with zero de
   **per machine**, so the savings shown are those of whoever runs the viewer.
 - **Numbers**: `rtk gain --project`, or `pnpm sdd:docs` → Costs → **RTK** tab. They are estimates
   (bytes ÷ 4), not billing.
+
+### 8. tucu-ui — design skill and MCP (optional, off by default)
+
+For repos with a React or Next frontend. `pnpm sdd:tucu -- --enable` installs the `tucu-ui-design`
+skill in `sdd/integrations/skills/tucu-ui-design/`, links it into `.claude/skills`,
+`.github/skills` and `.agents/skills`, and adds the `tucu-ui` MCP (pinned version) to `.mcp.json`,
+`.vscode/mcp.json` and `.gemini/settings.json` **without overwriting** your servers or your own
+entries.
+
+- **Switch**: `tucu_ui` in `sdd/tools.json` (`enabled`, `skill`, `mcp`, `version`). It is project
+  data: `harness update sdd` does not overwrite it, nor does it touch `sdd/integrations/`.
+- **Who decides**: the developer. The agent never turns it on or off by itself; the sdd-steward
+  operates it on request.
+- **Commands**: `pnpm sdd:tucu -- --status | --enable | --disable` (`--parts`, `--force`, `--purge`).
+  Only `--enable` without the skill installed needs network.
+- **From the CLI**: `harness init --tucu-ui | --no-tucu-ui`. `harness configure sdd --tucu-ui` is only for repos without the kit (if `sdd/` exists it asks to reset it entirely); with the kit installed use `pnpm sdd:tucu -- --enable`.
+- **Validator**: `pnpm sdd:validate` warns (never fails) about missing links or MCP entries.
+
+Full detail, per-harness map and the Windows note: [TUCU-UI.md](TUCU-UI.md).
 
 ---
 

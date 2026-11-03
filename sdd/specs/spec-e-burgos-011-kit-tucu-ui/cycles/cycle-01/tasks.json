@@ -377,7 +377,9 @@
         "apps/cli/templates/sdd/documentation/en/HOW-TO-USE-SDD.md",
         "apps/cli/templates/sdd/documentation/en/INSTALL.md",
         "apps/cli/README.md",
-        "apps/cli/templates/sdd/docs/app.js"
+        "apps/cli/templates/sdd/docs/app.js",
+        "apps/cli/templates/sdd/documentation/es/TUCU-UI.md",
+        "apps/cli/templates/sdd/documentation/en/TUCU-UI.md"
       ]
     },
     {

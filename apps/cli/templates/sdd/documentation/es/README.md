@@ -51,11 +51,11 @@ Antes de escribir código, un equipo de **agentes especializados** revisa la esp
 ```
 sdd/
 ├── README.md                          ← Índice de la documentación (es/en)
-├── documentation/                     ← Este documento + HOW-TO + INSTALL, en es/ y en/
+├── documentation/                     ← Este documento + HOW-TO + INSTALL + TUCU-UI, en es/ y en/
 ├── global.json                        ← Estado central del proyecto (módulos, stack)
 ├── tasks.json                         ← ÍNDICE de tasks (generado — el detalle vive en cada ciclo)
 ├── schemas/                           ← JSON Schemas estrictos de TODOS los registros (fuente de máquina)
-│   └── tools.schema.json              ← Forma de sdd/tools.json (interruptor de rtk)
+│   └── tools.schema.json              ← Forma de sdd/tools.json (interruptores de rtk, claude_mod y tucu_ui)
 ├── schema.json                        ← Esquema de base de datos (actualizado por Arquitecto)
 ├── api.json                           ← Contratos de API implementados
 ├── components.json                    ← Componentes frontend creados
@@ -107,7 +107,8 @@ sdd/
 │       └── YYYY-MM-DD-[spec-id]-cycle-XX.md
 │
 ├── pricing.json                       ← Tarifas del dashboard de Costos (hora tradicional + $/MTok por tier)
-├── tools.json                         ← Interruptor de rtk (dato del usuario — update sdd no lo toca)
+├── tools.json                         ← Interruptores de rtk, claude_mod y tucu_ui (dato del usuario — update sdd no lo toca)
+├── integrations/                      ← Skill de tucu-ui instalada (dato del proyecto, se crea al primer enable; update sdd no lo toca)
 │
 ├── agents/                            ← Definiciones de agentes SDD (centralizadas)
 │   ├── sdd-orchestrator.agent.md
@@ -129,6 +130,9 @@ sdd/
 │   ├── setup-rtk.mjs                  ← Instala/mergea los hooks de rtk (pnpm sdd:rtk)
 │   ├── rtk-hook.mjs                   ← Puente que llaman los hooks; si falla, pasa el comando sin tocar
 │   ├── rtk-common.mjs                 ← Helpers de rtk (versión fijada, resolución del binario)
+│   ├── sdd-tucu.mjs                   ← Interruptor de tucu-ui (pnpm sdd:tucu)
+│   ├── tucu-ui-common.mjs             ← Helpers de tucu-ui (versión fijada, enlaces de skill)
+│   ├── mcp-config.mjs                 ← Merge de entradas MCP en los tres archivos de los arneses
 │   └── rule-zero-hook.mjs             ← Hook SessionStart (Claude Code): reinyecta la regla cero (modelo/esfuerzo/contexto)
 │
 ├── templates/                         ← Blueprints de scaffolding (NO son proyectos Nx)
@@ -1094,6 +1098,24 @@ acción del dev.
   máquina**, así que el ahorro es el de quien corre el visor.
 - **Números**: `rtk gain --project`, o `pnpm sdd:docs` → Costos → pestaña **RTK**. Son
   estimaciones (bytes ÷ 4), no facturación.
+
+### 8. tucu-ui — skill de diseño y MCP (opcional, apagado por defecto)
+
+Para repos con un frontend React o Next. `pnpm sdd:tucu -- --enable` instala la skill
+`tucu-ui-design` en `sdd/integrations/skills/tucu-ui-design/`, la enlaza en `.claude/skills`,
+`.github/skills` y `.agents/skills`, y agrega el MCP `tucu-ui` (versión fijada) a `.mcp.json`,
+`.vscode/mcp.json` y `.gemini/settings.json` **sin pisar** servidores ni entradas propias.
+
+- **Interruptor**: `tucu_ui` en `sdd/tools.json` (`enabled`, `skill`, `mcp`, `version`). Es dato del
+  proyecto: `harness update sdd` no lo pisa, y tampoco toca `sdd/integrations/`.
+- **Quién decide**: el dev. El agente no lo prende ni lo apaga por su cuenta; el sdd-steward lo
+  opera a pedido.
+- **Comandos**: `pnpm sdd:tucu -- --status | --enable | --disable` (`--parts`, `--force`, `--purge`).
+  Solo `--enable` sin la skill instalada necesita red.
+- **Desde la CLI**: `harness init --tucu-ui | --no-tucu-ui`. `harness configure sdd --tucu-ui` es solo para repos sin kit (si `sdd/` existe pide reiniciarlo entero); con el kit instalado usá `pnpm sdd:tucu -- --enable`.
+- **Validador**: `pnpm sdd:validate` avisa (nunca falla) de enlaces o entradas MCP faltantes.
+
+Detalle completo, mapa por arnés y nota de Windows: [TUCU-UI.md](TUCU-UI.md).
 
 ---
 
