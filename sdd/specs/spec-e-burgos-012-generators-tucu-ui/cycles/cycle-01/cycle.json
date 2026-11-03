@@ -1,0 +1,39 @@
+{
+  "$schema": "../../../../schemas/cycle.schema.json",
+  "cycle": 1,
+  "module": "generators-tucu-ui",
+  "spec": "spec-e-burgos-012-generators-tucu-ui",
+  "apps": [
+    "apps/cli"
+  ],
+  "phase": "generators-tucu-ui",
+  "flow": "lite",
+  "objectives": [
+    "tucu-ui por defecto en react y nextjs (US-1)",
+    "Tipos next-bff y mfe-shell/mfe (US-2, US-3)",
+    "Python FastAPI + LangGraph con uv (US-4)",
+    "Registro, comandos y docs de los tipos nuevos (US-5)"
+  ],
+  "status": "in-progress",
+  "started_at": "2026-11-03",
+  "completed_at": null,
+  "documents": {
+    "plan": "sdd/specs/spec-e-burgos-012-generators-tucu-ui/cycles/cycle-01/plan.md",
+    "tasks": "sdd/specs/spec-e-burgos-012-generators-tucu-ui/cycles/cycle-01/tasks.json"
+  },
+  "artifacts": [],
+  "metrics": {
+    "tasks_total": 7,
+    "tasks_completed": 0,
+    "tasks_skipped": 0,
+    "story_points": 33,
+    "files_created": [],
+    "files_modified": [],
+    "files_deleted": []
+  },
+  "tables_created": [],
+  "endpoints_implemented": [],
+  "components_created": [],
+  "issues_found": [],
+  "reviewer_report": null
+}

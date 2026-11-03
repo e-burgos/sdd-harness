@@ -130,8 +130,7 @@
       "completed_at": "2026-11-03"
     }
   ],
-  "in_progress_modules": [],
-  "pending_modules": [
+  "in_progress_modules": [
     {
       "module": "generators-tucu-ui",
       "spec": "spec-e-burgos-012-generators-tucu-ui",
@@ -140,7 +139,9 @@
       ],
       "cycles_completed": 0,
       "description": "Generadores de frontend con tucu-ui, BFF, microfrontends por path y FastAPI con LangGraph."
-    },
+    }
+  ],
+  "pending_modules": [
     {
       "module": "studio-project-wizard",
       "spec": "spec-e-burgos-013-studio-project-wizard",

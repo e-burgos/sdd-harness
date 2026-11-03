@@ -253,6 +253,20 @@
           "tasks_done": 26
         }
       }
+    },
+    "spec-e-burgos-012-generators-tucu-ui": {
+      "cycles": {
+        "cycle-01": {
+          "file": "sdd/specs/spec-e-burgos-012-generators-tucu-ui/cycles/cycle-01/tasks.json",
+          "module": "generators-tucu-ui",
+          "apps": [
+            "apps/cli"
+          ],
+          "status": "in-progress",
+          "tasks_total": 7,
+          "tasks_done": 0
+        }
+      }
     }
   }
 }

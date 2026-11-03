@@ -181,7 +181,7 @@
       "file": "sdd/specs/spec-e-burgos-012-generators-tucu-ui/spec-e-burgos-012-generators-tucu-ui.spec.md",
       "module": "generators-tucu-ui",
       "app": "apps/cli",
-      "status": "draft",
+      "status": "in-progress",
       "title": "Generadores: frontends listos con tucu-ui, BFF y microfrontends por path",
       "created_at": "2026-11-03",
       "completed_at": null,
