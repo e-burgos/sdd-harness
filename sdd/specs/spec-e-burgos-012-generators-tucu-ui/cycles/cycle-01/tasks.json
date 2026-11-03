@@ -130,11 +130,21 @@
       "depends_on": [
         "TASK-001"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/cli/src/generators/app.generator.ts",
         "apps/cli/src/generators/docker.generator.ts"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 113685,
+        "tokens_out": 20062,
+        "approx": true,
+        "recorded_at": "2026-11-03",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "source": "agent-usage-notification"
+      }
     },
     {
       "id": "TASK-006",

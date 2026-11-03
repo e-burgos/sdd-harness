@@ -7,6 +7,7 @@ import {
   toPascalCase,
 } from "../utils/blueprint.js";
 import { writeNextTucuUiFiles, writeViteTucuUiFiles } from "./tucu-ui-app.js";
+import { pythonPackageName, pythonUvCommands, writePythonAppFiles } from "./python-app.js";
 import { appEnvPrefix, mfesOfShell, resolveMfeShell } from "./app-types.js";
 import {
   applyMfe,
@@ -31,6 +32,8 @@ export interface AppSpec {
   tucuUi?: boolean;
   /** mfe: nombre de su mfe-shell. Ausente = el único mfe-shell del workspace. */
   shell?: string;
+  /** python: agrega TensorFlow como dependencia por defecto (default false). */
+  ml?: boolean;
 }
 
 export const DEFAULT_APP_PORTS: Record<string, number> = {
@@ -125,7 +128,7 @@ export async function generateApp(
       await generateFastifyApp(appDir, app.name, port);
       break;
     case "python":
-      await generatePythonApp(appDir, app.name);
+      await generatePythonApp(appDir, app.name, port, app.ml === true);
       break;
     case "springboot":
       await generateSpringBootApp(root, appDir, app.name);
@@ -690,10 +693,24 @@ start();
 
 // ─── Python ─────────────────────────────────────────────────────────────────
 
-async function generatePythonApp(dir: string, name: string): Promise<void> {
-  const pkg = name.replace(/-/g, "_");
-  await fs.ensureDir(resolve(dir, "src", pkg));
-  await fs.ensureDir(resolve(dir, "tests"));
+async function generatePythonApp(
+  dir: string,
+  name: string,
+  port: number,
+  ml: boolean,
+): Promise<void> {
+  const pkg = pythonPackageName(name);
+  await writePythonAppFiles(dir, { name, port, ml }, { gitignore: true });
+
+  const targets = Object.fromEntries(
+    Object.entries(pythonUvCommands(pkg)).map(([target, command]) => [
+      target,
+      {
+        command: `cd apps/${name} && ${command}`,
+        ...(target === "build" ? { outputs: [`{projectRoot}/dist`] } : {}),
+      },
+    ]),
+  );
 
   await fs.writeFile(
     resolve(dir, "project.json"),
@@ -704,52 +721,11 @@ async function generatePythonApp(dir: string, name: string): Promise<void> {
         sourceRoot: `apps/${name}/src`,
         projectType: "application",
         tags: ["scope:agent", "type:app"],
-        targets: {
-          serve: { command: `cd apps/${name} && python -m ${pkg}` },
-          lint: { command: `cd apps/${name} && ruff check src/` },
-          test: { command: `cd apps/${name} && pytest tests/` },
-        },
+        targets,
       },
       null,
       2,
     ),
-    "utf-8",
-  );
-
-  await fs.writeFile(
-    resolve(dir, "pyproject.toml"),
-    `[project]
-name = "${name}"
-version = "0.1.0"
-requires-python = ">=3.11"
-dependencies = []
-
-[project.optional-dependencies]
-dev = ["pytest", "ruff"]
-`,
-    "utf-8",
-  );
-
-  await fs.writeFile(resolve(dir, "src", pkg, "__init__.py"), "", "utf-8");
-  await fs.writeFile(
-    resolve(dir, "src", pkg, "__main__.py"),
-    `"""Entry point for ${name}."""
-
-def main():
-    print("Hello from ${name}!")
-
-if __name__ == "__main__":
-    main()
-`,
-    "utf-8",
-  );
-
-  await fs.writeFile(resolve(dir, "tests", "__init__.py"), "", "utf-8");
-  await fs.writeFile(
-    resolve(dir, "tests", "test_main.py"),
-    `def test_placeholder():
-    assert True
-`,
     "utf-8",
   );
 }

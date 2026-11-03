@@ -65,11 +65,12 @@ export function toWorkspaceOptions(
     projectName: config.project.name,
     description: config.project.description,
     packageScope: config.project.packageScope,
-    apps: config.apps.map(({ name, type, port, tucuUi, shell }) => ({
+    apps: config.apps.map(({ name, type, port, tucuUi, ml, shell }) => ({
       name,
       type,
       port,
       tucuUi: tucuUi ?? overrides.tucuUi,
+      ml,
       shell,
     })),
     libs: config.libs.map(({ name, type }) => ({ name, type })),
@@ -96,6 +97,7 @@ export function toStandaloneOptions(
     appType: config.apps[0].type,
     port: config.apps[0].port,
     tucuUi: config.apps[0].tucuUi ?? overrides.tucuUi,
+    ml: config.apps[0].ml,
     services: config.services.map(({ type }) => type),
     npmScopes: config.npm?.scopes ?? [],
     sddAuthor: config.sdd?.author,

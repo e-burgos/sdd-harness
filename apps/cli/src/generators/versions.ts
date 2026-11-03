@@ -28,3 +28,13 @@ export const PYTHON_VERSIONS = {
 export function pythonRequirement(name: keyof typeof PYTHON_VERSIONS): string {
   return `${name}>=${PYTHON_VERSIONS[name]}`;
 }
+
+export const UV_VERSION = "0.13.7";
+export const PYTHON_REQUIRES = ">=3.12";
+export const PYTHON_REQUIRES_WITH_TENSORFLOW = ">=3.12,<3.14";
+
+export function uvBuildRequirement(): string {
+  const [major, minor] = UV_VERSION.split(".").map(Number);
+  return `uv_build>=${UV_VERSION},<${major}.${minor + 1}.0`;
+}
+export const PYTHON_DOCKER_IMAGE = "python:3.12-slim";

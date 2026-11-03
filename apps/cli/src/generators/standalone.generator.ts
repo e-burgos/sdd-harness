@@ -24,6 +24,7 @@ import {
   writeNextTucuUiFiles,
   writeViteTucuUiFiles,
 } from "./tucu-ui-app.js";
+import { pythonPackageName, pythonUvCommands, writePythonAppFiles } from "./python-app.js";
 import { FRONTEND_VERSIONS } from "./versions.js";
 import { assertValidAppTopology } from "./app-types.js";
 import type { ModuleSeed, NpmScope } from "../types/config.types.js";
@@ -36,6 +37,8 @@ export interface StandaloneOptions {
   port?: number;
   /** react/nextjs: scaffold con tucu-ui (default true). */
   tucuUi?: boolean;
+  /** python: TensorFlow como dependencia por defecto. */
+  ml?: boolean;
   services: string[];
   npmScopes?: NpmScope[];
   sddAuthor?: string;
@@ -71,7 +74,7 @@ export async function generateStandalone(
   // ─── FASE 1: App en la raíz ───────────────────────────────────────────────
 
   logger.step(`Generating standalone app (${opts.appType}, port ${port}) at the repo root...`);
-  await scaffoldStandaloneApp(root, opts.projectName, opts.appType, port, opts.tucuUi !== false);
+  await scaffoldStandaloneApp(root, opts.projectName, opts.appType, port, opts.tucuUi !== false, opts.ml === true);
   await writeGitignore(root, opts.appType);
   if (opts.npmScopes?.length) {
     await fs.writeFile(resolve(root, ".npmrc"), npmrcScopesBlock(opts.npmScopes), "utf-8");
@@ -157,6 +160,7 @@ async function scaffoldStandaloneApp(
   type: string,
   port: number,
   tucuUi: boolean,
+  ml: boolean,
 ): Promise<void> {
   switch (type) {
     case "react":
@@ -179,7 +183,7 @@ async function scaffoldStandaloneApp(
       await scaffoldHono(root, name, port);
       break;
     case "python":
-      await scaffoldPython(root, name);
+      await scaffoldPython(root, name, port, ml);
       break;
     default:
       throw new Error(`Tipo de app standalone no soportado: ${type}`);
@@ -679,47 +683,13 @@ async function writeNodeApiScaffold(
 
 // ─── Python ──────────────────────────────────────────────────────────────────
 
-async function scaffoldPython(root: string, name: string): Promise<void> {
-  const pkg = name.replace(/-/g, "_");
-  await fs.ensureDir(resolve(root, "src", pkg));
-  await fs.ensureDir(resolve(root, "tests"));
-
-  await fs.writeFile(
-    resolve(root, "pyproject.toml"),
-    `[project]
-name = "${name}"
-version = "0.1.0"
-requires-python = ">=3.11"
-dependencies = []
-
-[project.optional-dependencies]
-dev = ["pytest", "ruff"]
-`,
-    "utf-8",
-  );
-
-  await fs.writeFile(resolve(root, "src", pkg, "__init__.py"), "", "utf-8");
-  await fs.writeFile(
-    resolve(root, "src", pkg, "__main__.py"),
-    `"""Entry point for ${name}."""
-
-def main():
-    print("Hello from ${name}!")
-
-if __name__ == "__main__":
-    main()
-`,
-    "utf-8",
-  );
-
-  await fs.writeFile(resolve(root, "tests", "__init__.py"), "", "utf-8");
-  await fs.writeFile(
-    resolve(root, "tests", "test_main.py"),
-    `def test_placeholder():
-    assert True
-`,
-    "utf-8",
-  );
+async function scaffoldPython(
+  root: string,
+  name: string,
+  port: number,
+  ml: boolean,
+): Promise<void> {
+  await writePythonAppFiles(root, { name, port, ml }, { gitignore: false });
 
   await fs.writeJSON(
     resolve(root, "package.json"),
@@ -727,11 +697,7 @@ if __name__ == "__main__":
       name,
       version: "0.1.0",
       private: true,
-      scripts: {
-        serve: `python -m ${pkg}`,
-        lint: "ruff check src/",
-        test: "pytest tests/",
-      },
+      scripts: pythonUvCommands(pythonPackageName(name)),
     },
     { spaces: 2 },
   );

@@ -18,6 +18,7 @@ export interface AppConfig {
   port?: number;
   features: string[];
   tucuUi?: boolean;
+  ml?: boolean;
   shell?: string;
 }
 

@@ -33,6 +33,7 @@ const AppConfigSchema = z.object({
   port: z.number().min(1000).max(65535).optional(),
   features: z.array(z.string()).default([]),
   tucuUi: z.boolean().optional(),
+  ml: z.boolean().optional(),
   shell: z
     .string()
     .regex(/^[a-z][a-z0-9-]*$/, 'Shell must be a lowercase kebab-case app name')
