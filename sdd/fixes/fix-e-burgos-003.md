@@ -8,7 +8,7 @@
 | **Keyword**   | [IMPROVEMENT]                                                       |
 | **Fecha**     | 2026-10-26                                                          |
 | **Autor**     | e-burgos                                                            |
-| **Estado**    | implemented                                                         |
+| **Estado**    | validated                                                           |
 | **Spec**      | N/A (repo-level / apps/studio)                                      |
 
 ## Problema
@@ -69,3 +69,7 @@ Mejora cosmética y de coherencia visual sin alteración de modelos de datos, pr
 ### Test de validación
 
 - **Referencia:** `pnpm --filter sdd-studio-web test` (58 test files, 439 tests pasando) y `pnpm --filter sdd-studio-web typecheck` (limpio, sin errores).
+
+### Validación
+
+- **Fecha:** 2026-10-26 — `lucide-react` presente y `@phosphor-icons/react` removido de `apps/studio`; sin emojis en `apps/studio/src` fuera de specs; `pnpm --filter sdd-studio-web typecheck` limpio y `pnpm --filter sdd-studio-web test` en verde (82 archivos, 684 tests).

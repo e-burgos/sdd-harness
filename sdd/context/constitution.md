@@ -75,11 +75,11 @@ Para el detalle técnico de cada subproyecto, ver su constitución específica:
 
 | Subproyecto | Stack base | Última actualización |
 | ----------- | ---------- | -------------------- |
-| `apps/cli` | Node, TypeScript, citty, @clack/prompts, zod, Vitest | 2026-10-23 |
+| `apps/cli` | Node, TypeScript, citty, @clack/prompts, zod, Vitest; integración opcional tucu-ui (`sdd:tucu`, skill en `sdd/integrations/`, merge MCP compartido en `.mcp.json`/`.vscode/mcp.json`/`.gemini/settings.json`) | 2026-11-03 |
 | `apps/documentation` | React, Vite, Tailwind v4 | 2026-10-23 |
-| `apps/studio` | Next.js 16, React 19, zustand, Playwright; adjuntos re-encodeados en canvas; Mission Control derivado de la conversación (`lib/conversation.ts`, documentos por `document.touched` con corte por `seq`); título de sesión y asociaciones múltiples | 2026-10-26 |
-| `apps/studio-bridge` | Node, TypeScript, claude-agent-sdk 0.3.292 (prompt streaming), ws, chokidar; almacén `.sdd-studio/attachments`; prefijo de sistema estable (`engine/stable-prefix.ts`) y proveedor por motor; `DocumentChangeTracker` (instantánea de `sdd/` por Bash), asociaciones múltiples en `threads.json` y título de sesión vía `getSessionInfo` | 2026-10-26 |
-| `libs/studio-protocol` | TypeScript, zod 4, Vitest (PROTOCOL_VERSION 2); `ProviderId`/`EngineSessionId`/`sessionTitle` opcionales en `ThreadInfo`, `ThreadLink.targets`, evento `document.touched` y comando `thread.updateLinks` | 2026-10-26 |
+| `apps/studio` | Next.js 16, React 19, tucu-ui 3.10.0 sin wrappers; shell estilo Slack (riel de módulos personalizable + panel de lista por módulo, `lib/nav` persistido por proyecto) con módulos Inicio, Specs, Fixes, Agentes, Actividad, Mapa, Kit, Arquitectura y Métricas; interruptores de `sdd/tools.json` desde Kit; estados SDD compartidos en `lib/sdd-status.ts`; escala tipográfica micro…title; zustand, Playwright | 2026-11-02 |
+| `apps/studio-bridge` | Node, TypeScript, claude-agent-sdk 0.3.292 (prompt streaming), ws, chokidar, ajv; `KitIndexer`, escritura de `sdd/tools.json` con `expectedRevision` y evento `tools.changed`, ahorro de rtk; `DocumentChangeTracker`, asociaciones múltiples y título de sesión | 2026-10-28 |
+| `libs/studio-protocol` | TypeScript, zod 4, Vitest (PROTOCOL_VERSION 2); features `kit-index`/`kit-tools`/`rtk-gain`, comandos `kit.*`, evento `kit.changed`, bot event `tools.changed`, `snapshot.tools` | 2026-10-28 |
 
 ---
 

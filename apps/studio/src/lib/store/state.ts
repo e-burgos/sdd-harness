@@ -145,7 +145,7 @@ export function applyServerEvent(s: StudioState, e: ServerEvent): StudioState {
       const { kind: _kind, ...event } = e;
       const list = [...(s.bot[e.channelId] ?? []), event].slice(-MAX_BOT_EVENTS);
       const threads = Object.values(s.threads).flatMap((t) => (t.info ? [t.info] : []));
-      return { ...s, bot: { ...s.bot, [e.channelId]: list }, prepared: prepareFromBotEvent(event, threads, s.prepared) };
+      return { ...s, bot: { ...s.bot, [e.channelId]: list }, prepared: prepareFromBotEvent(event, threads, s.prepared, s.snapshot) };
     }
     case 'command.output': {
       const run = s.runs[e.runId] ?? { runId: e.runId, name: '?', args: [], output: '', exitCode: null };
@@ -155,6 +155,8 @@ export function applyServerEvent(s: StudioState, e: ServerEvent): StudioState {
       const run = s.runs[e.runId] ?? { runId: e.runId, name: '?', args: [], output: '', exitCode: null };
       return { ...s, runs: { ...s.runs, [e.runId]: { ...run, exitCode: e.exitCode } } };
     }
+    case 'kit.changed':
+      return s;
   }
 }
 

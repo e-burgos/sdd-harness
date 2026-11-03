@@ -1,6 +1,7 @@
 'use client';
 
 import { MAX_LINK_TARGETS, ThreadInfo, type ThreadLinkRef, type ThreadLinkTarget } from '@sdd-studio/protocol';
+import { Tooltip } from '@e-burgos/tucu-ui';
 import { X } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { bridgeErrorText } from '@/lib/bridge/error-text';
@@ -11,7 +12,7 @@ import { isLinkEntryAvailable, linkEntriesOf, linkRefKey, linkRefLabel, toLinkRe
 import { useBridgeFeatures } from '@/lib/use-bridge-features';
 import { useBridge, useStudio } from '../BridgeProvider';
 import { CapabilityNotice } from '../mission-control/CapabilityNotice';
-import { HelpSelect } from '../HelpSelect';
+import { HelpSelect, type HelpSelectOption } from '../HelpSelect';
 
 const NONE = 'none';
 const ring = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400';
@@ -55,12 +56,12 @@ export function ThreadLinkPicker({ threadId }: { threadId: string }) {
 
   const options = useMemo(() => {
     const linked = new Set(entries.map((entry) => linkRefKey(toLinkRef(entry))));
-    const specs = (snapshot?.specs ?? []).map((s) => ({ value: linkRefKey({ kind: 'spec', specId: s.id }), label: s.id }));
+    const specs = (snapshot?.specs ?? []).map((s) => ({ value: linkRefKey({ kind: 'spec', specId: s.id }), label: s.id, description: s.status }));
     const cycles = (snapshot?.cycles ?? [])
-      .map((c) => ({ value: encodeLinkTarget({ kind: 'cycle', specId: c.specId, cycle: c.cycle }), label: `${c.specId} · ${c.cycle} (${c.status})` }))
+      .map((c) => ({ value: encodeLinkTarget({ kind: 'cycle', specId: c.specId, cycle: c.cycle }), label: `${c.specId} · ${c.cycle}`, description: c.status, triggerLabel: `${c.specId} · ${c.cycle} (${c.status})` }))
       .sort((a, b) => a.label.localeCompare(b.label));
-    const fixes = (snapshot?.fixes ?? []).map((f) => ({ value: encodeLinkTarget({ kind: 'fix', fixId: f.id }), label: `${f.id} (${f.status})` }));
-    const free = (list: { value: string; label: string }[]) => list.filter((o) => !linked.has(o.value));
+    const fixes = (snapshot?.fixes ?? []).map((f) => ({ value: encodeLinkTarget({ kind: 'fix', fixId: f.id }), label: f.id, description: f.status, triggerLabel: `${f.id} (${f.status})` }));
+    const free = (list: HelpSelectOption[]) => list.filter((o) => !linked.has(o.value));
     return { cycles, fixes, specs: free(specs), freeCycles: free(cycles), freeFixes: free(fixes) };
   }, [snapshot, entries]);
 
@@ -96,31 +97,33 @@ export function ThreadLinkPicker({ threadId }: { threadId: string }) {
   const remove = (ref: ThreadLinkRef) => run({ cmd: 'thread.updateLinks', threadId, add: [], remove: [ref] });
 
   const detectedNote = detected && (
-    <span data-testid="link-detected" className="truncate font-mono text-[11px] text-ink-400" title={detected}>
+    <span data-testid="link-detected" className="truncate font-mono text-meta text-ink-400" title={detected}>
       {t('link.detected', { target: detected })}
     </span>
   );
   const errorNote = error && <p role="alert" className="basis-full text-roseish">{error}</p>;
-  const selectClass = `max-w-[16rem] truncate rounded-md border border-ink-700 bg-ink-950 px-2 py-1 text-xs text-ink-100 disabled:opacity-40 ${ring}`;
+  const grouped = (heading: string, list: HelpSelectOption[]): HelpSelectOption[] =>
+    list.map((o) => ({ ...o, group: heading }));
 
   if (!multiple) {
     return (
       <div className="flex min-w-0 flex-wrap items-center gap-2 text-xs text-ink-300">
-        <label htmlFor="thread-link">{t('link.label')}</label>
-        <HelpSelect help={t('help.link.target')} id="thread-link" className={selectClass} value={current} disabled={saving} onChange={(e) => void change(e.target.value)}>
-          <option value={NONE}>{t('link.none')}</option>
-          {!known && <option value={current}>{labelOf(link.target)}</option>}
-          {options.cycles.length > 0 && (
-            <optgroup label={t('link.cycles')}>
-              {options.cycles.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </optgroup>
-          )}
-          {options.fixes.length > 0 && (
-            <optgroup label={t('link.fixes')}>
-              {options.fixes.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </optgroup>
-          )}
-        </HelpSelect>
+        <span aria-hidden>{t('link.label')}</span>
+        <HelpSelect
+          label={t('link.label')}
+          help={t('help.link.target')}
+          searchable
+          className="max-w-[16rem]"
+          value={current}
+          disabled={saving}
+          options={[
+            { value: NONE, label: t('link.none') },
+            ...(known ? [] : [{ value: current, label: labelOf(link.target) }]),
+            ...grouped(t('link.cycles'), options.cycles),
+            ...grouped(t('link.fixes'), options.fixes),
+          ]}
+          onChange={(value) => void change(value)}
+        />
         {detectedNote}
         <CapabilityNotice capabilities={['link-targets']} />
         {errorNote}
@@ -130,7 +133,7 @@ export function ThreadLinkPicker({ threadId }: { threadId: string }) {
 
   return (
     <div className="flex min-w-0 flex-wrap items-center gap-2 text-xs text-ink-300">
-      <label htmlFor="thread-link-add">{t('link.label')}</label>
+      <span aria-hidden>{t('link.label')}</span>
       <ul data-testid="link-chips" className="flex min-w-0 flex-wrap items-center gap-1.5">
         {entries.length === 0 && <li className="text-ink-400">{t('link.none')}</li>}
         {entries.map((entry) => {
@@ -139,48 +142,39 @@ export function ThreadLinkPicker({ threadId }: { threadId: string }) {
           const available = isLinkEntryAvailable(ref, snapshot);
           return (
             <li key={linkRefKey(ref)} data-testid={`link-chip-${linkRefKey(ref)}`} className="flex min-w-0 items-center gap-1 rounded-md border border-ink-700 bg-ink-950 px-1.5 py-0.5">
-              <span className={`truncate font-mono text-[11px] ${available ? 'text-ink-100' : 'text-ink-400 line-through'}`} title={label}>{label}</span>
-              <span data-testid="link-origin" className="shrink-0 text-[10px] uppercase text-ink-500">{t(`link.origin.${entry.origin}`)}</span>
-              {!available && <span data-testid="link-unavailable" className="shrink-0 text-[10px] text-amberish">{t('link.unavailable')}</span>}
-              <button
-                type="button"
-                aria-label={t('link.remove', { target: label })}
-                title={t('link.remove', { target: label })}
-                disabled={saving}
-                onClick={() => void remove(ref)}
-                className={`shrink-0 rounded text-ink-400 hover:text-ink-100 disabled:opacity-40 ${ring}`}
-              >
-                <X size={12} aria-hidden />
-              </button>
+              <span className={`truncate font-mono text-meta ${available ? 'text-ink-100' : 'text-ink-400 line-through'}`} title={label}>{label}</span>
+              <span data-testid="link-origin" className="shrink-0 text-micro uppercase text-ink-500">{t(`link.origin.${entry.origin}`)}</span>
+              {!available && <span data-testid="link-unavailable" className="shrink-0 text-micro text-amberish">{t('link.unavailable')}</span>}
+              <Tooltip size="xs" arrow={false} content={t('link.remove', { target: label })}>
+                <button
+                  type="button"
+                  aria-label={t('link.remove', { target: label })}
+                  disabled={saving}
+                  onClick={() => void remove(ref)}
+                  className={`shrink-0 rounded text-ink-400 hover:text-ink-100 disabled:opacity-40 ${ring}`}
+                >
+                  <X size={12} aria-hidden />
+                </button>
+              </Tooltip>
             </li>
           );
         })}
       </ul>
       <HelpSelect
+        label={t('link.label')}
         help={t('help.link.add')}
-        id="thread-link-add"
-        className={selectClass}
+        searchable
+        className="max-w-[16rem]"
         value=""
         disabled={saving || entries.length >= MAX_LINK_TARGETS}
-        onChange={(e) => void add(e.target.value)}
-      >
-        <option value="">{entries.length >= MAX_LINK_TARGETS ? t('link.max') : t('link.add')}</option>
-        {options.specs.length > 0 && (
-          <optgroup label={t('link.specs')}>
-            {options.specs.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-          </optgroup>
-        )}
-        {options.freeCycles.length > 0 && (
-          <optgroup label={t('link.cycles')}>
-            {options.freeCycles.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-          </optgroup>
-        )}
-        {options.freeFixes.length > 0 && (
-          <optgroup label={t('link.fixes')}>
-            {options.freeFixes.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-          </optgroup>
-        )}
-      </HelpSelect>
+        options={[
+          { value: '', label: entries.length >= MAX_LINK_TARGETS ? t('link.max') : t('link.add') },
+          ...grouped(t('link.specs'), options.specs),
+          ...grouped(t('link.cycles'), options.freeCycles),
+          ...grouped(t('link.fixes'), options.freeFixes),
+        ]}
+        onChange={(value) => void add(value)}
+      />
       {detectedNote}
       {errorNote}
     </div>

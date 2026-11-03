@@ -102,9 +102,15 @@ export const BotKind = z.enum([
   'task.status',
   'fix.created',
   'fix.status',
+  'tools.changed',
 ]);
 export type BotKind = z.infer<typeof BotKind>;
-export const BotEvent = z.object({ channelId: ChannelId, botKind: BotKind, payload: z.record(z.string(), z.unknown()) });
+export const BotEvent = z.object({
+  channelId: ChannelId,
+  botKind: BotKind,
+  payload: z.record(z.string(), z.unknown()),
+  at: z.string().max(40).optional(),
+});
 export type BotEvent = z.infer<typeof BotEvent>;
 
 export const ServerEvent = z.discriminatedUnion('kind', [
@@ -118,6 +124,11 @@ export const ServerEvent = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('presence.changed'), presence: z.array(Presence) }),
   z.object({ kind: z.literal('workspace.changed'), areas: z.array(Area), snapshot: WorkspaceSnapshot }),
   z.object({ kind: z.literal('bot.event'), ...BotEvent.shape }),
+  z.object({
+    kind: z.literal('kit.changed'),
+    sections: z.array(z.string().min(1).max(32)).max(16),
+    revision: z.string().max(64),
+  }),
   z.object({
     kind: z.literal('command.output'),
     runId: z.string(),

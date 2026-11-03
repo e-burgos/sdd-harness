@@ -66,6 +66,49 @@ describe('ThreadStore', () => {
     expect(await b.botHistory('spec:s1', 10)).toEqual([done, reopened, done]);
   });
 
+  it('deduplicates consecutive bot events ignoring at and keeps the first stamp', async () => {
+    const base = { channelId: 'general', botKind: 'task.status' as const, payload: { taskId: 'TASK-001', from: 'pending', to: 'done' } };
+    const a = new ThreadStore(root);
+    await a.init();
+    a.appendBot({ ...base, at: '2026-10-27T10:00:00.000Z' });
+    a.appendBot({ ...base, at: '2026-10-27T10:00:05.000Z' });
+    await a.flush();
+    const b = new ThreadStore(root);
+    await b.init();
+    b.appendBot({ ...base, at: '2026-10-27T10:00:09.000Z' });
+    await b.flush();
+    expect(await b.botHistory('general', 10, true)).toEqual([{ ...base, at: '2026-10-27T10:00:00.000Z' }]);
+  });
+
+  it('keeps every tools.changed with the same payload when their stamps differ', async () => {
+    const base = { channelId: 'general', botKind: 'tools.changed' as const, payload: { tool: 'rtk', from: true, to: false, file: 'sdd/tools.json' } };
+    const a = new ThreadStore(root);
+    await a.init();
+    a.appendBot({ ...base, at: '2026-10-27T10:00:00.000Z' });
+    a.appendBot({ ...base, at: '2026-10-27T10:05:00.000Z' });
+    await a.flush();
+    const b = new ThreadStore(root);
+    await b.init();
+    expect(await b.botHistory('general', 10, true)).toEqual([
+      { ...base, at: '2026-10-27T10:00:00.000Z' },
+      { ...base, at: '2026-10-27T10:05:00.000Z' },
+    ]);
+  });
+
+  it('omits tools.changed from the history unless kit events are requested', async () => {
+    const tools = { channelId: 'general', botKind: 'tools.changed' as const, payload: { tool: 'gate', from: 'block', to: 'warn' }, at: '2026-10-27T10:00:00.000Z' };
+    const spec = { channelId: 'general', botKind: 'spec.created' as const, payload: { specId: 's1' } };
+    const s = new ThreadStore(root);
+    await s.init();
+    s.appendBot(spec);
+    s.appendBot(tools);
+    await s.flush();
+    expect(await s.botHistory('general', 10)).toEqual([spec]);
+    expect(await s.botHistory('general', 10, false)).toEqual([spec]);
+    expect(await s.botHistory('general', 10, true)).toEqual([spec, tools]);
+    expect(await s.botHistory('general', 1, false)).toEqual([spec]);
+  });
+
   it('collapses duplicates already on disk when reading the history', async () => {
     const dir = path.join(root, '.sdd-studio', 'channels');
     await mkdir(dir, { recursive: true });

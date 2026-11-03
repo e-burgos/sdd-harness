@@ -1,0 +1,196 @@
+{
+  "$schema": "../../../../schemas/cycle.schema.json",
+  "cycle": 3,
+  "module": "studio-tucu-ui",
+  "spec": "spec-e-burgos-009-studio-tucu-ui",
+  "apps": [
+    "apps/studio"
+  ],
+  "phase": "tucu-ui-3.5-adoption",
+  "flow": "lite",
+  "objectives": [
+    "Adoptar tucu-ui 3.5.0 sin wrappers ni overrides propios (US-009)",
+    "Modales con Modal de tucu-ui (US-010)"
+  ],
+  "status": "completed",
+  "started_at": "2026-10-27",
+  "completed_at": "2026-10-27",
+  "documents": {
+    "plan": "sdd/specs/spec-e-burgos-009-studio-tucu-ui/cycles/cycle-03/plan.md",
+    "tasks": "sdd/specs/spec-e-burgos-009-studio-tucu-ui/cycles/cycle-03/tasks.json"
+  },
+  "artifacts": [],
+  "metrics": {
+    "tasks_total": 4,
+    "tasks_completed": 4,
+    "tasks_skipped": 0,
+    "story_points": 12,
+    "files_created": [
+      "apps/studio/src/components/StudioThemeProvider.tsx",
+      "apps/studio/src/lib/typography-tokens.ts"
+    ],
+    "files_modified": [
+      "apps/studio/package.json",
+      "apps/studio/src/app/globals.css",
+      "apps/studio/src/app/layout.tsx",
+      "apps/studio/src/components/ConnectionBanner.tsx",
+      "apps/studio/src/components/GateStatusModal.spec.tsx",
+      "apps/studio/src/components/GateStatusModal.tsx",
+      "apps/studio/src/components/HelpSelect.tsx",
+      "apps/studio/src/components/StudioHeader.tsx",
+      "apps/studio/src/components/mission-control/AgentInspectorDrawer.tsx",
+      "apps/studio/src/components/mission-control/AgentMapCanvas.tsx",
+      "apps/studio/src/components/mission-control/ChatDialogueCard.tsx",
+      "apps/studio/src/components/mission-control/ConversationSessionInfo.tsx",
+      "apps/studio/src/components/mission-control/DocumentViewerModal.tsx",
+      "apps/studio/src/components/mission-control/EcosystemDashboard.tsx",
+      "apps/studio/src/components/mission-control/GateInspectorDrawer.tsx",
+      "apps/studio/src/components/mission-control/LiveAgentChatFeed.tsx",
+      "apps/studio/src/components/mission-control/LiveSwarmComms.tsx",
+      "apps/studio/src/components/mission-control/LiveTelemetryHUD.tsx",
+      "apps/studio/src/components/mission-control/documentviewermodal.spec.tsx",
+      "apps/studio/src/components/no-native-select.spec.ts",
+      "apps/studio/src/components/studioheader.spec.tsx",
+      "apps/studio/src/components/workspace/AgentAvatar.tsx",
+      "apps/studio/src/components/workspace/ApiKeyField.tsx",
+      "apps/studio/src/components/workspace/ApprovalCard.tsx",
+      "apps/studio/src/components/workspace/AttachmentView.tsx",
+      "apps/studio/src/components/workspace/Composer.tsx",
+      "apps/studio/src/components/workspace/PanelRail.tsx",
+      "apps/studio/src/components/workspace/PendingMessages.tsx",
+      "apps/studio/src/components/workspace/QuestionForm.tsx",
+      "apps/studio/src/components/workspace/StatusBadge.tsx",
+      "apps/studio/src/components/workspace/ThreadLinkPicker.tsx",
+      "apps/studio/src/components/workspace/threadlink.spec.tsx",
+      "apps/studio/vitest.config.mts",
+      "pnpm-lock.yaml"
+    ],
+    "files_deleted": [
+      "apps/studio/src/components/ColorModeBootstrap.tsx",
+      "apps/studio/src/components/StatusPill.tsx",
+      "apps/studio/src/components/Tip.tsx",
+      "apps/studio/src/components/colormodebootstrap.spec.tsx"
+    ],
+    "usage": {
+      "tokens_in": 580113,
+      "tokens_out": 99903,
+      "approx": true,
+      "source": "declared-estimate",
+      "by_tier": {
+        "claude/opus": {
+          "tokens_in": 150000,
+          "tokens_out": 24000,
+          "approx": true,
+          "source": "declared-estimate"
+        },
+        "claude/sonnet": {
+          "tokens_in": 430113,
+          "tokens_out": 75903,
+          "approx": true,
+          "source": "declared-estimate"
+        }
+      },
+      "by_agent": [
+        {
+          "agent": "orchestrator",
+          "label": "solo",
+          "provider_model": "claude/opus",
+          "effort": "medium",
+          "tokens_in": 60000,
+          "tokens_out": 10000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-27"
+        },
+        {
+          "agent": "orchestrator",
+          "label": "context-consolidation",
+          "provider_model": "claude/sonnet",
+          "effort": "low",
+          "tokens_in": 93968,
+          "tokens_out": 16583,
+          "approx": true,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-10-27"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-001",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 91513,
+          "tokens_out": 16149,
+          "approx": true,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-10-27"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-002",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 138718,
+          "tokens_out": 24480,
+          "approx": true,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-10-27"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-003",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 105914,
+          "tokens_out": 18691,
+          "approx": true,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-10-27"
+        },
+        {
+          "agent": "reviewer",
+          "label": "TASK-004",
+          "provider_model": "claude/opus",
+          "effort": "medium",
+          "tokens_in": 90000,
+          "tokens_out": 14000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-27"
+        }
+      ]
+    }
+  },
+  "tables_created": [],
+  "endpoints_implemented": [],
+  "components_created": [],
+  "issues_found": [
+    "decisión: NextThemeProvider con layout=\"clean\" y defaultMode según prefers-color-scheme en un wrapper cliente (StudioThemeProvider); se conserva el script anti-flash del head porque defaultMode se aplica después del montaje",
+    "decisión: HelpSelect queda como composición fina (Select + ayuda); no se usa Select native porque Studio mantiene la lista propia de tucu",
+    "decisión: se mantienen las reglas table-element de globals.css (BasicTable sin densidad equivalente) y px-4!/py-1.5! en ConnectionBanner (Alert sin variante compacta)",
+    "decisión: los tooltips del visor de documentos usan los colores por defecto de tucu, como el resto; un bg sin dark: no pisa los dark:bg-* del Tooltip",
+    "fricción tucu-ui 44-46 (enviadas): defaultMode sin system, defaultMode aplicado después del montaje, README con @source viejo; resueltas para 3.6.0",
+    "fricción tucu-ui 47-58 (enviadas): Modal sin overlayClassName, closeButtonProps/testid, título en span inline, alto/ancho libres, id de título fijo, foco inicial en el título con contorno visible; Alert sin densidad; BasicTable sin densidad/hover token; Select sin hideLabel y trigger con rounded-xl fijo; Badge sin alto libre; Tooltip sin maxWidth"
+  ],
+  "reviewer_report": {
+    "approved": true,
+    "date": "2026-10-27",
+    "ca_results": {
+      "US-009": "PASS con excepciones - sin Tip, StatusPill ni ColorModeBootstrap; HelpSelect reducido a composición; globals.css sin reglas de botón ni de select; vitest sin server.deps.inline; quedan las reglas de tabla y el override de ConnectionBanner, con fricción enviada",
+      "US-010": "PASS - GateStatusModal y DocumentViewerModal sobre tucu Modal (role dialog, aria-modal, Escape, foco atrapado y devuelto); specs actualizados; revisados en claro y oscuro. El overlay quedó más claro que antes (fricción enviada)"
+    },
+    "tests": {
+      "sdd:validate": "OK",
+      "build": "pnpm build exit 0",
+      "typecheck": "pnpm typecheck exit 0",
+      "suite": "protocol 103/103, cli 202 pass (9 skipped), studio-bridge 675 pass (2 skipped), studio 694/694",
+      "e2e": "apps/studio e2e 8/8 PASS contra dist/web recompilado (antes del ajuste de clases del tooltip del visor, que se verificó con typecheck y vitest)"
+    },
+    "notes": "Aprobado por el actor único del flow lite (opus/medium); TASK-001..003 por subagentes sonnet/medium, TASK-002 y 003 en paralelo. Recorrida en el navegador en claro y oscuro: modal de gates, selectores (trigger 28px, opciones 12px), badges, telemetría; el modo elegido persiste al recargar aunque difiera del sistema. Sin comentarios narrativos nuevos.",
+    "follow_ups": [
+      "Adoptar tucu-ui 3.6.0: ThemeModeScript y defaultMode=\"system\" reemplazan el script del head y StudioThemeProvider",
+      "Quitar las reglas de tabla y el override de ConnectionBanner cuando tucu-ui sume densidades",
+      "Reemplazar SegmentedControl cuando tucu-ui lo publique",
+      "Revisar en modo claro los tres colores de identidad de agentes muy claros"
+    ]
+  }
+}

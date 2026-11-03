@@ -105,6 +105,17 @@ describe('bootstrap', () => {
     expect(store.getState().bot.fixes).toHaveLength(1);
   });
 
+  it('asks for kit events on general only when the bridge supports kit-tools', async () => {
+    const store = createStudioStore();
+    const client = { ...fakeClient({ 'channel.botHistory': [] }), supports: (c: string) => c === 'kit-tools' };
+    await loadBotHistory(client as never, store, 'general');
+    await loadBotHistory(client as never, store, 'other');
+    expect(client.calls).toEqual([
+      { cmd: 'channel.botHistory', channelId: 'general', limit: 100, includeKitEvents: true },
+      { cmd: 'channel.botHistory', channelId: 'other', limit: 100 },
+    ]);
+  });
+
   it('buffers live events during reconnect so a gap is fetched', async () => {
     const store = createStudioStore();
     store.getState().loadHistory('t1', [0, 1, 2, 3, 4].map((seq) => ({ seq, event: { type: 'user.message' as const, text: `m${seq}` } })));

@@ -100,6 +100,24 @@ describe('startWorkspaceWatcher', () => {
   });
 });
 
+describe('onPath hook', () => {
+  it('reports every changed absolute path under sdd/', async () => {
+    const seen: string[] = [];
+    const journal = path.join(root, 'sdd/memory/journal/2026-10-27-x.md');
+    await mkdir(path.dirname(journal), { recursive: true });
+    const hooked = await startWorkspaceWatcher({ root, debounceMs: 50, onUpdate: () => undefined, onPath: (p) => seen.push(p) });
+    try {
+      let attempt = 0;
+      await waitFor(async () => {
+        if (!seen.includes(journal)) await writeFile(journal, `x${attempt++}`);
+        return seen.includes(journal);
+      }, 15_000);
+    } finally {
+      await hooked.close();
+    }
+  });
+});
+
 describe('.claude catalog watching', () => {
   const restart = async () => {
     await watcher!.close();

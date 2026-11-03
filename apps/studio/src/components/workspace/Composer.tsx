@@ -1,5 +1,6 @@
 'use client';
 
+import { Button, Textarea, Tooltip } from '@e-burgos/tucu-ui';
 import { Clock, Paperclip, Send } from 'lucide-react';
 import {
   DEFAULT_AGENT,
@@ -40,6 +41,7 @@ import { useAttachmentDraft } from '@/lib/use-attachment-draft';
 import { useMentionMenu } from '@/lib/use-mention-menu';
 import { useBridge, useStudio } from '../BridgeProvider';
 import { HelpSelect } from '../HelpSelect';
+import { AgentFace } from './AgentFace';
 import { AttachmentTray } from './AttachmentTray';
 import { MentionMenu } from './MentionMenu';
 import { ModeSelectors } from './ModeSelectors';
@@ -56,6 +58,7 @@ const BUSY_STATUSES = new Set(['running', 'waiting-approval', 'queued']);
 const MODELS: ModelChoice[] = ['kit', 'haiku', 'sonnet', 'opus', 'fable'];
 const EFFORTS: Effort[] = ['low', 'medium', 'high', 'xhigh', 'max'];
 const PERMS: PermissionModeChoice[] = ['default', 'acceptEdits', 'bypassPermissions', 'plan'];
+const MODEL_NAMES: Record<ModelChoice, string> = { kit: 'Kit', haiku: 'Haiku', sonnet: 'Sonnet', opus: 'Opus', fable: 'Fable' };
 
 export interface ComposerViewProps {
   options: ThreadOptions;
@@ -195,9 +198,10 @@ export function ComposerView(p: ComposerViewProps) {
         {p.error && <p role="alert" className="mb-2 text-xs text-roseish">{p.error}</p>}
         <div className="relative rounded-xl border border-ink-700 bg-ink-900 focus-within:border-accent-500/60">
           {mentionsOn && <MentionMenu menu={menu} />}
-          <textarea
+          <Textarea
             {...(mentionsOn ? menu.comboboxProps : {})}
-            className="block min-h-[44px] w-full resize-none overflow-y-auto bg-transparent px-3 py-2 text-sm outline-none"
+            variant="transparent"
+            inputClassName="min-h-[44px] sm:min-h-[44px] resize-none overflow-y-auto rounded-none px-3 py-2 focus-visible:outline-0"
             aria-label={t('composer.placeholder')}
             placeholder={t('composer.placeholder')}
             ref={box}
@@ -218,39 +222,48 @@ export function ComposerView(p: ComposerViewProps) {
             }}
           />
           <div className="flex flex-wrap items-center gap-2 border-t border-ink-800 px-2 py-1.5">
-            <label className="sr-only" htmlFor="composer-agent">{t('composer.agent')}</label>
-            <HelpSelect help={t('help.composer.agent')} id="composer-agent" className={select} disabled={p.agentLocked} value={p.options.agent} onChange={(e) => p.onOptionsChange({ agent: e.target.value })}>
-              {p.agents.map((a) => <option key={a} value={a}>{agentMeta(a).name}</option>)}
-            </HelpSelect>
-            <label className="sr-only" htmlFor="composer-model">{t('composer.model')}</label>
             <HelpSelect
+              label={t('composer.agent')}
+              help={t('help.composer.agent')}
+              disabled={p.agentLocked}
+              value={p.options.agent}
+              searchable={p.agents.length > 8}
+              options={p.agents.map((a) => ({
+                value: a,
+                label: agentMeta(a).name,
+                description: agentMeta(a).role,
+                icon: <span className="inline-flex size-[18px] items-center justify-center"><AgentFace agent={a} size={18} /></span>,
+              }))}
+              onChange={(agent) => p.onOptionsChange({ agent })}
+            />
+            <HelpSelect
+              label={t('composer.model')}
               help={t('help.composer.model')}
-              id="composer-model"
-              className={select}
               value={p.options.model}
-              onChange={(e) => {
-                const model = e.target.value as ModelChoice;
+              options={MODELS.map((m) => ({ value: m, label: MODEL_NAMES[m], description: t(`model.${m}.desc`) }))}
+              onChange={(value) => {
+                const model = value as ModelChoice;
                 p.onOptionsChange(model === 'kit' ? { model, effort: null } : { model, effort: p.options.effort ?? 'medium' });
               }}
-            >
-              {MODELS.map((m) => <option key={m} value={m}>{m === 'kit' ? t('model.kit') : m}</option>)}
-            </HelpSelect>
-            <label className="sr-only" htmlFor="composer-effort">{t('composer.effort')}</label>
+            />
             <HelpSelect
+              label={t('composer.effort')}
               help={t('help.composer.effort')}
-              id="composer-effort"
-              className={select}
               disabled={p.options.model === 'kit'}
               value={p.options.effort ?? ''}
-              onChange={(e) => p.onOptionsChange({ effort: e.target.value as Effort })}
-            >
-              {p.options.model === 'kit' && <option value="">—</option>}
-              {EFFORTS.map((x) => <option key={x} value={x}>{x}</option>)}
-            </HelpSelect>
-            <label className="sr-only" htmlFor="composer-perm">{t('composer.permission')}</label>
-            <HelpSelect help={t('help.composer.permission')} id="composer-perm" className={select} value={p.options.permissionMode} onChange={(e) => p.onOptionsChange({ permissionMode: e.target.value as PermissionModeChoice })}>
-              {PERMS.map((x) => <option key={x} value={x}>{t(`perm.${x}`)}</option>)}
-            </HelpSelect>
+              options={[
+                ...(p.options.model === 'kit' ? [{ value: '', label: '—', description: t('effort.none.desc') }] : []),
+                ...EFFORTS.map((x) => ({ value: x, label: x, description: t(`effort.${x}.desc`) })),
+              ]}
+              onChange={(value) => p.onOptionsChange({ effort: value as Effort })}
+            />
+            <HelpSelect
+              label={t('composer.permission')}
+              help={t('help.composer.permission')}
+              value={p.options.permissionMode}
+              options={PERMS.map((x) => ({ value: x, label: t(`perm.${x}`), description: t(`perm.${x}.desc`) }))}
+              onChange={(value) => p.onOptionsChange({ permissionMode: value as PermissionModeChoice })}
+            />
             {p.onFiles && (
               <>
                 <input
@@ -266,32 +279,41 @@ export function ComposerView(p: ComposerViewProps) {
                     if (files.length > 0) p.onFiles?.(files);
                   }}
                 />
-                <button
-                  type="button"
-                  aria-label={t('attach.add')}
-                  title={t('attach.add')}
-                  className="rounded-md p-1.5 text-ink-300 hover:bg-ink-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-40"
-                  disabled={pending}
-                  onClick={() => fileInput.current?.click()}
-                >
-                  <Paperclip size={16} />
-                </button>
+                <Tooltip size="xs" arrow={false} content={t('attach.add')}>
+                  <Button
+                    type="button"
+                    variant="transparent"
+                    color="gray"
+                    shape="circle"
+                    size="mini"
+                    aria-label={t('attach.add')}
+                    disabled={pending}
+                    onClick={() => fileInput.current?.click()}
+                  >
+                    <Paperclip size={16} />
+                  </Button>
+                </Tooltip>
               </>
             )}
-            <button
-              aria-label={p.queueing ? t('composer.queue') : t('composer.send')}
-              title={p.queueing ? t('composer.queueHint') : undefined}
-              className="ml-auto inline-flex items-center gap-1 rounded-md bg-accent-500 p-1.5 text-ink-950 hover:bg-accent-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-50"
-              disabled={pending}
-              onClick={() => void submit()}
-            >
-              {p.queueing ? <Clock size={16} /> : <Send size={16} />}
-              {p.queueing && <span className="pr-1 text-xs font-medium">{t('composer.queue')}</span>}
-            </button>
+            <div className="ml-auto">
+              <Tooltip size="xs" arrow={false} content={p.queueing ? t('composer.queueHint') : t('composer.send')}>
+                <Button
+                  type="button"
+                  shape={p.queueing ? 'rounded' : 'circle'}
+                  size="mini"
+                  aria-label={p.queueing ? t('composer.queue') : t('composer.send')}
+                  disabled={pending}
+                  onClick={() => void submit()}
+                >
+                  {p.queueing ? <Clock size={16} /> : <Send size={16} />}
+                  {p.queueing && <span className="pr-1 text-xs font-medium">{t('composer.queue')}</span>}
+                </Button>
+              </Tooltip>
+            </div>
           </div>
         </div>
         {p.modes}
-        <p data-testid="composer-hints" className="mt-1.5 px-1 text-[11px] text-ink-500">{t('composer.hints')}</p>
+        <p data-testid="composer-hints" className="mt-1.5 px-1 text-meta text-ink-500">{t('composer.hints')}</p>
       </div>
     </div>
   );

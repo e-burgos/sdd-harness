@@ -1,6 +1,7 @@
 'use client';
 
-import { useId, useState, type KeyboardEvent } from 'react';
+import { Button, SegmentedControl, segmentedControlPanelId, segmentedControlTabId } from '@e-burgos/tucu-ui';
+import { useId, useState } from 'react';
 import { KeyRound, LogIn, LogOut, RefreshCw, ExternalLink } from 'lucide-react';
 import type { AuthPreference } from '@sdd-studio/protocol';
 import { useT } from '@/lib/i18n/i18n';
@@ -22,7 +23,7 @@ function SubscriptionTab({ active }: { active: boolean }) {
   const connectLabel = state === 'connected' ? t('auth.sub.switch') : t('auth.sub.connect');
 
   return (
-    <div className="flex flex-col gap-2 text-[11px] text-ink-300">
+    <div className="flex flex-col gap-2 text-meta text-ink-300">
       <p aria-live="polite">
         {state === 'connected' && t('auth.sub.connected', { details })}
         {state === 'pending' && t('auth.sub.pending')}
@@ -38,21 +39,21 @@ function SubscriptionTab({ active }: { active: boolean }) {
         <div className="flex flex-col gap-2 rounded border border-ink-700 p-2">
           <p>{t('auth.sub.confirmLogout')}</p>
           <div className="flex gap-2">
-            <button type="button" disabled={busy} className={`rounded bg-accent-dim px-2 py-1 text-accent-300 ${ring}`} onClick={() => { setConfirming(false); void logout(); }}>{t('auth.sub.confirm')}</button>
-            <button type="button" className={`rounded px-2 py-1 hover:text-ink-100 ${ring}`} onClick={() => setConfirming(false)}>{t('apikey.cancel')}</button>
+            <Button type="button" size="tiny" disabled={busy} onClick={() => { setConfirming(false); void logout(); }}>{t('auth.sub.confirm')}</Button>
+            <Button type="button" variant="transparent" color="gray" size="tiny" onClick={() => setConfirming(false)}>{t('apikey.cancel')}</Button>
           </div>
         </div>
       ) : (
         <div className="flex flex-wrap gap-2">
           {state !== 'pending' && (
-            <button type="button" disabled={busy} className={`inline-flex items-center gap-1 rounded bg-accent-dim px-2 py-1 text-accent-300 ${ring}`} onClick={() => void login()}>
+            <Button type="button" size="tiny" disabled={busy} onClick={() => void login()}>
               {state === 'connected' ? <RefreshCw size={12} aria-hidden /> : <LogIn size={12} aria-hidden />} {connectLabel}
-            </button>
+            </Button>
           )}
           {state === 'connected' && (
-            <button type="button" disabled={busy} className={`inline-flex items-center gap-1 rounded px-2 py-1 hover:text-ink-100 ${ring}`} onClick={() => setConfirming(true)}>
+            <Button type="button" variant="transparent" color="gray" size="tiny" disabled={busy} onClick={() => setConfirming(true)}>
               <LogOut size={12} aria-hidden /> {t('auth.sub.disconnect')}
-            </button>
+            </Button>
           )}
         </div>
       )}
@@ -61,10 +62,10 @@ function SubscriptionTab({ active }: { active: boolean }) {
   );
 }
 
-export function AuthPanel() {
+export function AuthPanel({ defaultOpen = false }: { defaultOpen?: boolean } = {}) {
   const { t } = useT();
   const { authMode, authPreference, setAuthPreference, connection } = useBridge();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   const [error, setError] = useState<string | null>(null);
   const baseId = useId();
   const supported = connection.status !== 'open' || !!connection.welcome?.features?.includes('auth-subscription');
@@ -75,45 +76,32 @@ export function AuthPanel() {
     if (next === selected) return;
     setAuthPreference(next).catch((e: unknown) => setError(e instanceof Error ? e.message : String(e)));
   };
-  const onKeyDown = (e: KeyboardEvent<HTMLButtonElement>) => {
-    if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
-    e.preventDefault();
-    const next = TABS[(TABS.indexOf(selected) + 1) % TABS.length];
-    select(next);
-    document.getElementById(`${baseId}-tab-${next}`)?.focus();
-  };
-
   if (!open) {
     return (
-      <button className={`mt-1 inline-flex items-center gap-1 rounded px-1 text-[11px] text-ink-300 hover:text-ink-100 ${ring}`} onClick={() => setOpen(true)}>
+      <Button type="button" variant="transparent" color="gray" size="tiny" onClick={() => setOpen(true)}>
         <KeyRound size={12} aria-hidden /> {t('auth.panel.open')}
-      </button>
+      </Button>
     );
   }
   return (
     <section aria-label={t('auth.panel.title')} className="mt-2 rounded-md border border-ink-800 p-2">
-      <div role="tablist" aria-label={t('auth.panel.title')} className="mb-2 flex gap-1 text-[11px]">
-        {TABS.map((tab) => (
-          <button
-            key={tab}
-            id={`${baseId}-tab-${tab}`}
-            role="tab"
-            type="button"
-            aria-selected={selected === tab}
-            aria-controls={`${baseId}-panel-${tab}`}
-            tabIndex={selected === tab ? 0 : -1}
-            onClick={() => select(tab)}
-            onKeyDown={onKeyDown}
-            className={`rounded px-2 py-1 ${ring} ${selected === tab ? 'bg-accent-dim text-accent-300' : 'text-ink-300 hover:text-ink-100'}`}
-          >
-            {t(tab === 'subscription' ? 'auth.tab.subscription' : 'auth.tab.apikey')}
-          </button>
-        ))}
-        <button type="button" className={`ml-auto rounded px-2 py-1 text-ink-300 hover:text-ink-100 ${ring}`} onClick={() => setOpen(false)}>{t('auth.panel.close')}</button>
+      <div className="mb-2 flex items-center gap-1">
+        <SegmentedControl
+          semantics="tabs"
+          idBase={baseId}
+          aria-label={t('auth.panel.title')}
+          size="sm"
+          value={selected}
+          onChange={select}
+          options={TABS.map((tab) => ({ value: tab, label: t(tab === 'subscription' ? 'auth.tab.subscription' : 'auth.tab.apikey') }))}
+        />
+        <div className="ml-auto">
+          <Button type="button" variant="transparent" color="gray" size="tiny" onClick={() => setOpen(false)}>{t('auth.panel.close')}</Button>
+        </div>
       </div>
-      {error && <p role="alert" className="mb-2 text-[11px] text-roseish">{error}</p>}
-      <div role="tabpanel" id={`${baseId}-panel-${selected}`} aria-labelledby={`${baseId}-tab-${selected}`}>
-        {selected === 'subscription' ? (supported ? <SubscriptionTab active /> : <p className="text-[11px] text-ink-300">{t('auth.sub.unsupported')}</p>) : <ApiKeyField />}
+      {error && <p role="alert" className="mb-2 text-meta text-roseish">{error}</p>}
+      <div role="tabpanel" id={segmentedControlPanelId(baseId, selected)} aria-labelledby={segmentedControlTabId(baseId, selected)}>
+        {selected === 'subscription' ? (supported ? <SubscriptionTab active /> : <p className="text-meta text-ink-300">{t('auth.sub.unsupported')}</p>) : <ApiKeyField />}
       </div>
     </section>
   );

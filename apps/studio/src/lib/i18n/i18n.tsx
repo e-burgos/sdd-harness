@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { resolveTucuLang, useTheme } from '@e-burgos/tucu-ui';
 import { en } from './en';
 import { es, type Dict } from './es';
 
@@ -41,6 +42,7 @@ export function I18nProvider({ children, initial }: { children: ReactNode; initi
   }, [initial]);
   useEffect(() => {
     document.documentElement.lang = lang;
+    useTheme.setState({ lang: resolveTucuLang(lang) });
   }, [lang]);
   const setLang = useCallback((next: Lang) => {
     setLangState(next);

@@ -41,7 +41,7 @@ export function Timeline({ items, status, onRespond, onAnswerQuestion }: Timelin
                 </summary>
                 <ul className="space-y-1 px-3 pb-3">
                   {block.items.map((tool) => (
-                    <li key={tool.id} className="font-mono text-[11px]">
+                    <li key={tool.id} className="font-mono text-meta">
                       <span className={tool.status === 'error' ? 'text-roseish' : tool.status === 'running' ? 'text-amberish' : 'text-accent-300'}>
                         {tool.status === 'running' ? (
                           <Loader2 size={11} className="inline-block motion-safe:animate-spin" aria-hidden />
@@ -54,7 +54,7 @@ export function Timeline({ items, status, onRespond, onAnswerQuestion }: Timelin
                       </span>{' '}
                       <span className="text-ink-300">{tool.tool}</span> <span className="break-all">{tool.summary}</span>
                       {isToolSummaryClipped(tool) && (
-                        <span data-testid="tool-summary-clipped" className="ml-1 inline-flex items-center gap-0.5 text-[10px] text-ink-500" title={t('tool.clipped.title')}>
+                        <span data-testid="tool-summary-clipped" className="ml-1 inline-flex items-center gap-0.5 text-micro text-ink-500" title={t('tool.clipped.title')}>
                           <Scissors size={10} aria-hidden />
                           {t('tool.clipped')}
                         </span>
@@ -78,12 +78,12 @@ export function Timeline({ items, status, onRespond, onAnswerQuestion }: Timelin
                   {item.attachments && item.attachments.length > 0 && <AttachmentList attachments={item.attachments} />}
                   {item.refs && item.refs.agents.length + item.refs.skills.length > 0 && (
                     <ul className="mt-1 flex flex-wrap gap-1" aria-label={t('timeline.refs')}>
-                      {item.refs.agents.map((id) => <li key={`a:${id}`} className="rounded bg-ink-800 px-1.5 font-mono text-[11px] text-ink-300">@{id}</li>)}
-                      {item.refs.skills.map((id) => <li key={`s:${id}`} className="rounded bg-ink-800 px-1.5 font-mono text-[11px] text-ink-300">/{id}</li>)}
+                      {item.refs.agents.map((id) => <li key={`a:${id}`} className="rounded bg-ink-800 px-1.5 font-mono text-meta text-ink-300">@{id}</li>)}
+                      {item.refs.skills.map((id) => <li key={`s:${id}`} className="rounded bg-ink-800 px-1.5 font-mono text-meta text-ink-300">/{id}</li>)}
                     </ul>
                   )}
                   {item.pendingId && (
-                    <p className={`mt-0.5 text-[11px] ${item.notDelivered ? 'text-amberish' : 'text-ink-300'}`}>
+                    <p className={`mt-0.5 text-meta ${item.notDelivered ? 'text-amberish' : 'text-ink-300'}`}>
                       {item.notDelivered ? t('pending.notDelivered') : item.delivery === 'next-turn' ? t('pending.deliveredNextTurn') : t('pending.delivered')}
                     </p>
                   )}
@@ -100,7 +100,7 @@ export function Timeline({ items, status, onRespond, onAnswerQuestion }: Timelin
                     <span className="text-sm font-semibold tracking-tight" style={{ color: meta.color }}>
                       {meta.name}
                     </span>
-                    <span className="text-[11px] font-mono text-ink-400">
+                    <span className="text-meta font-mono text-ink-400">
                       {meta.role} · {meta.title}
                     </span>
                   </div>
@@ -129,7 +129,7 @@ export function Timeline({ items, status, onRespond, onAnswerQuestion }: Timelin
             );
           case 'usage':
             return (
-              <li key={item.id} className="pl-11 font-mono text-[11px] text-ink-500">
+              <li key={item.id} className="pl-11 font-mono text-meta text-ink-500">
                 {t('usage.footer', {
                   model: item.usage.model,
                   effort: item.usage.effort ?? 'kit',

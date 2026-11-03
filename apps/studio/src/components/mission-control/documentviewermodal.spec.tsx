@@ -1,4 +1,4 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { DocumentViewerModal } from './DocumentViewerModal';
 import { BridgeContext } from '../BridgeProvider';
 import { createStudioStore } from '@/lib/store/store';
@@ -99,13 +99,14 @@ describe('DocumentViewerModal', () => {
     );
     const modal = screen.getByTestId('document-viewer-modal');
     expect(container.contains(modal)).toBe(false);
-    expect(modal.parentElement).toBe(document.body);
-    expect(modal.className).toContain('fixed');
-    expect(modal.className).toContain('inset-0');
-    expect(modal.className).toContain('items-center');
-    expect(modal.className).toContain('justify-center');
-    expect(modal.firstElementChild?.className).toContain('max-w-4xl');
-    expect(modal.firstElementChild?.className).toContain('max-h-[85vh]');
+    const overlay = modal.parentElement as HTMLElement;
+    expect(overlay.parentElement).toBe(document.body);
+    expect(overlay.className).toContain('fixed');
+    expect(overlay.className).toContain('inset-0');
+    expect(modal.getAttribute('role')).toBe('dialog');
+    expect(modal.getAttribute('aria-modal')).toBe('true');
+    expect(screen.getByRole('dialog', { name: 'plan.md' })).toBe(modal);
+    expect(overlay.className).toContain('backdrop-blur-md');
   });
 
   it('closes with Escape and with a click on the backdrop but not on the panel', () => {
@@ -119,9 +120,11 @@ describe('DocumentViewerModal', () => {
     const modal = screen.getByTestId('document-viewer-modal');
     fireEvent.click(modal.firstElementChild as HTMLElement);
     expect(onClose).not.toHaveBeenCalled();
-    fireEvent.click(modal);
+    const overlay = modal.parentElement as HTMLElement;
+    fireEvent.mouseDown(overlay);
+    fireEvent.click(overlay);
     expect(onClose).toHaveBeenCalledTimes(1);
-    fireEvent.keyDown(window, { key: 'Escape' });
+    fireEvent.keyDown(modal, { key: 'Escape' });
     expect(onClose).toHaveBeenCalledTimes(2);
   });
 
@@ -135,30 +138,59 @@ describe('DocumentViewerModal', () => {
     expect(await screen.findByTestId('document-load-error')).toHaveTextContent(sampleDoc.path);
   });
 
-  it('splits the header into an info zone and an actions zone with the close button after a divider', () => {
+  it('shows the path as an info item and the copy actions in the sidebar, with the close button and its hint in the header', async () => {
+    mockClient.request.mockResolvedValue({ path: sampleDoc.path, content: '# x' });
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+    render(
+      <I18nProvider initial="es"><BridgeContext.Provider value={mockBridgeValue}>
+        <DocumentViewerModal document={sampleDoc} onClose={() => {}} />
+      </BridgeContext.Provider></I18nProvider>,
+    );
+    const dialog = screen.getByTestId('document-viewer-modal');
+    const path = screen.getByTestId('document-viewer-path');
+    expect(path).toHaveAttribute('title', sampleDoc.path);
+    expect(path.className).toContain('truncate');
+    expect(dialog).toContainElement(path);
+    await screen.findByText('x');
+    fireEvent.click(within(dialog).getByRole('button', { name: /Copiar ruta/ }));
+    expect(writeText).toHaveBeenCalledWith(sampleDoc.path);
+    fireEvent.click(within(dialog).getByRole('button', { name: /^Copiar$/ }));
+    expect(writeText).toHaveBeenCalledWith('# x');
+    expect(screen.getByTestId('modal-close-button')).toBeInTheDocument();
+  });
+
+  it('exposes the view section as a radio group independent from the documents navigation', () => {
     mockClient.request.mockResolvedValue({ path: sampleDoc.path, content: '# x' });
     render(
       <I18nProvider initial="es"><BridgeContext.Provider value={mockBridgeValue}>
         <DocumentViewerModal document={sampleDoc} onClose={() => {}} />
       </BridgeContext.Provider></I18nProvider>,
     );
-    const path = screen.getByTestId('document-viewer-path');
-    expect(path).toHaveAttribute('title', sampleDoc.path);
-    expect(path.className).toContain('truncate');
-    const actions = screen.getByTestId('document-viewer-actions');
-    expect(actions.className).toContain('flex-wrap');
-    expect(actions).not.toContainElement(path);
-    const copyPath = screen.getByTestId('copy-path-button');
-    expect(actions).toContainElement(copyPath);
-    expect(copyPath.className).toContain('whitespace-nowrap');
-    expect(copyPath.className).toContain('shrink-0');
-    expect(copyPath).toHaveTextContent('Copiar ruta');
-    expect(actions).toContainElement(screen.getByText('Renderizado'));
-    expect(actions).toContainElement(screen.getByText('Copiar'));
-    const divider = screen.getByTestId('document-viewer-divider');
-    expect(actions).toContainElement(divider);
-    const close = screen.getByTestId('modal-close-button');
-    expect(divider.nextElementSibling).toBe(close);
-    expect(screen.getByTestId('document-viewer-header').className).toContain('flex-wrap');
+    const dialog = screen.getByTestId('document-viewer-modal');
+    expect(within(dialog).getByRole('radio', { name: 'Renderizado' })).toHaveAttribute('aria-checked', 'true');
+    fireEvent.click(within(dialog).getByRole('radio', { name: /Crudo/ }));
+    expect(within(dialog).getByRole('radio', { name: /Crudo/ })).toHaveAttribute('aria-checked', 'true');
+    expect(within(dialog).getByRole('radio', { name: 'Renderizado' })).toHaveAttribute('aria-checked', 'false');
+  });
+
+  it('lists every document including the open one as active and navigates to another without closing', () => {
+    mockClient.request.mockResolvedValue({ path: sampleDoc.path, content: '# x' });
+    const other: AgentGeneratedDocument = { id: 'o', name: 'brief.yaml', path: 'sdd/specs/s/brief.yaml', type: 'spec', status: 'generated' };
+    const onNavigate = vi.fn();
+    const onClose = vi.fn();
+    render(
+      <I18nProvider initial="es"><BridgeContext.Provider value={mockBridgeValue}>
+        <DocumentViewerModal document={sampleDoc} onClose={onClose} related={[sampleDoc, other]} onNavigate={onNavigate} />
+      </BridgeContext.Provider></I18nProvider>,
+    );
+    const dialog = screen.getByTestId('document-viewer-modal');
+    const current = within(dialog).getAllByRole('button', { name: /plan\.md/ })[0];
+    expect(current).toHaveAttribute('aria-current', 'page');
+    fireEvent.click(current);
+    expect(onNavigate).not.toHaveBeenCalled();
+    fireEvent.click(within(dialog).getAllByRole('button', { name: /brief\.yaml/ })[0]);
+    expect(onNavigate).toHaveBeenCalledWith(other);
+    expect(onClose).not.toHaveBeenCalled();
   });
 });

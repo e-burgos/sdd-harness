@@ -1,0 +1,65 @@
+{
+  "$schema": "../../../../schemas/cycle-tasks.schema.json",
+  "spec": "spec-e-burgos-009-studio-tucu-ui",
+  "cycle": 7,
+  "module": "studio-tucu-ui",
+  "apps": [
+    "apps/studio"
+  ],
+  "flow": "lite",
+  "user_stories_generated": true,
+  "prerequisites": {
+    "tasks_generated": true
+  },
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "Base tucu-ui 3.10.0 y limpieza de overrides de color con ! y dark: sobre componentes que ahora leen tokens",
+      "estimation_hours": 2,
+      "story_points": 3,
+      "user_stories": [
+        "US-016"
+      ],
+      "depends_on": [],
+      "status": "done",
+      "files": [
+        "apps/studio/package.json",
+        "pnpm-lock.yaml"
+      ],
+      "usage": {
+        "tokens_in": 85371,
+        "tokens_out": 15066,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-02"
+      }
+    },
+    {
+      "id": "TASK-002",
+      "title": "Verificación y cierre: build:local, bridge, e2e, recorrida visual y fricciones a tucu-ui",
+      "estimation_hours": 1,
+      "story_points": 2,
+      "user_stories": [
+        "US-016"
+      ],
+      "depends_on": [
+        "TASK-001"
+      ],
+      "status": "done",
+      "files": [],
+      "usage": {
+        "tokens_in": 40000,
+        "tokens_out": 6000,
+        "provider_model": "claude/opus",
+        "effort": "medium",
+        "agent": "reviewer",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-11-02"
+      }
+    }
+  ]
+}

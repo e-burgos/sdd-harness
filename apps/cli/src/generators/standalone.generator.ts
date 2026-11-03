@@ -36,6 +36,7 @@ export interface StandaloneOptions {
   targetDir?: string;
   harnessFiles?: string[];
   skipVerify?: boolean;
+  beforeGate?: (root: string) => void | Promise<void>;
 }
 
 /**
@@ -114,6 +115,8 @@ export async function generateStandalone(
     });
     for (const s of seeded) logger.success(`  ${s.specId} → draft, pending_modules`);
   }
+
+  await opts.beforeGate?.(root);
 
   // ─── FASE 3: Finalización ─────────────────────────────────────────────────
 

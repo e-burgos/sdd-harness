@@ -45,7 +45,7 @@ export function detectAppType(dir: string): string {
   if (existsSync(resolve(dir, 'pom.xml'))) return 'springboot';
   if (existsSync(resolve(dir, 'build.gradle'))) return 'springboot';
   if (existsSync(resolve(dir, 'pyproject.toml'))) return 'python';
-  if (existsSync(resolve(dir, 'next.config.js')) || existsSync(resolve(dir, 'next.config.ts')))
+  if (['js', 'ts', 'mjs', 'cjs'].some((ext) => existsSync(resolve(dir, `next.config.${ext}`))))
     return 'nextjs';
   if (existsSync(resolve(dir, 'nest-cli.json'))) return 'nestjs';
   if (existsSync(resolve(dir, 'vite.config.ts'))) return 'react';

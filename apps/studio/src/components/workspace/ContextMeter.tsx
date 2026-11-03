@@ -1,5 +1,6 @@
 'use client';
 
+import { Button } from '@e-burgos/tucu-ui';
 import { Gauge, MessageSquarePlus } from 'lucide-react';
 import type { ContextUsage } from '@sdd-studio/protocol';
 import { contextMeterOf, type ContextLevel } from '@/lib/context-meter';
@@ -47,14 +48,10 @@ export function ContextMeter({ usage, onNewConversation }: { usage: ContextUsage
         </span>
       )}
       {reading.level !== 'ok' && onNewConversation && (
-        <button
-          type="button"
-          onClick={onNewConversation}
-          className="inline-flex items-center gap-1 rounded-md border border-ink-700 px-2 py-0.5 hover:bg-ink-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"
-        >
+        <Button type="button" variant="ghost" color="gray" size="tiny" onClick={onNewConversation}>
           <MessageSquarePlus size={12} aria-hidden />
           {t('context.newConversation')}
-        </button>
+        </Button>
       )}
     </div>
   );

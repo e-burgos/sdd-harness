@@ -379,6 +379,8 @@ Cuando el problema **no puede esperar un ciclo SDD completo**, usar uno de estos
 
 > Arnés para agentes AI que trabajen en **este repo** (la CLI). Es la herramienta que instala
 > el kit SDD en otros repos y, además, lo usa sobre sí misma (ver «Este repo usa el kit SDD»).
+> **No es un workspace Nx:** el chequeo de `init-nx-workspace` y las guías de Nx de arriba no
+> aplican acá (ver la primera regla de «Este repo usa el kit SDD»).
 > Fuente única de las reglas de este proyecto: esta sección; `CLAUDE.md` apunta acá.
 
 ## Este repo usa el kit SDD (dogfooding)

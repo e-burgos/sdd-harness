@@ -1,5 +1,6 @@
 'use client';
 
+import { Button } from '@e-burgos/tucu-ui';
 import { Copy, ExternalLink, PlugZap } from 'lucide-react';
 import { useState } from 'react';
 import { useT } from '@/lib/i18n/i18n';
@@ -15,12 +16,15 @@ function CommandBox({ command, label }: { command: string; label?: string }) {
   const state = copied ? t('connect.copied') : t('connect.copy');
   return (
     <div>
-      {label && <div className="mb-1 text-[11px] uppercase tracking-wider text-ink-500">{label}</div>}
+      {label && <div className="mb-1 text-meta uppercase tracking-wider text-ink-500">{label}</div>}
       <div className="flex items-center gap-2 rounded-lg bg-ink-950 p-3 font-mono text-sm">
         <code className="min-w-0 flex-1 break-words text-accent-300">{command}</code>
-        <button
+        <Button
+          type="button"
+          variant="transparent"
+          color="gray"
+          size="tiny"
           aria-label={`${state}: ${command}`}
-          className="inline-flex shrink-0 items-center gap-1 rounded-md px-2 py-1 text-ink-300 hover:bg-ink-800 hover:text-ink-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"
           onClick={async () => {
             try {
               await navigator.clipboard.writeText(command);
@@ -31,7 +35,7 @@ function CommandBox({ command, label }: { command: string; label?: string }) {
           }}
         >
           <Copy size={16} aria-hidden="true" /> <span aria-live="polite">{state}</span>
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -62,9 +66,11 @@ export function ConnectScreen({ error }: { error?: string }) {
         <div className="mb-6 flex items-center gap-3">
           <PlugZap aria-hidden="true" size={28} className="text-accent-400" />
           <h1 className="text-2xl font-semibold">{t('connect.title')}</h1>
-          <button className="ml-auto text-xs text-ink-300 hover:text-ink-100" onClick={() => setLang(lang === 'es' ? 'en' : 'es')}>
-            {t('lang.switch')}
-          </button>
+          <div className="ml-auto">
+            <Button type="button" variant="transparent" color="gray" size="tiny" onClick={() => setLang(lang === 'es' ? 'en' : 'es')}>
+              {t('lang.switch')}
+            </Button>
+          </div>
         </div>
         {error && <p role="alert" className="mb-4 rounded-lg border border-roseish/40 bg-roseish/10 p-3 text-sm text-roseish">{error}</p>}
         <ol aria-label={t('connect.steps')} className="space-y-5">
@@ -90,7 +96,7 @@ export function ConnectScreen({ error }: { error?: string }) {
           </Step>
         </ol>
         <section aria-label={t('connect.requirements')} className="mt-6 border-t border-ink-800 pt-4">
-          <h2 className="mb-2 text-[11px] uppercase tracking-wider text-ink-500">{t('connect.requirements')}</h2>
+          <h2 className="mb-2 text-meta uppercase tracking-wider text-ink-500">{t('connect.requirements')}</h2>
           <ul className="list-disc space-y-1 pl-4 text-xs text-ink-300">
             <li>{t('connect.req.node')}</li>
             <li>{t('connect.auth')}</li>

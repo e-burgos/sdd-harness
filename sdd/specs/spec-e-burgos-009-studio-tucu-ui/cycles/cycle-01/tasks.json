@@ -1,0 +1,221 @@
+{
+  "$schema": "../../../../schemas/cycle-tasks.schema.json",
+  "spec": "spec-e-burgos-009-studio-tucu-ui",
+  "cycle": 1,
+  "module": "studio-tucu-ui",
+  "apps": [
+    "apps/studio"
+  ],
+  "flow": "lite",
+  "user_stories_generated": true,
+  "prerequisites": {
+    "tasks_generated": true
+  },
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "Base: dependencia @e-burgos/tucu-ui@3.4.0, tema en globals.css, NextThemeProvider (layout clean, dark, sin settings) en app/layout.tsx sin reintroducir scroll del viewport",
+      "user_stories": [
+        "US-002",
+        "US-003"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [],
+      "status": "done",
+      "files": [
+        "apps/studio/package.json",
+        "apps/studio/src/app/layout.tsx",
+        "apps/studio/src/app/globals.css",
+        "apps/studio/src/lib/i18n/i18n.tsx",
+        "apps/studio/vitest.config.mts",
+        "pnpm-lock.yaml"
+      ],
+      "usage": {
+        "tokens_in": 95000,
+        "tokens_out": 14000,
+        "provider_model": "claude/opus",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-27"
+      }
+    },
+    {
+      "id": "TASK-002",
+      "title": "Puente de tokens: ink/accent/amberish/roseish y tipografía resuelven al tema de tucu-ui",
+      "user_stories": [
+        "US-001"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/app/globals.css",
+        "apps/studio/src/app/layout.tsx",
+        "apps/studio/package.json",
+        "pnpm-lock.yaml"
+      ],
+      "usage": {
+        "tokens_in": 80000,
+        "tokens_out": 9000,
+        "provider_model": "claude/opus",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-27"
+      }
+    },
+    {
+      "id": "TASK-003",
+      "title": "Botones: <button> de Studio a Button de tucu-ui conservando nombres accesibles",
+      "user_stories": [
+        "US-002"
+      ],
+      "estimation_hours": 5,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-002"
+      ],
+      "status": "done",
+      "files": [
+        "pps/studio/src/app/globals.css",
+        "apps/studio/src/components/ConnectScreen.tsx",
+        "apps/studio/src/components/ConnectionBanner.tsx",
+        "apps/studio/src/components/ErrorBoundary.tsx",
+        "apps/studio/src/components/GateStatusModal.tsx",
+        "apps/studio/src/components/NewConversationButton.tsx",
+        "apps/studio/src/components/StudioHeader.tsx",
+        "apps/studio/src/components/mission-control/AgentInspectorDrawer.tsx",
+        "apps/studio/src/components/mission-control/AgentMapCanvas.tsx",
+        "apps/studio/src/components/mission-control/ChatDialogueCard.tsx",
+        "apps/studio/src/components/mission-control/ConversationSessionInfo.tsx",
+        "apps/studio/src/components/mission-control/DocumentViewerModal.tsx",
+        "apps/studio/src/components/mission-control/GateInspectorDrawer.tsx",
+        "apps/studio/src/components/mission-control/LiveAgentChatFeed.tsx",
+        "apps/studio/src/components/mission-control/LiveSwarmComms.tsx",
+        "apps/studio/src/components/mission-control/documentviewermodal.spec.tsx",
+        "apps/studio/src/components/workspace/ApiKeyField.tsx",
+        "apps/studio/src/components/workspace/ApprovalCard.tsx",
+        "apps/studio/src/components/workspace/AttachmentTray.tsx",
+        "apps/studio/src/components/workspace/AttachmentView.tsx",
+        "apps/studio/src/components/workspace/AuthPanel.tsx",
+        "apps/studio/src/components/workspace/Composer.tsx",
+        "apps/studio/src/components/workspace/ContextMeter.tsx",
+        "apps/studio/src/components/workspace/PanelRail.tsx",
+        "apps/studio/src/components/workspace/PendingMessages.tsx",
+        "apps/studio/src/components/workspace/PreparedConversations.tsx",
+        "apps/studio/src/components/workspace/QuestionForm.tsx",
+        "apps/studio/src/components/workspace/Sidebar.tsx",
+        "apps/studio/src/components/workspace/ThreadView.tsx"
+      ],
+      "usage": {
+        "tokens_in": 116282,
+        "tokens_out": 20520,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-10-27"
+      }
+    },
+    {
+      "id": "TASK-004",
+      "title": "Campos: input/textarea/select a Input/Textarea/Select de tucu-ui; MentionMenu conserva su teclado",
+      "user_stories": [
+        "US-002"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-002"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/workspace/ApiKeyField.tsx",
+        "apps/studio/src/components/workspace/ApprovalCard.tsx",
+        "apps/studio/src/components/workspace/PendingMessages.tsx",
+        "apps/studio/src/components/mission-control/LiveAgentChatFeed.tsx",
+        "apps/studio/src/components/workspace/QuestionForm.tsx",
+        "apps/studio/src/components/workspace/Composer.tsx"
+      ],
+      "usage": {
+        "tokens_in": 91900,
+        "tokens_out": 16200,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-10-27"
+      }
+    },
+    {
+      "id": "TASK-005",
+      "title": "Modales y overlays: GateStatusModal y DocumentViewerModal a Modal, ConnectionBanner a Alert, badges/tooltips/spinners",
+      "user_stories": [
+        "US-002"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-002"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/ConnectionBanner.tsx",
+        "apps/studio/src/components/workspace/StatusBadge.tsx",
+        "apps/studio/src/components/workspace/PendingMessages.tsx",
+        "apps/studio/src/components/workspace/QuestionForm.tsx"
+      ],
+      "usage": {
+        "tokens_in": 49480,
+        "tokens_out": 8750,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-10-27"
+      }
+    },
+    {
+      "id": "TASK-006",
+      "title": "Verificación y cierre: build/typecheck/test, e2e contra el export, revisión visual y fricciones para el skill del kit",
+      "user_stories": [
+        "US-001",
+        "US-002",
+        "US-003"
+      ],
+      "estimation_hours": 2,
+      "story_points": 2,
+      "depends_on": [
+        "TASK-003",
+        "TASK-004",
+        "TASK-005"
+      ],
+      "status": "done",
+      "files": [
+        "sdd/context/apps/studio/updates/2026-10-27-spec-e-burgos-009-studio-tucu-ui-cycle-01.md",
+        "sdd/context/constitution.md",
+        "sdd/memory/journal/2026-10-27-spec-e-burgos-009-studio-tucu-ui-cycle-01.md"
+      ],
+      "usage": {
+        "tokens_in": 70000,
+        "tokens_out": 10000,
+        "provider_model": "claude/opus",
+        "effort": "medium",
+        "agent": "reviewer",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-27"
+      }
+    }
+  ]
+}

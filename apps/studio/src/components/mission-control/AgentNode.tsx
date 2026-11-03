@@ -47,8 +47,8 @@ export function AgentNode({ agentId, x, y, presence, isSelected, participating =
       )}
       <circle
         r="36"
-        fill="#090d16"
-        stroke={isSelected ? '#ffffff' : statusColor}
+        fill="var(--color-ink-900)"
+        stroke={isSelected ? 'var(--color-foreground)' : statusColor}
         strokeWidth={isSelected ? '3' : '2'}
         className="transition-all duration-300 group-hover:scale-105"
         filter="drop-shadow(0px 4px 12px rgba(0,0,0,0.7))"
@@ -85,7 +85,7 @@ export function AgentNode({ agentId, x, y, presence, isSelected, participating =
           width="100"
           height="22"
           rx="11"
-          fill="#0e1526"
+          fill="var(--color-ink-850)"
           stroke={meta.color}
           strokeWidth="1"
           strokeOpacity="0.6"
@@ -93,7 +93,7 @@ export function AgentNode({ agentId, x, y, presence, isSelected, participating =
         <text
           textAnchor="middle"
           dy="0.32em"
-          fill="#ffffff"
+          fill="var(--color-ink-100)"
           fontSize="11"
           fontWeight="600"
           className="pointer-events-none tracking-wide"
@@ -108,14 +108,14 @@ export function AgentNode({ agentId, x, y, presence, isSelected, participating =
           width="110"
           height="16"
           rx="8"
-          fill="#1e293b"
-          stroke="#475569"
+          fill="var(--color-ink-800)"
+          stroke="var(--color-ink-700)"
           strokeWidth="0.8"
         />
         <text
           textAnchor="middle"
           dy="0.32em"
-          fill="#38bdf8"
+          fill="var(--color-sky-300)"
           fontSize="9"
           fontFamily="var(--font-mono, monospace)"
           fontWeight="bold"

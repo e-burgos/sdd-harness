@@ -1,0 +1,503 @@
+{
+  "$schema": "../../../../schemas/cycle.schema.json",
+  "cycle": 1,
+  "module": "kit-tucu-ui",
+  "spec": "spec-e-burgos-011-kit-tucu-ui",
+  "apps": [
+    "apps/cli",
+    "apps/studio-bridge"
+  ],
+  "phase": "tucu-ui-integration",
+  "flow": "full",
+  "objectives": [
+    "Interruptor tucu_ui con pnpm sdd:tucu (US-1)",
+    "Skill y MCP de tucu-ui en los cuatro arneses sin pisar config ajena (US-2, US-3)",
+    "Oferta en init/configure sdd, docs y avisos del validador (US-4, US-5)"
+  ],
+  "status": "completed",
+  "started_at": "2026-11-02",
+  "completed_at": "2026-11-03",
+  "documents": {
+    "brief": "sdd/specs/spec-e-burgos-011-kit-tucu-ui/cycles/cycle-01/brief.yaml",
+    "functional": "sdd/specs/spec-e-burgos-011-kit-tucu-ui/cycles/cycle-01/functional.md",
+    "planner": "sdd/specs/spec-e-burgos-011-kit-tucu-ui/cycles/cycle-01/planner.md",
+    "architect": "sdd/specs/spec-e-burgos-011-kit-tucu-ui/cycles/cycle-01/architect.md"
+  },
+  "artifacts": [],
+  "metrics": {
+    "tasks_total": 26,
+    "tasks_completed": 26,
+    "tasks_skipped": 0,
+    "story_points": 86,
+    "files_created": [
+      "apps/cli/src/commands/__tests__/configure-mcp.spec.ts",
+      "apps/cli/src/commands/__tests__/tucu-ui-flow.spec.ts",
+      "apps/cli/src/generators/__tests__/tucu-ui.integration.spec.ts",
+      "apps/cli/src/utils/__tests__/kit-scripts.spec.ts",
+      "apps/cli/src/utils/__tests__/mcp-config.spec.ts",
+      "apps/cli/src/utils/__tests__/tucu-ui-common.spec.ts",
+      "apps/cli/src/utils/__tests__/tucu-ui-offer.spec.ts",
+      "apps/cli/src/utils/kit-scripts.ts",
+      "apps/cli/src/utils/mcp-sync.ts",
+      "apps/cli/src/utils/tucu-ui-offer.ts",
+      "apps/cli/src/utils/tucu-ui-run.ts",
+      "apps/cli/templates/sdd/documentation/en/TUCU-UI.md",
+      "apps/cli/templates/sdd/documentation/es/TUCU-UI.md",
+      "apps/cli/templates/sdd/scripts/mcp-config.mjs",
+      "apps/cli/templates/sdd/scripts/sdd-tucu.mjs",
+      "apps/cli/templates/sdd/scripts/tucu-ui-common.mjs"
+    ],
+    "files_modified": [
+      "apps/cli/README.md",
+      "apps/cli/src/commands/__tests__/configure-sdd-apps.spec.ts",
+      "apps/cli/src/commands/__tests__/init-target.spec.ts",
+      "apps/cli/src/commands/configure/mcp.ts",
+      "apps/cli/src/commands/configure/memory.ts",
+      "apps/cli/src/commands/configure/sdd-apps.ts",
+      "apps/cli/src/commands/configure/sdd.ts",
+      "apps/cli/src/commands/init.ts",
+      "apps/cli/src/config/__tests__/json-schema.spec.ts",
+      "apps/cli/src/config/__tests__/load.spec.ts",
+      "apps/cli/src/config/schema.ts",
+      "apps/cli/src/generators/__tests__/sdd.generator.integration.spec.ts",
+      "apps/cli/src/generators/__tests__/sdd.generator.windows.spec.ts",
+      "apps/cli/src/generators/__tests__/standalone.generator.spec.ts",
+      "apps/cli/src/generators/__tests__/update.generator.spec.ts",
+      "apps/cli/src/generators/kit-manifest.ts",
+      "apps/cli/src/generators/standalone.generator.ts",
+      "apps/cli/src/generators/workspace.generator.ts",
+      "apps/cli/src/types/config.types.ts",
+      "apps/cli/templates/sdd/docs/app.js",
+      "apps/cli/templates/sdd/documentation/en/HOW-TO-USE-SDD.md",
+      "apps/cli/templates/sdd/documentation/en/INSTALL.md",
+      "apps/cli/templates/sdd/documentation/en/README.md",
+      "apps/cli/templates/sdd/documentation/es/HOW-TO-USE-SDD.md",
+      "apps/cli/templates/sdd/documentation/es/INSTALL.md",
+      "apps/cli/templates/sdd/documentation/es/README.md",
+      "apps/cli/templates/sdd/dual-harness/AGENTS.md",
+      "apps/cli/templates/sdd/dual-harness/CLAUDE.md",
+      "apps/cli/templates/sdd/dual-harness/GEMINI.md",
+      "apps/cli/templates/sdd/dual-harness/copilot-instructions.md",
+      "apps/cli/templates/sdd/schemas/tools.schema.json",
+      "apps/cli/templates/sdd/scripts/setup-agents.ps1",
+      "apps/cli/templates/sdd/scripts/setup-agents.sh",
+      "apps/cli/templates/sdd/scripts/validate-sdd.mjs",
+      "apps/cli/templates/sdd/skills/sdd-steward/SKILL.md",
+      "apps/cli/templates/sdd/templates/nx-workspace/package.json",
+      "apps/cli/templates/sdd/tools.json",
+      "apps/studio-bridge/src/workspace/kit-tools.parity.spec.ts",
+      "apps/studio-bridge/src/workspace/kit-tools.spec.ts",
+      "package.json"
+    ],
+    "files_deleted": [],
+    "usage": {
+      "tokens_in": 2153068,
+      "tokens_out": 374310,
+      "approx": true,
+      "source": "agent-usage-notification",
+      "by_tier": {
+        "claude/sonnet": {
+          "tokens_in": 1308406,
+          "tokens_out": 230899,
+          "approx": true,
+          "source": "agent-usage-notification"
+        },
+        "claude/opus": {
+          "tokens_in": 844662,
+          "tokens_out": 143411,
+          "approx": true,
+          "source": "agent-usage-notification"
+        }
+      },
+      "by_agent": [
+        {
+          "agent": "functional",
+          "label": "functional.md",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 94076,
+          "tokens_out": 16602,
+          "approx": true,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-11-03"
+        },
+        {
+          "agent": "planner",
+          "label": "planner.md + reconcile",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 238808,
+          "tokens_out": 42143,
+          "approx": true,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-11-03"
+        },
+        {
+          "agent": "architect",
+          "label": "architect.md",
+          "provider_model": "claude/opus",
+          "effort": "high",
+          "tokens_in": 160489,
+          "tokens_out": 28322,
+          "approx": true,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-11-03"
+        },
+        {
+          "agent": "reviewer",
+          "label": "stage reviews",
+          "provider_model": "claude/opus",
+          "effort": "high",
+          "tokens_in": 414173,
+          "tokens_out": 73089,
+          "approx": true,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-11-03"
+        },
+        {
+          "agent": "custom",
+          "label": "kit map + tucu-ui-mcp inspection",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 174980,
+          "tokens_out": 30879,
+          "approx": true,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-11-03"
+        },
+        {
+          "agent": "orchestrator",
+          "label": "main loop",
+          "provider_model": "claude/opus",
+          "effort": "medium",
+          "tokens_in": 180000,
+          "tokens_out": 30000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-11-03"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-001",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 18761,
+          "tokens_out": 3311,
+          "approx": true,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-11-03"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-002",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 31268,
+          "tokens_out": 5518,
+          "approx": true,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-11-03"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-003",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 12507,
+          "tokens_out": 2207,
+          "approx": true,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-11-03"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-004",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 31268,
+          "tokens_out": 5518,
+          "approx": true,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-11-03"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-005",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 31268,
+          "tokens_out": 5518,
+          "approx": true,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-11-03"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-006",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 18761,
+          "tokens_out": 3311,
+          "approx": true,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-11-03"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-007",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 12507,
+          "tokens_out": 2207,
+          "approx": true,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-11-03"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-008",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 6254,
+          "tokens_out": 1104,
+          "approx": true,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-11-03"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-009",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 12507,
+          "tokens_out": 2207,
+          "approx": true,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-11-03"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-010",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 18761,
+          "tokens_out": 3311,
+          "approx": true,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-11-03"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-011",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 6254,
+          "tokens_out": 1104,
+          "approx": true,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-11-03"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-012",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 50029,
+          "tokens_out": 8829,
+          "approx": true,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-11-03"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-013",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 54768,
+          "tokens_out": 9665,
+          "approx": true,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-11-03"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-014",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 32861,
+          "tokens_out": 5799,
+          "approx": true,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-11-03"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-015",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 32861,
+          "tokens_out": 5799,
+          "approx": true,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-11-03"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-016",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 54768,
+          "tokens_out": 9665,
+          "approx": true,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-11-03"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-017",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 21907,
+          "tokens_out": 3866,
+          "approx": true,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-11-03"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-018",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 54768,
+          "tokens_out": 9665,
+          "approx": true,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-11-03"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-019",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 124660,
+          "tokens_out": 21999,
+          "approx": true,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-11-03"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-020",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 83107,
+          "tokens_out": 14666,
+          "approx": true,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-11-03"
+        },
+        {
+          "agent": "reviewer",
+          "label": "TASK-021",
+          "provider_model": "claude/opus",
+          "effort": "medium",
+          "tokens_in": 60000,
+          "tokens_out": 8000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-11-03"
+        },
+        {
+          "agent": "reviewer",
+          "label": "TASK-022",
+          "provider_model": "claude/opus",
+          "effort": "medium",
+          "tokens_in": 30000,
+          "tokens_out": 4000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-11-03"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-023",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 18761,
+          "tokens_out": 3311,
+          "approx": true,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-11-03"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-024",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 31268,
+          "tokens_out": 5518,
+          "approx": true,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-11-03"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-025",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 21907,
+          "tokens_out": 3866,
+          "approx": true,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-11-03"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-026",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 18761,
+          "tokens_out": 3311,
+          "approx": true,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-11-03"
+        }
+      ]
+    }
+  },
+  "tables_created": [],
+  "endpoints_implemented": [],
+  "components_created": [],
+  "issues_found": [
+    "decisión: la skill vive en sdd/integrations/skills/tucu-ui-design (dato del proyecto, fuera del catálogo y de update sdd); .claude/skills pasa de symlink entero a enlaces por skill cuando hace falta",
+    "decisión: helper mcp-config.mjs compartido por sdd-tucu.mjs y la CLI; configure mcp y configure memory dejan de pisar servidores ajenos",
+    "decisión: versión fijada @e-burgos/tucu-ui-mcp@0.16.0 registrada por proyecto en tools.json; update sdd no la cambia",
+    "pendiente: casos de Windows escritos pero no corridos (solo CI windows-latest); override local de Claude Code en Windows corregido en review sin prueba real",
+    "pendiente: la salida de --enable dice \"created\" para .gemini/settings.json aunque el archivo exista (cosmético)",
+    "fricción tucu-ui-mcp (enviada): el recurso tucu://catalog reporta tucu-ui 2.8.1"
+  ],
+  "reviewer_report": {
+    "approved": true,
+    "date": "2026-11-03",
+    "ca_results": {
+      "US-1": "PASS - tucu_ui opcional en el schema, pnpm sdd:tucu con --status/--enable/--disable idempotentes; tools.json sin la clave valida y reporta apagado",
+      "US-2": "PASS - skill instalada desde el paquete real en examples/tucu-next y enlazada en .claude/.github/.agents; sdd:validate verde",
+      "US-3": "PASS - entrada tucu-ui en .mcp.json, .vscode/mcp.json y .gemini/settings.json; --disable conserva un servidor ajeno y las claves de Gemini; handshake MCP real: tucu-ui-mcp 0.16.0, 11 tools",
+      "US-4": "PASS con excepciones - configure sdd --tucu-ui probado con red real; init --tucu-ui cubierto por specs con npx simulado, sin generación real completa",
+      "US-5": "PASS - docs bilingües, README de la CLI, textos de arneses, avisos del validador y playbook 8 del steward"
+    },
+    "tests": {
+      "sdd:validate": "OK",
+      "build": "pnpm build exit 0",
+      "typecheck": "pnpm typecheck exit 0",
+      "suite": "protocol 125, cli 354 pass (11 skipped), studio-bridge 797 pass (2 skipped), studio 885",
+      "e2e": "examples/tucu-next: configure sdd --tucu-ui, --disable, --enable y update sdd con red real"
+    },
+    "notes": "Implementado en tres etapas por workflow (implementadores sonnet/medium, reviewers opus/high); el orquestador corrió TASK-021/022.",
+    "follow_ups": [
+      "Interruptor tucu_ui en el módulo Kit de Studio",
+      "Correr los casos de Windows en una máquina Windows",
+      "Texto \"merged\" en vez de \"created\" al sumar a un archivo MCP existente"
+    ]
+  }
+}

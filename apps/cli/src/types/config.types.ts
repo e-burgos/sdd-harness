@@ -55,6 +55,7 @@ export interface SDDConfig {
   author?: string;
   /** team (ciclos full, default) | solo (ciclos lite, un solo actor) → sdd/global.json.profile */
   profile?: 'team' | 'solo';
+  tucu_ui?: boolean;
   modules: Array<string | ModuleSeed>;
   cycles?: CycleConfig[];
   skills?: {

@@ -57,6 +57,7 @@
 1. **Invariante de sincronización:** Cualquier cambio en este paquete impacta simultáneamente a `apps/studio` y `apps/studio-bridge`. Modificaciones en comandos o eventos deben ser retrocompatibles o requerir incremento de `PROTOCOL_VERSION` en `version.ts`.
 2. **Sin dependencias pesadas:** Debe mantenerse ultra liviano (solo `zod`). No debe depender de Node.js nativo (fs, path, child_process) para permitir su ejecución sin problemas en entornos navegador (Next.js / browser).
 3. **Flujo SDD:** Cambios estructurales en `libs/studio-protocol` deben correr bajo un ciclo SDD completo (`flow: full`), ya que es un contrato consumido por dos subproyectos distintos.
+4. **Eventos persistidos en el historial:** todo evento nuevo que viaje dentro de `thread.history` necesita su opt-in (patrón `includeDocumentTouched`/`includeQuestions`, por defecto `false`) y una prueba de que sin él no sale; una web anterior no puede parsear un resultado de comando con un evento desconocido. Decidirlo al diseñar el contrato, no al cerrar el ciclo.
 
 ## 6. Qué sigue
 

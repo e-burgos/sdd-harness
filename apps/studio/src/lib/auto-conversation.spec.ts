@@ -1,5 +1,5 @@
 import type { BotEvent, ThreadInfo, WorkspaceSnapshot } from '@sdd-studio/protocol';
-import { briefingFor, prepareFromBotEvent, preparedIdOf, preparedLabelOf, type PreparedConversation } from './auto-conversation';
+import { briefingFor, MAX_PREPARED, prepareFromBotEvent, preparedIdOf, preparedLabelOf, type PreparedConversation } from './auto-conversation';
 
 const bot = (botKind: BotEvent['botKind'], payload: Record<string, unknown>, channelId = 'general'): BotEvent => ({ channelId, botKind, payload });
 const options = { agent: 'sdd-orchestrator', model: 'kit' as const, effort: null, permissionMode: 'default' as const };
@@ -8,7 +8,7 @@ const thread = (link: ThreadInfo['link']): ThreadInfo => ({
 });
 const snapshot = {
   project: 'p', profile: 'solo', kitVersion: null, gateMode: 'block', pricing: null, stale: [], skills: [], agents: [],
-  specs: [], fixes: [{ id: 'FIX-a-001', title: 'Arreglo', status: 'pending', severity: null, specId: null, createdAt: null, closedAt: null }],
+  specs: [], fixes: [{ id: 'FIX-a-001', title: 'Arreglo', status: 'pending', severity: null, specId: null, createdAt: null, closedAt: null }, { id: 'FIX-a-002', title: 'Viejo', status: 'closed', severity: null, specId: null, createdAt: null, closedAt: '1' }],
   cycles: [
     { specId: 'spec-a', cycle: 'cycle-01', status: 'in-progress', flow: 'lite', apps: ['apps/studio', 'libs/studio-protocol'], tasks: [], tasksTotal: 0, tasksDone: 0 },
     { specId: 'spec-b', cycle: 'cycle-02', status: 'in-progress', flow: 'full', apps: [], tasks: [], tasksTotal: 0, tasksDone: 0 },
@@ -17,37 +17,58 @@ const snapshot = {
 
 describe('prepareFromBotEvent', () => {
   it('prepares a conversation in the spec channel for a new spec', () => {
-    const [p] = prepareFromBotEvent(bot('spec.created', { specId: 'spec-a', title: 'A' }), [], []);
+    const [p] = prepareFromBotEvent(bot('spec.created', { specId: 'spec-a', title: 'A', status: 'draft' }), [], [], snapshot);
     expect(p).toMatchObject({ id: 'spec:spec-a', channelId: 'spec:spec-a', link: { kind: 'none' } });
   });
 
   it('prepares a cycle conversation linked to the cycle and drops the spec-level one', () => {
-    const afterSpec = prepareFromBotEvent(bot('spec.created', { specId: 'spec-a' }), [], []);
-    const afterCycle = prepareFromBotEvent(bot('cycle.opened', { specId: 'spec-a', cycle: 'cycle-01' }), [], afterSpec);
+    const afterSpec = prepareFromBotEvent(bot('spec.created', { specId: 'spec-a', status: 'in-progress' }), [], [], snapshot);
+    const afterCycle = prepareFromBotEvent(bot('cycle.opened', { specId: 'spec-a', cycle: 'cycle-01', status: 'in-progress' }), [], afterSpec, snapshot);
     expect(afterCycle.map((p) => p.id)).toEqual(['cycle:spec-a:cycle-01']);
     expect(afterCycle[0]).toMatchObject({ channelId: 'spec:spec-a', link: { kind: 'cycle', specId: 'spec-a', cycle: 'cycle-01' } });
   });
 
   it('prepares a fix conversation in the fixes channel linked to the fix', () => {
-    const [p] = prepareFromBotEvent(bot('fix.created', { fixId: 'FIX-a-001', specId: null }, 'fixes'), [], []);
+    const [p] = prepareFromBotEvent(bot('fix.created', { fixId: 'FIX-a-001', specId: null }, 'fixes'), [], [], snapshot);
     expect(p).toMatchObject({ id: 'fix:FIX-a-001', channelId: 'fixes', link: { kind: 'fix', fixId: 'FIX-a-001' } });
   });
 
   it('ignores events that are not a new spec, cycle or fix, or that lack ids', () => {
-    for (const event of [bot('spec.status', { specId: 'a' }), bot('cycle.status', { specId: 'a', cycle: 'c' }), bot('task.status', {}), bot('fix.status', { fixId: 'x' }), bot('cycle.opened', { specId: 'a' }), bot('fix.created', {})]) {
-      expect(prepareFromBotEvent(event, [], [])).toEqual([]);
+    for (const event of [bot('spec.status', { specId: 'a' }), bot('cycle.status', { specId: 'a', cycle: 'c' }), bot('task.status', {}), bot('fix.status', { fixId: 'x' }), bot('cycle.opened', { specId: 'a', status: 'in-progress' }), bot('fix.created', {})]) {
+      expect(prepareFromBotEvent(event, [], [], snapshot)).toEqual([]);
     }
   });
 
   it('does not prepare twice for the same target', () => {
-    const once = prepareFromBotEvent(bot('cycle.opened', { specId: 'spec-a', cycle: 'cycle-01' }), [], []);
-    expect(prepareFromBotEvent(bot('cycle.opened', { specId: 'spec-a', cycle: 'cycle-01' }), [], once)).toBe(once);
+    const once = prepareFromBotEvent(bot('cycle.opened', { specId: 'spec-a', cycle: 'cycle-01', status: 'in-progress' }), [], [], snapshot);
+    expect(prepareFromBotEvent(bot('cycle.opened', { specId: 'spec-a', cycle: 'cycle-01', status: 'in-progress' }), [], once, snapshot)).toBe(once);
   });
 
   it('does not prepare when a conversation is already associated with the target', () => {
     const linked = thread({ target: { kind: 'none' }, source: 'auto', targets: [{ kind: 'cycle', specId: 'spec-a', cycle: 'cycle-01', origin: 'manual' }] });
-    expect(prepareFromBotEvent(bot('cycle.opened', { specId: 'spec-a', cycle: 'cycle-01' }), [linked], [])).toEqual([]);
-    expect(prepareFromBotEvent(bot('cycle.opened', { specId: 'spec-a', cycle: 'cycle-02' }), [linked], [])).toHaveLength(1);
+    expect(prepareFromBotEvent(bot('cycle.opened', { specId: 'spec-a', cycle: 'cycle-01', status: 'in-progress' }), [linked], [], snapshot)).toEqual([]);
+    expect(prepareFromBotEvent(bot('cycle.opened', { specId: 'spec-a', cycle: 'cycle-02', status: 'in-progress' }), [linked], [], snapshot)).toHaveLength(1);
+  });
+});
+
+describe('prepareFromBotEvent noise', () => {
+  const none = (event: BotEvent) => prepareFromBotEvent(event, [], [], snapshot);
+
+  it('ignores specs, cycles and fixes that are already finished', () => {
+    expect(none(bot('spec.created', { specId: 'spec-old', status: 'completed' }))).toEqual([]);
+    expect(none(bot('cycle.opened', { specId: 'spec-old', cycle: 'cycle-01', status: 'completed' }))).toEqual([]);
+    expect(none(bot('fix.created', { fixId: 'FIX-a-002', specId: null }, 'fixes'))).toEqual([]);
+  });
+
+  it('ignores a fix the snapshot does not know', () => {
+    expect(none(bot('fix.created', { fixId: 'FIX-zzz', specId: null }, 'fixes'))).toEqual([]);
+  });
+
+  it('never keeps more than MAX_PREPARED at once, as when the bridge announces everything again', () => {
+    let current: PreparedConversation[] = [];
+    for (let n = 1; n <= 12; n++) current = prepareFromBotEvent(bot('spec.created', { specId: `spec-${n}`, status: 'in-progress' }), [], current, snapshot);
+    expect(current).toHaveLength(MAX_PREPARED);
+    expect(current.map((p) => p.id)).toEqual(['spec:spec-1', 'spec:spec-2', 'spec:spec-3']);
   });
 });
 

@@ -1,7 +1,9 @@
 import { z } from 'zod';
 import { AttachmentMime, AttachmentUpload, PromptRefs, Sha256 } from './attachments';
 import { AuthPreference, ChannelId, DevProfile, MAX_QUESTIONS, QuestionAnswer, ThreadLinkRef, ThreadLinkTarget, ThreadOptions } from './domain';
+import { ToolsChange } from './kit';
 import { FILE_SEARCH_MAX, MAX_ATTACHMENTS } from './limits';
+import { ToolsRevision } from './snapshot';
 
 const Id = z.string().min(1).max(64);
 const Text = z.string().max(100_000);
@@ -54,7 +56,15 @@ export const ClientCommand = z.discriminatedUnion('cmd', [
     includeDocumentTouched: z.boolean().default(false),
     includeQuestions: z.boolean().default(false),
   }),
-  z.object({ ...cmd('channel.botHistory'), channelId: ChannelId, limit: z.number().int().min(1).max(200) }),
+  z.object({
+    ...cmd('channel.botHistory'),
+    channelId: ChannelId,
+    limit: z.number().int().min(1).max(200),
+    includeKitEvents: z.boolean().default(false),
+  }),
+  z.object({ ...cmd('kit.index') }),
+  z.object({ ...cmd('kit.rtkGain') }),
+  z.object({ ...cmd('kit.tools.set'), change: ToolsChange, expectedRevision: ToolsRevision }),
   z.object({
     ...cmd('approval.respond'),
     approvalId: Id,

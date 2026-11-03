@@ -73,6 +73,33 @@ describe('startBridge', () => {
     ws.close();
   });
 
+  it('arms the kit indexer on kit.index, broadcasts kit.changed and stamps tools.changed with at', async () => {
+    const { root, cleanup } = await copyFixture();
+    cleanups.push(cleanup);
+    const bridge = await startBridge({ root, port: 0, strictPort: true, engine: 'fake', allowedOrigins: DEFAULT_ORIGINS, webUrl: 'https://example.test/' });
+    cleanups.push(bridge.close);
+    const ws = new WebSocket(`ws://127.0.0.1:${bridge.port}`);
+    const inbox: ServerMessage[] = [];
+    ws.on('message', (raw) => inbox.push(JSON.parse(raw.toString())));
+    await new Promise((r) => ws.once('open', r));
+    ws.send(JSON.stringify({ kind: 'hello', token: bridge.token, protocolVersion: PROTOCOL_VERSION, clientVersion: 't' }));
+    await waitFor(() => inbox.find((m) => m.kind === 'welcome'));
+    ws.send(JSON.stringify({ kind: 'command', id: 'idx', cmd: 'kit.index' }));
+    await waitFor(() => inbox.find((m) => m.kind === 'result' && m.id === 'idx' && m.ok));
+    await mkdir(path.join(root, 'sdd/memory/journal'), { recursive: true });
+    await writeFile(path.join(root, 'sdd/memory/journal/2026-10-27-x.md'), 'x');
+    const changed = await waitFor(() => inbox.find((m) => m.kind === 'kit.changed'));
+    expect(changed).toMatchObject({ kind: 'kit.changed', sections: ['memory'] });
+
+    ws.send(JSON.stringify({ kind: 'command', id: 'snap', cmd: 'workspace.snapshot' }));
+    const snap = (await waitFor(() => inbox.find((m) => m.kind === 'result' && m.id === 'snap' && m.ok))) as { data: { tools: { revision: string } } };
+    ws.send(JSON.stringify({ kind: 'command', id: 'set', cmd: 'kit.tools.set', change: { tool: 'rtk', enabled: true }, expectedRevision: snap.data.tools.revision }));
+    const event = await waitFor(() => inbox.find((m) => m.kind === 'bot.event' && m.botKind === 'tools.changed'));
+    expect(event).toMatchObject({ channelId: 'general', payload: { tool: 'rtk', from: false, to: true } });
+    expect(typeof (event as { at?: string }).at).toBe('string');
+    ws.close();
+  });
+
   it('refuses a folder without sdd/', async () => {
     const dir = await mkdtemp(path.join(tmpdir(), 'no-sdd-'));
     cleanups.push(() => rm(dir, { recursive: true, force: true }));

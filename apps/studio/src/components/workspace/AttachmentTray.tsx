@@ -1,5 +1,6 @@
 'use client';
 
+import { Button } from '@e-burgos/tucu-ui';
 import { FileText, X } from 'lucide-react';
 import { MAX_ATTACHMENTS } from '@sdd-studio/protocol';
 import { PDF_MAX_BYTES, TEXT_MAX_BYTES } from '@/lib/attachments/classify';
@@ -8,7 +9,6 @@ import { formatBytes } from '@/lib/format';
 import { useT, type TFunction } from '@/lib/i18n/i18n';
 import type { AttachmentFailure } from '@/lib/use-attachment-draft';
 
-const ring = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400';
 
 function failureText(t: TFunction, f: AttachmentFailure): string {
   const max = f.reason === 'pdf-too-large' ? Math.floor(PDF_MAX_BYTES / 1024) : f.reason === 'text-too-large' ? Math.floor(TEXT_MAX_BYTES / 1024) : MAX_ATTACHMENTS;
@@ -43,15 +43,15 @@ export function AttachmentTray({ attachments, failures, dragging = false, onRemo
                 )}
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-xs text-ink-100">{a.name}</span>
-                  <span className="block text-[11px] text-ink-400">{formatBytes(a.size)}</span>
+                  <span className="block text-meta text-ink-400">{formatBytes(a.size)}</span>
                 </span>
-                <button type="button" aria-label={t('attach.remove', { name: a.name })} className={`rounded p-1 text-ink-300 hover:bg-ink-800 ${ring}`} onClick={() => onRemove(a.id)}>
+                <Button type="button" variant="transparent" color="gray" shape="circle" size="tiny" aria-label={t('attach.remove', { name: a.name })} onClick={() => onRemove(a.id)}>
                   <X size={12} />
-                </button>
+                </Button>
               </li>
             ))}
           </ul>
-          <p className="mt-1 text-[11px] text-ink-400" aria-live="polite">{t('attach.count', { n: attachments.length, max: MAX_ATTACHMENTS })}</p>
+          <p className="mt-1 text-meta text-ink-400" aria-live="polite">{t('attach.count', { n: attachments.length, max: MAX_ATTACHMENTS })}</p>
         </>
       )}
       {failures.length > 0 && (
@@ -59,9 +59,9 @@ export function AttachmentTray({ attachments, failures, dragging = false, onRemo
           <ul className="min-w-0 flex-1">
             {failures.map((f, i) => <li key={`${f.reason}-${f.name}-${i}`}>{failureText(t, f)}</li>)}
           </ul>
-          <button type="button" aria-label={t('attach.dismiss')} className={`rounded p-1 hover:bg-roseish/10 ${ring}`} onClick={onDismissFailures}>
+          <Button type="button" variant="transparent" color="danger" shape="circle" size="tiny" aria-label={t('attach.dismiss')} onClick={onDismissFailures}>
             <X size={12} />
-          </button>
+          </Button>
         </div>
       )}
     </section>

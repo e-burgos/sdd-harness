@@ -46,6 +46,19 @@ const statusOf = (m: SessionManager, id: string) => m.list().find((t) => t.id ==
 const pendingApproval = (threadId: string) =>
   eventsOf(threadId).find((e): e is Extract<ThreadEvent, { type: 'approval.requested' }> => e.type === 'approval.requested');
 const opts = defaultThreadOptions();
+function heldUntilOpened(inner: AgentEngine): { engine: AgentEngine; open: () => void } {
+  let open: () => void = () => undefined;
+  const opened = new Promise<void>((r) => (open = r));
+  const engine: AgentEngine = {
+    name: 'held',
+    provider: 'claude',
+    startTurn: (input, cb) => {
+      const turn = opened.then(() => inner.startTurn(input, cb));
+      return { done: turn.then((t) => t.done), interrupt: async () => (await turn).interrupt() };
+    },
+  };
+  return { engine, open };
+}
 
 describe('SessionManager', () => {
   it('runs DMs with the channel agent and rejects a mismatched agent', async () => {
@@ -1364,10 +1377,12 @@ describe('SessionManager attachments and refs', () => {
   });
 
   it('#bad-attachment ends in error without retrying or auto-sending the pending messages', async () => {
-    const { m } = await manager(new FakeEngine(40));
+    const held = heldUntilOpened(new FakeEngine(40));
+    const { m } = await manager(held.engine);
     const t = await m.createThread({ channelId: 'general', options: opts, text: '#bad-attachment', attachments: [png('p.png')] });
     const queued = await m.send(t.id, { text: 'later', attachments: [png('q.png', 1)] });
     expect(queued.delivery).toBe('pending');
+    held.open();
     await waitFor(() => statusOf(m, t.id) === 'error');
     await new Promise((r) => setTimeout(r, 80));
     expect(statusOf(m, t.id)).toBe('error');
@@ -1390,12 +1405,14 @@ describe('SessionManager attachments and refs', () => {
 
   it('collectPending textOnly leaves pending messages with attachments for the turn end', async () => {
     const collected: Array<{ at: string; ids: string[] }> = [];
+    let release: () => void = () => undefined;
+    const released = new Promise<void>((r) => (release = r));
     const engine: AgentEngine = {
       name: 'spy',
       provider: 'claude' as const,
       startTurn: (_input, cb) => ({
         done: (async () => {
-          await new Promise((r) => setTimeout(r, 60));
+          await released;
           collected.push({ at: 'cut-point', ids: cb.collectPending('cut-point', { textOnly: true }).map((x) => x.id) });
           collected.push({ at: 'turn-end', ids: cb.collectPending('turn-end').map((x) => x.id) });
         })(),
@@ -1406,6 +1423,7 @@ describe('SessionManager attachments and refs', () => {
     const t = await m.createThread({ channelId: 'general', options: opts, text: 'go' });
     const text = await m.send(t.id, { text: 'only text' });
     const file = await m.send(t.id, { text: 'with file', attachments: [png('p.png')] });
+    release();
     await waitFor(() => collected.length === 2);
     expect(collected[0]?.ids).toEqual([text.delivery === 'pending' ? text.pendingId : '']);
     expect(collected[1]?.ids).toEqual([file.delivery === 'pending' ? file.pendingId : '']);

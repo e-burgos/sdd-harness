@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { ServerEvent, ThreadEvent, decodeServerMessage } from './index';
+import { z } from 'zod';
+import { BotEvent, BotKind, ServerEvent, ThreadEvent, decodeServerMessage } from './index';
 
 const author = { agent: 'sdd-planner', parentToolUseId: 'toolu_1' };
 
@@ -67,6 +68,31 @@ describe('document.touched', () => {
     const start = { type: 'tool.start', toolUseId: 't1', author, tool: 'Bash', summary: '$ ls' };
     expect(ThreadEvent.parse(start)).toEqual(start);
     expect(ThreadEvent.safeParse({ ...start, summaryTruncated: 'yes' }).success).toBe(false);
+  });
+});
+
+describe('kit events', () => {
+  it('parses kit.changed with open section names', () => {
+    const event = { kind: 'kit.changed', sections: ['docs', 'future'], revision: 'abc' };
+    expect(ServerEvent.parse(event)).toEqual(event);
+    expect(ServerEvent.safeParse({ ...event, sections: [''] }).success).toBe(false);
+    expect(ServerEvent.safeParse({ ...event, sections: Array(17).fill('docs') }).success).toBe(false);
+    expect(ServerEvent.safeParse({ kind: 'kit.changed', sections: [] }).success).toBe(false);
+  });
+  it('parses bot.event tools.changed with and without at', () => {
+    const payload = { tool: 'rtk', from: true, to: false, file: 'sdd/tools.json' };
+    const event = { kind: 'bot.event', channelId: 'general', botKind: 'tools.changed', payload };
+    expect(ServerEvent.parse(event)).toEqual(event);
+    const stamped = { ...event, at: '2026-10-27T00:00:00.000Z' };
+    expect(ServerEvent.parse(stamped)).toEqual(stamped);
+    expect(ServerEvent.safeParse({ ...event, at: 'x'.repeat(41) }).success).toBe(false);
+  });
+  it('keeps the previous bot kinds parsing and a copy of the old enum rejecting tools.changed', () => {
+    const previous = BotKind.options.filter((kind) => kind !== 'tools.changed');
+    expect(previous).toHaveLength(7);
+    const legacy = z.enum(previous as [string, ...string[]]);
+    expect(legacy.safeParse('tools.changed').success).toBe(false);
+    for (const kind of previous) expect(BotEvent.safeParse({ channelId: 'fixes', botKind: kind, payload: {} }).success).toBe(true);
   });
 });
 

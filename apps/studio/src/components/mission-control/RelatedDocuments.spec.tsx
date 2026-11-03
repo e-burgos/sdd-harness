@@ -120,7 +120,7 @@ describe('RelatedDocuments', () => {
     const name = screen.getByTitle(longDoc.name);
     expect(name).toHaveClass('truncate', 'min-w-0');
     const agents = screen.getByTitle('sdd-architect, sdd-planner, sdd-reviewer');
-    expect(agents).toHaveClass('truncate', 'min-w-0', 'text-xs');
+    expect(agents).toHaveClass('truncate', 'min-w-0', 'text-ui');
     const inSpec = screen.getByTitle(`en ${longSpec}`);
     expect(inSpec).toHaveClass('truncate', 'min-w-0');
     expect(screen.getByTestId('related-documents')).toHaveClass('min-w-0', 'overflow-hidden');

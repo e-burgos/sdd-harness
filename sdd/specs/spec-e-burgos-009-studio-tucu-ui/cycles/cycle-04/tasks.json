@@ -1,0 +1,120 @@
+{
+  "$schema": "../../../../schemas/cycle-tasks.schema.json",
+  "spec": "spec-e-burgos-009-studio-tucu-ui",
+  "cycle": 4,
+  "module": "studio-tucu-ui",
+  "apps": [
+    "apps/studio"
+  ],
+  "flow": "lite",
+  "user_stories_generated": true,
+  "prerequisites": {
+    "tasks_generated": true
+  },
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "Selectores: opciones con icon y description, showCheck, searchable en listas largas, valor corto en el disparador y menú ajustado al contenido, textos es/en",
+      "user_stories": [
+        "US-011"
+      ],
+      "estimation_hours": 5,
+      "story_points": 5,
+      "depends_on": [],
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/HelpSelect.tsx",
+        "apps/studio/src/components/mission-control/ConversationSelector.tsx",
+        "apps/studio/src/components/workspace/Composer.tsx",
+        "apps/studio/src/components/workspace/ModeSelectors.tsx",
+        "apps/studio/src/components/workspace/ThreadLinkPicker.tsx",
+        "apps/studio/src/components/workspace/composer.spec.tsx",
+        "apps/studio/src/components/workspace/threadlink.spec.tsx",
+        "apps/studio/src/lib/i18n/en.ts",
+        "apps/studio/src/lib/i18n/es.ts",
+        "apps/studio/src/lib/test-utils/pick-option.ts"
+      ],
+      "usage": {
+        "tokens_in": 115416,
+        "tokens_out": 20368,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-10-27"
+      }
+    },
+    {
+      "id": "TASK-002",
+      "title": "Sidebar según el mockup aprobado: buscador que filtra el árbol, botón + de nueva conversación, sección En curso con avatar y chip de estado, canales como chips con cantidad de conversaciones, specs con estado, chip de ciclo y flow y progreso de tareas, fixes con severidad, agentes con presencia y tarea, resúmenes en los encabezados y modo colapsado a íconos",
+      "user_stories": [
+        "US-012"
+      ],
+      "estimation_hours": 8,
+      "story_points": 8,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/app/globals.css",
+        "apps/studio/src/components/mission-control/DocumentViewerModal.tsx",
+        "apps/studio/src/components/workspace/NavParts.tsx",
+        "apps/studio/src/components/workspace/NavSections.tsx",
+        "apps/studio/src/components/workspace/NavTree.tsx",
+        "apps/studio/src/components/workspace/Sidebar.tsx",
+        "apps/studio/src/components/workspace/SidebarHeader.tsx",
+        "apps/studio/src/components/workspace/SidebarRail.tsx",
+        "apps/studio/src/components/workspace/SidebarSearch.tsx",
+        "apps/studio/src/components/workspace/Workspace.tsx",
+        "apps/studio/src/components/workspace/sidebar-live.spec.tsx",
+        "apps/studio/src/components/workspace/sidebar.spec.tsx",
+        "apps/studio/src/components/workspace/workspace.spec.tsx",
+        "apps/studio/src/lib/i18n/en.ts",
+        "apps/studio/src/lib/i18n/es.ts",
+        "apps/studio/src/lib/store/nav-filter.ts",
+        "apps/studio/src/lib/store/nav-summary.ts",
+        "apps/studio/src/lib/store/nav-tree.ts",
+        "apps/studio/src/lib/typography-tokens.ts",
+        "apps/studio/src/lib/use-panel-state.ts"
+      ],
+      "usage": {
+        "tokens_in": 168569,
+        "tokens_out": 29747,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-10-27"
+      }
+    },
+    {
+      "id": "TASK-003",
+      "title": "Verificación y cierre: build, typecheck, test, e2e contra el bridge reconstruido, recorrida visual y fricciones nuevas a tucu-ui",
+      "user_stories": [
+        "US-011",
+        "US-012"
+      ],
+      "estimation_hours": 2,
+      "story_points": 2,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002"
+      ],
+      "status": "done",
+      "files": [],
+      "usage": {
+        "tokens_in": 120000,
+        "tokens_out": 18000,
+        "provider_model": "claude/opus",
+        "effort": "medium",
+        "agent": "reviewer",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-27"
+      }
+    }
+  ]
+}

@@ -1,5 +1,6 @@
 'use client';
 
+import { Badge, Button, Textarea } from '@e-burgos/tucu-ui';
 import { Pencil, Trash2 } from 'lucide-react';
 import { useRef, useState } from 'react';
 import { bridgeErrorText } from '@/lib/bridge/error-text';
@@ -7,8 +8,6 @@ import { useT } from '@/lib/i18n/i18n';
 import { useBridge, useStudio } from '../BridgeProvider';
 
 const BUSY = new Set(['running', 'waiting-approval', 'queued']);
-const ring = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400 disabled:opacity-50';
-const ghost = `rounded-md border border-ink-700 px-2 py-0.5 text-xs hover:bg-ink-800 ${ring}`;
 
 export function PendingMessages({ threadId }: { threadId: string }) {
   const { t } = useT();
@@ -57,9 +56,9 @@ export function PendingMessages({ threadId }: { threadId: string }) {
         <span className="font-medium">{t('pending.title')} ({items.length})</span>
         <span className="min-w-0 flex-1">{busy ? t('pending.hintBusy') : t('pending.hintIdle')}</span>
         {!busy && items.length > 0 && (
-          <button className={ghost} disabled={busyId !== null} onClick={() => void flush()}>
+          <Button type="button" variant="ghost" color="gray" size="tiny" disabled={busyId !== null} onClick={() => void flush()}>
             {t('pending.flush')}
-          </button>
+          </Button>
         )}
       </div>
       {error && <p role="alert" className="mb-1 text-xs text-roseish">{error}</p>}
@@ -68,24 +67,24 @@ export function PendingMessages({ threadId }: { threadId: string }) {
           const isEditing = editing?.id === item.id;
           return (
             <li key={item.id} className="flex items-start gap-2 rounded-md border border-ink-800 bg-ink-950 px-2 py-1.5 text-sm">
-              <span className="mt-0.5 shrink-0 rounded bg-amberish/15 px-1.5 text-[11px] text-amberish">{t('pending.badge')}</span>
+              <Badge variant="soft" color="warning" shape="rounded" className="mt-0.5 shrink-0 text-meta">{t('pending.badge')}</Badge>
               {isEditing ? (
                 <div className="flex min-w-0 flex-1 flex-col gap-1">
-                  <textarea
+                  <Textarea
                     aria-label={t('pending.editLabel')}
-                    className={`min-h-[44px] w-full resize-y rounded-md border border-ink-700 bg-ink-900 px-2 py-1 text-sm ${ring}`}
+                    inputClassName="min-h-[44px] sm:min-h-[44px] resize-y rounded-md px-2 py-1"
                     value={editing.text}
                     autoFocus
                     onChange={(e) => setEditing({ id: item.id, text: e.target.value })}
                   />
                   {emptyBlocked && <p className="text-xs text-amberish">{t('pending.emptyHint')}</p>}
                   <div className="flex gap-2">
-                    <button className={ghost} disabled={emptyBlocked || busyId !== null} onClick={() => void save()}>
+                    <Button type="button" variant="ghost" color="gray" size="tiny" disabled={emptyBlocked || busyId !== null} onClick={() => void save()}>
                       {t('pending.save')}
-                    </button>
-                    <button className={ghost} disabled={busyId !== null} onClick={() => setEditing(null)}>
+                    </Button>
+                    <Button type="button" variant="ghost" color="gray" size="tiny" disabled={busyId !== null} onClick={() => setEditing(null)}>
                       {t('pending.cancel')}
-                    </button>
+                    </Button>
                   </div>
                 </div>
               ) : (
@@ -95,17 +94,17 @@ export function PendingMessages({ threadId }: { threadId: string }) {
                     {item.attachments && item.attachments.length > 0 && (
                       <ul aria-label={t('attach.tray')} className="mt-0.5 flex flex-wrap gap-1">
                         {item.attachments.map((a) => (
-                          <li key={a.sha256} className="max-w-[10rem] truncate rounded bg-ink-800 px-1.5 text-[11px] text-ink-300">{a.name}</li>
+                          <li key={a.sha256} className="max-w-[10rem] truncate rounded bg-ink-800 px-1.5 text-meta text-ink-300">{a.name}</li>
                         ))}
                       </ul>
                     )}
                   </div>
-                  <button aria-label={t('pending.edit')} className={`rounded-md p-1 text-ink-300 hover:bg-ink-800 ${ring}`} disabled={busyId !== null} onClick={() => setEditing({ id: item.id, text: item.text })}>
+                  <Button type="button" variant="transparent" color="gray" shape="circle" size="tiny" aria-label={t('pending.edit')} disabled={busyId !== null} onClick={() => setEditing({ id: item.id, text: item.text })}>
                     <Pencil size={14} />
-                  </button>
-                  <button aria-label={t('pending.remove')} className={`rounded-md p-1 text-roseish hover:bg-roseish/10 ${ring}`} disabled={busyId !== null} onClick={() => void remove(item.id)}>
+                  </Button>
+                  <Button type="button" variant="transparent" color="danger" shape="circle" size="tiny" aria-label={t('pending.remove')} disabled={busyId !== null} onClick={() => void remove(item.id)}>
                     <Trash2 size={14} />
-                  </button>
+                  </Button>
                 </>
               )}
             </li>

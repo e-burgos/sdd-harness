@@ -87,15 +87,27 @@ async function readLines(file: string): Promise<string[]> {
 
 const serializeBotEvent = (event: BotEvent): string => JSON.stringify(event);
 
+const botDedupeKey = (event: BotEvent): string =>
+  event.botKind === 'tools.changed' ? serializeBotEvent(event) : JSON.stringify({ ...event, at: undefined });
+
+const lineDedupeKey = (line: string): string => {
+  try {
+    return botDedupeKey(JSON.parse(line) as BotEvent);
+  } catch {
+    return line;
+  }
+};
+
 function collapseConsecutiveDuplicates(lines: string[]): string[] {
-  return lines.filter((line, i) => i === 0 || line !== lines[i - 1]);
+  const keys = lines.map(lineDedupeKey);
+  return lines.filter((_, i) => i === 0 || keys[i] !== keys[i - 1]);
 }
 
 async function lastBotLine(file: string): Promise<string | null> {
   const lines = await readLines(file);
   for (let i = lines.length - 1; i >= 0; i--) {
     try {
-      return serializeBotEvent(JSON.parse(lines[i] as string) as BotEvent);
+      return botDedupeKey(JSON.parse(lines[i] as string) as BotEvent);
     } catch {
       continue;
     }
@@ -250,28 +262,28 @@ export class ThreadStore {
         await ensureTrailingNewline(file);
         this.repairedFiles.add(file);
       }
-      const line = serializeBotEvent(event);
+      const key = botDedupeKey(event);
       if (!this.lastBotLines.has(file)) this.lastBotLines.set(file, await lastBotLine(file));
-      if (this.lastBotLines.get(file) === line) return;
-      await appendFile(file, `${line}\n`);
-      this.lastBotLines.set(file, line);
+      if (this.lastBotLines.get(file) === key) return;
+      await appendFile(file, `${serializeBotEvent(event)}\n`);
+      this.lastBotLines.set(file, key);
     });
   }
 
-  async botHistory(channelId: string, limit: number): Promise<BotEvent[]> {
+  async botHistory(channelId: string, limit: number, includeKitEvents = false): Promise<BotEvent[]> {
     await this.flush();
     const file = this.channelFile(channelId);
     if (!file) return [];
     const lines = await readLines(file);
-    const out: BotEvent[] = [];
-    for (const line of collapseConsecutiveDuplicates(lines).slice(-limit)) {
+    const parsed: BotEvent[] = [];
+    for (const line of collapseConsecutiveDuplicates(lines)) {
       try {
-        out.push(JSON.parse(line) as BotEvent);
+        parsed.push(JSON.parse(line) as BotEvent);
       } catch {
         // idem
       }
     }
-    return out;
+    return (includeKitEvents ? parsed : parsed.filter((event) => event.botKind !== 'tools.changed')).slice(-limit);
   }
 
   flush(): Promise<void> {

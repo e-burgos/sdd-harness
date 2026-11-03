@@ -1,0 +1,76 @@
+{
+  "$schema": "../../../../schemas/cycle-tasks.schema.json",
+  "spec": "spec-e-burgos-009-studio-tucu-ui",
+  "cycle": 5,
+  "module": "studio-tucu-ui",
+  "apps": [
+    "apps/studio"
+  ],
+  "flow": "lite",
+  "user_stories_generated": true,
+  "prerequisites": {
+    "tasks_generated": true
+  },
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "Adopción de tucu-ui 3.6.0: ThemeModeScript y defaultMode system, Modal, Alert compact, BasicTable snug y tokens, Select neutral, Tooltip maxWidth y Badge; borrar los ajustes propios que resuelve",
+      "user_stories": [
+        "US-013"
+      ],
+      "estimation_hours": 5,
+      "story_points": 5,
+      "depends_on": [],
+      "status": "done",
+      "files": [
+        "apps/studio/package.json",
+        "apps/studio/src/app/globals.css",
+        "apps/studio/src/app/layout.tsx",
+        "apps/studio/src/components/ConnectionBanner.tsx",
+        "apps/studio/src/components/GateStatusModal.tsx",
+        "apps/studio/src/components/HelpSelect.tsx",
+        "apps/studio/src/components/StudioThemeProvider.tsx",
+        "apps/studio/src/components/mission-control/DocumentViewerModal.tsx",
+        "apps/studio/src/components/mission-control/EcosystemDashboard.tsx",
+        "apps/studio/src/components/mission-control/documentviewermodal.spec.tsx",
+        "apps/studio/src/components/workspace/NavParts.tsx",
+        "apps/studio/src/types/tucu-ui-next.d.ts",
+        "pnpm-lock.yaml"
+      ],
+      "usage": {
+        "tokens_in": 114209,
+        "tokens_out": 20155,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-10-27"
+      }
+    },
+    {
+      "id": "TASK-002",
+      "title": "Verificación y cierre: build, typecheck, test, e2e contra el bridge reconstruido, recorrida visual y fricciones nuevas a tucu-ui",
+      "user_stories": [
+        "US-013"
+      ],
+      "estimation_hours": 2,
+      "story_points": 2,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "status": "done",
+      "files": [],
+      "usage": {
+        "tokens_in": 60000,
+        "tokens_out": 10000,
+        "provider_model": "claude/opus",
+        "effort": "medium",
+        "agent": "reviewer",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-27"
+      }
+    }
+  ]
+}

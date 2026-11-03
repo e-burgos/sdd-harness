@@ -41,6 +41,7 @@ export async function startWorkspaceWatcher(opts: {
   rescanIntervalMs?: number;
   onUpdate: (update: WorkspaceUpdate) => void;
   onError?: (error: unknown) => void;
+  onPath?: (absolutePath: string) => void;
 }): Promise<WorkspaceWatcher> {
   let current = mergeSnapshot(null, await loadWorkspaceSnapshot(opts.root));
   let timer: NodeJS.Timeout | null = null;
@@ -95,7 +96,12 @@ export async function startWorkspaceWatcher(opts: {
       }),
     );
   }
-  for (const watcher of watchers) watcher.on('all', schedule);
+  for (const watcher of watchers) {
+    watcher.on('all', (_event, changedPath) => {
+      opts.onPath?.(changedPath);
+      schedule();
+    });
+  }
   const closeAll = () => Promise.all(watchers.map((watcher) => watcher.close()));
   await Promise.all(watchers.map(untilReady)).catch(async (error) => {
     closed = true;

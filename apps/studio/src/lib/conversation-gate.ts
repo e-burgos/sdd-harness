@@ -1,10 +1,9 @@
 import type { WorkspaceSnapshot } from '@sdd-studio/protocol';
 import type { ConversationView } from './conversation';
 import type { TFunction } from './i18n/i18n';
+import { OPEN_FIX_STATUSES } from './sdd-status';
 
 export type ConversationGate = { kind: 'spec'; specId: string; cycle: string | null } | { kind: 'fix'; fixId: string } | { kind: 'idle' };
-
-const OPEN_FIX_STATUSES = new Set(['pending', 'in-progress']);
 
 const lastGateHint = (view: ConversationView) => [...view.dialogues].reverse().find((dialogue) => dialogue.gateId)?.gateId;
 

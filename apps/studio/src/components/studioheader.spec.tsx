@@ -1,4 +1,5 @@
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { useTheme } from '@e-burgos/tucu-ui';
 import type { ThreadInfo, WorkspaceSnapshot } from '@sdd-studio/protocol';
 import { I18nProvider } from '@/lib/i18n/i18n';
 import { createStudioStore } from '@/lib/store/store';
@@ -39,7 +40,7 @@ function mount(store = createStudioStore()) {
   render(
     <I18nProvider initial="es">
       <BridgeContext.Provider value={value}>
-        <StudioHeader activeView="workspace" onSelectView={() => {}} />
+        <StudioHeader />
       </BridgeContext.Provider>
     </I18nProvider>,
   );
@@ -83,7 +84,7 @@ describe('StudioHeader gate chip', () => {
     expect(screen.queryByTestId('gate-status-modal')).toBeNull();
     fireEvent.click(screen.getByTestId('gate-chip'));
     expect(screen.getByTestId('gate-status-gate-label')).toHaveTextContent('FIX GATE FIX-e-burgos-005-006');
-    fireEvent.keyDown(window, { key: 'Escape' });
+    fireEvent.keyDown(screen.getByTestId('gate-status-modal'), { key: 'Escape' });
     expect(screen.queryByTestId('gate-status-modal')).toBeNull();
   });
 
@@ -91,5 +92,50 @@ describe('StudioHeader gate chip', () => {
     mount();
     fireEvent.click(screen.getByTestId('gate-chip'));
     expect(screen.getByTestId('gate-status-no-conversation')).toBeInTheDocument();
+  });
+});
+
+describe('StudioHeader gate mode', () => {
+  it('shows the SPEC GATE mode and follows a change made from the Kit tools', () => {
+    const store = createStudioStore();
+    store.getState().setSnapshot({ ...snapshot, tools: { status: 'ok', rtkEnabled: true, modEnabled: true, gate: 'block', modLinked: true, revision: 'aaaaaaaaaaaaaaaa' } });
+    mount(store);
+    expect(screen.getByTestId('gate-chip')).toHaveAttribute('data-gate-mode', 'block');
+    expect(screen.getByTestId('gate-mode')).toHaveTextContent('Bloquear');
+    act(() => store.getState().setSnapshot({ ...snapshot, tools: { status: 'ok', rtkEnabled: true, modEnabled: true, gate: 'warn', modLinked: true, revision: 'bbbbbbbbbbbbbbbb' } }));
+    expect(screen.getByTestId('gate-chip')).toHaveAttribute('data-gate-mode', 'warn');
+    expect(screen.getByTestId('gate-mode')).toHaveTextContent('Avisar');
+  });
+});
+
+describe('StudioHeader mode toggle', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    useTheme.setState({ mode: 'dark' });
+  });
+
+  it('switches between dark and light and labels the action it will perform', () => {
+    mount();
+    fireEvent.click(screen.getByTestId('mode-toggle'));
+    expect(useTheme.getState().mode).toBe('light');
+    expect(screen.getByTestId('mode-toggle')).toHaveAccessibleName('Cambiar a modo oscuro');
+    fireEvent.click(screen.getByTestId('mode-toggle'));
+    expect(useTheme.getState().mode).toBe('dark');
+    expect(screen.getByTestId('mode-toggle')).toHaveAccessibleName('Cambiar a modo claro');
+  });
+
+  it('persists the chosen mode across a remount', () => {
+    const first = mount();
+    fireEvent.click(screen.getByTestId('mode-toggle'));
+    expect(JSON.parse(localStorage.getItem('theme-storage') ?? '{}').state.mode).toBe('light');
+    cleanup();
+    mount(first);
+    expect(screen.getByTestId('mode-toggle')).toHaveAccessibleName('Cambiar a modo oscuro');
+  });
+
+  it('keeps the language toggle in the header', () => {
+    mount();
+    fireEvent.click(screen.getByRole('button', { name: 'es' }));
+    expect(screen.getByRole('button', { name: 'en' })).toBeInTheDocument();
   });
 });

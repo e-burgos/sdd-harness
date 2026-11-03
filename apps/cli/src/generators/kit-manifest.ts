@@ -18,6 +18,7 @@ const DATA_PREFIXES = [
   'context/libs/',
   'context/tools/',
   'memory/journal/',
+  'integrations/',
 ];
 
 const DATA_FILES = new Set([

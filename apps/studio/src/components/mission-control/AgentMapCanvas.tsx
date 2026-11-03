@@ -1,13 +1,11 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { Bot } from 'lucide-react';
-import { agentMeta } from '@/lib/agents';
+import { Button, SegmentedControl, Tooltip } from '@e-burgos/tucu-ui';
+import { useState, useMemo } from 'react';
+import { useT } from '@/lib/i18n/i18n';
 import { useStudio } from '../BridgeProvider';
-import { useConversationSelection } from '@/lib/use-conversation-selection';
+import { useSwarmPlayback } from '../modules/map/swarm-playback';
 import { AgentNode } from './AgentNode';
-import { AgentInspectorDrawer } from './AgentInspectorDrawer';
-import { ConversationSelector } from './ConversationSelector';
 import { GateCard } from './GateCard';
 import { GateInspectorDrawer } from './GateInspectorDrawer';
 import {
@@ -17,7 +15,7 @@ import {
   ALL_GATES,
   type GateId,
 } from '@/lib/gates';
-import { SwarmSpeechBubble, SwarmCommsConsole } from './LiveSwarmComms';
+import { SwarmSpeechBubble } from './LiveSwarmComms';
 
 interface AgentPosition {
   id: string;
@@ -36,6 +34,8 @@ const NODES: AgentPosition[] = [
   { id: 'sdd-implementor-front', x: 650, y: 530 },
   { id: 'sdd-reviewer', x: 500, y: 690 },
 ];
+
+export const MAP_AGENT_IDS: readonly string[] = NODES.map((node) => node.id);
 
 const AGENT_EDGES: { from: string; to: string; label?: string }[] = [
   { from: 'sdd-steward', to: 'sdd-orchestrator', label: 'kit status' },
@@ -69,53 +69,25 @@ const GATE_CONNECTIONS: { gateId: GateId; agentId: string }[] = [
   { gateId: 'memoria-gate', agentId: 'sdd-orchestrator' },
 ];
 
-export function AgentMapCanvas({ onOpenDm, onNewConversation }: { onOpenDm: (agentId: string) => void; onNewConversation: () => void }) {
-  const presence = useStudio((s) => s.presence);
-  const snapshot = useStudio((s) => s.snapshot);
-  const { conversations, selectedThreadId, pick, view } = useConversationSelection();
+export interface AgentMapCanvasProps {
+  selectedAgent: string | null;
+  onSelectAgent: (agentId: string) => void;
+  onSelectGate?: (gateId: GateId) => void;
+}
 
-  const [selectedAgent, setSelectedAgent] = useState<string | null>('sdd-orchestrator');
+export function AgentMapCanvas({ selectedAgent, onSelectAgent, onSelectGate }: AgentMapCanvasProps) {
+  const snapshot = useStudio((s) => s.snapshot);
+  const { view, conversationPresence, currentDialogue, inspectedDialogueId } = useSwarmPlayback();
+
   const [selectedGate, setSelectedGate] = useState<GateId | null>(null);
+  const { t } = useT();
   const [gateFilter, setGateFilter] = useState<'cycle' | 'transversal' | 'all'>('cycle');
 
   const [zoom, setZoom] = useState(1);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const [isPanelCollapsed, setIsPanelCollapsed] = useState(false);
 
-  const [dialogueIdx, setDialogueIdx] = useState(0);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [inspectedDialogueId, setInspectedDialogueId] = useState<string | null>(null);
-
-  const dialogues = view?.dialogues ?? [];
-  const lastDialogueIdx = dialogues.length - 1;
-
-  useEffect(() => {
-    setDialogueIdx(Math.max(0, lastDialogueIdx));
-    setInspectedDialogueId(null);
-  }, [selectedThreadId, lastDialogueIdx]);
-
-  const currentDialogue = dialogues[Math.min(dialogueIdx, lastDialogueIdx)] ?? null;
-
-  useEffect(() => {
-    if (!isPlaying || dialogues.length === 0) return;
-    const timer = setInterval(() => {
-      setDialogueIdx((prev) => {
-        if (prev + 1 >= dialogues.length) {
-          setIsPlaying(false);
-          return prev;
-        }
-        return prev + 1;
-      });
-    }, 5000);
-    return () => clearInterval(timer);
-  }, [isPlaying, dialogues.length]);
-
-  const conversationPresence = useMemo(
-    () => presence.filter((p) => p.threadId !== null && p.threadId === selectedThreadId),
-    [presence, selectedThreadId],
-  );
   const presenceMap = new Map(conversationPresence.map((p) => [p.agent, p]));
   const nodeMap = new Map(NODES.map((n) => [n.id, n]));
 
@@ -165,19 +137,19 @@ export function AgentMapCanvas({ onOpenDm, onNewConversation }: { onOpenDm: (age
 
   const handleSelectGate = (gateId: string) => {
     setSelectedGate(gateId as GateId);
+    onSelectGate?.(gateId as GateId);
   };
 
   const handleSelectAgentFromGate = (agentId: string) => {
-    setSelectedAgent(agentId);
+    onSelectAgent(agentId);
     setSelectedGate(null);
-    setIsPanelCollapsed(false);
   };
 
   const handleMouseDown = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement | SVGElement | null;
     if (
       target?.closest?.(
-        'button, input, textarea, form, [data-testid="gate-card"], .agent-node-interactive, [data-testid="agent-inspector-drawer"], [data-testid="gate-inspector-drawer"], [data-testid="swarm-comms-console"], [data-testid="conversation-selector"], [data-testid="open-panel-button"], [data-testid="zoom-toolbar"]'
+        'button, input, textarea, form, [data-testid="gate-card"], .agent-node-interactive, [data-testid="gate-inspector-drawer"], [data-testid="zoom-toolbar"]'
       )
     ) {
       return;
@@ -202,7 +174,7 @@ export function AgentMapCanvas({ onOpenDm, onNewConversation }: { onOpenDm: (age
     const target = e.target as HTMLElement | SVGElement | null;
     if (
       target?.closest?.(
-        'button, input, textarea, [data-testid="gate-card"], [data-testid="agent-inspector-drawer"], [data-testid="gate-inspector-drawer"], [data-testid="swarm-comms-console"], [data-testid="zoom-toolbar"]'
+        'button, input, textarea, [data-testid="gate-card"], [data-testid="gate-inspector-drawer"], [data-testid="zoom-toolbar"]'
       )
     ) {
       return;
@@ -232,90 +204,60 @@ export function AgentMapCanvas({ onOpenDm, onNewConversation }: { onOpenDm: (age
       <div
         className="absolute inset-0 opacity-[0.07] pointer-events-none"
         style={{
-          backgroundImage: 'radial-gradient(#ffffff 1px, transparent 1px)',
+          backgroundImage: 'radial-gradient(var(--color-foreground) 1px, transparent 1px)',
           backgroundSize: '24px 24px',
         }}
       />
 
-      <div className="flex items-center justify-between px-6 py-3 border-b border-white/5 bg-ink-950/40 backdrop-blur-md z-10">
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between gap-4 px-6 py-3 border-b border-foreground/5 bg-ink-950/40 backdrop-blur-md z-10">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="flex shrink-0 items-center gap-2 whitespace-nowrap">
             <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
-            <h2 className="text-sm font-semibold text-white tracking-tight">Topología del Enjambre</h2>
-            <span className="rounded bg-white/10 px-1.5 py-0.5 font-mono text-[9px] text-emerald-400 font-bold border border-emerald-500/20">
+            <h2 className="text-small font-semibold text-ink-100 tracking-tight whitespace-nowrap">{t('ui.map.title')}</h2>
+            <span className="rounded bg-foreground/10 px-1.5 py-0.5 font-mono text-micro text-emerald-400 font-bold border border-emerald-500/20">
               GATES
             </span>
           </div>
-          <span className="text-xs text-white/50 font-mono">
-            {snapshot?.project ? `Proyecto: ${snapshot.project}` : `${NODES.length} agentes`}
+          <span
+            className="min-w-0 truncate text-meta text-ink-500 font-mono"
+            title={snapshot?.project ? t('ui.map.project', { name: snapshot.project }) : undefined}
+          >
+            {snapshot?.project ? t('ui.map.project', { name: snapshot.project }) : t('ui.map.agentsCount', { n: NODES.length })}
           </span>
         </div>
 
-        <div className="flex items-center gap-3">
-          <ConversationSelector
-            conversations={conversations}
-            selectedThreadId={selectedThreadId}
-            onPick={pick}
-            onNewConversation={onNewConversation}
+        <div className="flex shrink-0 items-center gap-3 whitespace-nowrap">
+          <SegmentedControl<'cycle' | 'transversal' | 'all'>
+            semantics="radio"
+            aria-label={t('segment.gateFilter')}
+            size="sm"
+            className="font-mono"
+            value={gateFilter}
+            onChange={setGateFilter}
+            options={[
+              { value: 'cycle', label: t('ui.map.filter.cycle') },
+              { value: 'transversal', label: t('ui.map.filter.transversal') },
+              { value: 'all', label: t('ui.map.filter.all') },
+            ]}
           />
 
-          <div className="h-4 w-[1px] bg-white/10" />
+          <div className="h-4 w-[1px] bg-foreground/10" />
 
-          <div className="flex items-center bg-white/5 p-0.5 rounded-lg border border-white/10 text-[10px] font-mono">
-            <button
-              type="button"
-              onClick={() => setGateFilter('cycle')}
-              className={`px-2 py-0.5 rounded-md transition-all ${
-                gateFilter === 'cycle'
-                  ? 'bg-emerald-500 text-ink-950 font-bold shadow'
-                  : 'text-white/60 hover:text-white'
-              }`}
-            >
-              Ciclo (4)
-            </button>
-            <button
-              type="button"
-              onClick={() => setGateFilter('transversal')}
-              className={`px-2 py-0.5 rounded-md transition-all ${
-                gateFilter === 'transversal'
-                  ? 'bg-emerald-500 text-ink-950 font-bold shadow'
-                  : 'text-white/60 hover:text-white'
-              }`}
-            >
-              Transversales (2)
-            </button>
-            <button
-              type="button"
-              onClick={() => setGateFilter('all')}
-              className={`px-2 py-0.5 rounded-md transition-all ${
-                gateFilter === 'all'
-                  ? 'bg-emerald-500 text-ink-950 font-bold shadow'
-                  : 'text-white/60 hover:text-white'
-              }`}
-            >
-              Todas (6)
-            </button>
-          </div>
-
-          <div className="h-4 w-[1px] bg-white/10" />
-
-          <div className="flex items-center gap-4 text-xs font-mono text-white/60">
+          <div className="flex items-center gap-4 text-meta font-mono text-ink-300">
             <span className="flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full bg-sky-400" />
-              <span>{activePresenceCount} en ejecución</span>
+              <span>{t('ui.map.running', { n: activePresenceCount })}</span>
             </span>
             <span className="flex items-center gap-1.5">
               <span className="h-2 w-2 rounded-full bg-emerald-400" />
-              <span>{NODES.length - activePresenceCount} listos</span>
+              <span>{t('ui.map.ready', { n: NODES.length - activePresenceCount })}</span>
             </span>
           </div>
         </div>
       </div>
 
       <div
-        className={`relative flex-1 w-full h-full flex items-center justify-center p-4 transition-all duration-300 ${
-          !isPanelCollapsed ? 'pr-0 lg:pr-[420px]' : 'pr-0'
-        } ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+        className={`relative flex-1 w-full h-full flex items-center justify-center p-4 ${isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
@@ -366,7 +308,7 @@ export function AgentMapCanvas({ onOpenDm, onNewConversation }: { onOpenDm: (age
                   <path
                     d={pathData}
                     fill="none"
-                    stroke={isHighlight ? gateLayout.gate.color : '#ffffff'}
+                    stroke={isHighlight ? gateLayout.gate.color : 'var(--color-foreground)'}
                     strokeOpacity={isHighlight ? '0.75' : '0.1'}
                     strokeWidth={isHighlight ? '2.5' : '1'}
                     strokeDasharray={isHighlight ? '6 4' : '3 4'}
@@ -402,7 +344,7 @@ export function AgentMapCanvas({ onOpenDm, onNewConversation }: { onOpenDm: (age
                   <path
                     d={pathData}
                     fill="none"
-                    stroke={isCommunicating ? '#10b981' : isFlowActive ? '#38bdf8' : '#ffffff'}
+                    stroke={isCommunicating ? '#10b981' : isFlowActive ? '#38bdf8' : 'var(--color-foreground)'}
                     strokeOpacity={isCommunicating ? '0.85' : isFlowActive ? '0.5' : '0.12'}
                     strokeWidth={isCommunicating ? '3' : isFlowActive ? '2.5' : '1.5'}
                     filter={isFlowActive || isCommunicating ? 'url(#glow)' : undefined}
@@ -450,9 +392,8 @@ export function AgentMapCanvas({ onOpenDm, onNewConversation }: { onOpenDm: (age
                 participating={!dimNonParticipants || participantIds.has(node.id)}
                 isSelected={selectedAgent === node.id}
                 onSelect={(id) => {
-                  setSelectedAgent(id);
+                  onSelectAgent(id);
                   setSelectedGate(null);
-                  setIsPanelCollapsed(false);
                 }}
               />
             ))}
@@ -465,84 +406,29 @@ export function AgentMapCanvas({ onOpenDm, onNewConversation }: { onOpenDm: (age
 
         <div
           data-testid="zoom-toolbar"
-          className="absolute bottom-6 left-6 z-20 flex items-center gap-1.5 rounded-xl border border-white/15 bg-ink-950/85 p-1.5 shadow-xl backdrop-blur-xl select-none"
+          className="absolute bottom-6 left-6 z-20 flex items-center gap-1.5 rounded-xl border border-foreground/15 bg-ink-950/85 p-1.5 shadow-xl backdrop-blur-xl select-none"
         >
-          <button
-            type="button"
-            onClick={handleZoomIn}
-            className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/5 font-mono text-xs font-bold text-white/80 hover:bg-white/15 hover:text-white transition-all active:scale-95"
-            title="Acercar (+)"
-          >
-            +
-          </button>
-          <span className="min-w-[42px] text-center font-mono text-[11px] font-semibold text-emerald-400">
+          <Tooltip size="xs" arrow={false} content={t('ui.map.zoomIn')}>
+            <Button type="button" variant="transparent" color="gray" shape="circle" size="tiny" className="font-mono" onClick={handleZoomIn}>
+              +
+            </Button>
+          </Tooltip>
+          <span className="min-w-[42px] text-center font-mono text-meta font-semibold text-emerald-400">
             {Math.round(zoom * 100)}%
           </span>
-          <button
-            type="button"
-            onClick={handleZoomOut}
-            className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/5 font-mono text-xs font-bold text-white/80 hover:bg-white/15 hover:text-white transition-all active:scale-95"
-            title="Alejar (-)"
-          >
-            -
-          </button>
-          <div className="h-4 w-[1px] bg-white/10 mx-0.5" />
-          <button
-            type="button"
-            onClick={handleResetZoom}
-            className="flex items-center gap-1 rounded-lg bg-white/5 px-2 py-1 font-mono text-[10px] text-white/70 hover:bg-white/15 hover:text-white transition-all active:scale-95"
-            title="Restablecer posición y zoom (100%)"
-          >
-            <span>⟲</span>
-            <span>Ajustar</span>
-          </button>
+          <Tooltip size="xs" arrow={false} content={t('ui.map.zoomOut')}>
+            <Button type="button" variant="transparent" color="gray" shape="circle" size="tiny" className="font-mono" onClick={handleZoomOut}>
+              -
+            </Button>
+          </Tooltip>
+          <div className="h-4 w-[1px] bg-foreground/10 mx-0.5" />
+          <Tooltip size="xs" arrow={false} content={t('ui.map.zoomReset')}>
+            <Button type="button" variant="transparent" color="gray" size="tiny" className="font-mono text-meta" onClick={handleResetZoom}>
+              <span>⟲</span>
+              <span>{t('ui.map.fit')}</span>
+            </Button>
+          </Tooltip>
         </div>
-
-        {isPanelCollapsed && (
-          <button
-            type="button"
-            data-testid="open-panel-button"
-            onClick={() => setIsPanelCollapsed(false)}
-            className="absolute top-4 right-4 z-20 flex items-center gap-2 rounded-xl border border-white/15 bg-ink-950/90 px-3.5 py-2 font-mono text-xs text-emerald-400 shadow-2xl backdrop-blur-md hover:bg-ink-900 hover:border-emerald-500/50 transition-all hover:scale-105 active:scale-95"
-            title="Expandir panel lateral"
-          >
-            <Bot className="w-4 h-4 text-emerald-400" />
-            <span className="font-semibold text-white">Panel</span>
-            <span className="rounded bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-bold text-emerald-400 border border-emerald-500/30">
-              {selectedAgent ? agentMeta(selectedAgent).name : 'Enjambre'}
-            </span>
-          </button>
-        )}
-
-        <SwarmCommsConsole
-          currentDialogue={currentDialogue}
-          isPlaying={isPlaying}
-          onTogglePlay={() => setIsPlaying(!isPlaying)}
-          onNext={() => setDialogueIdx((prev) => (dialogues.length === 0 ? 0 : (prev + 1) % dialogues.length))}
-          activePresenceCount={activePresenceCount}
-          isPanelCollapsed={isPanelCollapsed}
-        />
-
-        {!isPanelCollapsed && (
-          <AgentInspectorDrawer
-            agentId={selectedAgent}
-            presence={selectedAgent ? presenceMap.get(selectedAgent) : undefined}
-            conversation={view}
-            currentDialogueId={currentDialogue?.id}
-            onPickConversation={pick}
-            onSelectAgent={(id) => {
-              setSelectedAgent(id);
-              setSelectedGate(null);
-            }}
-            onSelectDialogue={(dialogue) => {
-              setInspectedDialogueId(dialogue.id);
-              const idx = dialogues.findIndex((item) => item.id === dialogue.id);
-              if (idx >= 0) setDialogueIdx(idx);
-            }}
-            onClose={() => setIsPanelCollapsed(true)}
-            onOpenDm={onOpenDm}
-          />
-        )}
 
         <GateInspectorDrawer
           gateId={selectedGate}

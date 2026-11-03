@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
+import { Badge, Card } from '@e-burgos/tucu-ui';
 import {
   Activity,
   ArrowDownToLine,
@@ -12,6 +13,31 @@ import {
 import { useBridge, useStudio } from '../BridgeProvider';
 import { agentMeta } from '@/lib/agents';
 import { useT } from '@/lib/i18n/i18n';
+
+function KpiPanel({ glyph, glyphClass, label, value, valueClass, children }: { glyph: string; glyphClass: string; label: string; value: ReactNode; valueClass: string; children: ReactNode }) {
+  return (
+    <Card className="relative overflow-hidden backdrop-blur-md">
+      <div className={`pointer-events-none absolute -right-4 -bottom-4 font-mono text-7xl ${glyphClass}`}>{glyph}</div>
+      <p className="mb-1 font-mono text-meta uppercase text-ink-500">{label}</p>
+      <div className={`mb-2 font-mono text-3xl font-extrabold tracking-tight ${valueClass}`}>{value}</div>
+      {children}
+    </Card>
+  );
+}
+
+function SectionPanel({ icon, title, children }: { icon: ReactNode; title: string; children: ReactNode }) {
+  return (
+    <Card>
+      <div className="space-y-4">
+        <h3 className="flex items-center gap-2 text-sm font-semibold tracking-tight text-ink-100">
+          {icon}
+          <span>{title}</span>
+        </h3>
+        {children}
+      </div>
+    </Card>
+  );
+}
 
 interface ModelStat {
   name: string;
@@ -189,136 +215,111 @@ export function LiveTelemetryHUD() {
   return (
     <div
       data-testid="live-telemetry-hud"
-      className="flex-1 h-full w-full overflow-y-auto bg-radial from-ink-900 to-ink-950 p-6 space-y-6 text-white select-none"
+      className="flex-1 h-full w-full overflow-y-auto bg-radial from-ink-900 to-ink-950 p-6 space-y-6 text-ink-100 select-none"
     >
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/10 pb-5">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-foreground/10 pb-5">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <Activity className="w-5 h-5 text-emerald-400" />
-            <h2 className="text-xl font-bold tracking-tight text-white">Telemetría de Misión & Tokens</h2>
+            <h2 className="text-xl font-bold tracking-tight text-ink-100">{t('ui.tel.title')}</h2>
           </div>
-          <p className="text-xs text-white/50 font-mono">
-            Monitoreo en vivo de tokens consumidos, inversión en modelos, ROI agéntico y compresión rtk.
+          <p className="text-xs text-ink-500 font-mono">
+            {t('ui.tel.subtitle')}
           </p>
         </div>
         {telemetry && (
-          <div className="flex items-center gap-2 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 px-4 py-2">
-            <span className="h-2.5 w-2.5 rounded-full bg-emerald-400 animate-ping" />
-            <span className="font-mono text-xs font-bold text-emerald-300">STREAMING TELEMETRY ACTIVE</span>
-          </div>
+          <Badge variant="soft" size="micro" shape="pill" tone="success" className="gap-2 px-3 py-1.5 font-mono text-meta font-bold">
+            <span className="h-2 w-2 rounded-full bg-emerald-400 animate-ping" />
+            <span>{t('ui.tel.streaming')}</span>
+          </Badge>
         )}
       </div>
       {telemetry ? (
         <>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-md relative overflow-hidden">
-            <div className="absolute -right-4 -bottom-4 text-7xl font-mono text-white/5 pointer-events-none">∑</div>
-            <p className="text-[11px] font-mono uppercase text-white/40 mb-1">Tokens Totales Consumidos</p>
-            <div className="text-3xl font-extrabold font-mono text-white tracking-tight mb-2">
-              {telemetry.totalTokens.toLocaleString()}
+          <KpiPanel glyph="∑" glyphClass="text-foreground/5" label={t('ui.tel.totalTokens')} value={telemetry.totalTokens.toLocaleString()} valueClass="text-ink-100">
+            <div className="flex items-center gap-4 font-mono text-ui text-ink-300">
+              <span className="flex items-center gap-1.5"><ArrowDownToLine className="w-3.5 h-3.5 text-emerald-400" /> {t('ui.tel.in', { n: telemetry.totalTokensIn.toLocaleString() })}</span>
+              <span className="flex items-center gap-1.5"><ArrowUpFromLine className="w-3.5 h-3.5 text-sky-400" /> {t('ui.tel.out', { n: telemetry.totalTokensOut.toLocaleString() })}</span>
             </div>
-            <div className="flex items-center gap-4 text-xs font-mono text-white/60">
-              <span className="flex items-center gap-1.5"><ArrowDownToLine className="w-3.5 h-3.5 text-emerald-400" /> In: {telemetry.totalTokensIn.toLocaleString()}</span>
-              <span className="flex items-center gap-1.5"><ArrowUpFromLine className="w-3.5 h-3.5 text-sky-400" /> Out: {telemetry.totalTokensOut.toLocaleString()}</span>
-            </div>
-          </div>
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-md relative overflow-hidden">
-            <div className="absolute -right-4 -bottom-4 text-7xl font-mono text-emerald-500/10 pointer-events-none">$</div>
-            <p className="text-[11px] font-mono uppercase text-white/40 mb-1">Inversión Real en Modelos</p>
-            <div className="text-3xl font-extrabold font-mono text-emerald-400 tracking-tight mb-2">
-              ${telemetry.estimatedCostUsd.toFixed(2)} USD
-            </div>
-            <p className="text-xs font-mono text-white/60">
-              Tarifas sincronizadas con <code className="text-white">sdd/pricing.json</code>
+          </KpiPanel>
+          <KpiPanel glyph="$" glyphClass="text-emerald-500/10" label={t('ui.tel.invested')} value={`$${telemetry.estimatedCostUsd.toFixed(2)} USD`} valueClass="text-emerald-400">
+            <p className="font-mono text-ui text-ink-300">
+              {t('ui.tel.ratesSynced')} <code className="text-ink-100">sdd/pricing.json</code>
             </p>
-          </div>
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-md relative overflow-hidden">
-            <div className="absolute -right-4 -bottom-4 text-7xl font-mono text-purple-500/10 pointer-events-none">%</div>
-            <p className="text-[11px] font-mono uppercase text-white/40 mb-1">Ahorro Agéntico vs Tradicional</p>
-            <div className="text-3xl font-extrabold font-mono text-purple-300 tracking-tight mb-2">
-              {telemetry.savingsPct === null ? '—' : `${telemetry.savingsPct}% Ahorro`}
-            </div>
-            <p className="text-xs font-mono text-white/60">
-              Tradicional: ${telemetry.traditionalCostUsd.toLocaleString()} ({telemetry.traditionalHours}h) · Agéntico: ${telemetry.estimatedCostUsd}
+          </KpiPanel>
+          <KpiPanel
+            glyph="%"
+            glyphClass="text-purple-500/10"
+            label={t('ui.tel.savings')}
+            value={telemetry.savingsPct === null ? '—' : t('ui.tel.savingsValue', { pct: telemetry.savingsPct })}
+            valueClass="text-purple-300"
+          >
+            <p className="font-mono text-ui text-ink-300">
+              {t('ui.tel.traditionalLine', { cost: telemetry.traditionalCostUsd.toLocaleString(), hours: telemetry.traditionalHours, agentic: telemetry.estimatedCostUsd })}
             </p>
-          </div>
+          </KpiPanel>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="rounded-2xl border border-white/10 bg-ink-900/60 p-5 space-y-4">
-            <h3 className="text-sm font-semibold text-white tracking-tight flex items-center gap-2">
-              <Cpu className="w-4 h-4 text-sky-400" />
-              <span>Distribución de Carga por Modelo</span>
-            </h3>
+          <SectionPanel icon={<Cpu className="w-4 h-4 text-sky-400" />} title={t('ui.tel.byModel')}>
             <div className="space-y-3">
               {telemetry.modelBreakdown.map((m) => (
                 <div key={m.name} className="space-y-1">
-                  <div className="flex items-center justify-between text-xs font-mono">
-                    <span className="text-white font-medium">
+                  <div className="flex items-center justify-between text-ui font-mono">
+                    <span className="text-ink-100 font-medium">
                       {m.name}
-                      {m.provider && <span className="ml-1 text-[10px] text-white/40">({m.provider})</span>}
+                      {m.provider && <span className="ml-1 text-micro text-ink-500">({m.provider})</span>}
                     </span>
-                    <span className="text-white/60">{m.tokens.toLocaleString()} tokens ({m.pct}%)</span>
+                    <span className="text-ink-300">{t('ui.tel.tokensPct', { tokens: m.tokens.toLocaleString(), pct: m.pct })}</span>
                   </div>
-                  <div className="h-2 w-full rounded-full bg-white/5 overflow-hidden">
-                    <div
-                      className="h-full rounded-full transition-all duration-500"
-                      style={{ width: `${m.pct}%`, backgroundColor: m.color }}
-                    />
+                  <div className="h-2 w-full rounded-full bg-foreground/5 overflow-hidden">
+                    <div className="h-full rounded-full transition-all duration-500" style={{ width: `${m.pct}%`, backgroundColor: m.color }} />
                   </div>
                 </div>
               ))}
             </div>
-          </div>
-          <div className="rounded-2xl border border-white/10 bg-ink-900/60 p-5 space-y-4">
-            <h3 className="text-sm font-semibold text-white tracking-tight flex items-center gap-2">
-              <Users className="w-4 h-4 text-purple-400" />
-              <span>Consumo de Tokens por Agente</span>
-            </h3>
+          </SectionPanel>
+          <SectionPanel icon={<Users className="w-4 h-4 text-purple-400" />} title={t('ui.tel.byAgent')}>
             <div className="space-y-3">
               {telemetry.agentConsumption.map((a) => (
                 <div key={a.id} className="space-y-1">
-                  <div className="flex items-center justify-between text-xs font-mono">
-                    <span className="text-white font-medium">
-                      {a.name} <span className="text-white/40 text-[10px]">({agentMeta(a.id).role})</span>
+                  <div className="flex items-center justify-between text-ui font-mono">
+                    <span className="text-ink-100 font-medium">
+                      {a.name} <span className="text-ink-500 text-micro">({agentMeta(a.id).role})</span>
                     </span>
-                    <span className="text-white/60">{a.pct}% del enjambre</span>
+                    <span className="text-ink-300">{t('ui.tel.swarmPct', { pct: a.pct })}</span>
                   </div>
-                  <div className="h-2 w-full rounded-full bg-white/5 overflow-hidden">
-                    <div
-                      className="h-full rounded-full transition-all duration-500"
-                      style={{ width: `${a.pct}%`, backgroundColor: a.color }}
-                    />
+                  <div className="h-2 w-full rounded-full bg-foreground/5 overflow-hidden">
+                    <div className="h-full rounded-full transition-all duration-500" style={{ width: `${a.pct}%`, backgroundColor: a.color }} />
                   </div>
                 </div>
               ))}
             </div>
-          </div>
+          </SectionPanel>
         </div>
         </>
       ) : (
-        <div data-testid="telemetry-empty" className="rounded-2xl border border-white/10 bg-white/5 p-8 text-center font-mono text-sm text-white/60">
+        <div data-testid="telemetry-empty" className="rounded-2xl border border-foreground/10 bg-foreground/5 p-8 text-center font-mono text-sm text-ink-300">
           {t('mc.noTelemetry')}
         </div>
       )}
 
-      <div className="rounded-2xl border border-emerald-500/20 bg-emerald-950/20 p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center">
-            <Feather className="w-5 h-5 text-emerald-400" />
+      <Card>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center">
+              <Feather className="w-5 h-5 text-emerald-400" />
+            </div>
+            <div>
+              <h4 className="font-semibold text-sm text-ink-100">{t('ui.tel.shield')}</h4>
+              <p className="text-ui text-ink-300 font-mono">{t('ui.tel.shieldBody')}</p>
+            </div>
           </div>
-          <div>
-            <h4 className="font-semibold text-sm text-white">Escudo de Compresión RTK Activo</h4>
-            <p className="text-xs text-emerald-200/70 font-mono">
-              Comprimiendo salidas de shell en tiempo real. Ahorro promedio: 60%–90% de contexto.
-            </p>
-          </div>
+          <Badge variant="soft" size="micro" shape="pill" tone="success" className="gap-1.5 px-3 py-1.5 font-mono text-meta font-bold">
+            {t('ui.tel.protection')}
+          </Badge>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="rounded-xl bg-emerald-500/20 border border-emerald-500/30 px-3 py-1.5 font-mono text-xs font-bold text-emerald-300">
-            PROTECCIÓN ACTIVA
-          </span>
-        </div>
-      </div>
+      </Card>
     </div>
   );
 }

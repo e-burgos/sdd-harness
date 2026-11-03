@@ -9,6 +9,8 @@ const PUBLISHED_EXPORTS = [
   'SpecIdValue', 'CycleIdValue', 'FixIdValue', 'ThreadLinkTarget', 'ThreadLink', 'ThreadInfo',
   'AlwaysRule', 'AlwaysOffer', 'ClientCommand', 'SendResult', 'FileSearchResult',
   'ThreadEvent', 'CatalogSource', 'AgentSummary', 'SkillSummary', 'FixSummary', 'WorkspaceSnapshot',
+  'MAX_READ_FILE_BYTES', 'MAX_KIT_ENTRIES', 'MAX_CYCLE_DOCUMENTS', 'KIT_SECTIONS', 'KitEntry', 'KitIndex',
+  'ToolsChange', 'ToolsValue', 'ToolsSetResult', 'RtkGain', 'KitToolsState', 'ToolsRevision',
 ];
 
 describe('public surface', () => {

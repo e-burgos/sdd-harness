@@ -163,6 +163,16 @@ describe.skipIf(process.platform === 'win32')(
       expect(tools.rtk.enabled).toBe(true);
     });
 
+    it('tools.json del template trae tucu_ui apagado y el schema acepta claves nuevas dentro y rechaza ajenas en la raíz', async () => {
+      const tools = await fs.readJSON(resolve(ws, 'sdd/tools.json'));
+      expect(tools.tucu_ui).toEqual({ enabled: false, skill: true, mcp: true });
+      const schema = await fs.readJSON(resolve(ws, 'sdd/schemas/tools.schema.json'));
+      expect(schema.required).toEqual(['rtk']);
+      expect(schema.additionalProperties).toBe(false);
+      expect(schema.properties.tucu_ui.required).toBeUndefined();
+      expect(schema.properties.tucu_ui.additionalProperties).toBe(true);
+    });
+
     it('las rules de Antigravity quedan bajo el cap de 12k caracteres', () => {
       const rulesDir = resolve(ws, 'sdd/dual-harness/rules');
       const rules = fs.readdirSync(rulesDir);

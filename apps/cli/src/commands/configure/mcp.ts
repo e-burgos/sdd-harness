@@ -1,10 +1,11 @@
 import { defineCommand } from 'citty';
 import * as p from '@clack/prompts';
 import pc from 'picocolors';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { logger } from '../../utils/logger.js';
 import { parseListFlag } from '../../utils/flags.js';
+import { loadTucuUiCommon, type McpEntry } from '../../utils/kit-scripts.js';
+import { readMcpServerNames, syncMcpServers } from '../../utils/mcp-sync.js';
 
 interface McpServerConfig {
   command: string;
@@ -12,10 +13,13 @@ interface McpServerConfig {
   env?: Record<string, string>;
 }
 
-const MCP_CATALOG: Record<
-  string,
-  { label: string; hint: string; config: McpServerConfig }
-> = {
+interface McpCatalogEntry {
+  label: string;
+  hint: string;
+  config: McpServerConfig;
+}
+
+const BASE_MCP_CATALOG: Record<string, McpCatalogEntry> = {
   'nx-mcp': {
     label: 'Nx MCP',
     hint: 'Nx workspace tools',
@@ -69,6 +73,18 @@ const MCP_CATALOG: Record<
   },
 };
 
+export async function buildMcpCatalog(): Promise<Record<string, McpCatalogEntry>> {
+  const tucu = await loadTucuUiCommon();
+  return {
+    ...BASE_MCP_CATALOG,
+    'tucu-ui': {
+      label: 'tucu-ui',
+      hint: 'Design MCP for @e-burgos/tucu-ui (React/Next frontends)',
+      config: tucu.kitTucuEntry(tucu.TUCU_UI_PINNED_VERSION, '.mcp.json') as unknown as McpServerConfig,
+    },
+  };
+}
+
 export const configureMcpCommand = defineCommand({
   meta: {
     name: 'mcp',
@@ -86,30 +102,26 @@ export const configureMcpCommand = defineCommand({
 
     const cwd = process.cwd();
 
-    // Leer config existente
+    const catalog = await buildMcpCatalog();
+    const tucu = await loadTucuUiCommon();
     const mcpPath = resolve(cwd, '.mcp.json');
-    let existingServers: string[] = [];
-    if (existsSync(mcpPath)) {
-      try {
-        const existing = JSON.parse(readFileSync(mcpPath, 'utf-8'));
-        existingServers = Object.keys(
-          existing.mcpServers || existing.servers || {},
-        );
-      } catch {
-        // ignorar si no se puede parsear
-      }
+
+    const existing = await readMcpServerNames(mcpPath);
+    if (!existing.ok) {
+      logger.error(existing.error);
+      process.exit(1);
     }
 
     const servers = args.servers
-      ? parseListFlag(args.servers, Object.keys(MCP_CATALOG), '--servers')
+      ? parseListFlag(args.servers, Object.keys(catalog), '--servers')
       : await p.multiselect({
           message: 'Select MCP servers to configure:',
-          options: Object.entries(MCP_CATALOG).map(([key, val]) => ({
+          options: Object.entries(catalog).map(([key, val]) => ({
             value: key,
             label: val.label,
             hint: val.hint,
           })),
-          initialValues: existingServers.filter((s) => s in MCP_CATALOG),
+          initialValues: existing.names.filter((s) => s in catalog),
           required: true,
         });
 
@@ -118,20 +130,24 @@ export const configureMcpCommand = defineCommand({
       process.exit(0);
     }
 
-    // Generar .mcp.json
-    const mcpConfig: { mcpServers: Record<string, McpServerConfig> } = {
-      mcpServers: {},
-    };
-
-    for (const server of servers as string[]) {
-      const def = MCP_CATALOG[server];
-      if (def) {
-        mcpConfig.mcpServers[server] = def.config;
-      }
+    const result = await syncMcpServers({
+      mcpPath,
+      catalog: Object.fromEntries(
+        Object.entries(catalog).map(([key, val]) => [key, val.config as McpEntry]),
+      ),
+      selected: servers as string[],
+      isOwn: (name, entry) => name !== 'tucu-ui' || tucu.isKitTucuEntry(entry),
+      keepOwn: (name, entry) => name === 'tucu-ui' && tucu.isKitTucuEntry(entry),
+    });
+    if (!result.ok) {
+      logger.error(result.error);
+      process.exit(1);
     }
 
-    writeFileSync(mcpPath, JSON.stringify(mcpConfig, null, 2) + '\n', 'utf-8');
-    logger.success('.mcp.json generated');
+    if (result.outcomes['tucu-ui'] === 'custom') {
+      logger.info('tucu-ui: your own entry was kept as is');
+    }
+    logger.success(result.written ? '.mcp.json updated — servers outside the catalog preserved' : '.mcp.json already up to date');
 
     p.outro(pc.green('MCP configured.'));
   },

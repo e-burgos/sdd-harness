@@ -1,16 +1,23 @@
+import { Badge } from '@e-burgos/tucu-ui';
 import type { SessionStatus } from '@sdd-studio/protocol';
 import { useT } from '@/lib/i18n/i18n';
 
-const COLORS: Record<SessionStatus, string> = {
-  queued: 'bg-ink-700 text-ink-300',
-  running: 'bg-accent-dim text-accent-300',
-  'waiting-approval': 'bg-amberish/15 text-amberish',
-  idle: 'bg-ink-800 text-ink-300',
-  interrupted: 'bg-ink-700 text-ink-300',
-  error: 'bg-roseish/15 text-roseish',
+type BadgeColor = 'primary' | 'warning' | 'danger' | 'gray';
+
+const COLORS: Record<SessionStatus, BadgeColor> = {
+  queued: 'gray',
+  running: 'primary',
+  'waiting-approval': 'warning',
+  idle: 'gray',
+  interrupted: 'gray',
+  error: 'danger',
 };
 
 export function StatusBadge({ status }: { status: SessionStatus }) {
   const { t } = useT();
-  return <span className={`rounded-full px-2 py-0.5 text-[11px] ${COLORS[status]}`}>{t(`status.${status}`)}</span>;
+  return (
+    <Badge variant="soft" color={COLORS[status]} className="text-meta">
+      {t(`status.${status}`)}
+    </Badge>
+  );
 }

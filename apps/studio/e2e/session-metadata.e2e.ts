@@ -16,6 +16,7 @@ test('a document written through Bash shows up in the conversation as recorded b
   await page.keyboard.press('Enter');
   await expect(page.getByTestId('thread-scroller').getByText('echo: crea el doc #bash-doc')).toBeVisible();
 
+  await page.getByRole('tab', { name: 'Details' }).click();
   const documents = page.getByTestId('related-documents');
   await expect(documents.getByRole('button', { name: new RegExp(DOCUMENT.replace('.', '\\.')) })).toBeVisible({ timeout: 10_000 });
   await expect(documents.getByRole('button', { name: new RegExp(DOCUMENT.replace('.', '\\.')) })).toHaveCount(1);
@@ -29,6 +30,7 @@ test('a thread that changes no document lists none', async ({ page }) => {
   await page.keyboard.press('Enter');
   await expect(page.getByTestId('thread-scroller').getByText('echo: solo conversacion')).toBeVisible();
 
+  await page.getByRole('tab', { name: 'Details' }).click();
   const documents = page.getByTestId('related-documents');
   await expect(documents).toBeVisible();
   await expect(documents.getByRole('button', { name: new RegExp(DOCUMENT.replace('.', '\\.')) })).toHaveCount(0);

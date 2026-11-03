@@ -1,0 +1,217 @@
+{
+  "$schema": "../../../../schemas/cycle.schema.json",
+  "cycle": 1,
+  "module": "studio-tucu-ui",
+  "spec": "spec-e-burgos-009-studio-tucu-ui",
+  "apps": [
+    "apps/studio"
+  ],
+  "phase": "tucu-ui-adoption",
+  "flow": "lite",
+  "objectives": [
+    "NextThemeProvider en layout clean sin romper el viewport (RF-1, RF-4)",
+    "Paleta y tipografía de tucu-ui vía puente de tokens (RF-2)",
+    "Primitivas de tucu-ui: botones, campos, modales, overlays (RF-3)",
+    "Build estático y e2e intactos (RF-5)"
+  ],
+  "status": "completed",
+  "started_at": "2026-10-27",
+  "completed_at": "2026-10-27",
+  "documents": {
+    "plan": "sdd/specs/spec-e-burgos-009-studio-tucu-ui/cycles/cycle-01/plan.md",
+    "tasks": "sdd/specs/spec-e-burgos-009-studio-tucu-ui/cycles/cycle-01/tasks.json"
+  },
+  "artifacts": [],
+  "metrics": {
+    "tasks_total": 6,
+    "tasks_completed": 6,
+    "tasks_skipped": 0,
+    "story_points": 19,
+    "files_created": [],
+    "files_modified": [
+      "apps/studio/package.json",
+      "apps/studio/src/app/globals.css",
+      "apps/studio/src/app/layout.tsx",
+      "apps/studio/src/components/ConnectScreen.tsx",
+      "apps/studio/src/components/ConnectionBanner.tsx",
+      "apps/studio/src/components/ErrorBoundary.tsx",
+      "apps/studio/src/components/GateStatusModal.tsx",
+      "apps/studio/src/components/NewConversationButton.tsx",
+      "apps/studio/src/components/StudioHeader.tsx",
+      "apps/studio/src/components/mission-control/AgentInspectorDrawer.tsx",
+      "apps/studio/src/components/mission-control/AgentMapCanvas.tsx",
+      "apps/studio/src/components/mission-control/ChatDialogueCard.tsx",
+      "apps/studio/src/components/mission-control/ConversationSessionInfo.tsx",
+      "apps/studio/src/components/mission-control/DocumentViewerModal.tsx",
+      "apps/studio/src/components/mission-control/GateInspectorDrawer.tsx",
+      "apps/studio/src/components/mission-control/LiveAgentChatFeed.tsx",
+      "apps/studio/src/components/mission-control/LiveSwarmComms.tsx",
+      "apps/studio/src/components/mission-control/documentviewermodal.spec.tsx",
+      "apps/studio/src/components/workspace/ApiKeyField.tsx",
+      "apps/studio/src/components/workspace/ApprovalCard.tsx",
+      "apps/studio/src/components/workspace/AttachmentTray.tsx",
+      "apps/studio/src/components/workspace/AttachmentView.tsx",
+      "apps/studio/src/components/workspace/AuthPanel.tsx",
+      "apps/studio/src/components/workspace/Composer.tsx",
+      "apps/studio/src/components/workspace/ContextMeter.tsx",
+      "apps/studio/src/components/workspace/PanelRail.tsx",
+      "apps/studio/src/components/workspace/PendingMessages.tsx",
+      "apps/studio/src/components/workspace/PreparedConversations.tsx",
+      "apps/studio/src/components/workspace/QuestionForm.tsx",
+      "apps/studio/src/components/workspace/Sidebar.tsx",
+      "apps/studio/src/components/workspace/StatusBadge.tsx",
+      "apps/studio/src/components/workspace/ThreadView.tsx",
+      "apps/studio/src/lib/i18n/i18n.tsx",
+      "apps/studio/vitest.config.mts"
+    ],
+    "files_deleted": [],
+    "usage": {
+      "tokens_in": 622662,
+      "tokens_out": 98470,
+      "approx": true,
+      "source": "declared-estimate",
+      "by_tier": {
+        "claude/opus": {
+          "tokens_in": 365000,
+          "tokens_out": 53000,
+          "approx": true,
+          "source": "declared-estimate"
+        },
+        "claude/sonnet": {
+          "tokens_in": 257662,
+          "tokens_out": 45470,
+          "approx": true,
+          "source": "declared-estimate"
+        }
+      },
+      "by_agent": [
+        {
+          "agent": "orchestrator",
+          "label": "solo",
+          "provider_model": "claude/opus",
+          "effort": "high",
+          "tokens_in": 120000,
+          "tokens_out": 20000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-27"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-001",
+          "provider_model": "claude/opus",
+          "effort": "medium",
+          "tokens_in": 95000,
+          "tokens_out": 14000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-27"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-002",
+          "provider_model": "claude/opus",
+          "effort": "medium",
+          "tokens_in": 80000,
+          "tokens_out": 9000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-27"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-003",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 116282,
+          "tokens_out": 20520,
+          "approx": true,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-10-27"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-004",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 91900,
+          "tokens_out": 16200,
+          "approx": true,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-10-27"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-005",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 49480,
+          "tokens_out": 8750,
+          "approx": true,
+          "source": "agent-usage-notification",
+          "recorded_at": "2026-10-27"
+        },
+        {
+          "agent": "reviewer",
+          "label": "TASK-006",
+          "provider_model": "claude/opus",
+          "effort": "medium",
+          "tokens_in": 70000,
+          "tokens_out": 10000,
+          "approx": true,
+          "source": "declared-estimate",
+          "recorded_at": "2026-10-27"
+        }
+      ]
+    }
+  },
+  "tables_created": [],
+  "endpoints_implemented": [],
+  "components_created": [],
+  "issues_found": [
+    "fricción tucu-ui: el colorScheme por defecto del store es macos-tahoe; layout=\"clean\" solo no alcanza, hay que pasar themeStyle=\"default\" y background=\"none\" o la app arranca con el wallpaper de Tahoe",
+    "fricción tucu-ui: el barrel raíz importa CSS de swiper; vitest/jsdom exige server.deps.inline de @e-burgos/tucu-ui y swiper, y cargar el barrel desde el i18n suma ~9 s a la suite de Studio",
+    "fricción tucu-ui: @source sobre el paquete entero lleva el CSS exportado a ~727 KB; revisar si conviene acotar @source a los módulos usados",
+    "menor: spec-e-burgos-008-studio-session-flow.spec.md está vacío (0 bytes) desde su cierre; sdd:validate no lo detecta",
+    "proceso: el e2e de Studio corre contra apps/studio-bridge/dist/web, una copia de studio/out que solo se refresca con el build del bridge; el e2e de TASK-001 corrió contra la UI vieja y se repitió en TASK-002 tras pnpm --filter sdd-studio build (8/8 con la UI nueva)",
+    "menor: emerald-* (113 usos en Mission Control y header) se mapea a --color-success para conservar la semántica de estado; los CTA verdes pasan al color de marca al migrarse a Button en TASK-003",
+    "menor: los colores por agente en lib/agents.ts y lib/gates.ts (#10b981 y otros) son identidad de cada agente y quedan fuera del puente",
+    "fricción tucu-ui: Button siempre envuelve en un <div> y className cae en el <button> interno; ml-auto/absolute/shrink-0 requieren un wrapper propio (falta wrapperClassName o no envolver sin tooltip/drip); rompió un spec que usaba nextElementSibling",
+    "fricción tucu-ui: no hay tamaño menor que tiny (h-6) ni texto xs; los botones icono densos de Studio crecen a 24px y text-sm",
+    "fricción tucu-ui: className sin tailwind-merge; overrides de h-*/bg-*/text-xs no son confiables",
+    "fricción tucu-ui: variant transparent agrega siempre bg-gray-100/25 (en oscuro se ve como píldora gris); Studio lo neutraliza en globals.css con [data-tucu=button][data-variant=transparent]",
+    "fricción tucu-ui: ghost tiene border-2 fijo; gray solid es gray-600 sin un tono de superficie oscura; no hay type por defecto",
+    "CA-002 excepciones (24 <button> nativos): carets/filas/headers de NavTree, tabs del header y segmented controls (AgentInspectorDrawer, AgentMapCanvas, DocumentViewerModal), tab con roving tabindex de AuthPanel, filas de ChannelView/RightPanel/RelatedDocuments, chips de GateInspectorDrawer y ThreadLinkPicker, gate-chip del header e icono de ayuda de HelpSelect",
+    "desvío CA-003: GateStatusModal y DocumentViewerModal siguen custom; tucu Modal no deja pasar aria-label ni data-testid al role=dialog, trae el cierre con aria-label fijo en inglés, el título es solo string (DocumentViewerModal tiene header compuesto), escucha Escape en document, el backdrop es hermano y no click-through, demora ~200 ms al cerrar y fija max-h-[60vh]/sm:max-w-[800px]",
+    "excepción CA-002: HelpSelect conserva el <select> nativo (tucu Select es botón + listbox en portal con options[] y onChange(option), sin <option> hijos ni aria-describedby) y el <input type=file> oculto del Composer",
+    "fricción tucu-ui: Input/Textarea sin tamaño compacto (mínimo h-8 sm:h-10) y sin merge de clases; Studio fuerza alturas con utilidades ! vía inputClassName; Input pone siempre aria-invalid=false y el toggle de password tiene aria-label en inglés; Textarea separa className (wrapper) de inputClassName",
+    "fricción tucu-ui: Radio/Checkbox con label flex items-center (multilínea necesita items-start!) y Radio sin id/htmlFor",
+    "fricción tucu-ui: Alert fija role=alert y aria-live=assertive (no hay variante status/polite) e interpola className como string (undefined se renderiza); Badge soft usa colores fijos y no tokens del tema; Spinner sin tamaño xs"
+  ],
+  "reviewer_report": {
+    "approved": true,
+    "date": "2026-10-27",
+    "ca_results": {
+      "CA-001": "PASS - Workspace, Agent Map, Ecosystem, Telemetry y ConnectScreen conservan grilla, paneles y orden con la paleta, tipografía (Inter) y estados de tucu-ui en oscuro; revisado en el navegador contra el bridge fake con el build nuevo",
+      "CA-002": "PASS con excepciones - 61 de 85 <button> son Button de tucu-ui; 24 nativos estructurales listados en issues_found; campos con Input/Textarea/Checkbox/Radio salvo el <select> de HelpSelect y el <input type=file> oculto",
+      "CA-003": "FAIL (desvío aceptado) - GateStatusModal y DocumentViewerModal siguen custom porque tucu Modal no cumple accesibilidad/testids/i18n/header compuesto; ambos siguen cerrando con Escape (specs verdes); queda como follow-up de tucu-ui",
+      "CA-004": "PASS - pnpm build, typecheck y test verdes (protocol 103, cli 202, bridge 675, studio 684); e2e 8/8 sin tocar selectores",
+      "CA-005": "PASS - build:local genera out/, el bridge lo sirve y scrollHeight == innerHeight en las vistas revisadas"
+    },
+    "tests": {
+      "sdd:validate": "OK",
+      "build": "pnpm build exit 0",
+      "typecheck": "pnpm typecheck exit 0",
+      "suite": "protocol 103/103, cli 202 pass (9 skipped), studio-bridge 675 pass (2 skipped), studio 684/684",
+      "e2e": "apps/studio e2e 8/8 PASS contra dist/web recompilado"
+    },
+    "notes": "Aprobado por el actor único del flow lite (opus/medium) con TASK-003..005 implementadas por subagentes sonnet/medium. Sin comentarios narrativos nuevos. Fricciones de tucu-ui registradas en issues_found para la spec-002 de tucu-ui y el skill del kit. TASK-001 se verificó primero contra un dist/web viejo; corregido en TASK-002 (journal).",
+    "follow_ups": [
+      "Migrar GateStatusModal y DocumentViewerModal a tucu Modal cuando acepte aria-label, data-testid, cierre traducible y header ReactNode",
+      "Reemplazar el puente de tokens por un preset de marca con nombre cuando tucu-ui lo ofrezca",
+      "Pasar las fricciones de issues_found a la spec-002 de tucu-ui",
+      "Ciclo del kit: skill de tucu-ui y conexión de su MCP en los cuatro arneses",
+      "Documentar en la constitución de Studio que el e2e sirve dist/web del bridge (fragmento de este ciclo)"
+    ]
+  }
+}

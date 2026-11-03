@@ -1,8 +1,8 @@
 'use client';
 
+import { Skeleton, SplitModal, type SplitModalAction, type SplitModalSection } from '@e-burgos/tucu-ui';
 import React, { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom';
-import { Code2, ClipboardList, Zap, FileText, Check, Copy, Link2, X } from 'lucide-react';
+import { Code2, ClipboardList, Zap, FileText, Check, Copy, Link2 } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { AgentGeneratedDocument } from '@/lib/agent-documents';
@@ -12,14 +12,39 @@ import { useBridge } from '../BridgeProvider';
 export interface DocumentViewerModalProps {
   document: AgentGeneratedDocument | null;
   onClose: () => void;
+  related?: AgentGeneratedDocument[];
+  onNavigate?: (document: AgentGeneratedDocument) => void;
 }
 
-export function DocumentViewerModal({ document: doc, onClose }: DocumentViewerModalProps) {
+type ViewMode = 'rendered' | 'raw';
+
+const DOCUMENT_PREFIX = 'document:';
+
+const TYPE_BADGE_CLASS: Record<string, string> = {
+  spec: 'border-sky-500/40 bg-sky-500/20 text-sky-300',
+  plan: 'border-purple-500/40 bg-purple-500/20 text-purple-300',
+  wbs: 'border-purple-500/40 bg-purple-500/20 text-purple-300',
+  code: 'border-emerald-500/40 bg-emerald-500/20 text-emerald-300',
+  context: 'border-amber-500/40 bg-amber-500/20 text-amber-300',
+};
+
+const DocumentTypeIcon = ({ type }: { type: string }) =>
+  type === 'code' ? (
+    <Code2 className="h-3.5 w-3.5 text-emerald-400" aria-hidden />
+  ) : type === 'plan' || type === 'wbs' ? (
+    <ClipboardList className="h-3.5 w-3.5 text-purple-400" aria-hidden />
+  ) : type === 'fix' ? (
+    <Zap className="h-3.5 w-3.5 text-amber-400" aria-hidden />
+  ) : (
+    <FileText className="h-3.5 w-3.5 text-sky-400" aria-hidden />
+  );
+
+export function DocumentViewerModal({ document: doc, onClose, related = [], onNavigate }: DocumentViewerModalProps) {
   const { client } = useBridge();
   const { t } = useT();
   const [content, setContent] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [viewMode, setViewMode] = useState<'rendered' | 'raw'>('rendered');
+  const [viewMode, setViewMode] = useState<ViewMode>('rendered');
   const [loadFailed, setLoadFailed] = useState<boolean>(false);
   const [copied, setCopied] = useState<boolean>(false);
   const [pathCopied, setPathCopied] = useState<boolean>(false);
@@ -62,200 +87,148 @@ export function DocumentViewerModal({ document: doc, onClose }: DocumentViewerMo
   }, [doc, client]);
 
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [onClose]);
+    setViewMode('rendered');
+  }, [doc?.path]);
 
-  if (!doc) return null;
+  const path = doc?.path ?? '';
+  const isMarkdown = path.endsWith('.md');
+  const isCodeOrJson = path.endsWith('.json') || path.endsWith('.ts') || path.endsWith('.tsx');
 
-  const isMarkdown = doc.path.endsWith('.md');
-  const isCodeOrJson = doc.path.endsWith('.json') || doc.path.endsWith('.ts') || doc.path.endsWith('.tsx');
+  const documents = doc && !related.some((item) => item.path === path) ? [doc, ...related] : related;
+  const sections: SplitModalSection[] = [
+    ...(isMarkdown
+      ? [
+          {
+            id: 'view',
+            label: t('ui.doc.view'),
+            selectionMode: 'option' as const,
+            activeItemId: viewMode,
+            onActiveItemChange: (id: string) => setViewMode(id as ViewMode),
+            items: [
+              { id: 'rendered', label: t('ui.doc.rendered') },
+              { id: 'raw', label: t('ui.doc.raw') },
+            ],
+          },
+        ]
+      : []),
+    ...(documents.length > 1
+      ? [
+          {
+            id: 'documents',
+            label: t('ui.doc.documents'),
+            items: documents.map((item) => ({
+              id: `${DOCUMENT_PREFIX}${item.path}`,
+              label: item.name,
+              icon: <DocumentTypeIcon type={item.type} />,
+              description: item.type,
+            })),
+          },
+        ]
+      : []),
+    {
+      id: 'info',
+      items: [
+        {
+          id: 'path',
+          kind: 'info' as const,
+          label: t('ui.doc.path'),
+          value: (
+            <span data-testid="document-viewer-path" className="block max-w-full truncate font-mono text-meta" title={path}>
+              {path}
+            </span>
+          ),
+        },
+      ],
+    },
+  ];
 
-  const handleCopyContent = () => {
-    void navigator.clipboard.writeText(content);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const handleSelect = (id: string) => {
+    if (!id.startsWith(DOCUMENT_PREFIX)) return;
+    const target = documents.find((item) => item.path === id.slice(DOCUMENT_PREFIX.length));
+    if (target && target.path !== path) onNavigate?.(target);
   };
 
-  const handleCopyPath = () => {
-    void navigator.clipboard.writeText(doc.path);
-    setPathCopied(true);
-    setTimeout(() => setPathCopied(false), 2000);
+  const copyToClipboard = (value: string, flag: (copied: boolean) => void) => {
+    void navigator.clipboard.writeText(value);
+    flag(true);
+    setTimeout(() => flag(false), 2000);
   };
 
-  return createPortal(
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-label={doc.name}
-      data-testid="document-viewer-modal"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-ink-950/80 backdrop-blur-md animate-in fade-in duration-200"
+  const sidebarActions: SplitModalAction[] = [
+    {
+      id: 'copy-content',
+      label: copied ? t('ui.copied') : t('ui.copy'),
+      tooltip: t('ui.doc.copyAll'),
+      icon: copied ? <Check className="h-4 w-4 text-emerald-400" aria-hidden /> : <Copy className="h-4 w-4" aria-hidden />,
+      onClick: () => copyToClipboard(content, setCopied),
+    },
+    {
+      id: 'copy-path',
+      label: pathCopied ? t('ui.doc.pathCopied') : t('ui.doc.copyPath'),
+      icon: pathCopied ? <Check className="h-4 w-4 text-emerald-400" aria-hidden /> : <Link2 className="h-4 w-4" aria-hidden />,
+      onClick: () => copyToClipboard(path, setPathCopied),
+    },
+  ];
+
+  const typeBadge = doc && (
+    <span
+      className={`shrink-0 rounded border px-1.5 py-0.5 font-mono text-micro font-extrabold uppercase ${TYPE_BADGE_CLASS[doc.type] ?? 'border-rose-500/40 bg-rose-500/20 text-rose-300'}`}
     >
-      <div className="relative w-full max-w-4xl max-h-[85vh] rounded-2xl border border-white/15 bg-ink-950/95 shadow-2xl backdrop-blur-2xl flex flex-col overflow-hidden select-text text-white">
-        <div
-          data-testid="document-viewer-header"
-          className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3 px-5 py-4 border-b border-white/10 shrink-0 bg-white/5"
-        >
-          <div className="flex items-start gap-3 min-w-0 flex-1 basis-64">
-            <div className="h-10 w-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
-              {doc.type === 'code' ? (
-                <Code2 className="w-5 h-5 text-emerald-400" />
-              ) : doc.type === 'plan' || doc.type === 'wbs' ? (
-                <ClipboardList className="w-5 h-5 text-purple-400" />
-              ) : doc.type === 'fix' ? (
-                <Zap className="w-5 h-5 text-amber-400" />
-              ) : (
-                <FileText className="w-5 h-5 text-sky-400" />
-              )}
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2 min-w-0">
-                <h2 className="text-base font-bold text-white truncate font-sans min-w-0">{doc.name}</h2>
-                <span
-                  className={`px-1.5 py-0.5 rounded text-[9px] font-mono font-extrabold uppercase shrink-0 ${
-                    doc.type === 'spec'
-                      ? 'bg-sky-500/20 text-sky-300 border border-sky-500/40'
-                      : doc.type === 'plan' || doc.type === 'wbs'
-                        ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
-                        : doc.type === 'code'
-                          ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                          : doc.type === 'context'
-                            ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
-                            : 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
-                  }`}
-                >
-                  {doc.type}
-                </span>
-                <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded border border-emerald-500/20 shrink-0">
-                  {doc.status}
-                </span>
-              </div>
-              <p
-                data-testid="document-viewer-path"
-                className="mt-0.5 truncate text-xs text-white/50 font-mono"
-                title={doc.path}
-              >
-                {doc.path}
-              </p>
-            </div>
-          </div>
+      {doc.type}
+    </span>
+  );
 
-          <div
-            data-testid="document-viewer-actions"
-            className="flex flex-wrap items-center justify-end gap-2 shrink-0 ml-auto"
-          >
-            {isMarkdown && (
-              <div className="flex items-center bg-white/10 p-0.5 rounded-lg border border-white/10 text-[10px] font-mono shrink-0 whitespace-nowrap">
-                <button
-                  type="button"
-                  onClick={() => setViewMode('rendered')}
-                  className={`px-2.5 py-1 rounded transition-all whitespace-nowrap ${
-                    viewMode === 'rendered'
-                      ? 'bg-emerald-500 text-ink-950 font-bold shadow'
-                      : 'text-white/60 hover:text-white'
-                  }`}
-                >
-                  Renderizado
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setViewMode('raw')}
-                  className={`px-2.5 py-1 rounded transition-all whitespace-nowrap ${
-                    viewMode === 'raw'
-                      ? 'bg-emerald-500 text-ink-950 font-bold shadow'
-                      : 'text-white/60 hover:text-white'
-                  }`}
-                >
-                  Crudo / Fuente
-                </button>
-              </div>
-            )}
-
-            <button
-              type="button"
-              onClick={handleCopyContent}
-              className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white/80 hover:text-white text-xs font-mono font-medium transition-colors flex items-center gap-1.5 shrink-0 whitespace-nowrap"
-              title="Copiar todo el contenido"
-            >
-              {copied ? (
-                <>
-                  <Check className="w-3 h-3 text-emerald-400" />
-                  <span className="text-emerald-400">Copiado</span>
-                </>
-              ) : (
-                <>
-                  <Copy className="w-3 h-3" />
-                  <span>Copiar</span>
-                </>
-              )}
-            </button>
-
-            <button
-              type="button"
-              onClick={handleCopyPath}
-              data-testid="copy-path-button"
-              className="px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/20 text-white/80 hover:text-white text-xs font-mono font-medium transition-colors flex items-center gap-1.5 shrink-0 whitespace-nowrap"
-              title="Copiar ruta"
-            >
-              {pathCopied ? (
-                <>
-                  <Check className="w-3 h-3 text-emerald-400" />
-                  <span className="text-emerald-400">Copiada</span>
-                </>
-              ) : (
-                <>
-                  <Link2 className="w-3 h-3" />
-                  <span>Copiar ruta</span>
-                </>
-              )}
-            </button>
-
-            <span aria-hidden="true" data-testid="document-viewer-divider" className="h-6 w-px bg-white/15 shrink-0" />
-
-            <button
-              type="button"
-              onClick={onClose}
-              data-testid="modal-close-button"
-              aria-label="Cerrar modal de documento"
-              className="h-8 w-8 flex items-center justify-center rounded-lg text-white/50 hover:text-white hover:bg-white/10 transition-colors shrink-0"
-              title="Cerrar modal (Esc)"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-6 bg-ink-900/30">
+  return (
+    <SplitModal
+      isOpen={!!doc}
+      onClose={onClose}
+      title={doc?.name}
+      chips={
+        doc && (
+          <>
+            {typeBadge}
+            <span className="shrink-0 rounded border border-emerald-500/20 bg-emerald-500/10 px-1.5 py-0.5 font-mono text-micro text-emerald-400">{doc.status}</span>
+          </>
+        )
+      }
+      sections={sections}
+      activeItemId={`${DOCUMENT_PREFIX}${path}`}
+      onActiveItemChange={handleSelect}
+      sidebarActions={sidebarActions}
+      maxWidth="64rem"
+      overlayClassName="bg-ink-950/80 backdrop-blur-md"
+      closeLabel={t('ui.doc.closeAria')}
+      closeTooltip={t('ui.doc.closeHint')}
+      closeButtonProps={{ 'data-testid': 'modal-close-button' }}
+      data-testid="document-viewer-modal"
+      className="select-text rounded-2xl border border-foreground/15 bg-ink-950/95 text-ink-100 shadow-2xl backdrop-blur-2xl"
+      bodyClassName="bg-ink-900/30 p-6"
+    >
+      {doc && (
+        <>
           {isLoading ? (
             <div className="space-y-3 py-6">
-              <div className="h-6 w-1/3 bg-white/10 rounded animate-pulse" />
-              <div className="h-4 w-full bg-white/5 rounded animate-pulse" />
-              <div className="h-4 w-5/6 bg-white/5 rounded animate-pulse" />
-              <div className="h-4 w-4/6 bg-white/5 rounded animate-pulse" />
-              <div className="h-32 w-full bg-white/5 rounded animate-pulse mt-4" />
+              <Skeleton animation="pulse" height="1.5rem" width="33%" className="bg-foreground/10" />
+              <Skeleton animation="pulse" height="1rem" className="bg-foreground/5" />
+              <Skeleton animation="pulse" height="1rem" width="83%" className="bg-foreground/5" />
+              <Skeleton animation="pulse" height="1rem" width="66%" className="bg-foreground/5" />
+              <Skeleton animation="pulse" height="8rem" className="mt-4 bg-foreground/5" />
             </div>
           ) : loadFailed ? (
             <p data-testid="document-load-error" className="rounded-xl border border-rose-500/30 bg-rose-950/30 p-4 font-mono text-xs text-rose-200">
               {t('mc.doc.loadFailed', { path: doc.path })}
             </p>
           ) : viewMode === 'raw' || isCodeOrJson ? (
-            <div className="relative rounded-xl border border-white/10 bg-ink-950 p-4 font-mono text-xs leading-relaxed overflow-x-auto text-emerald-300">
+            <div className="relative overflow-x-auto rounded-xl border border-foreground/10 bg-ink-950 p-4 font-mono text-xs leading-relaxed text-emerald-300">
               <pre className="whitespace-pre-wrap break-words">{content}</pre>
             </div>
           ) : (
-            <div className="prose-studio mx-auto max-w-[72ch] text-[15px] leading-7 select-text [&_h1]:text-xl [&_h1]:font-bold [&_h1]:text-white [&_h1]:border-b [&_h1]:border-white/10 [&_h1]:pb-2 [&_h1]:mb-4 [&_h2]:text-lg [&_h2]:font-bold [&_h2]:text-white [&_h2]:mt-6 [&_h2]:mb-3 [&_h3]:text-base [&_h3]:font-bold [&_h3]:text-white [&_h3]:mt-4 [&_h3]:mb-2 [&_p]:my-2.5 [&_p]:text-white/80 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:my-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:my-2 [&_li]:my-1 [&_li]:text-white/80 [&_code]:rounded [&_code]:bg-white/10 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-xs [&_code]:text-emerald-300 [&_pre]:overflow-auto [&_pre]:rounded-xl [&_pre]:bg-ink-950 [&_pre]:p-4 [&_pre]:border [&_pre]:border-white/10 [&_blockquote]:border-l-2 [&_blockquote]:border-emerald-500/60 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-white/60 [&_table]:w-full [&_table]:border-collapse [&_table]:my-4 [&_th]:border [&_th]:border-white/15 [&_th]:bg-white/5 [&_th]:p-2 [&_th]:text-left [&_th]:text-xs [&_th]:font-bold [&_td]:border [&_td]:border-white/10 [&_td]:p-2 [&_td]:text-xs">
+            <div className="prose-studio mx-auto max-w-[72ch] text-copy leading-7 select-text [&_h1]:text-xl [&_h1]:font-bold [&_h1]:text-ink-100 [&_h1]:border-b [&_h1]:border-foreground/10 [&_h1]:pb-2 [&_h1]:mb-4 [&_h2]:text-lg [&_h2]:font-bold [&_h2]:text-ink-100 [&_h2]:mt-6 [&_h2]:mb-3 [&_h3]:text-base [&_h3]:font-bold [&_h3]:text-ink-100 [&_h3]:mt-4 [&_h3]:mb-2 [&_p]:my-2.5 [&_p]:text-ink-100 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:my-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:my-2 [&_li]:my-1 [&_li]:text-ink-100 [&_code]:rounded [&_code]:bg-foreground/10 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-xs [&_code]:text-emerald-300 [&_pre]:overflow-auto [&_pre]:rounded-xl [&_pre]:bg-ink-950 [&_pre]:p-4 [&_pre]:border [&_pre]:border-foreground/10 [&_blockquote]:border-l-2 [&_blockquote]:border-emerald-500/60 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-ink-300 [&_table]:w-full [&_table]:border-collapse [&_table]:my-4 [&_th]:border [&_th]:border-foreground/15 [&_th]:bg-foreground/5 [&_th]:p-2 [&_th]:text-left [&_th]:text-xs [&_th]:font-bold [&_td]:border [&_td]:border-foreground/10 [&_td]:p-2 [&_td]:text-xs">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
             </div>
           )}
-        </div>
-      </div>
-    </div>,
-    document.body,
+        </>
+      )}
+    </SplitModal>
   );
 }

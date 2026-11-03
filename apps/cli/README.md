@@ -100,13 +100,13 @@ $ npx @e-burgos/sdd-harness init
 >
 > | Command             | Unattended form                                                                 |
 > | ------------------- | -------------------------------------------------------------------------------- |
-> | `init`              | `--config <path>` (the whole wizard as a validated file), plus `--here`/`--dir <path>` for the target, `--profile team\|solo` for the SDD working profile and `--skip-verify` to skip the closing gate |
+> | `init`              | `--config <path>` (the whole wizard as a validated file), plus `--here`/`--dir <path>` for the target, `--profile team\|solo` for the SDD working profile and `--skip-verify` to skip the closing gate, and `--tucu-ui`/`--no-tucu-ui` to decide the tucu-ui design skill + MCP without a prompt |
 > | `add app`           | `<type> --name <name>`                                                            |
 > | `add tool`          | `<name> --type <what it is>`                                                      |
 > | `add spec`          | `<slug> --author <user> --title <text> --app apps/<name> [--apps <a,b>] [--depends-on <id|slug>]` |
 > | `add skill`         | `<name> --description <text>`                                                     |
 > | `add service`       | `<type>`                                                                          |
-> | `configure sdd`     | `--name <project> --description <text> [--profile team\|solo] [--apps name=path,...]` (plus `-y` only to reset an existing kit) |
+> | `configure sdd`     | `--name <project> --description <text> [--profile team\|solo] [--apps name=path,...] [--tucu-ui\|--no-tucu-ui]` (plus `-y` only to reset an existing kit) |
 > | `configure docker`  | `--services postgres,redis`                                                       |
 > | `configure mcp`     | `--servers <a,b>`                                                                 |
 > | `configure memory`  | `--providers <a,b>`                                                               |
@@ -499,7 +499,7 @@ Presents a multi-select with all 4 services, pre-selecting any already configure
 Configure or reset the SDD (Spec-Driven Development) agent infrastructure.
 
 ```bash
-harness configure sdd [--name <project>] [--description <text>] [--profile team|solo] [--apps name=path,...] [-y]
+harness configure sdd [--name <project>] [--description <text>] [--profile team|solo] [--apps name=path,...] [--tucu-ui|--no-tucu-ui] [-y]
 ```
 
 | Argument        | Description                                                                       |
@@ -508,6 +508,7 @@ harness configure sdd [--name <project>] [--description <text>] [--profile team|
 | `--description` | Project description — skips the prompt                                             |
 | `--profile`     | Working profile written to `sdd/global.json`: `team` (full cycles, default) or `solo` (lite cycles) |
 | `--apps`        | Applications to register as `name=path` pairs, comma-separated (`--apps api=src/api,web=src/web`). Skips detection. Paths are relative to the repo root and must exist |
+| `--tucu-ui` / `--no-tucu-ui` | Turn on (or keep off) the tucu-ui design skill + MCP without prompting. Without a flag the CLI asks only when a `react`/`nextjs` app exists and the terminal is interactive. The two flags together fail. See [tucu-ui](#tucu-ui-design-skill--mcp) |
 | `-y`, `--yes`   | Skip the reset confirmation. **Destructive** when `sdd/` already exists            |
 
 - **Shape detection**: Nx monorepo (`nx.json`/`apps/`) → registers every app in `apps/` **plus** every `project.json` with `projectType: "application"` found elsewhere (`src/<name>`, `packages/<name>`...; `node_modules`, build outputs and `sdd/` are skipped, and a nested workspace is not descended into). Otherwise the repo registers as a single logical app (standalone convention). App types are inferred from stack markers (`pom.xml`, `nest-cli.json`, `vite.config.ts`, ...)
@@ -529,7 +530,7 @@ Configure MCP (Model Context Protocol) servers for AI agent integration.
 harness configure mcp [--servers <a,b,c>]
 ```
 
-Presents a multi-select from the MCP catalog, pre-selecting any already in `.mcp.json`. Generates a `.mcp.json` file at workspace root. `--servers` takes catalog keys and runs unattended.
+Presents a multi-select from the MCP catalog, pre-selecting any already in `.mcp.json`. Merges into the `.mcp.json` at workspace root: servers outside the catalog are kept; a server with a catalog name is written from the catalog when selected and removed when deselected, with one exception: a `tucu-ui` entry the kit did not write is kept (invalid JSON aborts with exit 1). `--servers` takes catalog keys and runs unattended.
 
 **Available MCP servers:**
 
@@ -541,6 +542,35 @@ Presents a multi-select from the MCP catalog, pre-selecting any already in `.mcp
 | `figma`      | Design file access       | `@anthropic/mcp-server-figma`             |
 | `notion`     | Notion pages & databases | `@notionhq/mcp-server`                    |
 | `filesystem` | File read/write ops      | `@modelcontextprotocol/server-filesystem` |
+| `tucu-ui`    | Design MCP for React/Next frontends | `@e-burgos/tucu-ui-mcp` (version pinned by the kit) |
+
+Selecting `tucu-ui` here writes only `.mcp.json` and does not touch the `tucu_ui` switch in `sdd/tools.json`; use `pnpm sdd:tucu` for the full integration.
+
+---
+
+### tucu-ui (design skill + MCP)
+
+Optional integration for repos with a React or Next frontend. It installs the `tucu-ui-design`
+skill (in `sdd/integrations/skills/tucu-ui-design/`, linked into `.claude/skills`,
+`.github/skills` and `.agents/skills`) and adds the `tucu-ui` MCP entry to `.mcp.json`,
+`.vscode/mcp.json` and `.gemini/settings.json`, without overwriting anything of yours.
+
+```bash
+harness init --tucu-ui                  # or --no-tucu-ui
+harness configure sdd --tucu-ui         # repo without the kit only: resets sdd/ if it exists
+pnpm sdd:tucu -- --status               # read-only, no network
+pnpm sdd:tucu -- --enable [--parts=skill,mcp] [--force]
+pnpm sdd:tucu -- --disable [--purge]
+```
+
+- Without a flag, `init` and `configure sdd` ask only when a `react`/`nextjs` app exists and the terminal is interactive; with no flag, no `sdd.tucu_ui` in `init --config` and no earlier `tucu_ui` that was on, there is no prompt and it stays off (also with `--yes` or no TTY). `init --config` accepts `sdd.tucu_ui`, and `configure sdd` keeps an existing `tucu_ui` on when it resets the kit.
+- `configure sdd` asks to reset the whole `sdd/` directory (specs, cycles and fixes included) when the kit is already installed, and `-y` resets without asking. For a repo that already has the kit, turn tucu-ui on with `pnpm sdd:tucu -- --enable`.
+- `--tucu-ui` together with `--no-tucu-ui` fails before generating anything.
+- If the install fails during `init` (for example offline) the command does not abort: tucu-ui stays off and the retry command is printed.
+- Only `--enable` without the skill installed needs network and Node 20+. `update sdd` never touches `sdd/tools.json` nor `sdd/integrations/`.
+- Turning it on or off is the developer's call: the agents never change it on their own.
+
+Full guide: `sdd/documentation/en/TUCU-UI.md` in a generated repo (also in the docs viewer).
 
 ---
 
@@ -665,18 +695,19 @@ The kit is portable by design: **`sdd/global.json` is the single source of truth
 | `sdd/skills/`             | 16+ skills (cycle, scaffold-nx, init-nx-workspace, code generators), plus `sdd-mod/`: an optional Claude Code mod — band with the cycle in progress, `/sdd`, and the SPEC GATE applied to code edits (off by default) |
 | `sdd/prompts/`            | Gate prompts (SPEC GATE, FIX GATE, start/review cycle)                   |
 | `sdd/templates/`          | Scaffolding blueprints: nx-workspace, java-api, react-app, ts-lib        |
-| `sdd/scripts/`            | `validate-sdd.mjs`, `spec-gate.mjs` (the SPEC GATE as a command), `rebuild-tasks-index.mjs`, `rebuild-catalog.mjs`, `setup-agents`, `setup-rtk.mjs` + `rtk-hook.mjs` (rtk bridge/installer), `rule-zero-hook.mjs` (SessionStart hook: re-injects rule zero), `sdd-mod.mjs` (Claude Code mod switch) |
+| `sdd/scripts/`            | `validate-sdd.mjs`, `spec-gate.mjs` (the SPEC GATE as a command), `rebuild-tasks-index.mjs`, `rebuild-catalog.mjs`, `setup-agents`, `setup-rtk.mjs` + `rtk-hook.mjs` (rtk bridge/installer), `rule-zero-hook.mjs` (SessionStart hook: re-injects rule zero), `sdd-mod.mjs` (Claude Code mod switch), `sdd-tucu.mjs` (tucu-ui switch) + `tucu-ui-common.mjs` + `mcp-config.mjs` (shared MCP merge) |
 | `sdd/docs/`               | Zero-dependency docs viewer (`pnpm sdd:docs`) — includes the **Costos** dashboard in four tabs with charts (General · Specs · Fixes · RTK token savings) and live auto-refresh on registry changes |
 | `sdd/memory/`             | Portable self-learning layer: `lessons.md` (distilled, read every session) + `journal/` (episodic, MEMORIA GATE) |
 | `sdd/pricing.json`        | Editable rates feeding the Costos dashboard (hourly rate + $/MTok per model tier) |
-| `sdd/tools.json`          | Switch for the kit's helper tools — today [rtk](https://github.com/rtk-ai/rtk), which compresses shell output for the agents and ships **on by default** (`pnpm sdd:rtk -- --disable` turns it off; `update sdd` never overwrites this file) — and `claude_mod`, the switch of the Claude Code mod (off by default, `pnpm sdd:mod -- --enable`) |
+| `sdd/tools.json`          | Switch for the kit's helper tools — today [rtk](https://github.com/rtk-ai/rtk), which compresses shell output for the agents and ships **on by default** (`pnpm sdd:rtk -- --disable` turns it off; `update sdd` never overwrites this file) — and `claude_mod`, the switch of the Claude Code mod (off by default, `pnpm sdd:mod -- --enable`) — and `tucu_ui`, the switch of the tucu-ui design skill + MCP (off by default, `pnpm sdd:tucu -- --enable`) |
+| `sdd/integrations/`       | Developer-installed integrations (`integrations/skills/tucu-ui-design/`, written by `pnpm sdd:tucu`); project data that `update sdd` never touches |
 | `sdd/dual-harness/`       | Source of truth for root `AGENTS.md` / `CLAUDE.md` / `GEMINI.md`, plus `rules/` — the canonical gates (`sdd-gates.md`) and telemetry contract (`sdd-model-budget.md`) the root files point at — and `copilot-instructions.md`, seeded into `.github/` by `setup:agents` when that file does not exist |
 | `AGENTS.md` / `CLAUDE.md` | **Symlinks** to `sdd/dual-harness/` (created by `pnpm setup:agents`)     |
 | `.claude/` / `.github/`   | Symlinks exposing agents, skills and prompts to Claude Code & Copilot    |
 | `.claude/settings.json` / `.gemini/settings.json` | Pre-command hooks routing shell commands through the rtk bridge (merged, never clobbered) |
 | `.nxignore`               | Keeps `sdd/templates` blueprints out of the Nx project graph             |
 
-The root `package.json` ships the kit scripts: `setup:agents`, `sdd:docs`, `sdd:validate`, `sdd:gate` (answers the SPEC GATE for a spec or a cycle), `sdd:rebuild-tasks-index`, `sdd:rebuild-catalog`, `sdd:rtk`, `sdd:mod` and — when the project has none of its own — a `postinstall` that keeps the rtk binary installed for whoever clones the repo (plus `ajv`/`ajv-formats` as devDependencies for the validator).
+The root `package.json` ships the kit scripts: `setup:agents`, `sdd:docs`, `sdd:validate`, `sdd:gate` (answers the SPEC GATE for a spec or a cycle), `sdd:rebuild-tasks-index`, `sdd:rebuild-catalog`, `sdd:rtk`, `sdd:mod`, `sdd:tucu` and — when the project has none of its own — a `postinstall` that keeps the rtk binary installed for whoever clones the repo (plus `ajv`/`ajv-formats` as devDependencies for the validator).
 
 ### The SDD Cycle
 

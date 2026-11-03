@@ -1,5 +1,6 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { defaultThreadOptions } from '@sdd-studio/protocol';
+import { optionNames, pickOption } from '@/lib/test-utils/pick-option';
 import { I18nProvider } from '@/lib/i18n/i18n';
 import { createStudioStore } from '@/lib/store/store';
 import { BridgeContext, type BridgeContextValue } from '../BridgeProvider';
@@ -48,7 +49,7 @@ describe('ComposerView', () => {
   it('disables effort when the model is kit and enables it otherwise', () => {
     const { onOptionsChange } = setup();
     expect(screen.getByLabelText('Esfuerzo')).toBeDisabled();
-    fireEvent.change(screen.getByLabelText('Modelo'), { target: { value: 'opus' } });
+    pickOption(screen.getByLabelText('Modelo'), 'Opus');
     expect(onOptionsChange).toHaveBeenCalledWith({ model: 'opus', effort: 'medium' });
   });
   it('locks the agent selector in DMs', () => {
@@ -135,7 +136,7 @@ describe('Composer (connected)', () => {
     const { client, store } = connected('general', 't1', async () => ({}));
     act(() => store.getState().receive({ kind: 'thread.updated', thread: info() } as never));
     await waitFor(() => expect(screen.getByLabelText('Modelo')).toBeEnabled());
-    fireEvent.change(screen.getByLabelText('Modelo'), { target: { value: 'opus' } });
+    pickOption(screen.getByLabelText('Modelo'), 'Opus');
     const call = client.request.mock.calls.find((c) => c[0].cmd === 'thread.setOptions')![0] as unknown as { options: object };
     expect(call.options).toEqual({ model: 'opus', effort: 'medium' });
   });

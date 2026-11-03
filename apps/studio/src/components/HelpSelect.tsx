@@ -1,42 +1,81 @@
 'use client';
 
+import { useId, type ReactNode } from 'react';
 import { CircleHelp } from 'lucide-react';
-import { useId, type SelectHTMLAttributes } from 'react';
+import { Select, Tooltip, type SelectOption } from '@e-burgos/tucu-ui';
 import { useT } from '@/lib/i18n/i18n';
 
-export interface HelpSelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
+export interface HelpSelectOption {
+  value: string;
+  label: string;
+  disabled?: boolean;
+  group?: string;
+  icon?: ReactNode;
+  description?: string;
+  triggerLabel?: string;
+}
+
+export interface HelpSelectProps {
+  label: string;
   help: string;
+  options: HelpSelectOption[];
+  value: string;
+  onChange(value: string): void;
+  disabled?: boolean;
+  searchable?: boolean;
   wrapperClassName?: string;
+  className?: string;
 }
 
 const iconRing = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400';
-const tooltipVisibility = 'invisible opacity-0 group-hover/help:visible group-hover/help:opacity-100 group-focus-within/help:visible group-focus-within/help:opacity-100';
+const triggerClasses = 'gap-1.5 font-normal [&>svg]:size-3';
 
-export function HelpSelect({ help, wrapperClassName = '', children, ...selectProps }: HelpSelectProps) {
+export function HelpSelect({ label, help, options, value, onChange, disabled, searchable, wrapperClassName = '', className = 'max-w-[16rem]' }: HelpSelectProps) {
   const { t } = useT();
-  const tooltipId = useId();
+  const helpId = useId();
+  const items: SelectOption[] = options.map((o) => ({
+    name: o.label,
+    value: o.value,
+    disabled: o.disabled,
+    group: o.group,
+    icon: o.icon,
+    description: o.description,
+    triggerLabel: o.triggerLabel,
+  }));
+  const selected: SelectOption = items.find((o) => o.value === value) ?? { name: '', value };
   return (
-    <span data-testid="help-select" className={`group/help relative inline-flex min-w-0 items-center gap-1 ${wrapperClassName}`}>
-      <select {...selectProps} aria-describedby={[selectProps['aria-describedby'], tooltipId].filter(Boolean).join(' ')}>
-        {children}
-      </select>
-      <button
-        type="button"
-        data-testid="help-select-icon"
-        aria-label={t('help.icon')}
-        aria-describedby={tooltipId}
-        className={`inline-flex shrink-0 rounded-full text-ink-400 hover:text-ink-100 ${iconRing}`}
-      >
-        <CircleHelp size={14} aria-hidden />
-      </button>
-      <span
-        id={tooltipId}
-        role="tooltip"
-        data-testid="help-select-tooltip"
-        className={`pointer-events-none absolute bottom-full left-0 z-30 mb-1 w-max max-w-[16rem] rounded-md border border-ink-700 bg-ink-900 px-2 py-1 text-left text-[11px] font-normal normal-case leading-snug text-ink-100 shadow-lg transition-opacity ${tooltipVisibility}`}
-      >
+    <span data-testid="help-select" className={`relative inline-flex min-w-0 items-center gap-1 ${wrapperClassName}`}>
+      <Select
+        size="xs"
+        appearance="neutral"
+        aria-label={label}
+        aria-describedby={helpId}
+        options={items}
+        selectedOption={selected}
+        disabled={disabled}
+        className={`shrink-0 ${className}`}
+        buttonClassName={triggerClasses}
+        showCheck
+        searchable={searchable}
+        menuWidth="content"
+        wrapDescription
+        descriptionClassName="text-meta text-ink-400"
+        maxMenuHeight={320}
+        onChange={(option: SelectOption) => onChange(option.value)}
+      />
+      <span id={helpId} className="sr-only">
         {help}
       </span>
+      <Tooltip content={help} size="xs" arrow={false}>
+        <button
+          type="button"
+          data-testid="help-select-icon"
+          aria-label={t('help.icon')}
+          className={`inline-flex shrink-0 rounded-full text-ink-400 hover:text-ink-100 ${iconRing}`}
+        >
+          <CircleHelp size={14} aria-hidden />
+        </button>
+      </Tooltip>
     </span>
   );
 }

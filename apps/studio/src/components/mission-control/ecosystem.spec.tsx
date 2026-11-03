@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import { I18nProvider } from '@/lib/i18n/i18n';
 import { EcosystemDashboard } from './EcosystemDashboard';
 import { BridgeContext } from '../BridgeProvider';
 import { createStudioStore } from '@/lib/store/store';
@@ -37,9 +38,11 @@ const mockBridgeValue: any = {
 describe('EcosystemDashboard', () => {
   it('renders headline KPIs, subprojects and roadmap', () => {
     render(
-      <BridgeContext.Provider value={mockBridgeValue}>
-        <EcosystemDashboard />
-      </BridgeContext.Provider>
+      <I18nProvider initial="es">
+        <BridgeContext.Provider value={mockBridgeValue}>
+          <EcosystemDashboard />
+        </BridgeContext.Provider>
+      </I18nProvider>
     );
 
     expect(screen.getByTestId('ecosystem-dashboard')).toBeInTheDocument();

@@ -1,0 +1,53 @@
+# sdd/specs/spec-e-burgos-011-kit-tucu-ui/cycles/cycle-01/brief.yaml
+# Generado por: sdd-orchestrator
+# Al: iniciar el ciclo
+
+cycle: 1
+module: kit-tucu-ui
+phase: tucu-ui-integration
+flow: full
+date: 2026-11-02
+estimated_weeks: 1
+app_context: sdd/context/apps/cli/context_prompt.md
+
+objective: |
+  Integración opcional de tucu-ui en el kit: interruptor tucu_ui en sdd/tools.json con pnpm sdd:tucu,
+  skill tucu-ui-design enlazada en los cuatro arneses desde un lugar del proyecto, servidor MCP en
+  .mcp.json, .vscode/mcp.json y .gemini/settings.json con merge, oferta en harness init y configure sdd
+  cuando hay React o Next, docs y avisos del validador.
+
+scope:
+  - US-1 interruptor tucu_ui y script sdd:tucu
+  - US-2 skill en los cuatro arneses sin tocar lo kit-owned
+  - US-3 MCP en los tres archivos de configuración con merge; configure mcp sin pisar servidores ajenos
+  - US-4 oferta en init/configure sdd para react/nextjs con flags no interactivos
+  - US-5 docs bilingües, AGENTS/arneses, avisos de validate-sdd y playbook del steward
+
+out_of_scope:
+  - Interruptor en el módulo Kit de Studio
+  - Generación de código con tucu-ui
+  - Publicar o taggear
+
+dependencies_required:
+  - spec-e-burgos-009-studio-tucu-ui (completed)
+
+facts:
+  tucu_ui_mcp: |
+    @e-burgos/tucu-ui-mcp 0.16.0 (node >=20). bins: tucu-ui-mcp (stdio), tucu-ui-mcp-http, tucu-ui-skill.
+    stdio: command npx, args ["@e-burgos/tucu-ui-mcp"]. tucu-ui-skill install [--dir <path>] [--force];
+    default .claude/skills/tucu-ui-design; escribe SKILL.md + references/{checklist,design-guide}.md.
+    README documenta .vscode/mcp.json con "servers" y .cursor/Claude Desktop con "mcpServers".
+  kit: |
+    tools.json es DATA_FILE (update no lo toca); schema tools.schema.json con additionalProperties:false.
+    sdd-mod.mjs es el template de interruptor; setup-agents.sh enlaza sdd/skills completo en .claude/skills
+    (symlink de directorio) y por ítem en .github/skills y .agents/skills; corre setup-rtk.mjs al final.
+    configure mcp pisa .mcp.json entero; configure memory hace merge. catalog.json se valida contra el
+    filesystem de sdd/skills. detectAppType devuelve react (vite.config.ts) o nextjs (next.config.*).
+
+agent_contexts:
+  functional:
+    goal: Historias con criterios verificables, reglas de cada comando (status/enable/disable), qué pasa sin red, con tools.json viejo, con archivos MCP preexistentes y en update sdd
+  planner:
+    goal: Tasks ordenadas por subproyecto (kit templates, cli commands, docs, tests), con paridad sh/ps1 y prueba real en examples/
+  architect:
+    goal: Decidir dónde vive la skill instalada (dato del proyecto) y cómo la enlaza setup-agents sin romper el symlink de .claude/skills ni el catálogo; forma de la clave tucu_ui en el schema y su efecto en la paridad del bridge; helper de merge de configs MCP compartido entre el script del kit y la CLI; versión pinneada del paquete

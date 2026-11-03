@@ -138,6 +138,121 @@
           "tasks_done": 12
         }
       }
+    },
+    "spec-e-burgos-009-studio-tucu-ui": {
+      "cycles": {
+        "cycle-01": {
+          "file": "sdd/specs/spec-e-burgos-009-studio-tucu-ui/cycles/cycle-01/tasks.json",
+          "module": "studio-tucu-ui",
+          "apps": [
+            "apps/studio"
+          ],
+          "status": "completed",
+          "tasks_total": 6,
+          "tasks_done": 6
+        },
+        "cycle-02": {
+          "file": "sdd/specs/spec-e-burgos-009-studio-tucu-ui/cycles/cycle-02/tasks.json",
+          "module": "studio-tucu-ui",
+          "apps": [
+            "apps/studio"
+          ],
+          "status": "completed",
+          "tasks_total": 8,
+          "tasks_done": 8
+        },
+        "cycle-03": {
+          "file": "sdd/specs/spec-e-burgos-009-studio-tucu-ui/cycles/cycle-03/tasks.json",
+          "module": "studio-tucu-ui",
+          "apps": [
+            "apps/studio"
+          ],
+          "status": "completed",
+          "tasks_total": 4,
+          "tasks_done": 4
+        },
+        "cycle-04": {
+          "file": "sdd/specs/spec-e-burgos-009-studio-tucu-ui/cycles/cycle-04/tasks.json",
+          "module": "studio-tucu-ui",
+          "apps": [
+            "apps/studio"
+          ],
+          "status": "completed",
+          "tasks_total": 3,
+          "tasks_done": 3
+        },
+        "cycle-05": {
+          "file": "sdd/specs/spec-e-burgos-009-studio-tucu-ui/cycles/cycle-05/tasks.json",
+          "module": "studio-tucu-ui",
+          "apps": [
+            "apps/studio"
+          ],
+          "status": "completed",
+          "tasks_total": 2,
+          "tasks_done": 2
+        },
+        "cycle-06": {
+          "file": "sdd/specs/spec-e-burgos-009-studio-tucu-ui/cycles/cycle-06/tasks.json",
+          "module": "studio-tucu-ui",
+          "apps": [
+            "apps/studio"
+          ],
+          "status": "completed",
+          "tasks_total": 3,
+          "tasks_done": 3
+        },
+        "cycle-07": {
+          "file": "sdd/specs/spec-e-burgos-009-studio-tucu-ui/cycles/cycle-07/tasks.json",
+          "module": "studio-tucu-ui",
+          "apps": [
+            "apps/studio"
+          ],
+          "status": "completed",
+          "tasks_total": 2,
+          "tasks_done": 2
+        }
+      }
+    },
+    "spec-e-burgos-010-studio-dual-sidebar": {
+      "cycles": {
+        "cycle-01": {
+          "file": "sdd/specs/spec-e-burgos-010-studio-dual-sidebar/cycles/cycle-01/tasks.json",
+          "module": "studio-dual-sidebar",
+          "apps": [
+            "apps/studio",
+            "apps/studio-bridge",
+            "libs/studio-protocol"
+          ],
+          "status": "completed",
+          "tasks_total": 30,
+          "tasks_done": 30
+        },
+        "cycle-02": {
+          "file": "sdd/specs/spec-e-burgos-010-studio-dual-sidebar/cycles/cycle-02/tasks.json",
+          "module": "studio-dual-sidebar",
+          "apps": [
+            "apps/studio"
+          ],
+          "status": "completed",
+          "tasks_total": 3,
+          "tasks_done": 3
+        }
+      }
+    },
+    "spec-e-burgos-011-kit-tucu-ui": {
+      "cycles": {
+        "cycle-01": {
+          "file": "sdd/specs/spec-e-burgos-011-kit-tucu-ui/cycles/cycle-01/tasks.json",
+          "module": "kit-tucu-ui",
+          "apps": [
+            "apps/cli",
+            "apps/studio-bridge"
+          ],
+          "status": "completed",
+          "tasks_total": 26,
+          "tasks_done": 26
+        }
+      }
     }
   }
 }

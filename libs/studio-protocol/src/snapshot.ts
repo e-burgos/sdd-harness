@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { CatalogId } from './attachments';
+import { MAX_CYCLE_DOCUMENTS } from './limits';
 
 export const AREAS = ['global', 'specs', 'fixes', 'agents', 'tools', 'pricing', 'kit'] as const;
 export const Area = z.enum(AREAS);
@@ -22,6 +23,7 @@ export const CycleSummary = z.object({
   tasks: z.array(TaskSummary),
   tasksTotal: z.number().int().nonnegative(),
   tasksDone: z.number().int().nonnegative(),
+  documents: z.array(z.string().min(1).max(256)).max(MAX_CYCLE_DOCUMENTS).optional().catch(undefined),
 });
 export type CycleSummary = z.infer<typeof CycleSummary>;
 
@@ -33,6 +35,7 @@ export const SpecSummary = z.object({
   module: z.string().nullable(),
   app: z.string().nullable(),
   dependsOn: z.array(z.string()),
+  document: z.string().min(1).max(512).optional().catch(undefined),
 });
 export type SpecSummary = z.infer<typeof SpecSummary>;
 
@@ -44,6 +47,7 @@ export const FixSummary = z.object({
   specId: z.string().nullable(),
   createdAt: z.string().nullable(),
   closedAt: z.string().nullable(),
+  document: z.string().min(1).max(512).optional().catch(undefined),
 });
 export type FixSummary = z.infer<typeof FixSummary>;
 
@@ -71,6 +75,19 @@ export type SkillSummary = z.infer<typeof SkillSummary>;
 export const GateMode = z.enum(['block', 'warn']);
 export type GateMode = z.infer<typeof GateMode>;
 
+export const ToolsRevision = z.string().regex(/^[a-f0-9]{16}$/);
+export type ToolsRevision = z.infer<typeof ToolsRevision>;
+
+export const KitToolsState = z.object({
+  status: z.enum(['ok', 'missing', 'invalid']),
+  rtkEnabled: z.boolean().nullable(),
+  modEnabled: z.boolean().nullable(),
+  gate: GateMode.nullable(),
+  modLinked: z.boolean(),
+  revision: ToolsRevision.nullable(),
+});
+export type KitToolsState = z.infer<typeof KitToolsState>;
+
 export const WorkspaceSnapshot = z.object({
   project: z.string(),
   profile: z.string(),
@@ -82,6 +99,7 @@ export const WorkspaceSnapshot = z.object({
   skills: z.array(SkillSummary),
   gateMode: GateMode,
   pricing: z.record(z.string(), z.unknown()).nullable(),
+  tools: KitToolsState.optional().catch(undefined),
   stale: z.array(Area),
 });
 export type WorkspaceSnapshot = z.infer<typeof WorkspaceSnapshot>;

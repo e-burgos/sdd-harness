@@ -92,13 +92,26 @@ describe('AgentInspectorDrawer', () => {
     renderDrawer({ presence: { agent: 'sdd-orchestrator', state: 'working', threadId: 't-1', specId: null, tool: 'git status' }, onClose, onOpenDm });
 
     expect(screen.getByTestId('agent-inspector-drawer')).toBeInTheDocument();
-    expect(screen.getByText('LEADER')).toBeInTheDocument();
+    expect(screen.getByText('LÍDER')).toBeInTheDocument();
     expect(screen.getByText(/git status/)).toBeInTheDocument();
     expect(screen.getByTestId('live-agent-chat-feed')).toBeInTheDocument();
 
     fireEvent.click(screen.getByText(/Abrir nuevo chat con Clara/));
     expect(onOpenDm).toHaveBeenCalledWith('sdd-orchestrator');
     expect(onClose).toHaveBeenCalled();
+  });
+
+  it('embedded variant drops the floating chrome, the close button and does not close on open chat', () => {
+    const onClose = vi.fn();
+    const onOpenDm = vi.fn();
+    renderDrawer({ embedded: true, onClose, onOpenDm });
+    const drawer = screen.getByTestId('agent-inspector-drawer');
+    expect(drawer).toHaveAttribute('data-embedded', 'true');
+    expect(drawer.className).not.toContain('absolute');
+    expect(screen.queryByRole('button', { name: 'Contraer panel' })).toBeNull();
+    fireEvent.click(screen.getByText(/Abrir nuevo chat con Clara/));
+    expect(onOpenDm).toHaveBeenCalledWith('sdd-orchestrator');
+    expect(onClose).not.toHaveBeenCalled();
   });
 
   it('shows the empty feed state without a conversation', () => {
@@ -213,7 +226,9 @@ describe('AgentInspectorDrawer', () => {
     expect(screen.getByTestId('live-agent-chat-feed')).toBeInTheDocument();
     fireEvent.click(screen.getByText('Enjambre'));
     expect(screen.getByText('Último mensaje')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Clara' }));
+    expect(screen.getByRole('tab', { name: 'Enjambre' })).toHaveAttribute('aria-selected', 'true');
+    fireEvent.click(screen.getByRole('tab', { name: 'Clara' }));
+    expect(screen.getByRole('tab', { name: 'Clara' })).toHaveAttribute('aria-selected', 'true');
     expect(screen.getByTestId('live-agent-chat-feed')).toBeInTheDocument();
   });
 
@@ -235,7 +250,7 @@ describe('AgentInspectorDrawer', () => {
     renderDrawer({ onPickConversation });
 
     fireEvent.change(screen.getByPlaceholderText(/Escribir a Clara/), { target: { value: 'Hola' } });
-    fireEvent.click(screen.getByTitle(/Enviar mensaje a Clara/));
+    fireEvent.click(screen.getByRole('button', { name: 'Enviar' }));
 
     await waitFor(() => expect(mockClient.request).toHaveBeenCalledWith(expect.objectContaining({ cmd: 'thread.create', channelId: 'dm:sdd-orchestrator', text: 'Hola' })));
     await waitFor(() => expect(onPickConversation).toHaveBeenCalledWith('thread-9'));

@@ -31,6 +31,18 @@ describe('config json-schema', () => {
     expect(validate(invalid)).toBe(false);
   });
 
+  it('acepta sdd.tucu_ui booleano y rechaza otros tipos', () => {
+    const ajv = new Ajv({ strict: false, useDefaults: true });
+    const validate = ajv.compile(schema);
+    const base = {
+      project: { name: 'shop', description: 'tienda', packageScope: '@shop' },
+      apps: [{ name: 'web', type: 'nextjs' }],
+    };
+    expect(validate({ ...base, sdd: { tucu_ui: true } })).toBe(true);
+    expect(validate({ ...base, sdd: {} })).toBe(true);
+    expect(validate({ ...base, sdd: { tucu_ui: 'yes' } })).toBe(false);
+  });
+
   it('expone los enums del contrato (modos, apps, services, libs)', () => {
     const json = JSON.stringify(schema);
     for (const token of [

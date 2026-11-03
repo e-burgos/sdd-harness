@@ -396,6 +396,11 @@ Cuando el problema **no puede esperar un ciclo SDD completo**, usar uno de estos
 
 Notas específicas para Claude Code:
 
+- **Este repo NO es un workspace Nx.** Es la fuente del kit (la CLI `harness`, sobre pnpm
+  workspaces `apps/*` y `libs/*`) y usa el kit SDD solo para sus propios flujos de desarrollo.
+  El chequeo de inicio de `init-nx-workspace` y la sección «General Guidelines for working with
+  Nx» no aplican acá: que falten `nx.json`, `.nxignore` y `.npmrc` es lo esperado, y las tareas
+  corren con `pnpm --filter <paquete> <script>` o `pnpm build|test|typecheck`, jamás `pnpm nx`.
 - Este repo **usa el kit SDD** instalado en `sdd/`: aplican SPEC GATE y FIX GATE. Ver «Este repo
   usa el kit SDD» en [AGENTS.md](AGENTS.md).
 - Verificación fuerte antes de cerrar: `pnpm build && pnpm typecheck && pnpm test`

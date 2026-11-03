@@ -1,22 +1,73 @@
 @import 'tailwindcss';
+@import '@e-burgos/tucu-ui/theme';
+@source '../../node_modules/@e-burgos/tucu-ui/**/*.mjs';
+
+@import '@e-burgos/tucu-ui/fonts';
 
 @theme {
-  --font-display: 'Space Grotesk Variable', ui-sans-serif, system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono Variable', ui-monospace, 'SF Mono', monospace;
-  --color-ink-950: #0e0e11;
-  --color-ink-900: #131318;
-  --color-ink-850: #17171d;
-  --color-ink-800: #1d1d25;
-  --color-ink-700: #2a2a35;
-  --color-ink-500: #4b4b5c;
-  --color-ink-300: #a1a1b5;
-  --color-ink-100: #e4e4ee;
-  --color-accent-300: #6ee7b7;
-  --color-accent-400: #34d399;
-  --color-accent-500: #10b981;
-  --color-accent-dim: #34d39922;
-  --color-amberish: #fbbf24;
-  --color-roseish: #fb7185;
+  --text-micro: 0.625rem;
+  --text-micro--line-height: 1.2;
+  --text-meta: 0.6875rem;
+  --text-meta--line-height: 1.4;
+  --text-ui: 0.75rem;
+  --text-ui--line-height: 1.33;
+  --text-small: 0.8125rem;
+  --text-small--line-height: 1.45;
+  --text-copy: 0.875rem;
+  --text-copy--line-height: 1.5;
+  --text-title: 1rem;
+  --text-title--line-height: 1.5;
+}
+
+@theme inline {
+  --font-display: var(--font-sans);
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', monospace;
+  --color-ink-950: var(--color-body);
+  --color-ink-900: var(--color-light-dark);
+  --color-ink-850: color-mix(in oklab, var(--color-light-dark) 50%, var(--color-secondary));
+  --color-ink-800: var(--color-secondary);
+  --color-ink-700: color-mix(in oklab, var(--color-foreground) 14%, var(--color-light-dark));
+  --color-ink-400: color-mix(in oklab, var(--color-ink-300) 45%, var(--color-muted));
+  --color-ink-500: var(--color-muted);
+  --color-ink-300: color-mix(in oklab, var(--color-muted) 75%, var(--color-foreground));
+  --color-ink-50: var(--color-foreground);
+  --color-ink-100: color-mix(in oklab, var(--color-foreground) 92%, var(--color-muted));
+  --color-accent-300: color-mix(in oklab, var(--color-brand) 65%, var(--color-foreground));
+  --color-accent-400: var(--color-brand);
+  --color-accent-500: color-mix(in oklab, var(--color-brand) 85%, black);
+  --color-accent-dim: color-mix(in oklab, var(--color-brand) 14%, transparent);
+  --color-emerald-200: color-mix(in oklab, var(--color-success) 45%, var(--color-foreground));
+  --color-emerald-300: color-mix(in oklab, var(--color-success) 65%, var(--color-foreground));
+  --color-emerald-400: var(--color-success);
+  --color-emerald-500: color-mix(in oklab, var(--color-success) 85%, black);
+  --color-emerald-950: color-mix(in oklab, var(--color-success) 15%, var(--color-body));
+  --color-sky-200: color-mix(in oklab, oklch(0.72 0.13 235) 40%, var(--color-foreground));
+  --color-sky-300: color-mix(in oklab, oklch(0.72 0.13 235) 65%, var(--color-foreground));
+  --color-sky-400: color-mix(in oklab, oklch(0.72 0.13 235) 68%, var(--color-foreground));
+  --color-sky-500: color-mix(in oklab, oklch(0.72 0.13 235) 85%, black);
+  --color-sky-950: color-mix(in oklab, oklch(0.72 0.13 235) 15%, var(--color-body));
+  --color-purple-200: color-mix(in oklab, oklch(0.68 0.17 305) 40%, var(--color-foreground));
+  --color-purple-300: color-mix(in oklab, oklch(0.68 0.17 305) 65%, var(--color-foreground));
+  --color-purple-400: color-mix(in oklab, oklch(0.68 0.17 305) 82%, var(--color-foreground));
+  --color-purple-500: color-mix(in oklab, oklch(0.68 0.17 305) 85%, black);
+  --color-purple-950: color-mix(in oklab, oklch(0.68 0.17 305) 15%, var(--color-body));
+  --color-amber-200: color-mix(in oklab, var(--color-warning) 40%, var(--color-foreground));
+  --color-amber-300: color-mix(in oklab, var(--color-warning) 65%, var(--color-foreground));
+  --color-amber-400: color-mix(in oklab, var(--color-warning) 74%, var(--color-foreground));
+  --color-amber-500: color-mix(in oklab, var(--color-warning) 85%, black);
+  --color-amber-950: color-mix(in oklab, var(--color-warning) 15%, var(--color-body));
+  --color-rose-200: color-mix(in oklab, var(--color-error) 40%, var(--color-foreground));
+  --color-rose-300: color-mix(in oklab, var(--color-error) 65%, var(--color-foreground));
+  --color-rose-400: var(--color-error);
+  --color-rose-500: color-mix(in oklab, var(--color-error) 85%, black);
+  --color-rose-950: color-mix(in oklab, var(--color-error) 15%, var(--color-body));
+  --color-yellow-200: color-mix(in oklab, color-mix(in oklab, var(--color-warning) 80%, oklch(0.85 0.17 95)) 40%, var(--color-foreground));
+  --color-yellow-300: color-mix(in oklab, color-mix(in oklab, var(--color-warning) 80%, oklch(0.85 0.17 95)) 65%, var(--color-foreground));
+  --color-yellow-400: color-mix(in oklab, var(--color-warning) 80%, oklch(0.85 0.17 95));
+  --color-yellow-500: color-mix(in oklab, color-mix(in oklab, var(--color-warning) 80%, oklch(0.85 0.17 95)) 85%, black);
+  --color-yellow-950: color-mix(in oklab, color-mix(in oklab, var(--color-warning) 80%, oklch(0.85 0.17 95)) 15%, var(--color-body));
+  --color-amberish: var(--color-warning);
+  --color-roseish: var(--color-error);
 }
 
 html,
@@ -42,4 +93,15 @@ html[data-app-shell],
 html[data-app-shell] body {
   overflow: hidden;
   overscroll-behavior: none;
+}
+
+:root {
+  --tucu-table-header-bg: color-mix(in oklab, var(--color-light-dark) 50%, var(--color-secondary));
+  --tucu-table-header-fg: var(--color-muted);
+  --tucu-table-cell-fg: color-mix(in oklab, var(--color-foreground) 92%, var(--color-muted));
+  --tucu-table-cell-px: 1rem;
+  --tucu-table-cell-py: 0.75rem;
+  --tucu-table-font-size: 12px;
+  --tucu-table-header-font-size: 11px;
+  --tucu-table-row-hover: color-mix(in oklab, var(--color-foreground) 5%, transparent);
 }

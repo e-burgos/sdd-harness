@@ -1,5 +1,6 @@
 'use client';
 
+import { Button, Input, Tooltip } from '@e-burgos/tucu-ui';
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { ArrowUp, Moon } from 'lucide-react';
 import { ThreadInfo, channelForDm, defaultThreadOptions } from '@sdd-studio/protocol';
@@ -15,14 +16,12 @@ interface LiveAgentChatFeedProps {
   onPickConversation?: (threadId: string) => void;
 }
 
-const USER_NAME = 'Tú';
 const PAGE_SIZE = 50;
-
-const displayName = (id: string): string => (id === 'user' ? USER_NAME : agentMeta(id).name);
 
 export function LiveAgentChatFeed({ agentId, conversation, onPickConversation }: LiveAgentChatFeedProps) {
   const { client } = useBridge();
   const { t } = useT();
+  const displayName = (id: string): string => (id === 'user' ? t('ui.you') : agentMeta(id).name);
   const [quickInput, setQuickInput] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
@@ -65,7 +64,7 @@ export function LiveAgentChatFeed({ agentId, conversation, onPickConversation }:
       await sendQuickMessage(text);
       setQuickInput('');
     } catch (err: unknown) {
-      setSendError(err instanceof Error ? err.message : 'Error al enviar');
+      setSendError(err instanceof Error ? err.message : t('ui.feed.sendError'));
     } finally {
       setIsSending(false);
     }
@@ -74,39 +73,35 @@ export function LiveAgentChatFeed({ agentId, conversation, onPickConversation }:
   return (
     <div
       data-testid="live-agent-chat-feed"
-      className="flex-1 flex flex-col min-h-0 bg-ink-900/60 rounded-xl border border-white/10 overflow-hidden"
+      className="flex-1 flex flex-col min-h-0 bg-ink-900/60 rounded-xl border border-foreground/10 overflow-hidden"
     >
-      <div className="flex items-center justify-between px-3 py-2 border-b border-white/10 bg-white/5">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-foreground/10 bg-foreground/5">
         <div className="flex items-center gap-2">
           <span className={`h-2 w-2 rounded-full ${hasLive ? 'bg-rose-400 animate-ping' : 'bg-emerald-400'}`} />
-          <span className="text-[10px] font-mono font-bold text-white uppercase tracking-wider">
+          <span className="text-micro font-mono font-bold text-ink-100 uppercase tracking-wider">
             {hasLive ? t('map.chat.live') : t('mc.conversations')} ({agentDialogues.length})
           </span>
         </div>
-        <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-white/10 text-white/70" style={{ color: meta.color }}>
+        <span className="text-micro font-mono px-1.5 py-0.5 rounded bg-foreground/10 text-ink-300" style={{ color: meta.color }}>
           @{meta.name}
         </span>
       </div>
 
-      <div ref={scrollRef} className="flex-1 overflow-y-auto p-2.5 space-y-2.5 text-xs select-text scroll-smooth">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto p-2.5 space-y-2.5 text-ui select-text scroll-smooth">
         {agentDialogues.length === 0 ? (
-          <div data-testid="live-agent-chat-feed-empty" className="h-full flex flex-col items-center justify-center p-4 text-center text-white/50 space-y-2">
-            <Moon className="w-8 h-8 text-white/30" />
-            <p className="text-xs font-sans leading-relaxed">{t('mc.noActivity')}</p>
+          <div data-testid="live-agent-chat-feed-empty" className="h-full flex flex-col items-center justify-center p-4 text-center text-ink-500 space-y-2">
+            <Moon className="w-8 h-8 text-ink-500" />
+            <p className="text-ui font-sans leading-relaxed">{t('mc.noActivity')}</p>
           </div>
         ) : (
           <>
             {hiddenCount > 0 && (
               <div className="flex justify-center pb-1">
-                <button
-                  type="button"
-                  onClick={() => setVisibleLimit((v) => v + PAGE_SIZE)}
-                  className="rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 px-3 py-1 font-mono text-[10px] text-emerald-400 hover:text-emerald-300 transition-all flex items-center gap-1.5 shadow-sm"
-                >
+                <Button type="button" variant="transparent" color="success" size="tiny" className="font-mono text-meta" onClick={() => setVisibleLimit((v) => v + PAGE_SIZE)}>
                   <ArrowUp className="w-3 h-3" />
-                  <span>Cargar más mensajes (+{PAGE_SIZE})</span>
-                  <span className="text-white/40">({hiddenCount} restantes)</span>
-                </button>
+                  <span>{t('ui.feed.loadMore', { n: PAGE_SIZE })}</span>
+                  <span className="text-ink-500">{t('ui.feed.remaining', { n: hiddenCount })}</span>
+                </Button>
               </div>
             )}
             {visibleDialogues.map((dialogue) => {
@@ -135,32 +130,30 @@ export function LiveAgentChatFeed({ agentId, conversation, onPickConversation }:
         )}
       </div>
 
-      <form onSubmit={handleSendQuick} className="p-2 border-t border-white/10 bg-ink-950/90 flex flex-col gap-1.5">
-        {sendError && <span className="text-[10px] text-rose-400 font-mono px-1">{sendError}</span>}
+      <form onSubmit={handleSendQuick} className="p-2 border-t border-foreground/10 bg-ink-950/90 flex flex-col gap-1.5">
+        {sendError && <span className="text-micro text-rose-400 font-mono px-1">{sendError}</span>}
         <div className="flex items-center gap-2">
-          <input
+          <Input
             type="text"
             value={quickInput}
             onChange={(e) => setQuickInput(e.target.value)}
             placeholder={t('map.chat.placeholder', { name: meta.name })}
             disabled={isSending}
-            className="flex-1 bg-white/5 border border-white/10 rounded-lg px-2.5 py-1.5 text-xs text-white placeholder-white/40 focus:outline-none focus:border-emerald-400 focus:bg-white/10 transition-colors font-sans disabled:opacity-50"
+            className="flex-1"
+            inputClassName="h-auto sm:h-auto rounded-lg px-2.5 py-1.5 text-ui"
           />
-          <button
-            type="submit"
-            disabled={isSending || !quickInput.trim()}
-            className="bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-ink-950 font-bold px-3 py-1.5 rounded-lg text-xs transition-all shadow-md shadow-emerald-500/20 shrink-0 disabled:opacity-40 disabled:scale-100 flex items-center gap-1.5"
-            title={`Enviar mensaje a ${meta.name}`}
-          >
-            {isSending ? (
-              <>
-                <span className="h-2.5 w-2.5 rounded-full border border-ink-950 border-t-transparent animate-spin" />
-                <span>Enviando</span>
-              </>
-            ) : (
-              <span>{t('map.chat.send')}</span>
-            )}
-          </button>
+          <Tooltip size="xs" arrow={false} content={t('ui.feed.sendTo', { name: meta.name })}>
+            <Button type="submit" size="tiny" disabled={isSending || !quickInput.trim()}>
+              {isSending ? (
+                <>
+                  <span className="h-2.5 w-2.5 rounded-full border border-foreground border-t-transparent animate-spin" />
+                  <span>{t('ui.feed.sending')}</span>
+                </>
+              ) : (
+                <span>{t('map.chat.send')}</span>
+              )}
+            </Button>
+          </Tooltip>
         </div>
       </form>
     </div>

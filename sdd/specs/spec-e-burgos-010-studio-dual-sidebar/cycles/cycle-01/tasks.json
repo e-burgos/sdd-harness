@@ -1,0 +1,1446 @@
+{
+  "$schema": "../../../../schemas/cycle-tasks.schema.json",
+  "spec": "spec-e-burgos-010-studio-dual-sidebar",
+  "cycle": 1,
+  "module": "studio-dual-sidebar",
+  "apps": [
+    "apps/studio",
+    "apps/studio-bridge",
+    "libs/studio-protocol"
+  ],
+  "flow": "full",
+  "user_stories_generated": true,
+  "prerequisites": {
+    "tasks_generated": true
+  },
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "Protocolo: comandos kit.index y kit.rtkGain, evento kit.changed, features kit-index/kit-tools/rtk-gain y MAX_READ_FILE_BYTES exportado (sin valores nuevos en Area)",
+      "user_stories": [
+        "US-7-001",
+        "US-9-001"
+      ],
+      "estimation_hours": 4,
+      "story_points": 3,
+      "depends_on": [],
+      "status": "done",
+      "files": [
+        "libs/studio-protocol/src/commands.spec.ts",
+        "libs/studio-protocol/src/commands.ts",
+        "libs/studio-protocol/src/events.spec.ts",
+        "libs/studio-protocol/src/events.ts",
+        "libs/studio-protocol/src/handshake.spec.ts",
+        "libs/studio-protocol/src/index.spec.ts",
+        "libs/studio-protocol/src/index.ts",
+        "libs/studio-protocol/src/kit.spec.ts",
+        "libs/studio-protocol/src/kit.ts",
+        "libs/studio-protocol/src/limits.ts",
+        "libs/studio-protocol/src/snapshot.spec.ts",
+        "libs/studio-protocol/src/snapshot.ts"
+      ],
+      "usage": {
+        "tokens_in": 36770,
+        "tokens_out": 6489,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-10-27"
+      }
+    },
+    {
+      "id": "TASK-002",
+      "title": "Protocolo: comando kit.tools.set con expectedRevision, bot event tools.changed con at opcional e includeKitEvents en channel.botHistory",
+      "user_stories": [
+        "US-8-001"
+      ],
+      "estimation_hours": 4,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "status": "done",
+      "files": [
+        "libs/studio-protocol/src/commands.spec.ts",
+        "libs/studio-protocol/src/commands.ts",
+        "libs/studio-protocol/src/events.spec.ts",
+        "libs/studio-protocol/src/events.ts",
+        "libs/studio-protocol/src/handshake.spec.ts",
+        "libs/studio-protocol/src/index.spec.ts",
+        "libs/studio-protocol/src/index.ts",
+        "libs/studio-protocol/src/kit.spec.ts",
+        "libs/studio-protocol/src/kit.ts",
+        "libs/studio-protocol/src/limits.ts",
+        "libs/studio-protocol/src/snapshot.spec.ts",
+        "libs/studio-protocol/src/snapshot.ts"
+      ],
+      "usage": {
+        "tokens_in": 36770,
+        "tokens_out": 6489,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-10-27"
+      }
+    },
+    {
+      "id": "TASK-003",
+      "title": "Protocolo: snapshot.tools con revisión y documentos por ciclo, spec y fix (ThreadInfo.lastActivity ya existe; sin campos de actividad nuevos)",
+      "user_stories": [
+        "US-3-001",
+        "US-3-002",
+        "US-4-001",
+        "US-4-002",
+        "US-5-001"
+      ],
+      "estimation_hours": 4,
+      "story_points": 3,
+      "depends_on": [],
+      "status": "done",
+      "files": [
+        "libs/studio-protocol/src/commands.spec.ts",
+        "libs/studio-protocol/src/commands.ts",
+        "libs/studio-protocol/src/events.spec.ts",
+        "libs/studio-protocol/src/events.ts",
+        "libs/studio-protocol/src/handshake.spec.ts",
+        "libs/studio-protocol/src/index.spec.ts",
+        "libs/studio-protocol/src/index.ts",
+        "libs/studio-protocol/src/kit.spec.ts",
+        "libs/studio-protocol/src/kit.ts",
+        "libs/studio-protocol/src/limits.ts",
+        "libs/studio-protocol/src/snapshot.spec.ts",
+        "libs/studio-protocol/src/snapshot.ts"
+      ],
+      "usage": {
+        "tokens_in": 36770,
+        "tokens_out": 6489,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-10-27"
+      }
+    },
+    {
+      "id": "TASK-004",
+      "title": "Puente: kit.index y KitIndexer con lista blanca, límites y refresco por fingerprints (lecturas por workspace.readFile)",
+      "user_stories": [
+        "US-7-001",
+        "US-9-001"
+      ],
+      "estimation_hours": 6,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio-bridge/src/workspace/kit-index.spec.ts",
+        "apps/studio-bridge/src/workspace/kit-index.ts"
+      ],
+      "usage": {
+        "tokens_in": 110310,
+        "tokens_out": 19466,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-10-27"
+      }
+    },
+    {
+      "id": "TASK-005",
+      "title": "Puente: escritura de sdd/tools.json con conflicto por revisión, validación ajv contra el schema del repo, escritura atómica, test de paridad con sdd:rtk/sdd:mod y ajv como dependencia externa del build",
+      "user_stories": [
+        "US-8-001"
+      ],
+      "estimation_hours": 5,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-002"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio-bridge/build.js",
+        "apps/studio-bridge/package.json",
+        "apps/studio-bridge/src/workspace/kit-tools.parity.spec.ts",
+        "apps/studio-bridge/src/workspace/kit-tools.spec.ts",
+        "apps/studio-bridge/src/workspace/kit-tools.ts",
+        "pnpm-lock.yaml"
+      ],
+      "usage": {
+        "tokens_in": 110310,
+        "tokens_out": 19466,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-10-27"
+      }
+    },
+    {
+      "id": "TASK-006",
+      "title": "Puente: comandos de kit y herramientas, evento a #general y refresco por watcher",
+      "user_stories": [
+        "US-7-001",
+        "US-8-001",
+        "US-9-001"
+      ],
+      "estimation_hours": 5,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-004",
+        "TASK-005"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio-bridge/src/main.spec.ts",
+        "apps/studio-bridge/src/main.ts",
+        "apps/studio-bridge/src/server/router.spec.ts",
+        "apps/studio-bridge/src/server/router.ts",
+        "apps/studio-bridge/src/server/ws-server.ts",
+        "apps/studio-bridge/src/sessions/store.spec.ts",
+        "apps/studio-bridge/src/sessions/store.ts",
+        "apps/studio-bridge/src/workspace/watcher.spec.ts",
+        "apps/studio-bridge/src/workspace/watcher.ts",
+        "apps/studio/src/lib/store/state.ts"
+      ],
+      "usage": {
+        "tokens_in": 55155,
+        "tokens_out": 9733,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-10-27"
+      }
+    },
+    {
+      "id": "TASK-007",
+      "title": "Puente: snapshot con tools y documentos por ciclo, spec y fix, y su refresco",
+      "user_stories": [
+        "US-3-001",
+        "US-3-002",
+        "US-4-002",
+        "US-5-001"
+      ],
+      "estimation_hours": 5,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-003"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio-bridge/src/workspace/snapshot.spec.ts",
+        "apps/studio-bridge/src/workspace/snapshot.ts",
+        "libs/studio-protocol/src/snapshot.spec.ts",
+        "libs/studio-protocol/src/snapshot.ts"
+      ],
+      "usage": {
+        "tokens_in": 55155,
+        "tokens_out": 9733,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-10-27"
+      }
+    },
+    {
+      "id": "TASK-030",
+      "title": "Puente: comando kit.rtkGain (rtk gain --project --all --format json, sin shell, timeout 8 s y caché 10 s)",
+      "user_stories": [
+        "US-10-001"
+      ],
+      "estimation_hours": 2,
+      "story_points": 2,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio-bridge/src/workspace/rtk-gain.spec.ts",
+        "apps/studio-bridge/src/workspace/rtk-gain.ts"
+      ],
+      "usage": {
+        "tokens_in": 110310,
+        "tokens_out": 19466,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-10-27"
+      }
+    },
+    {
+      "id": "TASK-008",
+      "title": "Web: estado de navegación, selección persistente y preferencia del riel",
+      "user_stories": [
+        "US-1-001",
+        "US-2-001"
+      ],
+      "estimation_hours": 5,
+      "story_points": 3,
+      "depends_on": [],
+      "status": "done",
+      "files": [
+        "apps/studio/e2e/session-metadata.e2e.ts",
+        "apps/studio/e2e/studio.e2e.ts",
+        "apps/studio/package.json",
+        "apps/studio/src/components/SegmentedControl.tsx",
+        "apps/studio/src/components/StudioHeader.tsx",
+        "apps/studio/src/components/StudioThemeProvider.tsx",
+        "apps/studio/src/components/WorkspaceApp.tsx",
+        "apps/studio/src/components/mission-control/AgentInspectorDrawer.tsx",
+        "apps/studio/src/components/mission-control/DocumentViewerModal.tsx",
+        "apps/studio/src/components/mission-control/documentviewermodal.spec.tsx",
+        "apps/studio/src/components/shell/ModuleBoundary.tsx",
+        "apps/studio/src/components/shell/ModulePanel.tsx",
+        "apps/studio/src/components/shell/ModuleRail.tsx",
+        "apps/studio/src/components/shell/PanelGroup.tsx",
+        "apps/studio/src/components/shell/PanelNotice.tsx",
+        "apps/studio/src/components/shell/PanelRow.tsx",
+        "apps/studio/src/components/shell/PanelSkeleton.tsx",
+        "apps/studio/src/components/shell/RailCustomizeMenu.tsx",
+        "apps/studio/src/components/shell/RailPopover.tsx",
+        "apps/studio/src/components/shell/RightPanelFrame.tsx",
+        "apps/studio/src/components/shell/SectionListPanel.tsx",
+        "apps/studio/src/components/shell/StudioShell.tsx",
+        "apps/studio/src/components/shell/modulepanel.spec.tsx",
+        "apps/studio/src/components/shell/modulerail.spec.tsx",
+        "apps/studio/src/components/shell/shell-context.tsx",
+        "apps/studio/src/components/shell/shell-test-utils.tsx",
+        "apps/studio/src/components/shell/source-scale.spec.ts",
+        "apps/studio/src/components/shell/studioshell.spec.tsx",
+        "apps/studio/src/components/shell/typography.spec.tsx",
+        "apps/studio/src/components/shell/use-viewport-tier.ts",
+        "apps/studio/src/components/workspace/AuthPanel.tsx",
+        "apps/studio/src/components/workspace/PanelRail.tsx",
+        "apps/studio/src/components/workspace/SidebarSearch.tsx",
+        "apps/studio/src/lib/i18n/en.ts",
+        "apps/studio/src/lib/i18n/es.ts",
+        "apps/studio/src/lib/i18n/modules/shell.ts",
+        "apps/studio/src/lib/nav/module-ids.ts",
+        "apps/studio/src/lib/nav/module-labels.ts",
+        "apps/studio/src/lib/nav/module-slots.ts",
+        "apps/studio/src/lib/nav/modules.spec.ts",
+        "apps/studio/src/lib/nav/modules.ts",
+        "apps/studio/src/lib/nav/search.spec.ts",
+        "apps/studio/src/lib/nav/search.ts",
+        "apps/studio/src/lib/nav/use-module-query.ts",
+        "apps/studio/src/lib/nav/use-nav.spec.tsx",
+        "apps/studio/src/lib/nav/use-nav.ts",
+        "apps/studio/src/lib/nav/use-rail-preferences.spec.tsx",
+        "apps/studio/src/lib/nav/use-rail-preferences.ts",
+        "pnpm-lock.yaml"
+      ],
+      "usage": {
+        "tokens_in": 107944,
+        "tokens_out": 19049,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-10-27"
+      }
+    },
+    {
+      "id": "TASK-009",
+      "title": "Web: componente del riel de módulos",
+      "user_stories": [
+        "US-1-001"
+      ],
+      "estimation_hours": 5,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-008"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/e2e/session-metadata.e2e.ts",
+        "apps/studio/e2e/studio.e2e.ts",
+        "apps/studio/package.json",
+        "apps/studio/src/components/SegmentedControl.tsx",
+        "apps/studio/src/components/StudioHeader.tsx",
+        "apps/studio/src/components/StudioThemeProvider.tsx",
+        "apps/studio/src/components/WorkspaceApp.tsx",
+        "apps/studio/src/components/mission-control/AgentInspectorDrawer.tsx",
+        "apps/studio/src/components/mission-control/DocumentViewerModal.tsx",
+        "apps/studio/src/components/mission-control/documentviewermodal.spec.tsx",
+        "apps/studio/src/components/shell/ModuleBoundary.tsx",
+        "apps/studio/src/components/shell/ModulePanel.tsx",
+        "apps/studio/src/components/shell/ModuleRail.tsx",
+        "apps/studio/src/components/shell/PanelGroup.tsx",
+        "apps/studio/src/components/shell/PanelNotice.tsx",
+        "apps/studio/src/components/shell/PanelRow.tsx",
+        "apps/studio/src/components/shell/PanelSkeleton.tsx",
+        "apps/studio/src/components/shell/RailCustomizeMenu.tsx",
+        "apps/studio/src/components/shell/RailPopover.tsx",
+        "apps/studio/src/components/shell/RightPanelFrame.tsx",
+        "apps/studio/src/components/shell/SectionListPanel.tsx",
+        "apps/studio/src/components/shell/StudioShell.tsx",
+        "apps/studio/src/components/shell/modulepanel.spec.tsx",
+        "apps/studio/src/components/shell/modulerail.spec.tsx",
+        "apps/studio/src/components/shell/shell-context.tsx",
+        "apps/studio/src/components/shell/shell-test-utils.tsx",
+        "apps/studio/src/components/shell/source-scale.spec.ts",
+        "apps/studio/src/components/shell/studioshell.spec.tsx",
+        "apps/studio/src/components/shell/typography.spec.tsx",
+        "apps/studio/src/components/shell/use-viewport-tier.ts",
+        "apps/studio/src/components/workspace/AuthPanel.tsx",
+        "apps/studio/src/components/workspace/PanelRail.tsx",
+        "apps/studio/src/components/workspace/SidebarSearch.tsx",
+        "apps/studio/src/lib/i18n/en.ts",
+        "apps/studio/src/lib/i18n/es.ts",
+        "apps/studio/src/lib/i18n/modules/shell.ts",
+        "apps/studio/src/lib/nav/module-ids.ts",
+        "apps/studio/src/lib/nav/module-labels.ts",
+        "apps/studio/src/lib/nav/module-slots.ts",
+        "apps/studio/src/lib/nav/modules.spec.ts",
+        "apps/studio/src/lib/nav/modules.ts",
+        "apps/studio/src/lib/nav/search.spec.ts",
+        "apps/studio/src/lib/nav/search.ts",
+        "apps/studio/src/lib/nav/use-module-query.ts",
+        "apps/studio/src/lib/nav/use-nav.spec.tsx",
+        "apps/studio/src/lib/nav/use-nav.ts",
+        "apps/studio/src/lib/nav/use-rail-preferences.spec.tsx",
+        "apps/studio/src/lib/nav/use-rail-preferences.ts",
+        "pnpm-lock.yaml"
+      ],
+      "usage": {
+        "tokens_in": 107944,
+        "tokens_out": 19049,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-10-27"
+      }
+    },
+    {
+      "id": "TASK-010",
+      "title": "Web: marco del panel de lista (título, buscador ⌘K, grupos, estados)",
+      "user_stories": [
+        "US-1-001",
+        "US-1-002",
+        "US-X-001"
+      ],
+      "estimation_hours": 6,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-008"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/e2e/session-metadata.e2e.ts",
+        "apps/studio/e2e/studio.e2e.ts",
+        "apps/studio/package.json",
+        "apps/studio/src/components/SegmentedControl.tsx",
+        "apps/studio/src/components/StudioHeader.tsx",
+        "apps/studio/src/components/StudioThemeProvider.tsx",
+        "apps/studio/src/components/WorkspaceApp.tsx",
+        "apps/studio/src/components/mission-control/AgentInspectorDrawer.tsx",
+        "apps/studio/src/components/mission-control/DocumentViewerModal.tsx",
+        "apps/studio/src/components/mission-control/documentviewermodal.spec.tsx",
+        "apps/studio/src/components/shell/ModuleBoundary.tsx",
+        "apps/studio/src/components/shell/ModulePanel.tsx",
+        "apps/studio/src/components/shell/ModuleRail.tsx",
+        "apps/studio/src/components/shell/PanelGroup.tsx",
+        "apps/studio/src/components/shell/PanelNotice.tsx",
+        "apps/studio/src/components/shell/PanelRow.tsx",
+        "apps/studio/src/components/shell/PanelSkeleton.tsx",
+        "apps/studio/src/components/shell/RailCustomizeMenu.tsx",
+        "apps/studio/src/components/shell/RailPopover.tsx",
+        "apps/studio/src/components/shell/RightPanelFrame.tsx",
+        "apps/studio/src/components/shell/SectionListPanel.tsx",
+        "apps/studio/src/components/shell/StudioShell.tsx",
+        "apps/studio/src/components/shell/modulepanel.spec.tsx",
+        "apps/studio/src/components/shell/modulerail.spec.tsx",
+        "apps/studio/src/components/shell/shell-context.tsx",
+        "apps/studio/src/components/shell/shell-test-utils.tsx",
+        "apps/studio/src/components/shell/source-scale.spec.ts",
+        "apps/studio/src/components/shell/studioshell.spec.tsx",
+        "apps/studio/src/components/shell/typography.spec.tsx",
+        "apps/studio/src/components/shell/use-viewport-tier.ts",
+        "apps/studio/src/components/workspace/AuthPanel.tsx",
+        "apps/studio/src/components/workspace/PanelRail.tsx",
+        "apps/studio/src/components/workspace/SidebarSearch.tsx",
+        "apps/studio/src/lib/i18n/en.ts",
+        "apps/studio/src/lib/i18n/es.ts",
+        "apps/studio/src/lib/i18n/modules/shell.ts",
+        "apps/studio/src/lib/nav/module-ids.ts",
+        "apps/studio/src/lib/nav/module-labels.ts",
+        "apps/studio/src/lib/nav/module-slots.ts",
+        "apps/studio/src/lib/nav/modules.spec.ts",
+        "apps/studio/src/lib/nav/modules.ts",
+        "apps/studio/src/lib/nav/search.spec.ts",
+        "apps/studio/src/lib/nav/search.ts",
+        "apps/studio/src/lib/nav/use-module-query.ts",
+        "apps/studio/src/lib/nav/use-nav.spec.tsx",
+        "apps/studio/src/lib/nav/use-nav.ts",
+        "apps/studio/src/lib/nav/use-rail-preferences.spec.tsx",
+        "apps/studio/src/lib/nav/use-rail-preferences.ts",
+        "pnpm-lock.yaml"
+      ],
+      "usage": {
+        "tokens_in": 107944,
+        "tokens_out": 19049,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-10-27"
+      }
+    },
+    {
+      "id": "TASK-011",
+      "title": "Web: shell de layout por módulo y header sin pestañas",
+      "user_stories": [
+        "US-1-001"
+      ],
+      "estimation_hours": 6,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-009",
+        "TASK-010"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/e2e/session-metadata.e2e.ts",
+        "apps/studio/e2e/studio.e2e.ts",
+        "apps/studio/package.json",
+        "apps/studio/src/components/SegmentedControl.tsx",
+        "apps/studio/src/components/StudioHeader.tsx",
+        "apps/studio/src/components/StudioThemeProvider.tsx",
+        "apps/studio/src/components/WorkspaceApp.tsx",
+        "apps/studio/src/components/mission-control/AgentInspectorDrawer.tsx",
+        "apps/studio/src/components/mission-control/DocumentViewerModal.tsx",
+        "apps/studio/src/components/mission-control/documentviewermodal.spec.tsx",
+        "apps/studio/src/components/shell/ModuleBoundary.tsx",
+        "apps/studio/src/components/shell/ModulePanel.tsx",
+        "apps/studio/src/components/shell/ModuleRail.tsx",
+        "apps/studio/src/components/shell/PanelGroup.tsx",
+        "apps/studio/src/components/shell/PanelNotice.tsx",
+        "apps/studio/src/components/shell/PanelRow.tsx",
+        "apps/studio/src/components/shell/PanelSkeleton.tsx",
+        "apps/studio/src/components/shell/RailCustomizeMenu.tsx",
+        "apps/studio/src/components/shell/RailPopover.tsx",
+        "apps/studio/src/components/shell/RightPanelFrame.tsx",
+        "apps/studio/src/components/shell/SectionListPanel.tsx",
+        "apps/studio/src/components/shell/StudioShell.tsx",
+        "apps/studio/src/components/shell/modulepanel.spec.tsx",
+        "apps/studio/src/components/shell/modulerail.spec.tsx",
+        "apps/studio/src/components/shell/shell-context.tsx",
+        "apps/studio/src/components/shell/shell-test-utils.tsx",
+        "apps/studio/src/components/shell/source-scale.spec.ts",
+        "apps/studio/src/components/shell/studioshell.spec.tsx",
+        "apps/studio/src/components/shell/typography.spec.tsx",
+        "apps/studio/src/components/shell/use-viewport-tier.ts",
+        "apps/studio/src/components/workspace/AuthPanel.tsx",
+        "apps/studio/src/components/workspace/PanelRail.tsx",
+        "apps/studio/src/components/workspace/SidebarSearch.tsx",
+        "apps/studio/src/lib/i18n/en.ts",
+        "apps/studio/src/lib/i18n/es.ts",
+        "apps/studio/src/lib/i18n/modules/shell.ts",
+        "apps/studio/src/lib/nav/module-ids.ts",
+        "apps/studio/src/lib/nav/module-labels.ts",
+        "apps/studio/src/lib/nav/module-slots.ts",
+        "apps/studio/src/lib/nav/modules.spec.ts",
+        "apps/studio/src/lib/nav/modules.ts",
+        "apps/studio/src/lib/nav/search.spec.ts",
+        "apps/studio/src/lib/nav/search.ts",
+        "apps/studio/src/lib/nav/use-module-query.ts",
+        "apps/studio/src/lib/nav/use-nav.spec.tsx",
+        "apps/studio/src/lib/nav/use-nav.ts",
+        "apps/studio/src/lib/nav/use-rail-preferences.spec.tsx",
+        "apps/studio/src/lib/nav/use-rail-preferences.ts",
+        "pnpm-lock.yaml"
+      ],
+      "usage": {
+        "tokens_in": 107944,
+        "tokens_out": 19049,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-10-27"
+      }
+    },
+    {
+      "id": "TASK-012",
+      "title": "Web: personalización del riel (Más, ocultar, reordenar, restablecer)",
+      "user_stories": [
+        "US-2-001"
+      ],
+      "estimation_hours": 5,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-009",
+        "TASK-011"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/e2e/session-metadata.e2e.ts",
+        "apps/studio/e2e/studio.e2e.ts",
+        "apps/studio/package.json",
+        "apps/studio/src/components/SegmentedControl.tsx",
+        "apps/studio/src/components/StudioHeader.tsx",
+        "apps/studio/src/components/StudioThemeProvider.tsx",
+        "apps/studio/src/components/WorkspaceApp.tsx",
+        "apps/studio/src/components/mission-control/AgentInspectorDrawer.tsx",
+        "apps/studio/src/components/mission-control/DocumentViewerModal.tsx",
+        "apps/studio/src/components/mission-control/documentviewermodal.spec.tsx",
+        "apps/studio/src/components/shell/ModuleBoundary.tsx",
+        "apps/studio/src/components/shell/ModulePanel.tsx",
+        "apps/studio/src/components/shell/ModuleRail.tsx",
+        "apps/studio/src/components/shell/PanelGroup.tsx",
+        "apps/studio/src/components/shell/PanelNotice.tsx",
+        "apps/studio/src/components/shell/PanelRow.tsx",
+        "apps/studio/src/components/shell/PanelSkeleton.tsx",
+        "apps/studio/src/components/shell/RailCustomizeMenu.tsx",
+        "apps/studio/src/components/shell/RailPopover.tsx",
+        "apps/studio/src/components/shell/RightPanelFrame.tsx",
+        "apps/studio/src/components/shell/SectionListPanel.tsx",
+        "apps/studio/src/components/shell/StudioShell.tsx",
+        "apps/studio/src/components/shell/modulepanel.spec.tsx",
+        "apps/studio/src/components/shell/modulerail.spec.tsx",
+        "apps/studio/src/components/shell/shell-context.tsx",
+        "apps/studio/src/components/shell/shell-test-utils.tsx",
+        "apps/studio/src/components/shell/source-scale.spec.ts",
+        "apps/studio/src/components/shell/studioshell.spec.tsx",
+        "apps/studio/src/components/shell/typography.spec.tsx",
+        "apps/studio/src/components/shell/use-viewport-tier.ts",
+        "apps/studio/src/components/workspace/AuthPanel.tsx",
+        "apps/studio/src/components/workspace/PanelRail.tsx",
+        "apps/studio/src/components/workspace/SidebarSearch.tsx",
+        "apps/studio/src/lib/i18n/en.ts",
+        "apps/studio/src/lib/i18n/es.ts",
+        "apps/studio/src/lib/i18n/modules/shell.ts",
+        "apps/studio/src/lib/nav/module-ids.ts",
+        "apps/studio/src/lib/nav/module-labels.ts",
+        "apps/studio/src/lib/nav/module-slots.ts",
+        "apps/studio/src/lib/nav/modules.spec.ts",
+        "apps/studio/src/lib/nav/modules.ts",
+        "apps/studio/src/lib/nav/search.spec.ts",
+        "apps/studio/src/lib/nav/search.ts",
+        "apps/studio/src/lib/nav/use-module-query.ts",
+        "apps/studio/src/lib/nav/use-nav.spec.tsx",
+        "apps/studio/src/lib/nav/use-nav.ts",
+        "apps/studio/src/lib/nav/use-rail-preferences.spec.tsx",
+        "apps/studio/src/lib/nav/use-rail-preferences.ts",
+        "pnpm-lock.yaml"
+      ],
+      "usage": {
+        "tokens_in": 107944,
+        "tokens_out": 19049,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-10-27"
+      }
+    },
+    {
+      "id": "TASK-013",
+      "title": "Web: Inicio, panel con En curso, Por aprobar, canales, conversaciones y agentes",
+      "user_stories": [
+        "US-3-001",
+        "US-1-002"
+      ],
+      "estimation_hours": 6,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-010",
+        "TASK-011",
+        "TASK-007"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/modules/home/ChannelCenter.tsx",
+        "apps/studio/src/components/modules/home/HomeCenter.tsx",
+        "apps/studio/src/components/modules/home/HomeDetails.tsx",
+        "apps/studio/src/components/modules/home/HomePanel.tsx",
+        "apps/studio/src/components/modules/home/HomeRight.tsx",
+        "apps/studio/src/components/modules/home/InboxCenter.tsx",
+        "apps/studio/src/components/modules/home/PanelAgent.tsx",
+        "apps/studio/src/components/modules/home/PanelTabs.tsx",
+        "apps/studio/src/components/modules/home/channel-sections.tsx",
+        "apps/studio/src/components/modules/home/derive.spec.ts",
+        "apps/studio/src/components/modules/home/derive.ts",
+        "apps/studio/src/components/modules/home/home.spec.tsx",
+        "apps/studio/src/components/modules/home/index.ts",
+        "apps/studio/src/components/modules/home/summaries.tsx",
+        "apps/studio/src/components/modules/home/use-bot-history.ts",
+        "apps/studio/src/lib/i18n/modules/home.ts"
+      ],
+      "usage": {
+        "tokens_in": 89953,
+        "tokens_out": 15874,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-10-27"
+      }
+    },
+    {
+      "id": "TASK-014",
+      "title": "Web: Inicio, centro de canales con resúmenes #specs y #fixes y panel derecho",
+      "user_stories": [
+        "US-3-001",
+        "US-3-002"
+      ],
+      "estimation_hours": 6,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-013",
+        "TASK-007"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/modules/home/ChannelCenter.tsx",
+        "apps/studio/src/components/modules/home/HomeCenter.tsx",
+        "apps/studio/src/components/modules/home/HomeDetails.tsx",
+        "apps/studio/src/components/modules/home/HomePanel.tsx",
+        "apps/studio/src/components/modules/home/HomeRight.tsx",
+        "apps/studio/src/components/modules/home/InboxCenter.tsx",
+        "apps/studio/src/components/modules/home/PanelAgent.tsx",
+        "apps/studio/src/components/modules/home/PanelTabs.tsx",
+        "apps/studio/src/components/modules/home/channel-sections.tsx",
+        "apps/studio/src/components/modules/home/derive.spec.ts",
+        "apps/studio/src/components/modules/home/derive.ts",
+        "apps/studio/src/components/modules/home/home.spec.tsx",
+        "apps/studio/src/components/modules/home/index.ts",
+        "apps/studio/src/components/modules/home/summaries.tsx",
+        "apps/studio/src/components/modules/home/use-bot-history.ts",
+        "apps/studio/src/lib/i18n/modules/home.ts"
+      ],
+      "usage": {
+        "tokens_in": 89953,
+        "tokens_out": 15874,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-10-27"
+      }
+    },
+    {
+      "id": "TASK-015",
+      "title": "Web: módulo Specs, panel con filtros Activas/Todas/Cerradas y grupos por estado",
+      "user_stories": [
+        "US-4-001"
+      ],
+      "estimation_hours": 4,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-010",
+        "TASK-011",
+        "TASK-007"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/modules/specs/SpecCard.tsx",
+        "apps/studio/src/components/modules/specs/SpecConversationsTab.tsx",
+        "apps/studio/src/components/modules/specs/SpecDocumentsTab.tsx",
+        "apps/studio/src/components/modules/specs/SpecParts.tsx",
+        "apps/studio/src/components/modules/specs/SpecPlanTab.tsx",
+        "apps/studio/src/components/modules/specs/SpecSummaryTab.tsx",
+        "apps/studio/src/components/modules/specs/SpecTasksTab.tsx",
+        "apps/studio/src/components/modules/specs/SpecsCenter.tsx",
+        "apps/studio/src/components/modules/specs/SpecsPanel.tsx",
+        "apps/studio/src/components/modules/specs/SpecsRight.tsx",
+        "apps/studio/src/components/modules/specs/index.ts",
+        "apps/studio/src/components/modules/specs/specs-model.spec.ts",
+        "apps/studio/src/components/modules/specs/specs-model.ts",
+        "apps/studio/src/components/modules/specs/specs-module.spec.tsx",
+        "apps/studio/src/components/modules/specs/use-document-viewer.tsx",
+        "apps/studio/src/components/modules/specs/use-spec-threads.ts",
+        "apps/studio/src/lib/i18n/modules/specs.ts"
+      ],
+      "usage": {
+        "tokens_in": 59969,
+        "tokens_out": 10583,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-10-27"
+      }
+    },
+    {
+      "id": "TASK-016",
+      "title": "Web: ficha de spec con pestañas Resumen y Tareas",
+      "user_stories": [
+        "US-4-002"
+      ],
+      "estimation_hours": 5,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-015"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/modules/specs/SpecCard.tsx",
+        "apps/studio/src/components/modules/specs/SpecConversationsTab.tsx",
+        "apps/studio/src/components/modules/specs/SpecDocumentsTab.tsx",
+        "apps/studio/src/components/modules/specs/SpecParts.tsx",
+        "apps/studio/src/components/modules/specs/SpecPlanTab.tsx",
+        "apps/studio/src/components/modules/specs/SpecSummaryTab.tsx",
+        "apps/studio/src/components/modules/specs/SpecTasksTab.tsx",
+        "apps/studio/src/components/modules/specs/SpecsCenter.tsx",
+        "apps/studio/src/components/modules/specs/SpecsPanel.tsx",
+        "apps/studio/src/components/modules/specs/SpecsRight.tsx",
+        "apps/studio/src/components/modules/specs/index.ts",
+        "apps/studio/src/components/modules/specs/specs-model.spec.ts",
+        "apps/studio/src/components/modules/specs/specs-model.ts",
+        "apps/studio/src/components/modules/specs/specs-module.spec.tsx",
+        "apps/studio/src/components/modules/specs/use-document-viewer.tsx",
+        "apps/studio/src/components/modules/specs/use-spec-threads.ts",
+        "apps/studio/src/lib/i18n/modules/specs.ts"
+      ],
+      "usage": {
+        "tokens_in": 59969,
+        "tokens_out": 10583,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-10-27"
+      }
+    },
+    {
+      "id": "TASK-017",
+      "title": "Web: ficha de spec, pestañas Plan, Documentos y Conversaciones y panel derecho",
+      "user_stories": [
+        "US-4-002"
+      ],
+      "estimation_hours": 5,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-016",
+        "TASK-007"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/modules/specs/SpecCard.tsx",
+        "apps/studio/src/components/modules/specs/SpecConversationsTab.tsx",
+        "apps/studio/src/components/modules/specs/SpecDocumentsTab.tsx",
+        "apps/studio/src/components/modules/specs/SpecParts.tsx",
+        "apps/studio/src/components/modules/specs/SpecPlanTab.tsx",
+        "apps/studio/src/components/modules/specs/SpecSummaryTab.tsx",
+        "apps/studio/src/components/modules/specs/SpecTasksTab.tsx",
+        "apps/studio/src/components/modules/specs/SpecsCenter.tsx",
+        "apps/studio/src/components/modules/specs/SpecsPanel.tsx",
+        "apps/studio/src/components/modules/specs/SpecsRight.tsx",
+        "apps/studio/src/components/modules/specs/index.ts",
+        "apps/studio/src/components/modules/specs/specs-model.spec.ts",
+        "apps/studio/src/components/modules/specs/specs-model.ts",
+        "apps/studio/src/components/modules/specs/specs-module.spec.tsx",
+        "apps/studio/src/components/modules/specs/use-document-viewer.tsx",
+        "apps/studio/src/components/modules/specs/use-spec-threads.ts",
+        "apps/studio/src/lib/i18n/modules/specs.ts"
+      ],
+      "usage": {
+        "tokens_in": 59969,
+        "tokens_out": 10583,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-10-27"
+      }
+    },
+    {
+      "id": "TASK-018",
+      "title": "Web: módulo Fixes, panel, ficha y panel derecho",
+      "user_stories": [
+        "US-5-001"
+      ],
+      "estimation_hours": 4,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-010",
+        "TASK-011",
+        "TASK-007"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/modules/fixes/FixBadges.tsx",
+        "apps/studio/src/components/modules/fixes/FixCard.tsx",
+        "apps/studio/src/components/modules/fixes/FixFacts.tsx",
+        "apps/studio/src/components/modules/fixes/FixesCenter.tsx",
+        "apps/studio/src/components/modules/fixes/FixesPanel.tsx",
+        "apps/studio/src/components/modules/fixes/FixesRight.tsx",
+        "apps/studio/src/components/modules/fixes/fix-date.ts",
+        "apps/studio/src/components/modules/fixes/fix-model.spec.ts",
+        "apps/studio/src/components/modules/fixes/fix-model.ts",
+        "apps/studio/src/components/modules/fixes/fixes-module.spec.tsx",
+        "apps/studio/src/components/modules/fixes/index.ts",
+        "apps/studio/src/components/modules/fixes/use-fixes.ts",
+        "apps/studio/src/lib/i18n/modules/fixes.ts"
+      ],
+      "usage": {
+        "tokens_in": 179907,
+        "tokens_out": 31748,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-10-27"
+      }
+    },
+    {
+      "id": "TASK-019",
+      "title": "Web: ficha de agente compartida y módulo Agentes",
+      "user_stories": [
+        "US-5-002"
+      ],
+      "estimation_hours": 6,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-010",
+        "TASK-011"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/mission-control/AgentMapCanvas.tsx",
+        "apps/studio/src/components/modules/agents/AgentCard.tsx",
+        "apps/studio/src/components/modules/agents/AgentDirectChat.tsx",
+        "apps/studio/src/components/modules/agents/AgentFaceChip.tsx",
+        "apps/studio/src/components/modules/agents/AgentsCenter.tsx",
+        "apps/studio/src/components/modules/agents/AgentsPanel.tsx",
+        "apps/studio/src/components/modules/agents/AgentsRight.tsx",
+        "apps/studio/src/components/modules/agents/agent-presence.ts",
+        "apps/studio/src/components/modules/agents/agents.spec.tsx",
+        "apps/studio/src/components/modules/agents/index.ts",
+        "apps/studio/src/components/modules/map/MapCenter.tsx",
+        "apps/studio/src/components/modules/map/MapPanel.tsx",
+        "apps/studio/src/components/modules/map/MapRight.tsx",
+        "apps/studio/src/components/modules/map/SwarmInteraction.tsx",
+        "apps/studio/src/components/modules/map/index.ts",
+        "apps/studio/src/components/modules/map/map-filters.spec.ts",
+        "apps/studio/src/components/modules/map/map-filters.ts",
+        "apps/studio/src/components/modules/map/map.spec.tsx",
+        "apps/studio/src/components/modules/map/swarm-playback.tsx",
+        "apps/studio/src/components/workspace/AgentAvatar.tsx",
+        "apps/studio/src/lib/i18n/modules/agents.ts",
+        "apps/studio/src/lib/i18n/modules/map.ts"
+      ],
+      "usage": {
+        "tokens_in": 89953,
+        "tokens_out": 15874,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-10-27"
+      }
+    },
+    {
+      "id": "TASK-020",
+      "title": "Web: Mapa en tres columnas con nodos intactos",
+      "user_stories": [
+        "US-6-001"
+      ],
+      "estimation_hours": 6,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-019",
+        "TASK-007"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/mission-control/AgentMapCanvas.tsx",
+        "apps/studio/src/components/modules/agents/AgentCard.tsx",
+        "apps/studio/src/components/modules/agents/AgentDirectChat.tsx",
+        "apps/studio/src/components/modules/agents/AgentFaceChip.tsx",
+        "apps/studio/src/components/modules/agents/AgentsCenter.tsx",
+        "apps/studio/src/components/modules/agents/AgentsPanel.tsx",
+        "apps/studio/src/components/modules/agents/AgentsRight.tsx",
+        "apps/studio/src/components/modules/agents/agent-presence.ts",
+        "apps/studio/src/components/modules/agents/agents.spec.tsx",
+        "apps/studio/src/components/modules/agents/index.ts",
+        "apps/studio/src/components/modules/map/MapCenter.tsx",
+        "apps/studio/src/components/modules/map/MapPanel.tsx",
+        "apps/studio/src/components/modules/map/MapRight.tsx",
+        "apps/studio/src/components/modules/map/SwarmInteraction.tsx",
+        "apps/studio/src/components/modules/map/index.ts",
+        "apps/studio/src/components/modules/map/map-filters.spec.ts",
+        "apps/studio/src/components/modules/map/map-filters.ts",
+        "apps/studio/src/components/modules/map/map.spec.tsx",
+        "apps/studio/src/components/modules/map/swarm-playback.tsx",
+        "apps/studio/src/components/workspace/AgentAvatar.tsx",
+        "apps/studio/src/lib/i18n/modules/agents.ts",
+        "apps/studio/src/lib/i18n/modules/map.ts"
+      ],
+      "usage": {
+        "tokens_in": 89953,
+        "tokens_out": 15874,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-10-27"
+      }
+    },
+    {
+      "id": "TASK-021",
+      "title": "Web: módulo Actividad, filtros por origen y línea de tiempo",
+      "user_stories": [
+        "US-1-001"
+      ],
+      "estimation_hours": 4,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-010",
+        "TASK-011",
+        "TASK-007",
+        "TASK-002",
+        "TASK-006"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/modules/activity/ActivityCenter.tsx",
+        "apps/studio/src/components/modules/activity/ActivityPanel.tsx",
+        "apps/studio/src/components/modules/activity/ActivityTimeline.tsx",
+        "apps/studio/src/components/modules/activity/activity-model.spec.ts",
+        "apps/studio/src/components/modules/activity/activity-model.ts",
+        "apps/studio/src/components/modules/activity/activity-module.spec.tsx",
+        "apps/studio/src/components/modules/activity/activity-scope.tsx",
+        "apps/studio/src/components/modules/activity/activity-text.ts",
+        "apps/studio/src/components/modules/activity/index.ts",
+        "apps/studio/src/components/modules/activity/use-activity-feed.ts",
+        "apps/studio/src/lib/bootstrap.spec.ts",
+        "apps/studio/src/lib/bootstrap.ts",
+        "apps/studio/src/lib/i18n/modules/activity.ts",
+        "apps/studio/src/lib/nav/use-nav.spec.tsx",
+        "apps/studio/src/lib/nav/use-nav.ts"
+      ],
+      "usage": {
+        "tokens_in": 333692,
+        "tokens_out": 58887,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-10-27"
+      }
+    },
+    {
+      "id": "TASK-022",
+      "title": "Web: módulo Kit, secciones Skills, Prompts, Agentes del kit y Documentación",
+      "user_stories": [
+        "US-7-001"
+      ],
+      "estimation_hours": 6,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-004",
+        "TASK-010",
+        "TASK-011",
+        "TASK-006"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/StudioHeader.tsx",
+        "apps/studio/src/components/modules/kit/KitCapabilitiesView.tsx",
+        "apps/studio/src/components/modules/kit/KitCenter.tsx",
+        "apps/studio/src/components/modules/kit/KitPanel.tsx",
+        "apps/studio/src/components/modules/kit/KitParts.tsx",
+        "apps/studio/src/components/modules/kit/KitProvider.tsx",
+        "apps/studio/src/components/modules/kit/KitToolsView.tsx",
+        "apps/studio/src/components/modules/kit/index.ts",
+        "apps/studio/src/components/modules/kit/kit-model.spec.ts",
+        "apps/studio/src/components/modules/kit/kit-model.ts",
+        "apps/studio/src/components/modules/kit/kit-module.spec.tsx",
+        "apps/studio/src/components/modules/kit/use-kit-file.ts",
+        "apps/studio/src/components/modules/kit/use-kit-tools.ts",
+        "apps/studio/src/lib/format.spec.ts",
+        "apps/studio/src/lib/format.ts",
+        "apps/studio/src/lib/i18n/en.ts",
+        "apps/studio/src/lib/i18n/es.ts",
+        "apps/studio/src/lib/i18n/modules/kit.ts",
+        "apps/studio/src/lib/tools-text.ts"
+      ],
+      "usage": {
+        "tokens_in": 278077,
+        "tokens_out": 49072,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-10-27"
+      }
+    },
+    {
+      "id": "TASK-023",
+      "title": "Web: Kit, secciones Schemas JSON, Contexto y Memoria",
+      "user_stories": [
+        "US-7-001"
+      ],
+      "estimation_hours": 5,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-022",
+        "TASK-006"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/StudioHeader.tsx",
+        "apps/studio/src/components/modules/kit/KitCapabilitiesView.tsx",
+        "apps/studio/src/components/modules/kit/KitCenter.tsx",
+        "apps/studio/src/components/modules/kit/KitPanel.tsx",
+        "apps/studio/src/components/modules/kit/KitParts.tsx",
+        "apps/studio/src/components/modules/kit/KitProvider.tsx",
+        "apps/studio/src/components/modules/kit/KitToolsView.tsx",
+        "apps/studio/src/components/modules/kit/index.ts",
+        "apps/studio/src/components/modules/kit/kit-model.spec.ts",
+        "apps/studio/src/components/modules/kit/kit-model.ts",
+        "apps/studio/src/components/modules/kit/kit-module.spec.tsx",
+        "apps/studio/src/components/modules/kit/use-kit-file.ts",
+        "apps/studio/src/components/modules/kit/use-kit-tools.ts",
+        "apps/studio/src/lib/format.spec.ts",
+        "apps/studio/src/lib/format.ts",
+        "apps/studio/src/lib/i18n/en.ts",
+        "apps/studio/src/lib/i18n/es.ts",
+        "apps/studio/src/lib/i18n/modules/kit.ts",
+        "apps/studio/src/lib/tools-text.ts"
+      ],
+      "usage": {
+        "tokens_in": 278077,
+        "tokens_out": 49072,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-10-27"
+      }
+    },
+    {
+      "id": "TASK-024",
+      "title": "Web: Kit, Herramientas con confirmación, registro en #general y chip del gate",
+      "user_stories": [
+        "US-8-001"
+      ],
+      "estimation_hours": 6,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-006",
+        "TASK-023",
+        "TASK-014"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/StudioHeader.tsx",
+        "apps/studio/src/components/modules/kit/KitCapabilitiesView.tsx",
+        "apps/studio/src/components/modules/kit/KitCenter.tsx",
+        "apps/studio/src/components/modules/kit/KitPanel.tsx",
+        "apps/studio/src/components/modules/kit/KitParts.tsx",
+        "apps/studio/src/components/modules/kit/KitProvider.tsx",
+        "apps/studio/src/components/modules/kit/KitToolsView.tsx",
+        "apps/studio/src/components/modules/kit/index.ts",
+        "apps/studio/src/components/modules/kit/kit-model.spec.ts",
+        "apps/studio/src/components/modules/kit/kit-model.ts",
+        "apps/studio/src/components/modules/kit/kit-module.spec.tsx",
+        "apps/studio/src/components/modules/kit/use-kit-file.ts",
+        "apps/studio/src/components/modules/kit/use-kit-tools.ts",
+        "apps/studio/src/lib/format.spec.ts",
+        "apps/studio/src/lib/format.ts",
+        "apps/studio/src/lib/i18n/en.ts",
+        "apps/studio/src/lib/i18n/es.ts",
+        "apps/studio/src/lib/i18n/modules/kit.ts",
+        "apps/studio/src/lib/tools-text.ts"
+      ],
+      "usage": {
+        "tokens_in": 278077,
+        "tokens_out": 49072,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-10-27"
+      }
+    },
+    {
+      "id": "TASK-025",
+      "title": "Web: módulo Arquitectura",
+      "user_stories": [
+        "US-9-001"
+      ],
+      "estimation_hours": 5,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-010",
+        "TASK-011"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/modules/architecture/ArchitectureCenter.tsx",
+        "apps/studio/src/components/modules/architecture/ArchitecturePanel.tsx",
+        "apps/studio/src/components/modules/architecture/architecture-model.ts",
+        "apps/studio/src/components/modules/architecture/architecture.spec.tsx",
+        "apps/studio/src/components/modules/architecture/index.ts",
+        "apps/studio/src/components/modules/architecture/use-registries.tsx",
+        "apps/studio/src/lib/i18n/modules/architecture.ts"
+      ],
+      "usage": {
+        "tokens_in": 333692,
+        "tokens_out": 58887,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-10-27"
+      }
+    },
+    {
+      "id": "TASK-026",
+      "title": "Web: módulo Métricas, Dashboard, Planificación, Ecosistema y Telemetría",
+      "user_stories": [
+        "US-10-001"
+      ],
+      "estimation_hours": 6,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-010",
+        "TASK-011",
+        "TASK-007"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/package.json",
+        "apps/studio/src/components/mission-control/AgentMapCanvas.tsx",
+        "apps/studio/src/components/mission-control/agentmap.spec.tsx",
+        "apps/studio/src/components/modules/metrics/CostsView.tsx",
+        "apps/studio/src/components/modules/metrics/MetricsCenter.tsx",
+        "apps/studio/src/components/modules/metrics/MetricsDashboard.tsx",
+        "apps/studio/src/components/modules/metrics/MetricsPanel.tsx",
+        "apps/studio/src/components/modules/metrics/MetricsParts.tsx",
+        "apps/studio/src/components/modules/metrics/PlanningView.tsx",
+        "apps/studio/src/components/modules/metrics/RtkSavings.tsx",
+        "apps/studio/src/components/modules/metrics/costs-model.spec.ts",
+        "apps/studio/src/components/modules/metrics/costs-model.ts",
+        "apps/studio/src/components/modules/metrics/index.ts",
+        "apps/studio/src/components/modules/metrics/metrics-model.spec.ts",
+        "apps/studio/src/components/modules/metrics/metrics-model.ts",
+        "apps/studio/src/components/modules/metrics/metrics-module.spec.tsx",
+        "apps/studio/src/components/modules/metrics/use-cycle-records.ts",
+        "apps/studio/src/components/modules/metrics/use-rtk-gain.ts",
+        "apps/studio/src/lib/i18n/modules/metrics.ts",
+        "pnpm-lock.yaml"
+      ],
+      "usage": {
+        "tokens_in": 250269,
+        "tokens_out": 44165,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-10-27"
+      }
+    },
+    {
+      "id": "TASK-027",
+      "title": "Web: Métricas, vista Costos con RTK",
+      "user_stories": [
+        "US-10-001"
+      ],
+      "estimation_hours": 4,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-026",
+        "TASK-030"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/package.json",
+        "apps/studio/src/components/mission-control/AgentMapCanvas.tsx",
+        "apps/studio/src/components/mission-control/agentmap.spec.tsx",
+        "apps/studio/src/components/modules/metrics/CostsView.tsx",
+        "apps/studio/src/components/modules/metrics/MetricsCenter.tsx",
+        "apps/studio/src/components/modules/metrics/MetricsDashboard.tsx",
+        "apps/studio/src/components/modules/metrics/MetricsPanel.tsx",
+        "apps/studio/src/components/modules/metrics/MetricsParts.tsx",
+        "apps/studio/src/components/modules/metrics/PlanningView.tsx",
+        "apps/studio/src/components/modules/metrics/RtkSavings.tsx",
+        "apps/studio/src/components/modules/metrics/costs-model.spec.ts",
+        "apps/studio/src/components/modules/metrics/costs-model.ts",
+        "apps/studio/src/components/modules/metrics/index.ts",
+        "apps/studio/src/components/modules/metrics/metrics-model.spec.ts",
+        "apps/studio/src/components/modules/metrics/metrics-model.ts",
+        "apps/studio/src/components/modules/metrics/metrics-module.spec.tsx",
+        "apps/studio/src/components/modules/metrics/use-cycle-records.ts",
+        "apps/studio/src/components/modules/metrics/use-rtk-gain.ts",
+        "apps/studio/src/lib/i18n/modules/metrics.ts",
+        "pnpm-lock.yaml"
+      ],
+      "usage": {
+        "tokens_in": 250269,
+        "tokens_out": 44165,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-10-27"
+      }
+    },
+    {
+      "id": "TASK-028",
+      "title": "Web: limpieza del sidebar anterior, pestañas e i18n y cierre del layout",
+      "user_stories": [
+        "US-1-001",
+        "US-X-001"
+      ],
+      "estimation_hours": 5,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-012",
+        "TASK-013",
+        "TASK-014",
+        "TASK-017",
+        "TASK-018",
+        "TASK-019",
+        "TASK-020",
+        "TASK-021",
+        "TASK-024",
+        "TASK-025",
+        "TASK-026",
+        "TASK-027"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/NewConversationButton.tsx",
+        "apps/studio/src/components/mission-control/ConversationSelector.spec.tsx",
+        "apps/studio/src/components/mission-control/ConversationSelector.tsx",
+        "apps/studio/src/components/modules/activity/activity-module.spec.tsx",
+        "apps/studio/src/components/modules/fixes/FixBadges.tsx",
+        "apps/studio/src/components/modules/fixes/FixesPanel.tsx",
+        "apps/studio/src/components/modules/fixes/fix-model.spec.ts",
+        "apps/studio/src/components/modules/fixes/fix-model.ts",
+        "apps/studio/src/components/modules/home/HomeDetails.tsx",
+        "apps/studio/src/components/modules/home/derive.spec.ts",
+        "apps/studio/src/components/modules/home/derive.ts",
+        "apps/studio/src/components/modules/home/home.spec.tsx",
+        "apps/studio/src/components/modules/home/summaries.tsx",
+        "apps/studio/src/components/modules/map/SwarmInteraction.tsx",
+        "apps/studio/src/components/modules/map/map.spec.tsx",
+        "apps/studio/src/components/modules/metrics/PlanningView.tsx",
+        "apps/studio/src/components/modules/metrics/metrics-model.ts",
+        "apps/studio/src/components/modules/metrics/metrics-module.spec.tsx",
+        "apps/studio/src/components/modules/specs/SpecCard.tsx",
+        "apps/studio/src/components/modules/specs/SpecParts.tsx",
+        "apps/studio/src/components/modules/specs/SpecPlanTab.tsx",
+        "apps/studio/src/components/modules/specs/SpecSummaryTab.tsx",
+        "apps/studio/src/components/modules/specs/SpecTasksTab.tsx",
+        "apps/studio/src/components/modules/specs/specs-model.spec.ts",
+        "apps/studio/src/components/modules/specs/specs-model.ts",
+        "apps/studio/src/components/shell/ModulePanel.tsx",
+        "apps/studio/src/components/shell/ModuleRail.tsx",
+        "apps/studio/src/components/shell/NewConversationIconButton.tsx",
+        "apps/studio/src/components/shell/PanelRail.tsx",
+        "apps/studio/src/components/shell/RightPanelFrame.tsx",
+        "apps/studio/src/components/shell/SidebarSearch.tsx",
+        "apps/studio/src/components/shell/StudioShell.tsx",
+        "apps/studio/src/components/workspace/ChannelView.tsx",
+        "apps/studio/src/components/workspace/ConversationPanelSections.tsx",
+        "apps/studio/src/components/workspace/NavParts.tsx",
+        "apps/studio/src/components/workspace/NavSections.tsx",
+        "apps/studio/src/components/workspace/NavTree.tsx",
+        "apps/studio/src/components/workspace/RightPanel.tsx",
+        "apps/studio/src/components/workspace/Sidebar.tsx",
+        "apps/studio/src/components/workspace/SidebarHeader.tsx",
+        "apps/studio/src/components/workspace/SidebarRail.tsx",
+        "apps/studio/src/components/workspace/Workspace.tsx",
+        "apps/studio/src/components/workspace/channelview.spec.tsx",
+        "apps/studio/src/components/workspace/rightpanel.spec.tsx",
+        "apps/studio/src/components/workspace/sidebar-live.spec.tsx",
+        "apps/studio/src/components/workspace/sidebar.spec.tsx",
+        "apps/studio/src/components/workspace/threadlink.spec.tsx",
+        "apps/studio/src/components/workspace/workspace.spec.tsx",
+        "apps/studio/src/lib/auto-conversation.ts",
+        "apps/studio/src/lib/conversation-gate.ts",
+        "apps/studio/src/lib/i18n/en.ts",
+        "apps/studio/src/lib/i18n/es.ts",
+        "apps/studio/src/lib/i18n/modules/agents.ts",
+        "apps/studio/src/lib/i18n/modules/home.ts",
+        "apps/studio/src/lib/i18n/modules/map.ts",
+        "apps/studio/src/lib/i18n/modules/metrics.ts",
+        "apps/studio/src/lib/i18n/modules/shell.ts",
+        "apps/studio/src/lib/nav/module-slots.ts",
+        "apps/studio/src/lib/sdd-status.spec.ts",
+        "apps/studio/src/lib/sdd-status.ts",
+        "apps/studio/src/lib/store/nav-filter.ts",
+        "apps/studio/src/lib/store/nav-summary.ts",
+        "apps/studio/src/lib/store/nav-tree.spec.ts",
+        "apps/studio/src/lib/store/nav-tree.ts",
+        "sdd/components.json"
+      ],
+      "usage": {
+        "tokens_in": 264075,
+        "tokens_out": 46602,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-10-28"
+      }
+    },
+    {
+      "id": "TASK-029",
+      "title": "Integral: verificación del workspace, recorrida visual y cierre",
+      "user_stories": [
+        "US-1-001",
+        "US-X-001"
+      ],
+      "estimation_hours": 3,
+      "story_points": 2,
+      "depends_on": [
+        "TASK-028"
+      ],
+      "status": "done",
+      "files": [],
+      "usage": {
+        "tokens_in": 60000,
+        "tokens_out": 8000,
+        "provider_model": "claude/opus",
+        "effort": "medium",
+        "agent": "reviewer",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-10-28"
+      }
+    }
+  ]
+}

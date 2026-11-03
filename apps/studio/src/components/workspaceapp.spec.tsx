@@ -82,38 +82,45 @@ describe('WorkspaceApp / Connected Navigation', () => {
     window.localStorage.clear();
   });
 
-  it('renders StudioHeader and defaults to workspace view', () => {
+  it('renders the header and the module rail on Home by default', () => {
     mountConnected();
     expect(screen.getByText('SDD Studio')).toBeInTheDocument();
-    // Default workspace channel heading should be present
+    expect(screen.getByRole('navigation', { name: 'Módulos' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Inicio' })).toHaveAttribute('aria-current', 'page');
     expect(screen.getByRole('heading', { name: '# general' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Mapa de agentes/i })).not.toBeInTheDocument();
   });
 
-  it('switches between views when clicking header buttons', () => {
+  it('switches modules from the rail and keeps Mission Control reachable', () => {
     mountConnected();
 
-    // Switch to Agent Map view
-    const mapButton = screen.getByRole('button', { name: /Mapa de agentes/i });
-    fireEvent.click(mapButton);
+    fireEvent.click(screen.getByRole('button', { name: 'Mapa' }));
+    expect(screen.getByRole('button', { name: 'Mapa' })).toHaveAttribute('aria-current', 'page');
     expect(screen.getByTestId('agent-map-canvas')).toBeInTheDocument();
     expect(screen.getByText('Topología del Enjambre')).toBeInTheDocument();
     expect(screen.getAllByText('Clara').length).toBeGreaterThan(0);
 
-    // Switch to Ecosystem view
-    const ecoButton = screen.getByRole('button', { name: /Ecosistema/i });
-    fireEvent.click(ecoButton);
+    fireEvent.click(screen.getByRole('button', { name: 'Métricas' }));
+    expect(screen.getByRole('heading', { name: 'Dashboard' })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Ecosistema' }));
     expect(screen.getByTestId('ecosystem-dashboard')).toBeInTheDocument();
     expect(screen.getByText('Ecosistema del Repositorio')).toBeInTheDocument();
 
-    // Switch to Telemetry view
-    const telemButton = screen.getByRole('button', { name: /Telemetría/i });
-    fireEvent.click(telemButton);
+    fireEvent.click(screen.getByRole('button', { name: 'Telemetría' }));
     expect(screen.getByTestId('live-telemetry-hud')).toBeInTheDocument();
     expect(screen.getByText('Telemetría de Misión & Tokens')).toBeInTheDocument();
 
-    // Switch back to Workspace
-    const wsButton = screen.getByRole('button', { name: /Workspace/i });
-    fireEvent.click(wsButton);
+    fireEvent.click(screen.getByRole('button', { name: 'Inicio' }));
     expect(screen.getByRole('heading', { name: '# general' })).toBeInTheDocument();
+  });
+
+  it('persists the active module per project and restores it on reload', () => {
+    const first = mountConnected();
+    fireEvent.click(screen.getByRole('button', { name: 'Mapa' }));
+    first.unmount();
+    mountConnected();
+    expect(screen.getByRole('button', { name: 'Mapa' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByTestId('agent-map-canvas')).toBeInTheDocument();
   });
 });

@@ -1,9 +1,10 @@
 import { chmod, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { WorkspaceSnapshot } from '@sdd-studio/protocol';
+import { MAX_CYCLE_DOCUMENTS, WorkspaceSnapshot } from '@sdd-studio/protocol';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { copyFixture } from '../test-utils/fixture';
 import { diffSnapshots } from './diff';
+import { computeToolsRevision } from './kit-tools';
 import { changedAreas, loadWorkspaceSnapshot, mergeSnapshot } from './snapshot';
 
 let root: string;
@@ -223,5 +224,120 @@ describe('mergeSnapshot / changedAreas', () => {
         expect.objectContaining({ id: 'FIX-2', createdAt: null, closedAt: null }),
       ]);
     });
+  });
+});
+
+describe('tools state and documents in the snapshot', () => {
+  it('reports the tools state with its revision', async () => {
+    const { snapshot } = await loadWorkspaceSnapshot(root);
+    const raw = await readFile(path.join(root, 'sdd/tools.json'));
+    expect(snapshot.tools).toEqual({
+      status: 'ok', rtkEnabled: false, modEnabled: false, gate: 'block', modLinked: false, revision: computeToolsRevision(raw),
+    });
+  });
+
+  it('reports modLinked when the mod plugin manifest exists', async () => {
+    const manifest = path.join(root, '.claude/skills/sdd-mod/.claude-plugin/plugin.json');
+    await mkdir(path.dirname(manifest), { recursive: true });
+    await writeFile(manifest, '{}');
+    expect((await loadWorkspaceSnapshot(root)).snapshot.tools?.modLinked).toBe(true);
+  });
+
+  it('reports missing and invalid tools.json without marking the area failed when missing', async () => {
+    await rm(path.join(root, 'sdd/tools.json'));
+    const missing = await loadWorkspaceSnapshot(root);
+    expect(missing.snapshot.tools).toEqual({ status: 'missing', rtkEnabled: null, modEnabled: null, gate: null, modLinked: false, revision: null });
+    expect(missing.failed).toEqual([]);
+    await writeFile(path.join(root, 'sdd/tools.json'), '{ nope');
+    const invalid = await loadWorkspaceSnapshot(root);
+    expect(invalid.snapshot.tools).toMatchObject({ status: 'invalid', rtkEnabled: null, revision: null });
+    expect(invalid.failed).toContain('tools');
+  });
+
+  it('does not restore the previous tools state when tools.json turns invalid', async () => {
+    const prev = mergeSnapshot(null, await loadWorkspaceSnapshot(root));
+    await writeFile(path.join(root, 'sdd/tools.json'), '{ nope');
+    const merged = mergeSnapshot(prev, await loadWorkspaceSnapshot(root));
+    expect(merged.tools?.status).toBe('invalid');
+    expect(merged.gateMode).toBe(prev.gateMode);
+    expect(merged.stale).toContain('tools');
+    expect(changedAreas(prev, merged)).toContain('tools');
+  });
+
+  it('flags the tools area as changed when only the tools state changes', async () => {
+    const prev = mergeSnapshot(null, await loadWorkspaceSnapshot(root));
+    await writeFile(path.join(root, 'sdd/tools.json'), JSON.stringify({ rtk: { enabled: true }, claude_mod: { enabled: false, gate: 'block' } }));
+    const next = mergeSnapshot(prev, await loadWorkspaceSnapshot(root));
+    expect(changedAreas(prev, next)).toEqual(['tools']);
+    expect(next.tools?.rtkEnabled).toBe(true);
+  });
+
+  it('lists the whitelisted cycle documents plus first-level artifacts only', async () => {
+    const cycleDir = path.join(root, 'sdd/specs/spec-dev-001-pagos/cycles/cycle-01');
+    await writeFile(path.join(cycleDir, 'functional.md'), 'x');
+    await writeFile(path.join(cycleDir, 'architect.md'), 'x');
+    await writeFile(path.join(cycleDir, 'notes.md'), 'x');
+    await mkdir(path.join(cycleDir, 'artifacts', 'deep'), { recursive: true });
+    await writeFile(path.join(cycleDir, 'artifacts', 'b.txt'), 'x');
+    await writeFile(path.join(cycleDir, 'artifacts', 'a.txt'), 'x');
+    await writeFile(path.join(cycleDir, 'artifacts', '.hidden'), 'x');
+    await writeFile(path.join(cycleDir, 'artifacts', 'deep', 'c.txt'), 'x');
+    const { snapshot } = await loadWorkspaceSnapshot(root);
+    expect(snapshot.cycles[0]?.documents).toEqual(['functional.md', 'architect.md', 'cycle.json', 'tasks.json', 'artifacts/a.txt', 'artifacts/b.txt']);
+  });
+
+  it('skips over-long artifact names and keeps the rest valid against the protocol', async () => {
+    const dir = path.join(root, 'sdd/specs/spec-dev-001-pagos/cycles/cycle-01/artifacts');
+    await mkdir(dir, { recursive: true });
+    await writeFile(path.join(dir, `${'n'.repeat(250)}.txt`), 'x');
+    await writeFile(path.join(dir, 'ok.txt'), 'x');
+    const { snapshot } = await loadWorkspaceSnapshot(root);
+    expect(snapshot.cycles[0]?.documents).toEqual(['cycle.json', 'tasks.json', 'artifacts/ok.txt']);
+    expect(WorkspaceSnapshot.safeParse(snapshot).success).toBe(true);
+  });
+
+  it('reports invalid for tools.json that violates the schema', async () => {
+    const file = path.join(root, 'sdd/tools.json');
+    for (const doc of [{ claude_mod: { enabled: false, gate: 'block' } }, { rtk: { enabled: 'no' } }]) {
+      await writeFile(file, JSON.stringify(doc));
+      expect((await loadWorkspaceSnapshot(root)).snapshot.tools).toMatchObject({
+        status: 'invalid', rtkEnabled: null, modEnabled: null, gate: null, revision: null,
+      });
+    }
+  });
+
+  it('caps the document list at MAX_CYCLE_DOCUMENTS', async () => {
+    const dir = path.join(root, 'sdd/specs/spec-dev-001-pagos/cycles/cycle-01/artifacts');
+    await mkdir(dir, { recursive: true });
+    for (let i = 0; i < MAX_CYCLE_DOCUMENTS + 10; i++) await writeFile(path.join(dir, `f${String(i).padStart(3, '0')}.txt`), 'x');
+    const { snapshot } = await loadWorkspaceSnapshot(root);
+    expect(snapshot.cycles[0]?.documents).toHaveLength(MAX_CYCLE_DOCUMENTS);
+  });
+
+  it('reports the spec document when the spec file exists and omits it otherwise', async () => {
+    const { snapshot } = await loadWorkspaceSnapshot(root);
+    const pagos = snapshot.specs.find((s) => s.id === 'spec-dev-001-pagos');
+    expect(pagos?.document).toBe(`${pagos?.folder}/spec-dev-001-pagos.spec.md`);
+    expect(snapshot.specs.find((s) => s.id === 'spec-dev-002-borrador')?.document).toBeUndefined();
+  });
+
+  it('keeps fix_document only when it points inside sdd/', async () => {
+    const file = path.join(root, 'sdd/fixes.json');
+    const json = JSON.parse(await readFile(file, 'utf8'));
+    const base = json.fixes[0];
+    json.fixes = [
+      { ...base, id: 'F1', fix_document: 'sdd/fixes/fix-1.md' },
+      { ...base, id: 'F2', fix_document: 'sdd/../secret.md' },
+      { ...base, id: 'F3', fix_document: '/etc/passwd' },
+      { ...base, id: 'F4', fix_document: undefined },
+    ];
+    await writeFile(file, JSON.stringify(json));
+    const { snapshot } = await loadWorkspaceSnapshot(root);
+    expect(snapshot.fixes.map((f) => f.document)).toEqual(['sdd/fixes/fix-1.md', undefined, undefined, undefined]);
+  });
+
+  it('produces a snapshot the protocol accepts', async () => {
+    const { snapshot } = await loadWorkspaceSnapshot(root);
+    expect(WorkspaceSnapshot.safeParse(snapshot).success).toBe(true);
   });
 });
