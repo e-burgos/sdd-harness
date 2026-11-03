@@ -118,19 +118,19 @@
       "cycles_completed": 7,
       "description": "Studio adopta @e-burgos/tucu-ui vía el entry ./next: tema, paleta y primitivas de la librería con la misma distribución de pantallas.",
       "completed_at": "2026-11-02"
-    }
-  ],
-  "in_progress_modules": [
+    },
     {
       "module": "kit-tucu-ui",
       "spec": "spec-e-burgos-011-kit-tucu-ui",
       "apps": [
         "apps/cli"
       ],
-      "cycles_completed": 0,
-      "description": "Integración opcional de tucu-ui en el kit: skill de diseño y servidor MCP en los cuatro arneses, con interruptor en sdd/tools.json."
+      "cycles_completed": 1,
+      "description": "Integración opcional de tucu-ui en el kit: skill de diseño y servidor MCP en los cuatro arneses, con interruptor en sdd/tools.json.",
+      "completed_at": "2026-11-03"
     }
   ],
+  "in_progress_modules": [],
   "pending_modules": [],
   "monorepo": {
     "tool": "none (multi-app repo)",

@@ -23,14 +23,24 @@
       "estimation_hours": 3,
       "story_points": 3,
       "depends_on": [],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/cli/templates/sdd/schemas/tools.schema.json",
         "apps/cli/templates/sdd/tools.json",
         "apps/cli/src/generators/kit-manifest.ts",
         "apps/cli/src/generators/__tests__/sdd.generator.integration.spec.ts",
         "apps/cli/src/generators/__tests__/update.generator.spec.ts"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 18761,
+        "tokens_out": 3311,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-03"
+      }
     },
     {
       "id": "TASK-002",
@@ -42,11 +52,21 @@
       "estimation_hours": 6,
       "story_points": 5,
       "depends_on": [],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/cli/templates/sdd/scripts/mcp-config.mjs",
         "apps/cli/src/utils/__tests__/mcp-config.spec.ts"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 31268,
+        "tokens_out": 5518,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-03"
+      }
     },
     {
       "id": "TASK-003",
@@ -61,10 +81,20 @@
         "TASK-001",
         "TASK-023"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/cli/templates/sdd/scripts/sdd-tucu.mjs"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 12507,
+        "tokens_out": 2207,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-03"
+      }
     },
     {
       "id": "TASK-004",
@@ -78,10 +108,20 @@
       "depends_on": [
         "TASK-003"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/cli/templates/sdd/scripts/sdd-tucu.mjs"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 31268,
+        "tokens_out": 5518,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-03"
+      }
     },
     {
       "id": "TASK-005",
@@ -98,10 +138,20 @@
         "TASK-004",
         "TASK-024"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/cli/templates/sdd/scripts/sdd-tucu.mjs"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 31268,
+        "tokens_out": 5518,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-03"
+      }
     },
     {
       "id": "TASK-006",
@@ -116,10 +166,20 @@
       "depends_on": [
         "TASK-005"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/cli/templates/sdd/scripts/sdd-tucu.mjs"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 18761,
+        "tokens_out": 3311,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-03"
+      }
     },
     {
       "id": "TASK-007",
@@ -133,10 +193,20 @@
       "depends_on": [
         "TASK-024"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/cli/templates/sdd/scripts/setup-agents.sh"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 12507,
+        "tokens_out": 2207,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-03"
+      }
     },
     {
       "id": "TASK-008",
@@ -149,10 +219,20 @@
       "depends_on": [
         "TASK-007"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/cli/templates/sdd/scripts/setup-agents.ps1"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 6254,
+        "tokens_out": 1104,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-03"
+      }
     },
     {
       "id": "TASK-009",
@@ -166,12 +246,22 @@
       "depends_on": [
         "TASK-003"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/cli/templates/sdd/templates/nx-workspace/package.json",
         "apps/cli/src/generators/__tests__/update.generator.spec.ts",
         "apps/cli/src/generators/__tests__/standalone.generator.spec.ts"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 12507,
+        "tokens_out": 2207,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-03"
+      }
     },
     {
       "id": "TASK-010",
@@ -185,10 +275,20 @@
         "TASK-001",
         "TASK-023"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/cli/templates/sdd/scripts/validate-sdd.mjs"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 18761,
+        "tokens_out": 3311,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-03"
+      }
     },
     {
       "id": "TASK-011",
@@ -201,10 +301,20 @@
       "depends_on": [
         "TASK-003"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/cli/templates/sdd/skills/sdd-steward/SKILL.md"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 6254,
+        "tokens_out": 1104,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-03"
+      }
     },
     {
       "id": "TASK-012",
@@ -225,11 +335,21 @@
         "TASK-008",
         "TASK-010"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/cli/src/generators/__tests__/tucu-ui.integration.spec.ts",
         "apps/cli/src/generators/__tests__/sdd.generator.windows.spec.ts"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 50029,
+        "tokens_out": 8829,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-03"
+      }
     },
     {
       "id": "TASK-013",
@@ -246,14 +366,24 @@
         "TASK-005",
         "TASK-023"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/cli/src/utils/kit-scripts.ts",
         "apps/cli/src/utils/tucu-ui-offer.ts",
         "apps/cli/src/utils/tucu-ui-run.ts",
         "apps/cli/src/utils/__tests__/tucu-ui-offer.spec.ts",
         "apps/cli/src/utils/__tests__/kit-scripts.spec.ts"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 54768,
+        "tokens_out": 9665,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-03"
+      }
     },
     {
       "id": "TASK-014",
@@ -268,13 +398,23 @@
         "TASK-013",
         "TASK-025"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/cli/src/commands/init.ts",
         "apps/cli/src/generators/workspace.generator.ts",
         "apps/cli/src/generators/standalone.generator.ts",
         "apps/cli/src/commands/__tests__/init-target.spec.ts"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 32861,
+        "tokens_out": 5799,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-03"
+      }
     },
     {
       "id": "TASK-015",
@@ -288,12 +428,22 @@
       "depends_on": [
         "TASK-013"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/cli/src/commands/configure/sdd.ts",
         "apps/cli/src/commands/configure/sdd-apps.ts",
         "apps/cli/src/commands/__tests__/configure-sdd-apps.spec.ts"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 32861,
+        "tokens_out": 5799,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-03"
+      }
     },
     {
       "id": "TASK-016",
@@ -307,13 +457,23 @@
         "TASK-002",
         "TASK-013"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/cli/src/commands/configure/mcp.ts",
         "apps/cli/src/commands/configure/memory.ts",
         "apps/cli/src/utils/mcp-sync.ts",
         "apps/cli/src/commands/__tests__/configure-mcp.spec.ts"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 54768,
+        "tokens_out": 9665,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-03"
+      }
     },
     {
       "id": "TASK-017",
@@ -329,10 +489,20 @@
         "TASK-008",
         "TASK-009"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/cli/src/generators/__tests__/update.generator.spec.ts"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 21907,
+        "tokens_out": 3866,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-03"
+      }
     },
     {
       "id": "TASK-018",
@@ -352,10 +522,20 @@
         "TASK-016",
         "TASK-017"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/cli/src/commands/__tests__/tucu-ui-flow.spec.ts"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 54768,
+        "tokens_out": 9665,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-03"
+      }
     },
     {
       "id": "TASK-019",
@@ -368,7 +548,7 @@
       "depends_on": [
         "TASK-018"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/cli/templates/sdd/documentation/es/README.md",
         "apps/cli/templates/sdd/documentation/es/HOW-TO-USE-SDD.md",
@@ -380,7 +560,17 @@
         "apps/cli/templates/sdd/docs/app.js",
         "apps/cli/templates/sdd/documentation/es/TUCU-UI.md",
         "apps/cli/templates/sdd/documentation/en/TUCU-UI.md"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 124660,
+        "tokens_out": 21999,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-03"
+      }
     },
     {
       "id": "TASK-020",
@@ -393,13 +583,23 @@
       "depends_on": [
         "TASK-011"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/cli/templates/sdd/dual-harness/AGENTS.md",
         "apps/cli/templates/sdd/dual-harness/CLAUDE.md",
         "apps/cli/templates/sdd/dual-harness/GEMINI.md",
         "apps/cli/templates/sdd/dual-harness/copilot-instructions.md"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 83107,
+        "tokens_out": 14666,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-03"
+      }
     },
     {
       "id": "TASK-021",
@@ -420,10 +620,20 @@
         "TASK-020",
         "TASK-026"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
-        "examples/"
-      ]
+        "examples/tucu-next (gitignored)"
+      ],
+      "usage": {
+        "tokens_in": 60000,
+        "tokens_out": 8000,
+        "provider_model": "claude/opus",
+        "effort": "medium",
+        "agent": "reviewer",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-11-03"
+      }
     },
     {
       "id": "TASK-022",
@@ -452,8 +662,18 @@
       "depends_on": [
         "TASK-021"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [],
+      "usage": {
+        "tokens_in": 30000,
+        "tokens_out": 4000,
+        "provider_model": "claude/opus",
+        "effort": "medium",
+        "agent": "reviewer",
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-11-03"
+      }
     },
     {
       "id": "TASK-023",
@@ -470,11 +690,21 @@
         "TASK-001",
         "TASK-002"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/cli/templates/sdd/scripts/tucu-ui-common.mjs",
         "apps/cli/src/utils/__tests__/tucu-ui-common.spec.ts"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 18761,
+        "tokens_out": 3311,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-03"
+      }
     },
     {
       "id": "TASK-024",
@@ -490,10 +720,20 @@
         "TASK-003",
         "TASK-004"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/cli/templates/sdd/scripts/sdd-tucu.mjs"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 31268,
+        "tokens_out": 5518,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-03"
+      }
     },
     {
       "id": "TASK-025",
@@ -505,14 +745,24 @@
       "estimation_hours": 2,
       "story_points": 2,
       "depends_on": [],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/cli/src/config/schema.ts",
         "apps/cli/src/config/json-schema.ts",
         "apps/cli/src/types/config.types.ts",
         "apps/cli/src/config/__tests__/load.spec.ts",
         "apps/cli/src/config/__tests__/json-schema.spec.ts"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 21907,
+        "tokens_out": 3866,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-03"
+      }
     },
     {
       "id": "TASK-026",
@@ -525,7 +775,7 @@
       "depends_on": [
         "TASK-012"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "sdd/schemas/tools.schema.json",
         "sdd/scripts/mcp-config.mjs",
@@ -539,7 +789,17 @@
         "package.json",
         "apps/studio-bridge/src/workspace/kit-tools.parity.spec.ts",
         "apps/studio-bridge/src/workspace/kit-tools.spec.ts"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 18761,
+        "tokens_out": 3311,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-03"
+      }
     }
   ]
 }

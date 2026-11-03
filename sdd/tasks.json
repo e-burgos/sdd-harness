@@ -238,9 +238,9 @@
             "apps/cli",
             "apps/studio-bridge"
           ],
-          "status": "in-progress",
+          "status": "completed",
           "tasks_total": 26,
-          "tasks_done": 0
+          "tasks_done": 26
         }
       }
     }
