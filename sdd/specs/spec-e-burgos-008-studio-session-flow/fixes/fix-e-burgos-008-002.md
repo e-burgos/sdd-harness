@@ -7,7 +7,7 @@
 | **Severidad** | low |
 | **Fecha**     | 2026-11-03 |
 | **Autor**     | e-burgos |
-| **Estado**    | implemented |
+| **Estado**    | validated |
 | **Spec**      | spec-e-burgos-008-studio-session-flow |
 
 ## Problema
@@ -21,3 +21,7 @@ Solo tests: el motor espera una señal que el test abre después de encolar los 
 ## Archivos
 
 - `apps/studio-bridge/src/sessions/session-manager.spec.ts`
+
+## Validación
+
+CI de PR #63 en verde en `ubuntu-latest` y `windows-latest` (head 36bb829), mergeado a main el 2026-11-03.

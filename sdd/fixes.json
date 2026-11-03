@@ -1083,7 +1083,7 @@
       "severity": "medium",
       "created_at": "2026-11-03",
       "resolved_at": "2026-11-03",
-      "validated_at": null,
+      "validated_at": "2026-11-03",
       "title": "En Windows --sync no reconoce el link de tucu-ui-design como del kit",
       "estimation_hours": 1,
       "description": "Con el temp de Windows en ruta corta 8.3, realpathSync (JS) y la raíz resuelta desde PowerShell no coinciden y los links tucu-ui-design se tratan como ajenos. Se compara con realpathSync.native.",
@@ -1097,8 +1097,8 @@
         "sdd/scripts/tucu-ui-common.mjs",
         "sdd/scripts/sdd-tucu.mjs"
       ],
-      "test_reference": "sdd.generator.windows.spec.ts (CI windows-latest)",
-      "status": "implemented",
+      "test_reference": "sdd.generator.windows.spec.ts (CI windows-latest) — verde en CI ubuntu + windows-latest (PR #63, 36bb829)",
+      "status": "validated",
       "cycle": null,
       "usage": {
         "provider_model": "claude/opus",
@@ -1130,7 +1130,7 @@
       "severity": "low",
       "created_at": "2026-11-03",
       "resolved_at": "2026-11-03",
-      "validated_at": null,
+      "validated_at": "2026-11-03",
       "title": "Tests de cola de SessionManager dependientes del reloj fallan en Windows",
       "estimation_hours": 1,
       "description": "Dos tests asumían que el motor tardaba más que el envío del mensaje en cola; en el runner de Windows el turno terminaba antes. Los tests pasan a esperar una señal explícita.",
@@ -1141,8 +1141,8 @@
       "affected_files": [
         "apps/studio-bridge/src/sessions/session-manager.spec.ts"
       ],
-      "test_reference": "session-manager.spec.ts",
-      "status": "implemented",
+      "test_reference": "session-manager.spec.ts — verde en CI ubuntu + windows-latest (PR #63, 36bb829)",
+      "status": "validated",
       "cycle": null,
       "usage": {
         "provider_model": "claude/opus",
