@@ -98,18 +98,6 @@
       "completed_at": "2026-10-26"
     },
     {
-      "module": "studio-dual-sidebar",
-      "spec": "spec-e-burgos-010-studio-dual-sidebar",
-      "apps": [
-        "apps/studio",
-        "apps/studio-bridge",
-        "libs/studio-protocol"
-      ],
-      "cycles_completed": 1,
-      "description": "Navegación de Studio estilo Slack: riel de módulos y panel de lista, con módulos de Kit, Arquitectura y Métricas y control de las herramientas del kit.",
-      "completed_at": "2026-10-28"
-    },
-    {
       "module": "studio-tucu-ui",
       "spec": "spec-e-burgos-009-studio-tucu-ui",
       "apps": [
@@ -130,7 +118,19 @@
       "completed_at": "2026-11-03"
     }
   ],
-  "in_progress_modules": [],
+  "in_progress_modules": [
+    {
+      "module": "studio-dual-sidebar",
+      "spec": "spec-e-burgos-010-studio-dual-sidebar",
+      "apps": [
+        "apps/studio",
+        "apps/studio-bridge",
+        "libs/studio-protocol"
+      ],
+      "cycles_completed": 1,
+      "description": "Navegación de Studio estilo Slack: riel de módulos y panel de lista, con módulos de Kit, Arquitectura y Métricas y control de las herramientas del kit."
+    }
+  ],
   "pending_modules": [],
   "monorepo": {
     "tool": "none (multi-app repo)",

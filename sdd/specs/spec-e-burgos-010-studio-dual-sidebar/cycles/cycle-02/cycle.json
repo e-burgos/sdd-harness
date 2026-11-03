@@ -1,0 +1,29 @@
+{
+  "$schema": "../../../../schemas/cycle.schema.json",
+  "cycle": 2,
+  "module": "studio-dual-sidebar",
+  "spec": "spec-e-burgos-010-studio-dual-sidebar",
+  "apps": [
+    "apps/studio"
+  ],
+  "phase": "dual-sidebar-followups",
+  "flow": "lite",
+  "objectives": [
+    "Refresco de la skill abierta y lecturas selectivas de Arquitectura (US-11, US-12)",
+    "Actividad de conversaciones en el módulo Actividad (US-13)"
+  ],
+  "status": "in-progress",
+  "started_at": "2026-11-03",
+  "completed_at": null,
+  "documents": {
+    "plan": "sdd/specs/spec-e-burgos-010-studio-dual-sidebar/cycles/cycle-02/plan.md",
+    "tasks": "sdd/specs/spec-e-burgos-010-studio-dual-sidebar/cycles/cycle-02/tasks.json"
+  },
+  "artifacts": [],
+  "metrics": null,
+  "tables_created": [],
+  "endpoints_implemented": [],
+  "components_created": [],
+  "issues_found": [],
+  "reviewer_report": null
+}

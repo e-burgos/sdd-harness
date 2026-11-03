@@ -1,0 +1,58 @@
+{
+  "$schema": "../../../../schemas/cycle-tasks.schema.json",
+  "spec": "spec-e-burgos-010-studio-dual-sidebar",
+  "cycle": 2,
+  "module": "studio-dual-sidebar",
+  "apps": [
+    "apps/studio"
+  ],
+  "flow": "lite",
+  "user_stories_generated": true,
+  "prerequisites": {
+    "tasks_generated": true
+  },
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "Refresco de la skill abierta en Kit y lecturas selectivas de registros en Arquitectura",
+      "user_stories": [
+        "US-11",
+        "US-12"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-002",
+      "title": "Origen Conversaciones en Actividad derivado de los hilos del store",
+      "user_stories": [
+        "US-13"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-003",
+      "title": "Verificación y cierre: build, typecheck, test, e2e y recorrida",
+      "user_stories": [
+        "US-11",
+        "US-12",
+        "US-13"
+      ],
+      "estimation_hours": 1,
+      "story_points": 2,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002"
+      ],
+      "status": "pending",
+      "files": []
+    }
+  ]
+}

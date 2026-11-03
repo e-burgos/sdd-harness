@@ -226,6 +226,16 @@
           "status": "completed",
           "tasks_total": 30,
           "tasks_done": 30
+        },
+        "cycle-02": {
+          "file": "sdd/specs/spec-e-burgos-010-studio-dual-sidebar/cycles/cycle-02/tasks.json",
+          "module": "studio-dual-sidebar",
+          "apps": [
+            "apps/studio"
+          ],
+          "status": "in-progress",
+          "tasks_total": 3,
+          "tasks_done": 0
         }
       }
     },
