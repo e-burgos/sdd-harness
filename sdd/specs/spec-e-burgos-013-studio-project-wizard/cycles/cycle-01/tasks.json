@@ -25,7 +25,7 @@
       "estimation_hours": 6,
       "story_points": 5,
       "depends_on": [],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/cli/src/config/app-options.ts",
         "apps/cli/src/config/schema.ts",
@@ -33,7 +33,17 @@
         "apps/cli/src/generators/workspace.generator.ts",
         "apps/cli/src/commands/init.ts",
         "apps/cli/src/generators/__tests__/app-types.spec.ts"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 46322,
+        "tokens_out": 8175,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-04"
+      }
     },
     {
       "id": "TASK-002",
@@ -51,11 +61,21 @@
       "depends_on": [
         "TASK-001"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/cli/src/config/catalog.ts",
         "apps/cli/src/config/__tests__/catalog.spec.ts"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 46322,
+        "tokens_out": 8175,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-04"
+      }
     },
     {
       "id": "TASK-003",
@@ -83,13 +103,23 @@
         "TASK-001",
         "TASK-002"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/cli/src/config/validate.ts",
         "apps/cli/src/commands/config/index.ts",
         "apps/cli/src/config/__tests__/validate.spec.ts",
         "apps/cli/src/commands/config/__tests__/config.command.spec.ts"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 46322,
+        "tokens_out": 8175,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-04"
+      }
     },
     {
       "id": "TASK-004",
@@ -105,7 +135,7 @@
       "estimation_hours": 6,
       "story_points": 5,
       "depends_on": [],
-      "status": "pending",
+      "status": "done",
       "files": [
         "libs/studio-protocol/src/wizard.ts",
         "libs/studio-protocol/src/commands.ts",
@@ -114,7 +144,17 @@
         "libs/studio-protocol/src/limits.ts",
         "libs/studio-protocol/src/index.ts",
         "libs/studio-protocol/src/__tests__/wizard.spec.ts"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 66903,
+        "tokens_out": 11806,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-04"
+      }
     },
     {
       "id": "TASK-005",
@@ -315,7 +355,7 @@
       "depends_on": [
         "TASK-004"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/studio/src/lib/wizard/state.ts",
         "apps/studio/src/lib/wizard/to-config.ts",
@@ -324,7 +364,17 @@
         "apps/studio/src/lib/wizard/issues.ts",
         "apps/studio/src/lib/wizard/recommendations.ts",
         "apps/studio/src/lib/wizard/__tests__/"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 66903,
+        "tokens_out": 11806,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-04"
+      }
     },
     {
       "id": "TASK-013",
@@ -345,7 +395,7 @@
         "TASK-004",
         "TASK-012"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/studio/src/lib/wizard/persist.ts",
         "apps/studio/src/lib/wizard/hermes-idea.ts",
@@ -354,7 +404,17 @@
         "apps/studio/src/lib/wizard/use-target-check.ts",
         "apps/studio/src/lib/wizard/use-generation.ts",
         "apps/studio/src/lib/wizard/__tests__/"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 66903,
+        "tokens_out": 11806,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-04"
+      }
     },
     {
       "id": "TASK-014",

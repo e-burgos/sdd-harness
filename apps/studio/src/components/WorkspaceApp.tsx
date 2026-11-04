@@ -39,7 +39,7 @@ export function Connected() {
 function ConnectedShell() {
   const { connection, syncError, retrySync } = useBridge();
   const snapshot = useStudio((s) => s.snapshot);
-  const welcomeProject = connection.status === 'open' ? connection.welcome?.workspace.project : undefined;
+  const welcomeProject = connection.status === 'open' ? connection.welcome?.workspace?.project : undefined;
   const project = snapshot?.project ?? welcomeProject ?? '';
   const known = useMemo<KnownEntities | null>(
     () =>

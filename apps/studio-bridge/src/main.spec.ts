@@ -125,7 +125,7 @@ describe('startBridge root resolution (M5)', () => {
     await new Promise((r) => ws.once('open', r));
     ws.send(JSON.stringify({ kind: 'hello', token: bridge.token, protocolVersion: PROTOCOL_VERSION, clientVersion: 't' }));
     const welcome = (await waitFor(() => inbox.find((m) => m.kind === 'welcome'))) as Extract<ServerMessage, { kind: 'welcome' }>;
-    expect(welcome.workspace.root).toBe(await realpath(root));
+    expect(welcome.workspace?.root).toBe(await realpath(root));
     ws.close();
   });
 });

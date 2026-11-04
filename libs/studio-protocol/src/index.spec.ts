@@ -11,6 +11,10 @@ const PUBLISHED_EXPORTS = [
   'ThreadEvent', 'CatalogSource', 'AgentSummary', 'SkillSummary', 'FixSummary', 'WorkspaceSnapshot',
   'MAX_READ_FILE_BYTES', 'MAX_KIT_ENTRIES', 'MAX_CYCLE_DOCUMENTS', 'KIT_SECTIONS', 'KitEntry', 'KitIndex',
   'ToolsChange', 'ToolsValue', 'ToolsSetResult', 'RtkGain', 'KitToolsState', 'ToolsRevision',
+  'MAX_CONFIG_BYTES', 'GENERATION_CHUNK_MAX', 'GENERATION_BUFFER_BYTES', 'MAX_DIR_ENTRIES', 'WS_CLOSE_WORKSPACE_SWITCHED',
+  'ConfigCatalog', 'WizardCatalogResult', 'ConfigIssue', 'ResolvedConfig', 'ConfigValidation', 'Preflight', 'DirListing',
+  'TargetState', 'TargetCheck', 'GenerationStage', 'GenerationStatus', 'GenerationState', 'GenerateResult',
+  'GenerationOutputChunk', 'GenerationSnapshot', 'WorkspaceOpenResult',
 ];
 
 describe('public surface', () => {

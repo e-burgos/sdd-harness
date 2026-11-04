@@ -69,62 +69,109 @@ export function mfesOfShell<T extends TopologyApp>(
   );
 }
 
+export type TopologyIssueCode =
+  | "ml-not-python"
+  | "tucu-ui-not-frontend"
+  | "workspace-only-type"
+  | "shell-not-mfe"
+  | "shell-missing"
+  | "shell-not-found"
+  | "shell-not-mfe-shell"
+  | "shell-ambiguous";
+
+export interface TopologyIssue {
+  appIndex: number;
+  field: "ml" | "tucuUi" | "type" | "shell";
+  code: TopologyIssueCode;
+  message: string;
+}
+
+export function collectAppTopologyIssues(
+  apps: readonly TopologyApp[],
+  mode: "nx" | "standalone",
+): TopologyIssue[] {
+  const issues: TopologyIssue[] = [];
+
+  apps.forEach((app, appIndex) => {
+    if (app.ml !== undefined && app.type !== "python") {
+      issues.push({
+        appIndex,
+        field: "ml",
+        code: "ml-not-python",
+        message: `App "${app.name}": "ml" is only valid on apps of type "python" (got type "${app.type}").`,
+      });
+    }
+    if (app.tucuUi !== undefined && !(TUCU_UI_APP_TYPES as readonly string[]).includes(app.type)) {
+      issues.push({
+        appIndex,
+        field: "tucuUi",
+        code: "tucu-ui-not-frontend",
+        message: `App "${app.name}": "tucuUi" is only valid on frontend apps (${TUCU_UI_APP_TYPES.join(", ")}), got type "${app.type}".`,
+      });
+    }
+  });
+
+  if (mode === "standalone") {
+    apps.forEach((app, appIndex) => {
+      if (!isWorkspaceOnlyAppType(app.type)) return;
+      issues.push({
+        appIndex,
+        field: "type",
+        code: "workspace-only-type",
+        message: `App type "${app.type}" ("${app.name}") is only supported in monorepo (nx) mode, not in standalone mode.`,
+      });
+    });
+    return issues;
+  }
+
+  const shells = apps.filter((a) => a.type === "mfe-shell");
+  apps.forEach((app, appIndex) => {
+    if (app.shell && app.type !== "mfe") {
+      issues.push({
+        appIndex,
+        field: "shell",
+        code: "shell-not-mfe",
+        message: `App "${app.name}": "shell" is only valid on apps of type "mfe" (got type "${app.type}").`,
+      });
+    }
+    if (app.type !== "mfe") return;
+    if (app.shell) {
+      const target = apps.find((a) => a.name === app.shell);
+      if (!target) {
+        issues.push({
+          appIndex,
+          field: "shell",
+          code: "shell-not-found",
+          message: `App "${app.name}": shell "${app.shell}" does not exist in apps.`,
+        });
+      } else if (target.type !== "mfe-shell") {
+        issues.push({
+          appIndex,
+          field: "shell",
+          code: "shell-not-mfe-shell",
+          message: `App "${app.name}": shell "${app.shell}" must be an app of type "mfe-shell" (got "${target.type}").`,
+        });
+      }
+    } else if (shells.length !== 1) {
+      issues.push({
+        appIndex,
+        field: "shell",
+        code: shells.length === 0 ? "shell-missing" : "shell-ambiguous",
+        message:
+          shells.length === 0
+            ? `App "${app.name}": an "mfe" needs a shell, but there is no app of type "mfe-shell".`
+            : `App "${app.name}": declare apps[].shell — there are ${shells.length} "mfe-shell" apps (${shells.map((s) => s.name).join(", ")}).`,
+      });
+    }
+  });
+  return issues;
+}
+
 export function validateAppTopology(
   apps: readonly TopologyApp[],
   mode: "nx" | "standalone",
 ): string[] {
-  const errors: string[] = [];
-
-  for (const app of apps) {
-    if (app.ml !== undefined && app.type !== "python") {
-      errors.push(
-        `App "${app.name}": "ml" is only valid on apps of type "python" (got type "${app.type}").`,
-      );
-    }
-    if (app.tucuUi !== undefined && !(TUCU_UI_APP_TYPES as readonly string[]).includes(app.type)) {
-      errors.push(
-        `App "${app.name}": "tucuUi" is only valid on frontend apps (${TUCU_UI_APP_TYPES.join(", ")}), got type "${app.type}".`,
-      );
-    }
-  }
-
-  if (mode === "standalone") {
-    for (const app of apps.filter((a) => isWorkspaceOnlyAppType(a.type))) {
-      errors.push(
-        `App type "${app.type}" ("${app.name}") is only supported in monorepo (nx) mode, not in standalone mode.`,
-      );
-    }
-    return errors;
-  }
-
-  const shells = apps.filter((a) => a.type === "mfe-shell");
-  for (const app of apps) {
-    if (app.shell && app.type !== "mfe") {
-      errors.push(
-        `App "${app.name}": "shell" is only valid on apps of type "mfe" (got type "${app.type}").`,
-      );
-    }
-    if (app.type !== "mfe") continue;
-    if (app.shell) {
-      const target = apps.find((a) => a.name === app.shell);
-      if (!target) {
-        errors.push(
-          `App "${app.name}": shell "${app.shell}" does not exist in apps.`,
-        );
-      } else if (target.type !== "mfe-shell") {
-        errors.push(
-          `App "${app.name}": shell "${app.shell}" must be an app of type "mfe-shell" (got "${target.type}").`,
-        );
-      }
-    } else if (shells.length !== 1) {
-      errors.push(
-        shells.length === 0
-          ? `App "${app.name}": an "mfe" needs a shell, but there is no app of type "mfe-shell".`
-          : `App "${app.name}": declare apps[].shell — there are ${shells.length} "mfe-shell" apps (${shells.map((s) => s.name).join(", ")}).`,
-      );
-    }
-  }
-  return errors;
+  return collectAppTopologyIssues(apps, mode).map((issue) => issue.message);
 }
 
 export function assertValidAppTopology(

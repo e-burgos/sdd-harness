@@ -3,6 +3,7 @@ import { AttachmentRef, PromptRefs } from './attachments';
 import { AlwaysOffer, AlwaysRule, Author, ChannelId, Effort, MAX_QUESTIONS, Presence, Question, QuestionAnswer, SessionStatus, ThreadInfo } from './domain';
 import { MAX_ATTACHMENTS } from './limits';
 import { Area, WorkspaceSnapshot } from './snapshot';
+import { GenerationState } from './wizard';
 
 export const Usage = z.object({
   model: z.string(),
@@ -136,5 +137,14 @@ export const ServerEvent = z.discriminatedUnion('kind', [
     chunk: z.string(),
   }),
   z.object({ kind: z.literal('command.exit'), runId: z.string(), exitCode: z.number().int() }),
+  z.object({ kind: z.literal('generation.status'), generation: GenerationState }),
+  z.object({
+    kind: z.literal('generation.output'),
+    generationId: z.string().max(64),
+    seq: z.number().int().positive(),
+    stream: z.enum(['stdout', 'stderr']),
+    chunk: z.string().max(32_768),
+  }),
+  z.object({ kind: z.literal('workspace.switched'), root: z.string().max(1024), project: z.string().max(128) }),
 ]);
 export type ServerEvent = z.infer<typeof ServerEvent>;

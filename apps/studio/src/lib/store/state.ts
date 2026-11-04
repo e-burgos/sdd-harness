@@ -156,6 +156,9 @@ export function applyServerEvent(s: StudioState, e: ServerEvent): StudioState {
       return { ...s, runs: { ...s.runs, [e.runId]: { ...run, exitCode: e.exitCode } } };
     }
     case 'kit.changed':
+    case 'generation.status':
+    case 'generation.output':
+    case 'workspace.switched':
       return s;
   }
 }

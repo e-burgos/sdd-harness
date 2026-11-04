@@ -22,7 +22,7 @@ export const COLLAPSED_WIDTH_PX = 44;
 export function StudioShell() {
   const { t } = useT();
   const { connection } = useBridge();
-  const project = useStudio((s) => s.snapshot?.project ?? (connection.status === 'open' ? connection.welcome?.workspace.project : undefined) ?? '');
+  const project = useStudio((s) => s.snapshot?.project ?? (connection.status === 'open' ? connection.welcome?.workspace?.project : undefined) ?? '');
   const kitVersion = useStudio((s) => s.snapshot?.kitVersion ?? null);
   const activeModule = useNav((s) => s.module);
   const setModule = useNav((s) => s.setModule);

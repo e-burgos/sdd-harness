@@ -60,7 +60,7 @@ export interface WorkspaceOptions {
  * Entradas que pueden preexistir en un directorio destino sin que sea "otro proyecto":
  * el repo git, los archivos de `harness idea`, y lo que un `git init` + README suelen dejar.
  */
-const TOLERATED_ENTRIES = new Set([
+export const TOLERATED_ENTRIES = new Set([
   ".git",
   ".gitignore",
   ".gitattributes",

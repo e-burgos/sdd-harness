@@ -4,6 +4,7 @@ import { AuthPreference, ChannelId, DevProfile, MAX_QUESTIONS, QuestionAnswer, T
 import { ToolsChange } from './kit';
 import { FILE_SEARCH_MAX, MAX_ATTACHMENTS } from './limits';
 import { ToolsRevision } from './snapshot';
+import { AbsPathInput, ConfigDraft, GenerationId } from './wizard';
 
 const Id = z.string().min(1).max(64);
 const Text = z.string().max(100_000);
@@ -85,6 +86,25 @@ export const ClientCommand = z.discriminatedUnion('cmd', [
   z.object({ ...cmd('auth.status') }),
   z.object({ ...cmd('auth.login') }),
   z.object({ ...cmd('auth.logout') }),
+  z.object({ ...cmd('wizard.catalog') }),
+  z.object({ ...cmd('wizard.preflight') }),
+  z.object({ ...cmd('wizard.validate'), config: ConfigDraft }),
+  z.object({ ...cmd('wizard.listDirs'), path: AbsPathInput.optional(), showHidden: z.boolean().default(false) }),
+  z.object({ ...cmd('wizard.checkTarget'), path: AbsPathInput }),
+  z.object({
+    ...cmd('wizard.generate'),
+    config: ConfigDraft,
+    path: AbsPathInput,
+    fingerprint: z.string().regex(/^[0-9a-f]{16}$/).optional(),
+  }),
+  z.object({
+    ...cmd('wizard.generation.get'),
+    generationId: GenerationId.optional(),
+    sinceSeq: z.number().int().nonnegative().default(0),
+  }),
+  z.object({ ...cmd('wizard.generation.cancel'), generationId: GenerationId }),
+  z.object({ ...cmd('wizard.reveal'), generationId: GenerationId }),
+  z.object({ ...cmd('workspace.open'), generationId: GenerationId }),
 ]);
 export type ClientCommand = z.infer<typeof ClientCommand>;
 

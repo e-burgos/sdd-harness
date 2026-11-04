@@ -8,3 +8,4 @@ export * from './handshake';
 export * from './events';
 export * from './commands';
 export * from './codec';
+export * from './wizard';
