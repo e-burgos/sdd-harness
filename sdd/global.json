@@ -140,19 +140,21 @@
       "completed_at": "2026-11-03"
     }
   ],
-  "in_progress_modules": [],
-  "pending_modules": [
+  "in_progress_modules": [
     {
       "module": "studio-project-wizard",
       "spec": "spec-e-burgos-013-studio-project-wizard",
       "apps": [
+        "apps/cli",
         "apps/studio",
         "apps/studio-bridge",
         "libs/studio-protocol"
       ],
       "cycles_completed": 0,
       "description": "Wizard de arquitectura en Studio que genera el proyecto con harness init."
-    },
+    }
+  ],
+  "pending_modules": [
     {
       "module": "github-integration",
       "spec": "spec-e-burgos-014-github-integration",

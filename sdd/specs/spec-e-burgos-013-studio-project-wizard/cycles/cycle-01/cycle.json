@@ -1,0 +1,109 @@
+{
+  "$schema": "../../../../schemas/cycle.schema.json",
+  "cycle": 1,
+  "module": "studio-project-wizard",
+  "spec": "spec-e-burgos-013-studio-project-wizard",
+  "apps": [
+    "apps/cli",
+    "apps/studio",
+    "apps/studio-bridge",
+    "libs/studio-protocol"
+  ],
+  "phase": "project-wizard",
+  "flow": "full",
+  "objectives": [
+    "Wizard de arquitectura de 6 pasos en Studio con vista previa (US-1, US-2)",
+    "Generación de una carpeta local nueva vía bridge con harness init --config, progreso y gate en vivo (US-3, US-5)",
+    "Abrir el proyecto nuevo en Studio (US-4)"
+  ],
+  "status": "in-progress",
+  "started_at": "2026-11-04",
+  "completed_at": null,
+  "documents": {
+    "brief": "sdd/specs/spec-e-burgos-013-studio-project-wizard/cycles/cycle-01/brief.yaml",
+    "functional": "sdd/specs/spec-e-burgos-013-studio-project-wizard/cycles/cycle-01/functional.md",
+    "planner": "sdd/specs/spec-e-burgos-013-studio-project-wizard/cycles/cycle-01/planner.md",
+    "architect": "sdd/specs/spec-e-burgos-013-studio-project-wizard/cycles/cycle-01/architect.md"
+  },
+  "artifacts": [],
+  "metrics": {
+    "tasks_total": 23,
+    "tasks_completed": 0,
+    "tasks_skipped": 0,
+    "story_points": 117,
+    "files_created": [],
+    "files_modified": [],
+    "files_deleted": [],
+    "usage": {
+      "tokens_in": 497879,
+      "tokens_out": 86978,
+      "approx": true,
+      "source": "agent-usage-notification",
+      "by_tier": {
+        "claude/opus": {
+          "tokens_in": 297050,
+          "tokens_out": 51538,
+          "approx": true,
+          "source": "agent-usage-notification"
+        },
+        "claude/sonnet": {
+          "tokens_in": 200829,
+          "tokens_out": 35440,
+          "approx": true,
+          "source": "agent-usage-notification"
+        }
+      },
+      "by_agent": [
+        {
+          "agent": "orchestrator",
+          "label": "brief + apertura",
+          "provider_model": "claude/opus",
+          "effort": "medium",
+          "tokens_in": 90000,
+          "tokens_out": 15000,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-04"
+        },
+        {
+          "agent": "functional",
+          "label": "functional.md",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 99004,
+          "tokens_out": 17471,
+          "source": "agent-usage-notification",
+          "approx": true,
+          "recorded_at": "2026-11-04"
+        },
+        {
+          "agent": "architect",
+          "label": "architect.md",
+          "provider_model": "claude/opus",
+          "effort": "high",
+          "tokens_in": 207050,
+          "tokens_out": 36538,
+          "source": "agent-usage-notification",
+          "approx": true,
+          "recorded_at": "2026-11-04"
+        },
+        {
+          "agent": "planner",
+          "label": "planner.md + tasks.json",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 101825,
+          "tokens_out": 17969,
+          "source": "agent-usage-notification",
+          "approx": true,
+          "recorded_at": "2026-11-04"
+        }
+      ]
+    }
+  },
+  "tables_created": [],
+  "endpoints_implemented": [],
+  "components_created": [],
+  "issues_found": [],
+  "reviewer_report": null
+}
