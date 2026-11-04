@@ -35,11 +35,16 @@ generador real a través del puente.
   con contenido sin confirmación.
 - Studio sobre tucu-ui; mismos tokens y escala tipográfica.
 
-## Preguntas abiertas (decisión del dev)
-1. ¿El wizard vive en Studio con un puente ya conectado a otro repo, o Studio necesita un modo «sin
-   proyecto» para arrancar de cero?
-2. ¿Generar también instala dependencias y corre el gate, o deja eso para después?
-3. ¿Se guarda el `harness.config.json` en el repo nuevo como registro de la decisión?
+## Decisiones (dev, 2026-11-04)
+1. **El wizard no depende del repo conectado.** Su objetivo es filtrar qué herramienta necesita
+   crear el usuario y generar una carpeta local nueva, ya armada como la arma el kit, en la ruta
+   de su computadora que el usuario indique. Esa carpeta después se puede vincular a su repo
+   remoto (eso es spec-e-burgos-014). Studio necesita poder lanzar el wizard sin un proyecto
+   abierto: el puente corre el generador en la carpeta destino elegida.
+2. **Generar instala dependencias y corre el gate** (`harness init --config … -y`, que ya hace
+   `pnpm install`, `sdd:validate` y `lint test build`), con el progreso en vivo en Studio.
+3. **El `harness.config.json` queda en el proyecto nuevo** como registro de la decisión de
+   arquitectura (la CLI ya lo conserva al generar en el lugar).
 
 ## Dependencias
 - spec-e-burgos-012-generators-tucu-ui.
