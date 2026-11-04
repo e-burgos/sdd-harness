@@ -1,3 +1,4 @@
+import path from 'node:path';
 import { BridgeStartError } from './main';
 
 export function parsePort(raw: string): number {
@@ -31,4 +32,12 @@ export function parseToken(raw: string): string {
     throw new BridgeStartError('Invalid token: use at least 16 characters [A-Za-z0-9_-].');
   }
   return raw;
+}
+
+export function parseAllowTargets(raw: string | undefined): string[] {
+  const entries = (raw ?? '').split(',').map((entry) => entry.trim()).filter(Boolean);
+  for (const entry of entries) {
+    if (!path.isAbsolute(entry)) throw new BridgeStartError(`Invalid --allow-target: ${entry} (use absolute paths)`);
+  }
+  return entries.map((entry) => path.resolve(entry));
 }

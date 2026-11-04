@@ -70,3 +70,11 @@ export const idOf = (state: WizardState, name: string): string => {
   if (!found) throw new Error(`no app ${name}`);
   return found.id;
 };
+
+export const catalogResultFixture = {
+  catalog: catalogFixture,
+  initArgv: ['init', '--config', 'harness.config.json', '-y'],
+  home: '/home/dev',
+  suggestedParent: '/home/dev/projects',
+  platform: 'posix' as const,
+};

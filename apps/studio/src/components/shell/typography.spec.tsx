@@ -1,4 +1,5 @@
 import { act, fireEvent, screen } from '@testing-library/react';
+import { Fragment } from 'react';
 import { MODULE_ICONS, MODULES } from '@/lib/nav/modules';
 import { MODULE_IDS } from '@/lib/nav/module-ids';
 import { useRailPreferences } from '@/lib/nav/use-rail-preferences';
@@ -8,7 +9,8 @@ import { PanelGroup } from './PanelGroup';
 import { PanelRow } from './PanelRow';
 import { RightPanelFrame } from './RightPanelFrame';
 import { SectionListPanel } from './SectionListPanel';
-import { renderShell } from './shell-test-utils';
+import { wizardClient } from '../modules/new-project/__tests__/harness';
+import { bridgeValue, renderShell } from './shell-test-utils';
 
 const FORBIDDEN = /^text-(?:xs|sm|base|lg|[2-9]?xl|body|\[(?:\d|length:).*)$/;
 const SCOPES = '[data-studio-panel], [data-studio-rail]';
@@ -44,12 +46,13 @@ describe('panel type scale', () => {
   beforeEach(() => window.localStorage.clear());
 
   it.each(MODULE_IDS)('the %s module panel and right panel use only scale tokens', (id) => {
-    const { Panel, Right } = MODULES[id];
+    const { Panel, Right, Scope = Fragment } = MODULES[id];
     const { container } = renderShell(
-      <>
+      <Scope>
         <Panel />
         {Right && <Right />}
-      </>,
+      </Scope>,
+      { value: id === 'new-project' ? bridgeValue({ client: wizardClient().client as never }) : undefined },
     );
     expect(container.querySelector(SCOPES)).not.toBeNull();
     expect(forbiddenClassesWithin(container)).toEqual([]);

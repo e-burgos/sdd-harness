@@ -11,4 +11,5 @@ export const MODULE_LABEL_KEY: Record<ModuleId, keyof Dict> = {
   kit: 'module.kit.label',
   architecture: 'module.architecture.label',
   metrics: 'module.metrics.label',
+  'new-project': 'module.new-project.label',
 };

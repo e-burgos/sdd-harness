@@ -9,6 +9,7 @@ import { mapEn } from './modules/map';
 import { kitEn } from './modules/kit';
 import { architectureEn } from './modules/architecture';
 import { metricsEn } from './modules/metrics';
+import { wizardEn } from './modules/wizard';
 
 export const en = {
   ...shellEn,
@@ -21,6 +22,7 @@ export const en = {
   ...kitEn,
   ...architectureEn,
   ...metricsEn,
+  ...wizardEn,
   'connect.title': 'Connect your repo',
   'connect.steps': 'Steps to connect your repo',
   'connect.step1.title': 'Install the SDD kit in your repo',

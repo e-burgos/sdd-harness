@@ -26,6 +26,7 @@ export interface BridgeHandlers {
 export interface BridgeServer {
   port: number;
   broadcast(message: ServerMessage): void;
+  closeAll(code: number): void;
   close(): Promise<void>;
 }
 
@@ -150,6 +151,9 @@ export async function startBridgeServer(o: {
     broadcast: (message) => {
       const payload = JSON.stringify(message);
       for (const ws of clients) if (ws.readyState === ws.OPEN) ws.send(payload);
+    },
+    closeAll: (code) => {
+      for (const ws of wss.clients) ws.close(code);
     },
     close: async () => {
       for (const ws of wss.clients) ws.terminate();

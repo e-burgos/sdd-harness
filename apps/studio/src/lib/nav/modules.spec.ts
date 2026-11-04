@@ -4,8 +4,8 @@ import { es } from '@/lib/i18n/es';
 import { en } from '@/lib/i18n/en';
 
 describe('module registry', () => {
-  it('has the nine modules in the documented order', () => {
-    expect(MODULE_IDS).toEqual(['home', 'specs', 'fixes', 'agents', 'activity', 'map', 'kit', 'architecture', 'metrics']);
+  it('has the ten modules in the documented order', () => {
+    expect(MODULE_IDS).toEqual(['home', 'specs', 'fixes', 'agents', 'activity', 'map', 'kit', 'architecture', 'metrics', 'new-project']);
     expect(Object.keys(MODULES)).toEqual([...MODULE_IDS]);
   });
 

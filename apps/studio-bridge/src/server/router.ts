@@ -4,6 +4,7 @@ import { BRIDGE_FEATURES, MAX_READ_FILE_BYTES, type BotEvent, type ClientCommand
 import type { AuthState } from '../auth-mode';
 import type { ClaudeLogin } from '../auth/claude-login';
 import type { CommandRunner } from '../commands/runner';
+import type { ProjectRuntime } from '../project/runtime';
 import type { AttachmentStore } from '../sessions/attachment-store';
 import { SessionError, type SessionManager } from '../sessions/session-manager';
 import type { ThreadStore } from '../sessions/store';
@@ -145,6 +146,51 @@ export function createHandlers(d: {
         default:
           throw new SessionError('bad-request', `unsupported: ${(command as { cmd: string }).cmd}`);
       }
+    },
+  };
+}
+
+export type HostCommand = Extract<ClientCommand, { cmd: `wizard.${string}` | 'workspace.open' }>;
+
+const isHostCommand = (command: ClientCommand): command is HostCommand =>
+  command.cmd.startsWith('wizard.') || command.cmd === 'workspace.open';
+
+export function createHostHandlers(d: {
+  bridgeVersion: string;
+  auth: Pick<AuthState, 'mode' | 'set'>;
+  login: Pick<ClaudeLogin, 'status' | 'login' | 'logout'>;
+  runtime: () => ProjectRuntime | null;
+  hostCommands?: (command: HostCommand) => Promise<unknown>;
+}): BridgeHandlers {
+  return {
+    welcome: () => ({
+      bridgeVersion: d.bridgeVersion,
+      ...(d.runtime()?.welcomePart() ?? { workspace: null, kitVersion: null }),
+      authMode: d.auth.mode(),
+      features: [...BRIDGE_FEATURES],
+    }),
+    handle: async (command: ClientCommand) => {
+      switch (command.cmd) {
+        case 'auth.set':
+          return { authMode: d.auth.set(command.apiKey, command.mode) };
+        case 'auth.status':
+          return d.login.status();
+        case 'auth.login':
+          return d.login.login();
+        case 'auth.logout':
+          return d.login.logout();
+        case 'presence.get':
+          return d.runtime()?.presence() ?? [];
+        default:
+          break;
+      }
+      if (isHostCommand(command)) {
+        if (!d.hostCommands) throw new SessionError('bad-request', `unsupported: ${command.cmd}`);
+        return d.hostCommands(command);
+      }
+      const runtime = d.runtime();
+      if (!runtime) throw new SessionError('not-found', 'no project open');
+      return runtime.handle(command);
     },
   };
 }

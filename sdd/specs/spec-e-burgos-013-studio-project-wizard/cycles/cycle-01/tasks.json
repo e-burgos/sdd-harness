@@ -169,7 +169,7 @@
       "depends_on": [
         "TASK-004"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/studio-bridge/src/main.ts",
         "apps/studio-bridge/src/project/runtime.ts",
@@ -177,7 +177,17 @@
         "apps/studio-bridge/src/server/ws-server.ts",
         "apps/studio-bridge/src/cli.ts",
         "apps/studio-bridge/src/cli-options.ts"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 46164,
+        "tokens_out": 8146,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-04"
+      }
     },
     {
       "id": "TASK-006",
@@ -195,7 +205,7 @@
         "TASK-003",
         "TASK-005"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/studio-bridge/package.json",
         "apps/studio-bridge/src/wizard/cli-locator.ts",
@@ -203,7 +213,17 @@
         "apps/studio-bridge/src/wizard/config-cli.ts",
         "apps/studio-bridge/src/wizard/__tests__/config-cli.contract.spec.ts",
         "apps/studio-bridge/src/test-utils/fake-harness.mjs"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 46164,
+        "tokens_out": 8146,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-04"
+      }
     },
     {
       "id": "TASK-007",
@@ -226,13 +246,23 @@
       "depends_on": [
         "TASK-005"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/studio-bridge/src/wizard/target.ts",
         "apps/studio-bridge/src/wizard/dirs.ts",
         "apps/studio-bridge/src/wizard/__tests__/target.spec.ts",
         "apps/studio-bridge/src/wizard/__tests__/dirs.spec.ts"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 46164,
+        "tokens_out": 8146,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-04"
+      }
     },
     {
       "id": "TASK-008",
@@ -248,12 +278,22 @@
       "depends_on": [
         "TASK-005"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/studio-bridge/src/wizard/preflight.ts",
         "apps/studio-bridge/src/wizard/reveal.ts",
         "apps/studio-bridge/src/wizard/__tests__/preflight.spec.ts"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 46164,
+        "tokens_out": 8146,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-04"
+      }
     },
     {
       "id": "TASK-009",
@@ -436,7 +476,7 @@
         "TASK-012",
         "TASK-013"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/studio/src/lib/nav/module-ids.ts",
         "apps/studio/src/lib/nav/modules.ts",
@@ -446,7 +486,17 @@
         "apps/studio/src/components/modules/new-project/NewProjectPanel.tsx",
         "apps/studio/src/components/modules/new-project/NewProjectCenter.tsx",
         "apps/studio/src/components/modules/new-project/NewProjectRight.tsx"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 84583,
+        "tokens_out": 14926,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-04"
+      }
     },
     {
       "id": "TASK-015",
@@ -474,7 +524,7 @@
       "depends_on": [
         "TASK-014"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/studio/src/components/modules/new-project/steps/ScopeStep.tsx",
         "apps/studio/src/components/modules/new-project/steps/ShapeStep.tsx",
@@ -482,7 +532,17 @@
         "apps/studio/src/components/modules/new-project/AppRow.tsx",
         "apps/studio/src/components/modules/new-project/PortField.tsx",
         "apps/studio/src/components/modules/new-project/__tests__/"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 84583,
+        "tokens_out": 14926,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-04"
+      }
     },
     {
       "id": "TASK-016",
@@ -508,7 +568,7 @@
       "depends_on": [
         "TASK-015"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/studio/src/components/modules/new-project/steps/BackStep.tsx",
         "apps/studio/src/components/modules/new-project/steps/ExtrasStep.tsx",
@@ -516,7 +576,17 @@
         "apps/studio/src/components/modules/new-project/ServiceRow.tsx",
         "apps/studio/src/components/modules/new-project/DiscardChangesDialog.tsx",
         "apps/studio/src/components/modules/new-project/__tests__/"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 84583,
+        "tokens_out": 14926,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-04"
+      }
     },
     {
       "id": "TASK-017",

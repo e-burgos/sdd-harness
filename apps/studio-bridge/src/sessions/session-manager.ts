@@ -208,6 +208,12 @@ export class SessionManager {
     return this.tracker.compute();
   }
 
+  isBusy(): boolean {
+    if (this.approvals.size > 0 || this.questions.size > 0) return true;
+    for (const live of this.live.values()) if (live.turn !== null || live.queued !== null) return true;
+    return false;
+  }
+
   async createThread(args: { channelId: string; options: ThreadOptions; link?: ThreadLinkTarget } & MessageInput): Promise<ThreadInfo> {
     const dmAgent = dmAgentOfChannel(args.channelId);
     if (dmAgent !== null && args.options.agent !== dmAgent) {

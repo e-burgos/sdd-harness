@@ -27,9 +27,9 @@ const railLabels = () =>
 describe('ModuleRail', () => {
   beforeEach(() => window.localStorage.clear());
 
-  it('lists the nine modules in order with Más, new conversation and account below', () => {
+  it('lists the ten modules in order with Más, new conversation and account below', () => {
     renderShell(<Harness />);
-    expect(railLabels()).toEqual(['Inicio', 'Specs', 'Fixes', 'Agentes', 'Actividad', 'Mapa', 'Kit', 'Arquitectura', 'Métricas']);
+    expect(railLabels()).toEqual(['Inicio', 'Specs', 'Fixes', 'Agentes', 'Actividad', 'Mapa', 'Kit', 'Arquitectura', 'Métricas', 'Nuevo proyecto']);
     expect(screen.getByRole('button', { name: 'Más' })).toBeInTheDocument();
     expect(screen.getByTestId('new-conversation-button')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Cuenta y conexión' })).toBeInTheDocument();
@@ -91,7 +91,7 @@ describe('ModuleRail', () => {
     renderShell(<Harness />);
     fireEvent.click(screen.getByRole('button', { name: 'Más' }));
     expect(screen.getByRole('button', { name: 'Subir Inicio' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Bajar Métricas' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Bajar Nuevo proyecto' })).toBeDisabled();
     fireEvent.click(screen.getByRole('button', { name: 'Subir Fixes' }));
     expect(railLabels().slice(0, 3)).toEqual(['Inicio', 'Fixes', 'Specs']);
   });
@@ -114,7 +114,7 @@ describe('ModuleRail', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Ocultar Fixes' }));
     fireEvent.click(screen.getByRole('button', { name: 'Subir Kit' }));
     fireEvent.click(screen.getByRole('button', { name: 'Restablecer riel' }));
-    expect(railLabels()).toEqual(['Inicio', 'Specs', 'Fixes', 'Agentes', 'Actividad', 'Mapa', 'Kit', 'Arquitectura', 'Métricas']);
+    expect(railLabels()).toEqual(['Inicio', 'Specs', 'Fixes', 'Agentes', 'Actividad', 'Mapa', 'Kit', 'Arquitectura', 'Métricas', 'Nuevo proyecto']);
     expect(window.localStorage.getItem(`${RAIL_KEY_PREFIX}fixture-project`)).toBeNull();
   });
 

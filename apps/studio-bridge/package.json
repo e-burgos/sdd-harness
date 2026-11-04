@@ -23,6 +23,7 @@
     "record-fixtures": "node scripts/record-sdk-fixtures.mjs"
   },
   "dependencies": {
+    "@e-burgos/sdd-harness": "workspace:*",
     "@anthropic-ai/claude-agent-sdk": "0.3.292",
     "ajv": "^8.20.0",
     "chokidar": "^4.0.3",

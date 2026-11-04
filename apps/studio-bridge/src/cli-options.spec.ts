@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { parseEngine, parsePort, parseToken, parseWebUrl } from './cli-options';
+import path from 'node:path';
+import { parseAllowTargets, parseEngine, parsePort, parseToken, parseWebUrl } from './cli-options';
 import { BridgeStartError } from './main';
 
 describe('cli option validators', () => {
@@ -31,5 +32,16 @@ describe('parseToken', () => {
   });
   it.each(['short', 'has space in it 1234', 'ñññññññññññññññññ', ''])('rejects %j', (raw) => {
     expect(() => parseToken(raw)).toThrow(BridgeStartError);
+  });
+});
+
+describe('parseAllowTargets', () => {
+  it('returns resolved absolute paths and ignores blanks', () => {
+    const base = path.resolve('/tmp/a');
+    expect(parseAllowTargets(`${base}, ,${path.resolve('/tmp/b')}`)).toEqual([base, path.resolve('/tmp/b')]);
+    expect(parseAllowTargets(undefined)).toEqual([]);
+  });
+  it('rejects relative paths', () => {
+    expect(() => parseAllowTargets('relative/dir')).toThrow(BridgeStartError);
   });
 });
