@@ -1,14 +1,23 @@
 'use client';
 
-import { Alert } from '@e-burgos/tucu-ui';
-import { useT } from '@/lib/i18n/i18n';
+import { Alert, Button } from '@e-burgos/tucu-ui';
+import { useT, type TFunction } from '@/lib/i18n/i18n';
 import type { Dict } from '@/lib/i18n/es';
 import { initCommand, summaryModel, type SummaryApp } from '@/lib/wizard/summary-model';
 import type { WizardStepId } from '@/lib/wizard/state';
+import { generateBlock } from '@/lib/wizard/generate-gate';
+import { useLaunch, type LaunchNotice } from '@/lib/wizard/use-launch';
+import { usePreflight } from '@/lib/wizard/use-preflight';
+import { useTargetCheck } from '@/lib/wizard/use-target-check';
+import { useBridge } from '../../../BridgeProvider';
 import { ConfigPreview } from '../ConfigPreview';
+import { ConfirmTargetDialog } from '../ConfirmTargetDialog';
+import { PreflightNotice } from '../PreflightNotice';
+import { TargetPicker } from '../TargetPicker';
 import { ProjectTree } from '../ProjectTree';
 import { SummarySection } from '../SummarySection';
 import { useWizard } from '../wizard-context';
+import { lookupText } from '../wizard-text';
 
 function AppLine({ app }: { app: SummaryApp }) {
   const { t } = useT();
@@ -29,8 +38,13 @@ function AppLine({ app }: { app: SummaryApp }) {
 
 export function SummaryStep() {
   const { t } = useT();
-  const { catalog, info, state, validation, issues, canGenerate } = useWizard();
+  const { catalog, info, state, validation, issues, canGenerate, config, targetPath, generation } = useWizard();
+  const { client } = useBridge();
+  const target = useTargetCheck(client, targetPath);
+  const preflight = usePreflight(client);
+  const launch = useLaunch(client, generation.adopt);
   if (catalog === null || info === null) return null;
+  const block = generateBlock({ fieldsReady: canGenerate && config !== null, targetPath, target, preflight, starting: launch.starting });
   const resolved = validation.validation?.resolved ?? null;
   const model = summaryModel(state, catalog, resolved);
   const appsStep: WizardStepId = state.scope === 'back' ? 'back' : 'front';
@@ -105,6 +119,48 @@ export function SummaryStep() {
         <p className="text-small text-ink-300">{t('wizard.summary.configHint')}</p>
         <ConfigPreview label={t('wizard.summary.config')} />
       </SummarySection>
+      <SummarySection id="target" title={t('wizard.target.title')}>
+        <TargetPicker status={target} />
+      </SummarySection>
+      <SummarySection id="preflight" title={t('wizard.preflight.title')}>
+        <PreflightNotice preflight={preflight} />
+      </SummarySection>
+      <div className="flex flex-col gap-2">
+        {launch.notice !== null && (
+          <Alert variant="error" density="compact" live="assertive">
+            {noticeText(t, launch.notice)}
+          </Alert>
+        )}
+        {block !== null && block !== 'starting' && (
+          <p data-testid="generate-blocked-reason" role="status" className="text-small text-amberish">
+            {t('wizard.generate.blocked', { reason: t(`wizard.generate.reason.${block}` as keyof Dict) })}
+          </p>
+        )}
+        <Button
+          type="button"
+          size="tiny"
+          className="w-fit text-ui"
+          disabled={block !== null}
+          isLoading={launch.starting}
+          onClick={() => config !== null && target.check !== null && launch.start(config, targetPath.trim(), target.check)}
+        >
+          {launch.starting ? t('wizard.generate.starting') : t('wizard.generate.button')}
+        </Button>
+      </div>
+      <ConfirmTargetDialog confirmation={launch.confirmation} loading={launch.starting} onConfirm={launch.confirm} onCancel={launch.cancelConfirmation} />
     </div>
   );
+}
+
+function noticeText(t: TFunction, notice: LaunchNotice): string {
+  switch (notice.kind) {
+    case 'blocked':
+      return lookupText(t, `wizard.generate.blocked.${notice.reason ?? 'other'}`, { reason: notice.reason ?? '' }) ?? t('wizard.generate.blocked.other', { reason: notice.reason ?? '' });
+    case 'invalid-config':
+      return t('wizard.generate.invalidConfig');
+    case 'conflict':
+      return t('wizard.generate.conflict', { message: notice.message });
+    case 'error':
+      return t('wizard.generate.error', { error: notice.message });
+  }
 }

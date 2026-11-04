@@ -6,6 +6,8 @@ import type { Dict } from '@/lib/i18n/es';
 import type { WizardStepId } from '@/lib/wizard/state';
 import type { ComponentType } from 'react';
 import { DiscardChangesDialog } from './DiscardChangesDialog';
+import { GenerationProgress } from './GenerationProgress';
+import { GenerationResult } from './GenerationResult';
 import { BackStep } from './steps/BackStep';
 import { ExtrasStep } from './steps/ExtrasStep';
 import { FrontStep } from './steps/FrontStep';
@@ -26,7 +28,7 @@ const STEP_COMPONENT: Record<WizardStepId, ComponentType> = {
 
 export function NewProjectCenter() {
   const { t } = useT();
-  const { catalogControls, step, steps, back, next, nextBlockReason } = useWizard();
+  const { catalogControls, step, steps, back, next, nextBlockReason, generation } = useWizard();
   if (catalogControls.status === 'loading') {
     return (
       <p role="status" className="p-6 text-copy text-ink-400">
@@ -47,6 +49,14 @@ export function NewProjectCenter() {
           }
         />
       </div>
+    );
+  }
+  if (generation.target !== null) {
+    const finished = generation.generation !== null && generation.generation.status !== 'running' && !generation.unknown;
+    return (
+      <article data-wizard-step="generation" aria-label={t('wizard.progress.title')} className="mx-auto flex h-full w-full max-w-3xl flex-col gap-4 overflow-y-auto p-6">
+        {finished && generation.generation !== null ? <GenerationResult state={generation.generation} /> : <GenerationProgress />}
+      </article>
     );
   }
   const Step = STEP_COMPONENT[step];

@@ -1,0 +1,25 @@
+┌   harness init 
+│
+◇  Configuration from harness.config.json ──────────────────────────────────────────────────────────────────╮
+│                                                                                                           │
+│  Project: fx-nopnpm                                                                                       │
+│  Mode: standalone                                                                                         │
+│  Target: <TARGET> (current directory)  │
+│  Apps: web (react:4400)                                                                                   │
+│  Libs: none                                                                                               │
+│  Services: none                                                                                           │
+│  Modules: 1 spec(s) seeded as draft                                                                       │
+│  npm scopes: none                                                                                         │
+│  SDD: enabled (always)                                                                                    │
+│  Gate: sdd:validate + lint/test/build                                                                     │
+│                                                                                                           │
+├───────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+Generating standalone repo...
+
+→ Generating standalone app (react, port 4400) at the repo root...
+→ Registering SDD harness scripts in package.json...
+→ Installing dependencies (pnpm install)...
+✗ Command failed: pnpm install --ignore-workspace
+Command failed: pnpm install --ignore-workspace
+/bin/sh: pnpm: command not found

@@ -1,4 +1,5 @@
-import { appendFileSync, existsSync } from 'node:fs';
+import { spawn } from 'node:child_process';
+import { appendFileSync, cpSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 
 const FAKE_VERSION = '0.0.0-fake';
 const argv = process.argv.slice(2);
@@ -46,7 +47,7 @@ const catalog = {
   profiles: ['team', 'solo'],
   patterns: { name: '^[a-z][a-z0-9-]*$', packageScope: '^@[a-z][a-z0-9-]*$', author: '^[a-z][a-z0-9-]*$' },
   portRange: { min: 1024, max: 65535 },
-  targetDir: { tolerated: ['.git', 'README.md'] },
+  targetDir: { tolerated: ['.git', 'README.md', 'harness.config.json'] },
   jsonSchema: {},
 };
 
@@ -63,8 +64,33 @@ const validation = (config) => {
   };
 };
 
+const runInit = async () => {
+  const configFile = 'harness.config.json';
+  log({ cwd: process.cwd(), config: existsSync(configFile) ? readFileSync(configFile, 'utf8') : null });
+  if (process.env.FAKE_HARNESS_INIT_STARTED) appendFileSync(process.env.FAKE_HARNESS_INIT_STARTED, 'started\n');
+  if (process.env.FAKE_HARNESS_GRANDCHILD_PID_FILE) {
+    const grandchild = spawn(process.execPath, ['-e', 'setInterval(() => undefined, 1000)'], { stdio: 'inherit' });
+    writeFileSync(process.env.FAKE_HARNESS_GRANDCHILD_PID_FILE, String(grandchild.pid));
+  }
+  const replay = process.env.FAKE_HARNESS_REPLAY;
+  if (replay) process.stdout.write(readFileSync(replay, 'utf8'));
+  if (process.env.FAKE_HARNESS_FLOOD_KIB) {
+    const line = `${'y'.repeat(1023)}\n`;
+    for (let i = 0; i < Number(process.env.FAKE_HARNESS_FLOOD_KIB); i++) process.stdout.write(line);
+  }
+  if (process.env.FAKE_HARNESS_SELF_KILL === '1') process.kill(process.pid, 'SIGKILL');
+  if (process.env.FAKE_HARNESS_STDERR) process.stderr.write(process.env.FAKE_HARNESS_STDERR);
+  if (process.env.FAKE_HARNESS_INIT_GATE) await waitForFile(process.env.FAKE_HARNESS_INIT_GATE);
+  if (process.env.FAKE_HARNESS_COPY_FROM) cpSync(process.env.FAKE_HARNESS_COPY_FROM, process.cwd(), { recursive: true });
+  if (process.env.FAKE_HARNESS_CREATE_SDD === '1') mkdirSync('sdd', { recursive: true });
+  if (mode === 'init-hang') return setInterval(() => undefined, 1000);
+  process.exitCode = Number(process.env.FAKE_HARNESS_EXIT_CODE ?? 0);
+  return undefined;
+};
+
 const main = async () => {
   log({ argv, env: { ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY ?? null, CI: process.env.CI ?? null, NX_DAEMON: process.env.NX_DAEMON ?? null } });
+  if (argv[0] === 'init') return runInit();
   if (mode === 'env-check') {
     const leaked = ['ANTHROPIC_API_KEY', 'ANTHROPIC_AUTH_TOKEN', 'CI', 'NX_WORKSPACE_ROOT_PATH'].filter((key) => process.env[key] !== undefined);
     if (leaked.length > 0 || process.env.NX_DAEMON !== 'false') process.exit(3);

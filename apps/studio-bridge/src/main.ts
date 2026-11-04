@@ -1,13 +1,17 @@
 import { existsSync } from 'node:fs';
 import { realpath } from 'node:fs/promises';
 import path from 'node:path';
-import { WS_CLOSE_WORKSPACE_SWITCHED, type AuthMode, type ServerMessage } from '@sdd-studio/protocol';
+import { WS_CLOSE_WORKSPACE_SWITCHED, type AuthMode, type ServerMessage, type WorkspaceOpenResult } from '@sdd-studio/protocol';
 import { AuthState, CLIENT_APP } from './auth-mode';
 import { ClaudeLogin } from './auth/claude-login';
 import { openProjectRuntime, type ProjectRuntime } from './project/runtime';
 import { createHostHandlers, type HostCommand } from './server/router';
 import { createToken } from './server/security';
 import { startBridgeServer, type BridgeServer } from './server/ws-server';
+import { SessionError } from './sessions/session-manager';
+import type { HarnessCli } from './wizard/cli-locator';
+import { GenerationRegistry } from './wizard/generation';
+import { createWizardCommands } from './wizard/service';
 import { BRIDGE_VERSION } from './version';
 
 export class BridgeStartError extends Error {}
@@ -20,6 +24,8 @@ export class BridgeHost {
   readonly login: ClaudeLogin;
   runtime: ProjectRuntime | null = null;
   server: BridgeServer | null = null;
+  readonly generations: GenerationRegistry;
+  private switching = false;
   private closing: Promise<void> | null = null;
 
   constructor(
@@ -28,6 +34,7 @@ export class BridgeHost {
   ) {
     this.auth = new AuthState(process.env, CLIENT_APP(BRIDGE_VERSION));
     this.login = new ClaudeLogin(() => this.auth.cliEnv());
+    this.generations = new GenerationRegistry({ broadcast: (message) => this.broadcast(message) });
   }
 
   broadcast = (message: ServerMessage): void => this.server?.broadcast(message);
@@ -54,8 +61,29 @@ export class BridgeHost {
     setImmediate(() => this.server?.closeAll(WS_CLOSE_WORKSPACE_SWITCHED));
   }
 
+  async switchProject(root: string): Promise<WorkspaceOpenResult> {
+    if (this.switching) throw new SessionError('conflict', 'a project switch is already in progress');
+    const previous = this.runtime;
+    if (previous?.isBusy()) throw new SessionError('conflict', `agents are working in ${previous.project}`);
+    this.switching = true;
+    try {
+      let next: ProjectRuntime;
+      try {
+        next = await this.openProject(root);
+      } catch (error) {
+        if (previous) await this.openProject(previous.root).catch(() => undefined);
+        throw error;
+      }
+      this.announceSwitched();
+      return { root: next.root, project: next.project };
+    } finally {
+      this.switching = false;
+    }
+  }
+
   close(): Promise<void> {
     this.closing ??= (async () => {
+      await this.generations.closeAll().catch(() => undefined);
       const runtime = this.runtime;
       this.runtime = null;
       const results = await Promise.allSettled([this.server?.close() ?? Promise.resolve(), runtime?.close() ?? Promise.resolve()]);
@@ -77,6 +105,7 @@ export async function startBridge(o: {
   token?: string;
   localUiDir?: string;
   allowTargets?: string[];
+  harnessCli?: HarnessCli;
   hostCommands?: (host: BridgeHost) => (command: HostCommand) => Promise<unknown>;
 }): Promise<{
   url: string;
@@ -112,7 +141,7 @@ export async function startBridge(o: {
         auth: host.auth,
         login: host.login,
         runtime: () => host.runtime,
-        hostCommands: o.hostCommands?.(host),
+        hostCommands: o.hostCommands ? o.hostCommands(host) : createWizardCommands(host, { cli: o.harnessCli }),
       }),
     });
   } catch (error) {

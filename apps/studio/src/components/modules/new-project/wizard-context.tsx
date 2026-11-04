@@ -11,6 +11,8 @@ import { recommendationsFor, type Recommendation } from '@/lib/wizard/recommenda
 import { fieldDomId, stepBlockers, type StepBlocker } from '@/lib/wizard/step-gate';
 import { toHarnessConfig, type HarnessConfigDraft } from '@/lib/wizard/to-config';
 import { useCatalog, type CatalogControls } from '@/lib/wizard/use-catalog';
+import { useGeneration, type GenerationControls } from '@/lib/wizard/use-generation';
+import { defaultTargetPath } from '@/lib/wizard/target-path';
 import { useWizardValidation, type WizardValidation } from '@/lib/wizard/use-wizard-validation';
 import { useBridge } from '../../BridgeProvider';
 import { blockerText, issueTranslator } from './wizard-text';
@@ -59,6 +61,9 @@ export interface WizardContextValue {
   issues: WizardIssue[];
   canGenerate: boolean;
   recommendations: Recommendation[];
+  targetPath: string;
+  setTargetPath(value: string): void;
+  generation: GenerationControls;
 }
 
 const WizardContext = createContext<WizardContextValue | null>(null);
@@ -103,6 +108,10 @@ export function WizardScope({ children }: { children: ReactNode }) {
     [state, catalog],
   );
   const validation = useWizardValidation(client, config);
+  const generation = useGeneration(client);
+  const [targetText, setTargetPath] = useState<string | null>(null);
+  const info = catalogControls.data;
+  const targetPath = targetText ?? (info === null ? '' : defaultTargetPath(info, state.project.name));
   const translate = useMemo(() => issueTranslator(t), [t]);
   const serverIssues = useMemo(
     () => (validation.validation ? mapIssues(validation.validation.issues, state, translate) : []),
@@ -236,6 +245,7 @@ export function WizardScope({ children }: { children: ReactNode }) {
     setReturnToSummary(false);
     setPendingChange(null);
     setTouched(new Set());
+    setTargetPath(null);
   }, []);
 
   const focusField = useCallback(
@@ -287,6 +297,9 @@ export function WizardScope({ children }: { children: ReactNode }) {
       issues,
       canGenerate,
       recommendations,
+      targetPath,
+      setTargetPath,
+      generation,
     }),
     [
       catalogControls,
@@ -315,6 +328,8 @@ export function WizardScope({ children }: { children: ReactNode }) {
       issues,
       canGenerate,
       recommendations,
+      targetPath,
+      generation,
     ],
   );
   return <WizardContext.Provider value={value}>{children}</WizardContext.Provider>;

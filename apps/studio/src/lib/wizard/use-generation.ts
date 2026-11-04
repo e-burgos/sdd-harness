@@ -12,6 +12,7 @@ import {
 import { errorCode, errorMessage, type WizardClient } from './wizard-client';
 
 export interface GenerationView {
+  generationId: string | null;
   generation: GenerationState | null;
   target: string | null;
   output: GenerationOutputChunk[];
@@ -43,6 +44,7 @@ interface Tracker {
 }
 
 const EMPTY_VIEW: GenerationView = {
+  generationId: null,
   generation: null,
   target: null,
   output: [],
@@ -79,6 +81,7 @@ export function useGeneration(client: WizardClient, storage: StorageLike | null 
     if (!alive.current) return;
     const t = tracker.current;
     setView({
+      generationId: t.id,
       generation: t.generation,
       target: t.target,
       output: t.output,

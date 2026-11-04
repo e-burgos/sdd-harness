@@ -317,14 +317,24 @@
         "TASK-007",
         "TASK-008"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/studio-bridge/src/wizard/generation.ts",
         "apps/studio-bridge/src/wizard/init-output.ts",
         "apps/studio-bridge/src/wizard/__fixtures__/init-output/",
         "apps/studio-bridge/src/wizard/__tests__/generation.spec.ts",
         "apps/studio-bridge/src/wizard/__tests__/init-output.spec.ts"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 63135,
+        "tokens_out": 11141,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-04"
+      }
     },
     {
       "id": "TASK-010",
@@ -343,13 +353,23 @@
       "depends_on": [
         "TASK-009"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/studio-bridge/src/wizard/generation.ts",
         "apps/studio-bridge/src/wizard/service.ts",
         "apps/studio-bridge/src/server/router.ts",
         "apps/studio-bridge/src/wizard/__tests__/service.spec.ts"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 63135,
+        "tokens_out": 11141,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-04"
+      }
     },
     {
       "id": "TASK-011",
@@ -366,13 +386,23 @@
       "depends_on": [
         "TASK-010"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/studio-bridge/src/main.ts",
         "apps/studio-bridge/src/wizard/service.ts",
         "apps/studio-bridge/src/server/ws-server.ts",
         "apps/studio-bridge/src/wizard/__tests__/open.spec.ts"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 63135,
+        "tokens_out": 11141,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-04"
+      }
     },
     {
       "id": "TASK-012",
@@ -612,7 +642,7 @@
         "TASK-008",
         "TASK-007"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/studio/src/components/modules/new-project/TargetPicker.tsx",
         "apps/studio/src/components/modules/new-project/DirectoryBrowserModal.tsx",
@@ -620,7 +650,17 @@
         "apps/studio/src/components/modules/new-project/ConfirmTargetDialog.tsx",
         "apps/studio/src/components/modules/new-project/PreflightNotice.tsx",
         "apps/studio/src/components/modules/new-project/__tests__/"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 104664,
+        "tokens_out": 18470,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-04"
+      }
     },
     {
       "id": "TASK-018",
@@ -656,13 +696,23 @@
         "TASK-014",
         "TASK-017"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/studio/src/components/modules/new-project/GenerationProgress.tsx",
         "apps/studio/src/components/modules/new-project/OutputLog.tsx",
         "apps/studio/src/components/modules/new-project/GenerationResult.tsx",
         "apps/studio/src/components/modules/new-project/__tests__/"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 104664,
+        "tokens_out": 18470,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-04"
+      }
     },
     {
       "id": "TASK-019",
