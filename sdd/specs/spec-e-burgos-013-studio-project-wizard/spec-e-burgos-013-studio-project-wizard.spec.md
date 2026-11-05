@@ -1,6 +1,6 @@
 # SPEC-e-burgos-013: Studio — wizard de arquitectura que genera el proyecto
 
-> Estado: **in-progress** (2026-11-04). cycle-01 abierto (flow full). Antes: draft, dependía de spec-e-burgos-012 y de decisiones
+> Estado: **completed** (2026-11-05). cycle-01 cerrado (flow full, 23/23 tasks). Antes: draft, dependía de spec-e-burgos-012 y de decisiones
 > del dev. Paso 3 del plan: tucu-ui en el kit → generadores → **wizard** → GitHub.
 
 ## Resumen ejecutivo

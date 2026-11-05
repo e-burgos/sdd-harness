@@ -5,6 +5,7 @@
 
 ## Estructura
 - `src/wizard.ts` nuevo con los schemas (`ConfigDraft`, `ConfigCatalog`, `ConfigValidation`, `Preflight`, `DirListing`, `TargetCheck`/`TargetState`, `GenerationState`/`Stage`/`Status`, `GenerateResult`, `GenerationSnapshot`, `WorkspaceOpenResult`); cambios en `commands.ts`, `events.ts`, `handshake.ts` y `index.ts`.
+- `ConfigCatalog.limits` opcional (`nameMax`, `packageScopeMax`, `maxApps`, `maxLibs`, `maxServices`, `configBytes`) y `ConfigCliFailure` (salida JSON del exit 2 de la CLI); el tope de `ConfigDraft` se mide en bytes UTF-8 (`TextEncoder`), no en caracteres.
 - `src/limits.ts`: `MAX_CONFIG_BYTES` (64 KiB), `GENERATION_CHUNK_MAX`, `GENERATION_BUFFER_BYTES` (4 MiB), `MAX_DIR_ENTRIES`, `WS_CLOSE_WORKSPACE_SWITCHED` (4010).
 
 ## Dependencias
