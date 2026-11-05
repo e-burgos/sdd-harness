@@ -17,10 +17,14 @@ En el CI de PR #64 (head 1c103a2) fallaron los dos jobs:
 - **windows-latest:** `reveal.spec.ts > opens a folder inside the allowed bases with the platform opener`. `revealPath` elegía la semántica de rutas (`posix`/`win32`) según la plataforma del abridor, así que con `platform: 'darwin'` sobre rutas `D:\…` reales rechazaba la carpeta como fuera de las bases.
 - **ubuntu-latest:** todos los tests en verde, pero Vitest atrapó un error no manejado (`window is not defined`). El `Select` de tucu-ui 3.10.0 programa un `setTimeout` de 100 ms al cerrarse y no lo cancela al desmontar; en `threadlink.spec.tsx` se disparaba después de que jsdom se había desmontado.
 
+- **windows-latest (segunda corrida, 340ba39):** `steps-1-3.spec.tsx > confirms before a mode change…` no encontraba el paso «Forma». Al cargar el catálogo el wizard se ubica en el paso restaurado dentro de un efecto; en el runner lento ese efecto corría después del click del test y volvía al paso guardado.
+
 ## Solución
 
 - `apps/studio-bridge/src/wizard/reveal.ts`: la semántica de rutas sale de `process.platform` (las rutas son del sistema de archivos real); `ctx.platform` solo elige el comando que abre la carpeta.
 - `apps/studio/src/lib/test-utils/pick-option.ts`: `waitForSelectToClose()` espera el cierre del `Select`; los cuatro specs que abren selects lo usan en `afterEach`. El arreglo de fondo (cancelar el timer al desmontar) va al repo de tucu-ui.
+
+- `openStep` de `steps-1-3.spec.tsx` y `steps-4-6.spec.tsx` repite el click dentro de `waitFor` hasta que el paso pedido esté abierto (en la rama del motion, el centro además espera a estar posicionado).
 
 ## Archivos
 
@@ -30,6 +34,8 @@ En el CI de PR #64 (head 1c103a2) fallaron los dos jobs:
 - `apps/studio/src/components/workspace/modes.spec.tsx`
 - `apps/studio/src/components/workspace/composer.spec.tsx`
 - `apps/studio/src/components/workspace/threadlink.spec.tsx`
+- `apps/studio/src/components/modules/new-project/__tests__/steps-1-3.spec.tsx`
+- `apps/studio/src/components/modules/new-project/__tests__/steps-4-6.spec.tsx`
 
 ## Validación
 

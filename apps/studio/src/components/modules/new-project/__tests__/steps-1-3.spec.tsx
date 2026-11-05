@@ -16,8 +16,10 @@ const typeInto = (label: string, value: string) => fireEvent.change(screen.getBy
 
 async function openStep(id: string, title: string) {
   await screen.findByRole('article');
-  fireEvent.click(within(document.querySelector(`[data-step="${id}"]`) as HTMLElement).getByRole('button'));
-  return screen.findByRole('article', { name: title });
+  return waitFor(() => {
+    if (!screen.queryByRole('article', { name: title })) fireEvent.click(within(document.querySelector(`[data-step="${id}"]`) as HTMLElement).getByRole('button'));
+    return screen.getByRole('article', { name: title });
+  });
 }
 const center = () => within(screen.getByRole('article'));
 const alerts = () => center().queryAllByRole('alert').map((node) => node.textContent ?? '').join(' | ');

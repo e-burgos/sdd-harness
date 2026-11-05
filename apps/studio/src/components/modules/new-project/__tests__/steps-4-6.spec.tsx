@@ -15,8 +15,10 @@ function preload(actions: WizardAction[], scope: 'fullstack' | 'front' | 'back',
 
 async function openStep(id: string, title: string) {
   await screen.findByRole('article');
-  fireEvent.click(within(document.querySelector(`[data-step="${id}"]`) as HTMLElement).getByRole('button'));
-  return screen.findByRole('article', { name: title });
+  return waitFor(() => {
+    if (!screen.queryByRole('article', { name: title })) fireEvent.click(within(document.querySelector(`[data-step="${id}"]`) as HTMLElement).getByRole('button'));
+    return screen.getByRole('article', { name: title });
+  });
 }
 
 const typeOption = (type: string) => document.querySelector(`[data-type-option="${type}"]`) as HTMLElement;
