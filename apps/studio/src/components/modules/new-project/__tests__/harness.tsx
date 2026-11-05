@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { configure, render } from '@testing-library/react';
 import type { ConfigIssue, ResolvedConfig } from '@sdd-studio/protocol';
 import { I18nProvider } from '@/lib/i18n/i18n';
 import { NavProvider } from '@/lib/nav/use-nav';
@@ -10,6 +10,8 @@ import { NewProjectCenter } from '../NewProjectCenter';
 import { NewProjectPanel } from '../NewProjectPanel';
 import { NewProjectRight } from '../NewProjectRight';
 import { WizardScope } from '../wizard-context';
+
+configure({ asyncUtilTimeout: 5000 });
 
 type Handler = (cmd: Record<string, unknown>) => unknown;
 
