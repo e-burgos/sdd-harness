@@ -5,6 +5,16 @@ All notable changes to `@e-burgos/sdd-harness` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.18.0] - 2026-11-05
+
+### Added
+
+- **Kit skill `crafted-motion`** for graphic motion in React/Next frontends: layered approach
+  (CSS keyframes, framer-motion for UI state, GSAP loaded on demand for scroll-and-loop scenes, a
+  raw WebGL shader for the backdrop), motion tokens, a `useSectionMotion` runtime that only runs in
+  view and pauses when the tab is hidden, recipes, reduced-motion and narrow-screen fallbacks, and
+  a QA trap list. The front-end implementor agent, the catalog and the docs (es/en) point to it.
+
 ## [0.17.0] - 2026-11-05
 
 ### Added
