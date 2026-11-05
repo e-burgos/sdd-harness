@@ -1,0 +1,55 @@
+┌   harness init 
+│
+◇  Configuration from harness.config.json ───────────────────────────────────────────────────────────────╮
+│                                                                                                        │
+│  Project: fx-net                                                                                       │
+│  Mode: standalone                                                                                      │
+│  Target: <TARGET> (current directory)  │
+│  Apps: web (react:4400)                                                                                │
+│  Libs: none                                                                                            │
+│  Services: none                                                                                        │
+│  Modules: 1 spec(s) seeded as draft                                                                    │
+│  npm scopes: none                                                                                      │
+│  SDD: enabled (always)                                                                                 │
+│  Gate: sdd:validate + lint/test/build                                                                  │
+│                                                                                                        │
+├────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+Generating standalone repo...
+
+→ Generating standalone app (react, port 4400) at the repo root...
+→ Registering SDD harness scripts in package.json...
+→ Installing dependencies (pnpm install)...
+ WARN  GET http://127.0.0.1:9/@tailwindcss%2Fvite error (ECONNREFUSED). Will retry in 10 seconds. 2 retries left.
+ WARN  GET http://127.0.0.1:9/@types%2Freact error (ECONNREFUSED). Will retry in 10 seconds. 2 retries left.
+ WARN  GET http://127.0.0.1:9/@types%2Freact-dom error (ECONNREFUSED). Will retry in 10 seconds. 2 retries left.
+ WARN  GET http://127.0.0.1:9/@vitejs%2Fplugin-react error (ECONNREFUSED). Will retry in 10 seconds. 2 retries left.
+ WARN  GET http://127.0.0.1:9/tailwindcss error (ECONNREFUSED). Will retry in 10 seconds. 2 retries left.
+ WARN  GET http://127.0.0.1:9/typescript error (ECONNREFUSED). Will retry in 10 seconds. 2 retries left.
+ WARN  GET http://127.0.0.1:9/vite error (ECONNREFUSED). Will retry in 10 seconds. 2 retries left.
+ WARN  GET http://127.0.0.1:9/vitest error (ECONNREFUSED). Will retry in 10 seconds. 2 retries left.
+ WARN  GET http://127.0.0.1:9/ajv error (ECONNREFUSED). Will retry in 10 seconds. 2 retries left.
+ WARN  GET http://127.0.0.1:9/ajv-formats error (ECONNREFUSED). Will retry in 10 seconds. 2 retries left.
+ WARN  GET http://127.0.0.1:9/react error (ECONNREFUSED). Will retry in 10 seconds. 2 retries left.
+ WARN  GET http://127.0.0.1:9/react-dom error (ECONNREFUSED). Will retry in 10 seconds. 2 retries left.
+ WARN  GET http://127.0.0.1:9/react-router-dom error (ECONNREFUSED). Will retry in 10 seconds. 2 retries left.
+ WARN  GET http://127.0.0.1:9/@e-burgos%2Ftucu-ui error (ECONNREFUSED). Will retry in 10 seconds. 2 retries left.
+ WARN  GET http://127.0.0.1:9/@tailwindcss%2Fvite error (ECONNREFUSED). Will retry in 1 minute. 1 retries left.
+ WARN  GET http://127.0.0.1:9/@types%2Freact error (ECONNREFUSED). Will retry in 1 minute. 1 retries left.
+ WARN  GET http://127.0.0.1:9/@types%2Freact-dom error (ECONNREFUSED). Will retry in 1 minute. 1 retries left.
+ WARN  GET http://127.0.0.1:9/@vitejs%2Fplugin-react error (ECONNREFUSED). Will retry in 1 minute. 1 retries left.
+ WARN  GET http://127.0.0.1:9/tailwindcss error (ECONNREFUSED). Will retry in 1 minute. 1 retries left.
+ WARN  GET http://127.0.0.1:9/typescript error (ECONNREFUSED). Will retry in 1 minute. 1 retries left.
+ WARN  GET http://127.0.0.1:9/vite error (ECONNREFUSED). Will retry in 1 minute. 1 retries left.
+ WARN  GET http://127.0.0.1:9/vitest error (ECONNREFUSED). Will retry in 1 minute. 1 retries left.
+ WARN  GET http://127.0.0.1:9/ajv error (ECONNREFUSED). Will retry in 1 minute. 1 retries left.
+ WARN  GET http://127.0.0.1:9/ajv-formats error (ECONNREFUSED). Will retry in 1 minute. 1 retries left.
+ WARN  GET http://127.0.0.1:9/react error (ECONNREFUSED). Will retry in 1 minute. 1 retries left.
+ WARN  GET http://127.0.0.1:9/react-dom error (ECONNREFUSED). Will retry in 1 minute. 1 retries left.
+ WARN  GET http://127.0.0.1:9/react-router-dom error (ECONNREFUSED). Will retry in 1 minute. 1 retries left.
+ WARN  GET http://127.0.0.1:9/@e-burgos%2Ftucu-ui error (ECONNREFUSED). Will retry in 1 minute. 1 retries left.
+ ERR_PNPM_META_FETCH_FAIL  GET http://127.0.0.1:9/@tailwindcss%2Fvite: request to http://127.0.0.1:9/@tailwindcss%2Fvite failed, reason: connect ECONNREFUSED 127.0.0.1:9
+
+This error happened while installing a direct dependency of <TARGET>
+✗ Command failed: pnpm install --ignore-workspace
+Command failed: pnpm install --ignore-workspace

@@ -13,6 +13,16 @@ node apps/studio-bridge/bin/sdd-studio.mjs --engine fake --no-open \
 
 Open the URL the bridge prints (`/w#bridge=…&token=…`).
 
+## New project module
+
+When the bridge runs without `sdd/` (launcher mode) Studio shows only **New project**, a
+six-step wizard (scope, shape, frontend, backend, extras, summary) that builds a
+`harness.config.json`, validates it live with `harness config validate`, and generates the
+workspace through the bridge, with a safe target picker, preflight, progress, cancel and a
+result screen. Option lists come from `harness config catalog`, never hardcoded. The module is
+also reachable from a project workspace. Details and limits (no resume of a failed generation,
+Python and Java toolchains are yours): [bridge README](../studio-bridge/README.md).
+
 ## Builds
 
 | Script | Result |

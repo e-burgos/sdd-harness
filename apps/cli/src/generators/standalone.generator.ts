@@ -19,6 +19,14 @@ import {
   resolveTargetDir,
   runVerificationGate,
 } from "./workspace.generator.js";
+import {
+  tucuUiPackageDeps,
+  writeNextTucuUiFiles,
+  writeViteTucuUiFiles,
+} from "./tucu-ui-app.js";
+import { pythonPackageName, pythonUvCommands, writePythonAppFiles } from "./python-app.js";
+import { FRONTEND_VERSIONS } from "./versions.js";
+import { assertValidAppTopology } from "./app-types.js";
 import type { ModuleSeed, NpmScope } from "../types/config.types.js";
 
 export interface StandaloneOptions {
@@ -27,6 +35,8 @@ export interface StandaloneOptions {
   appType: string;
   /** Puerto declarado en harness.config.json (apps[0].port). */
   port?: number;
+  tucuUi?: boolean;
+  ml?: boolean;
   services: string[];
   npmScopes?: NpmScope[];
   sddAuthor?: string;
@@ -54,6 +64,7 @@ export interface StandaloneOptions {
 export async function generateStandalone(
   opts: StandaloneOptions,
 ): Promise<void> {
+  assertValidAppTopology([{ name: opts.projectName, type: opts.appType }], "standalone");
   const root = await resolveTargetDir(opts);
   await fs.ensureDir(root);
   const port = resolveAppPort({ name: opts.projectName, type: opts.appType, port: opts.port });
@@ -61,7 +72,7 @@ export async function generateStandalone(
   // ─── FASE 1: App en la raíz ───────────────────────────────────────────────
 
   logger.step(`Generating standalone app (${opts.appType}, port ${port}) at the repo root...`);
-  await scaffoldStandaloneApp(root, opts.projectName, opts.appType, port);
+  await scaffoldStandaloneApp(root, opts.projectName, opts.appType, port, opts.tucuUi !== false, opts.ml === true);
   await writeGitignore(root, opts.appType);
   if (opts.npmScopes?.length) {
     await fs.writeFile(resolve(root, ".npmrc"), npmrcScopesBlock(opts.npmScopes), "utf-8");
@@ -146,10 +157,12 @@ async function scaffoldStandaloneApp(
   name: string,
   type: string,
   port: number,
+  tucuUi: boolean,
+  ml: boolean,
 ): Promise<void> {
   switch (type) {
     case "react":
-      await scaffoldReact(root, name);
+      await scaffoldReact(root, name, tucuUi);
       await applyVitePort(resolve(root, "vite.config.ts"), name, port);
       break;
     case "springboot":
@@ -159,7 +172,7 @@ async function scaffoldStandaloneApp(
       await scaffoldNest(root, name, port);
       break;
     case "nextjs":
-      await scaffoldNext(root, name);
+      await scaffoldNext(root, name, tucuUi);
       break;
     case "fastify":
       await scaffoldFastify(root, name, port);
@@ -168,24 +181,23 @@ async function scaffoldStandaloneApp(
       await scaffoldHono(root, name, port);
       break;
     case "python":
-      await scaffoldPython(root, name);
+      await scaffoldPython(root, name, port, ml);
       break;
     default:
       throw new Error(`Tipo de app standalone no soportado: ${type}`);
   }
 }
 
-/** Versiones desde el package.json del kit — única fuente, sin duplicar pins. */
 async function kitVersions(): Promise<Record<string, string>> {
   const kitPkg = await fs.readJSON(
     resolve(getTemplatesDir(), "sdd/templates/nx-workspace/package.json"),
   );
-  return { ...kitPkg.dependencies, ...kitPkg.devDependencies };
+  return { ...kitPkg.dependencies, ...kitPkg.devDependencies, ...FRONTEND_VERSIONS };
 }
 
 // ─── React (blueprint react-app root-ificado) ────────────────────────────────
 
-async function scaffoldReact(root: string, name: string): Promise<void> {
+async function scaffoldReact(root: string, name: string, tucuUi: boolean): Promise<void> {
   const blueprint = resolve(getTemplatesDir(), "sdd/templates/apps/react-app");
   await copyBlueprint(blueprint, root, { "example-app": name });
 
@@ -253,6 +265,7 @@ export default defineConfig({
         react: v["react"],
         "react-dom": v["react-dom"],
         "react-router-dom": v["react-router-dom"],
+        ...(tucuUi ? tucuUiPackageDeps("react").dependencies : {}),
       },
       devDependencies: {
         "@tailwindcss/vite": v["tailwindcss"] ? v["@tailwindcss/vite"] : undefined,
@@ -267,6 +280,8 @@ export default defineConfig({
     },
     { spaces: 2 },
   );
+
+  if (tucuUi) await writeViteTucuUiFiles(root, name, "../node_modules");
 }
 
 // ─── Spring Boot (blueprint java-api root-ificado, Maven) ────────────────────
@@ -456,7 +471,7 @@ export class AppService {
 
 // ─── Next.js ─────────────────────────────────────────────────────────────────
 
-async function scaffoldNext(root: string, name: string): Promise<void> {
+async function scaffoldNext(root: string, name: string, tucuUi: boolean): Promise<void> {
   await fs.ensureDir(resolve(root, "app"));
 
   await fs.writeFile(
@@ -513,7 +528,7 @@ module.exports = nextConfig;
         moduleResolution: "bundler",
         resolveJsonModule: true,
         isolatedModules: true,
-        jsx: "preserve",
+        jsx: "react-jsx",
         incremental: true,
         plugins: [{ name: "next" }],
       },
@@ -538,11 +553,13 @@ module.exports = nextConfig;
         start: "next start",
       },
       dependencies: {
-        next: "^15.0.0",
+        next: v["next"],
         react: v["react"],
         "react-dom": v["react-dom"],
+        ...(tucuUi ? tucuUiPackageDeps("nextjs").dependencies : {}),
       },
       devDependencies: {
+        ...(tucuUi ? tucuUiPackageDeps("nextjs").devDependencies : {}),
         "@types/node": v["@types/node"],
         "@types/react": v["@types/react"],
         "@types/react-dom": v["@types/react-dom"],
@@ -551,6 +568,8 @@ module.exports = nextConfig;
     },
     { spaces: 2 },
   );
+
+  if (tucuUi) await writeNextTucuUiFiles(root, name, "../node_modules");
 }
 
 // ─── Fastify ─────────────────────────────────────────────────────────────────
@@ -661,47 +680,13 @@ async function writeNodeApiScaffold(
 
 // ─── Python ──────────────────────────────────────────────────────────────────
 
-async function scaffoldPython(root: string, name: string): Promise<void> {
-  const pkg = name.replace(/-/g, "_");
-  await fs.ensureDir(resolve(root, "src", pkg));
-  await fs.ensureDir(resolve(root, "tests"));
-
-  await fs.writeFile(
-    resolve(root, "pyproject.toml"),
-    `[project]
-name = "${name}"
-version = "0.1.0"
-requires-python = ">=3.11"
-dependencies = []
-
-[project.optional-dependencies]
-dev = ["pytest", "ruff"]
-`,
-    "utf-8",
-  );
-
-  await fs.writeFile(resolve(root, "src", pkg, "__init__.py"), "", "utf-8");
-  await fs.writeFile(
-    resolve(root, "src", pkg, "__main__.py"),
-    `"""Entry point for ${name}."""
-
-def main():
-    print("Hello from ${name}!")
-
-if __name__ == "__main__":
-    main()
-`,
-    "utf-8",
-  );
-
-  await fs.writeFile(resolve(root, "tests", "__init__.py"), "", "utf-8");
-  await fs.writeFile(
-    resolve(root, "tests", "test_main.py"),
-    `def test_placeholder():
-    assert True
-`,
-    "utf-8",
-  );
+async function scaffoldPython(
+  root: string,
+  name: string,
+  port: number,
+  ml: boolean,
+): Promise<void> {
+  await writePythonAppFiles(root, { name, port, ml }, { gitignore: false });
 
   await fs.writeJSON(
     resolve(root, "package.json"),
@@ -709,11 +694,7 @@ if __name__ == "__main__":
       name,
       version: "0.1.0",
       private: true,
-      scripts: {
-        serve: `python -m ${pkg}`,
-        lint: "ruff check src/",
-        test: "pytest tests/",
-      },
+      scripts: pythonUvCommands(pythonPackageName(name)),
     },
     { spaces: 2 },
   );

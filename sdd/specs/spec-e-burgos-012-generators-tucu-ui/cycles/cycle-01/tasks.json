@@ -1,0 +1,217 @@
+{
+  "$schema": "../../../../schemas/cycle-tasks.schema.json",
+  "spec": "spec-e-burgos-012-generators-tucu-ui",
+  "cycle": 1,
+  "module": "generators-tucu-ui",
+  "apps": [
+    "apps/cli"
+  ],
+  "flow": "lite",
+  "user_stories_generated": true,
+  "prerequisites": {
+    "tasks_generated": true
+  },
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "Versiones estables centralizadas en versions.ts y Next 16",
+      "user_stories": [
+        "US-1"
+      ],
+      "estimation_hours": 2,
+      "story_points": 2,
+      "depends_on": [],
+      "status": "done",
+      "files": [
+        "apps/cli/src/generators/versions.ts",
+        "apps/cli/src/generators/root-package.ts",
+        "apps/cli/src/generators/standalone.generator.ts"
+      ],
+      "usage": {
+        "tokens_in": 49387,
+        "tokens_out": 8715,
+        "approx": true,
+        "recorded_at": "2026-11-03",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "source": "agent-usage-notification"
+      }
+    },
+    {
+      "id": "TASK-002",
+      "title": "tucu-ui por defecto en react y nextjs, flag --no-tucu-ui",
+      "user_stories": [
+        "US-1"
+      ],
+      "estimation_hours": 5,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "status": "done",
+      "files": [
+        "apps/cli/src/generators/app.generator.ts",
+        "apps/cli/src/generators/standalone.generator.ts",
+        "apps/cli/templates/sdd/templates/apps/react-app/src/main.tsx",
+        "apps/cli/templates/sdd/templates/apps/react-app/src/index.css"
+      ],
+      "usage": {
+        "tokens_in": 115235,
+        "tokens_out": 20336,
+        "approx": true,
+        "recorded_at": "2026-11-03",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "source": "agent-usage-notification"
+      }
+    },
+    {
+      "id": "TASK-003",
+      "title": "Tipo next-bff: Next con rutas API frente a los servicios",
+      "user_stories": [
+        "US-2"
+      ],
+      "estimation_hours": 5,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-002"
+      ],
+      "status": "done",
+      "files": [
+        "apps/cli/src/generators/app.generator.ts"
+      ],
+      "usage": {
+        "tokens_in": 65930,
+        "tokens_out": 11635,
+        "approx": true,
+        "recorded_at": "2026-11-03",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "source": "agent-usage-notification"
+      }
+    },
+    {
+      "id": "TASK-004",
+      "title": "Tipos mfe-shell y mfe por path con proxy de desarrollo",
+      "user_stories": [
+        "US-3"
+      ],
+      "estimation_hours": 8,
+      "story_points": 8,
+      "depends_on": [
+        "TASK-002"
+      ],
+      "status": "done",
+      "files": [
+        "apps/cli/src/generators/app.generator.ts"
+      ],
+      "usage": {
+        "tokens_in": 98896,
+        "tokens_out": 17452,
+        "approx": true,
+        "recorded_at": "2026-11-03",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "source": "agent-usage-notification"
+      }
+    },
+    {
+      "id": "TASK-005",
+      "title": "Python FastAPI + LangGraph con uv y TensorFlow opcional",
+      "user_stories": [
+        "US-4"
+      ],
+      "estimation_hours": 5,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "status": "done",
+      "files": [
+        "apps/cli/src/generators/app.generator.ts",
+        "apps/cli/src/generators/docker.generator.ts"
+      ],
+      "usage": {
+        "tokens_in": 113685,
+        "tokens_out": 20062,
+        "approx": true,
+        "recorded_at": "2026-11-03",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "source": "agent-usage-notification"
+      }
+    },
+    {
+      "id": "TASK-006",
+      "title": "Cableado de config, comandos, Docker, detección, docs y tests",
+      "user_stories": [
+        "US-5"
+      ],
+      "estimation_hours": 5,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-003",
+        "TASK-004",
+        "TASK-005"
+      ],
+      "status": "done",
+      "files": [
+        "apps/cli/src/types/config.types.ts",
+        "apps/cli/src/config/schema.ts",
+        "apps/cli/src/commands/init.ts",
+        "apps/cli/src/commands/add/app.ts",
+        "apps/cli/src/commands/configure/sdd-apps.ts"
+      ],
+      "usage": {
+        "tokens_in": 151225,
+        "tokens_out": 26687,
+        "approx": true,
+        "recorded_at": "2026-11-03",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "source": "agent-usage-notification"
+      }
+    },
+    {
+      "id": "TASK-007",
+      "title": "Verificación con generación real en examples/ y cierre",
+      "user_stories": [
+        "US-1",
+        "US-2",
+        "US-3",
+        "US-4",
+        "US-5"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-006"
+      ],
+      "status": "done",
+      "files": [
+        "apps/cli/src/commands/add/app.ts",
+        "apps/cli/src/utils/workspace-apps.ts",
+        "apps/cli/src/generators/mfe-sync.ts",
+        "apps/cli/src/commands/configure/sdd-apps.ts",
+        "apps/cli/src/generators/app.generator.ts",
+        "apps/cli/src/utils/tucu-ui-offer.ts"
+      ],
+      "usage": {
+        "tokens_in": 200650,
+        "tokens_out": 35409,
+        "approx": true,
+        "recorded_at": "2026-11-03",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "source": "agent-usage-notification"
+      }
+    }
+  ]
+}

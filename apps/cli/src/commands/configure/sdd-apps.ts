@@ -40,16 +40,60 @@ export function toSubprojectName(raw: string): string {
   return name;
 }
 
-/** Heurística mínima de tipo por marcadores del stack — solo informativa. */
+const NEXT_CONFIG_EXTENSIONS = ['js', 'ts', 'mjs', 'cjs'];
+const MFE_PROXY_MARKER = 'const mfeProxy';
+const MFE_BASE_PATH = /base:\s*'\/[^'/]+\/'/;
+const MFE_PROXY_ENTRY = /'\/([a-z][a-z0-9-]*)\/':\s*\{/g;
+
+function readTextIfExists(file: string): string | undefined {
+  try {
+    return readFileSync(file, 'utf-8');
+  } catch {
+    return undefined;
+  }
+}
+
+function detectViteAppType(dir: string): string {
+  const config = readTextIfExists(resolve(dir, 'vite.config.ts')) ?? '';
+  if (config.includes(MFE_PROXY_MARKER)) return 'mfe-shell';
+  if (MFE_BASE_PATH.test(config)) return 'mfe';
+  return 'react';
+}
+
+function isNextBff(dir: string): boolean {
+  return existsSync(resolve(dir, 'lib/upstream.ts')) && existsSync(resolve(dir, 'app/api'));
+}
+
 export function detectAppType(dir: string): string {
   if (existsSync(resolve(dir, 'pom.xml'))) return 'springboot';
   if (existsSync(resolve(dir, 'build.gradle'))) return 'springboot';
   if (existsSync(resolve(dir, 'pyproject.toml'))) return 'python';
-  if (['js', 'ts', 'mjs', 'cjs'].some((ext) => existsSync(resolve(dir, `next.config.${ext}`))))
-    return 'nextjs';
+  if (NEXT_CONFIG_EXTENSIONS.some((ext) => existsSync(resolve(dir, `next.config.${ext}`))))
+    return isNextBff(dir) ? 'next-bff' : 'nextjs';
   if (existsSync(resolve(dir, 'nest-cli.json'))) return 'nestjs';
-  if (existsSync(resolve(dir, 'vite.config.ts'))) return 'react';
+  if (existsSync(resolve(dir, 'src/app/app.module.ts'))) return 'nestjs';
+  if (existsSync(resolve(dir, 'vite.config.ts'))) return detectViteAppType(dir);
   return 'app';
+}
+
+export function readShellProxyMfeNames(shellDir: string): string[] {
+  const config = readTextIfExists(resolve(shellDir, 'vite.config.ts')) ?? '';
+  const block = /const mfeProxy = \{[\s\S]*?\n\};/.exec(config)?.[0] ?? '';
+  return [...block.matchAll(MFE_PROXY_ENTRY)].map((match) => match[1]);
+}
+
+export function assignDetectedShells(cwd: string, apps: AppSpec[]): AppSpec[] {
+  const shellOfMfe = new Map<string, string>();
+  for (const shell of apps.filter((app) => app.type === 'mfe-shell')) {
+    for (const mfeName of readShellProxyMfeNames(resolve(cwd, shell.path ?? `apps/${shell.name}`))) {
+      if (!shellOfMfe.has(mfeName)) shellOfMfe.set(mfeName, shell.name);
+    }
+  }
+  return apps.map((app) =>
+    app.type === 'mfe' && !app.shell && shellOfMfe.has(app.name)
+      ? { ...app, shell: shellOfMfe.get(app.name) }
+      : app,
+  );
 }
 
 /** Directorios que nunca contienen apps del repo: dependencias, salidas de build, el propio kit. */
@@ -136,7 +180,10 @@ export function discoverNxApplications(cwd: string): AppSpec[] {
   };
   walk(cwd, 1);
 
-  return [...found.values()].map((f) => f.spec);
+  return assignDetectedShells(
+    cwd,
+    [...found.values()].map((f) => f.spec),
+  );
 }
 
 function safeReaddir(dir: string) {
@@ -193,7 +240,7 @@ export function parseAppsFlag(raw: string, cwd: string): AppSpec[] {
     }
     apps.push({ name, type: detectAppType(abs), path: toPosix(rel) });
   }
-  return apps;
+  return assignDetectedShells(cwd, apps);
 }
 
 /** `name (type)` o `name (type @ path)` cuando el código no vive en apps/<name>. */

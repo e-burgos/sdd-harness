@@ -11,6 +11,13 @@ import {
   toStandaloneOptions,
   toWorkspaceOptions,
 } from "../config/load.js";
+import { isWorkspaceOnlyAppType } from "../generators/app-types.js";
+import {
+  APP_TYPE_OPTIONS,
+  DEFAULT_APP_NAMES,
+  LIB_TYPE_OPTIONS,
+  SERVICE_OPTIONS,
+} from "../config/app-options.js";
 import { IDEA_FILENAME } from "../generators/idea.generator.js";
 import { parseProfile } from "../generators/sdd.generator.js";
 import type { SddProfile } from "../generators/sdd.generator.js";
@@ -19,6 +26,8 @@ import {
   TUCU_UI_CONFLICT_MESSAGE,
   hasConflictingTucuUiFlags,
   hasFrontendApp,
+  resolveAppTucuUi,
+  resolveKitTucuUiFlag,
 } from "../utils/tucu-ui-offer.js";
 import {
   applyTucuUi,
@@ -44,11 +53,13 @@ export interface TucuUiPlan {
 
 export async function planTucuUi(
   flags: TargetFlags,
-  appTypes: string[],
+  appsOrTypes: ReadonlyArray<string | { type: string; tucuUi?: boolean }>,
+  configDefault?: boolean,
 ): Promise<TucuUiPlan> {
+  const apps = appsOrTypes.map((a) => (typeof a === "string" ? { type: a } : a));
   const decision = await decideTucuUiOffer({
-    flag: flags.tucuUi,
-    hasFrontend: hasFrontendApp(appTypes),
+    flag: resolveKitTucuUiFlag(apps, flags.tucuUi, configDefault),
+    hasFrontend: hasFrontendApp(apps.map((a) => a.type)),
     interactive: flags.interactive ?? false,
     current: "off",
   });
@@ -96,55 +107,9 @@ function harnessFilesNextTo(configPath: string | undefined, cwd: string): string
   return candidates.filter((f) => fs.existsSync(f));
 }
 
-const APP_TYPE_OPTIONS = [
-  {
-    value: "nestjs",
-    label: "NestJS API",
-    hint: "Backend REST/WebSocket API",
-  },
-  { value: "react", label: "React SPA", hint: "Vite + React 19" },
-  {
-    value: "nextjs",
-    label: "Next.js",
-    hint: "Full-stack React framework",
-  },
-  {
-    value: "python",
-    label: "Python Agent",
-    hint: "Python 3.11+ service",
-  },
-  {
-    value: "fastify",
-    label: "Fastify API",
-    hint: "Lightweight Node.js API",
-  },
-  {
-    value: "springboot",
-    label: "Spring Boot 3",
-    hint: "Java 21 REST API hexagonal (Maven)",
-  },
-  {
-    value: "hono",
-    label: "Hono API",
-    hint: "Ultra-fast Node.js API",
-  },
-];
-
-const SERVICE_OPTIONS = [
-  { value: "postgres", label: "PostgreSQL", hint: "Relational DB" },
-  { value: "redis", label: "Redis", hint: "Cache & queues" },
-  { value: "rabbitmq", label: "RabbitMQ", hint: "Message broker" },
-  { value: "minio", label: "MinIO", hint: "S3-compatible storage" },
-];
-
-const DEFAULT_APP_NAMES: Record<string, string> = {
-  nestjs: "api",
-  react: "webapp",
-  nextjs: "web",
-  fastify: "api",
-  springboot: "service",
-  hono: "api",
-};
+const STANDALONE_APP_TYPE_OPTIONS = APP_TYPE_OPTIONS.filter(
+  (option) => !isWorkspaceOnlyAppType(option.value),
+);
 
 /** Closing pointer shown by every init path: real generated repos to compare against. */
 function outroReady(message: string): void {
@@ -205,7 +170,7 @@ export const initCommand = defineCommand({
     "tucu-ui": {
       type: "boolean",
       description:
-        "Turn on the tucu-ui design skill + MCP (React/Next apps). --no-tucu-ui keeps it off. With --config, sdd.tucu_ui is the fallback",
+        "Scaffold react/nextjs apps with tucu-ui and turn on its design skill + MCP (default). --no-tucu-ui generates plain apps and keeps it off. With --config, sdd.tucu_ui is the fallback",
     },
     profile: {
       type: "string",
@@ -340,8 +305,12 @@ async function runConfigFlow(
   );
   const modules = config.sdd?.modules ?? [];
   const tucuUi = await planTucuUi(
-    { ...flags, tucuUi: flags.tucuUi ?? config.sdd?.tucu_ui },
-    config.apps.map((a) => a.type),
+    flags,
+    config.apps.map((a) => ({
+      type: a.type,
+      tucuUi: resolveAppTucuUi(a, { cliFlag: flags.tucuUi, configDefault: config.sdd?.tucu_ui }),
+    })),
+    config.sdd?.tucu_ui,
   );
 
   p.note(
@@ -370,7 +339,7 @@ async function runConfigFlow(
   try {
     if (config.mode === "standalone") {
       await generateStandalone({
-        ...toStandaloneOptions(config),
+        ...toStandaloneOptions(config, { tucuUi: flags.tucuUi }),
         sddProfile: config.sdd?.profile ?? flags.profile,
         targetDir,
         harnessFiles,
@@ -379,7 +348,7 @@ async function runConfigFlow(
       });
     } else {
       await generateWorkspace({
-        ...toWorkspaceOptions(config),
+        ...toWorkspaceOptions(config, { tucuUi: flags.tucuUi }),
         sddProfile: config.sdd?.profile ?? flags.profile,
         targetDir,
         harnessFiles,
@@ -406,7 +375,7 @@ async function runStandaloneFlow(
 ): Promise<void> {
   const appType = await p.select({
     message: "App type (code lives at the repo root):",
-    options: APP_TYPE_OPTIONS,
+    options: STANDALONE_APP_TYPE_OPTIONS,
   });
 
   if (p.isCancel(appType)) {
@@ -448,7 +417,7 @@ async function runStandaloneFlow(
     process.exit(0);
   }
 
-  const tucuUi = await planTucuUi(flags, [appType as string]);
+  const tucuUi = await planTucuUi(flags, [{ type: appType as string }]);
 
   logger.title("Generating standalone repo...");
 
@@ -457,6 +426,7 @@ async function runStandaloneFlow(
       projectName,
       description,
       appType: appType as string,
+      tucuUi: flags.tucuUi,
       services: services as string[],
       sddProfile: flags.profile,
       ...resolveInitTarget(process.cwd(), projectName, flags),
@@ -507,7 +477,12 @@ async function runNxFlow(
     process.exit(0);
   }
 
-  const apps: Array<{ name: string; type: string }> = [];
+  const apps: Array<{
+    name: string;
+    type: string;
+    shell?: string;
+    ml?: boolean;
+  }> = [];
   for (const type of appTypes as string[]) {
     const defaultName = DEFAULT_APP_NAMES[type] ?? type;
     const appName = await p.text({
@@ -530,35 +505,38 @@ async function runNxFlow(
     apps.push({ name: appName as string, type });
   }
 
+  for (const app of apps) {
+    if (app.type === "python") {
+      const wantsMl = await p.confirm({
+        message: `Add TensorFlow (ml) to "${app.name}" as a default dependency?`,
+        initialValue: false,
+      });
+      if (p.isCancel(wantsMl)) {
+        p.cancel("Operation cancelled.");
+        process.exit(0);
+      }
+      if (wantsMl) app.ml = true;
+    }
+  }
+
+  const shells = apps.filter((a) => a.type === "mfe-shell");
+  if (shells.length > 1) {
+    for (const app of apps.filter((a) => a.type === "mfe")) {
+      const picked = await p.select({
+        message: `Which mfe-shell serves "${app.name}"?`,
+        options: shells.map((s) => ({ value: s.name, label: s.name })),
+      });
+      if (p.isCancel(picked)) {
+        p.cancel("Operation cancelled.");
+        process.exit(0);
+      }
+      app.shell = picked as string;
+    }
+  }
+
   const libTypes = await p.multiselect({
     message: "Which shared libraries do you want?",
-    options: [
-      {
-        value: "shared-types",
-        label: "Shared Types",
-        hint: "TypeScript interfaces & DTOs",
-      },
-      {
-        value: "shared-utils",
-        label: "Shared Utils",
-        hint: "Helper functions & validators",
-      },
-      {
-        value: "ui-kit",
-        label: "UI Kit",
-        hint: "Shared React components",
-      },
-      {
-        value: "api-client",
-        label: "API Client",
-        hint: "Typed HTTP client for backend",
-      },
-      {
-        value: "config",
-        label: "Config",
-        hint: "Env vars, constants, schemas",
-      },
-    ],
+    options: LIB_TYPE_OPTIONS,
     required: false,
   });
 
@@ -625,10 +603,7 @@ async function runNxFlow(
     process.exit(0);
   }
 
-  const tucuUi = await planTucuUi(
-    flags,
-    apps.map((a) => a.type),
-  );
+  const tucuUi = await planTucuUi(flags, apps);
 
   logger.title("Generating workspace...");
 
@@ -637,7 +612,7 @@ async function runNxFlow(
       projectName,
       description,
       packageScope: packageScope as string,
-      apps,
+      apps: apps.map((a) => ({ ...a, tucuUi: resolveAppTucuUi(a, { cliFlag: flags.tucuUi }) })),
       libs,
       services: services as string[],
       sddProfile: flags.profile,

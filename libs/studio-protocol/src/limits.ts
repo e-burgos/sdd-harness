@@ -9,6 +9,11 @@ export const MAX_LINK_TARGETS = 32;
 export const MAX_READ_FILE_BYTES = 2 * 1024 * 1024;
 export const MAX_KIT_ENTRIES = 2000;
 export const MAX_CYCLE_DOCUMENTS = 64;
+export const MAX_CONFIG_BYTES = 65_536;
+export const GENERATION_CHUNK_MAX = 32_768;
+export const GENERATION_BUFFER_BYTES = 4 * 1024 * 1024;
+export const MAX_DIR_ENTRIES = 500;
+export const WS_CLOSE_WORKSPACE_SWITCHED = 4010;
 export const BRIDGE_FEATURES = [
   'pending-messages',
   'thread-link',
@@ -27,6 +32,8 @@ export const BRIDGE_FEATURES = [
   'kit-index',
   'kit-tools',
   'rtk-gain',
+  'project-wizard',
+  'workspace-switch',
 ] as const;
 export const TEXT_ATTACHMENT_EXTENSIONS = [
   'txt', 'md', 'mdx', 'markdown', 'json', 'jsonc', 'yaml', 'yml', 'toml', 'ini', 'csv', 'log', 'diff', 'patch',

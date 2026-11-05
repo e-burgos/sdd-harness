@@ -128,30 +128,33 @@
       "cycles_completed": 2,
       "description": "Navegación de Studio estilo Slack: riel de módulos y panel de lista, con módulos de Kit, Arquitectura y Métricas y control de las herramientas del kit.",
       "completed_at": "2026-11-03"
-    }
-  ],
-  "in_progress_modules": [],
-  "pending_modules": [
+    },
     {
       "module": "generators-tucu-ui",
       "spec": "spec-e-burgos-012-generators-tucu-ui",
       "apps": [
         "apps/cli"
       ],
-      "cycles_completed": 0,
-      "description": "Generadores de frontend con tucu-ui, BFF, microfrontends por path y FastAPI con LangGraph."
+      "cycles_completed": 1,
+      "description": "Generadores de frontend con tucu-ui, BFF, microfrontends por path y FastAPI con LangGraph.",
+      "completed_at": "2026-11-03"
     },
     {
       "module": "studio-project-wizard",
       "spec": "spec-e-burgos-013-studio-project-wizard",
       "apps": [
+        "apps/cli",
         "apps/studio",
         "apps/studio-bridge",
         "libs/studio-protocol"
       ],
-      "cycles_completed": 0,
-      "description": "Wizard de arquitectura en Studio que genera el proyecto con harness init."
-    },
+      "cycles_completed": 1,
+      "description": "Wizard de arquitectura en Studio que genera el proyecto con harness init.",
+      "completed_at": "2026-11-05"
+    }
+  ],
+  "in_progress_modules": [],
+  "pending_modules": [
     {
       "module": "github-integration",
       "spec": "spec-e-burgos-014-github-integration",
@@ -160,6 +163,15 @@
       ],
       "cycles_completed": 0,
       "description": "Repo en GitHub, CI del kit y ramas/PRs por ciclo SDD."
+    },
+    {
+      "module": "studio-framework-vision",
+      "spec": "spec-e-burgos-015-studio-framework-vision",
+      "apps": [
+        "apps/studio"
+      ],
+      "cycles_completed": 0,
+      "description": "Visión de Studio como framework de trabajo sobre el kit independiente: regla de independencia y decisiones para formalizarlo."
     }
   ],
   "monorepo": {

@@ -9,6 +9,7 @@ import { mapEn } from './modules/map';
 import { kitEn } from './modules/kit';
 import { architectureEn } from './modules/architecture';
 import { metricsEn } from './modules/metrics';
+import { wizardEn } from './modules/wizard';
 
 export const en = {
   ...shellEn,
@@ -21,6 +22,7 @@ export const en = {
   ...kitEn,
   ...architectureEn,
   ...metricsEn,
+  ...wizardEn,
   'connect.title': 'Connect your repo',
   'connect.steps': 'Steps to connect your repo',
   'connect.step1.title': 'Install the SDD kit in your repo',
@@ -32,6 +34,7 @@ export const en = {
   'connect.step2.body': 'In a terminal, at the root of the repo, run:',
   'connect.step3.title': 'Done: this page opens connected to your repo',
   'connect.step3.body': 'The bridge prints a link with a token that changes on every start. If the browser does not open by itself, copy that link.',
+  'connect.launcherHint': 'If you run it in a folder without sdd/, Studio opens the "New project" wizard so you can create one from scratch.',
   'connect.requirements': 'Requirements',
   'connect.req.node': 'Node 20 or later.',
   'connect.req.chrome': 'In Chrome, allow the local network access permission the first time.',
@@ -306,6 +309,8 @@ export const en = {
   'caps.notice': 'This bridge does not offer: {features}. Restart it with the latest version to enable it.',
   'caps.session-title': 'session title',
   'caps.link-targets': 'multiple associations',
+  'caps.project-wizard': 'the new project wizard',
+  'caps.workspace-switch': 'opening another project from Studio',
   'caps.document-touched': 'documents changed from the console',
   'link.add': 'Add association…',
   'link.max': 'Association limit reached',

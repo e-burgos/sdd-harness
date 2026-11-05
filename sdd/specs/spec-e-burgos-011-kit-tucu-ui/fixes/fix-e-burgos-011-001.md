@@ -7,7 +7,7 @@
 | **Severidad** | medium |
 | **Fecha**     | 2026-11-03 |
 | **Autor**     | e-burgos |
-| **Estado**    | implemented |
+| **Estado**    | validated |
 | **Spec**      | spec-e-burgos-011-kit-tucu-ui |
 
 ## Problema
@@ -22,3 +22,7 @@ En el CI de Windows (PR #63), `setup-agents.ps1` corre `sdd-tucu.mjs --sync` y m
 
 - `apps/cli/templates/sdd/scripts/tucu-ui-common.mjs`, `apps/cli/templates/sdd/scripts/sdd-tucu.mjs` (y su copia en `sdd/scripts/`)
 - Prueba: `apps/cli/src/generators/__tests__/sdd.generator.windows.spec.ts` (solo corre en Windows; lo valida el CI)
+
+## Validación
+
+CI de PR #63 en verde en `ubuntu-latest` y `windows-latest` (head 36bb829), mergeado a main el 2026-11-03.

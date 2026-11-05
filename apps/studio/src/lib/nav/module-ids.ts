@@ -1,4 +1,4 @@
-export const MODULE_IDS = ['home', 'specs', 'fixes', 'agents', 'activity', 'map', 'kit', 'architecture', 'metrics'] as const;
+export const MODULE_IDS = ['home', 'specs', 'fixes', 'agents', 'activity', 'map', 'kit', 'architecture', 'metrics', 'new-project'] as const;
 export type ModuleId = (typeof MODULE_IDS)[number];
 
 export const ALWAYS_VISIBLE_MODULE: ModuleId = 'home';

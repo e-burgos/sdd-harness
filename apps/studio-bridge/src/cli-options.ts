@@ -1,3 +1,5 @@
+import { existsSync } from 'node:fs';
+import path from 'node:path';
 import { BridgeStartError } from './main';
 
 export function parsePort(raw: string): number {
@@ -32,3 +34,15 @@ export function parseToken(raw: string): string {
   }
   return raw;
 }
+
+export function parseAllowTargets(raw: string | undefined): string[] {
+  const entries = (raw ?? '').split(',').map((entry) => entry.trim()).filter(Boolean);
+  for (const entry of entries) {
+    if (!path.isAbsolute(entry)) throw new BridgeStartError(`Invalid --allow-target: ${entry} (use absolute paths)`);
+    const resolved = path.resolve(entry);
+    if (path.parse(resolved).root === resolved) throw new BridgeStartError(`Invalid --allow-target: ${entry} (a filesystem root would allow every folder)`);
+  }
+  return entries.map((entry) => path.resolve(entry));
+}
+
+export const missingAllowTargets = (targets: string[]): string[] => targets.filter((target) => !existsSync(target));

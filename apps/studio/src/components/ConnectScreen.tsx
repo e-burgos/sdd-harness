@@ -90,6 +90,7 @@ export function ConnectScreen({ error }: { error?: string }) {
           <Step n={2} title={t('connect.step2.title')}>
             <p className="text-sm text-ink-300">{t('connect.step2.body')}</p>
             <CommandBox command={BRIDGE_COMMAND} />
+            <p className="text-small text-ink-400">{t('connect.launcherHint')}</p>
           </Step>
           <Step n={3} title={t('connect.step3.title')}>
             <p className="text-sm text-ink-300">{t('connect.step3.body')}</p>

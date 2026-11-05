@@ -6,6 +6,15 @@ import {
   toFlatCase,
   toPascalCase,
 } from "../utils/blueprint.js";
+import { writeNextTucuUiFiles, writeViteTucuUiFiles } from "./tucu-ui-app.js";
+import { pythonPackageName, pythonUvCommands, writePythonAppFiles } from "./python-app.js";
+import { appEnvPrefix, mfesOfShell, resolveMfeShell } from "./app-types.js";
+import {
+  applyMfe,
+  applyMfeShell,
+  applyNextBff,
+  type SharedTypesLib,
+} from "./frontend-apps.js";
 
 export interface AppSpec {
   name: string;
@@ -19,6 +28,9 @@ export interface AppSpec {
    * lo exigen); esto solo documenta dónde vive el código. Ausente = `apps/<name>`.
    */
   path?: string;
+  tucuUi?: boolean;
+  shell?: string;
+  ml?: boolean;
 }
 
 export const DEFAULT_APP_PORTS: Record<string, number> = {
@@ -29,15 +41,42 @@ export const DEFAULT_APP_PORTS: Record<string, number> = {
   python: 8000,
   springboot: 8080,
   react: 4200,
+  "next-bff": 3001,
+  "mfe-shell": 4300,
+  mfe: 4301,
 };
 
 /** `catalog-api` → `CATALOG_API_PORT`: variable de entorno por app (un PORT único es ambiguo en un monorepo). */
 export function portEnvVar(appName: string): string {
-  return `${appName.toUpperCase().replace(/[^A-Z0-9]+/g, "_")}_PORT`;
+  return `${appEnvPrefix(appName)}_PORT`;
 }
 
-export function resolveAppPort(app: AppSpec): number {
-  return app.port ?? DEFAULT_APP_PORTS[app.type] ?? 3000;
+export function resolveAppPorts(apps: readonly AppSpec[]): Map<string, number> {
+  const resolved = new Map<string, number>();
+  const taken = new Set<number>();
+  for (const app of apps) {
+    if (!app.port) continue;
+    resolved.set(app.name, app.port);
+    taken.add(app.port);
+  }
+  for (const app of apps) {
+    if (app.port) continue;
+    let port = DEFAULT_APP_PORTS[app.type] ?? 3000;
+    while (taken.has(port)) port += 1;
+    taken.add(port);
+    resolved.set(app.name, port);
+  }
+  return resolved;
+}
+
+export function resolveAppPort(app: AppSpec, apps: readonly AppSpec[] = []): number {
+  if (app.port) return app.port;
+  const known = apps.some((a) => a.name === app.name) ? apps : [...apps, app];
+  return resolveAppPorts(known).get(app.name) as number;
+}
+
+export interface GenerateAppContext {
+  apps?: readonly AppSpec[];
 }
 
 /**
@@ -51,10 +90,12 @@ export async function generateApp(
   root: string,
   app: AppSpec,
   packageScope: string,
+  context: GenerateAppContext = {},
 ): Promise<void> {
   const appDir = resolve(root, "apps", app.name);
   await fs.ensureDir(appDir);
-  const port = resolveAppPort(app);
+  const allApps = context.apps ?? [app];
+  const port = resolveAppPort(app, allApps);
 
   switch (app.type) {
     case "nestjs":
@@ -62,16 +103,43 @@ export async function generateApp(
       await generateNestApp(appDir, app.name, port);
       break;
     case "react":
-      await generateReactApp(root, appDir, app.name, port);
+      await generateReactApp(root, appDir, app.name, port, app.tucuUi !== false);
       break;
     case "nextjs":
-      await generateNextApp(appDir, app.name, port);
+      await generateNextApp(appDir, app.name, port, app.tucuUi !== false);
+      break;
+    case "next-bff":
+      await generateNextApp(appDir, app.name, port, app.tucuUi !== false);
+      await applyNextBff(appDir, app.name, {
+        tucuUi: app.tucuUi !== false,
+        sharedTypes: await findSharedTypesLib(root),
+      });
+      break;
+    case "mfe":
+      await generateReactApp(root, appDir, app.name, port, app.tucuUi !== false);
+      await applyMfe(appDir, app.name, {
+        tucuUi: app.tucuUi !== false,
+        shellName: resolveMfeShell(app, allApps)?.name,
+      });
+      break;
+    case "mfe-shell":
+      await generateReactApp(root, appDir, app.name, port, app.tucuUi !== false);
+      await applyMfeShell(
+        appDir,
+        app.name,
+        mfesOfShell(app, allApps).map((mfe) => ({
+          name: mfe.name,
+          port: resolveAppPort(mfe, allApps),
+          portEnvVar: portEnvVar(mfe.name),
+        })),
+        { tucuUi: app.tucuUi !== false },
+      );
       break;
     case "fastify":
       await generateFastifyApp(appDir, app.name, port);
       break;
     case "python":
-      await generatePythonApp(appDir, app.name);
+      await generatePythonApp(appDir, app.name, port, app.ml === true);
       break;
     case "springboot":
       await generateSpringBootApp(root, appDir, app.name);
@@ -80,6 +148,18 @@ export async function generateApp(
       await generateHonoApp(appDir, app.name, port);
       break;
   }
+}
+
+async function findSharedTypesLib(root: string): Promise<SharedTypesLib | undefined> {
+  const libsDir = resolve(root, "libs");
+  if (!(await fs.pathExists(libsDir))) return undefined;
+  for (const entry of (await fs.readdir(libsDir)).sort()) {
+    const projectJson = resolve(libsDir, entry, "project.json");
+    if (!(await fs.pathExists(projectJson))) continue;
+    const { tags = [] } = await fs.readJSON(projectJson);
+    if (tags.includes("type:types")) return { name: entry, alias: `@${entry}` };
+  }
+  return undefined;
 }
 
 /** Expresión TS que resuelve el puerto: variable por app → PORT genérico → default del config. */
@@ -385,10 +465,12 @@ async function generateReactApp(
   dir: string,
   name: string,
   port: number,
+  tucuUi: boolean,
 ): Promise<void> {
   const blueprint = resolveBlueprintDir(root, "apps/react-app");
   await copyBlueprint(blueprint, dir, { "example-app": name });
   await applyVitePort(resolve(dir, "vite.config.ts"), name, port);
+  if (tucuUi) await writeViteTucuUiFiles(dir, name, "../../../node_modules");
 }
 
 /** El blueprint trae `server: { port: 4200 }`; el config manda (apps[].port) con override por env. */
@@ -430,6 +512,7 @@ async function generateNextApp(
   dir: string,
   name: string,
   port: number,
+  tucuUi: boolean,
 ): Promise<void> {
   await fs.ensureDir(resolve(dir, "app"));
   // Next sirve lo que haya acá; vacío es válido, ausente no (`next build` lo lista).
@@ -503,7 +586,7 @@ module.exports = nextConfig;
       {
         extends: "../../tsconfig.base.json",
         compilerOptions: {
-          jsx: "preserve",
+          jsx: "react-jsx",
           lib: ["dom", "dom.iterable", "esnext"],
           module: "esnext",
           moduleResolution: "bundler",
@@ -516,6 +599,8 @@ module.exports = nextConfig;
     ),
     "utf-8",
   );
+
+  if (tucuUi) await writeNextTucuUiFiles(dir, name, "../../../node_modules");
 }
 
 // ─── Fastify ────────────────────────────────────────────────────────────────
@@ -619,10 +704,24 @@ start();
 
 // ─── Python ─────────────────────────────────────────────────────────────────
 
-async function generatePythonApp(dir: string, name: string): Promise<void> {
-  const pkg = name.replace(/-/g, "_");
-  await fs.ensureDir(resolve(dir, "src", pkg));
-  await fs.ensureDir(resolve(dir, "tests"));
+async function generatePythonApp(
+  dir: string,
+  name: string,
+  port: number,
+  ml: boolean,
+): Promise<void> {
+  const pkg = pythonPackageName(name);
+  await writePythonAppFiles(dir, { name, port, ml }, { gitignore: true });
+
+  const targets = Object.fromEntries(
+    Object.entries(pythonUvCommands(pkg)).map(([target, command]) => [
+      target,
+      {
+        command: `cd apps/${name} && ${command}`,
+        ...(target === "build" ? { outputs: [`{projectRoot}/dist`] } : {}),
+      },
+    ]),
+  );
 
   await fs.writeFile(
     resolve(dir, "project.json"),
@@ -633,52 +732,11 @@ async function generatePythonApp(dir: string, name: string): Promise<void> {
         sourceRoot: `apps/${name}/src`,
         projectType: "application",
         tags: ["scope:agent", "type:app"],
-        targets: {
-          serve: { command: `cd apps/${name} && python -m ${pkg}` },
-          lint: { command: `cd apps/${name} && ruff check src/` },
-          test: { command: `cd apps/${name} && pytest tests/` },
-        },
+        targets,
       },
       null,
       2,
     ),
-    "utf-8",
-  );
-
-  await fs.writeFile(
-    resolve(dir, "pyproject.toml"),
-    `[project]
-name = "${name}"
-version = "0.1.0"
-requires-python = ">=3.11"
-dependencies = []
-
-[project.optional-dependencies]
-dev = ["pytest", "ruff"]
-`,
-    "utf-8",
-  );
-
-  await fs.writeFile(resolve(dir, "src", pkg, "__init__.py"), "", "utf-8");
-  await fs.writeFile(
-    resolve(dir, "src", pkg, "__main__.py"),
-    `"""Entry point for ${name}."""
-
-def main():
-    print("Hello from ${name}!")
-
-if __name__ == "__main__":
-    main()
-`,
-    "utf-8",
-  );
-
-  await fs.writeFile(resolve(dir, "tests", "__init__.py"), "", "utf-8");
-  await fs.writeFile(
-    resolve(dir, "tests", "test_main.py"),
-    `def test_placeholder():
-    assert True
-`,
     "utf-8",
   );
 }

@@ -1,6 +1,6 @@
 # SPEC-e-burgos-012: Generadores — frontends listos con tucu-ui, BFF y microfrontends por path
 
-> Estado: **draft** (2026-11-03). Sin ciclo abierto: faltan decisiones del dev (abajo).
+> Estado: **completed** (2026-11-03). cycle-01 (flow lite) cerrado con las decisiones del dev de abajo.
 > Sucesora de spec-e-burgos-011 (tucu-ui en el kit). Paso 2 del plan del dev: tucu-ui en el kit →
 > **generadores** → wizard en Studio → GitHub.
 
@@ -33,12 +33,13 @@ trabajo de agentes/CPU pesado.
 - Versiones de dependencias fijadas en `apps/cli/src/generators/versions.ts`.
 - tucu-ui es SPA-first; en Next solo vía el entry `./next` (Next 16+, App Router).
 
-## Preguntas abiertas (decisión del dev)
-1. ¿tucu-ui por defecto en toda app `react`/`nextjs` o solo si se prende `--tucu-ui`?
-2. BFF: ¿Next con rutas API o un servicio Node aparte (fastify/hono) delante del front?
-3. Microfrontends: ¿alcanza el modelo por path de tucu-ui o hace falta Module Federation?
-4. Python: ¿LangGraph por defecto y TensorFlow opcional, o ambos opcionales? ¿gestor `uv` o `poetry`?
-5. ¿Standalone y monorepo Nx los dos, o los patrones BFF/MFE solo en monorepo?
+## Decisiones (2026-11-03)
+1. tucu-ui **por defecto** en toda app `react`/`nextjs`; `--no-tucu-ui` la genera sin él. (dev)
+2. BFF = **Next con rutas API** (tipo `next-bff`), no un servicio Node aparte. (dev)
+3. Microfrontends **por path**, sin Module Federation (tipos `mfe-shell` y `mfe`). (dev)
+4. Python: FastAPI + **LangGraph por defecto**, **TensorFlow opcional**, gestor **uv**. (dev)
+5. `next-bff`, `mfe-shell` y `mfe` solo en monorepo; standalone mantiene `react` y `nextjs` con tucu-ui. (decisión del implementador)
+6. Toda dependencia de los generadores nuevos en su **última versión estable** consultada en npm/PyPI al implementar. (dev)
 
 ## Fuera de alcance
 - El wizard en Studio (spec-e-burgos-013) y la conexión a GitHub (spec-e-burgos-014).

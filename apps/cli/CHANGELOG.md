@@ -5,6 +5,33 @@ All notable changes to `@e-burgos/sdd-harness` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.17.0] - 2026-11-05
+
+### Added
+
+- **`harness config catalog --json`** prints every option the config accepts (scopes, shapes, app
+  and lib types, backends, ports, tucu-ui layouts, Docker services) with labels and defaults, so a
+  UI can build the same choices `harness init` offers without hardcoding them.
+- **`harness config validate <file|-> --json`** checks a `harness.config.json` (from a file or
+  stdin) against the schema plus the cross-field rules: app topology (an `mfe` needs an
+  `mfe-shell`, unique names and ports), size limits (`CONFIG_LIMITS`: names 64, scope 64, apps 32,
+  libs 32, services 16). Exit codes: 0 valid, 1 invalid (issues listed), 2 the file could not be
+  read or parsed (with `--json`, a `ConfigCliFailure` object).
+- **New app types in `init` and `add app`:** `next-bff` (Next as a backend-for-frontend),
+  path-based microfrontends (`mfe-shell` + `mfe`), and `python` (FastAPI + LangGraph managed with
+  `uv`, TensorFlow behind the `ml` option).
+- **React and Next apps are scaffolded with `@e-burgos/tucu-ui` by default** (valid layouts, a
+  client sample page in Next). Generator versions are pinned in one place (`versions.ts`) at their
+  latest stable release.
+- **Kit: optional tucu-ui integration.** `sdd/tools.json → tucu_ui` (off by default) and
+  `pnpm sdd:tucu -- --enable|--disable|--status` wire the tucu-ui design skill and its MCP server
+  into the harnesses; the docs gain `TUCU-UI.md` (es/en).
+
+### Fixed
+
+- Shell topology and microfrontend ports, detection of the new app types, port defaults and
+  tucu-ui precedence found by real generations; Python builds use wheel-only `uv`.
+
 ## [0.16.1] - 2026-10-22
 
 ### Fixed

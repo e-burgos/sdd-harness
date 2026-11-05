@@ -1,0 +1,11 @@
+{
+  "cliVersion": "0.16.1",
+  "recordedWith": "node apps/cli/dist/cli.js init --config harness.config.json --here -y (stdout then stderr, NO_COLOR=1 FORCE_COLOR=0 NX_DAEMON=false, CI unset)",
+  "fixtures": [
+    { "file": "nx-success.txt", "mode": "nx", "exitCode": 0 },
+    { "file": "standalone-success.txt", "mode": "standalone", "exitCode": 0 },
+    { "file": "nx-gate-red.txt", "mode": "nx", "exitCode": 1, "note": "pnpm exec nx run-many replaced by a failing shim on PATH" },
+    { "file": "standalone-network-failure.txt", "mode": "standalone", "exitCode": 1, "note": ".npmrc registry pointing to a closed port" },
+    { "file": "standalone-pnpm-missing.txt", "mode": "standalone", "exitCode": 1, "note": "PATH containing only node" }
+  ]
+}

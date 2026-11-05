@@ -1,7 +1,9 @@
+import { TUCU_UI_APP_TYPES } from '../generators/app-types.js';
+
 export type TucuUiState = 'off' | 'complete' | 'incomplete';
 export type TucuUiChoice = 'enable' | 'skip' | 'ask-enable' | 'ask-repair';
 
-const FRONTEND_APP_TYPES = ['react', 'nextjs'];
+const FRONTEND_APP_TYPES: readonly string[] = TUCU_UI_APP_TYPES;
 
 export function resolveTucuUiChoice(input: {
   flag: boolean | undefined;
@@ -20,6 +22,36 @@ export function resolveTucuUiChoice(input: {
 
 export function hasFrontendApp(types: readonly string[]): boolean {
   return types.some((type) => FRONTEND_APP_TYPES.includes(type));
+}
+
+export function appUsesTucuUi(
+  app: { type: string; tucuUi?: boolean },
+  flag?: boolean,
+): boolean {
+  return FRONTEND_APP_TYPES.includes(app.type) && (app.tucuUi ?? flag ?? true);
+}
+
+export interface TucuUiSources {
+  cliFlag?: boolean;
+  configDefault?: boolean;
+}
+
+export function resolveAppTucuUi(
+  app: { type: string; tucuUi?: boolean },
+  sources: TucuUiSources = {},
+): boolean | undefined {
+  if (!FRONTEND_APP_TYPES.includes(app.type)) return undefined;
+  return sources.cliFlag ?? app.tucuUi ?? sources.configDefault;
+}
+
+export function resolveKitTucuUiFlag(
+  apps: ReadonlyArray<{ type: string; tucuUi?: boolean }>,
+  flag: boolean | undefined,
+  configDefault?: boolean,
+): boolean | undefined {
+  if (flag !== undefined) return flag;
+  if (!hasFrontendApp(apps.map((app) => app.type))) return configDefault;
+  return apps.some((app) => appUsesTucuUi(app));
 }
 
 export function hasConflictingTucuUiFlags(rawArgs: readonly string[]): boolean {

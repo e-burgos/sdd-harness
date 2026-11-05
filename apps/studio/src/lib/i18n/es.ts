@@ -8,6 +8,7 @@ import { mapEs } from './modules/map';
 import { kitEs } from './modules/kit';
 import { architectureEs } from './modules/architecture';
 import { metricsEs } from './modules/metrics';
+import { wizardEs } from './modules/wizard';
 
 export const es = {
   ...shellEs,
@@ -20,6 +21,7 @@ export const es = {
   ...kitEs,
   ...architectureEs,
   ...metricsEs,
+  ...wizardEs,
   'connect.title': 'Conectá tu repo',
   'connect.steps': 'Pasos para conectar tu repo',
   'connect.step1.title': 'Instalá el kit SDD en tu repo',
@@ -31,6 +33,7 @@ export const es = {
   'connect.step2.body': 'En una terminal, parado en la raíz del repo, corré:',
   'connect.step3.title': 'Listo: se abre esta web conectada a tu repo',
   'connect.step3.body': 'El puente imprime un enlace con un token que cambia en cada arranque. Si el navegador no se abre solo, copiá ese enlace.',
+  'connect.launcherHint': 'Si lo corrés en una carpeta sin sdd/, Studio abre el asistente «Nuevo proyecto» para crear uno desde cero.',
   'connect.requirements': 'Requisitos',
   'connect.req.node': 'Node 20 o superior.',
   'connect.req.chrome': 'En Chrome, aceptá el permiso de acceso a la red local la primera vez.',
@@ -305,6 +308,8 @@ export const es = {
   'caps.notice': 'Este puente no ofrece: {features}. Reinicialo con la última versión para habilitarlo.',
   'caps.session-title': 'título de sesión',
   'caps.link-targets': 'asociaciones múltiples',
+  'caps.project-wizard': 'el asistente de nuevo proyecto',
+  'caps.workspace-switch': 'abrir otro proyecto desde Studio',
   'caps.document-touched': 'documentos modificados desde la consola',
   'link.add': 'Agregar asociación…',
   'link.max': 'Máximo de asociaciones',

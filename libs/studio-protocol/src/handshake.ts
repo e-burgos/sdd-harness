@@ -13,7 +13,7 @@ export const Welcome = z.object({
   kind: z.literal('welcome'),
   protocolVersion: z.number().int(),
   bridgeVersion: z.string(),
-  workspace: z.object({ root: z.string(), project: z.string() }),
+  workspace: z.object({ root: z.string(), project: z.string() }).nullable(),
   kitVersion: z.string().nullable(),
   authMode: AuthMode,
   features: z.array(z.string().max(40)).max(32).optional(),

@@ -9,9 +9,20 @@ import { clearApiKey, loadApiKey, saveApiKey } from '@/lib/api-key';
 import { BridgeClient, BridgeError, type ConnectionState } from '@/lib/bridge/client';
 import { bridgeUrl, type PairingInfo } from '@/lib/bridge/pairing';
 import type { StudioState } from '@/lib/store/state';
+import { draftKey } from '@/lib/store/state';
+import { clearWizardSession, loadPendingIdea } from '@/lib/wizard/persist';
 import { createStudioStore, type StudioActions, type StudioStore } from '@/lib/store/store';
 
 const CLIENT_VERSION = '0.1.0';
+export const SWITCH_TIMEOUT_MS = 15_000;
+
+export type WorkspaceMode = 'launcher' | 'project';
+
+export interface SwitchingState {
+  project: string;
+  root: string;
+  failed: boolean;
+}
 
 export interface BridgeContextValue {
   client: BridgeClient;
@@ -28,6 +39,10 @@ export interface BridgeContextValue {
   /** Which auth tab is in effect for the SDK subprocess, null until the user (or storage) decides. */
   authPreference: AuthPreference | null;
   setAuthPreference: (preference: AuthPreference) => Promise<void>;
+  workspaceMode: WorkspaceMode | null;
+  workspaceEpoch: number;
+  switching: SwitchingState | null;
+  retrySwitch: () => void;
 }
 
 export const BridgeContext = createContext<BridgeContextValue | null>(null);
@@ -42,6 +57,24 @@ export function BridgeProvider({ pairing, children }: { pairing: PairingInfo; ch
   const [apiKeySource, setApiKeySource] = useState<'tab' | 'saved' | null>(null);
 
   const [authPreference, setAuthPreferenceState] = useState<AuthPreference | null>(null);
+
+  const [workspaceMode, setWorkspaceMode] = useState<WorkspaceMode | null>(null);
+  const [workspaceEpoch, setWorkspaceEpoch] = useState(0);
+  const [switching, setSwitching] = useState<SwitchingState | null>(null);
+  const rootRef = useRef<string | null | undefined>(undefined);
+  const switchWatch = switching !== null && !switching.failed;
+
+  useEffect(() => {
+    if (!switchWatch) return;
+    const timer = setTimeout(() => setSwitching((current) => (current ? { ...current, failed: true } : current)), SWITCH_TIMEOUT_MS);
+    return () => clearTimeout(timer);
+  }, [switchWatch]);
+
+  const retrySwitch = useCallback(() => {
+    setSwitching((current) => (current ? { ...current, failed: false } : current));
+    client.close();
+    client.connect();
+  }, [client]);
 
   const pushAuth = useCallback(
     async (apiKey: string | null, mode: AuthPreference) => {
@@ -92,6 +125,18 @@ export function BridgeProvider({ pairing, children }: { pairing: PairingInfo; ch
     const offState = client.onState((s) => {
       setConnection(s);
       if (s.status === 'open') {
+        const root = s.welcome.workspace?.root ?? null;
+        const previousRoot = rootRef.current;
+        rootRef.current = root;
+        setWorkspaceMode(s.welcome.workspace === null ? 'launcher' : 'project');
+        setSwitching(null);
+        if (previousRoot !== undefined && previousRoot !== root) {
+          store.getState().reset();
+          const idea = loadPendingIdea();
+          clearWizardSession();
+          if (idea) store.getState().setDraftText(draftKey('general', null), idea);
+          setWorkspaceEpoch((epoch) => epoch + 1);
+        }
         setAuthMode(s.welcome.authMode);
         // The bridge keeps the key in memory only: hand it back after every (re)connection.
         const stored = loadApiKey();
@@ -100,14 +145,17 @@ export function BridgeProvider({ pairing, children }: { pairing: PairingInfo; ch
         setAuthPreferenceState(preference);
         if (preference === 'subscription') pushAuth(null, 'subscription').catch((e: unknown) => console.error('[sdd-studio] auth.set:', e instanceof Error ? e.message : 'failed'));
         else if (stored) pushApiKey(stored.apiKey).catch((e: unknown) => console.error('[sdd-studio] auth.set:', e instanceof Error ? e.message : 'failed'));
-        sync();
+        if (s.welcome.workspace !== null) sync();
       }
       else {
         runRef.current++; // invalida cualquier sync en vuelo
         setSyncError(null);
       }
     });
-    const offEvents = client.onEvent((e) => store.getState().receive(e));
+    const offEvents = client.onEvent((e) => {
+      if (e.kind === 'workspace.switched') setSwitching({ project: e.project, root: e.root, failed: false });
+      else store.getState().receive(e);
+    });
     client.connect();
     return () => {
       offState();
@@ -117,8 +165,8 @@ export function BridgeProvider({ pairing, children }: { pairing: PairingInfo; ch
   }, [client, store, sync, pushApiKey, pushAuth]);
 
   const value = useMemo(
-    () => ({ client, store, connection, pairing, syncError, retrySync: sync, authMode, apiKeySource, setApiKey, authPreference, setAuthPreference }),
-    [client, store, connection, pairing, syncError, sync, authMode, apiKeySource, setApiKey, authPreference, setAuthPreference],
+    () => ({ client, store, connection, pairing, syncError, retrySync: sync, authMode, apiKeySource, setApiKey, authPreference, setAuthPreference, workspaceMode, workspaceEpoch, switching, retrySwitch }),
+    [client, store, connection, pairing, syncError, sync, authMode, apiKeySource, setApiKey, authPreference, setAuthPreference, workspaceMode, workspaceEpoch, switching, retrySwitch],
   );
   return <BridgeContext.Provider value={value}>{children}</BridgeContext.Provider>;
 }

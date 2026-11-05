@@ -6,7 +6,7 @@
   "type": "module",
   "bin": { "sdd-studio": "./bin/sdd-studio.mjs" },
   "files": ["bin/", "dist/"],
-  "engines": { "node": ">=20" },
+  "engines": { "node": ">=20.6" },
   "homepage": "https://studio.sdd.estebanburgos.com.ar",
   "author": "Esteban Burgos",
   "license": "MIT",
@@ -23,6 +23,7 @@
     "record-fixtures": "node scripts/record-sdk-fixtures.mjs"
   },
   "dependencies": {
+    "@e-burgos/sdd-harness": "workspace:*",
     "@anthropic-ai/claude-agent-sdk": "0.3.292",
     "ajv": "^8.20.0",
     "chokidar": "^4.0.3",

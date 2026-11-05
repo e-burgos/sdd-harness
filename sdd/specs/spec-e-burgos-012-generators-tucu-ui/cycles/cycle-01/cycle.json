@@ -1,0 +1,208 @@
+{
+  "$schema": "../../../../schemas/cycle.schema.json",
+  "cycle": 1,
+  "module": "generators-tucu-ui",
+  "spec": "spec-e-burgos-012-generators-tucu-ui",
+  "apps": [
+    "apps/cli"
+  ],
+  "phase": "generators-tucu-ui",
+  "flow": "lite",
+  "objectives": [
+    "tucu-ui por defecto en react y nextjs (US-1)",
+    "Tipos next-bff y mfe-shell/mfe (US-2, US-3)",
+    "Python FastAPI + LangGraph con uv (US-4)",
+    "Registro, comandos y docs de los tipos nuevos (US-5)"
+  ],
+  "status": "completed",
+  "started_at": "2026-11-03",
+  "completed_at": "2026-11-03",
+  "documents": {
+    "plan": "sdd/specs/spec-e-burgos-012-generators-tucu-ui/cycles/cycle-01/plan.md",
+    "tasks": "sdd/specs/spec-e-burgos-012-generators-tucu-ui/cycles/cycle-01/tasks.json"
+  },
+  "artifacts": [],
+  "metrics": {
+    "tasks_total": 7,
+    "tasks_completed": 7,
+    "tasks_skipped": 0,
+    "story_points": 33,
+    "files_created": [
+      "apps/cli/src/commands/__tests__/add-app.spec.ts",
+      "apps/cli/src/generators/__tests__/app-types.spec.ts",
+      "apps/cli/src/generators/__tests__/docker.env.spec.ts",
+      "apps/cli/src/generators/__tests__/frontend-apps.generator.spec.ts",
+      "apps/cli/src/generators/__tests__/mfe-sync.spec.ts",
+      "apps/cli/src/generators/__tests__/python-app.generator.spec.ts",
+      "apps/cli/src/generators/__tests__/sdd.generator.mfe-registry.spec.ts",
+      "apps/cli/src/generators/__tests__/versions.spec.ts",
+      "apps/cli/src/generators/app-types.ts",
+      "apps/cli/src/generators/frontend-apps.ts",
+      "apps/cli/src/generators/mfe-sync.ts",
+      "apps/cli/src/generators/python-app.ts",
+      "apps/cli/src/generators/tucu-ui-app.ts",
+      "apps/cli/src/utils/__tests__/workspace-apps.detect.spec.ts",
+      "apps/cli/src/utils/__tests__/workspace-apps.spec.ts",
+      "apps/cli/src/utils/workspace-apps.ts"
+    ],
+    "files_modified": [
+      "apps/cli/README.md",
+      "apps/cli/src/commands/__tests__/init-target.spec.ts",
+      "apps/cli/src/commands/add/app.ts",
+      "apps/cli/src/commands/configure/sdd-apps.ts",
+      "apps/cli/src/commands/init.ts",
+      "apps/cli/src/config/__tests__/load.spec.ts",
+      "apps/cli/src/config/load.ts",
+      "apps/cli/src/config/schema.ts",
+      "apps/cli/src/generators/__tests__/root-package.spec.ts",
+      "apps/cli/src/generators/__tests__/standalone.generator.spec.ts",
+      "apps/cli/src/generators/__tests__/workspace.generator.spec.ts",
+      "apps/cli/src/generators/app.generator.ts",
+      "apps/cli/src/generators/docker.generator.ts",
+      "apps/cli/src/generators/root-package.ts",
+      "apps/cli/src/generators/sdd.generator.ts",
+      "apps/cli/src/generators/standalone.generator.ts",
+      "apps/cli/src/generators/versions.ts",
+      "apps/cli/src/generators/workspace.generator.ts",
+      "apps/cli/src/types/config.types.ts",
+      "apps/cli/src/utils/__tests__/tucu-ui-offer.spec.ts",
+      "apps/cli/src/utils/tucu-ui-offer.ts",
+      "apps/cli/templates/sdd/documentation/en/TUCU-UI.md",
+      "apps/cli/templates/sdd/documentation/es/TUCU-UI.md",
+      "apps/cli/templates/sdd/templates/nx-workspace/package.json"
+    ],
+    "files_deleted": [],
+    "usage": {
+      "tokens_in": 1124986,
+      "tokens_out": 198528,
+      "approx": true,
+      "source": "agent-usage-notification",
+      "by_tier": {
+        "claude/opus": {
+          "tokens_in": 329979,
+          "tokens_out": 58232,
+          "approx": true,
+          "source": "agent-usage-notification"
+        },
+        "claude/sonnet": {
+          "tokens_in": 795007,
+          "tokens_out": 140296,
+          "approx": true,
+          "source": "agent-usage-notification"
+        }
+      },
+      "by_agent": [
+        {
+          "agent": "orchestrator",
+          "label": "solo",
+          "provider_model": "claude/opus",
+          "effort": "medium",
+          "tokens_in": 153000,
+          "tokens_out": 27000,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-03"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-001/002",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 164621,
+          "tokens_out": 29051,
+          "source": "agent-usage-notification",
+          "approx": true,
+          "recorded_at": "2026-11-03"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-003/004",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 164826,
+          "tokens_out": 29087,
+          "source": "agent-usage-notification",
+          "approx": true,
+          "recorded_at": "2026-11-03"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-005",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 113685,
+          "tokens_out": 20062,
+          "source": "agent-usage-notification",
+          "approx": true,
+          "recorded_at": "2026-11-03"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-006",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 151225,
+          "tokens_out": 26687,
+          "source": "agent-usage-notification",
+          "approx": true,
+          "recorded_at": "2026-11-03"
+        },
+        {
+          "agent": "reviewer",
+          "label": "review",
+          "provider_model": "claude/opus",
+          "effort": "high",
+          "tokens_in": 176979,
+          "tokens_out": 31232,
+          "source": "agent-usage-notification",
+          "approx": true,
+          "recorded_at": "2026-11-03"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-007 fixes",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 200650,
+          "tokens_out": 35409,
+          "source": "agent-usage-notification",
+          "approx": true,
+          "recorded_at": "2026-11-03"
+        }
+      ]
+    }
+  },
+  "tables_created": [],
+  "endpoints_implemented": [],
+  "components_created": [],
+  "issues_found": [
+    "corregido en la generación real: layout 'minimal' de tucu-ui (solo en la fuente local, no en 3.10.0), página de Next con componentes con estado como server component, uv build roto con uv < 0.13 (target pasa a --wheel)",
+    "corregido en review: segundo mfe-shell borraba mfes del primero, puertos explícitos perdidos al sincronizar, configure sdd no detectaba los tipos nuevos, choque de puerto react/mfe-shell, JSDoc narrativos, Next 16 forzado sobre workspaces existentes, archivos del shell pisados, prioridad de tucu-ui inconsistente con las docs",
+    "decisión: Nx 24 y TypeScript 7 fuera de este ciclo; context_prompt.md global del proyecto generado no lista apps (template verbatim)"
+  ],
+  "reviewer_report": {
+    "approved": true,
+    "date": "2026-11-03",
+    "ca_results": {
+      "US-1": "PASS - tucu-ui por defecto en react/nextjs con provider, estilos y pantalla de ejemplo; integración del kit prendida; --no-tucu-ui genera apps planas; generación real verde (monorepo y standalone)",
+      "US-2": "PASS - next-bff con app/api/health hacia <APP>_UPSTREAM_URL, tipos de shared-types, test de la ruta; solo monorepo",
+      "US-3": "PASS - mfe con base por path, shell con proxy/nginx/Dockerfile; add app de un segundo shell y de un mfe conserva los existentes y sus puertos; 11 proyectos verdes",
+      "US-4": "PASS - FastAPI + LangGraph con uv, TensorFlow por ml (requires-python <3.14), ruff/pytest/build verdes en real; docker build sin correr",
+      "US-5": "PASS - schema/tipos, init y add app, puertos sin choques, .env.example, detección en configure sdd, docs es/en y README"
+    },
+    "tests": {
+      "sdd:validate": "OK",
+      "build": "pnpm build exit 0",
+      "typecheck": "pnpm typecheck exit 0",
+      "suite": "cli 484, bridge 797, studio 903, protocol 125",
+      "real-generation": "examples/gen-012-mono (11 proyectos tras add app) y standalone react/nextjs: lint test build verdes"
+    },
+    "notes": "Implementadores sonnet/medium en secuencia, reviewer opus/high y pasada de fix sonnet/medium; orquestador opus.",
+    "follow_ups": [
+      "Nx 24 y TypeScript 7 en los generadores",
+      "Listar las apps en el context_prompt.md global del proyecto generado",
+      "Warning no-non-null-assertion del blueprint react-app",
+      "docker build real de python y del mfe-shell"
+    ]
+  }
+}

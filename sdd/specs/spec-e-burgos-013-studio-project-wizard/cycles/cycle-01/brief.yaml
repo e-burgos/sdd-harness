@@ -1,0 +1,72 @@
+# sdd/specs/spec-e-burgos-013-studio-project-wizard/cycles/cycle-01/brief.yaml
+# Generado por: sdd-orchestrator
+# Al: iniciar el ciclo
+
+cycle: 1
+module: studio-project-wizard
+phase: project-wizard
+flow: full
+date: 2026-11-04
+estimated_weeks: 1
+app_context: sdd/context/apps/studio/context_prompt.md
+
+objective: |
+  Módulo «Nuevo proyecto» en Studio: un wizard de arquitectura de 6 pasos que filtra qué herramienta
+  necesita crear el usuario, arma un harness.config.json válido para la CLI y, a través del bridge,
+  genera una carpeta local nueva en la ruta que el usuario elige, ya armada como la arma el kit
+  (harness init --config … -y: instala dependencias, sdd:validate y lint test build), con progreso en
+  vivo. El harness.config.json queda en el proyecto nuevo. Al terminar se puede abrir el proyecto en
+  Studio. Vincularlo a un repo remoto es spec-e-burgos-014.
+
+scope:
+  - US-1 módulo Nuevo proyecto con el wizard de 6 pasos, explicaciones y recomendaciones
+  - US-2 vista previa del árbol, apps/libs y comandos antes de generar
+  - US-3 el bridge genera en la carpeta elegida con harness init --config, progreso y gate en vivo
+  - US-4 abrir el proyecto nuevo en Studio con su #general y una idea inicial para Hermes
+  - US-5 el wizard produce el mismo harness.config.json que acepta la CLI (un solo contrato)
+
+out_of_scope:
+  - Crear o vincular el repo remoto, push, GitHub (spec-e-burgos-014)
+  - Cambios en los generadores de la CLI salvo lo imprescindible para que el bridge los invoque
+  - App de escritorio
+  - Publicar o taggear
+
+dependencies_required:
+  - spec-e-burgos-012-generators-tucu-ui (completed)
+
+decisions_from_dev:
+  - "2026-11-04: el wizard no depende del repo conectado; genera una carpeta local nueva en la ruta que el usuario indique, vinculable después a su repo"
+  - "2026-11-04: generar instala dependencias y corre el gate"
+  - "2026-11-04: harness.config.json queda en el proyecto nuevo"
+  - "Regla de independencia (spec-e-burgos-015): la CLI y el kit nunca dependen de Studio; Studio consume el kit solo vía CLI, scripts sdd:* y registros sdd/ a través del bridge"
+
+facts:
+  bridge: |
+    apps/studio-bridge (@e-burgos/sdd-studio 0.1.3, bin sdd-studio, citty). startBridge exige sdd/ en
+    --root (BridgeStartError si falta) y fija root con realpath; todo (ThreadStore, attachments,
+    file-index, watcher, KitIndexer, CommandRunner) cuelga de ese root único. CommandRunner hace spawn
+    sin shell de node sdd/scripts/<script> y emite command.output (stdout/stderr) y command.exit con un
+    runId. Auth por token de pareo; orígenes permitidos: web pública + localhost.
+  protocol: |
+    libs/studio-protocol (zod): ClientCommand es discriminatedUnion por cmd; command.run acepta
+    KitCommandName (gate|validate|rebuild-tasks-index|rebuild-catalog) con args SafeArg; ErrorCode
+    bad-request|not-found|bad-path|conflict|internal. Eventos command.output / command.exit.
+  cli: |
+    @e-burgos/sdd-harness 0.16.1. init --config <file> -y genera en el cwd (conserva harness.*), corre
+    pnpm install, sdd:validate y nx run-many -t lint test build e imprime "[x] sdd:validate" /
+    "[x] nx run-many -t lint test build". `harness config schema` imprime el JSON Schema del config
+    (derivado de HarnessConfigSchema zod con zodToJsonSchema). Tipos de app: react, nextjs, next-bff,
+    mfe-shell, mfe, nestjs, python (ml opcional), etc.; tucuUi por app, shell para mfe. E2E de
+    referencia: apps/cli/src/__e2e__/init.e2e.spec.ts (HARNESS_E2E=1).
+  studio: |
+    apps/studio (Next, tucu-ui 3.10.0, ruta /w). Componentes en src/components/{shell,modules,workspace,
+    mission-control}; ConnectScreen, BridgeProvider, GateStatusModal. Escala tipográfica estilo Slack.
+    Hoy Studio solo funciona con un bridge conectado a un repo con sdd/.
+
+agent_contexts:
+  functional:
+    goal: Historias con criterios verificables para los 6 pasos (qué opciones aparecen según lo elegido antes, recomendaciones, validación de puertos y nombres), carpeta destino (vacía, inexistente, con contenido → confirmación), progreso y fallos a mitad de la generación (install sin red, gate en rojo), y qué ve el usuario al terminar
+  planner:
+    goal: Tasks ordenadas por subproyecto (protocol → bridge → studio → docs), con tests de cada capa, e2e de Studio en el puerto 4417 y una generación real de punta a punta en examples/
+  architect:
+    goal: Decidir cómo arranca el wizard sin un repo con sdd/ (modo del bridge sin proyecto vs. comando en un bridge conectado con destino fuera del root), cómo el bridge invoca la CLI (versión fijada, npx vs. dependencia) sin acoplar el kit a Studio, cómo se elige y valida la carpeta destino de forma segura, de dónde saca Studio el contrato del config (harness config schema) y cómo se pasa a abrir el proyecto nuevo

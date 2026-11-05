@@ -1,0 +1,247 @@
+┌   harness init 
+│
+◇  Configuration from harness.config.json ──────────────────────────────────────────────────────────────╮
+│                                                                                                       │
+│  Project: fx-nx                                                                                       │
+│  Mode: nx                                                                                             │
+│  Target: <TARGET> (current directory)  │
+│  Apps: core-api (nestjs:3000)                                                                         │
+│  Libs: shared-types                                                                                   │
+│  Services: postgres                                                                                   │
+│  Modules: 1 spec(s) seeded as draft                                                                   │
+│  npm scopes: none                                                                                     │
+│  SDD: enabled (always)                                                                                │
+│  Gate: sdd:validate + lint/test/build                                                                 │
+│                                                                                                       │
+├───────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+Generating workspace...
+
+ℹ Generating in the current directory (fx-nx/) — it already holds this project.
+→ Creating directory structure...
+→ Generating Nx configuration files...
+→ Installing Nx dependencies (pnpm install)...
+Progress: resolved 1, reused 0, downloaded 0, added 0
+ WARN  deprecated eslint@9.39.5: This version is no longer supported. Please see https://eslint.org/version-support for other options.
+Progress: resolved 60, reused 57, downloaded 1, added 0
+Progress: resolved 302, reused 280, downloaded 1, added 0
+Progress: resolved 457, reused 435, downloaded 2, added 0
+Progress: resolved 596, reused 556, downloaded 3, added 0
+Progress: resolved 861, reused 769, downloaded 4, added 0
+Progress: resolved 1032, reused 941, downloaded 4, added 0
+ WARN  3 deprecated subdependencies found: glob@10.5.0, glob@7.2.3, inflight@1.0.6
+Packages: +964
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Progress: resolved 1053, reused 961, downloaded 5, added 125
+Progress: resolved 1053, reused 961, downloaded 6, added 523
+Progress: resolved 1053, reused 961, downloaded 6, added 747
+Progress: resolved 1053, reused 961, downloaded 6, added 963
+Progress: resolved 1053, reused 961, downloaded 6, added 964, done
+.../node_modules/@swc/core postinstall$ node postinstall.js
+.../node_modules/@swc/core postinstall: Done
+.../node_modules/nx postinstall$ node -e "try{require('./dist/bin/post-install')}catch(e){}"
+.../node_modules/nx postinstall: Done
+. postinstall$ node -e "const f='sdd/scripts/setup-rtk.mjs';if(require('fs').existsSync(f)){require('child_process').execFileSync(process.execPath,[f],{stdio:'inherit'})}"
+. postinstall: Done
+
+dependencies:
++ @nestjs/common 11.2.8 (12.3.3 is available)
++ @nestjs/core 11.2.8 (12.3.3 is available)
++ @nestjs/platform-express 11.2.8 (12.3.3 is available)
++ reflect-metadata 0.2.2
++ rxjs 7.8.2
+
+devDependencies:
++ @nestjs/testing 11.2.8 (12.3.3 is available)
++ @nx/devkit 23.1.1 (24.0.2 is available)
++ @nx/eslint 23.1.1 (24.0.2 is available)
++ @nx/eslint-plugin 23.1.1 (24.0.2 is available)
++ @nx/jest 23.1.1 (24.0.2 is available)
++ @nx/js 23.1.1 (24.0.2 is available)
++ @nx/nest 23.1.1 (24.0.2 is available)
++ @nx/node 23.1.1 (24.0.2 is available)
++ @nx/webpack 23.1.1 (24.0.2 is available)
++ @nx/workspace 23.1.1 (24.0.2 is available)
++ @swc-node/register 1.11.1 (1.12.1 is available)
++ @swc/core 1.15.47 (1.16.21 is available)
++ @swc/helpers 0.5.24
++ @types/express 5.0.6
++ @types/jest 29.5.14 (30.0.0 is available)
++ @types/node 22.20.5 (26.6.6 is available)
++ ajv 8.20.0
++ ajv-formats 3.0.1
++ eslint 9.39.5 (10.14.0 is available) deprecated
++ jest 29.7.0 (30.5.2 is available)
++ jest-environment-node 29.7.0 (30.5.2 is available)
++ nx 23.1.1 (24.0.3 is available)
++ prettier 3.9.10
++ ts-jest 29.4.15
++ tslib 2.9.1
++ typescript 6.0.3 (7.0.2 is available)
++ typescript-eslint 8.72.1
++ webpack-cli 5.1.4 (7.3.1 is available)
+
+╭ Warning ─────────────────────────────────────────────────────────────────────╮
+│                                                                              │
+│   Ignored build scripts: @parcel/watcher, less.                              │
+│   Run "pnpm approve-builds" to pick which dependencies should be allowed     │
+│   to run scripts.                                                            │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+Done in 13.8s using pnpm v10.14.0
+→ Initializing Nx workspace (nx reset)...
+→ Generating Docker Compose...
+→ Configuring SDD (Spec-Driven Development)...
+created  symlink : .claude/agents -> sdd/agents
+created  symlink : .github/agents -> sdd/agents
+created  symlink : .claude/skills -> sdd/skills
+created  symlink : .github/skills/generate-api-contract
+created  symlink : .github/skills/generate-nestjs-module
+created  symlink : .github/skills/generate-prisma-schema
+created  symlink : .github/skills/generate-react-component
+created  symlink : .github/skills/generate-springboot-api
+created  symlink : .github/skills/init-nx-workspace
+created  symlink : .github/skills/scaffold-nx
+created  symlink : .github/skills/sdd-architect
+created  symlink : .github/skills/sdd-data-schemas
+created  symlink : .github/skills/sdd-file-structure
+created  symlink : .github/skills/sdd-functional
+created  symlink : .github/skills/sdd-hermes
+created  symlink : .github/skills/sdd-implementor-back
+created  symlink : .github/skills/sdd-implementor-front
+created  symlink : .github/skills/sdd-orchestrator
+created  symlink : .github/skills/sdd-planner
+created  symlink : .github/skills/sdd-reviewer
+created  symlink : .github/skills/sdd-steward
+created  symlink : .github/skills/setup-graphify
+created  symlink : .claude/prompts -> sdd/prompts
+created  symlink : .claude/commands -> sdd/prompts
+created  symlink : .github/prompts/check-spec-before-implement.prompt.md
+created  symlink : .github/prompts/hermes-resume.prompt.md
+created  symlink : .github/prompts/hotfix-bypass-gate.prompt.md
+created  symlink : .github/prompts/review-cycle.prompt.md
+created  symlink : .github/prompts/sdd-steward.prompt.md
+created  symlink : .github/prompts/start-sdd-cycle.prompt.md
+created  symlink : AGENTS.md
+created  symlink : CLAUDE.md
+created  symlink : GEMINI.md
+created  file    : .github/copilot-instructions.md (seeded from sdd/dual-harness/)
+created  symlink : .agents/rules/sdd-code-style.md
+created  symlink : .agents/rules/sdd-gates.md
+created  symlink : .agents/rules/sdd-model-budget.md
+created  symlink : .agents/skills/generate-api-contract
+created  symlink : .agents/skills/generate-nestjs-module
+created  symlink : .agents/skills/generate-prisma-schema
+created  symlink : .agents/skills/generate-react-component
+created  symlink : .agents/skills/generate-springboot-api
+created  symlink : .agents/skills/init-nx-workspace
+created  symlink : .agents/skills/scaffold-nx
+created  symlink : .agents/skills/sdd-architect
+created  symlink : .agents/skills/sdd-data-schemas
+created  symlink : .agents/skills/sdd-file-structure
+created  symlink : .agents/skills/sdd-functional
+created  symlink : .agents/skills/sdd-hermes
+created  symlink : .agents/skills/sdd-implementor-back
+created  symlink : .agents/skills/sdd-implementor-front
+created  symlink : .agents/skills/sdd-orchestrator
+created  symlink : .agents/skills/sdd-planner
+created  symlink : .agents/skills/sdd-reviewer
+created  symlink : .agents/skills/sdd-steward
+created  symlink : .agents/skills/setup-graphify
+created  symlink : .agent/workflows/check-spec-before-implement.md
+created  symlink : .agent/workflows/hermes-resume.md
+created  symlink : .agent/workflows/hotfix-bypass-gate.md
+created  symlink : .agent/workflows/review-cycle.md
+created  symlink : .agent/workflows/sdd-steward.md
+created  symlink : .agent/workflows/start-sdd-cycle.md
+generated        : .gemini/commands/check-spec-before-implement.toml
+generated        : .gemini/commands/hermes-resume.toml
+generated        : .gemini/commands/hotfix-bypass-gate.toml
+generated        : .gemini/commands/review-cycle.toml
+generated        : .gemini/commands/sdd-steward.toml
+generated        : .gemini/commands/start-sdd-cycle.toml
+merged           : .gemini/settings.json (context.fileName)
+merged           : .claude/settings.json (SessionStart rule-zero)
+merged           : .claude/settings.json (PreToolUse rtk)
+merged           : .gemini/settings.json (BeforeTool rtk)
+present          : rtk 0.48.0 (<HOME>/.local/bin/rtk)
+
+done.
+→ Generating lib: shared-types (shared-types)...
+→ Generating app: core-api (nestjs, port 3000)...
+→ Seeding 1 module spec(s) from sdd.modules...
+✓   spec-e2e-001-core → draft, pending_modules
+
+FASE 3 gate
+
+
+[validate-sdd] OK — 8 files valid, cross-checks passed
+✓ [x] sdd:validate
+
+ NX   Running targets lint, test, build for 2 projects:
+
+- shared-types
+- core-api
+
+
+
+> nx run shared-types:lint
+
+The `@nx/eslint:lint` executor is deprecated and will be removed in Nx v24. Run `nx g @nx/eslint:convert-to-inferred` to migrate to the `@nx/eslint/plugin` inferred targets. See https://nx.dev/docs/guides/tasks--caching/convert-to-inferred for details.
+
+Linting "shared-types"...
+
+✔ All files pass linting
+
+
+> nx run core-api:lint
+
+The `@nx/eslint:lint` executor is deprecated and will be removed in Nx v24. Run `nx g @nx/eslint:convert-to-inferred` to migrate to the `@nx/eslint/plugin` inferred targets. See https://nx.dev/docs/guides/tasks--caching/convert-to-inferred for details.
+
+Linting "core-api"...
+
+✔ All files pass linting
+
+
+> nx run core-api:test
+
+The `@nx/jest:jest` executor is deprecated and will be removed in Nx v24. Run `nx g @nx/jest:convert-to-inferred` to migrate to the `@nx/jest/plugin` inferred targets. See https://nx.dev/docs/guides/tasks--caching/convert-to-inferred for details.
+PASS core-api apps/core-api/src/app/app.controller.spec.ts
+  AppController
+    ✓ reports health (10 ms)
+
+Test Suites: 1 passed, 1 total
+Tests:       1 passed, 1 total
+Snapshots:   0 total
+Time:        1.86 s
+Ran all test suites.
+
+> nx run core-api:build
+
+> webpack-cli build
+
+webpack compiled [1m[32msuccessfully[39m[22m (31ff2d9351d1aaa5)
+
+
+
+ NX   Successfully ran targets lint, test, build for 2 projects
+
+
+  Run duration:      4.4s
+  Cache:             0/4 hit (0%)
+  Critical path:     3.2s (1 task)
+  Recoverable time:  1.2s (27% of the run)
+✓ [x] nx run-many -t lint test build
+→ Committing the generated workspace...
+✓ Workspace "fx-nx" created successfully.
+│
+◇  See more examples ───────────────────────────────────────────────────────╮
+│                                                                           │
+│  Browsable examples of every mode, regenerated from npm on each release:  │
+│  https://github.com/e-burgos/sdd-harness-examples                         │
+│                                                                           │
+├───────────────────────────────────────────────────────────────────────────╯
+│
+└  Done! Your workspace is ready.
+

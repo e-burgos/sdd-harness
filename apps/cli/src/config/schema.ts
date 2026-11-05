@@ -1,9 +1,21 @@
 import { z } from 'zod';
 import type { HarnessConfig } from '../types/config.types.js';
+import { validateAppTopology } from '../generators/app-types.js';
 
-// Debe cubrir los mismos tipos que el wizard (APP_TYPE_OPTIONS en commands/init.ts)
-// y que `add app`: si no, la vía no interactiva genera menos que la interactiva.
-const AppTypeSchema = z.enum([
+export const KEBAB_NAME_PATTERN = /^[a-z][a-z0-9-]*$/;
+export const PACKAGE_SCOPE_PATTERN = /^@[a-z0-9-]+$/;
+export const AUTHOR_PATTERN = /^[a-z0-9-]+$/;
+export const PORT_RANGE = { min: 1000, max: 65535 } as const;
+export const PROFILE_VALUES = ['team', 'solo'] as const;
+export const CONFIG_LIMITS = {
+  nameMax: 64,
+  packageScopeMax: 64,
+  maxApps: 32,
+  maxLibs: 32,
+  maxServices: 16,
+} as const;
+
+export const AppTypeSchema = z.enum([
   'nestjs',
   'react',
   'python',
@@ -11,8 +23,11 @@ const AppTypeSchema = z.enum([
   'fastify',
   'springboot',
   'hono',
+  'next-bff',
+  'mfe-shell',
+  'mfe',
 ]);
-const ServiceTypeSchema = z.enum(['postgres', 'redis', 'rabbitmq', 'minio']);
+export const ServiceTypeSchema = z.enum(['postgres', 'redis', 'rabbitmq', 'minio']);
 const InfraProviderSchema = z.enum([
   'digitalocean',
   'aws',
@@ -24,20 +39,28 @@ const InfraProviderSchema = z.enum([
 const AppConfigSchema = z.object({
   name: z
     .string()
-    .regex(/^[a-z][a-z0-9-]*$/, 'App name must be lowercase kebab-case'),
+    .max(CONFIG_LIMITS.nameMax)
+    .regex(KEBAB_NAME_PATTERN, 'App name must be lowercase kebab-case'),
   type: AppTypeSchema,
-  port: z.number().min(1000).max(65535).optional(),
+  port: z.number().min(PORT_RANGE.min).max(PORT_RANGE.max).optional(),
   features: z.array(z.string()).default([]),
+  tucuUi: z.boolean().optional(),
+  ml: z.boolean().optional(),
+  shell: z
+    .string()
+    .max(CONFIG_LIMITS.nameMax)
+    .regex(KEBAB_NAME_PATTERN, 'Shell must be a lowercase kebab-case app name')
+    .optional(),
 });
 
 const ServiceConfigSchema = z.object({
   type: ServiceTypeSchema,
   version: z.string().optional(),
-  port: z.number().min(1000).max(65535).optional(),
+  port: z.number().min(PORT_RANGE.min).max(PORT_RANGE.max).optional(),
   extensions: z.array(z.string()).optional(),
 });
 
-const LibTypeSchema = z.enum([
+export const LibTypeSchema = z.enum([
   'shared-types',
   'shared-utils',
   'ui-kit',
@@ -48,7 +71,8 @@ const LibTypeSchema = z.enum([
 const LibConfigSchema = z.object({
   name: z
     .string()
-    .regex(/^[a-z][a-z0-9-]*$/, 'Lib name must be lowercase kebab-case'),
+    .max(CONFIG_LIMITS.nameMax)
+    .regex(KEBAB_NAME_PATTERN, 'Lib name must be lowercase kebab-case'),
   type: LibTypeSchema,
 });
 
@@ -84,11 +108,11 @@ const SDDConfigSchema = z.object({
   /** GitHub user que firma las specs sembradas (spec-<author>-NNN-<slug>). Default: git config user.name. */
   author: z
     .string()
-    .regex(/^[a-z0-9-]+$/, 'Author must be a lowercase GitHub username')
+    .regex(AUTHOR_PATTERN, 'Author must be a lowercase GitHub username')
     .optional(),
   modules: z.array(ModuleSeedSchema).default([]),
   /** Perfil de trabajo → sdd/global.json.profile: team (ciclos full, default) | solo (ciclos lite, un solo actor). */
-  profile: z.enum(['team', 'solo']).optional(),
+  profile: z.enum(PROFILE_VALUES).optional(),
   tucu_ui: z.boolean().optional(),
   cycles: z.array(CycleConfigSchema).optional(),
   skills: z
@@ -114,7 +138,7 @@ const NxConfigSchema = z.object({
 // Scopes npm privados → `.npmrc` del repo (`@org:registry=https://npm.pkg.github.com`).
 // Solo la URL: la credencial vive en ~/.npmrc local y NODE_AUTH_TOKEN en CI.
 const NpmScopeSchema = z.object({
-  scope: z.string().regex(/^@[a-z0-9-]+$/, 'Must be an npm scope like @my-org'),
+  scope: z.string().regex(PACKAGE_SCOPE_PATTERN, 'Must be an npm scope like @my-org'),
   registry: z.string().url('registry must be a URL'),
 });
 
@@ -127,15 +151,17 @@ export const HarnessConfigSchema = z.object({
   project: z.object({
     name: z
       .string()
-      .regex(/^[a-z][a-z0-9-]*$/, 'Project name must be lowercase kebab-case'),
+      .max(CONFIG_LIMITS.nameMax)
+      .regex(KEBAB_NAME_PATTERN, 'Project name must be lowercase kebab-case'),
     description: z.string().min(1),
     packageScope: z
       .string()
-      .regex(/^@[a-z0-9-]+$/, 'Must be an npm scope like @my-project'),
+      .max(CONFIG_LIMITS.packageScopeMax)
+      .regex(PACKAGE_SCOPE_PATTERN, 'Must be an npm scope like @my-project'),
   }),
-  apps: z.array(AppConfigSchema).min(1),
-  libs: z.array(LibConfigSchema).default([]),
-  services: z.array(ServiceConfigSchema).default([]),
+  apps: z.array(AppConfigSchema).min(1).max(CONFIG_LIMITS.maxApps),
+  libs: z.array(LibConfigSchema).max(CONFIG_LIMITS.maxLibs).default([]),
+  services: z.array(ServiceConfigSchema).max(CONFIG_LIMITS.maxServices).default([]),
   sdd: SDDConfigSchema.optional(),
   nx: NxConfigSchema.optional(),
   npm: NpmConfigSchema.optional(),
@@ -144,6 +170,10 @@ export const HarnessConfigSchema = z.object({
       provider: InfraProviderSchema.optional(),
     })
     .optional(),
+}).superRefine((config, ctx) => {
+  for (const message of validateAppTopology(config.apps, config.mode)) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['apps'], message });
+  }
 });
 
 export type HarnessConfigInput = z.input<typeof HarnessConfigSchema>;

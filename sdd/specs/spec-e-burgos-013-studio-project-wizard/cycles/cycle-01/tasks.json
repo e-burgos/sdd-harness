@@ -1,0 +1,885 @@
+{
+  "$schema": "../../../../schemas/cycle-tasks.schema.json",
+  "spec": "spec-e-burgos-013-studio-project-wizard",
+  "cycle": 1,
+  "module": "studio-project-wizard",
+  "apps": [
+    "apps/cli",
+    "apps/studio",
+    "apps/studio-bridge",
+    "libs/studio-protocol"
+  ],
+  "flow": "full",
+  "user_stories_generated": true,
+  "prerequisites": {
+    "tasks_generated": true
+  },
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "Refactor sin cambio de comportamiento: opciones movidas, patrones con nombre y topología estructurada",
+      "user_stories": [
+        "US-5-001",
+        "US-5-002"
+      ],
+      "estimation_hours": 6,
+      "story_points": 5,
+      "depends_on": [],
+      "status": "done",
+      "files": [
+        "apps/cli/src/config/app-options.ts",
+        "apps/cli/src/config/schema.ts",
+        "apps/cli/src/generators/app-types.ts",
+        "apps/cli/src/generators/workspace.generator.ts",
+        "apps/cli/src/commands/init.ts",
+        "apps/cli/src/generators/__tests__/app-types.spec.ts"
+      ],
+      "usage": {
+        "tokens_in": 46322,
+        "tokens_out": 8175,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-04"
+      }
+    },
+    {
+      "id": "TASK-002",
+      "title": "Subcomando harness config catalog: opciones, flags, patrones, puertos y tolerated",
+      "user_stories": [
+        "US-5-001",
+        "US-1-020",
+        "US-1-032",
+        "US-1-033",
+        "US-1-050",
+        "US-2-003"
+      ],
+      "estimation_hours": 6,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "status": "done",
+      "files": [
+        "apps/cli/src/config/catalog.ts",
+        "apps/cli/src/config/__tests__/catalog.spec.ts"
+      ],
+      "usage": {
+        "tokens_in": 46322,
+        "tokens_out": 8175,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-04"
+      }
+    },
+    {
+      "id": "TASK-003",
+      "title": "Subcomando harness config validate con topología estructurada, precondiciones y vista previa resuelta",
+      "user_stories": [
+        "US-5-001",
+        "US-5-003",
+        "US-5-004",
+        "US-1-034",
+        "US-1-035",
+        "US-1-051",
+        "US-1-052",
+        "US-1-053",
+        "US-1-054",
+        "US-1-055",
+        "US-1-056",
+        "US-1-057",
+        "US-2-001",
+        "US-2-002",
+        "US-2-003"
+      ],
+      "estimation_hours": 8,
+      "story_points": 8,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002"
+      ],
+      "status": "done",
+      "files": [
+        "apps/cli/src/config/validate.ts",
+        "apps/cli/src/commands/config/index.ts",
+        "apps/cli/src/config/__tests__/validate.spec.ts",
+        "apps/cli/src/commands/config/__tests__/config.command.spec.ts"
+      ],
+      "usage": {
+        "tokens_in": 46322,
+        "tokens_out": 8175,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-04"
+      }
+    },
+    {
+      "id": "TASK-004",
+      "title": "Tipos, comandos, eventos, handshake y límites del wizard (PROTOCOL_VERSION 2)",
+      "user_stories": [
+        "US-1-001",
+        "US-3-011",
+        "US-3-012",
+        "US-3-013",
+        "US-4-005",
+        "US-5-001"
+      ],
+      "estimation_hours": 6,
+      "story_points": 5,
+      "depends_on": [],
+      "status": "done",
+      "files": [
+        "libs/studio-protocol/src/wizard.ts",
+        "libs/studio-protocol/src/commands.ts",
+        "libs/studio-protocol/src/events.ts",
+        "libs/studio-protocol/src/handshake.ts",
+        "libs/studio-protocol/src/limits.ts",
+        "libs/studio-protocol/src/index.ts",
+        "libs/studio-protocol/src/__tests__/wizard.spec.ts"
+      ],
+      "usage": {
+        "tokens_in": 66903,
+        "tokens_out": 11806,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-04"
+      }
+    },
+    {
+      "id": "TASK-005",
+      "title": "Refactor host/runtime, modo launcher sin sdd/ y cierre 4010",
+      "user_stories": [
+        "US-1-001",
+        "US-4-005",
+        "US-4-010"
+      ],
+      "estimation_hours": 8,
+      "story_points": 8,
+      "depends_on": [
+        "TASK-004"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio-bridge/src/main.ts",
+        "apps/studio-bridge/src/project/runtime.ts",
+        "apps/studio-bridge/src/server/router.ts",
+        "apps/studio-bridge/src/server/ws-server.ts",
+        "apps/studio-bridge/src/cli.ts",
+        "apps/studio-bridge/src/cli-options.ts"
+      ],
+      "usage": {
+        "tokens_in": 46164,
+        "tokens_out": 8146,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-04"
+      }
+    },
+    {
+      "id": "TASK-006",
+      "title": "Localizador y entorno de la CLI fijada, config-cli y test de contrato contra la CLI real",
+      "user_stories": [
+        "US-5-001",
+        "US-5-002",
+        "US-5-007",
+        "US-1-032",
+        "US-1-034"
+      ],
+      "estimation_hours": 6,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-003",
+        "TASK-005"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio-bridge/package.json",
+        "apps/studio-bridge/src/wizard/cli-locator.ts",
+        "apps/studio-bridge/src/wizard/cli-env.ts",
+        "apps/studio-bridge/src/wizard/config-cli.ts",
+        "apps/studio-bridge/src/wizard/__tests__/config-cli.contract.spec.ts",
+        "apps/studio-bridge/src/test-utils/fake-harness.mjs"
+      ],
+      "usage": {
+        "tokens_in": 46164,
+        "tokens_out": 8146,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-04"
+      }
+    },
+    {
+      "id": "TASK-007",
+      "title": "Destino seguro: target.ts, dirs.ts y wizard.checkTarget / wizard.listDirs",
+      "user_stories": [
+        "US-3-001",
+        "US-3-002",
+        "US-3-003",
+        "US-3-004",
+        "US-3-005",
+        "US-3-006",
+        "US-3-007",
+        "US-3-008",
+        "US-3-009",
+        "US-3-010",
+        "US-3-041"
+      ],
+      "estimation_hours": 8,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-005"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio-bridge/src/wizard/target.ts",
+        "apps/studio-bridge/src/wizard/dirs.ts",
+        "apps/studio-bridge/src/wizard/__tests__/target.spec.ts",
+        "apps/studio-bridge/src/wizard/__tests__/dirs.spec.ts"
+      ],
+      "usage": {
+        "tokens_in": 46164,
+        "tokens_out": 8146,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-04"
+      }
+    },
+    {
+      "id": "TASK-008",
+      "title": "Preflight de pnpm y registry, y reveal en el explorador",
+      "user_stories": [
+        "US-3-014",
+        "US-3-015",
+        "US-3-031",
+        "US-3-037"
+      ],
+      "estimation_hours": 4,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-005"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio-bridge/src/wizard/preflight.ts",
+        "apps/studio-bridge/src/wizard/reveal.ts",
+        "apps/studio-bridge/src/wizard/__tests__/preflight.spec.ts"
+      ],
+      "usage": {
+        "tokens_in": 46164,
+        "tokens_out": 8146,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-04"
+      }
+    },
+    {
+      "id": "TASK-009",
+      "title": "Generación: generation.ts, clasificador init-output y fixtures grabados",
+      "user_stories": [
+        "US-3-011",
+        "US-3-012",
+        "US-3-013",
+        "US-3-017",
+        "US-3-018",
+        "US-3-019",
+        "US-3-030",
+        "US-3-033",
+        "US-3-036",
+        "US-5-007"
+      ],
+      "estimation_hours": 8,
+      "story_points": 8,
+      "depends_on": [
+        "TASK-006",
+        "TASK-007",
+        "TASK-008"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio-bridge/src/wizard/generation.ts",
+        "apps/studio-bridge/src/wizard/init-output.ts",
+        "apps/studio-bridge/src/wizard/__fixtures__/init-output/",
+        "apps/studio-bridge/src/wizard/__tests__/generation.spec.ts",
+        "apps/studio-bridge/src/wizard/__tests__/init-output.spec.ts"
+      ],
+      "usage": {
+        "tokens_in": 63135,
+        "tokens_out": 11141,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-04"
+      }
+    },
+    {
+      "id": "TASK-010",
+      "title": "Cancelación, registry de generaciones, wizard.generation.get y servicio del wizard en el router",
+      "user_stories": [
+        "US-3-016",
+        "US-3-032",
+        "US-3-034",
+        "US-3-035",
+        "US-3-038",
+        "US-3-040",
+        "US-3-042"
+      ],
+      "estimation_hours": 6,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-009"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio-bridge/src/wizard/generation.ts",
+        "apps/studio-bridge/src/wizard/service.ts",
+        "apps/studio-bridge/src/server/router.ts",
+        "apps/studio-bridge/src/wizard/__tests__/service.spec.ts"
+      ],
+      "usage": {
+        "tokens_in": 63135,
+        "tokens_out": 11141,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-04"
+      }
+    },
+    {
+      "id": "TASK-011",
+      "title": "workspace.open con cambio de proyecto en caliente y evento workspace.switched",
+      "user_stories": [
+        "US-4-001",
+        "US-4-005",
+        "US-4-009",
+        "US-4-010",
+        "US-4-011"
+      ],
+      "estimation_hours": 6,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-010"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio-bridge/src/main.ts",
+        "apps/studio-bridge/src/wizard/service.ts",
+        "apps/studio-bridge/src/server/ws-server.ts",
+        "apps/studio-bridge/src/wizard/__tests__/open.spec.ts"
+      ],
+      "usage": {
+        "tokens_in": 63135,
+        "tokens_out": 11141,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-04"
+      }
+    },
+    {
+      "id": "TASK-012",
+      "title": "lib/wizard puro: state, to-config, catalog, field-checks, issues y recommendations",
+      "user_stories": [
+        "US-1-002",
+        "US-1-003",
+        "US-1-010",
+        "US-1-011",
+        "US-1-012",
+        "US-1-025",
+        "US-1-027",
+        "US-1-036",
+        "US-1-040",
+        "US-5-004",
+        "US-5-006"
+      ],
+      "estimation_hours": 8,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-004"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/lib/wizard/state.ts",
+        "apps/studio/src/lib/wizard/to-config.ts",
+        "apps/studio/src/lib/wizard/catalog.ts",
+        "apps/studio/src/lib/wizard/field-checks.ts",
+        "apps/studio/src/lib/wizard/issues.ts",
+        "apps/studio/src/lib/wizard/recommendations.ts",
+        "apps/studio/src/lib/wizard/__tests__/"
+      ],
+      "usage": {
+        "tokens_in": 66903,
+        "tokens_out": 11806,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-04"
+      }
+    },
+    {
+      "id": "TASK-013",
+      "title": "Persistencia, idea para Hermes y hooks sobre el cliente del puente",
+      "user_stories": [
+        "US-1-041",
+        "US-4-006",
+        "US-4-007",
+        "US-1-032",
+        "US-1-034",
+        "US-3-002",
+        "US-3-013",
+        "US-3-032"
+      ],
+      "estimation_hours": 6,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-004",
+        "TASK-012"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/lib/wizard/persist.ts",
+        "apps/studio/src/lib/wizard/hermes-idea.ts",
+        "apps/studio/src/lib/wizard/use-catalog.ts",
+        "apps/studio/src/lib/wizard/use-wizard-validation.ts",
+        "apps/studio/src/lib/wizard/use-target-check.ts",
+        "apps/studio/src/lib/wizard/use-generation.ts",
+        "apps/studio/src/lib/wizard/__tests__/"
+      ],
+      "usage": {
+        "tokens_in": 66903,
+        "tokens_out": 11806,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-04"
+      }
+    },
+    {
+      "id": "TASK-014",
+      "title": "Módulo new-project: ids de navegación, slots Panel/Center/Right, stepper y textos i18n",
+      "user_stories": [
+        "US-1-001",
+        "US-1-002",
+        "US-1-003",
+        "US-1-004",
+        "US-1-005",
+        "US-1-011",
+        "US-1-041",
+        "US-2-005",
+        "US-2-008"
+      ],
+      "estimation_hours": 8,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-012",
+        "TASK-013"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/lib/nav/module-ids.ts",
+        "apps/studio/src/lib/nav/modules.ts",
+        "apps/studio/src/lib/nav/module-labels.ts",
+        "apps/studio/src/lib/i18n/",
+        "apps/studio/src/components/modules/new-project/index.ts",
+        "apps/studio/src/components/modules/new-project/NewProjectPanel.tsx",
+        "apps/studio/src/components/modules/new-project/NewProjectCenter.tsx",
+        "apps/studio/src/components/modules/new-project/NewProjectRight.tsx"
+      ],
+      "usage": {
+        "tokens_in": 84583,
+        "tokens_out": 14926,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-04"
+      }
+    },
+    {
+      "id": "TASK-015",
+      "title": "Pasos 1 a 3 (alcance, forma, frontend) con AppRow y PortField",
+      "user_stories": [
+        "US-1-010",
+        "US-1-011",
+        "US-1-012",
+        "US-1-013",
+        "US-1-014",
+        "US-1-015",
+        "US-1-016",
+        "US-1-017",
+        "US-1-018",
+        "US-1-019",
+        "US-1-020",
+        "US-1-021",
+        "US-1-022",
+        "US-1-053",
+        "US-1-054",
+        "US-1-055"
+      ],
+      "estimation_hours": 8,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-014"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/modules/new-project/steps/ScopeStep.tsx",
+        "apps/studio/src/components/modules/new-project/steps/ShapeStep.tsx",
+        "apps/studio/src/components/modules/new-project/steps/FrontStep.tsx",
+        "apps/studio/src/components/modules/new-project/AppRow.tsx",
+        "apps/studio/src/components/modules/new-project/PortField.tsx",
+        "apps/studio/src/components/modules/new-project/__tests__/"
+      ],
+      "usage": {
+        "tokens_in": 84583,
+        "tokens_out": 14926,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-04"
+      }
+    },
+    {
+      "id": "TASK-016",
+      "title": "Pasos 4 a 6 parte A: backend, extras y resumen, con ServiceRow y descartes",
+      "user_stories": [
+        "US-1-023",
+        "US-1-024",
+        "US-1-026",
+        "US-1-028",
+        "US-1-029",
+        "US-1-030",
+        "US-1-031",
+        "US-1-056",
+        "US-1-057",
+        "US-2-004",
+        "US-2-006",
+        "US-2-007",
+        "US-2-009",
+        "US-1-036"
+      ],
+      "estimation_hours": 8,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-015"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/modules/new-project/steps/BackStep.tsx",
+        "apps/studio/src/components/modules/new-project/steps/ExtrasStep.tsx",
+        "apps/studio/src/components/modules/new-project/steps/SummaryStep.tsx",
+        "apps/studio/src/components/modules/new-project/ServiceRow.tsx",
+        "apps/studio/src/components/modules/new-project/DiscardChangesDialog.tsx",
+        "apps/studio/src/components/modules/new-project/__tests__/"
+      ],
+      "usage": {
+        "tokens_in": 84583,
+        "tokens_out": 14926,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-04"
+      }
+    },
+    {
+      "id": "TASK-017",
+      "title": "Destino: TargetPicker, explorador de directorios, estado, confirmación y preflight",
+      "user_stories": [
+        "US-3-001",
+        "US-3-002",
+        "US-3-003",
+        "US-3-004",
+        "US-3-005",
+        "US-3-006",
+        "US-3-007",
+        "US-3-008",
+        "US-3-009",
+        "US-3-010",
+        "US-3-014",
+        "US-3-015"
+      ],
+      "estimation_hours": 8,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-014",
+        "TASK-008",
+        "TASK-007"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/modules/new-project/TargetPicker.tsx",
+        "apps/studio/src/components/modules/new-project/DirectoryBrowserModal.tsx",
+        "apps/studio/src/components/modules/new-project/TargetStatus.tsx",
+        "apps/studio/src/components/modules/new-project/ConfirmTargetDialog.tsx",
+        "apps/studio/src/components/modules/new-project/PreflightNotice.tsx",
+        "apps/studio/src/components/modules/new-project/__tests__/"
+      ],
+      "usage": {
+        "tokens_in": 104664,
+        "tokens_out": 18470,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-04"
+      }
+    },
+    {
+      "id": "TASK-018",
+      "title": "Progreso y resultado: GenerationProgress, OutputLog y GenerationResult",
+      "user_stories": [
+        "US-3-011",
+        "US-3-012",
+        "US-3-013",
+        "US-3-016",
+        "US-3-017",
+        "US-3-018",
+        "US-3-019",
+        "US-3-030",
+        "US-3-031",
+        "US-3-032",
+        "US-3-033",
+        "US-3-034",
+        "US-3-035",
+        "US-3-036",
+        "US-3-037",
+        "US-3-038",
+        "US-5-007",
+        "US-4-001",
+        "US-4-002",
+        "US-4-003",
+        "US-4-004",
+        "US-4-008"
+      ],
+      "estimation_hours": 8,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-013",
+        "TASK-014",
+        "TASK-017"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/modules/new-project/GenerationProgress.tsx",
+        "apps/studio/src/components/modules/new-project/OutputLog.tsx",
+        "apps/studio/src/components/modules/new-project/GenerationResult.tsx",
+        "apps/studio/src/components/modules/new-project/__tests__/"
+      ],
+      "usage": {
+        "tokens_in": 104664,
+        "tokens_out": 18470,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-04"
+      }
+    },
+    {
+      "id": "TASK-019",
+      "title": "LauncherShell, cambio de proyecto en BridgeProvider, ConnectionBanner y ConnectScreen",
+      "user_stories": [
+        "US-1-001",
+        "US-4-005",
+        "US-4-006",
+        "US-4-007",
+        "US-4-009",
+        "US-4-010",
+        "US-4-011"
+      ],
+      "estimation_hours": 8,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-011",
+        "TASK-014",
+        "TASK-018"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/shell/LauncherShell.tsx",
+        "apps/studio/src/components/WorkspaceApp.tsx",
+        "apps/studio/src/components/BridgeProvider.tsx",
+        "apps/studio/src/components/ConnectionBanner.tsx",
+        "apps/studio/src/components/ConnectScreen.tsx",
+        "apps/studio/src/components/__tests__/"
+      ],
+      "usage": {
+        "tokens_in": 155646,
+        "tokens_out": 27467,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-04"
+      }
+    },
+    {
+      "id": "TASK-020",
+      "title": "Documentación bilingüe de la CLI (config catalog/validate) y de Studio (Nuevo proyecto)",
+      "user_stories": [
+        "US-5-001",
+        "US-5-002",
+        "US-1-001",
+        "US-3-001"
+      ],
+      "estimation_hours": 5,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-003",
+        "TASK-019"
+      ],
+      "status": "done",
+      "files": [
+        "sdd/documentation/es/",
+        "sdd/documentation/en/"
+      ],
+      "usage": {
+        "tokens_in": 62244,
+        "tokens_out": 10984,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "custom",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-04"
+      }
+    },
+    {
+      "id": "TASK-021",
+      "title": "Fragmentos de contexto aditivos de apps/cli, apps/studio, apps/studio-bridge y libs/studio-protocol",
+      "user_stories": [
+        "US-5-002"
+      ],
+      "estimation_hours": 3,
+      "story_points": 2,
+      "depends_on": [
+        "TASK-019"
+      ],
+      "status": "done",
+      "files": [
+        "sdd/context/apps/cli/updates/",
+        "sdd/context/apps/studio/updates/",
+        "sdd/context/apps/studio-bridge/updates/",
+        "sdd/context/libs/studio-protocol/updates/"
+      ],
+      "usage": {
+        "tokens_in": 62244,
+        "tokens_out": 10984,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "custom",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-04"
+      }
+    },
+    {
+      "id": "TASK-022",
+      "title": "Generación real de punta a punta en examples/ y equivalencia con harness init --config",
+      "user_stories": [
+        "US-3-011",
+        "US-3-012",
+        "US-3-030",
+        "US-5-005",
+        "US-5-006",
+        "US-5-007"
+      ],
+      "estimation_hours": 6,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-011",
+        "TASK-003"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio-bridge/src/wizard/__e2e__/generation.e2e.spec.ts",
+        "examples/"
+      ],
+      "usage": {
+        "tokens_in": 123066,
+        "tokens_out": 21717,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-04"
+      }
+    },
+    {
+      "id": "TASK-023",
+      "title": "e2e de Studio en el puerto 4417: wizard completo con bridge launcher y apertura del proyecto",
+      "user_stories": [
+        "US-1-001",
+        "US-1-003",
+        "US-2-005",
+        "US-3-012",
+        "US-3-037",
+        "US-4-001",
+        "US-4-005",
+        "US-4-006"
+      ],
+      "estimation_hours": 8,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-019",
+        "TASK-011"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/e2e/new-project.e2e.ts",
+        "apps/studio/e2e/start-bridge.mjs"
+      ],
+      "usage": {
+        "tokens_in": 147691,
+        "tokens_out": 26063,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-05"
+      }
+    }
+  ]
+}

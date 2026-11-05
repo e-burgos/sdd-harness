@@ -6,6 +6,7 @@ import { logger } from '../utils/logger.js';
 import { writeManifest } from './kit-manifest.js';
 import type { WorkspaceOptions } from './workspace.generator.js';
 import type { AppSpec } from './app.generator.js';
+import { describeAppStack, resolveMfeShell } from './app-types.js';
 
 /**
  * Cómo se instala el kit según la forma del repo destino:
@@ -75,7 +76,7 @@ export async function generateSDD(
   await writeGlobalJson(root, opts, layout, usesNx);
 
   for (const app of opts.apps) {
-    await createSubprojectContext(root, 'apps', app.name, app.type, layout, app.path);
+    await createSubprojectContext(root, 'apps', app.name, app.type, layout, app.path, app.tucuUi);
   }
   for (const lib of opts.libs) {
     await createSubprojectContext(root, 'libs', lib.name, lib.type, layout);
@@ -111,6 +112,8 @@ export async function registerSubprojectInSDD(
   category: 'apps' | 'libs' | 'tools',
   name: string,
   type: string,
+  shell?: string,
+  tucuUi?: boolean,
 ): Promise<void> {
   const globalPath = resolve(root, 'sdd/global.json');
   if (await fs.pathExists(globalPath)) {
@@ -118,10 +121,29 @@ export async function registerSubprojectInSDD(
     if (typeof globalJson.monorepo[category] !== 'object') {
       globalJson.monorepo[category] = {};
     }
-    globalJson.monorepo[category][name] = `${category}/${name} — ${type}`;
+    globalJson.monorepo[category][name] =
+      `${category}/${name} — ${type}${shell ? ` (shell: ${shell})` : ''}`;
     await fs.writeJSON(globalPath, globalJson, { spaces: 2 });
   }
-  await createSubprojectContext(root, category, name, type, 'nx');
+  await createSubprojectContext(root, category, name, type, 'nx', undefined, tucuUi);
+}
+
+export async function pinMfeShellsInRegistry(
+  root: string,
+  mfes: ReadonlyArray<{ name: string; shell?: string }>,
+): Promise<void> {
+  const globalPath = resolve(root, 'sdd/global.json');
+  if (!(await fs.pathExists(globalPath))) return;
+  const globalJson = await fs.readJSON(globalPath);
+  const registered: Record<string, unknown> = globalJson?.monorepo?.apps ?? {};
+  let changed = false;
+  for (const mfe of mfes) {
+    const entry = registered[mfe.name];
+    if (!mfe.shell || typeof entry !== 'string' || !/—\s*mfe\s*$/.test(entry)) continue;
+    registered[mfe.name] = `${entry} (shell: ${mfe.shell})`;
+    changed = true;
+  }
+  if (changed) await fs.writeJSON(globalPath, globalJson, { spaces: 2 });
 }
 
 /** `Mi_Proyecto` → `mi-proyecto`: npm rechaza mayúsculas y caracteres fuera de [a-z0-9._-]. */
@@ -347,7 +369,8 @@ async function writeGlobalJson(
 ): Promise<void> {
   const apps: Record<string, string> = {};
   for (const app of opts.apps) {
-    apps[app.name] = describeAppEntry(app, layout);
+    const shell = app.type === 'mfe' ? resolveMfeShell(app, opts.apps)?.name : app.shell;
+    apps[app.name] = describeAppEntry({ ...app, shell }, layout);
   }
 
   const libs: Record<string, string> = {};
@@ -397,7 +420,7 @@ export function describeAppEntry(
   }
   const codePath = app.path ?? `apps/${app.name}`;
   return codePath === `apps/${app.name}`
-    ? `apps/${app.name} — ${app.type}`
+    ? `apps/${app.name} — ${app.type}${app.shell ? ` (shell: ${app.shell})` : ''}`
     : `${codePath} — ${app.type} (código en ${codePath}; id lógico apps/${app.name})`;
 }
 
@@ -408,6 +431,7 @@ async function createSubprojectContext(
   type: string,
   layout: 'nx' | 'standalone',
   codePath?: string,
+  tucuUi?: boolean,
 ): Promise<void> {
   const dir = resolve(root, 'sdd/context', category, name);
   await fs.ensureDir(resolve(dir, 'updates'));
@@ -420,6 +444,11 @@ async function createSubprojectContext(
       : livesElsewhere
         ? `> ⚠ **Ubicación:** el código de este subproyecto vive en \`${codePath}/\`, no en \`${category}/${name}/\`. El identificador \`${category}/${name}\` es la convención con la que los registros SDD (global.json, specs, ciclos) refieren a él.\n\n`
         : '';
+
+  const stackDescription =
+    category === 'apps' ? describeAppStack(type, tucuUi) : undefined;
+  const stackLine =
+    stackDescription ?? '[Framework / librerías principales y versión]';
 
   const constitutionPath = resolve(dir, 'constitution.md');
   if (!(await fs.pathExists(constitutionPath))) {
@@ -437,7 +466,7 @@ ${locationNote}## 1. Propósito
 
 ## 2. Stack tecnológico
 
-- [Framework / librerías principales y versión]
+- ${stackLine}
 
 ## 3. Estructura y patrones
 
@@ -463,7 +492,7 @@ ${locationNote}## 1. Propósito
 > Entry point para agentes que trabajen sobre \`${category}/${name}\`.
 > Leer junto con \`constitution.md\` de este directorio **+ \`updates/*.md\` en orden de nombre**.
 
-${locationNote}- **Tipo:** ${type}
+${locationNote}- **Tipo:** ${type}${stackDescription ? `\n- **Stack:** ${stackDescription}` : ''}
 - **Estado:** recién generado — sin ciclos SDD completados todavía.
 - [Completar en el primer ciclo: módulos existentes, endpoints/componentes clave, cómo correr y testear.]
 `,

@@ -5,6 +5,7 @@ import { HarnessConfigSchema } from './schema.js';
 import type { HarnessConfig, ModuleSeed } from '../types/config.types.js';
 import type { WorkspaceOptions } from '../generators/workspace.generator.js';
 import type { StandaloneOptions } from '../generators/standalone.generator.js';
+import { resolveAppTucuUi } from '../utils/tucu-ui-offer.js';
 
 /**
  * Carga y valida un archivo de configuración de harness para `init --config`,
@@ -53,12 +54,29 @@ export function normalizeModuleSeeds(config: HarnessConfig): ModuleSeed[] {
   );
 }
 
-export function toWorkspaceOptions(config: HarnessConfig): WorkspaceOptions {
+export interface ConfigOptionOverrides {
+  tucuUi?: boolean;
+}
+
+export function toWorkspaceOptions(
+  config: HarnessConfig,
+  overrides: ConfigOptionOverrides = {},
+): WorkspaceOptions {
   return {
     projectName: config.project.name,
     description: config.project.description,
     packageScope: config.project.packageScope,
-    apps: config.apps.map(({ name, type, port }) => ({ name, type, port })),
+    apps: config.apps.map(({ name, type, port, tucuUi, ml, shell }) => ({
+      name,
+      type,
+      port,
+      tucuUi: resolveAppTucuUi(
+        { type, tucuUi },
+        { cliFlag: overrides.tucuUi, configDefault: config.sdd?.tucu_ui },
+      ),
+      ml,
+      shell,
+    })),
     libs: config.libs.map(({ name, type }) => ({ name, type })),
     services: config.services.map(({ type }) => type),
     npmScopes: config.npm?.scopes ?? [],
@@ -68,7 +86,10 @@ export function toWorkspaceOptions(config: HarnessConfig): WorkspaceOptions {
   };
 }
 
-export function toStandaloneOptions(config: HarnessConfig): StandaloneOptions {
+export function toStandaloneOptions(
+  config: HarnessConfig,
+  overrides: ConfigOptionOverrides = {},
+): StandaloneOptions {
   if (config.apps.length !== 1) {
     throw new Error(
       `Standalone mode requires exactly one app in "apps" (got ${config.apps.length}).`,
@@ -79,6 +100,11 @@ export function toStandaloneOptions(config: HarnessConfig): StandaloneOptions {
     description: config.project.description,
     appType: config.apps[0].type,
     port: config.apps[0].port,
+    tucuUi: resolveAppTucuUi(config.apps[0], {
+      cliFlag: overrides.tucuUi,
+      configDefault: config.sdd?.tucu_ui,
+    }),
+    ml: config.apps[0].ml,
     services: config.services.map(({ type }) => type),
     npmScopes: config.npm?.scopes ?? [],
     sddAuthor: config.sdd?.author,

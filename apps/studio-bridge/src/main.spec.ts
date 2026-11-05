@@ -100,12 +100,13 @@ describe('startBridge', () => {
     ws.close();
   });
 
-  it('refuses a folder without sdd/', async () => {
+  it('starts in launcher mode for a folder without sdd/', async () => {
     const dir = await mkdtemp(path.join(tmpdir(), 'no-sdd-'));
     cleanups.push(() => rm(dir, { recursive: true, force: true }));
-    await expect(
-      startBridge({ root: dir, port: 0, strictPort: true, engine: 'fake', allowedOrigins: [], webUrl: 'x' }),
-    ).rejects.toBeInstanceOf(BridgeStartError);
+    const bridge = await startBridge({ root: dir, port: 0, strictPort: true, engine: 'fake', allowedOrigins: [], webUrl: 'x' });
+    cleanups.push(bridge.close);
+    expect(bridge.launcher).toBe(true);
+    expect(bridge.project).toBeNull();
   });
 });
 
@@ -125,7 +126,7 @@ describe('startBridge root resolution (M5)', () => {
     await new Promise((r) => ws.once('open', r));
     ws.send(JSON.stringify({ kind: 'hello', token: bridge.token, protocolVersion: PROTOCOL_VERSION, clientVersion: 't' }));
     const welcome = (await waitFor(() => inbox.find((m) => m.kind === 'welcome'))) as Extract<ServerMessage, { kind: 'welcome' }>;
-    expect(welcome.workspace.root).toBe(await realpath(root));
+    expect(welcome.workspace?.root).toBe(await realpath(root));
     ws.close();
   });
 });

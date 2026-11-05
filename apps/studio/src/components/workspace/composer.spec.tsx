@@ -1,10 +1,12 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { defaultThreadOptions } from '@sdd-studio/protocol';
-import { optionNames, pickOption } from '@/lib/test-utils/pick-option';
+import { optionNames, pickOption, waitForSelectToClose } from '@/lib/test-utils/pick-option';
 import { I18nProvider } from '@/lib/i18n/i18n';
 import { createStudioStore } from '@/lib/store/store';
 import { BridgeContext, type BridgeContextValue } from '../BridgeProvider';
 import { Composer, ComposerView, TEXTAREA_MAX_HEIGHT_PX } from './Composer';
+
+afterEach(waitForSelectToClose);
 
 function setup(extra: Partial<React.ComponentProps<typeof ComposerView>> = {}) {
   const onSubmit = vi.fn(() => Promise.resolve(true));

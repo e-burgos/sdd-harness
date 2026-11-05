@@ -10,6 +10,7 @@ import {
   clearDraft,
   dismissPrepared,
   openPrepared,
+  resetState,
   setDraftAttachments,
   setDraftText,
   setThreads,
@@ -19,6 +20,7 @@ import {
 
 export interface StudioActions {
   receive(e: ServerEvent): void;
+  reset(): void;
   setSnapshot(s: WorkspaceSnapshot): void;
   setThreads(list: ThreadInfo[]): void;
   beginSync(threadId: string): void;
@@ -40,6 +42,7 @@ export function createStudioStore(): StudioStore {
   return createStore<StudioState & StudioActions>()((set) => ({
     ...initialState(),
     receive: (e) => set((s) => applyServerEvent(s, e)),
+    reset: () => set((s) => resetState(s)),
     setSnapshot: (snapshot) => set({ snapshot }),
     setThreads: (list) => set((s) => setThreads(s, list)),
     beginSync: (id) => set((s) => beginSync(s, id)),

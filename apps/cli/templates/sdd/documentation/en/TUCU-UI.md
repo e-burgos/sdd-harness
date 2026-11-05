@@ -38,6 +38,31 @@ command.
 below 20) the switch stays as it was and the message says how to continue. Whatever was already
 written to disk is safe: another `--enable` completes it and `--disable` cleans it up.
 
+## Generated frontend apps: tucu-ui by default
+
+The CLI scaffolds `react`, `nextjs`, `next-bff`, `mfe-shell` and `mfe` apps **with tucu-ui** already
+wired: the pinned dependency, Tailwind v4 importing its styles, `ThemeProvider` (Vite apps) or
+`NextThemeProvider` from `@e-burgos/tucu-ui/next` (Next apps) and an example screen. Generating one
+also turns this integration on. `--no-tucu-ui` generates plain apps and keeps the integration off
+(it wins over every `apps[].tucuUi`); `apps[].tucuUi: false` in `init --config` opts a single app out.
+
+| App type    | What it is                                                                                  | Config fields                  |
+| ----------- | ------------------------------------------------------------------------------------------- | ------------------------------ |
+| `react`     | Vite + React SPA                                                                            | `tucuUi`                       |
+| `nextjs`    | Next 16 App Router                                                                          | `tucuUi`                       |
+| `next-bff`  | Next App Router whose `app/api/*` routes call a service at `<APP>_UPSTREAM_URL` (monorepo only) | `tucuUi`                   |
+| `mfe-shell` | Vite shell: dev proxy, menu, `nginx.conf` and a combined `Dockerfile` for its mfes (monorepo only) | `tucuUi`                |
+| `mfe`       | Vite app with `base: '/<name>/'` served behind a shell (monorepo only)                      | `tucuUi`, `shell`              |
+| `python`    | FastAPI + LangGraph managed with uv; TensorFlow behind `ml` (not a frontend)                | `ml`                           |
+
+- `next-bff`, `mfe-shell` and `mfe` exist only in Nx monorepo mode; standalone fails with a clear
+  message. An `mfe` needs `shell` when the workspace has more than one `mfe-shell`.
+- Default ports: `next-bff` 3001, `mfe-shell` 4300, `mfe` 4301 (+1 per extra mfe), `python` 8000;
+  `apps[].port` overrides them and every app reads `<APP>_PORT`.
+- `harness add app mfe --name <mfe> --shell <shell>` adds an mfe to an existing shell and updates the
+  shell's proxy, menu, `nginx.conf` and `Dockerfile` idempotently; `harness add app python --ml`
+  adds TensorFlow.
+
 ## From the CLI
 
 ```bash
@@ -52,12 +77,16 @@ exists it asks to **reset the whole directory** (specs, cycles and fixes include
 resets without asking. To turn tucu-ui on in a repo with the kit installed, use
 `pnpm sdd:tucu -- --enable`.
 
-- With no flag, the CLI **only asks when there is a `react` or `nextjs` app** and the terminal is
-  interactive. With no flag, no `sdd.tucu_ui` in `--config` and no earlier `tucu_ui` that was on,
-  it does not ask and stays off (also with `--yes` or without a TTY). `configure sdd` keeps an
-  existing `tucu_ui` on when it resets the kit.
+- `harness init` with no flag turns tucu-ui **on by default** when there is a frontend app
+  (`react`, `nextjs`, `next-bff`, `mfe-shell`, `mfe`): the apps are scaffolded with tucu-ui and the
+  kit integration is enabled. `--no-tucu-ui`, `sdd.tucu_ui: false` in `--config`, or `tucuUi: false`
+  on every frontend app keeps it off. `configure sdd` with no flag **only asks when there is a
+  `react` or `nextjs` app** and the terminal is interactive; with `--yes` or without a TTY it stays
+  off, and it keeps an existing `tucu_ui` on when it resets the kit.
 - `--tucu-ui` together with `--no-tucu-ui` fails before generating anything.
-- In `init --config`, `sdd.tucu_ui: true | false` acts as the default; the flag wins.
+- Precedence, per app: CLI flag (`--tucu-ui` / `--no-tucu-ui`) > `apps[].tucuUi` > `sdd.tucu_ui` > default (on).
+  The kit integration is on if and only if some frontend app ends up with tucu-ui, unless the CLI flag
+  says otherwise.
 - If the install fails during `init` (for example offline), `init` does not abort: it finishes the
   generation, leaves tucu-ui off and prints the command to retry.
 - `harness configure mcp` has `tucu-ui` in its catalog and **merges**: servers outside the catalog

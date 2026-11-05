@@ -1,4 +1,4 @@
-import { spawn } from 'node:child_process';
+import { spawn, type ChildProcess } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import path from 'node:path';
 import type { KitCommandName, ServerEvent } from '@sdd-studio/protocol';
@@ -11,23 +11,35 @@ const SCRIPTS: Record<KitCommandName, string> = {
 };
 
 export class CommandRunner {
+  private readonly active = new Set<ChildProcess>();
+
   constructor(
     private readonly root: string,
     private readonly broadcast: (event: ServerEvent) => void,
     private readonly newId: () => string = randomUUID,
   ) {}
 
+  activeRuns(): number {
+    return this.active.size;
+  }
+
+  terminateAll(): void {
+    for (const child of this.active) child.kill('SIGKILL');
+  }
+
   /** `args` is already validated by the protocol; passed without a shell. */
   run(name: KitCommandName, args: string[]): string {
     const runId = this.newId();
     const script = path.join(this.root, 'sdd', 'scripts', SCRIPTS[name]);
     const child = spawn(process.execPath, [script, ...args], { cwd: this.root, shell: false, stdio: ['ignore', 'pipe', 'pipe'] });
+    this.active.add(child);
     child.stdout.setEncoding('utf8');
     child.stderr.setEncoding('utf8');
     let exited = false;
     const exit = (exitCode: number) => {
       if (exited) return;
       exited = true;
+      this.active.delete(child);
       this.broadcast({ kind: 'command.exit', runId, exitCode });
     };
     child.stdout.on('data', (chunk: string) =>

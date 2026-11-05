@@ -1,7 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { I18nProvider } from '@/lib/i18n/i18n';
-import { optionNames, pickOption } from '@/lib/test-utils/pick-option';
+import { optionNames, pickOption, waitForSelectToClose } from '@/lib/test-utils/pick-option';
 import { HelpSelect } from './HelpSelect';
+
+afterEach(waitForSelectToClose);
 
 const OPTIONS = [
   { value: 'a', label: 'A' },

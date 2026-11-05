@@ -32,6 +32,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build CLI
+        run: pnpm --filter @e-burgos/sdd-harness build
+
       - name: Typecheck and test
         run: |
           pnpm --filter @sdd-studio/protocol --filter @e-burgos/sdd-studio typecheck

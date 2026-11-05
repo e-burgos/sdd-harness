@@ -1,4 +1,11 @@
-import { NX_VERSION } from "./versions.js";
+import { tucuUiPackageDeps } from "./tucu-ui-app.js";
+import { logger } from "../utils/logger.js";
+import { FRONTEND_VERSIONS, NX_VERSION } from "./versions.js";
+
+function nextMajor(range: string): number {
+  const match = /\d+/.exec(range);
+  return match ? Number(match[0]) : Number.POSITIVE_INFINITY;
+}
 
 type PackageJson = {
   scripts: Record<string, string>;
@@ -33,21 +40,33 @@ export function addAppTypeDepsToRootPkg(
   pkg: PackageJson,
   type: string,
   referencePkg?: PackageJson,
+  options: { tucuUi?: boolean } = {},
 ): void {
   const addMissingFromReference = (
     section: "dependencies" | "devDependencies",
     names: string[],
   ) => {
-    if (!referencePkg) return;
     for (const name of names) {
-      if (!(name in pkg[section]) && referencePkg[section][name]) {
-        pkg[section][name] = referencePkg[section][name];
+      if (name in pkg[section]) continue;
+      const pinned = (FRONTEND_VERSIONS as Record<string, string>)[name];
+      const version = pinned ?? referencePkg?.[section][name];
+      if (version) pkg[section][name] = version;
+    }
+  };
+  const addTucuUi = (appType: "react" | "nextjs") => {
+    if (options.tucuUi === false) return;
+    const extra = tucuUiPackageDeps(appType);
+    for (const section of ["dependencies", "devDependencies"] as const) {
+      for (const [name, version] of Object.entries(extra[section])) {
+        if (!(name in pkg[section])) pkg[section][name] = version;
       }
     }
   };
 
   switch (type) {
     case "react":
+    case "mfe-shell":
+    case "mfe":
       addMissingFromReference("dependencies", [
         "react",
         "react-dom",
@@ -65,6 +84,7 @@ export function addAppTypeDepsToRootPkg(
         "vitest",
         "@vitest/coverage-v8",
       ]);
+      addTucuUi("react");
       break;
     case "nestjs":
       Object.assign(pkg.dependencies, {
@@ -91,13 +111,28 @@ export function addAppTypeDepsToRootPkg(
       });
       break;
     case "nextjs":
-      pkg.dependencies["next"] = "^15.0.0";
+    case "next-bff":
+      if (!pkg.dependencies["next"]) {
+        pkg.dependencies["next"] = FRONTEND_VERSIONS.next;
+      } else if (options.tucuUi !== false && nextMajor(pkg.dependencies["next"]) < 16) {
+        logger.warn(
+          `Root package.json pins next ${pkg.dependencies["next"]}, but tucu-ui needs Next 16 — upgrade it manually.`,
+        );
+      }
       pkg.devDependencies["@nx/next"] = NX_VERSION;
       addMissingFromReference("dependencies", ["react", "react-dom"]);
       addMissingFromReference("devDependencies", [
         "@types/react",
         "@types/react-dom",
       ]);
+      addTucuUi("nextjs");
+      if (type === "next-bff") {
+        addMissingFromReference("devDependencies", [
+          "vite",
+          "vitest",
+          "@vitest/coverage-v8",
+        ]);
+      }
       break;
     case "fastify":
       pkg.dependencies["fastify"] = "^5.0.0";
@@ -113,8 +148,8 @@ export function addAppTypeDepsToRootPkg(
       });
       Object.assign(pkg.devDependencies, {
         "@nx/node": NX_VERSION,
-        vite: pkg.devDependencies["vite"] ?? "^8.0.0",
-        vitest: pkg.devDependencies["vitest"] ?? "^4.1.10",
+        vite: pkg.devDependencies["vite"] ?? FRONTEND_VERSIONS.vite,
+        vitest: pkg.devDependencies["vitest"] ?? FRONTEND_VERSIONS.vitest,
       });
       break;
   }

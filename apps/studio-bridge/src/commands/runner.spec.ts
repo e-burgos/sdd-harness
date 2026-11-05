@@ -1,3 +1,5 @@
+import { writeFile } from 'node:fs/promises';
+import path from 'node:path';
 import type { ServerEvent } from '@sdd-studio/protocol';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { copyFixture, waitFor } from '../test-utils/fixture';
@@ -44,5 +46,17 @@ describe('CommandRunner', () => {
     runner.run('rebuild-tasks-index', []);
     await waitFor(() => exitOf('r4'));
     expect(outputOf('r4', 'stdout')).toBe('ñandú ✓\n');
+  });
+
+  it('counts active runs and terminateAll kills them', async () => {
+    await writeFile(path.join(root, 'sdd', 'scripts', 'spec-gate.mjs'), "process.stdout.write('up\\n'); setInterval(() => undefined, 1000);\n");
+    const runner = new CommandRunner(root, (e) => sent.push(e), () => 'r5');
+    expect(runner.activeRuns()).toBe(0);
+    runner.run('gate', []);
+    expect(runner.activeRuns()).toBe(1);
+    await waitFor(() => outputOf('r5', 'stdout').includes('up'));
+    runner.terminateAll();
+    expect((await waitFor(() => exitOf('r5'))).exitCode).not.toBe(0);
+    expect(runner.activeRuns()).toBe(0);
   });
 });
