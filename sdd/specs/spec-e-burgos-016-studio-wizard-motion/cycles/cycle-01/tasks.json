@@ -1,0 +1,207 @@
+{
+  "$schema": "../../../../schemas/cycle-tasks.schema.json",
+  "spec": "spec-e-burgos-016-studio-wizard-motion",
+  "cycle": 1,
+  "module": "studio-wizard-motion",
+  "apps": [
+    "apps/studio",
+    "apps/cli"
+  ],
+  "flow": "lite",
+  "user_stories_generated": true,
+  "prerequisites": {
+    "tasks_generated": true
+  },
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "Skill crafted-motion en el kit y en el repo",
+      "user_stories": [
+        "US-1"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [],
+      "status": "done",
+      "files": [
+        "apps/cli/templates/sdd/skills/crafted-motion/SKILL.md",
+        "sdd/skills/crafted-motion/SKILL.md"
+      ],
+      "usage": {
+        "tokens_in": 250000,
+        "tokens_out": 12000,
+        "approx": true,
+        "recorded_at": "2026-11-05",
+        "provider_model": "claude/opus",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "source": "declared-estimate"
+      }
+    },
+    {
+      "id": "TASK-002",
+      "title": "Runtime de motion en Studio (deps, tokens, hooks, CSS)",
+      "user_stories": [
+        "US-2",
+        "US-3",
+        "US-4",
+        "US-5"
+      ],
+      "estimation_hours": 2,
+      "story_points": 2,
+      "depends_on": [],
+      "status": "done",
+      "files": [
+        "apps/studio/package.json",
+        "apps/studio/src/lib/motion/motion-tokens.ts"
+      ],
+      "usage": {
+        "tokens_in": 150000,
+        "tokens_out": 6000,
+        "approx": true,
+        "recorded_at": "2026-11-05",
+        "provider_model": "claude/opus",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "source": "declared-estimate"
+      }
+    },
+    {
+      "id": "TASK-003",
+      "title": "Transición entre pasos, título animado y selección",
+      "user_stories": [
+        "US-3"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-002"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/modules/new-project/NewProjectCenter.tsx",
+        "apps/studio/src/components/modules/new-project/OptionCard.tsx"
+      ],
+      "usage": {
+        "tokens_in": 250000,
+        "tokens_out": 10000,
+        "approx": true,
+        "recorded_at": "2026-11-05",
+        "provider_model": "claude/opus",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "source": "declared-estimate"
+      }
+    },
+    {
+      "id": "TASK-004",
+      "title": "Escena de puertas con shader en el paso Alcance",
+      "user_stories": [
+        "US-2"
+      ],
+      "estimation_hours": 5,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-002"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/modules/new-project/steps/ScopeStep.tsx"
+      ],
+      "usage": {
+        "tokens_in": 400000,
+        "tokens_out": 20000,
+        "approx": true,
+        "recorded_at": "2026-11-05",
+        "provider_model": "claude/opus",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "source": "declared-estimate"
+      }
+    },
+    {
+      "id": "TASK-005",
+      "title": "Riel de progreso en el panel",
+      "user_stories": [
+        "US-4"
+      ],
+      "estimation_hours": 2,
+      "story_points": 2,
+      "depends_on": [
+        "TASK-002"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/modules/new-project/NewProjectPanel.tsx"
+      ],
+      "usage": {
+        "tokens_in": 120000,
+        "tokens_out": 4000,
+        "approx": true,
+        "recorded_at": "2026-11-05",
+        "provider_model": "claude/opus",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "source": "declared-estimate"
+      }
+    },
+    {
+      "id": "TASK-006",
+      "title": "Generación viva",
+      "user_stories": [
+        "US-5"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-002"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/modules/new-project/GenerationProgress.tsx"
+      ],
+      "usage": {
+        "tokens_in": 150000,
+        "tokens_out": 6000,
+        "approx": true,
+        "recorded_at": "2026-11-05",
+        "provider_model": "claude/opus",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "source": "declared-estimate"
+      }
+    },
+    {
+      "id": "TASK-007",
+      "title": "Verificación y cierre",
+      "user_stories": [
+        "US-1",
+        "US-2",
+        "US-3",
+        "US-4",
+        "US-5"
+      ],
+      "estimation_hours": 2,
+      "story_points": 2,
+      "depends_on": [
+        "TASK-001",
+        "TASK-003",
+        "TASK-004",
+        "TASK-005",
+        "TASK-006"
+      ],
+      "status": "done",
+      "files": [],
+      "usage": {
+        "tokens_in": 280000,
+        "tokens_out": 12000,
+        "approx": true,
+        "recorded_at": "2026-11-05",
+        "provider_model": "claude/opus",
+        "effort": "medium",
+        "agent": "reviewer",
+        "source": "declared-estimate"
+      }
+    }
+  ]
+}

@@ -284,6 +284,21 @@
           "tasks_done": 23
         }
       }
+    },
+    "spec-e-burgos-016-studio-wizard-motion": {
+      "cycles": {
+        "cycle-01": {
+          "file": "sdd/specs/spec-e-burgos-016-studio-wizard-motion/cycles/cycle-01/tasks.json",
+          "module": "studio-wizard-motion",
+          "apps": [
+            "apps/studio",
+            "apps/cli"
+          ],
+          "status": "completed",
+          "tasks_total": 7,
+          "tasks_done": 7
+        }
+      }
     }
   }
 }

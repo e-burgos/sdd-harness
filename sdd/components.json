@@ -1268,13 +1268,19 @@
         "module": "studio-project-wizard",
         "spec": "sdd/specs/spec-e-burgos-013-studio-project-wizard",
         "path": "src/components/modules/new-project/NewProjectPanel.tsx",
-        "status": "implemented",
+        "status": "updated",
         "created_in_cycle": 1,
-        "updated_in_cycle": null,
+        "updated_in_cycle": 1,
         "description": "Stepper de los 6 pasos con actual, completados y «No aplica por el alcance», y botón «Empezar de nuevo».",
         "consumes": [],
         "created_at": "2026-11-05",
-        "changelog": []
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-11-05",
+            "change": "spec-e-burgos-016 cycle-01: Riel de progreso con relleno y paso actual latiendo; checks con pop."
+          }
+        ]
       },
       {
         "id": "COMP-071",
@@ -1283,13 +1289,19 @@
         "module": "studio-project-wizard",
         "spec": "sdd/specs/spec-e-burgos-013-studio-project-wizard",
         "path": "src/components/modules/new-project/NewProjectCenter.tsx",
-        "status": "implemented",
+        "status": "updated",
         "created_in_cycle": 1,
-        "updated_in_cycle": null,
+        "updated_in_cycle": 1,
         "description": "Paso actual o progreso/resultado de la generación; Siguiente y Atrás con la razón del bloqueo.",
         "consumes": [],
         "created_at": "2026-11-05",
-        "changelog": []
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-11-05",
+            "change": "spec-e-burgos-016 cycle-01: StepStage, WordTitle, foco y scroll al cambiar de paso, aria-live del paso; espera a estar posicionado."
+          }
+        ]
       },
       {
         "id": "COMP-072",
@@ -1313,13 +1325,19 @@
         "module": "studio-project-wizard",
         "spec": "sdd/specs/spec-e-burgos-013-studio-project-wizard",
         "path": "src/components/modules/new-project/steps/ScopeStep.tsx",
-        "status": "implemented",
+        "status": "updated",
         "created_in_cycle": 1,
-        "updated_in_cycle": null,
+        "updated_in_cycle": 1,
         "description": "Paso 1: alcance (frontend, backend o ambos) y modo.",
         "consumes": [],
         "created_at": "2026-11-05",
-        "changelog": []
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-11-05",
+            "change": "spec-e-burgos-016 cycle-01: Delegado a ScopeDoors."
+          }
+        ]
       },
       {
         "id": "COMP-074",
@@ -1403,13 +1421,19 @@
         "module": "studio-project-wizard",
         "spec": "sdd/specs/spec-e-burgos-013-studio-project-wizard",
         "path": "src/components/modules/new-project/OptionCard.tsx",
-        "status": "implemented",
+        "status": "updated",
         "created_in_cycle": 1,
-        "updated_in_cycle": null,
+        "updated_in_cycle": 1,
         "description": "Tarjeta de opción seleccionable con descripción y estado bloqueado.",
         "consumes": [],
         "created_at": "2026-11-05",
-        "changelog": []
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-11-05",
+            "change": "spec-e-burgos-016 cycle-01: Brillo al elegir, pop del check y elevación al pasar el puntero."
+          }
+        ]
       },
       {
         "id": "COMP-080",
@@ -1418,13 +1442,19 @@
         "module": "studio-project-wizard",
         "spec": "sdd/specs/spec-e-burgos-013-studio-project-wizard",
         "path": "src/components/modules/new-project/OptionCard.tsx",
-        "status": "implemented",
+        "status": "updated",
         "created_in_cycle": 1,
-        "updated_in_cycle": null,
+        "updated_in_cycle": 1,
         "description": "Grupo de OptionCard con selección única o múltiple.",
         "consumes": [],
         "created_at": "2026-11-05",
-        "changelog": []
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-11-05",
+            "change": "spec-e-burgos-016 cycle-01: Opciones escalonadas por CSS (wizard-stagger)."
+          }
+        ]
       },
       {
         "id": "COMP-081",
@@ -1703,13 +1733,19 @@
         "module": "studio-project-wizard",
         "spec": "sdd/specs/spec-e-burgos-013-studio-project-wizard",
         "path": "src/components/modules/new-project/GenerationProgress.tsx",
-        "status": "implemented",
+        "status": "updated",
         "created_in_cycle": 1,
-        "updated_in_cycle": null,
+        "updated_in_cycle": 1,
         "description": "Etapas de la generación, log en vivo, cancelar con confirmación y «Conexión perdida».",
         "consumes": [],
         "created_at": "2026-11-05",
-        "changelog": []
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-11-05",
+            "change": "spec-e-burgos-016 cycle-01: StageList como pipeline con barra por etapas, riel y estados vivos."
+          }
+        ]
       },
       {
         "id": "COMP-100",
@@ -1733,13 +1769,19 @@
         "module": "studio-project-wizard",
         "spec": "sdd/specs/spec-e-burgos-013-studio-project-wizard",
         "path": "src/components/modules/new-project/GenerationResult.tsx",
-        "status": "implemented",
+        "status": "updated",
         "created_in_cycle": 1,
-        "updated_in_cycle": null,
+        "updated_in_cycle": 1,
         "description": "Resultado (éxito, generado con errores, fallo) con abrir en Studio (confirmación si hay proyecto abierto), revelar, copiar ruta/log y reintentar.",
         "consumes": [],
         "created_at": "2026-11-05",
-        "changelog": []
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-11-05",
+            "change": "spec-e-burgos-016 cycle-01: Celebración breve en el título de éxito."
+          }
+        ]
       },
       {
         "id": "COMP-102",
@@ -1978,6 +2020,153 @@
             "cycle": 1,
             "date": "2026-11-05",
             "change": "Registrado en spec-e-burgos-013 cycle-01 (existía sin registro): soporte de workspace nulo (modo launcher) y cambio de workspace."
+          }
+        ]
+      },
+      {
+        "id": "COMP-116",
+        "name": "ScopeDoors",
+        "type": "component",
+        "module": "studio-wizard-motion",
+        "spec": "sdd/specs/spec-e-burgos-016-studio-wizard-motion",
+        "path": "src/components/modules/new-project/steps/scope/ScopeDoors.tsx",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "description": "Escena del paso Alcance: puertas front/back sobre el shader de costura y pill de full stack; radios accesibles con fallback estático.",
+        "consumes": [],
+        "created_at": "2026-11-05",
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-11-05",
+            "change": "Creado en spec-e-burgos-016 cycle-01."
+          }
+        ]
+      },
+      {
+        "id": "COMP-117",
+        "name": "DoorMocks",
+        "type": "component",
+        "module": "studio-wizard-motion",
+        "spec": "sdd/specs/spec-e-burgos-016-studio-wizard-motion",
+        "path": "src/components/modules/new-project/steps/scope/DoorMocks.tsx",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "description": "Mockups decorativos de cada puerta (ventana que se arma, consola de requests) marcados con data-* para la coreografía.",
+        "consumes": [],
+        "created_at": "2026-11-05",
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-11-05",
+            "change": "Creado en spec-e-burgos-016 cycle-01."
+          }
+        ]
+      },
+      {
+        "id": "COMP-118",
+        "name": "SeamCanvas",
+        "type": "component",
+        "module": "studio-wizard-motion",
+        "spec": "sdd/specs/spec-e-burgos-016-studio-wizard-motion",
+        "path": "src/components/modules/new-project/steps/scope/SeamCanvas.tsx",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "description": "Canvas WebGL del shader de costura; dibuja solo en vista y con la pestaña visible.",
+        "consumes": [],
+        "created_at": "2026-11-05",
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-11-05",
+            "change": "Creado en spec-e-burgos-016 cycle-01."
+          }
+        ]
+      },
+      {
+        "id": "COMP-119",
+        "name": "StepStage",
+        "type": "component",
+        "module": "studio-wizard-motion",
+        "spec": "sdd/specs/spec-e-burgos-016-studio-wizard-motion",
+        "path": "src/components/modules/new-project/motion/StepStage.tsx",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "description": "Transición dirigida entre pasos del wizard con framer-motion; sin motion renderiza el contenido tal cual.",
+        "consumes": [],
+        "created_at": "2026-11-05",
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-11-05",
+            "change": "Creado en spec-e-burgos-016 cycle-01."
+          }
+        ]
+      },
+      {
+        "id": "COMP-120",
+        "name": "WordTitle",
+        "type": "component",
+        "module": "studio-wizard-motion",
+        "spec": "sdd/specs/spec-e-burgos-016-studio-wizard-motion",
+        "path": "src/components/modules/new-project/motion/WordTitle.tsx",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "description": "Título de paso que entra palabra por palabra; enfocable para mover el foco al cambiar de paso.",
+        "consumes": [],
+        "created_at": "2026-11-05",
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-11-05",
+            "change": "Creado en spec-e-burgos-016 cycle-01."
+          }
+        ]
+      },
+      {
+        "id": "COMP-121",
+        "name": "useSectionMotion",
+        "type": "hook",
+        "module": "studio-wizard-motion",
+        "spec": "sdd/specs/spec-e-burgos-016-studio-wizard-motion",
+        "path": "src/lib/motion/use-section-motion.ts",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "description": "GSAP con import() al entrar en vista, build en gsap.context, loops pausables y estado off/loading/running/failed.",
+        "consumes": [],
+        "created_at": "2026-11-05",
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-11-05",
+            "change": "Creado en spec-e-burgos-016 cycle-01."
+          }
+        ]
+      },
+      {
+        "id": "COMP-122",
+        "name": "useMotionAllowed",
+        "type": "hook",
+        "module": "studio-wizard-motion",
+        "spec": "sdd/specs/spec-e-burgos-016-studio-wizard-motion",
+        "path": "src/lib/motion/use-motion-allowed.ts",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "description": "Reactivo a matchMedia: motion solo con ancho mínimo y sin prefers-reduced-motion.",
+        "consumes": [],
+        "created_at": "2026-11-05",
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-11-05",
+            "change": "Creado en spec-e-burgos-016 cycle-01."
           }
         ]
       }

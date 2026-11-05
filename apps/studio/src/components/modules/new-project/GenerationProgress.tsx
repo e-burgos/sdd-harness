@@ -21,22 +21,52 @@ const STAGE_CLASS: Record<StageStatus, string> = {
   failed: 'text-roseish',
   skipped: 'text-ink-500',
 };
+const DOT_CLASS: Record<StageStatus, string> = {
+  pending: 'border-foreground/10',
+  active: 'wizard-breathe border-accent-400/60 shadow-[0_0_0_4px_var(--color-accent-dim),0_0_22px_2px_var(--color-accent-dim)]',
+  done: 'wizard-pop border-emerald-400/50 bg-emerald-950',
+  failed: 'wizard-pop border-roseish/60 bg-rose-950',
+  skipped: 'border-foreground/10',
+};
+
+const settledCount = (stages: GenerationState['stages']) => stages.filter(({ status }) => status === 'done' || status === 'skipped').length;
+
+function StageProgressBar({ stages }: { stages: GenerationState['stages'] }) {
+  const running = stages.some(({ status }) => status === 'active');
+  const fraction = stages.length === 0 ? 0 : settledCount(stages) / stages.length;
+  return (
+    <div aria-hidden className="relative h-1 overflow-hidden rounded-full bg-foreground/10">
+      <span
+        data-testid="stage-progress-fill"
+        className="absolute inset-0 origin-left rounded-full bg-gradient-to-r from-accent-500 via-accent-400 to-emerald-400 transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] motion-reduce:transition-none"
+        style={{ transform: `scaleX(${fraction})` }}
+      />
+      {running && <span key={settledCount(stages)} className="wizard-sweep absolute inset-y-0 left-0 w-1/4 bg-gradient-to-r from-transparent via-white/50 to-transparent" />}
+    </div>
+  );
+}
 
 export function StageList({ stages }: { stages: GenerationState['stages'] }) {
   const { t } = useT();
   return (
-    <ol aria-label={t('wizard.progress.stages')} className="flex flex-col gap-1">
-      {stages.map(({ stage, status }) => {
-        const Icon = STAGE_ICON[status];
-        return (
-          <li key={stage} data-stage={stage} data-status={status} aria-current={status === 'active' ? 'step' : undefined} className={`flex items-center gap-2 text-copy ${STAGE_CLASS[status]}`}>
-            <Icon aria-hidden size={ROW_ICON} className={status === 'active' ? 'animate-spin' : undefined} />
-            <span className={status === 'active' ? 'font-medium text-ink-50' : undefined}>{t(`wizard.progress.stage.${stage satisfies GenerationStage}` as keyof Dict)}</span>
-            <span className="text-meta text-ink-400">{t(`wizard.progress.stageState.${status}` as keyof Dict)}</span>
-          </li>
-        );
-      })}
-    </ol>
+    <div className="flex flex-col gap-3">
+      <StageProgressBar stages={stages} />
+      <ol aria-label={t('wizard.progress.stages')} className="relative flex flex-col gap-2">
+        <span aria-hidden className="absolute bottom-3 left-[11.5px] top-3 w-px bg-foreground/10" />
+        {stages.map(({ stage, status }) => {
+          const Icon = STAGE_ICON[status];
+          return (
+            <li key={stage} data-stage={stage} data-status={status} aria-current={status === 'active' ? 'step' : undefined} className={`relative flex items-center gap-3 text-copy ${STAGE_CLASS[status]}`}>
+              <span key={status} className={`relative z-10 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border bg-ink-950 ${DOT_CLASS[status]}`}>
+                <Icon aria-hidden size={ROW_ICON - 4} className={status === 'active' ? 'animate-spin' : undefined} />
+              </span>
+              <span className={status === 'active' ? 'font-medium text-ink-50' : status === 'done' ? 'text-ink-100' : undefined}>{t(`wizard.progress.stage.${stage satisfies GenerationStage}` as keyof Dict)}</span>
+              <span className="font-mono text-meta uppercase tracking-wider text-ink-400">{t(`wizard.progress.stageState.${status}` as keyof Dict)}</span>
+            </li>
+          );
+        })}
+      </ol>
+    </div>
   );
 }
 

@@ -181,6 +181,7 @@ sdd/
     ├── generate-springboot-api/
     ├── generate-api-contract/
     ├── generate-react-component/
+    ├── crafted-motion/                ← Graphic motion para frontends React/Next
     ├── generate-nestjs-module/
     └── generate-prisma-schema/
 ```
@@ -766,6 +767,7 @@ Skills son micro-agentes especializados invocados con `/skill [nombre]`.
 | `generate-springboot-api`  | Genera módulo Spring Boot completo (controller/service/repo/tests) |
 | `generate-api-contract`    | Genera contratos OpenAPI, DTOs y mappers                           |
 | `generate-react-component` | Genera componente React con props tipadas y tests                  |
+| `crafted-motion`           | Graphic motion en React/Next: capas CSS / framer-motion / GSAP / WebGL, tokens, recetas, wizards y QA |
 | `generate-nestjs-module`   | Genera módulo NestJS (reservado para futuros proyectos)            |
 | `generate-prisma-schema`   | Genera schema Prisma (reservado para futuros proyectos)            |
 

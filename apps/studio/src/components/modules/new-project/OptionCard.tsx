@@ -29,7 +29,9 @@ export function RecommendedBadge({ reason }: { reason?: string }) {
 export function OptionCard({ label, hint, selected, onSelect, recommended = null, blockedReason = null, testId }: OptionCardProps) {
   const reasonId = useId();
   const blocked = blockedReason !== null;
-  const tone = selected ? 'border-accent-400 bg-accent-dim' : 'border-foreground/10 hover:bg-ink-800';
+  const tone = selected
+    ? 'border-accent-400 bg-accent-dim shadow-[0_0_0_1px_var(--color-accent-400),0_0_28px_-6px_var(--color-accent-400)]'
+    : 'border-foreground/10 hover:-translate-y-px hover:border-foreground/20 hover:bg-ink-800';
   return (
     <button
       type="button"
@@ -39,12 +41,12 @@ export function OptionCard({ label, hint, selected, onSelect, recommended = null
       disabled={blocked}
       data-testid={testId}
       onClick={onSelect}
-      className={`${focusRing} flex w-full flex-col gap-1 rounded-lg border p-3 text-left transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${tone}`}
+      className={`${focusRing} flex w-full flex-col gap-1 rounded-lg border p-3 text-left transition-[background-color,border-color,box-shadow,translate] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] disabled:cursor-not-allowed disabled:opacity-60 ${tone}`}
     >
       <span className="flex items-center gap-2">
         <span className="min-w-0 flex-1 text-copy font-medium text-ink-50">{label}</span>
         {recommended !== null && <RecommendedBadge reason={recommended} />}
-        {selected && <Check aria-hidden size={ROW_ICON} className="shrink-0 text-accent-400" />}
+        {selected && <Check aria-hidden size={ROW_ICON} className="wizard-pop shrink-0 text-accent-400" />}
       </span>
       <span className="text-small text-ink-300">{hint}</span>
       {blocked && (
@@ -58,7 +60,7 @@ export function OptionCard({ label, hint, selected, onSelect, recommended = null
 
 export function OptionGroup({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div role="radiogroup" aria-label={label} className="flex flex-col gap-2">
+    <div role="radiogroup" aria-label={label} className="wizard-stagger flex flex-col gap-2">
       {children}
     </div>
   );

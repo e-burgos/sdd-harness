@@ -29,6 +29,10 @@
   ],
   "skills": [
     {
+      "dir": "crafted-motion",
+      "file": "SKILL.md"
+    },
+    {
       "dir": "generate-api-contract",
       "file": "SKILL.md"
     },
@@ -161,6 +165,9 @@
     }
   ],
   "memory": [
+    {
+      "file": "2026-11-05-spec-e-burgos-016-cycle-01.md"
+    },
     {
       "file": "2026-11-05-spec-e-burgos-013-cycle-01.md"
     }

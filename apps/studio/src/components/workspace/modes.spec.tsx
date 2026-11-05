@@ -21,11 +21,12 @@ describe('ModeSelectors', () => {
   });
   const mount = (p: ModeSelectorsProps) => render(<I18nProvider initial="es"><ModeSelectors {...p} /></I18nProvider>);
 
-  it('has a help icon on each selector and reports changes', () => {
+  it('has a help icon on each selector and reports changes', async () => {
     const p = props();
     mount(p);
     expect(screen.getAllByTestId('help-select')).toHaveLength(2);
     pickOption(screen.getByLabelText('Modo de desarrollo'), /solo/i);
+    await waitForSelectToClose();
     pickOption(screen.getByLabelText('Modo de implementación'), /lite/i);
     expect(p.onProfileChange).toHaveBeenCalledWith('solo');
     expect(p.onFlowChange).toHaveBeenCalledWith('lite');
