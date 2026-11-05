@@ -1,7 +1,7 @@
 'use client';
 
 import { Check } from 'lucide-react';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useId, useMemo, useRef } from 'react';
 import { useT } from '@/lib/i18n/i18n';
 import type { Dict } from '@/lib/i18n/es';
 import { MOTION_MIN_WIDTH } from '@/lib/motion/motion-tokens';
@@ -58,11 +58,14 @@ function Door({ side, selected, dimmed, onSelect }: { side: DoorSide; selected: 
   const { t } = useT();
   const tone = DOOR_TONE[side];
   const label = t(`wizard.scope.${side}.label` as keyof Dict);
+  const hintId = useId();
   return (
     <button
       type="button"
       role="radio"
       aria-checked={selected}
+      aria-label={label}
+      aria-describedby={hintId}
       data-door={side}
       data-testid={`scope-${side}`}
       onClick={onSelect}
@@ -71,7 +74,7 @@ function Door({ side, selected, dimmed, onSelect }: { side: DoorSide; selected: 
       <span data-door-copy={side} className={`flex flex-col gap-2 ${tone.align}`}>
         <span className={`font-mono text-micro uppercase tracking-[0.25em] ${tone.eyebrow}`}>{t(`wizard.scope.${side}.eyebrow` as keyof Dict)}</span>
         <SplitLabel text={label} accent={tone.accent} />
-        <span className="max-w-[22rem] text-small text-white/60">{t(`wizard.scope.${side}.hint` as keyof Dict)}</span>
+        <span id={hintId} className="max-w-[22rem] text-small text-white/60">{t(`wizard.scope.${side}.hint` as keyof Dict)}</span>
         {selected && <SelectedMark label={t('wizard.scope.selected')} />}
       </span>
       {side === 'front' ? <FrontMock statusBuilding={t('wizard.scope.mock.building')} statusLive={t('wizard.scope.mock.live')} /> : <BackMock />}
@@ -81,6 +84,7 @@ function Door({ side, selected, dimmed, onSelect }: { side: DoorSide; selected: 
 
 function FullstackPill({ selected, onSelect }: { selected: boolean; onSelect(): void }) {
   const { t } = useT();
+  const hintId = useId();
   return (
     <div className="relative flex justify-center px-6 pb-6">
       <div className="flex flex-col items-center gap-2">
@@ -89,6 +93,8 @@ function FullstackPill({ selected, onSelect }: { selected: boolean; onSelect(): 
           type="button"
           role="radio"
           aria-checked={selected}
+          aria-label={t('wizard.scope.fullstack.label')}
+          aria-describedby={hintId}
           data-door="fullstack"
           data-testid="scope-fullstack"
           onClick={onSelect}
@@ -103,7 +109,7 @@ function FullstackPill({ selected, onSelect }: { selected: boolean; onSelect(): 
           </span>
         </button>
         </div>
-        <span className="max-w-md text-center text-small text-white/55">{t('wizard.scope.fullstack.hint')}</span>
+        <span id={hintId} className="max-w-md text-center text-small text-white/55">{t('wizard.scope.fullstack.hint')}</span>
       </div>
     </div>
   );

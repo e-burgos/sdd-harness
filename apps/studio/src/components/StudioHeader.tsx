@@ -38,7 +38,11 @@ export function StudioHeader({ launcher = false }: { launcher?: boolean }) {
           <AgentAvatar agent="sdd-orchestrator" size={24} showBadge={false} />
           <span className="font-semibold text-sm tracking-tight text-ink-100 flex items-center gap-1.5">
             SDD Studio
-            <Badge variant="soft" size="micro" shape="pill" tone="success" className="gap-1.5 px-2 py-0.5 font-mono text-micro">v0.16</Badge>
+            {snapshot?.kitVersion && (
+              <Badge variant="soft" size="micro" shape="pill" tone="success" title={t('header.kitVersion')} className="gap-1.5 px-2 py-0.5 font-mono text-micro">
+                v{snapshot.kitVersion}
+              </Badge>
+            )}
           </span>
         </div>
         {launcher && (

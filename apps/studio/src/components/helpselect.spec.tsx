@@ -58,12 +58,13 @@ describe('HelpSelect', () => {
     expect(screen.getByLabelText('Modelo')).toBeDisabled();
   });
 
-  it('calls onChange with the chosen value and ignores re-picking the current one', () => {
+  it('calls onChange with the chosen value and ignores re-picking the current one', async () => {
     const onChange = vi.fn();
     mount({ onChange });
     const combobox = screen.getByRole('combobox', { name: 'Modelo' });
     pickOption(combobox, 'A');
     expect(onChange).not.toHaveBeenCalled();
+    await waitForSelectToClose();
     pickOption(combobox, 'B');
     expect(onChange).toHaveBeenCalledTimes(1);
     expect(onChange).toHaveBeenCalledWith('b');

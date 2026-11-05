@@ -53,10 +53,11 @@ function mountMulti(request: (cmd: { cmd: string; add?: unknown[]; remove?: unkn
 }
 
 describe('ThreadLinkPicker', () => {
-  it('offers every cycle, every fix and no link, with the current link selected', () => {
+  it('offers every cycle, every fix and no link, with the current link selected', async () => {
     const { select } = mount(() => Promise.resolve(null));
     expect(select).toHaveTextContent('s1 · cycle-02 (in-progress)');
     expect(optionNames(select)).toEqual(['Sin asociar', 's1 · cycle-01', 's1 · cycle-02', 'FIX-a-001']);
+    await waitForSelectToClose();
     openSelect(select);
     expect(screen.getByRole('group', { name: 'Ciclos' })).toHaveTextContent('s1 · cycle-01');
     expect(screen.getByRole('group', { name: 'Fixes' })).toHaveTextContent('FIX-a-001');
@@ -78,6 +79,7 @@ describe('ThreadLinkPicker', () => {
     await waitFor(() => expect(select).toHaveTextContent('FIX-a-001 (pending)'));
     expect(client.request).toHaveBeenLastCalledWith({ cmd: 'thread.setLink', threadId: 't1', link: { kind: 'fix', fixId: 'FIX-a-001' } });
     await waitFor(() => expect(select).toBeEnabled());
+    await waitForSelectToClose();
     pickOption(select, 'Sin asociar');
     await waitFor(() => expect(select).toHaveTextContent('Sin asociar'));
     expect(client.request).toHaveBeenLastCalledWith({ cmd: 'thread.setLink', threadId: 't1', link: { kind: 'none' } });
@@ -172,6 +174,7 @@ describe('ThreadLinkPicker with link-targets', () => {
       withTargets,
     );
     expect(optionNames(add)).toEqual(['Agregar asociación…', 's1', 's1 · cycle-01', 'FIX-a-001']);
+    await waitForSelectToClose();
     pickOption(add, 'FIX-a-001');
     await waitFor(() => expect(screen.getByTestId('link-chip-fix:FIX-a-001')).toBeInTheDocument());
     expect(client.request).toHaveBeenCalledWith({ cmd: 'thread.updateLinks', threadId: 't1', add: [{ kind: 'fix', fixId: 'FIX-a-001' }], remove: [] });

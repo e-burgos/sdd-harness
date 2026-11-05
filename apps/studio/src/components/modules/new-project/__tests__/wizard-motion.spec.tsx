@@ -38,6 +38,8 @@ describe('wizard motion', () => {
     expect(screen.queryByTestId('seam-canvas')).not.toBeInTheDocument();
     const doors = screen.getByTestId('scope-doors');
     expect(['scope-front', 'scope-back', 'scope-fullstack'].map((id) => screen.getByTestId(id).getAttribute('role'))).toEqual(['radio', 'radio', 'radio']);
+    expect(screen.getByRole('radio', { name: 'Solo back' })).toHaveAccessibleDescription('Solo la API o los servicios. Conviene cuando el front ya existe o todavía no hace falta.');
+    expect(screen.getByRole('radio', { name: 'Full stack' })).toBe(screen.getByTestId('scope-fullstack'));
     fireEvent.click(screen.getByTestId('scope-back'));
     expect(doors.dataset.selected).toBe('back');
     expect(screen.getByTestId('scope-back')).toHaveAttribute('aria-checked', 'true');

@@ -139,3 +139,15 @@ describe('StudioHeader mode toggle', () => {
     expect(screen.getByRole('button', { name: 'en' })).toBeInTheDocument();
   });
 });
+
+describe('StudioHeader kit version', () => {
+  it('shows the kit version of the open project and nothing without one', () => {
+    const store = createStudioStore();
+    store.getState().setSnapshot({ ...snapshot, kitVersion: '0.17.0' });
+    mount(store);
+    expect(screen.getByTitle('Versión del kit SDD instalada en el proyecto')).toHaveTextContent('v0.17.0');
+    cleanup();
+    mount();
+    expect(screen.queryByTitle('Versión del kit SDD instalada en el proyecto')).not.toBeInTheDocument();
+  });
+});
