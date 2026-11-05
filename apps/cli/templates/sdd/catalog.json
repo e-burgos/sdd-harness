@@ -29,6 +29,10 @@
   ],
   "skills": [
     {
+      "dir": "crafted-motion",
+      "file": "SKILL.md"
+    },
+    {
       "dir": "generate-api-contract",
       "file": "SKILL.md"
     },

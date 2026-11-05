@@ -107,6 +107,9 @@ sdd/
 │   │   └── SKILL.md
 │   ├── generate-react-component/
 │   │   └── SKILL.md
+│   ├── crafted-motion/
+│   │   ├── SKILL.md
+│   │   └── references/
 │   ├── generate-api-contract/
 │   │   └── SKILL.md
 │   ├── generate-nestjs-module/
@@ -745,6 +748,7 @@ Manifest **generado** que enumera agents, skills, prompts y schemas para el viso
 | Specs registradas                   | `sdd/specs/index.json`                              |
 | Crear API Spring Boot               | `sdd/skills/generate-springboot-api/SKILL.md`       |
 | Crear componente React              | `sdd/skills/generate-react-component/SKILL.md`      |
+| Motion / animaciones / dirección visual | `sdd/skills/crafted-motion/SKILL.md`            |
 | Ver visor SDD en vivo (sin build)   | `pnpm sdd:docs` → `sdd/docs/`                       |
 
 ---

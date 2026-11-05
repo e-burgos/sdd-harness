@@ -14,6 +14,7 @@ model: sonnet
 | -------------------------- | ------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
 | `sdd-implementor-front`    | `sdd/skills/sdd-implementor-front/SKILL.md` | Guía completa del rol: protocolo task-by-task, verificaciones, actualización de components.json          |
 | `generate-*` (según stack) | `sdd/skills/generate-*/SKILL.md`            | Elegir la skill del stack frontend del subproyecto (`constitution.md`): `generate-react-component`, etc. |
+| `crafted-motion`           | `sdd/skills/crafted-motion/SKILL.md`        | Si la task toca motion, animaciones o dirección visual: capas, tokens, recetas, transiciones de pasos y QA |
 | `sdd-data-schemas`         | `sdd/skills/sdd-data-schemas/SKILL.md`      | Schema de components.json y del tasks.json per-cycle para actualizar al finalizar cada task              |
 
 ---
