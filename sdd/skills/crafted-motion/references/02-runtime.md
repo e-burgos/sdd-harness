@@ -15,7 +15,12 @@ export interface MotionLoop {
   pause: () => unknown;
   resume: () => unknown;
 }
-export type BuildSectionMotion = (gsap: Gsap, root: HTMLElement) => readonly MotionLoop[];
+export interface SectionMotion {
+  loops: readonly MotionLoop[];
+  dispose?: () => void;
+}
+export type BuildSectionMotion = (gsap: Gsap, root: HTMLElement) => SectionMotion;
+export type SectionMotionStatus = 'off' | 'loading' | 'running' | 'failed';
 
 function motionAllowed(minWidth = 640): boolean {
   if (typeof window.matchMedia !== 'function') return false;
@@ -41,30 +46,40 @@ export function useSectionMotion(
   ref: RefObject<HTMLElement | null>,
   build: BuildSectionMotion,
   rootMargin = '0px 0px -12% 0px',
-): void {
+): SectionMotionStatus {
   const inView = useInView(ref, rootMargin);
   const [gsap, setGsap] = useState<Gsap | null>(null);
+  const [failed, setFailed] = useState(false);
   const loopsRef = useRef<readonly MotionLoop[]>([]);
   const buildRef = useRef(build);
 
   useEffect(() => {
     if (!inView || gsap || !motionAllowed()) return;
     let cancelled = false;
-    import('gsap').then((mod) => {
-      if (!cancelled) setGsap(mod.gsap);
-    });
+    import('gsap').then(
+      (mod) => {
+        if (!cancelled) setGsap(mod.gsap);
+      },
+      () => {
+        if (!cancelled) setFailed(true);
+      },
+    );
     return () => {
       cancelled = true;
     };
   }, [inView, gsap]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const root = ref.current;
     if (!gsap || !root) return;
+    let dispose: (() => void) | undefined;
     const ctx = gsap.context(() => {
-      loopsRef.current = buildRef.current(gsap, root);
+      const motion = buildRef.current(gsap, root);
+      loopsRef.current = motion.loops;
+      dispose = motion.dispose;
     }, root);
     return () => {
+      dispose?.();
       loopsRef.current = [];
       ctx.revert();
     };
@@ -76,6 +91,28 @@ export function useSectionMotion(
       else loop.pause();
     }
   }, [inView, gsap]);
+
+  if (!motionAllowed()) return 'off';
+  if (failed) return 'failed';
+  return gsap ? 'running' : 'loading';
+}
+```
+
+- El build corre en `useLayoutEffect`: así el estado inicial de los `from()` se aplica antes del
+  primer paint y no hay un frame con el contenido final visible.
+- `dispose` suelta lo que `gsap.context` no revierte: listeners de puntero, `quickTo` atados a
+  eventos, controladores expuestos a React.
+- **Sin flash antes de la entrada:** mientras el estado es `loading`, el contenedor lleva
+  `data-intro="pending"` y el CSS oculta solo las piezas que la entrada va a animar, dentro de la
+  misma media query que habilita el motion. Si GSAP falla (`failed`) o no corre (`off`), no hay
+  `pending` y se ve el HTML final.
+
+```css
+@media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
+  [data-intro='pending'] [data-copy],
+  [data-intro='pending'] [data-device] {
+    opacity: 0;
+  }
 }
 ```
 
@@ -90,7 +127,7 @@ export const buildFeaturesMotion: BuildSectionMotion = (gsap, root) => {
     .from(q('[data-feature]'), { x: 36, opacity: 0, duration: 0.9, stagger: 0.12 }, 0.45)
     .from(q('[data-feature-icon]'), { scale: 0, rotate: -40, duration: 0.8, stagger: 0.12, ease: 'back.out(2.2)' }, 0.55);
   const float = gsap.to(q('[data-device]'), { y: -12, duration: 3.2, ease: 'sine.inOut', yoyo: true, repeat: -1, delay: 1.6 });
-  return [float];
+  return { loops: [float] };
 };
 ```
 
@@ -146,3 +183,19 @@ El placeholder ocupa el mismo alto (sin CLS). Solo se monta del lado desktop del
   hidratar (medido: ~10 s de LCP en un teléfono medio).
 - Para estado de UI (pasos, modales, listas) sí: `AnimatePresence` + `initial={false}` en el primer
   render, y `useReducedMotion()` para apagar desplazamientos.
+
+## Estado compartido React ↔ GSAP
+
+Cuando React decide algo que el motion tiene que reflejar (la opción elegida mueve la costura del
+shader), el build expone un controlador por un ref y React lo llama en un efecto; React nunca
+escribe el mismo estilo inline que GSAP anima:
+
+```ts
+const controller = useRef<{ settle(value: Choice | null): void } | null>(null);
+const build = useMemo(() => createSceneMotion(sharedState, controller), [sharedState]);
+const status = useSectionMotion(stageRef, build, animate);
+useEffect(() => controller.current?.settle(choice), [choice]);
+```
+
+El build lee la elección inicial de un `data-*` del root (`data-selected`) para arrancar en el
+lugar correcto, y en `dispose` pone `controller.current = null`.

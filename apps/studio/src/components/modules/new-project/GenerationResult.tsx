@@ -21,6 +21,15 @@ type ResultVariant = 'success' | 'gate-failed' | 'failed' | 'cancelled' | 'inter
 
 const variantOf = (state: GenerationState): ResultVariant => (state.status === 'running' ? 'failed' : state.status === 'succeeded' ? 'success' : state.status);
 
+function SuccessBurst() {
+  return (
+    <span aria-hidden className="pointer-events-none absolute -left-6 -top-6 h-16 w-16">
+      <span className="wizard-glow-out absolute inset-0 rounded-full bg-[radial-gradient(circle,var(--color-emerald-400)_0%,transparent_70%)] opacity-0" />
+      <span className="wizard-glow-out absolute inset-0 rounded-full border border-emerald-400/60 opacity-0 [animation-delay:0.15s]" />
+    </span>
+  );
+}
+
 function GateLine({ label, status }: { label: string; status: GenerationState['gate']['validate'] }) {
   const { t } = useT();
   const tone = status === 'pass' ? 'text-emerald-400' : status === 'fail' ? 'text-roseish' : 'text-ink-400';
@@ -80,8 +89,9 @@ export function GenerationResult({ state }: { state: GenerationState }) {
 
   return (
     <div data-testid="generation-result" data-variant={variant} className="flex flex-col gap-4">
-      <header className="flex flex-col gap-1">
-        <h2 className="text-title font-semibold text-ink-50">{t(`wizard.result.${variant}.title` as keyof Dict)}</h2>
+      <header className="relative flex flex-col gap-1">
+        {variant === 'success' && <SuccessBurst />}
+        <h2 className="relative text-title font-semibold text-ink-50">{t(`wizard.result.${variant}.title` as keyof Dict)}</h2>
         <p className="break-all text-small text-ink-300">{t('wizard.result.path', { path: state.target })}</p>
         <p data-testid="result-cli" className="text-small text-ink-400">
           {t('wizard.result.cli', { version: state.cliVersion })}

@@ -17,10 +17,21 @@
    `overflow-hidden` en la sección.
 9. **Lazy sin placeholder** → CLS. Placeholder con el mismo alto.
 10. **Meta OG por JS** no la ven los crawlers: estática en el HTML / metadata de Next.
+11. **Flash antes de la entrada**: si el contenido se pinta y recién después GSAP aplica el `from`,
+    se ve aparecer, desaparecer y volver. `data-intro="pending"` + build en `useLayoutEffect`.
+12. **Contenedor de paso con `min-h-0` dentro de un scroll** → el contenido desborda y se pisa con
+    el footer. El wrapper animado de un paso crece con su contenido (`flex-1` sin `min-h-0`).
+13. **Cambio de paso**: volver el scroll del contenedor a 0 y mover el foco al título; no hacerlo
+    en el primer render ni cuando el estado se restaura de storage.
+14. **Estado restaurado después del primer render** (posición del wizard, sesión) → se ve el paso
+    inicial y salta al guardado con transición. No pintar el contenido hasta estar posicionado.
+15. **Verificar en un navegador en segundo plano** (pestaña oculta, panel embebido oculto): el
+    navegador frena `requestAnimationFrame` a pocos frames por segundo y las entradas parecen
+    trabadas. Medir con la pestaña visible antes de diagnosticar.
 
 ## QA
 
-- Viewports: 1440 (dark y light) y 390.
+- Viewports: 1440 (dark y light) y 390, con la pestaña visible (ver trampa 15).
 - `document.documentElement.scrollWidth <= innerWidth`.
 - Consola sin errores ni warnings con StrictMode; recargar y scrollear arriba/abajo: ninguna
   sección queda en blanco.
