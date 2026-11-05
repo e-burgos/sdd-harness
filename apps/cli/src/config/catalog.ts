@@ -7,7 +7,9 @@ import {
 } from './app-options.js';
 import { DEFAULT_SERVICES } from './defaults.js';
 import { buildConfigJsonSchema } from './json-schema.js';
+import { MAX_CONFIG_BYTES } from './validate.js';
 import {
+  CONFIG_LIMITS,
   AUTHOR_PATTERN,
   KEBAB_NAME_PATTERN,
   PACKAGE_SCOPE_PATTERN,
@@ -54,6 +56,14 @@ export interface ConfigCatalog {
   patterns: { name: string; packageScope: string; author: string };
   portRange: { min: number; max: number };
   targetDir: { tolerated: string[] };
+  limits: {
+    nameMax: number;
+    packageScopeMax: number;
+    maxApps: number;
+    maxLibs: number;
+    maxServices: number;
+    configBytes: number;
+  };
   jsonSchema: Record<string, unknown>;
 }
 
@@ -103,6 +113,7 @@ export function buildConfigCatalog(): ConfigCatalog {
     },
     portRange: { ...PORT_RANGE },
     targetDir: { tolerated: [...TOLERATED_ENTRIES].sort() },
+    limits: { ...CONFIG_LIMITS, configBytes: MAX_CONFIG_BYTES },
     jsonSchema: buildConfigJsonSchema(),
   };
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { Alert, Button } from '@e-burgos/tucu-ui';
+import { Alert, Button, ConfirmDialog } from '@e-burgos/tucu-ui';
 import { useState } from 'react';
 import { WorkspaceOpenResult, type GenerationState } from '@sdd-studio/protocol';
 import { useT } from '@/lib/i18n/i18n';
@@ -9,7 +9,9 @@ import { buildHermesIdea } from '@/lib/wizard/hermes-idea';
 import { joinLog } from '@/lib/wizard/log-text';
 import { savePendingIdea } from '@/lib/wizard/persist';
 import { errorMessage } from '@/lib/wizard/wizard-client';
-import { useBridge } from '../../BridgeProvider';
+import { useBridgeFeatures } from '@/lib/use-bridge-features';
+import { useBridge, useStudio } from '../../BridgeProvider';
+import { CapabilityNotice } from '../../mission-control/CapabilityNotice';
 import { CopyButton } from './CopyButton';
 import { StageList } from './GenerationProgress';
 import { OutputLog } from './OutputLog';
@@ -31,7 +33,10 @@ function GateLine({ label, status }: { label: string; status: GenerationState['g
 
 export function GenerationResult({ state }: { state: GenerationState }) {
   const { t, lang } = useT();
-  const { client } = useBridge();
+  const { client, workspaceMode } = useBridge();
+  const currentProject = useStudio((s) => s.snapshot?.project ?? '');
+  const switchUnavailable = useBridgeFeatures().missing(['workspace-switch']).length > 0;
+  const [confirmingOpen, setConfirmingOpen] = useState(false);
   const wizard = useWizard();
   const { generation, setTargetPath, goToStep } = wizard;
   const [busy, setBusy] = useState<'open' | 'reveal' | null>(null);
@@ -46,8 +51,8 @@ export function GenerationResult({ state }: { state: GenerationState }) {
     setActionError(null);
     try {
       if (action === 'open') {
-        savePendingIdea(buildHermesIdea(wizard.state, lang));
         WorkspaceOpenResult.parse(await client.request({ cmd: 'workspace.open', generationId: state.id }));
+        savePendingIdea(buildHermesIdea(wizard.state, lang));
       } else {
         await client.request({ cmd: 'wizard.reveal', generationId: state.id });
       }
@@ -57,6 +62,8 @@ export function GenerationResult({ state }: { state: GenerationState }) {
       setBusy(null);
     }
   };
+
+  const requestOpen = () => (workspaceMode === 'project' ? setConfirmingOpen(true) : void run('open'));
 
   const editAndRetry = () => {
     generation.dismiss();
@@ -135,9 +142,16 @@ export function GenerationResult({ state }: { state: GenerationState }) {
         </p>
       )}
 
+      {state.hasSdd && switchUnavailable && (
+        <div className="flex flex-col gap-1">
+          <p className="text-small text-ink-300">{t('wizard.result.switch.unavailable')}</p>
+          <CapabilityNotice capabilities={['workspace-switch']} />
+        </div>
+      )}
+
       <div className="flex flex-wrap gap-2">
         {state.hasSdd && (
-          <Button type="button" size="tiny" className="text-ui" isLoading={busy === 'open'} disabled={busy !== null} onClick={() => void run('open')}>
+          <Button type="button" size="tiny" className="text-ui" isLoading={busy === 'open'} disabled={busy !== null || switchUnavailable} onClick={requestOpen}>
             {busy === 'open' ? t('wizard.result.opening') : t('wizard.result.open')}
           </Button>
         )}
@@ -161,7 +175,21 @@ export function GenerationResult({ state }: { state: GenerationState }) {
         </Button>
       </div>
 
-      {showLog && <OutputLog chunks={generation.output} truncatedBefore={generation.truncatedBefore} maxHeightClass="max-h-96" />}
+      <ConfirmDialog
+        isOpen={confirmingOpen}
+        title={t('wizard.result.switch.title', { current: currentProject })}
+        description={t('wizard.result.switch.body', { current: currentProject, path: state.target })}
+        tone="warning"
+        confirmLabel={t('wizard.result.switch.confirm')}
+        cancelLabel={t('wizard.result.switch.cancel')}
+        onConfirm={() => {
+          setConfirmingOpen(false);
+          void run('open');
+        }}
+        onCancel={() => setConfirmingOpen(false)}
+      />
+
+      {showLog && <OutputLog chunks={generation.output} truncatedBefore={generation.truncatedBefore} revision={generation.outputVersion} maxHeightClass="max-h-96" />}
     </div>
   );
 }

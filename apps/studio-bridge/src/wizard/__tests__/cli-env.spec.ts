@@ -18,11 +18,14 @@ describe('buildCliEnv', () => {
     npm_config_local_prefix: '/somewhere',
     INIT_CWD: '/somewhere',
     PNPM_SCRIPT_SRC_DIR: '/somewhere',
+    npm_config_user_agent: 'pnpm/10 npm/? node/v20',
+    npm_execpath: '/usr/lib/pnpm.cjs',
+    npm_command: 'run-script',
   };
 
   it('drops credentials, CI, Nx and npx contamination', () => {
     const env = buildCliEnv(polluted);
-    for (const key of ['ANTHROPIC_API_KEY', 'ANTHROPIC_AUTH_TOKEN', 'CI', 'NX_WORKSPACE_ROOT_PATH', 'npm_package_name', 'npm_lifecycle_event', 'npm_config_local_prefix', 'INIT_CWD', 'PNPM_SCRIPT_SRC_DIR']) {
+    for (const key of ['ANTHROPIC_API_KEY', 'ANTHROPIC_AUTH_TOKEN', 'CI', 'NX_WORKSPACE_ROOT_PATH', 'npm_package_name', 'npm_lifecycle_event', 'npm_config_local_prefix', 'INIT_CWD', 'PNPM_SCRIPT_SRC_DIR', 'npm_config_user_agent', 'npm_execpath', 'npm_command']) {
       expect(env).not.toHaveProperty(key);
     }
   });

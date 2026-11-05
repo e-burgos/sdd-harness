@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, Modal } from '@e-burgos/tucu-ui';
+import { Button, Checkbox, Modal } from '@e-burgos/tucu-ui';
 import { ArrowUp, Folder } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { DirListing } from '@sdd-studio/protocol';
@@ -64,10 +64,7 @@ function Browser({ onPick, onClose }: { onPick(path: string): void; onClose(): v
           {listing?.path ?? t('wizard.browser.loading')}
         </p>
       </div>
-      <label className="flex items-center gap-2 text-small text-ink-300">
-        <input type="checkbox" checked={showHidden} onChange={(event) => setShowHidden(event.target.checked)} />
-        {t('wizard.browser.hidden')}
-      </label>
+      <Checkbox size="sm" className="text-small text-ink-300" label={t('wizard.browser.hidden')} checked={showHidden} onChange={(event) => setShowHidden(event.target.checked)} />
       {state.status === 'error' && (
         <p role="alert" className="text-small text-roseish">
           {t('wizard.browser.error', { error: state.error ?? '' })}

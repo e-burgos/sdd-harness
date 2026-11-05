@@ -7,9 +7,14 @@ export const PACKAGE_SCOPE_PATTERN = /^@[a-z0-9-]+$/;
 export const AUTHOR_PATTERN = /^[a-z0-9-]+$/;
 export const PORT_RANGE = { min: 1000, max: 65535 } as const;
 export const PROFILE_VALUES = ['team', 'solo'] as const;
+export const CONFIG_LIMITS = {
+  nameMax: 64,
+  packageScopeMax: 64,
+  maxApps: 32,
+  maxLibs: 32,
+  maxServices: 16,
+} as const;
 
-// Debe cubrir los mismos tipos que el wizard (APP_TYPE_OPTIONS en config/app-options.ts)
-// y que `add app`: si no, la vía no interactiva genera menos que la interactiva.
 export const AppTypeSchema = z.enum([
   'nestjs',
   'react',
@@ -34,6 +39,7 @@ const InfraProviderSchema = z.enum([
 const AppConfigSchema = z.object({
   name: z
     .string()
+    .max(CONFIG_LIMITS.nameMax)
     .regex(KEBAB_NAME_PATTERN, 'App name must be lowercase kebab-case'),
   type: AppTypeSchema,
   port: z.number().min(PORT_RANGE.min).max(PORT_RANGE.max).optional(),
@@ -42,6 +48,7 @@ const AppConfigSchema = z.object({
   ml: z.boolean().optional(),
   shell: z
     .string()
+    .max(CONFIG_LIMITS.nameMax)
     .regex(KEBAB_NAME_PATTERN, 'Shell must be a lowercase kebab-case app name')
     .optional(),
 });
@@ -64,6 +71,7 @@ export const LibTypeSchema = z.enum([
 const LibConfigSchema = z.object({
   name: z
     .string()
+    .max(CONFIG_LIMITS.nameMax)
     .regex(KEBAB_NAME_PATTERN, 'Lib name must be lowercase kebab-case'),
   type: LibTypeSchema,
 });
@@ -143,15 +151,17 @@ export const HarnessConfigSchema = z.object({
   project: z.object({
     name: z
       .string()
+      .max(CONFIG_LIMITS.nameMax)
       .regex(KEBAB_NAME_PATTERN, 'Project name must be lowercase kebab-case'),
     description: z.string().min(1),
     packageScope: z
       .string()
+      .max(CONFIG_LIMITS.packageScopeMax)
       .regex(PACKAGE_SCOPE_PATTERN, 'Must be an npm scope like @my-project'),
   }),
-  apps: z.array(AppConfigSchema).min(1),
-  libs: z.array(LibConfigSchema).default([]),
-  services: z.array(ServiceConfigSchema).default([]),
+  apps: z.array(AppConfigSchema).min(1).max(CONFIG_LIMITS.maxApps),
+  libs: z.array(LibConfigSchema).max(CONFIG_LIMITS.maxLibs).default([]),
+  services: z.array(ServiceConfigSchema).max(CONFIG_LIMITS.maxServices).default([]),
   sdd: SDDConfigSchema.optional(),
   nx: NxConfigSchema.optional(),
   npm: NpmConfigSchema.optional(),

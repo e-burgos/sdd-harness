@@ -107,7 +107,7 @@ describe('checkTarget', () => {
     expect(await checkTarget(path.join(file, 'child'), ctx)).toMatchObject({ state: 'not-directory', reason: 'ancestor' });
   });
 
-  it.skipIf(process.platform === 'win32')('rejects a non writable folder and a non writable parent', async () => {
+  it.skipIf(process.platform === 'win32' || process.getuid?.() === 0)('rejects a non writable folder and a non writable parent', async () => {
     const locked = path.join(base, 'locked');
     await mkdir(path.join(locked, 'inner'), { recursive: true });
     await chmod(locked, 0o555);

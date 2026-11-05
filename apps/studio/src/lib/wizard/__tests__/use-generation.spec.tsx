@@ -1,5 +1,5 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
-import type { GenerationSnapshot, GenerationState } from '@sdd-studio/protocol';
+import { GENERATION_BUFFER_BYTES, type GenerationSnapshot, type GenerationState } from '@sdd-studio/protocol';
 import { WIZARD_GENERATION_KEY, loadGenerationPointer, saveGenerationPointer } from '../persist';
 import { useGeneration } from '../use-generation';
 import { BridgeFailure, fakeClient, memoryStorage } from './fake-client';
@@ -35,6 +35,25 @@ const snapshot = (patch: Partial<GenerationSnapshot> = {}): GenerationSnapshot =
 });
 const outputEvent = (seq: number, id = 'g1') => ({ kind: 'generation.output' as const, generationId: id, seq, stream: 'stdout' as const, chunk: `line ${seq}` });
 const open = { status: 'open', welcome: {} as never } as const;
+
+describe('useGeneration log bound', () => {
+  it('keeps the newest output within the protocol buffer and flags the truncation without replacing the array per chunk', () => {
+    const fake = fakeClient();
+    const { result } = renderHook(() => useGeneration(fake.client, memoryStorage()));
+    act(() => result.current.adopt(generation()));
+    const big = 'x'.repeat(512 * 1024);
+    const first = result.current.output;
+    const total = 12;
+    for (let seq = 1; seq <= total; seq += 1) act(() => fake.emit({ kind: 'generation.output', generationId: 'g1', seq, stream: 'stdout', chunk: big }));
+    const bytes = result.current.output.reduce((sum, c) => sum + c.chunk.length, 0);
+    expect(bytes).toBeLessThanOrEqual(GENERATION_BUFFER_BYTES);
+    expect(result.current.truncatedBefore).toBe(true);
+    expect(result.current.output.at(-1)?.seq).toBe(total);
+    expect(result.current.output[0].seq).toBeGreaterThan(1);
+    expect(result.current.output).toBe(first);
+    expect(result.current.outputVersion).toBe(total);
+  });
+});
 
 describe('useGeneration', () => {
   it('adopts a started generation and appends contiguous output in order', () => {

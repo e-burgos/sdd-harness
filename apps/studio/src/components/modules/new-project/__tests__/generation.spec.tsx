@@ -4,7 +4,7 @@ import { I18nProvider } from '@/lib/i18n/i18n';
 import { BridgeFailure } from '@/lib/wizard/__tests__/fake-client';
 import { loadPendingIdea, saveGenerationPointer } from '@/lib/wizard/persist';
 import { OutputLog } from '../OutputLog';
-import { renderWizard } from './harness';
+import { renderWizard, withFeatures } from './harness';
 import { DEFAULT_TARGET, generationState, preloadFullstack, summaryClient } from './summary-fixtures';
 
 const chunk = (seq: number, text = `line ${seq}\n`, stream: 'stdout' | 'stderr' = 'stdout') => ({ seq, stream, chunk: text });
@@ -15,11 +15,11 @@ function pointTo(generation: GenerationState): void {
   saveGenerationPointer({ generationId: generation.id, target: generation.target, lastSeq: 0, lastStatus: generation.status }, window.sessionStorage);
 }
 
-async function openGeneration(generation: GenerationState, handlers: Parameters<typeof summaryClient>[0] = {}, output = [chunk(1)]) {
+async function openGeneration(generation: GenerationState, handlers: Parameters<typeof summaryClient>[0] = {}, output = [chunk(1)], bridge: NonNullable<Parameters<typeof renderWizard>[0]>['bridge'] = {}) {
   preloadFullstack();
   pointTo(generation);
   const fake = summaryClient({ 'wizard.generation.get': () => snapshot(generation, output), ...handlers });
-  const view = renderWizard({ fake });
+  const view = renderWizard({ fake, bridge });
   return { ...view, fake };
 }
 
@@ -255,6 +255,47 @@ describe('GenerationResult', () => {
       await waitFor(() => expect(fake.requests.some((r) => r.cmd === 'workspace.open')).toBe(true));
       expect(fake.requests.find((r) => r.cmd === 'workspace.open')).toEqual({ cmd: 'workspace.open', generationId: 'gen-1' });
       expect(loadPendingIdea(window.sessionStorage)).toEqual(expect.any(String));
+    });
+
+    it('asks for confirmation naming the closing project when a project is open, and cancelling does nothing', async () => {
+      const { fake } = await openGeneration(finished({}), { 'workspace.open': () => ({ root: DEFAULT_TARGET, project: 'acme' }) }, [chunk(1)], { workspaceMode: 'project' });
+      fireEvent.click(await screen.findByRole('button', { name: 'Abrir en Studio' }));
+      const dialog = await screen.findByRole('alertdialog');
+      expect(dialog).toHaveTextContent('Cerrar');
+      expect(dialog).toHaveTextContent('se pierden los borradores sin enviar');
+      expect(dialog).toHaveTextContent(DEFAULT_TARGET);
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Cancelar' }));
+      await waitFor(() => expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument());
+      expect(fake.requests.some((r) => r.cmd === 'workspace.open')).toBe(false);
+      expect(loadPendingIdea(window.sessionStorage)).toBeNull();
+    });
+
+    it('opens after confirming the switch from a project', async () => {
+      const { fake } = await openGeneration(finished({}), { 'workspace.open': () => ({ root: DEFAULT_TARGET, project: 'acme' }) }, [chunk(1)], { workspaceMode: 'project' });
+      fireEvent.click(await screen.findByRole('button', { name: 'Abrir en Studio' }));
+      fireEvent.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Cerrar y abrir' }));
+      await waitFor(() => expect(fake.requests.some((r) => r.cmd === 'workspace.open')).toBe(true));
+    });
+
+    it('does not keep the idea when opening fails', async () => {
+      await openGeneration(finished({}), {
+        'workspace.open': () => {
+          throw new BridgeFailure('conflict', 'Hay agentes trabajando');
+        },
+      });
+      fireEvent.click(await screen.findByRole('button', { name: 'Abrir en Studio' }));
+      await screen.findByText('No se pudo completar la acción: Hay agentes trabajando');
+      expect(loadPendingIdea(window.sessionStorage)).toBeNull();
+    });
+
+    it('explains why opening is unavailable when the bridge lacks workspace-switch', async () => {
+      preloadFullstack();
+      const generation = finished({});
+      pointTo(generation);
+      const fake = withFeatures(summaryClient({ 'wizard.generation.get': () => snapshot(generation) }), ['project-wizard']);
+      renderWizard({ fake });
+      expect(await screen.findByRole('button', { name: 'Abrir en Studio' })).toBeDisabled();
+      expect(screen.getByTestId('capability-notice')).toHaveTextContent('abrir otro proyecto desde Studio');
     });
 
     it('shows the error when opening is rejected', async () => {

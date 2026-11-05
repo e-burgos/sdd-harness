@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { buildConfigCatalog, formatConfigCatalog } from '../catalog.js';
 import { APP_TYPE_OPTIONS, LIB_TYPE_OPTIONS, SERVICE_OPTIONS } from '../app-options.js';
 import {
+  CONFIG_LIMITS,
   AUTHOR_PATTERN,
   AppTypeSchema,
   KEBAB_NAME_PATTERN,
@@ -12,6 +13,7 @@ import {
 } from '../schema.js';
 import { TOLERATED_ENTRIES } from '../../generators/workspace.generator.js';
 import { version } from '../../version.js';
+import { MAX_CONFIG_BYTES } from '../validate.js';
 
 describe('buildConfigCatalog', () => {
   const catalog = buildConfigCatalog();
@@ -35,6 +37,10 @@ describe('buildConfigCatalog', () => {
     expect(catalog.portRange).toEqual(PORT_RANGE);
     expect(new RegExp(catalog.patterns.name).test('my-app')).toBe(true);
     expect(new RegExp(catalog.patterns.name).test('My_App')).toBe(false);
+  });
+
+  it('exposes the same limits the schema enforces', () => {
+    expect(catalog.limits).toEqual({ ...CONFIG_LIMITS, configBytes: MAX_CONFIG_BYTES });
   });
 
   it('flags app types by family', () => {

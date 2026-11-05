@@ -14,6 +14,7 @@ import { useCatalog, type CatalogControls } from '@/lib/wizard/use-catalog';
 import { useGeneration, type GenerationControls } from '@/lib/wizard/use-generation';
 import { defaultTargetPath } from '@/lib/wizard/target-path';
 import { useWizardValidation, type WizardValidation } from '@/lib/wizard/use-wizard-validation';
+import { useBridgeFeatures } from '@/lib/use-bridge-features';
 import { useBridge } from '../../BridgeProvider';
 import { blockerText, issueTranslator } from './wizard-text';
 
@@ -79,7 +80,8 @@ const stepIndex = (step: WizardStepId): number => WIZARD_STEPS.indexOf(step);
 export function WizardScope({ children }: { children: ReactNode }) {
   const { t } = useT();
   const { client } = useBridge();
-  const catalogControls = useCatalog(client);
+  const wizardAvailable = useBridgeFeatures().missing(['project-wizard']).length === 0;
+  const catalogControls = useCatalog(client, wizardAvailable);
   const catalog = catalogControls.data?.catalog ?? null;
   const [state, setState] = useState<WizardState>(loadOrInitialState);
   const [step, setStep] = useState<WizardStepId>('scope');

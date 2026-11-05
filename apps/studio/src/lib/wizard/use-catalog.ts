@@ -14,7 +14,7 @@ export interface CatalogControls extends CatalogState {
   reload(): void;
 }
 
-export function useCatalog(client: WizardClient): CatalogControls {
+export function useCatalog(client: WizardClient, enabled = true): CatalogControls {
   const [state, setState] = useState<CatalogState>({ status: 'loading', data: null, error: null });
   const alive = useRef(true);
   const ready = useRef(false);
@@ -38,6 +38,7 @@ export function useCatalog(client: WizardClient): CatalogControls {
   useEffect(() => {
     alive.current = true;
     ready.current = false;
+    if (!enabled) return;
     if (client.state.status === 'open') void load();
     else setState({ status: 'loading', data: null, error: null });
     const off = client.onState((next) => {
@@ -47,12 +48,13 @@ export function useCatalog(client: WizardClient): CatalogControls {
       alive.current = false;
       off();
     };
-  }, [client, load]);
+  }, [client, load, enabled]);
 
   const reload = useCallback(() => {
+    if (!enabled) return;
     ready.current = false;
     void load();
-  }, [load]);
+  }, [load, enabled]);
 
   return { ...state, reload };
 }

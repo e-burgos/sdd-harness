@@ -3,6 +3,7 @@ import {
   BRIDGE_FEATURES,
   ClientCommand,
   ConfigCatalog,
+  ConfigCliFailure,
   ConfigValidation,
   GENERATION_BUFFER_BYTES,
   GENERATION_CHUNK_MAX,
@@ -107,6 +108,13 @@ describe('wizard commands', () => {
     expect(JSON.stringify(config).length).toBe(MAX_CONFIG_BYTES);
     expect(ClientCommand.safeParse({ ...base, cmd: 'wizard.validate', config }).success).toBe(true);
   });
+
+  it('measures the config limit in UTF-8 bytes, not UTF-16 length', () => {
+    const overhead = JSON.stringify({ blob: '' }).length;
+    const config = { blob: 'ñ'.repeat((MAX_CONFIG_BYTES - overhead) / 2 + 1) };
+    expect(JSON.stringify(config).length).toBeLessThanOrEqual(MAX_CONFIG_BYTES);
+    expect(ClientCommand.safeParse({ ...base, cmd: 'wizard.validate', config }).success).toBe(false);
+  });
 });
 
 describe('wizard events', () => {
@@ -205,6 +213,12 @@ describe('wizard result types', () => {
     expect(ConfigValidation.safeParse({ ...validation, format: 2 }).success).toBe(false);
     expect(ConfigValidation.safeParse({ ...validation, issues: [{ severity: 'info', code: 'x', path: [], message: 'm' }] }).success).toBe(false);
   });
+  it('parses the CLI failure payload', () => {
+    const failure = { format: 1, cliVersion: '0.17.0', ok: false, error: { code: 'unreadable', message: 'bad' } };
+    expect(ConfigCliFailure.safeParse(failure).success).toBe(true);
+    expect(ConfigCliFailure.safeParse({ ...failure, ok: true }).success).toBe(false);
+    expect(ConfigCliFailure.safeParse({ ...failure, error: { code: 'other', message: 'm' } }).success).toBe(false);
+  });
   it('parses a Preflight and a catalog result', () => {
     const preflight = {
       node: { version: '20.0.0' },
@@ -228,6 +242,9 @@ describe('wizard result types', () => {
       jsonSchema: {},
     };
     expect(ConfigCatalog.safeParse(catalog).success).toBe(true);
+    const limits = { nameMax: 64, packageScopeMax: 64, maxApps: 32, maxLibs: 32, maxServices: 16, configBytes: 65_536 };
+    expect(ConfigCatalog.safeParse({ ...catalog, limits }).success).toBe(true);
+    expect(ConfigCatalog.safeParse({ ...catalog, limits: { ...limits, maxApps: 0 } }).success).toBe(false);
     const result = { catalog, initArgv: ['harness', 'init'], home: '/h', suggestedParent: '/h', platform: 'posix' };
     expect(WizardCatalogResult.safeParse(result).success).toBe(true);
     expect(WizardCatalogResult.safeParse({ ...result, platform: 'darwin' }).success).toBe(false);

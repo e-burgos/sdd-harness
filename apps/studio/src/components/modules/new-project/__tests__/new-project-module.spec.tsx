@@ -5,7 +5,7 @@ import { ISSUE_TEXT_CODES, issueTextKey } from '@/lib/wizard/issues';
 import { WIZARD_STATE_KEY } from '@/lib/wizard/persist';
 import { BridgeFailure } from '@/lib/wizard/__tests__/fake-client';
 import { catalogResultFixture } from '@/lib/wizard/__tests__/fixtures';
-import { renderWizard, wizardClient } from './harness';
+import { renderWizard, withFeatures, wizardClient } from './harness';
 
 const FORBIDDEN = /^text-(?:xs|sm|base|lg|[2-9]?xl|body|\[(?:\d|length:).*)$/;
 
@@ -19,6 +19,16 @@ async function ready() {
 
 describe('new project module shell', () => {
   beforeEach(() => window.sessionStorage.clear());
+
+  it('shows the capability notice and sends no wizard request when the bridge lacks project-wizard', async () => {
+    const fake = withFeatures(wizardClient(), ['workspace-switch']);
+    renderWizard({ fake });
+    expect(await screen.findAllByTestId('capability-notice')).not.toHaveLength(0);
+    expect(screen.getAllByTestId('capability-notice')[0]).toHaveTextContent('el asistente de nuevo proyecto');
+    expect(screen.queryByRole('radiogroup', { name: 'Alcance del proyecto' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Siguiente' })).not.toBeInTheDocument();
+    expect(fake.requests.filter((r) => String(r.cmd).startsWith('wizard.'))).toEqual([]);
+  });
 
   it('shows the six steps with the first one current', async () => {
     await ready();

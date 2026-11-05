@@ -97,7 +97,7 @@ export function GenerationProgress() {
       ) : (
         <StageList stages={state.stages} />
       )}
-      <OutputLog chunks={generation.output} truncatedBefore={generation.truncatedBefore} />
+      <OutputLog chunks={generation.output} truncatedBefore={generation.truncatedBefore} revision={generation.outputVersion} />
       <div className="flex flex-wrap gap-2">
         {running && (
           <Button type="button" size="tiny" variant="outline" color="gray" className="text-ui" onClick={() => setConfirmingCancel(true)}>

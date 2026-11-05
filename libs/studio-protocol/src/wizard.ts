@@ -8,7 +8,7 @@ export const AbsPathInput = z
   .refine((value) => !value.includes('\0'), 'NUL not allowed');
 export const ConfigDraft = z
   .record(z.string(), z.unknown())
-  .refine((config) => JSON.stringify(config).length <= MAX_CONFIG_BYTES, 'config too large');
+  .refine((config) => new TextEncoder().encode(JSON.stringify(config)).length <= MAX_CONFIG_BYTES, 'config too large');
 export const GenerationId = z.string().min(1).max(64);
 
 export const ConfigCatalog = z.object({
@@ -51,6 +51,16 @@ export const ConfigCatalog = z.object({
   patterns: z.object({ name: z.string().max(200), packageScope: z.string().max(200), author: z.string().max(200) }),
   portRange: z.object({ min: z.number().int(), max: z.number().int() }),
   targetDir: z.object({ tolerated: z.array(z.string().max(64)).max(64) }),
+  limits: z
+    .object({
+      nameMax: z.number().int().positive(),
+      packageScopeMax: z.number().int().positive(),
+      maxApps: z.number().int().positive(),
+      maxLibs: z.number().int().positive(),
+      maxServices: z.number().int().positive(),
+      configBytes: z.number().int().positive(),
+    })
+    .optional(),
   jsonSchema: z.record(z.string(), z.unknown()),
 });
 export type ConfigCatalog = z.infer<typeof ConfigCatalog>;
@@ -106,6 +116,14 @@ export const ConfigValidation = z.object({
   resolved: ResolvedConfig.nullable(),
 });
 export type ConfigValidation = z.infer<typeof ConfigValidation>;
+
+export const ConfigCliFailure = z.object({
+  format: z.literal(1),
+  cliVersion: z.string().max(40),
+  ok: z.literal(false),
+  error: z.object({ code: z.enum(['usage', 'unreadable']), message: z.string().max(500) }),
+});
+export type ConfigCliFailure = z.infer<typeof ConfigCliFailure>;
 
 export const Preflight = z.object({
   node: z.object({ version: z.string().max(40) }),

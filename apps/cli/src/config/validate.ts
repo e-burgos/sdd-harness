@@ -130,7 +130,7 @@ function topologyIssues(raw: unknown): ConfigIssue[] {
     severity: 'error',
     code: issue.code,
     path: ['apps', issue.appIndex, issue.field],
-    message: issue.message,
+    message: clip(issue.message),
   }));
 }
 
@@ -148,7 +148,7 @@ function duplicateNameIssues(
         severity: 'error',
         code,
         path: [key, index, 'name'],
-        message: `Duplicate ${key === 'apps' ? 'app' : 'lib'} name "${entry.name}".`,
+        message: clip(`Duplicate ${key === 'apps' ? 'app' : 'lib'} name "${entry.name}".`),
       });
     }
     seen.add(entry.name);
@@ -164,7 +164,7 @@ function preconditionIssues(raw: unknown): ConfigIssue[] {
       severity: 'error',
       code: 'standalone-app-count',
       path: ['apps'],
-      message: `Standalone mode requires exactly one app in "apps" (got ${raw.apps.length}).`,
+      message: clip(`Standalone mode requires exactly one app in "apps" (got ${raw.apps.length}).`),
     });
   }
   issues.push(...duplicateNameIssues(apps, 'apps', 'duplicate-app-name'));
@@ -218,7 +218,7 @@ function portConflictIssues(raw: unknown): ConfigIssue[] {
         severity: 'warning',
         code: 'port-conflict',
         path: row.path,
-        message: `Port ${port} of ${row.label} is also used by ${others.join(', ')}.`,
+        message: clip(`Port ${port} of ${row.label} is also used by ${others.join(', ')}.`),
       });
     }
   }
@@ -234,7 +234,7 @@ function standaloneLibsIssues(raw: unknown): ConfigIssue[] {
       severity: 'warning',
       code: 'standalone-libs-ignored',
       path: ['libs'],
-      message: 'Standalone mode generates a single app and ignores "libs".',
+      message: clip('Standalone mode generates a single app and ignores "libs".'),
     },
   ];
 }

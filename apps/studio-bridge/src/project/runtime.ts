@@ -59,6 +59,7 @@ export async function openProjectRuntime(root: string, deps: ProjectRuntimeDeps)
     },
   });
 
+  const runner = new CommandRunner(root, broadcast);
   let sessions: SessionManager;
   let handlers: BridgeHandlers;
   try {
@@ -80,7 +81,7 @@ export async function openProjectRuntime(root: string, deps: ProjectRuntimeDeps)
       bridgeVersion: deps.bridgeVersion,
       sessions,
       watcher,
-      runner: new CommandRunner(root, broadcast),
+      runner,
       store,
       attachments,
       fileIndex,
@@ -97,6 +98,7 @@ export async function openProjectRuntime(root: string, deps: ProjectRuntimeDeps)
   const close = (): Promise<void> => {
     closing ??= (async () => {
       kitIndexer.close();
+      runner.terminateAll();
       const results = await Promise.allSettled([watcher.close(), store.flush()]);
       const failed = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected');
       if (failed.length === 1) throw failed[0]!.reason;
@@ -111,7 +113,7 @@ export async function openProjectRuntime(root: string, deps: ProjectRuntimeDeps)
     handle: handlers.handle,
     welcomePart: () => ({ workspace: { root, project: watcher.current().project }, kitVersion: watcher.current().kitVersion }),
     presence: () => sessions.presence(),
-    isBusy: () => sessions.isBusy(),
+    isBusy: () => sessions.isBusy() || runner.activeRuns() > 0,
     close,
   };
 }

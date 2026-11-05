@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import os from 'node:os';
 import path from 'node:path';
-import { parseAllowTargets, parseEngine, parsePort, parseToken, parseWebUrl } from './cli-options';
+import { missingAllowTargets, parseAllowTargets, parseEngine, parsePort, parseToken, parseWebUrl } from './cli-options';
 import { BridgeStartError } from './main';
 
 describe('cli option validators', () => {
@@ -43,5 +44,13 @@ describe('parseAllowTargets', () => {
   });
   it('rejects relative paths', () => {
     expect(() => parseAllowTargets('relative/dir')).toThrow(BridgeStartError);
+  });
+  it('rejects the filesystem root', () => {
+    expect(() => parseAllowTargets(path.parse(process.cwd()).root)).toThrow(/filesystem root/);
+    expect(() => parseAllowTargets(`${path.resolve('/tmp/a')},${path.parse(process.cwd()).root}`)).toThrow(BridgeStartError);
+  });
+  it('reports the targets that do not exist', () => {
+    const missing = path.join(os.tmpdir(), 'allow-target-does-not-exist-xyz');
+    expect(missingAllowTargets([os.tmpdir(), missing])).toEqual([missing]);
   });
 });

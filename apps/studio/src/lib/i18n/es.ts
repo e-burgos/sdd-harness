@@ -308,6 +308,8 @@ export const es = {
   'caps.notice': 'Este puente no ofrece: {features}. Reinicialo con la última versión para habilitarlo.',
   'caps.session-title': 'título de sesión',
   'caps.link-targets': 'asociaciones múltiples',
+  'caps.project-wizard': 'el asistente de nuevo proyecto',
+  'caps.workspace-switch': 'abrir otro proyecto desde Studio',
   'caps.document-touched': 'documentos modificados desde la consola',
   'link.add': 'Agregar asociación…',
   'link.max': 'Máximo de asociaciones',

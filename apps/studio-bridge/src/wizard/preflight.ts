@@ -58,6 +58,11 @@ export async function probeRegistry(url: string, timeoutMs = REGISTRY_PROBE_TIME
   }
 }
 
+const PROXY_VARIABLES = ['http_proxy', 'https_proxy', 'all_proxy', 'no_proxy'];
+
+export const hasProxyConfigured = (env: NodeJS.ProcessEnv): boolean =>
+  Object.entries(env).some(([key, value]) => PROXY_VARIABLES.includes(key.toLowerCase()) && (value ?? '').trim() !== '');
+
 const firstLine = (stdout: string) => stdout.split(/\r?\n/, 1)[0]!.trim();
 
 const httpUrlOrNull = (raw: string): string | null => {
@@ -73,6 +78,7 @@ export async function runPreflight(o: {
   run: RunPreflightCommand;
   probe?: (url: string) => Promise<boolean>;
   nodeVersion?: string;
+  env?: NodeJS.ProcessEnv;
 }): Promise<Preflight> {
   const probe = o.probe ?? probeRegistry;
   const [pnpmVersion, pnpmRegistry, gitVersion, gitName, gitEmail] = await Promise.all([
@@ -85,7 +91,8 @@ export async function runPreflight(o: {
 
   const pnpmFound = pnpmVersion.code === 0 && firstLine(pnpmVersion.stdout) !== '';
   const registryUrl = pnpmFound && pnpmRegistry.code === 0 ? httpUrlOrNull(firstLine(pnpmRegistry.stdout)) : null;
-  const reachable: Preflight['registry']['reachable'] = registryUrl === null ? 'unknown' : (await probe(registryUrl)) ? 'yes' : 'no';
+  const probeable = registryUrl !== null && !hasProxyConfigured(o.env ?? process.env);
+  const reachable: Preflight['registry']['reachable'] = !probeable ? 'unknown' : (await probe(registryUrl)) ? 'yes' : 'no';
 
   return {
     node: { version: o.nodeVersion ?? process.versions.node },
@@ -100,4 +107,4 @@ export async function runPreflight(o: {
 }
 
 export const defaultPreflight = (env: NodeJS.ProcessEnv = process.env, platform: NodeJS.Platform = process.platform): Promise<Preflight> =>
-  runPreflight({ run: createCommandRunner({ env, platform }) });
+  runPreflight({ run: createCommandRunner({ env, platform }), env });

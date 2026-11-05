@@ -15,6 +15,7 @@ import { ScopeStep } from './steps/ScopeStep';
 import { ShapeStep } from './steps/ShapeStep';
 import { SummaryStep } from './steps/SummaryStep';
 import { useWizard } from './wizard-context';
+import { useWizardUnavailable, WizardUnavailable } from './WizardUnavailable';
 import { stepLabel } from './wizard-text';
 
 const STEP_COMPONENT: Record<WizardStepId, ComponentType> = {
@@ -29,6 +30,8 @@ const STEP_COMPONENT: Record<WizardStepId, ComponentType> = {
 export function NewProjectCenter() {
   const { t } = useT();
   const { catalogControls, step, steps, back, next, nextBlockReason, generation } = useWizard();
+  const unavailable = useWizardUnavailable();
+  if (unavailable) return <WizardUnavailable />;
   if (catalogControls.status === 'loading') {
     return (
       <p role="status" className="p-6 text-copy text-ink-400">

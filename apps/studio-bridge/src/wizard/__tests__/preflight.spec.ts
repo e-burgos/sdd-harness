@@ -23,7 +23,7 @@ const healthy = {
 describe('runPreflight', () => {
   it('is ready when pnpm exists and the registry answers', async () => {
     const probed: string[] = [];
-    const result = await runPreflight({ run: scripted(healthy), probe: async (url) => (probed.push(url), true), nodeVersion: '22.1.0' });
+    const result = await runPreflight({ run: scripted(healthy), probe: async (url) => (probed.push(url), true), nodeVersion: '22.1.0', env: {} });
     expect(result).toEqual({
       node: { version: '22.1.0' },
       pnpm: { found: true, version: '9.15.0' },
@@ -36,25 +36,37 @@ describe('runPreflight', () => {
 
   it('blocks when pnpm is missing and does not probe the registry', async () => {
     let probes = 0;
-    const result = await runPreflight({ run: scripted({ ...healthy, pnpmVersion: missing, pnpmRegistry: missing }), probe: async () => (probes++, true) });
+    const result = await runPreflight({ run: scripted({ ...healthy, pnpmVersion: missing, pnpmRegistry: missing }), probe: async () => (probes++, true), env: {} });
     expect(result).toMatchObject({ pnpm: { found: false, version: null }, registry: { url: null, reachable: 'unknown' }, ready: false });
     expect(probes).toBe(0);
   });
 
   it('reports an unreachable registry as a blocking notice without throwing', async () => {
-    const result = await runPreflight({ run: scripted(healthy), probe: async () => false });
+    const result = await runPreflight({ run: scripted(healthy), probe: async () => false, env: {} });
     expect(result).toMatchObject({ registry: { url: 'https://registry.npmjs.org/', reachable: 'no' }, ready: false });
   });
 
   it('keeps ready when the registry url is unknown or not http(s)', async () => {
-    const result = await runPreflight({ run: scripted({ ...healthy, pnpmRegistry: ok('undefined') }), probe: async () => false });
+    const result = await runPreflight({ run: scripted({ ...healthy, pnpmRegistry: ok('undefined') }), probe: async () => false, env: {} });
     expect(result).toMatchObject({ registry: { url: null, reachable: 'unknown' }, ready: true });
   });
 
+  it.each([['HTTPS_PROXY'], ['http_proxy'], ['No_Proxy'], ['ALL_PROXY']])('does not probe nor block when %s is set (node fetch ignores proxies)', async (variable) => {
+    let probes = 0;
+    const result = await runPreflight({ run: scripted(healthy), probe: async () => (probes++, false), env: { [variable]: 'http://proxy.test:3128' } });
+    expect(result).toMatchObject({ registry: { url: 'https://registry.npmjs.org/', reachable: 'unknown' }, ready: true });
+    expect(probes).toBe(0);
+  });
+
+  it('still probes when the proxy variables are empty', async () => {
+    const result = await runPreflight({ run: scripted(healthy), probe: async () => false, env: { HTTPS_PROXY: '  ', PATH: '/usr/bin' } });
+    expect(result).toMatchObject({ registry: { reachable: 'no' }, ready: false });
+  });
+
   it('reports git as optional information', async () => {
-    const noGit = await runPreflight({ run: scripted({ ...healthy, gitVersion: missing, gitUserName: missing, gitUserEmail: missing }), probe: async () => true });
+    const noGit = await runPreflight({ run: scripted({ ...healthy, gitVersion: missing, gitUserName: missing, gitUserEmail: missing }), probe: async () => true, env: {} });
     expect(noGit).toMatchObject({ git: { found: false, identity: false }, ready: true });
-    const noIdentity = await runPreflight({ run: scripted({ ...healthy, gitUserEmail: { code: 1, stdout: '' } }), probe: async () => true });
+    const noIdentity = await runPreflight({ run: scripted({ ...healthy, gitUserEmail: { code: 1, stdout: '' } }), probe: async () => true, env: {} });
     expect(noIdentity).toMatchObject({ git: { found: true, identity: false }, ready: true });
   });
 });
@@ -86,7 +98,7 @@ describe('createCommandRunner with a fake pnpm binary', () => {
   it.skipIf(process.platform === 'win32')('reports a missing binary as not found', async () => {
     const run = createCommandRunner({ env: { PATH: dir }, platform: process.platform });
     expect(await run('pnpmVersion')).toEqual({ code: null, stdout: '' });
-    const result = await runPreflight({ run, probe: async () => true });
+    const result = await runPreflight({ run, probe: async () => true, env: {} });
     expect(result).toMatchObject({ pnpm: { found: false }, ready: false });
   });
 });

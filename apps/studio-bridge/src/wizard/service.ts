@@ -102,7 +102,7 @@ export class WizardService {
   }
 
   private async generate(command: Extract<HostCommand, { cmd: 'wizard.generate' }>): Promise<GenerateResult> {
-    const validation = await this.configCli().validate(command.config);
+    const validation = await this.configCli().validateExact(command.config);
     if (!validation.ok) return { outcome: 'invalid-config', validation };
 
     const check = await this.check(command.path);
@@ -137,7 +137,10 @@ export class WizardService {
     if (!OPENABLE_STATUSES.includes(state.status) || !existsSync(path.join(state.target, 'sdd'))) {
       throw new SessionError('not-found', 'the generation did not produce a project with sdd/');
     }
-    return this.host.switchProject(await nativeRealpath(state.target));
+    const real = await nativeRealpath(state.target).catch(() => null);
+    if (real === null || real !== state.target) throw new SessionError('bad-request', 'the generated folder moved or is no longer the folder that was generated');
+    if (containingBase(real, await this.bases(), this.pathPlatform)?.relation !== 'inside') throw new SessionError('bad-request', 'the generated folder is outside the allowed folders');
+    return this.host.switchProject(real);
   }
 
   readonly handle = async (command: HostCommand): Promise<unknown> => {

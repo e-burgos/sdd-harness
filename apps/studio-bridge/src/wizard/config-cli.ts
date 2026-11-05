@@ -1,5 +1,5 @@
 import { spawn } from 'node:child_process';
-import { ConfigCatalog, ConfigValidation } from '@sdd-studio/protocol';
+import { ConfigCatalog, ConfigCliFailure, ConfigValidation } from '@sdd-studio/protocol';
 import { buildCliEnv } from './cli-env';
 import type { HarnessCli } from './cli-locator';
 
@@ -11,6 +11,7 @@ export class ConfigCliError extends Error {}
 export interface ConfigCli {
   catalog(): Promise<ConfigCatalog>;
   validate(config: Record<string, unknown>): Promise<ConfigValidation>;
+  validateExact(config: Record<string, unknown>): Promise<ConfigValidation>;
 }
 
 interface CliRun {
@@ -55,8 +56,21 @@ function runCli(o: { cli: HarnessCli; args: string[]; stdin?: string; env: NodeJ
   });
 }
 
+function failureFrom(stdout: string): ConfigCliFailure | null {
+  try {
+    const parsed = ConfigCliFailure.safeParse(JSON.parse(stdout));
+    return parsed.success ? parsed.data : null;
+  } catch {
+    return null;
+  }
+}
+
 function parseOutput<T>(schema: { safeParse(value: unknown): { success: true; data: T } | { success: false } }, run: CliRun, cli: HarnessCli, acceptedCodes: number[]): T {
   const mismatch = () => new ConfigCliError(`CLI ${cli.version} output does not match the protocol`);
+  if (run.code === 2) {
+    const failure = failureFrom(run.stdout);
+    if (failure) throw new ConfigCliError(`CLI ${cli.version} rejected the request: ${failure.error.message}`);
+  }
   if (run.code === null || !acceptedCodes.includes(run.code)) throw new ConfigCliError(`CLI ${cli.version} failed with exit code ${run.code}`);
   let json: unknown;
   try {
@@ -110,6 +124,7 @@ export function createConfigCli(o: {
       });
       return catalogPromise;
     },
+    validateExact: (config) => validateOnce(config),
     validate: (config) =>
       new Promise<ConfigValidation>((resolve, reject) => {
         const waiters = [...(queued?.waiters ?? []), { resolve, reject }];

@@ -85,6 +85,26 @@ describe('createConfigCli', () => {
     await expect(configCli.catalog()).rejects.toMatchObject({ message: expect.stringContaining('exceeds') });
   });
 
+  it('validateExact never shares a result with queued validations of other configs', async () => {
+    const gate = path.join(dir, 'gate');
+    const started = path.join(dir, 'started');
+    await writeFile(started, '');
+    const configCli = createConfigCli({ cli, env: fakeEnv({ FAKE_HARNESS_GATE: gate, FAKE_HARNESS_STARTED: started }) });
+    const running = configCli.validate({ tag: 'running' });
+    await waitFor(() => readFileSync(started, 'utf8').includes('started'));
+    const exact = configCli.validateExact({ tag: 'exact' });
+    const queuedInvalid = configCli.validate({ __invalid: true });
+    appendFileSync(gate, '');
+    const [exactResult, queuedResult] = await Promise.all([exact, queuedInvalid, running]);
+    expect(exactResult).toMatchObject({ ok: true, issues: [{ message: 'exact' }] });
+    expect(queuedResult.ok).toBe(false);
+  });
+
+  it('surfaces the CLI error payload of a usage exit', async () => {
+    const configCli = createConfigCli({ cli, env: fakeEnv({ FAKE_HARNESS_MODE: 'exit-2-json' }) });
+    await expect(configCli.validate({})).rejects.toMatchObject({ message: expect.stringContaining('stdin is not valid JSON') });
+  });
+
   it('runs one validation at a time and the last queued request wins', async () => {
     const gate = path.join(dir, 'gate');
     const started = path.join(dir, 'started');

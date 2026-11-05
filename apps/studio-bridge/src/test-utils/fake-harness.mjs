@@ -99,6 +99,10 @@ const main = async () => {
   if (mode === 'garbage') return process.stdout.write('not json');
   if (mode === 'flood') return process.stdout.write('x'.repeat(4 * 1024 * 1024));
   if (mode === 'exit-2') process.exit(2);
+  if (mode === 'exit-2-json') {
+    process.stdout.write(`${JSON.stringify({ format: 1, cliVersion: FAKE_VERSION, ok: false, error: { code: 'unreadable', message: 'stdin is not valid JSON' } })}\n`);
+    process.exit(2);
+  }
 
   const [group, action] = argv;
   if (group === 'config' && action === 'catalog') return process.stdout.write(`${JSON.stringify(catalog)}\n`);

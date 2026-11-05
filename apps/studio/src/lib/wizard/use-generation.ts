@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { GenerationSnapshot, GenerationState, type GenerationOutputChunk, type ServerEvent } from '@sdd-studio/protocol';
+import { GENERATION_BUFFER_BYTES, GenerationSnapshot, GenerationState, type GenerationOutputChunk, type ServerEvent } from '@sdd-studio/protocol';
 import {
   clearGenerationPointer,
   loadGenerationPointer,
@@ -16,6 +16,7 @@ export interface GenerationView {
   generation: GenerationState | null;
   target: string | null;
   output: GenerationOutputChunk[];
+  outputVersion: number;
   truncatedBefore: boolean;
   connection: 'live' | 'lost';
   unknown: boolean;
@@ -36,6 +37,8 @@ interface Tracker {
   lastSeq: number;
   lastStatus: string;
   output: GenerationOutputChunk[];
+  outputBytes: number;
+  outputVersion: number;
   truncatedBefore: boolean;
   generation: GenerationState | null;
   syncing: boolean;
@@ -48,12 +51,14 @@ const EMPTY_VIEW: GenerationView = {
   generation: null,
   target: null,
   output: [],
+  outputVersion: 0,
   truncatedBefore: false,
   connection: 'live',
   unknown: false,
   error: null,
 };
 
+const TRIM_TO_FRACTION = 0.75;
 const LOST_CODES = new Set(['not-connected', 'disconnected', 'timeout']);
 
 export function useGeneration(client: WizardClient, storage: StorageLike | null = sessionStore()): GenerationControls {
@@ -67,6 +72,8 @@ export function useGeneration(client: WizardClient, storage: StorageLike | null 
     lastSeq: 0,
     lastStatus: 'running',
     output: [],
+    outputBytes: 0,
+    outputVersion: 0,
     truncatedBefore: false,
     generation: null,
     syncing: false,
@@ -85,6 +92,7 @@ export function useGeneration(client: WizardClient, storage: StorageLike | null 
       generation: t.generation,
       target: t.target,
       output: t.output,
+      outputVersion: t.outputVersion,
       truncatedBefore: t.truncatedBefore,
       connection: connection.current,
       unknown: t.unknown,
@@ -113,8 +121,19 @@ export function useGeneration(client: WizardClient, storage: StorageLike | null 
     const t = tracker.current;
     const fresh = chunks.filter((chunk) => chunk.seq > t.lastSeq).sort((a, b) => a.seq - b.seq);
     if (fresh.length === 0) return;
-    t.output = [...t.output, ...fresh];
+    for (const chunk of fresh) {
+      t.output.push(chunk);
+      t.outputBytes += chunk.chunk.length;
+    }
     t.lastSeq = fresh[fresh.length - 1].seq;
+    if (t.outputBytes > GENERATION_BUFFER_BYTES) {
+      const target = GENERATION_BUFFER_BYTES * TRIM_TO_FRACTION;
+      let dropCount = 0;
+      while (dropCount < t.output.length - 1 && t.outputBytes > target) t.outputBytes -= t.output[dropCount++].chunk.length;
+      t.output.splice(0, dropCount);
+      t.truncatedBefore = true;
+    }
+    t.outputVersion += 1;
   }, []);
 
   const resync = useCallback(async (): Promise<void> => {
@@ -165,6 +184,8 @@ export function useGeneration(client: WizardClient, storage: StorageLike | null 
       lastSeq: 0,
       lastStatus,
       output: [],
+      outputBytes: 0,
+      outputVersion: 0,
       truncatedBefore: false,
       generation: null,
       syncing: false,
@@ -260,6 +281,8 @@ export function useGeneration(client: WizardClient, storage: StorageLike | null 
       lastSeq: 0,
       lastStatus: 'running',
       output: [],
+      outputBytes: 0,
+      outputVersion: 0,
       truncatedBefore: false,
       generation: null,
       syncing: false,

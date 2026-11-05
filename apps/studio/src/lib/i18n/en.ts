@@ -309,6 +309,8 @@ export const en = {
   'caps.notice': 'This bridge does not offer: {features}. Restart it with the latest version to enable it.',
   'caps.session-title': 'session title',
   'caps.link-targets': 'multiple associations',
+  'caps.project-wizard': 'the new project wizard',
+  'caps.workspace-switch': 'opening another project from Studio',
   'caps.document-touched': 'documents changed from the console',
   'link.add': 'Add association…',
   'link.max': 'Association limit reached',

@@ -105,6 +105,19 @@ describe('harness config catalog / validate', () => {
     expect(out).toBe('');
   });
 
+  it('validate --json exits 2 with an error payload on stdout', async () => {
+    await run('validate', resolve(dir, 'nope.json'), '--json');
+    expect(process.exitCode).toBe(2);
+    expect(JSON.parse(out)).toMatchObject({ format: 1, ok: false, error: { code: 'unreadable', message: expect.stringContaining('not found') } });
+    expect(err.length).toBeGreaterThan(0);
+  });
+
+  it('validate --json without a source reports a usage error payload', async () => {
+    await run('validate', '--json');
+    expect(process.exitCode).toBe(2);
+    expect(JSON.parse(out)).toMatchObject({ ok: false, error: { code: 'usage' } });
+  });
+
   it('validate exits 2 on invalid JSON from stdin', async () => {
     useStdin('not json');
     await run('validate', '-', '--json');

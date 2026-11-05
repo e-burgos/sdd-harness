@@ -219,7 +219,10 @@ class GenerationRun {
 
   private consumeLines(stream: 'stdout' | 'stderr', text: string): void {
     const lines = (this.partialLine[stream] + text).split(/\r?\n/);
-    this.partialLine[stream] = lines.pop() ?? '';
+    const rest = lines.pop() ?? '';
+    const overlong = rest.length > GENERATION_CHUNK_MAX;
+    this.partialLine[stream] = overlong ? '' : rest;
+    if (overlong) lines.push(rest);
     let changed = false;
     for (const line of lines) changed = this.consumeLine(line) || changed;
     if (changed) this.announce();
@@ -278,6 +281,10 @@ class GenerationRun {
       return this.conclude('cancelled', { stage: 'scaffold', kind: 'cancelled', message: 'cancelled by the user' });
     }
     this.setStage('scaffold', 'active');
+    if (!existsSync(this.o.cli.bin)) {
+      this.failStage('scaffold');
+      return this.conclude('failed', { stage: 'scaffold', kind: 'cli-missing', message: `harness binary not found at ${this.o.cli.bin}` });
+    }
     const child = spawn(process.execPath, [this.o.cli.bin, ...INIT_ARGV.slice(1)], {
       cwd: this.o.target,
       shell: false,
@@ -292,6 +299,11 @@ class GenerationRun {
     child.once('error', (error) => this.finish({ spawnError: error }));
     child.once('close', (code, signal) => this.finish({ code, signal }));
     this.announce();
+  }
+
+  discard(): void {
+    this.state.status = 'cancelled';
+    this.resolveDone();
   }
 
   failPrepare(error: unknown): void {
@@ -457,6 +469,7 @@ export class GenerationRegistry {
     }
     if (outcome === 'config-differs') {
       this.active = null;
+      run.discard();
       return { outcome: 'config-differs' };
     }
     run.launch();

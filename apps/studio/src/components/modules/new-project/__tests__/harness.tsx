@@ -2,7 +2,7 @@ import { render } from '@testing-library/react';
 import type { ConfigIssue, ResolvedConfig } from '@sdd-studio/protocol';
 import { I18nProvider } from '@/lib/i18n/i18n';
 import { NavProvider } from '@/lib/nav/use-nav';
-import { BridgeContext } from '../../../BridgeProvider';
+import { BridgeContext, type BridgeContextValue } from '../../../BridgeProvider';
 import { bridgeValue } from '../../../shell/shell-test-utils';
 import { BridgeFailure, fakeClient } from '@/lib/wizard/__tests__/fake-client';
 import { catalogResultFixture } from '@/lib/wizard/__tests__/fixtures';
@@ -41,9 +41,14 @@ export function WizardHarness() {
   );
 }
 
-export function renderWizard(options: { lang?: 'es' | 'en'; fake?: ReturnType<typeof wizardClient> } = {}) {
+export function withFeatures(fake: ReturnType<typeof wizardClient>, features: readonly string[]) {
+  (fake.client as unknown as { supports(feature: string): boolean }).supports = (feature) => features.includes(feature);
+  return fake;
+}
+
+export function renderWizard(options: { lang?: 'es' | 'en'; fake?: ReturnType<typeof wizardClient>; bridge?: Partial<BridgeContextValue> } = {}) {
   const fake = options.fake ?? wizardClient();
-  const value = bridgeValue({ client: fake.client as never });
+  const value = bridgeValue({ client: fake.client as never, ...options.bridge });
   const view = render(
     <I18nProvider initial={options.lang ?? 'es'}>
       <BridgeContext.Provider value={value}>

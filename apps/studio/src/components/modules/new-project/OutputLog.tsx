@@ -11,10 +11,11 @@ const BOTTOM_TOLERANCE_PX = 24;
 export interface OutputLogProps {
   chunks: readonly GenerationOutputChunk[];
   truncatedBefore: boolean;
+  revision?: number;
   maxHeightClass?: string;
 }
 
-export function OutputLog({ chunks, truncatedBefore, maxHeightClass = 'max-h-72' }: OutputLogProps) {
+export function OutputLog({ chunks, truncatedBefore, revision = 0, maxHeightClass = 'max-h-72' }: OutputLogProps) {
   const { t } = useT();
   const container = useRef<HTMLDivElement>(null);
   const following = useRef(true);
@@ -23,7 +24,7 @@ export function OutputLog({ chunks, truncatedBefore, maxHeightClass = 'max-h-72'
   useLayoutEffect(() => {
     const element = container.current;
     if (element !== null && following.current) element.scrollTop = element.scrollHeight;
-  }, [chunks]);
+  }, [chunks, revision]);
 
   const onScroll = () => {
     const element = container.current;

@@ -3,7 +3,7 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import type { GenerationState, ServerMessage } from '@sdd-studio/protocol';
+import { GENERATION_CHUNK_MAX, type GenerationState, type ServerMessage } from '@sdd-studio/protocol';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { waitFor } from '../../test-utils/fixture';
 import { nativeRealpath } from '../fs-paths';
@@ -196,6 +196,38 @@ describe('GenerationRegistry.start', () => {
     expect(registry.activeTarget()).toBeNull();
     expect(registry.find((await finished).id)).toMatchObject({ status: 'gate-failed' });
     await expect(registry.start({ cli, config: CONFIG, target, mode: 'nx', projectName: 'demo' })).resolves.toMatchObject({ outcome: 'started' });
+    await registry.closeAll();
+  });
+});
+
+describe('generation edge cases', () => {
+  it('maps a missing harness binary to cli-missing before spawning', async () => {
+    const { registry, finished } = harness();
+    await registry.start({ cli: { bin: path.join(dir, 'nope', 'cli.js'), version: '0.0.0-fake' }, config: CONFIG, target, mode: 'nx', projectName: 'demo' });
+    const final = await finished;
+    expect(final).toMatchObject({ status: 'failed', failure: { stage: 'scaffold', kind: 'cli-missing' } });
+    expect(registry.activeTarget()).toBeNull();
+  });
+
+  it('settles a config-differs run so closeAll does not hang', async () => {
+    await mkdir(target, { recursive: true });
+    await writeFile(path.join(target, 'harness.config.json'), '{"mine":true}\n');
+    const { registry, start } = harness();
+    const pending = start();
+    const closed = registry.closeAll();
+    await expect(pending).resolves.toEqual({ outcome: 'config-differs' });
+    await expect(Promise.race([closed.then(() => 'closed'), new Promise((resolve) => setTimeout(() => resolve('hung'), 2000))])).resolves.toBe('closed');
+    expect(registry.activeTarget()).toBeNull();
+  });
+
+  it('consumes an overlong unterminated line instead of buffering it forever', async () => {
+    const startedFile = path.join(dir, 'started');
+    const replay = path.join(dir, 'replay.txt');
+    await writeFile(replay, `[x] sdd:validate ${'a'.repeat(GENERATION_CHUNK_MAX + 5000)}`);
+    const { start, registry } = harness({ FAKE_HARNESS_MODE: 'init-hang', FAKE_HARNESS_REPLAY: replay, FAKE_HARNESS_INIT_STARTED: startedFile }, { killGraceMs: 200 });
+    const started = await start();
+    if (started.outcome !== 'started') throw new Error('not started');
+    await waitFor(() => registry.get(started.generation.id, 0).generation?.gate.validate === 'pass');
     await registry.closeAll();
   });
 });

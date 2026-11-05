@@ -3,7 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { defineCommand, runMain } from 'citty';
 import pc from 'picocolors';
 import { BridgeStartError, DEFAULT_ORIGINS, DEFAULT_WEB_URL, startBridge } from './main';
-import { parseAllowTargets, parseEngine, parsePort, parseToken, parseWebUrl } from './cli-options';
+import { missingAllowTargets, parseAllowTargets, parseEngine, parsePort, parseToken, parseWebUrl } from './cli-options';
 import { openBrowser } from './open-browser';
 import { BRIDGE_VERSION } from './version';
 
@@ -26,6 +26,8 @@ const main = defineCommand({
       const engine = parseEngine(args.engine);
       const port = args.port === undefined ? 4320 : parsePort(args.port);
       const webUrl = parseWebUrl(args['web-url']);
+      const allowTargets = parseAllowTargets(args['allow-target']);
+      for (const missing of missingAllowTargets(allowTargets)) console.warn(pc.yellow(`--allow-target ${missing} does not exist and will be ignored`));
       const bridge = await startBridge({
         root: args.root ?? process.cwd(),
         port,
@@ -34,7 +36,7 @@ const main = defineCommand({
         allowedOrigins: [...DEFAULT_ORIGINS, ...extraOrigins],
         webUrl,
         token: args.token !== undefined ? parseToken(args.token) : undefined,
-        allowTargets: parseAllowTargets(args['allow-target']),
+        allowTargets,
         localUiDir: args['local-ui'] ? fileURLToPath(new URL('./web', import.meta.url)) : undefined,
       });
       const auth = bridge.authMode === 'api-key' ? 'API key (ANTHROPIC_API_KEY)' : 'local Claude Code login';

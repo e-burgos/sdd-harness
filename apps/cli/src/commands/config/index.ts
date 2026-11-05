@@ -6,6 +6,7 @@ import {
   buildConfigJsonSchema,
   CONFIG_SCHEMA_FILENAME,
 } from '../../config/json-schema.js';
+import { version } from '../../version.js';
 import { buildConfigCatalog, formatConfigCatalog } from '../../config/catalog.js';
 import {
   ConfigReadError,
@@ -18,6 +19,15 @@ import {
 export const EXIT_VALID = 0;
 export const EXIT_INVALID = 1;
 export const EXIT_UNREADABLE = 2;
+
+function reportUnreadable(message: string, json: boolean, code: 'usage' | 'unreadable'): void {
+  process.stderr.write(`${message}\n`);
+  if (json) {
+    const payload = { format: 1, cliVersion: version, ok: false, error: { code, message: message.slice(0, 500) } };
+    process.stdout.write(`${JSON.stringify(payload, null, 2)}\n`);
+  }
+  process.exitCode = EXIT_UNREADABLE;
+}
 
 const schemaCommand = defineCommand({
   meta: {
@@ -88,8 +98,7 @@ const validateCommand = defineCommand({
   async run({ args, rawArgs }) {
     const source = (args.file as string | undefined) ?? (rawArgs.includes('-') ? '-' : undefined);
     if (!source) {
-      process.stderr.write('Usage: harness config validate <file|-> [--json]\n');
-      process.exitCode = EXIT_UNREADABLE;
+      reportUnreadable('Usage: harness config validate <file|-> [--json]', Boolean(args.json), 'usage');
       return;
     }
     try {
@@ -102,8 +111,7 @@ const validateCommand = defineCommand({
       process.exitCode = validation.ok ? EXIT_VALID : EXIT_INVALID;
     } catch (err) {
       if (!(err instanceof ConfigReadError)) throw err;
-      process.stderr.write(`${err.message}\n`);
-      process.exitCode = EXIT_UNREADABLE;
+      reportUnreadable(err.message, Boolean(args.json), 'unreadable');
     }
   },
 });

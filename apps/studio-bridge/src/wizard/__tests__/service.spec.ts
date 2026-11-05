@@ -1,10 +1,11 @@
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { GenerateResult, GenerationState, ServerMessage } from '@sdd-studio/protocol';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { waitFor } from '../../test-utils/fixture';
+import { createConfigCli } from '../config-cli';
 import { nativeRealpath } from '../fs-paths';
 import { GenerationRegistry } from '../generation';
 import type { HostCommand } from '../../server/router';
@@ -97,6 +98,29 @@ describe('WizardService read commands', () => {
 });
 
 describe('WizardService.generate', () => {
+  it('validates its own config even while other validations are queued', async () => {
+    generationEnv = { ...generationEnv, FAKE_HARNESS_REPLAY: path.join(FIXTURES, 'nx-success.txt'), FAKE_HARNESS_CREATE_SDD: '1' };
+    const gate = path.join(home, 'gate');
+    const startedFile = path.join(home, 'validate-started');
+    await writeFile(startedFile, '');
+    const configCli = createConfigCli({ cli, env: { ...process.env, FAKE_HARNESS_GATE: gate, FAKE_HARNESS_STARTED: startedFile } });
+    const events: ServerMessage[] = [];
+    const registry = new GenerationRegistry({ broadcast: (message) => events.push(message), env: generationEnv, flushIntervalMs: 5, killGraceMs: 200 });
+    const wizard = new WizardService({ generations: registry, allowTargets: [], runtime: null, switchProject: async (root) => ({ root, project: 'p' }) }, { cli, configCli, homeDir: home, cwd: home });
+    const command = (body: Record<string, unknown>) => wizard.handle({ kind: 'command', id: 'test', ...body } as HostCommand);
+
+    const running = command({ cmd: 'wizard.validate', config: { tag: 'running' } });
+    await waitFor(async () => (await readFile(startedFile, 'utf8')).includes('started'));
+    const generating = command({ cmd: 'wizard.generate', config: CONFIG, path: path.join(home, 'exact') }) as Promise<GenerateResult>;
+    const queued = command({ cmd: 'wizard.validate', config: { __invalid: true } });
+    await writeFile(gate, '');
+    await running;
+    expect(await queued).toMatchObject({ ok: false });
+    const result = await generating;
+    expect(result.outcome).toBe('started');
+    await waitFor(() => events.some((e) => e.kind === 'generation.status' && e.generation.status !== 'running'));
+  });
+
   it('returns invalid-config without touching the filesystem', async () => {
     const target = path.join(home, 'proj');
     const { service } = setup();
@@ -207,5 +231,42 @@ describe('WizardService generation.get and reveal', () => {
     expect(await service.handle({ cmd: 'wizard.reveal', generationId: result.generation.id })).toBeNull();
     expect(revealed).toEqual([result.generation.target]);
     await expect(service.handle({ cmd: 'wizard.reveal', generationId: 'unknown' })).rejects.toMatchObject({ code: 'not-found' });
+  });
+});
+
+describe('WizardService workspace.open revalidation', () => {
+  const finished = (target: string) =>
+    ({ id: 'g1', target, status: 'succeeded' }) as unknown as GenerationState;
+  const openWith = (target: string, allowTargets: string[] = []) => {
+    const switched: string[] = [];
+    const host = { generations: { find: () => finished(target) }, allowTargets, runtime: null, switchProject: async (root: string) => (switched.push(root), { root, project: 'p' }) } as unknown as WizardHost;
+    const wizard = new WizardService(host, { cli, homeDir: home, cwd: home });
+    return { switched, open: () => wizard.handle({ kind: 'command', id: 't', cmd: 'workspace.open', generationId: 'g1' } as HostCommand) };
+  };
+
+  it('opens a generated folder that still resolves to itself inside the bases', async () => {
+    const target = path.join(home, 'ok');
+    await mkdir(path.join(target, 'sdd'), { recursive: true });
+    const { open, switched } = openWith(target);
+    await expect(open()).resolves.toMatchObject({ root: target });
+    expect(switched).toEqual([target]);
+  });
+
+  it('rejects a folder swapped for a symlink after the generation', async () => {
+    const real = path.join(home, 'real');
+    await mkdir(path.join(real, 'sdd'), { recursive: true });
+    const target = path.join(home, 'swapped');
+    await symlink(real, target);
+    const { open, switched } = openWith(target);
+    await expect(open()).rejects.toMatchObject({ code: 'bad-request' });
+    expect(switched).toEqual([]);
+  });
+
+  it('rejects a folder outside the allowed bases', async () => {
+    const target = path.join(outside, 'elsewhere');
+    await mkdir(path.join(target, 'sdd'), { recursive: true });
+    const { open, switched } = openWith(target);
+    await expect(open()).rejects.toMatchObject({ code: 'bad-request', message: expect.stringContaining('outside') });
+    expect(switched).toEqual([]);
   });
 });

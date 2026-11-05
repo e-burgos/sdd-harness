@@ -21,7 +21,7 @@ export function ConnectionBanner({
   const { t } = useT();
   if (switching?.failed) {
     return (
-      <Alert variant="error" density="compact" className="flex items-center justify-center gap-3 rounded-none border-x-0 border-t-0 text-xs shadow-none">
+      <Alert variant="error" density="compact" className="flex items-center justify-center gap-3 rounded-none border-x-0 border-t-0 text-ui shadow-none">
         <span>{t('switch.failed', { project: switching.project, root: switching.root })}</span>
         {onRetrySwitch && (
           <Button type="button" variant="ghost" color="danger" size="tiny" onClick={onRetrySwitch}>
@@ -33,7 +33,7 @@ export function ConnectionBanner({
   }
   if (switching) {
     return (
-      <div role="status" className="border-b border-amberish/30 bg-amberish/10 px-4 py-1.5 text-center text-xs text-amberish">
+      <div role="status" className="border-b border-amberish/30 bg-amberish/10 px-4 py-1.5 text-center text-ui text-amberish">
         {t('switch.opening', { project: switching.project })}
       </div>
     );

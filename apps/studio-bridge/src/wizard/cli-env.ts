@@ -1,6 +1,6 @@
 import { withoutCredentialEnv } from '../auth-mode';
 
-const DROPPED_EXACT = new Set(['anthropic_api_key', 'anthropic_auth_token', 'ci', 'init_cwd', 'pnpm_script_src_dir', 'npm_config_local_prefix']);
+const DROPPED_EXACT = new Set(['anthropic_api_key', 'anthropic_auth_token', 'ci', 'init_cwd', 'pnpm_script_src_dir', 'npm_config_local_prefix', 'npm_config_user_agent', 'npm_execpath', 'npm_command']);
 const DROPPED_PREFIXES = ['nx_', 'npm_package_', 'npm_lifecycle_'];
 
 export function buildCliEnv(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {

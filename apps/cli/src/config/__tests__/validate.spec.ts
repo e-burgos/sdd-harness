@@ -209,3 +209,58 @@ describe('readRawConfigFromStream', () => {
     await expect(readRawConfigFromStream(big)).rejects.toThrow(/exceeds/);
   });
 });
+
+describe('validateHarnessConfig: protocol limits', () => {
+  const name = (length: number) => `a${'b'.repeat(length - 1)}`;
+  const messages = (raw: unknown) => validateHarnessConfig(raw).issues.map((i) => i.message);
+
+  it('accepts names and scope at the limit', () => {
+    const result = validateHarnessConfig({
+      project: { name: name(64), description: 'd', packageScope: `@${'s'.repeat(63)}` },
+      apps: [{ name: name(64), type: 'nestjs' }],
+      libs: [{ name: name(64), type: 'shared-types' }],
+    });
+    expect(result.ok).toBe(true);
+  });
+
+  it('rejects names, scope and collection sizes above the limit as schema issues', () => {
+    const result = validateHarnessConfig({
+      project: { name: name(65), description: 'd', packageScope: `@${'s'.repeat(64)}` },
+      apps: [{ name: name(65), type: 'nestjs' }],
+      libs: [{ name: name(65), type: 'shared-types' }],
+    });
+    expect(result.ok).toBe(false);
+    expect(result.issues.map((i) => i.path.join('.'))).toEqual(
+      expect.arrayContaining(['project.name', 'project.packageScope', 'apps.0.name', 'libs.0.name']),
+    );
+
+    const tooMany = validateHarnessConfig({
+      project,
+      apps: Array.from({ length: 33 }, (_, i) => ({ name: `app-${i}`, type: 'nestjs', port: 4000 + i })),
+      libs: Array.from({ length: 33 }, (_, i) => ({ name: `lib-${i}`, type: 'shared-types' })),
+      services: Array.from({ length: 17 }, () => ({ type: 'redis' })),
+    });
+    expect(tooMany.issues.map((i) => i.path.join('.'))).toEqual(expect.arrayContaining(['apps', 'libs', 'services']));
+  });
+
+  it('clips every message to the protocol limit, including raw names from topology and duplicates', () => {
+    const huge = 'x'.repeat(2000);
+    const all = messages({
+      mode: 'standalone',
+      project,
+      apps: [
+        { name: huge, type: 'nestjs' },
+        { name: huge, type: 'mfe' },
+      ],
+    });
+    expect(all.length).toBeGreaterThan(0);
+    for (const message of all) expect(message.length).toBeLessThanOrEqual(500);
+    expect(all.some((m) => m.includes('Duplicate'))).toBe(true);
+  });
+
+  it('measures the stdin cap in bytes, not characters', async () => {
+    const multibyte = JSON.stringify({ pad: 'ñ'.repeat(MAX_CONFIG_BYTES / 2) });
+    expect(multibyte.length).toBeLessThanOrEqual(MAX_CONFIG_BYTES);
+    await expect(readRawConfigFromStream(Readable.from([multibyte]))).rejects.toBeInstanceOf(ConfigReadError);
+  });
+});

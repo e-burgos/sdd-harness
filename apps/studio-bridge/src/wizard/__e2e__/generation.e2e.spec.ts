@@ -3,7 +3,7 @@ import { lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, readlinkS
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { PROTOCOL_VERSION, WS_CLOSE_WORKSPACE_SWITCHED, type GenerationState, type ServerMessage } from '@sdd-studio/protocol';
-import { afterAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import WebSocket from 'ws';
 import { DEFAULT_ORIGINS, startBridge } from '../../main';
 import { waitFor } from '../../test-utils/fixture';
@@ -62,7 +62,10 @@ async function connect(port: number, token: string) {
   return { ws, inbox, welcome, call };
 }
 
-const sandbox = mkdtempSync(path.join(process.env['HARNESS_E2E_OUT'] ?? tmpdir(), 'wizard-e2e-'));
+let sandbox: string;
+beforeAll(() => {
+  sandbox = mkdtempSync(path.join(process.env['HARNESS_E2E_OUT'] ?? tmpdir(), 'wizard-e2e-'));
+});
 afterAll(() => rmSync(sandbox, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 }), 5 * MINUTE);
 
 describe.skipIf(!process.env['HARNESS_E2E'])('e2e: real generation through the launcher bridge', () => {

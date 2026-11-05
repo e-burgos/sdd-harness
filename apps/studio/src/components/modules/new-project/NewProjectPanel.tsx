@@ -9,6 +9,7 @@ import { isInitialState, WIZARD_STEPS } from '@/lib/wizard/state';
 import { ModulePanel } from '../../shell/ModulePanel';
 import { PanelRow } from '../../shell/PanelRow';
 import { useWizard, type StepState } from './wizard-context';
+import { useWizardUnavailable, WizardUnavailable } from './WizardUnavailable';
 import { stepLabel } from './wizard-text';
 
 const STEP_ICON = { current: CircleDot, done: Check, pending: Circle, na: Minus } as const;
@@ -64,15 +65,22 @@ function RestartButton() {
 export function NewProjectPanel() {
   const { t } = useT();
   const { catalogControls, stepState } = useWizard();
+  const unavailable = useWizardUnavailable();
   const status = catalogControls.status === 'ready' ? 'ready' : catalogControls.status === 'error' ? 'error' : 'loading';
   return (
-    <ModulePanel moduleId="new-project" searchable={false} status={status} onRetry={catalogControls.reload}>
+    <ModulePanel moduleId="new-project" searchable={false} status={unavailable ? 'ready' : status} onRetry={catalogControls.reload}>
+      {unavailable ? (
+        <WizardUnavailable />
+      ) : (
+        <>
       <ol aria-label={t('wizard.panel.steps')} className="flex flex-col gap-px">
         {WIZARD_STEPS.map((id, index) => (
           <StepRow key={id} id={id} index={index} state={stepState(id)} />
         ))}
       </ol>
       <RestartButton />
+        </>
+      )}
     </ModulePanel>
   );
 }
