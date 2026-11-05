@@ -47,6 +47,7 @@ export interface WizardContextValue {
   restart(): void;
   step: WizardStepId;
   steps: WizardStepId[];
+  positioned: boolean;
   stepState(step: WizardStepId): StepState;
   goToStep(step: WizardStepId): void;
   editStep(step: WizardStepId): void;
@@ -91,6 +92,7 @@ export function WizardScope({ children }: { children: ReactNode }) {
   const [touched, setTouched] = useState<ReadonlySet<string>>(() => new Set());
   const [focusTarget, setFocusTarget] = useState<{ step: WizardStepId; field: string } | null>(null);
   const positioned = useRef(false);
+  const [positionedReady, setPositionedReady] = useState(false);
 
   const dispatch = useCallback(
     (action: WizardAction) => {
@@ -126,6 +128,7 @@ export function WizardScope({ children }: { children: ReactNode }) {
     const target = firstOpenStep(state, catalog, []);
     setStep(target);
     setFurthest(stepIndex(target));
+    setPositionedReady(true);
   }, [catalog, state]);
 
   const steps = useMemo(() => visibleSteps(state.scope), [state.scope]);
@@ -284,6 +287,7 @@ export function WizardScope({ children }: { children: ReactNode }) {
       restart,
       step,
       steps,
+      positioned: positionedReady,
       stepState,
       goToStep,
       editStep,
@@ -315,6 +319,7 @@ export function WizardScope({ children }: { children: ReactNode }) {
       restart,
       step,
       steps,
+      positionedReady,
       stepState,
       goToStep,
       editStep,

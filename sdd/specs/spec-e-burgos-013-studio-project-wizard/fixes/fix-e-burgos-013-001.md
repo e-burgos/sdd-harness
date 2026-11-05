@@ -24,11 +24,14 @@ En el CI de PR #64 (head 1c103a2) fallaron los dos jobs:
 - `apps/studio-bridge/src/wizard/reveal.ts`: la semántica de rutas sale de `process.platform` (las rutas son del sistema de archivos real); `ctx.platform` solo elige el comando que abre la carpeta.
 - `apps/studio/src/lib/test-utils/pick-option.ts`: `waitForSelectToClose()` espera el cierre del `Select`; los cuatro specs que abren selects lo usan en `afterEach`. El arreglo de fondo (cancelar el timer al desmontar) va al repo de tucu-ui.
 
-- `openStep` de `steps-1-3.spec.tsx` y `steps-4-6.spec.tsx` repite el click dentro de `waitFor` hasta que el paso pedido esté abierto (en la rama del motion, el centro además espera a estar posicionado).
+- `wizard-context.tsx` expone `positioned` y `NewProjectCenter.tsx` no muestra ningún paso hasta que el wizard se ubicó en el paso restaurado: el usuario ya no ve el paso inicial un instante ni puede perder un click contra el posicionamiento. Era una carrera real del producto, que el runner lento de Windows dejó a la vista (tercera corrida, d22c6dd: `steps-4-6.spec.tsx > applies nothing when the user cancels…`).
+- `openStep` de `steps-1-3.spec.tsx` y `steps-4-6.spec.tsx` repite el click dentro de `waitFor` hasta que el paso pedido esté abierto.
 
 ## Archivos
 
 - `apps/studio-bridge/src/wizard/reveal.ts`
+- `apps/studio/src/components/modules/new-project/wizard-context.tsx`
+- `apps/studio/src/components/modules/new-project/NewProjectCenter.tsx`
 - `apps/studio/src/lib/test-utils/pick-option.ts`
 - `apps/studio/src/components/helpselect.spec.tsx`
 - `apps/studio/src/components/workspace/modes.spec.tsx`

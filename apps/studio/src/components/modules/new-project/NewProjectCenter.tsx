@@ -29,10 +29,10 @@ const STEP_COMPONENT: Record<WizardStepId, ComponentType> = {
 
 export function NewProjectCenter() {
   const { t } = useT();
-  const { catalogControls, step, steps, back, next, nextBlockReason, generation } = useWizard();
+  const { catalogControls, step, steps, back, next, nextBlockReason, generation, positioned } = useWizard();
   const unavailable = useWizardUnavailable();
   if (unavailable) return <WizardUnavailable />;
-  if (catalogControls.status === 'loading') {
+  if (catalogControls.status === 'loading' || (catalogControls.status === 'ready' && !positioned)) {
     return (
       <p role="status" className="p-6 text-copy text-ink-400">
         {t('wizard.center.catalogLoading')}

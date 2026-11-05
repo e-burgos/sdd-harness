@@ -1178,7 +1178,7 @@
       "title": "CI de PR #64: reveal en Windows y timer de tucu-ui Select en jsdom",
       "estimation_hours": 1,
       "description": "revealPath usaba la plataforma del abridor para la semántica de rutas y fallaba en Windows; el Select de tucu-ui deja un setTimeout que se dispara tras desmontar jsdom y Vitest lo reporta como error no manejado. En Windows, además, openStep de los specs del wizard perdía el click contra el posicionamiento inicial del wizard.",
-      "justification": "Corrige un error de semántica de rutas en el puente y estabiliza tests; sin contratos ni entidades nuevas.",
+      "justification": "Corrige la semántica de rutas del puente en Windows y una carrera del wizard al restaurar el paso; sin contratos ni entidades nuevas.",
       "related_modules": [
         "studio-project-wizard"
       ],
@@ -1190,7 +1190,9 @@
         "apps/studio/src/components/workspace/composer.spec.tsx",
         "apps/studio/src/components/workspace/threadlink.spec.tsx",
         "apps/studio/src/components/modules/new-project/__tests__/steps-1-3.spec.tsx",
-        "apps/studio/src/components/modules/new-project/__tests__/steps-4-6.spec.tsx"
+        "apps/studio/src/components/modules/new-project/__tests__/steps-4-6.spec.tsx",
+        "apps/studio/src/components/modules/new-project/wizard-context.tsx",
+        "apps/studio/src/components/modules/new-project/NewProjectCenter.tsx"
       ],
       "test_reference": "reveal.spec.ts y specs con Select — verde local; pendiente CI ubuntu + windows-latest de PR #64",
       "status": "implemented",
@@ -1198,8 +1200,8 @@
       "usage": {
         "provider_model": "claude/opus",
         "effort": "medium",
-        "tokens_in": 120000,
-        "tokens_out": 7000,
+        "tokens_in": 145000,
+        "tokens_out": 9000,
         "approx": true,
         "source": "declared-estimate",
         "recorded_at": "2026-11-05",
@@ -1208,8 +1210,8 @@
             "agent": "implementor-back",
             "provider_model": "claude/opus",
             "effort": "medium",
-            "tokens_in": 120000,
-            "tokens_out": 7000,
+            "tokens_in": 145000,
+            "tokens_out": 9000,
             "approx": true,
             "source": "declared-estimate"
           }
