@@ -34,6 +34,11 @@ const MAX_RUN_OUTPUT = 200_000;
 
 export const initialState = (): StudioState => ({ snapshot: null, threads: {}, presence: [], bot: {}, runs: {}, drafts: {}, selectedThreadId: null, prepared: [], openedPreparedId: null });
 
+export function resetState(s: StudioState): StudioState {
+  for (const draft of Object.values(s.drafts)) revokePreviews(draft.attachments);
+  return initialState();
+}
+
 const threadOf = (s: StudioState, id: string): ThreadState => s.threads[id] ?? emptyThread();
 
 function withThread(s: StudioState, id: string, thread: ThreadState): StudioState {

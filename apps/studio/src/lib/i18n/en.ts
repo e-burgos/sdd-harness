@@ -34,6 +34,7 @@ export const en = {
   'connect.step2.body': 'In a terminal, at the root of the repo, run:',
   'connect.step3.title': 'Done: this page opens connected to your repo',
   'connect.step3.body': 'The bridge prints a link with a token that changes on every start. If the browser does not open by itself, copy that link.',
+  'connect.launcherHint': 'If you run it in a folder without sdd/, Studio opens the "New project" wizard so you can create one from scratch.',
   'connect.requirements': 'Requirements',
   'connect.req.node': 'Node 20 or later.',
   'connect.req.chrome': 'In Chrome, allow the local network access permission the first time.',

@@ -26,6 +26,10 @@ describe('connection UI', () => {
     expect(screen.getByText('npx @e-burgos/sdd-studio')).toBeInTheDocument();
     expect(screen.getByRole('alert')).toHaveTextContent('invalid token');
   });
+  it('explains the launcher mode on the connect screen', () => {
+    wrap(<ConnectScreen />);
+    expect(screen.getByText(/carpeta sin sdd\/, Studio abre el asistente/)).toBeInTheDocument();
+  });
   it('shows reconnect countdown and hides when open', () => {
     const { rerender } = wrap(<ConnectionBanner connection={{ status: 'reconnecting', attempt: 2, delayMs: 2000 }} />);
     expect(screen.getByRole('status')).toHaveTextContent('Reconectando en 2s');

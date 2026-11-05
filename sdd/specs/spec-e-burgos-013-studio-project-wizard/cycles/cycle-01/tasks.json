@@ -733,7 +733,7 @@
         "TASK-014",
         "TASK-018"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/studio/src/components/shell/LauncherShell.tsx",
         "apps/studio/src/components/WorkspaceApp.tsx",
@@ -741,7 +741,17 @@
         "apps/studio/src/components/ConnectionBanner.tsx",
         "apps/studio/src/components/ConnectScreen.tsx",
         "apps/studio/src/components/__tests__/"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 155646,
+        "tokens_out": 27467,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-04"
+      }
     },
     {
       "id": "TASK-020",
@@ -758,11 +768,21 @@
         "TASK-003",
         "TASK-019"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "sdd/documentation/es/",
         "sdd/documentation/en/"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 62244,
+        "tokens_out": 10984,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "custom",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-04"
+      }
     },
     {
       "id": "TASK-021",
@@ -775,13 +795,23 @@
       "depends_on": [
         "TASK-019"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "sdd/context/apps/cli/updates/",
         "sdd/context/apps/studio/updates/",
         "sdd/context/apps/studio-bridge/updates/",
         "sdd/context/libs/studio-protocol/updates/"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 62244,
+        "tokens_out": 10984,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "custom",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-04"
+      }
     },
     {
       "id": "TASK-022",
@@ -800,11 +830,21 @@
         "TASK-011",
         "TASK-003"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/studio-bridge/src/wizard/__e2e__/generation.e2e.spec.ts",
         "examples/"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 123066,
+        "tokens_out": 21717,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-04"
+      }
     },
     {
       "id": "TASK-023",
@@ -825,11 +865,21 @@
         "TASK-019",
         "TASK-011"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/studio/e2e/new-project.e2e.ts",
         "apps/studio/e2e/start-bridge.mjs"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 147691,
+        "tokens_out": 26063,
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-05"
+      }
     }
   ]
 }

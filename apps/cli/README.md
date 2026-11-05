@@ -101,6 +101,7 @@ $ npx @e-burgos/sdd-harness init
 > | Command             | Unattended form                                                                 |
 > | ------------------- | -------------------------------------------------------------------------------- |
 > | `init`              | `--config <path>` (the whole wizard as a validated file), plus `--here`/`--dir <path>` for the target, `--profile team\|solo` for the SDD working profile and `--skip-verify` to skip the closing gate, and `--tucu-ui`/`--no-tucu-ui` to decide the tucu-ui design skill + MCP without a prompt |
+> | `config validate`   | `<file\|-> [--json]` (exit `0` valid, `1` errors, `2` unreadable); `config catalog [--json]` is read-only |
 > | `add app`           | `<type> --name <name>`                                                            |
 > | `add tool`          | `<name> --type <what it is>`                                                      |
 > | `add spec`          | `<slug> --author <user> --title <text> --app apps/<name> [--apps <a,b>] [--depends-on <id|slug>]` |
@@ -283,6 +284,41 @@ running the CLI.
 harness config schema                                  # stdout
 harness config schema --out harness.config.schema.json # file
 ```
+
+### `harness config catalog`
+
+Print the options `init --config` accepts, exactly as this CLI version sees them: app types
+(with role, default name and port, stack, whether they are workspace-only, tucu-ui, ML or
+shell), lib types, Docker services (default port and image version), profiles, name/scope/author
+patterns, port range, the entries tolerated in a non-empty target directory and the JSON Schema.
+Studio's "New project" wizard reads it so it never hardcodes the contract.
+
+```bash
+harness config catalog          # human-readable list
+harness config catalog --json   # { format, cliVersion, modes, appTypes, libTypes, serviceTypes, profiles, patterns, portRange, targetDir, jsonSchema }
+```
+
+### `harness config validate`
+
+Validate a config without generating anything: JSON Schema and zod rules, app topology
+(mfe/mfe-shell/next-bff pairing, ports, names) and the preconditions `init` would enforce, then
+preview what `init` would resolve (final ports and where each came from, stack per app, tucu-ui,
+services, profile).
+
+```bash
+harness config validate harness.config.json          # .json | .mjs | .js
+harness config validate harness.config.json --json   # { format, cliVersion, ok, issues[], resolved }
+cat harness.config.json | harness config validate -  # JSON on stdin (max 64 KiB)
+```
+
+| Exit code | Meaning |
+| --------- | ------- |
+| `0`       | Valid (warnings may be present) |
+| `1`       | The config has errors |
+| `2`       | Could not be read (missing file, unsupported extension, invalid JSON, stdin over 64 KiB) or no file given |
+
+Each issue carries `severity` (`error` | `warning`), `code`, `path` and `message`; `resolved` is
+`null` when there are errors.
 
 ### `harness add app`
 

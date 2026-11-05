@@ -27,6 +27,11 @@ export const shellEs = {
   'shell.right.title': 'Detalles',
   'shell.module.error': 'Este módulo falló al mostrarse',
   'shell.module.retry': 'Reintentar',
+  'launcher.noProject': 'Sin proyecto abierto',
+  'launcher.hint': 'Creá un proyecto con el asistente. Para abrir uno existente, corré npx @e-burgos/sdd-studio en su carpeta.',
+  'switch.opening': 'Abriendo {project}…',
+  'switch.failed': 'No se pudo abrir {project}. Abrilo a mano: corré npx @e-burgos/sdd-studio en {root}.',
+  'switch.retry': 'Reintentar conexión',
 };
 
 export const shellEn = {
@@ -58,4 +63,9 @@ export const shellEn = {
   'shell.right.title': 'Details',
   'shell.module.error': 'This module failed to render',
   'shell.module.retry': 'Retry',
+  'launcher.noProject': 'No project open',
+  'launcher.hint': 'Create a project with the wizard. To open an existing one, run npx @e-burgos/sdd-studio in its folder.',
+  'switch.opening': 'Opening {project}…',
+  'switch.failed': 'Could not open {project}. Open it by hand: run npx @e-burgos/sdd-studio in {root}.',
+  'switch.retry': 'Retry connection',
 } satisfies Record<keyof typeof shellEs, string>;

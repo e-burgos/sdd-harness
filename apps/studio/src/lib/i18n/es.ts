@@ -33,6 +33,7 @@ export const es = {
   'connect.step2.body': 'En una terminal, parado en la raíz del repo, corré:',
   'connect.step3.title': 'Listo: se abre esta web conectada a tu repo',
   'connect.step3.body': 'El puente imprime un enlace con un token que cambia en cada arranque. Si el navegador no se abre solo, copiá ese enlace.',
+  'connect.launcherHint': 'Si lo corrés en una carpeta sin sdd/, Studio abre el asistente «Nuevo proyecto» para crear uno desde cero.',
   'connect.requirements': 'Requisitos',
   'connect.req.node': 'Node 20 o superior.',
   'connect.req.chrome': 'En Chrome, aceptá el permiso de acceso a la red local la primera vez.',

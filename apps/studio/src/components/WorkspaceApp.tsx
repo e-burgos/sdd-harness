@@ -1,15 +1,16 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { clearPairing, resolvePairing, type PairingInfo } from '@/lib/bridge/pairing';
 import { I18nProvider, useT } from '@/lib/i18n/i18n';
-import { NavProvider, type KnownEntities } from '@/lib/nav/use-nav';
+import { NavProvider, useNav, type KnownEntities } from '@/lib/nav/use-nav';
 import { AppShell } from './AppShell';
 import { ErrorBoundary } from './ErrorBoundary';
 import { BridgeProvider, useBridge, useStudio } from './BridgeProvider';
 import { ConnectScreen } from './ConnectScreen';
 import { ConnectionBanner } from './ConnectionBanner';
 import { StudioHeader } from './StudioHeader';
+import { LauncherShell } from './shell/LauncherShell';
 import { StudioShell } from './shell/StudioShell';
 
 export function Connected() {
@@ -36,8 +37,21 @@ export function Connected() {
   return <ConnectedShell />;
 }
 
+export function WorkspaceArrival() {
+  const { workspaceEpoch } = useBridge();
+  const openHome = useNav((s) => s.openHome);
+  const handled = useRef(workspaceEpoch ?? 0);
+  useEffect(() => {
+    if (workspaceEpoch === undefined || workspaceEpoch === handled.current) return;
+    handled.current = workspaceEpoch;
+    openHome({ kind: 'channel', channelId: 'general' });
+  }, [workspaceEpoch, openHome]);
+  return null;
+}
+
 function ConnectedShell() {
-  const { connection, syncError, retrySync } = useBridge();
+  const { connection, syncError, retrySync, workspaceMode, switching, retrySwitch } = useBridge();
+  const launcher = connection.status === 'open' ? connection.welcome?.workspace === null : workspaceMode === 'launcher';
   const snapshot = useStudio((s) => s.snapshot);
   const welcomeProject = connection.status === 'open' ? connection.welcome?.workspace?.project : undefined;
   const project = snapshot?.project ?? welcomeProject ?? '';
@@ -50,10 +64,11 @@ function ConnectedShell() {
   );
   return (
     <NavProvider project={project} known={known}>
+      <WorkspaceArrival />
       <AppShell>
-        <StudioHeader />
-        <ConnectionBanner connection={connection} syncError={syncError} onRetry={retrySync} />
-        <StudioShell />
+        <StudioHeader launcher={launcher} />
+        <ConnectionBanner connection={connection} syncError={syncError} onRetry={retrySync} switching={switching} onRetrySwitch={retrySwitch} />
+        {launcher ? <LauncherShell /> : <StudioShell />}
       </AppShell>
     </NavProvider>
   );

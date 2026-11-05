@@ -267,6 +267,26 @@ export const COMMANDS: Command[] = [
     ],
   },
   {
+    name: 'config catalog',
+    usage: 'harness config catalog [--json]',
+    summary: 'Prints the options the config accepts, exactly as this CLI version sees them.',
+    points: [
+      'App types (role, default name and port, stack, monorepo-only, tucu-ui, ML, shell), lib types, Docker services, profiles, name/scope/author patterns, port range, entries tolerated in a non-empty target and the JSON Schema.',
+      '--json: { format, cliVersion, modes, appTypes, libTypes, serviceTypes, profiles, patterns, portRange, targetDir, jsonSchema }. The Studio wizard reads it so it never hardcodes the contract.',
+    ],
+  },
+  {
+    name: 'config validate',
+    usage: 'harness config validate <file|-> [--json]',
+    summary: 'Validates a config without generating anything and previews what init would resolve.',
+    points: [
+      'Accepts .json, .mjs or .js; with "-" it reads JSON from stdin (64 KiB max).',
+      'Checks the schema, app topology (mfe, mfe-shell, next-bff, ports, names) and the preconditions of init; returns final ports (explicit, default or shifted), stack per app, tucu-ui, services and profile.',
+      '--json: { format, cliVersion, ok, issues[], resolved }; each issue carries severity (error | warning), code, path and message; resolved is null when there are errors.',
+      'Exit codes: 0 valid (warnings allowed), 1 has errors, 2 could not be read (missing file, unsupported extension, invalid JSON, stdin over the limit) or no file given.',
+    ],
+  },
+  {
     name: 'add app',
     usage: 'harness add app [type] --name <name>',
     summary: 'Adds an app to an existing workspace.',
@@ -816,6 +836,21 @@ export const UI = {
         title: 'Offline or with Safari',
         body: 'The UI also ships inside the bridge: it is served from 127.0.0.1, with no dependency on the published site or on Safari restrictions around local ws://.',
         command: 'npx @e-burgos/sdd-studio --local-ui',
+      },
+      {
+        title: 'New project (launcher mode)',
+        body: 'If you run the bridge in a folder without sdd/, it does not abort: it starts in launcher mode and Studio shows only the New project module, a six-step wizard (scope, shape, frontend, backend, extras, summary) that validates the config live with harness config validate, checks pnpm, git and the registry, and generates the workspace with the CLI pinned next to the bridge (harness init --config --here). It has per-stage progress, cancel and a result screen to open the new project in Studio.',
+        command: 'npx @e-burgos/sdd-studio',
+      },
+      {
+        title: 'Safe target folder (--allow-target)',
+        body: 'It only generates inside your home or the folders you pass with --allow-target (absolute paths, comma-separated); the base folder itself is refused. The target must be missing, empty or hold only harmless entries (.git, README.md, LICENSE…); if it falls inside the opened project or has tolerated entries, it asks for confirmation.',
+        command: 'npx @e-burgos/sdd-studio --allow-target /srv/projects',
+      },
+      {
+        title: 'New project limitations',
+        body: 'A failed or cancelled generation cannot be resumed: start again on an empty target. Python apps need uv and Python, and Spring Boot apps a JDK, installed on your machine; the bridge does not install toolchains. pnpm install writes to the global pnpm store and runs third-party postinstall scripts, as it does from the terminal. Release order: CLI, then the web app, then the bridge.',
+        command: null as string | null,
       },
       {
         title: 'Security',

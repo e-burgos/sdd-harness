@@ -323,6 +323,26 @@ export const COMMANDS: Command[] = [
     ],
   },
   {
+    name: 'config catalog',
+    usage: 'harness config catalog [--json]',
+    summary: 'Imprime las opciones que acepta la config, tal como las ve esta versión de la CLI.',
+    points: [
+      'Tipos de app (rol, nombre y puerto por defecto, stack, solo-monorepo, tucu-ui, ML, shell), tipos de lib, servicios Docker, perfiles, patrones de nombre/scope/autor, rango de puertos, entradas toleradas en un destino no vacío y el JSON Schema.',
+      '--json: { format, cliVersion, modes, appTypes, libTypes, serviceTypes, profiles, patterns, portRange, targetDir, jsonSchema }. El wizard de Studio lo lee para no hardcodear el contrato.',
+    ],
+  },
+  {
+    name: 'config validate',
+    usage: 'harness config validate <archivo|-> [--json]',
+    summary: 'Valida una config sin generar nada y muestra qué resolvería init.',
+    points: [
+      'Acepta .json, .mjs o .js; con "-" lee JSON por stdin (máximo 64 KiB).',
+      'Chequea schema, topología de apps (mfe, mfe-shell, next-bff, puertos, nombres) y las precondiciones de init; devuelve puertos finales (explícito, default o corrido), stack por app, tucu-ui, servicios y perfil.',
+      '--json: { format, cliVersion, ok, issues[], resolved }; cada issue trae severity (error | warning), code, path y message; resolved es null si hay errores.',
+      'Exit codes: 0 válida (puede haber warnings), 1 con errores, 2 no se pudo leer (archivo inexistente, extensión no soportada, JSON inválido, stdin excedido) o falta el archivo.',
+    ],
+  },
+  {
     name: 'add app',
     usage: 'harness add app [tipo] --name <nombre>',
     summary: 'Agrega una app a un workspace existente.',
@@ -889,6 +909,21 @@ export const UI = {
         title: 'Sin internet o con Safari',
         body: 'La UI también viaja dentro del puente: se sirve desde 127.0.0.1, sin depender del sitio publicado ni de las restricciones de Safari con ws:// local.',
         command: 'npx @e-burgos/sdd-studio --local-ui',
+      },
+      {
+        title: 'Nuevo proyecto (modo launcher)',
+        body: 'Si corrés el puente en una carpeta sin sdd/, no aborta: arranca en modo launcher y Studio muestra solo el módulo Nuevo proyecto, un wizard de seis pasos (alcance, forma, frontend, backend, extras, resumen) que valida la config en vivo con harness config validate, chequea pnpm, git y el registry, y genera el workspace con la CLI fijada junto al puente (harness init --config --here). Hay progreso por etapas, cancelación y una pantalla de resultado para abrir el proyecto nuevo en Studio.',
+        command: 'npx @e-burgos/sdd-studio',
+      },
+      {
+        title: 'Carpeta destino segura (--allow-target)',
+        body: 'Solo se genera dentro de tu home o de las carpetas que pases con --allow-target (rutas absolutas, separadas por coma); la carpeta base en sí se rechaza. El destino debe no existir, estar vacío o tener solo entradas inocuas (.git, README.md, LICENSE…); si queda dentro del proyecto abierto o tiene entradas toleradas, pide confirmación.',
+        command: 'npx @e-burgos/sdd-studio --allow-target /srv/proyectos',
+      },
+      {
+        title: 'Limitaciones de Nuevo proyecto',
+        body: 'Una generación fallida o cancelada no se puede reanudar: empezá de nuevo en un destino vacío. Las apps Python necesitan uv y Python, y las Spring Boot un JDK, instalados en tu máquina; el puente no instala toolchains. pnpm install escribe en el store global de pnpm y corre postinstall de terceros, igual que desde la terminal. Orden de release: CLI, después la web, después el puente.',
+        command: null as string | null,
       },
       {
         title: 'Seguridad',

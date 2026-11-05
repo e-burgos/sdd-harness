@@ -10,7 +10,7 @@ import { useStudio } from './BridgeProvider';
 import { GateStatusModal } from './GateStatusModal';
 import { AgentAvatar } from './workspace/AgentAvatar';
 
-export function StudioHeader() {
+export function StudioHeader({ launcher = false }: { launcher?: boolean }) {
   const { t, lang, setLang } = useT();
   const mode = useTheme((s) => s.mode);
   const setMode = useTheme((s) => s.setMode);
@@ -41,7 +41,12 @@ export function StudioHeader() {
             <Badge variant="soft" size="micro" shape="pill" tone="success" className="gap-1.5 px-2 py-0.5 font-mono text-micro">v0.16</Badge>
           </span>
         </div>
-        {snapshot?.project && (
+        {launcher && (
+          <span className="hidden sm:inline-flex items-center text-xs text-ink-500 border-l border-foreground/10 pl-3 truncate max-w-[240px]">
+            {t('launcher.noProject')}
+          </span>
+        )}
+        {!launcher && snapshot?.project && (
           <span className="hidden sm:inline-flex items-center text-xs text-ink-500 border-l border-foreground/10 pl-3 font-mono truncate max-w-[200px]">
             {snapshot.project}
           </span>
@@ -50,7 +55,7 @@ export function StudioHeader() {
 
       {/* Right Telemetry Pills & Language */}
       <div className="flex items-center gap-2.5">
-        <button
+        {!launcher && <button
           type="button"
           data-testid="gate-chip"
           data-gate={gate.kind}
@@ -74,15 +79,15 @@ export function StudioHeader() {
               {t(gateMode === 'warn' ? 'module.kit.tools.warn' : 'module.kit.tools.block')}
             </span>
           )}
-        </button>
+        </button>}
 
         {/* Working Swarm Presence Counter */}
-        <Tooltip size="xs" arrow={false} content={t('ui.header.activeHint', { n: workingAgents.length })}>
+        {!launcher && <Tooltip size="xs" arrow={false} content={t('ui.header.activeHint', { n: workingAgents.length })}>
           <Badge variant="soft" size="micro" shape="pill" tone={workingAgents.length > 0 ? 'info' : 'neutral'} data-testid="presence-pill" className={`gap-1.5 px-2.5 py-1 font-mono text-meta ${workingAgents.length > 0 ? 'animate-pulse' : ''}`}>
             <span className={`h-1.5 w-1.5 rounded-full ${workingAgents.length > 0 ? 'bg-sky-400' : 'bg-emerald-400'}`} />
             <span>{workingAgents.length > 0 ? t('ui.header.activeCount', { n: workingAgents.length }) : t('ui.header.ready')}</span>
           </Badge>
-        </Tooltip>
+        </Tooltip>}
 
         {/* Language Toggle */}
         <Tooltip size="xs" arrow={false} content={t('ui.header.langToggle')}>

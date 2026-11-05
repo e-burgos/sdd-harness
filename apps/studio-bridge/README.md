@@ -55,6 +55,38 @@ Browser (studio.sdd.estebanburgos.com.ar)        Your machine
 
 The web is a static page; everything that touches your code runs in the bridge, on your machine.
 
+## Launcher mode and "New project"
+
+Run `npx @e-burgos/sdd-studio` in a folder **without** `sdd/` and the bridge starts in
+**launcher mode** instead of aborting: it prints `No sdd/ in <dir>: launcher mode (New project)`
+and Studio opens with a single module, **New project**, a six-step wizard (scope, shape,
+frontend, backend, extras, summary) that generates a workspace by running the pinned
+`@e-burgos/sdd-harness` CLI installed next to the bridge (`harness init --config
+harness.config.json --here -y`). Nothing is generated until you confirm the summary.
+
+- **Safe target.** The destination must be inside your home directory or inside a folder passed
+  with `--allow-target` (absolute paths, comma-separated); the base folder itself is refused.
+  The bridge resolves symlinks first and accepts only a missing folder, an empty one, or one that
+  holds only harmless entries (`.git`, `README.md`, `LICENSE`…). A destination inside the project
+  you opened, or with tolerated entries, asks for explicit confirmation; a folder with other
+  content is refused.
+- **Preflight.** Before generating it checks Node, pnpm, git (and your git identity) and whether
+  the npm registry is reachable, and says what is missing.
+- **Progress, cancel, result.** Six stages (prepare, scaffold, install, generate, validate,
+  build) with live output; you can cancel and the whole process tree is killed. On success you
+  can reveal the folder, copy its path or open the new project in Studio (workspace switch);
+  if the closing gate fails the project is kept and the log tells you why.
+- **With `sdd/`.** In a repo that already has the kit nothing changes: the bridge opens it as
+  before, and the module is also available to create another project.
+
+Limitations: a failed or cancelled generation **cannot be resumed** (start again on an empty
+target or delete the leftovers); Python apps need `uv`/Python and Spring Boot apps need a JDK on
+your machine, the bridge does not install toolchains; `pnpm install` writes to the global pnpm
+store and runs third-party postinstall scripts, as it would from the terminal.
+
+Release order: CLI first, then the hosted web, then the bridge (the bridge pins a CLI version
+that must already be on npm, and the hosted web must accept a bridge without a workspace).
+
 ## Requirements
 
 - Node 20 or later.
@@ -72,6 +104,7 @@ The web is a static page; everything that touches your code runs in the bridge, 
 | `--local-ui` | — | Serve the web from the bridge itself (`http://127.0.0.1:<port>/w/`): offline use, or browsers that block the hosted page (Safari) |
 | `--web-url <url>` | `https://studio.sdd.estebanburgos.com.ar` | Web to open |
 | `--allow-origin <a,b>` | — | Extra allowed browser origins |
+| `--allow-target <a,b>` | — | Extra absolute base directories where "New project" may generate (your home directory is always allowed) |
 | `--no-open` | — | Don't open the browser (the pairing link is printed) |
 | `--token <t>` | generated | Fixed pairing token (≥16 chars `[A-Za-z0-9_-]`), for tests/scripts only: it is visible in the process list |
 
@@ -114,6 +147,8 @@ Thread history lives in `.sdd-studio/` at the repo root; the folder ignores itse
 | Chrome never connects | Allow "local network access" for the site (lock icon → site settings) |
 | Safari never connects | Use `npx @e-burgos/sdd-studio --local-ui` |
 | "No sdd/ folder found in …" | Run it at the repo root, or install the kit first (see Quick start) |
+| "launcher mode (New project)" | There is no `sdd/` here: use the wizard, or run the bridge at a project root |
+| "outside the allowed folders" | The destination is not under your home directory: add it with `--allow-target /abs/path` |
 
 ## License
 
