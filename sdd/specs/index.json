@@ -234,6 +234,22 @@
       "created_at": "2026-11-03",
       "completed_at": null,
       "depends_on": []
+    },
+    {
+      "id": "spec-e-burgos-016-studio-wizard-motion",
+      "author": "e-burgos",
+      "slug": "studio-wizard-motion",
+      "folder": "sdd/specs/spec-e-burgos-016-studio-wizard-motion",
+      "file": "sdd/specs/spec-e-burgos-016-studio-wizard-motion/spec-e-burgos-016-studio-wizard-motion.spec.md",
+      "module": "studio-wizard-motion",
+      "app": "apps/studio",
+      "status": "in-progress",
+      "title": "Studio: wizard con graphic motion y skill crafted-motion en el kit",
+      "created_at": "2026-11-05",
+      "completed_at": null,
+      "depends_on": [
+        "spec-e-burgos-013-studio-project-wizard"
+      ]
     }
   ]
 }

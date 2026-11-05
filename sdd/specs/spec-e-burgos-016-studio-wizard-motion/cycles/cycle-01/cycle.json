@@ -1,0 +1,33 @@
+{
+  "$schema": "../../../../schemas/cycle.schema.json",
+  "cycle": 1,
+  "module": "studio-wizard-motion",
+  "spec": "spec-e-burgos-016-studio-wizard-motion",
+  "apps": [
+    "apps/studio",
+    "apps/cli"
+  ],
+  "phase": "studio-wizard-motion",
+  "flow": "lite",
+  "objectives": [
+    "Skill crafted-motion en el kit (US-1)",
+    "Escena de puertas con shader en Alcance (US-2)",
+    "Transición de pasos y selección (US-3)",
+    "Riel de progreso (US-4)",
+    "Generación viva (US-5)"
+  ],
+  "status": "in-progress",
+  "started_at": "2026-11-05",
+  "completed_at": null,
+  "documents": {
+    "plan": "sdd/specs/spec-e-burgos-016-studio-wizard-motion/cycles/cycle-01/plan.md",
+    "tasks": "sdd/specs/spec-e-burgos-016-studio-wizard-motion/cycles/cycle-01/tasks.json"
+  },
+  "artifacts": [],
+  "metrics": null,
+  "tables_created": [],
+  "endpoints_implemented": [],
+  "components_created": [],
+  "issues_found": [],
+  "reviewer_report": null
+}
