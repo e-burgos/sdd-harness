@@ -17,7 +17,7 @@ export async function revealPath(
   ctx: { bases: string[]; platform?: NodeJS.Platform; open?: SpawnOpener },
 ): Promise<void> {
   const platform = ctx.platform ?? process.platform;
-  const pathPlatform: PathPlatform = platform === 'win32' ? 'win32' : 'posix';
+  const pathPlatform: PathPlatform = process.platform === 'win32' ? 'win32' : 'posix';
   let real: string;
   try {
     real = await nativeRealpath(target);

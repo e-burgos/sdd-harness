@@ -1164,6 +1164,55 @@
           }
         ]
       }
+    },
+    {
+      "id": "FIX-e-burgos-013-001",
+      "author": "e-burgos",
+      "spec_id": "spec-e-burgos-013-studio-project-wizard",
+      "fix_document": "sdd/specs/spec-e-burgos-013-studio-project-wizard/fixes/fix-e-burgos-013-001.md",
+      "type": "BUGFIX",
+      "severity": "low",
+      "created_at": "2026-11-05",
+      "resolved_at": "2026-11-05",
+      "validated_at": null,
+      "title": "CI de PR #64: reveal en Windows y timer de tucu-ui Select en jsdom",
+      "estimation_hours": 1,
+      "description": "revealPath usaba la plataforma del abridor para la semántica de rutas y fallaba en Windows; el Select de tucu-ui deja un setTimeout que se dispara tras desmontar jsdom y Vitest lo reporta como error no manejado.",
+      "justification": "Corrige un error de semántica de rutas en el puente y estabiliza tests; sin contratos ni entidades nuevas.",
+      "related_modules": [
+        "studio-project-wizard"
+      ],
+      "affected_files": [
+        "apps/studio-bridge/src/wizard/reveal.ts",
+        "apps/studio/src/lib/test-utils/pick-option.ts",
+        "apps/studio/src/components/helpselect.spec.tsx",
+        "apps/studio/src/components/workspace/modes.spec.tsx",
+        "apps/studio/src/components/workspace/composer.spec.tsx",
+        "apps/studio/src/components/workspace/threadlink.spec.tsx"
+      ],
+      "test_reference": "reveal.spec.ts y specs con Select — verde local; pendiente CI ubuntu + windows-latest de PR #64",
+      "status": "implemented",
+      "cycle": null,
+      "usage": {
+        "provider_model": "claude/opus",
+        "effort": "medium",
+        "tokens_in": 90000,
+        "tokens_out": 5000,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-11-05",
+        "by_agent": [
+          {
+            "agent": "implementor-back",
+            "provider_model": "claude/opus",
+            "effort": "medium",
+            "tokens_in": 90000,
+            "tokens_out": 5000,
+            "approx": true,
+            "source": "declared-estimate"
+          }
+        ]
+      }
     }
   ]
 }

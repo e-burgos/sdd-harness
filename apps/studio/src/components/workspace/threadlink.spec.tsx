@@ -1,11 +1,13 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ThreadInfo, WorkspaceSnapshot } from '@sdd-studio/protocol';
 import { BridgeError } from '@/lib/bridge/client';
-import { openSelect, optionNames, pickOption } from '@/lib/test-utils/pick-option';
+import { openSelect, optionNames, pickOption, waitForSelectToClose } from '@/lib/test-utils/pick-option';
 import { I18nProvider } from '@/lib/i18n/i18n';
 import { createStudioStore } from '@/lib/store/store';
 import { BridgeContext, type BridgeContextValue } from '../BridgeProvider';
 import { ThreadLinkPicker } from './ThreadLinkPicker';
+
+afterEach(waitForSelectToClose);
 
 const options = { agent: 'sdd-planner', model: 'kit' as const, effort: null, permissionMode: 'default' as const };
 const thread = (link: ThreadInfo['link']): ThreadInfo => ({

@@ -1,11 +1,13 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { defaultThreadOptions, type WorkspaceSnapshot } from '@sdd-studio/protocol';
-import { optionNames, pickOption } from '@/lib/test-utils/pick-option';
+import { optionNames, pickOption, waitForSelectToClose } from '@/lib/test-utils/pick-option';
 import { I18nProvider } from '@/lib/i18n/i18n';
 import { createStudioStore } from '@/lib/store/store';
 import { BridgeContext, type BridgeContextValue } from '../BridgeProvider';
 import { Composer } from './Composer';
 import { ModeSelectors, type ModeSelectorsProps } from './ModeSelectors';
+
+afterEach(waitForSelectToClose);
 
 const spec = (id: string, dependsOn: string[] = []) => ({ id, title: id, status: 'in-progress', folder: 'f', module: null, app: null, dependsOn });
 const snapshot = (profile: 'team' | 'solo'): WorkspaceSnapshot => ({
