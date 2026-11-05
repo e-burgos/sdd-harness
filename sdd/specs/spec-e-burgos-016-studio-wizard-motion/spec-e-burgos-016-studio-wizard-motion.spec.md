@@ -1,6 +1,6 @@
 # SPEC-e-burgos-016: Studio — wizard con graphic motion y skill crafted-motion en el kit
 
-> Estado: **in-progress** (2026-11-05). cycle-01 abierto (flow lite).
+> Estado: **completed** (2026-11-05). cycle-01 cerrado (flow lite, 7/7 tasks).
 > Sucesora de spec-e-burgos-013 (wizard de proyecto). Referencia visual: la landing pública de
 > Display Ads (clientes.displayads.com.ar, código en opticagestion `apps/web/src/modules/landing/`).
 

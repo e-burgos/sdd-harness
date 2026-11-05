@@ -16,18 +16,145 @@
     "Riel de progreso (US-4)",
     "Generación viva (US-5)"
   ],
-  "status": "in-progress",
+  "status": "completed",
   "started_at": "2026-11-05",
-  "completed_at": null,
+  "completed_at": "2026-11-05",
   "documents": {
     "plan": "sdd/specs/spec-e-burgos-016-studio-wizard-motion/cycles/cycle-01/plan.md",
     "tasks": "sdd/specs/spec-e-burgos-016-studio-wizard-motion/cycles/cycle-01/tasks.json"
   },
   "artifacts": [],
-  "metrics": null,
+  "metrics": {
+    "tasks_total": 7,
+    "tasks_completed": 7,
+    "tasks_skipped": 0,
+    "story_points": 20,
+    "files_created": [
+      "apps/cli/templates/sdd/skills/crafted-motion/SKILL.md",
+      "apps/cli/templates/sdd/skills/crafted-motion/references/01-tokens.md",
+      "apps/cli/templates/sdd/skills/crafted-motion/references/02-runtime.md",
+      "apps/cli/templates/sdd/skills/crafted-motion/references/03-recetas.md",
+      "apps/cli/templates/sdd/skills/crafted-motion/references/04-pasos-wizard.md",
+      "apps/cli/templates/sdd/skills/crafted-motion/references/05-trampas-qa.md",
+      "apps/cli/templates/sdd/skills/crafted-motion/references/06-shader-costura.md",
+      "apps/studio/src/components/modules/new-project/__tests__/wizard-motion.spec.tsx",
+      "apps/studio/src/components/modules/new-project/motion/StepStage.tsx",
+      "apps/studio/src/components/modules/new-project/motion/WordTitle.tsx",
+      "apps/studio/src/components/modules/new-project/motion/use-step-focus.ts",
+      "apps/studio/src/components/modules/new-project/steps/scope/DoorMocks.tsx",
+      "apps/studio/src/components/modules/new-project/steps/scope/ScopeDoors.tsx",
+      "apps/studio/src/components/modules/new-project/steps/scope/SeamCanvas.tsx",
+      "apps/studio/src/components/modules/new-project/steps/scope/scope-doors-motion.ts",
+      "apps/studio/src/lib/motion/motion-tokens.ts",
+      "apps/studio/src/lib/motion/seam-shader.ts",
+      "apps/studio/src/lib/motion/use-motion-allowed.ts",
+      "apps/studio/src/lib/motion/use-section-motion.ts",
+      "sdd/skills/crafted-motion/SKILL.md",
+      "sdd/skills/crafted-motion/references/01-tokens.md",
+      "sdd/skills/crafted-motion/references/02-runtime.md",
+      "sdd/skills/crafted-motion/references/03-recetas.md",
+      "sdd/skills/crafted-motion/references/04-pasos-wizard.md",
+      "sdd/skills/crafted-motion/references/05-trampas-qa.md",
+      "sdd/skills/crafted-motion/references/06-shader-costura.md"
+    ],
+    "files_modified": [
+      "apps/cli/templates/sdd/agents/sdd-implementor-front.agent.md",
+      "apps/cli/templates/sdd/catalog.json",
+      "apps/cli/templates/sdd/documentation/en/README.md",
+      "apps/cli/templates/sdd/documentation/es/README.md",
+      "apps/cli/templates/sdd/skills/sdd-file-structure/SKILL.md",
+      "apps/studio/package.json",
+      "apps/studio/src/app/globals.css",
+      "apps/studio/src/components/modules/new-project/GenerationProgress.tsx",
+      "apps/studio/src/components/modules/new-project/GenerationResult.tsx",
+      "apps/studio/src/components/modules/new-project/NewProjectCenter.tsx",
+      "apps/studio/src/components/modules/new-project/NewProjectPanel.tsx",
+      "apps/studio/src/components/modules/new-project/OptionCard.tsx",
+      "apps/studio/src/components/modules/new-project/steps/ScopeStep.tsx",
+      "apps/studio/src/components/modules/new-project/wizard-context.tsx",
+      "apps/studio/src/lib/i18n/modules/wizard.ts",
+      "pnpm-lock.yaml",
+      "sdd/components.json"
+    ],
+    "files_deleted": [],
+    "usage": {
+      "tokens_in": 1600000,
+      "tokens_out": 70000,
+      "approx": true,
+      "source": "declared-estimate",
+      "by_tier": {
+        "claude/opus": {
+          "tokens_in": 1600000,
+          "tokens_out": 70000,
+          "approx": true,
+          "source": "declared-estimate"
+        }
+      },
+      "by_agent": [
+        {
+          "agent": "implementor-front",
+          "label": "6 tasks (TASK-001, TASK-002, TASK-003, TASK-004, TASK-005, TASK-006)",
+          "provider_model": "claude/opus",
+          "effort": "medium",
+          "tokens_in": 1320000,
+          "tokens_out": 58000,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-05"
+        },
+        {
+          "agent": "reviewer",
+          "label": "TASK-007 verificación y cierre",
+          "provider_model": "claude/opus",
+          "effort": "medium",
+          "tokens_in": 280000,
+          "tokens_out": 12000,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-05"
+        }
+      ]
+    }
+  },
   "tables_created": [],
   "endpoints_implemented": [],
-  "components_created": [],
-  "issues_found": [],
-  "reviewer_report": null
+  "components_created": [
+    "COMP-116",
+    "COMP-117",
+    "COMP-118",
+    "COMP-119",
+    "COMP-120",
+    "COMP-121",
+    "COMP-122"
+  ],
+  "issues_found": [
+    "Corregido: el wrapper animado de cada paso tenía min-h-0 y en pasos largos el contenido se pisaba con el footer.",
+    "Corregido: al restaurar el wizard desde sessionStorage se veía el paso Alcance y saltaba al guardado; el centro espera a estar posicionado.",
+    "Corregido: el scroll del paso anterior se heredaba; cambiar de paso vuelve arriba y enfoca el título.",
+    "Corregido: flash del contenido antes de la entrada de GSAP; data-intro=pending y build en useLayoutEffect.",
+    "Corregido: el texto bajo el pill de full stack se desplazaba con la costura.",
+    "Abierto: la escena de bienvenida y la pantalla de conexión todavía no tienen este lenguaje (onboarding wizard-first)."
+  ],
+  "reviewer_report": {
+    "approved": true,
+    "date": "2026-11-05",
+    "ca_results": {
+      "US-1": "PASS - skill crafted-motion (SKILL.md + 6 references) en el kit y en el repo, nombrado por el implementador front, README es/en y sdd-file-structure; catálogo regenerado",
+      "US-2": "PASS - puertas front/back sobre shader de costura que sigue hover, foco y elección; full stack centra la costura y enciende ambos lados; fallback estático sin canvas en < 1024 px, reduced motion y sin WebGL (spec)",
+      "US-3": "PASS - transición dirigida por avance/retroceso, título palabra por palabra, opciones escalonadas, brillo y pop al elegir, foco al título y aria-live",
+      "US-4": "PASS - riel con relleno hasta el paso actual (spec scaleY), punto actual latiendo y checks con pop",
+      "US-5": "PASS - pipeline con barra por etapas (spec scaleX), etapa en curso latiendo, checks con pop y celebración de éxito; el log no se anima"
+    },
+    "tests": {
+      "protocol": "OK - 175 tests",
+      "cli": "OK - 525 tests (11 skip)",
+      "bridge": "OK - 953 tests (5 skip)",
+      "studio": "OK - 1197 tests (8 nuevos en wizard-motion.spec.tsx)",
+      "build": "OK",
+      "typecheck": "OK",
+      "e2e-wizard": "OK - 4/4 en Chrome de escritorio con motion activo",
+      "visual-qa": "OK - 1440 dark y light, 390 sin overflow horizontal"
+    },
+    "notes": "Flow lite, un solo actor (opus/medium). Telemetría declarada (estimación). El latido de la etapa en curso no se vio en vivo porque el CLI falso termina al instante; está cubierto por el estado active del spec."
+  }
 }
