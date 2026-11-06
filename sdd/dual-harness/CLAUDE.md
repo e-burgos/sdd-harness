@@ -126,6 +126,23 @@ transparente: pedís `git status` y se ejecuta `rtk git status`.
   (`pnpm sdd:mod -- --status | --enable | --disable | --gate=warn|block`; el sdd-steward lo
   opera a pedido).
 
+## 🎨 tucu-ui — skill de diseño y MCP para frontends (OPCIONAL, apagado por defecto)
+
+[`@e-burgos/tucu-ui`](https://github.com/e-burgos/tucu-ui) es la librería de UI para React y
+Next. Con la integración prendida, el repo trae la skill `tucu-ui-design`
+(`sdd/integrations/skills/tucu-ui-design/`, enlazada en `.claude/skills`, `.github/skills` y
+`.agents/skills`) y el MCP `tucu-ui` en `.mcp.json`, `.vscode/mcp.json` y
+`.gemini/settings.json`.
+
+- **Si la skill está enlazada, usala** al construir o tocar UI de un frontend React/Next; si no
+  está, no la busques ni intentes instalarla.
+- **Nunca prendas ni apagues tucu-ui por tu cuenta**: el interruptor es del dev (`sdd/tools.json`;
+  `pnpm sdd:tucu -- --status | --enable | --disable`; el sdd-steward lo opera a pedido).
+- No edites a mano la entrada `tucu-ui` de los archivos MCP ni `sdd/integrations/`: los gestiona
+  `pnpm sdd:tucu`. `--status` funciona sin red; solo `--enable` sin la skill instalada la necesita.
+- Si `pnpm sdd:validate` avisa de enlaces o entradas faltantes, informá al dev: reparar es
+  `pnpm sdd:tucu -- --enable`, decisión suya.
+
 ## ⚙️ Selección de modelo y esfuerzo — anexo de la REGLA CERO (OBLIGATORIO — optimización de tokens/contexto)
 
 > [!IMPORTANT]
@@ -389,8 +406,6 @@ Cuando el problema **no puede esperar un ciclo SDD completo**, usar uno de estos
 - The `nx-generate` skill handles generator discovery internally - don't call nx_docs just to look up generator syntax
 
 <!-- nx configuration end-->
-
-
 ---
 
 ## Instrucciones previas del proyecto (absorbidas al instalar SDD)

@@ -38,3 +38,4 @@ Reglas mínimas no negociables:
    `sdd/tasks.json` es un índice generado (`pnpm sdd:rebuild-tasks-index`) — no editarlo a mano.
 7. **Código sin comentarios**: la documentación vive en los documentos SDD, no en el código.
 8. Código, commits y nombres en inglés; documentos SDD en el idioma del kit.
+9. **tucu-ui (opcional)**: si `sdd/integrations/skills/tucu-ui-design/` está enlazada en `.github/skills`, usala para UI React/Next. Prender o apagar la integración (`pnpm sdd:tucu -- --status | --enable | --disable`) es decisión del dev: no la cambies por tu cuenta.
