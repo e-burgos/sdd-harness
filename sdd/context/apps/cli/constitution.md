@@ -1,6 +1,6 @@
 # Constitución — apps/cli
 
-> Versión 1.0 | Última actualización: 2026-10-23 (profundización de contexto)
+> Versión 1.0 | Última actualización: 2026-11-06 (consolidación de fragmentos 011, 012, 013, 016, 017)
 
 ## 1. Propósito y Alcance
 
@@ -32,7 +32,10 @@
   - `docker.ts`, `mcp.ts`, `memory.ts`: Configuración opcional de servicios, MCP servers y grafos de conocimiento.
 - `update/sdd.ts`: Actualiza la instalación local de `sdd/` hacia la versión del kit empaquetada en la CLI sin sobrescribir specs, ciclos, fixes, contexto ni memoria.
 - `add/`: Scaffolding aditivo para `app`, `service` (Docker compose), `skill`, `spec` (`spec-[gh-user]-[NNN]-[slug]`) y `tool`.
-- `config/index.ts`: Inspección y exportación del JSON Schema del archivo de configuración (`harness.config.schema.json`).
+- `config/index.ts`: Inspección y exportación del JSON Schema del archivo de configuración (`harness.config.schema.json`), más dos subcomandos de solo lectura consumidos por el puente de Studio:
+  - `config catalog [--json]`: tipos de app/lib, servicios, perfiles, patrones, rango de puertos, entradas toleradas del destino, límites (`CONFIG_LIMITS`, `configBytes`) y el JSON Schema.
+  - `config validate <archivo|-> [--json]`: no genera nada; chequea schema, topología de apps y precondiciones de `init`; devuelve `{ format, cliVersion, ok, issues[], resolved }`. Exit 0 válida, 1 con errores, 2 ilegible (`.json`, `.mjs`, `.js` o stdin, máx. 64 KiB; con `--json` el exit 2 escribe `{ ok: false, error: { code, message } }`).
+  - Código en `src/config/{catalog,validate,app-options}.ts`; `init.ts` reutiliza `app-options.ts`.
 - `info.ts`: Diagnóstico de salud y metadatos del workspace.
 
 ### 3.2 Generadores (`src/generators/`)
@@ -41,13 +44,19 @@
 - `kit-migrations.ts`: Detecta y alerta sobre breaking changes o vocabulario obsoleto entre versiones del kit.
 - `workspace.generator.ts`: Construye la raíz de un monorepo Nx a partir de `templates/sdd/templates/nx-workspace/`, ajustando package.json, gitignore, npmrc y corriendo `runVerificationGate`.
 - `standalone.generator.ts`: Construye repositorios standalone con la app en la raíz pero gobernados íntegramente por el sistema SDD.
-- `app.generator.ts`: Genera aplicaciones de 7 tipos: `nestjs` (con soporte para webpack/jest plugin en workspace), `react`, `python`, `nextjs`, `fastify`, `springboot` (Maven) y `hono`.
+- `app.generator.ts`: Genera aplicaciones de 10 tipos: `nestjs` (con soporte para webpack/jest plugin en workspace), `react`, `python` (FastAPI + LangGraph con uv; `apps[].ml` suma TensorFlow), `nextjs`, `fastify`, `springboot` (Maven), `hono`, `next-bff` (Next con rutas API frente a `<APP>_UPSTREAM_URL`, puerto 3001), `mfe-shell` (4300) y `mfe` (4301+, `base: '/<mfe>/'`). Los tres últimos y `next-bff` son solo monorepo.
+  - Los frontend (`react`, `nextjs`, `next-bff`, `mfe-shell`, `mfe`) nacen con tucu-ui por defecto; `--no-tucu-ui` genera apps planas. Prioridad: flag > `apps[].tucuUi` > `sdd.tucu_ui` > encendido.
+  - Módulos de apoyo: `versions.ts` (única fuente de versiones, igualada por test con `templates/sdd/templates/nx-workspace/package.json`), `tucu-ui-app.ts`, `app-types.ts` (topología, puertos con `resolveAppPorts`, stack, `collectAppTopologyIssues`), `frontend-apps.ts`, `mfe-sync.ts`, `python-app.ts`, `utils/workspace-apps.ts`. `harness add app` mantiene la topología shell/mfe y `configure sdd` detecta los tipos nuevos.
 - `spec.generator.ts`: Generación determinista de especificaciones (`spec-[gh-user]-[NNN]-[slug]`), registro en `sdd/specs/index.json` y siembra de módulos en `pending_modules`.
 - `root-package.ts`, `docker.generator.ts`, `lib.generator.ts`.
 
 ### 3.3 Plantillas (`templates/`)
 - `templates/sdd/`: El kit SDD canónico completo que se distribuye a los repositorios de los usuarios.
 - `templates/sdd/templates/`: Blueprints portables de apps (`java-api`, `react-app`), libs (`ts-lib`) y workspace base (`nx-workspace`).
+- Integraciones opcionales del kit (apagadas por defecto):
+  - tucu-ui: `tucu_ui` en `sdd/tools.json`, `pnpm sdd:tucu -- --status | --enable [--parts=skill,mcp] [--force] | --disable [--purge]`. Instala la skill `tucu-ui-design` (`@e-burgos/tucu-ui-mcp@0.16.0`) en `sdd/integrations/skills/`, la enlaza en `.claude/skills`, `.github/skills` y `.agents/skills`, y suma el servidor `tucu-ui` a `.mcp.json`, `.vscode/mcp.json` y `.gemini/settings.json` sin pisar claves ajenas (`scripts/{sdd-tucu,tucu-ui-common,mcp-config}.mjs`). `integrations/` es prefijo de datos en `kit-manifest.ts`; `configure mcp` y `configure memory` usan el mismo merge. `harness init` y `configure sdd` lo ofrecen con `--tucu-ui` / `--no-tucu-ui`.
+  - Sesiones paralelas: cada sesión queda atada a un ciclo o fix en `sdd/.sessions/` (`scripts/lib/session-registry.mjs`, `scripts/sdd-use.mjs`, `schemas/session-binding.schema.json`); GATE B ata la sesión sola (línea `SDD-BIND` de `spec-gate.mjs`) y `pnpm sdd:use` la ata a mano. El mod `sdd-mod` (`skills/sdd-mod/hooks/.src/`, con copia de `session-registry.mjs` protegida por test de bytes) muestra todas las unidades abiertas y aplica el gate por sesión; con el mod apagado nada cambia.
+  - Skill `crafted-motion` (`skills/crafted-motion/`): método y recetas de graphic motion para frontends React/Next.
 - `templates/workspace/`: Archivos auxiliares (como `eslint.config.mjs` para workspaces Nx).
 
 ## 4. Comandos de Trabajo
@@ -64,3 +73,4 @@
 2. **Doble copia del kit en este monorepo:** La carpeta `sdd/` en la raíz de este monorepo es la instalación local activa (dogfooding). La carpeta `apps/cli/templates/sdd/` es el producto que se publica en npm. Si se arregla o mejora el kit, debe hacerse en `apps/cli/templates/sdd/` y luego correr `harness update sdd` o `pnpm setup:agents`.
 3. **Preservación en actualizaciones:** Toda adición al kit debe registrarse en `templates/sdd/catalog.json` y respetar la clasificación de pertenencia de `kit-manifest.ts` para no pisar trabajo del usuario en futuros updates.
 4. **Sincronización con documentación:** Cualquier comando, flag o cambio de comportamiento en la CLI debe reflejarse en los archivos bilingües de `apps/documentation/src/data/content.ts` y `content.en.ts`.
+5. **Contrato con el puente de Studio:** `@e-burgos/sdd-studio` depende de `@e-burgos/sdd-harness` (`workspace:*`) y fija su versión porque consume `config catalog`/`validate`. Una subida de la CLI que cambie el texto de salida de `init` obliga a regrabar los fixtures `apps/studio-bridge/src/wizard/__fixtures__/init-output/`. Orden de release: CLI, luego la web, luego el puente.

@@ -1,6 +1,6 @@
 # Context prompt — apps/studio
 
-> Última actualización: consolida los fragmentos de spec-e-burgos-009 cycle-03..06 y spec-e-burgos-010 cycle-01 (tucu-ui 3.9.1, shell con riel de módulos) | Fecha: 2026-11-02
+> Última actualización: consolida los fragmentos de spec-e-burgos-009 cycle-07, 010 cycle-02, 013 cycle-01, 016 cycle-01 y 017 cycle-01 | Fecha: 2026-11-06
 
 > Entry point para agentes y desarrolladores trabajando en `sdd-studio-web`.
 > Leer este documento antes de realizar cambios en la UI, componentes de workspace o stores de Zustand.
@@ -14,13 +14,15 @@ Es la aplicación web frontend de **SDD Studio**: una interfaz tipo Slack que se
 - **Página principal y emparejamiento:** `src/app/w/page.tsx` y `src/components/ConnectScreen.tsx`.
 - **Proveedor de WebSocket:** `src/components/BridgeProvider.tsx` y cliente en `src/lib/bridge/client.ts`.
 - **Shell y módulos:** `src/components/shell/` (`StudioShell`, `ModuleRail`, `ModulePanel`, `RightPanelFrame`), `src/components/modules/{home,specs,fixes,agents,activity,map,kit,architecture,metrics}` y navegación persistida en `src/lib/nav/`; estados SDD compartidos en `src/lib/sdd-status.ts`.
+- **Nuevo proyecto (wizard):** `src/components/modules/new-project/` (incluye `motion/` y `steps/scope/`), `src/components/shell/LauncherShell.tsx`, `src/lib/wizard/`, `src/lib/motion/`; requiere las features `project-wizard` y `workspace-switch` del puente.
+- **Unidades abiertas:** `src/components/OpenUnitsPill.tsx`, `OpenUnitsList.tsx` y `src/lib/open-units.ts` (header y Mission Control).
 - **Hilos y Streaming:** `src/components/workspace/ThreadView.tsx`, `Timeline.tsx`, `Composer.tsx`, `PendingMessages.tsx` y `ThreadLinkPicker.tsx`.
 - **Aprobaciones de herramientas:** `src/components/workspace/ApprovalCard.tsx`.
 - **Autenticación:** `src/components/workspace/AuthPanel.tsx`, `ApiKeyField.tsx`, `src/lib/use-subscription.ts`, `auth-preference.ts`, `usage-limit.ts`.
 - **Panel derecho:** `src/components/shell/RightPanelFrame.tsx` (solo en Inicio, Specs, Fixes, Agentes y Mapa).
 - **Adjuntos y menú `@`/`/`:** `src/lib/attachments/`, `use-attachment-*.ts`, `use-mention-menu.ts`, `AttachmentTray`, `AttachmentView`, `MentionMenu`.
 - **Mission Control:** `src/components/StudioHeader.tsx` (idioma, tema, chip de gate) y `src/components/mission-control/` (mapa del enjambre, Gates, inspector, visor de documentos, ecosistema, telemetría); modelos en `src/lib/agents.ts`, `gates.ts`, `agent-documents.ts` y `conversation.ts` (conversación elegida, sesión/proveedor reales, documentos y specs/fixes derivados de eventos; sin guiones ficticios).
-- **Tema y UI kit:** `@e-burgos/tucu-ui` 3.9.1 (`app/layout.tsx` con `ThemeModeScript`, `StudioThemeProvider.tsx`, `app/globals.css`, `lib/typography-tokens.ts`); envoltorios `HelpSelect` y `SegmentedControl`, el resto de componentes de tucu-ui directo; modo claro/oscuro desde `StudioHeader`; escala `text-micro|meta|ui|small|copy|title`.
+- **Tema y UI kit:** `@e-burgos/tucu-ui` 3.10.0 (`app/layout.tsx` con `ThemeModeScript`, `StudioThemeProvider.tsx`, `app/globals.css`, `lib/typography-tokens.ts`); envoltorios `HelpSelect` y `SegmentedControl`, el resto de componentes de tucu-ui directo; modo claro/oscuro desde `StudioHeader`; escala `text-micro|meta|ui|small|copy|title`.
 - **Capacidades del puente y flujo de spec:** `src/lib/use-bridge-features.ts`, `CapabilityNotice.tsx`, `QuestionForm.tsx`, `ContextMeter.tsx`, `ModeSelectors.tsx` + `lib/flow-choice.ts`, `PreparedConversations.tsx` + `lib/auto-conversation.ts`, `lib/link-targets.ts`, `lib/conversation-gate.ts`, `GateStatusModal`.
 - **Stores de Zustand:** `src/lib/store/` (`timeline.ts`, `state.ts`, `activity.ts`, `selectors.ts`); hooks en `src/lib/` (`use-collapsed-state.ts`, `use-stick-to-bottom.ts`, `use-panel-state.ts`).
 

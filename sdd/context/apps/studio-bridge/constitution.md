@@ -1,6 +1,6 @@
 # Constitución — apps/studio-bridge
 
-> Versión 1.4 | Última actualización: cycle-01 (spec-e-burgos-013-studio-project-wizard) | Fecha: 2026-11-05
+> Versión 1.5 | Última actualización: cycle-01 (spec-e-burgos-017-parallel-sessions) | Fecha: 2026-11-06
 
 ## 1. Propósito y Alcance
 
@@ -39,7 +39,7 @@
 - `judge.ts`: Núcleo de validación de ediciones de código (`judgeEdit`); exporta `OPEN_FIX`.
   - Herramientas monitoreadas: `EDIT_TOOLS` (`Edit`, `Write`, `MultiEdit`, `NotebookEdit`).
   - Carpetas exentas de gate: `sdd`, `.claude`, `.github`, `.gemini`, `.agents`, `.agent`, `.vscode`, `.idea`.
-  - Regla: Toda edición fuera de carpetas exentas es RECHAZADA (`deny`) a menos que exista un ciclo con `status: "in-progress"` o un fix abierto con `status: "pending" | "in-progress"`. Si el permiso está en modo warn, se deriva a la UI como solicitud de aprobación con aviso visible.
+  - Regla: Toda edición fuera de carpetas exentas es RECHAZADA (`deny`) a menos que exista un ciclo con `status: "in-progress"` o un fix abierto con `status: "pending" | "in-progress"`. La decisión es por sesión, igual que el mod: con varias unidades abiertas se resuelve contra la atadura de la conversación (`SessionBindings`). Si el permiso está en modo warn, se deriva a la UI como solicitud de aprobación con aviso visible.
 
 ### 3.3 Gestión de Sesiones y Presencia (`src/sessions/`)
 - `session-manager.ts`: Coordina las conversaciones (`threads`), el historial persistido (`store.ts`), las aprobaciones (`approval.respond`) y las notificaciones del bot (`channel.botHistory`). `thread.send` sobre un hilo ocupado devuelve `{ delivery: 'pending' }` (no `conflict`): los pendientes se persisten, se entregan en el punto de corte o como siguiente turno, se editan/quitan hasta su entrega y vuelven a pendientes si el interrupt no llegó a entregarlos. `send(threadId, MessageInput)` acepta `attachments`/`refs` opcionales; `Live.acceptTail` serializa la aceptación por hilo (FIFO); las refs se filtran y deduplican contra el snapshot (una ref inexistente viaja como texto plano).
@@ -49,10 +49,11 @@
 - `thread-link.ts`: álgebra pura de asociaciones múltiples (`assignLink`, `addManual`, `removeRef`, `detectRef(s)`, `legacyTargetOf`, `linkTargetExists` incluye spec). Quitar una asociación la deja descartada persistente; la detección nunca la reagrega ni pisa una manual. `thread.setLink` queda como compatibilidad sobre `targets` (`thread.updateLinks`).
 - `document-tracker.ts`: `DocumentChangeTracker` emite `document.touched` exacto para Write/Edit/MultiEdit/NotebookEdit y, para Bash, por instantánea de metadatos de `sdd/` antes/después (`SNAPSHOT_MAX_ENTRIES` 20 000, `SNAPSHOT_BUDGET_MS` 250, `MAX_TOUCHED_PER_TOOL` 50); atribución por hilo/spec y omisión si es ambigua.
 - Preguntas del proveedor: `AskUserQuestion` se desvía a `requestQuestion` (`question.requested`/`question.resolved`, `question.answer`); declinar o interrumpir cancela y `recover()` cancela las abiertas. `history(threadId, sinceSeq, includeDocumentTouched, includeQuestions)` oculta ambos tipos por defecto (webs anteriores). Título de sesión refrescado en `onSessionId` y cada `turn.end` (tope 3 s) con backfill de 20 hilos tras `recover()`.
+- `session-bindings.ts` (`SessionBindings`, `sessionIdOfThread`): ata cada conversación de Studio a su unidad abierta en el registro de sesiones del kit (arnés `studio`, fuente por conversación) y renueva el latido cada 60 s. Lee el registro vía `sdd/scripts/lib/session-registry.mjs` del workspace; con un kit viejo el puente cae al comportamiento previo. El mensaje de denegación pide vincular la conversación, no usar `pnpm sdd:use`.
 - `presence.ts`: Seguimiento en memoria de qué agentes y usuarios están activos en cada canal (una pregunta abierta cuenta como agente esperando).
 
 ### 3.4 Espacio de Trabajo e Introspección (`src/workspace/`)
-- `snapshot.ts`: Lee el sistema SDD local (`global.json`, `specs/index.json`, ciclos, `fixes.json`, `tools.json`, `pricing.json`) y construye el `WorkspaceSnapshot`. `workspace.snapshot` hace `await watcher.refresh()` antes de responder (FIX-e-burgos-001-001).
+- `snapshot.ts`: Lee el sistema SDD local (`global.json`, `specs/index.json`, ciclos, `fixes.json`, `tools.json`, `pricing.json`) y construye el `WorkspaceSnapshot`, que incluye `sessions` (ataduras del registro del kit, `sessions-feed.ts`: `createSessionsFeed`, `withSessions`, refresco cada 30 s). `workspace.snapshot` hace `await watcher.refresh()` antes de responder (FIX-e-burgos-001-001).
 - `watcher.ts`: Watcher con chokidar que debounceriza escrituras en disco y emite `workspace.changed`; re-escaneo periódico para converger cuando FSEvents pierde eventos; segundo watch sobre `.claude` solo si existe al arrancar, filtrado por `isClaudeCatalogPath` (agents/skills, profundidad 3, nunca worktrees).
 - `file-index.ts`: `createFileIndex(root)` — `git ls-files --cached --others --exclude-standard` con fallback a walk acotado (profundidad 12, 50 000 entradas); excluye secretos (`.env*` salvo example/sample/template, `.pem`, `.key`, `id_rsa*`, `.npmrc`, `.netrc`…), `node_modules`, `.git`, `.sdd-studio`, `.nx`, `.next`, `dist`, `coverage`, `.claude/worktrees/`; re-verifica cada resultado con realpath. Ranking por tiers (prefijo de basename, substring de basename, substring de ruta); no devuelve subsecuencias débiles en búsquedas cortas. Caché TTL 15 s; `listGit` inyectable.
 - `catalog.ts`: `loadCatalog` — agentes de `.claude/agents` y `sdd/agents`, skills de `.claude/skills` y `sdd/skills`, prompts de `sdd/prompts`; dedupe por realpath canónico (symlinks `.claude` → `sdd/`), tope 200 por tipo, descripciones a 300 caracteres.
@@ -105,4 +106,5 @@
 - Bash en segundo plano (`run_in_background`) solo se observa mientras dura su tool; escrituras fuera de `sdd/` durante un Bash no se detectan; un `touch` sin cambio cuenta como `modified`. Si recorrer `sdd/` dos veces por Bash molesta, reusar la instantánea como índice vivo alimentado por el watcher.
 - `getContextUsage` se pide tras cada resultado; si se vuelve costoso, pedirlo solo al cruzar el umbral.
 - Exponer la hora exacta de aprobaciones y preguntas para Actividad; exponer el interruptor de tucu-ui en el módulo Kit (requiere correr `sdd-tucu.mjs`).
+- cycle-02 de sesiones paralelas: reservas de archivo y avisos entre sesiones.
 - Wizard: `SIGKILL` al puente deja huérfano el grupo de procesos en POSIX (R-3); `pnpm install` escribe en el store global y corre postinstall de terceros (R-6); pendientes de Windows del review de spec-e-burgos-013 (seguimiento).
