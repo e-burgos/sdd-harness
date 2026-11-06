@@ -155,6 +155,9 @@
       "file": "pricing.schema.json"
     },
     {
+      "file": "session-binding.schema.json"
+    },
+    {
       "file": "specs-index.schema.json"
     },
     {
