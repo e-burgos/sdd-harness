@@ -259,10 +259,10 @@
       "file": "sdd/specs/spec-e-burgos-017-parallel-sessions/spec-e-burgos-017-parallel-sessions.spec.md",
       "module": "parallel-sessions",
       "app": "apps/cli",
-      "status": "in-progress",
+      "status": "completed",
       "title": "Sesiones en paralelo: cada sesión sabe en qué spec, ciclo o fix trabaja y no pisa a las otras",
       "created_at": "2026-11-06",
-      "completed_at": null,
+      "completed_at": "2026-11-06",
       "depends_on": []
     }
   ]

@@ -25,12 +25,22 @@
       "estimation_hours": 3,
       "story_points": 5,
       "depends_on": [],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/cli/templates/sdd/schemas/file-lease.schema.json",
         "apps/cli/templates/sdd/schemas/session-request.schema.json",
         "apps/cli/templates/sdd/scripts/lib/session-registry.mjs"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 160000,
+        "tokens_out": 9000,
+        "approx": true,
+        "recorded_at": "2026-11-06",
+        "provider_model": "claude/opus",
+        "effort": "high",
+        "agent": "implementor-back",
+        "source": "declared-estimate"
+      }
     },
     {
       "id": "TASK-002",
@@ -43,10 +53,20 @@
       "depends_on": [
         "TASK-001"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/cli/templates/sdd/scripts/sdd-release.mjs"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 70000,
+        "tokens_out": 4000,
+        "approx": true,
+        "recorded_at": "2026-11-06",
+        "provider_model": "claude/opus",
+        "effort": "high",
+        "agent": "implementor-back",
+        "source": "declared-estimate"
+      }
     },
     {
       "id": "TASK-003",
@@ -60,11 +80,21 @@
       "depends_on": [
         "TASK-001"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/cli/templates/sdd/skills/sdd-mod/hooks/.src/sdd.ts",
         "apps/cli/templates/sdd/skills/sdd-mod/hooks/.src/register.tsx"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 170000,
+        "tokens_out": 9000,
+        "approx": true,
+        "recorded_at": "2026-11-06",
+        "provider_model": "claude/opus",
+        "effort": "high",
+        "agent": "implementor-back",
+        "source": "declared-estimate"
+      }
     },
     {
       "id": "TASK-004",
@@ -78,11 +108,21 @@
       "depends_on": [
         "TASK-001"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/studio-bridge/src/sessions/session-bindings.ts",
         "libs/studio-protocol/src/snapshot.ts"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 150000,
+        "tokens_out": 8000,
+        "approx": true,
+        "recorded_at": "2026-11-06",
+        "provider_model": "claude/opus",
+        "effort": "high",
+        "agent": "implementor-back",
+        "source": "declared-estimate"
+      }
     },
     {
       "id": "TASK-005",
@@ -95,10 +135,20 @@
       "depends_on": [
         "TASK-004"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/studio/src/components/OpenUnitsList.tsx"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 80000,
+        "tokens_out": 5000,
+        "approx": true,
+        "recorded_at": "2026-11-06",
+        "provider_model": "claude/opus",
+        "effort": "high",
+        "agent": "implementor-front",
+        "source": "declared-estimate"
+      }
     },
     {
       "id": "TASK-006",
@@ -114,10 +164,20 @@
         "TASK-002",
         "TASK-003"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/cli/templates/sdd/dual-harness/rules/sdd-gates.md"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 60000,
+        "tokens_out": 5000,
+        "approx": true,
+        "recorded_at": "2026-11-06",
+        "provider_model": "claude/opus",
+        "effort": "high",
+        "agent": "implementor-back",
+        "source": "declared-estimate"
+      }
     },
     {
       "id": "TASK-007",
@@ -135,8 +195,18 @@
         "TASK-005",
         "TASK-006"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [],
+      "usage": {
+        "tokens_in": 200000,
+        "tokens_out": 8000,
+        "approx": true,
+        "recorded_at": "2026-11-06",
+        "provider_model": "claude/opus",
+        "effort": "high",
+        "agent": "implementor-back",
+        "source": "declared-estimate"
+      }
     }
   ]
 }

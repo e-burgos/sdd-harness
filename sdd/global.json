@@ -162,9 +162,7 @@
       "description": "Wizard de Studio con graphic motion (puertas con shader, rieles, estados vivos) y skill crafted-motion en el kit.",
       "cycles_completed": 1,
       "completed_at": "2026-11-05"
-    }
-  ],
-  "in_progress_modules": [
+    },
     {
       "module": "parallel-sessions",
       "spec": "spec-e-burgos-017-parallel-sessions",
@@ -174,10 +172,12 @@
         "apps/studio",
         "libs/studio-protocol"
       ],
-      "cycles_completed": 1,
-      "description": "Visibilidad multi-ciclo, atadura de sesión a spec/ciclo/fix y reservas de archivo con aviso entre sesiones."
+      "cycles_completed": 2,
+      "description": "Visibilidad multi-ciclo, atadura de sesión a spec/ciclo/fix y reservas de archivo con aviso entre sesiones.",
+      "completed_at": "2026-11-06"
     }
   ],
+  "in_progress_modules": [],
   "pending_modules": [
     {
       "module": "github-integration",
