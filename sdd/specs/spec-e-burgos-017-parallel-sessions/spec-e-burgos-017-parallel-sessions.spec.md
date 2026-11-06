@@ -1,6 +1,6 @@
 # SPEC-e-burgos-017: Sesiones en paralelo — cada sesión sabe en qué trabaja y no pisa a las otras
 
-> Estado: **in-progress** (2026-11-06). cycle-01 cerrado (flow lite, 7/7 tasks); queda cycle-02. Pedido del dev tras trabajar en otro proyecto
+> Estado: **in-progress** (2026-11-06). cycle-01 cerrado (flow lite, 7/7 tasks); cycle-02 en curso. Pedido del dev tras trabajar en otro proyecto
 > con tres specs abiertas a la vez: Studio y la franja del mod mostraban una sola.
 
 ## Resumen ejecutivo

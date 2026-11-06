@@ -1,0 +1,33 @@
+{
+  "$schema": "../../../../schemas/cycle.schema.json",
+  "cycle": 2,
+  "module": "parallel-sessions",
+  "spec": "spec-e-burgos-017-parallel-sessions",
+  "apps": [
+    "apps/cli",
+    "apps/studio-bridge",
+    "apps/studio",
+    "libs/studio-protocol"
+  ],
+  "phase": "parallel-sessions",
+  "flow": "lite",
+  "objectives": [
+    "Reserva de archivo (US-5)",
+    "Las sesiones se comunican (US-6)",
+    "Studio muestra ataduras y reservas (US-7)"
+  ],
+  "status": "in-progress",
+  "started_at": "2026-11-06",
+  "completed_at": null,
+  "documents": {
+    "plan": "sdd/specs/spec-e-burgos-017-parallel-sessions/cycles/cycle-02/plan.md",
+    "tasks": "sdd/specs/spec-e-burgos-017-parallel-sessions/cycles/cycle-02/tasks.json"
+  },
+  "artifacts": [],
+  "metrics": null,
+  "tables_created": [],
+  "endpoints_implemented": [],
+  "components_created": [],
+  "issues_found": [],
+  "reviewer_report": null
+}
