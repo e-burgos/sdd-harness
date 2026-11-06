@@ -5,13 +5,40 @@ import type {
   CycleTask,
   ModSettings,
   OpenFix,
+  SessionBinding,
   Snapshot,
+  UnitRef,
 } from '../../.claude-plugin/contract';
+import {
+  autoBindUnit,
+  endBinding,
+  judgeSessionEdit,
+  listLiveBindings,
+  openUnitsOf,
+  parseBindMarker,
+  readBinding,
+  readBranch,
+  resolveRegistryDir,
+  sameUnit,
+  touchBinding,
+  unitKey,
+  writeBinding,
+} from './session-registry.mjs';
+import type { BindSource } from './session-registry.mjs';
 
 export type Reader = {
   read: (path: string) => Promise<string>;
   list: (path: string) => Promise<{ name: string; kind: string }[]>;
 };
+
+export type SessionStore = Reader & { write: (path: string, text: string) => Promise<void> };
+
+export type SessionContext = { id: string; now: number };
+
+const HARNESS = 'claude-code' as const;
+const BIND_COMMAND = /sdd:use|sdd:gate|spec-gate|sdd-use/;
+const GATE_COMMAND = /sdd:gate|spec-gate/;
+const OTHERS_SHOWN = 3;
 
 export type Verdict =
   | { kind: 'allow' }
@@ -82,20 +109,129 @@ async function openFixes(reader: Reader, root: string): Promise<OpenFix[]> {
     .map((f: OpenFix): OpenFix => ({ id: f.id, title: f.title, status: f.status }));
 }
 
-export async function loadSnapshot(reader: Reader, root: string): Promise<Snapshot> {
+function emptySnapshot(settings: ModSettings, extra: Partial<Snapshot> = {}): Snapshot {
+  return { settings, cycles: [], fixes: [], openUnits: [], mine: null, others: [], ...extra };
+}
+
+async function bindSession(
+  store: SessionStore,
+  root: string,
+  dir: string,
+  session: SessionContext,
+  unit: UnitRef,
+  source: BindSource,
+): Promise<SessionBinding> {
+  return writeBinding(store, dir, {
+    sessionId: session.id,
+    unit,
+    worktree: root,
+    harness: HARNESS,
+    source,
+    now: session.now,
+  });
+}
+
+async function readSessionState(
+  store: Reader,
+  root: string,
+  session: SessionContext,
+): Promise<{ mine: SessionBinding | null; others: SessionBinding[]; dir: string }> {
+  const dir = await resolveRegistryDir(store, root);
+  const live = await listLiveBindings(store, dir, session.now);
+  return {
+    dir,
+    mine: live.find((b) => b.session_id === session.id) ?? null,
+    others: live.filter((b) => b.session_id !== session.id),
+  };
+}
+
+export async function loadSnapshot(
+  reader: Reader | SessionStore,
+  root: string,
+  session?: SessionContext,
+): Promise<Snapshot> {
   const tools = await readJson(reader, `${root}/sdd/tools.json`).catch(() => null);
   const settings = readSettings(tools);
-  if (!settings.enabled) return { settings, cycles: [], fixes: [] };
+  if (!settings.enabled) return emptySnapshot(settings);
   try {
     const [cycles, fixes] = await Promise.all([
       activeCycles(reader, root),
       openFixes(reader, root),
     ]);
-    return { settings, cycles, fixes };
+    const openUnits = openUnitsOf(
+      cycles,
+      fixes.map((f) => ({ id: f.id })),
+    ) as UnitRef[];
+    const base = emptySnapshot(settings, { cycles, fixes, openUnits });
+    if (!session) return base;
+    try {
+      const state = await readSessionState(reader, root, session);
+      let mine = state.mine;
+      if ('write' in reader) {
+        const decision = autoBindUnit({
+          binding: mine,
+          openUnits,
+          branch: await readBranch(reader, root),
+          now: session.now,
+        });
+        if (decision) {
+          mine = await bindSession(reader, root, state.dir, session, decision.unit, decision.source);
+        }
+      }
+      return { ...base, mine, others: state.others };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      return { ...base, registryError: message.slice(0, 120) };
+    }
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    return { settings, cycles: [], fixes: [], error: message.slice(0, 120) };
+    return emptySnapshot(settings, { error: message.slice(0, 120) });
   }
+}
+
+export function outputText(result: unknown): string {
+  if (typeof result === 'string') return result;
+  if (result === null || typeof result !== 'object') return '';
+  const record = result as { stdout?: unknown; stderr?: unknown; result?: unknown; text?: unknown };
+  return [outputText(record.result), outputText(record.text), outputText(record.stdout), outputText(record.stderr)]
+    .filter((part) => part !== '')
+    .join('\n');
+}
+
+export async function bindFromCommand(
+  store: SessionStore,
+  root: string,
+  session: SessionContext,
+  command: string,
+  output: unknown,
+): Promise<UnitRef | null> {
+  if (!BIND_COMMAND.test(command)) return null;
+  const unit = parseBindMarker(outputText(output)) as UnitRef | null;
+  if (!unit) return null;
+  const tools = await readJson(store, `${root}/sdd/tools.json`).catch(() => null);
+  if (!readSettings(tools).enabled) return null;
+  const [cycles, fixes] = await Promise.all([activeCycles(store, root), openFixes(store, root)]);
+  const open = openUnitsOf(cycles, fixes.map((f) => ({ id: f.id }))) as UnitRef[];
+  if (!open.some((candidate) => sameUnit(candidate, unit))) return null;
+  const dir = await resolveRegistryDir(store, root);
+  const source: BindSource = GATE_COMMAND.test(command) ? 'gate-b' : 'sdd-use';
+  await bindSession(store, root, dir, session, unit, source);
+  return unit;
+}
+
+export async function touchSession(store: SessionStore, root: string, session: SessionContext) {
+  const dir = await resolveRegistryDir(store, root);
+  return touchBinding(store, dir, session.id, session.now);
+}
+
+export async function endSession(store: SessionStore, root: string, session: SessionContext) {
+  const dir = await resolveRegistryDir(store, root);
+  return endBinding(store, dir, session.id, session.now);
+}
+
+export async function currentBinding(store: Reader, root: string, session: SessionContext) {
+  const dir = await resolveRegistryDir(store, root);
+  return readBinding(store, dir, session.id);
 }
 
 /** Path relative to the repo root with `/` separators, or null when it lands outside it. */
@@ -121,18 +257,35 @@ export function isCodePath(rel: string): boolean {
   return !EXEMPT_DIRS.has(first ?? '');
 }
 
-export function judgeEdit(snapshot: Snapshot, root: string, filePath: string): Verdict {
+export function judgeEdit(
+  snapshot: Snapshot,
+  root: string,
+  filePath: string,
+  now: number = Date.now(),
+): Verdict {
   if (!snapshot.settings.enabled || snapshot.error) return { kind: 'allow' };
   const rel = relativeToRoot(root, filePath);
   if (rel === null || !isCodePath(rel)) return { kind: 'allow' };
-  if (snapshot.cycles.length > 0 || snapshot.fixes.length > 0) return { kind: 'allow' };
-  const reason =
-    `SPEC GATE: no hay ningún ciclo in-progress ni un fix abierto, así que todavía no se ` +
-    `escribe código (${rel}). Abrí un ciclo (pnpm sdd:gate <spec> → sdd-orchestrator) o ` +
-    `registrá el cambio con [FIX]/[BUGFIX]/[HOTFIX]. Reglas: sdd/dual-harness/rules/sdd-gates.md.`;
-  return snapshot.settings.gate === 'block'
-    ? { kind: 'deny', reason }
-    : { kind: 'warn', reason };
+  if (snapshot.registryError && snapshot.openUnits.length > 0) return { kind: 'allow' };
+  const verdict = judgeSessionEdit({
+    gate: snapshot.settings.gate,
+    binding: snapshot.mine,
+    openUnits: snapshot.openUnits,
+    rel,
+    now,
+  });
+  return verdict.kind === 'allow' ? verdict : { kind: verdict.kind, reason: verdict.reason };
+}
+
+export function unitLabel(unit: UnitRef): string {
+  return unitKey(unit);
+}
+
+export type Holder = 'mine' | 'other' | null;
+
+export function holderOf(snapshot: Snapshot, unit: UnitRef): Holder {
+  if (snapshot.mine && sameUnit(snapshot.mine.unit, unit)) return 'mine';
+  return snapshot.others.some((b) => sameUnit(b.unit, unit)) ? 'other' : null;
 }
 
 export function progress(cycle: ActiveCycle): string {
@@ -141,22 +294,34 @@ export function progress(cycle: ActiveCycle): string {
   return `${done}/${counted.length}`;
 }
 
+function mineSegment(snapshot: Snapshot): string {
+  const unit = snapshot.mine?.unit;
+  if (!unit) return 'esta sesión: sin unidad';
+  const open = snapshot.openUnits.some((candidate) => sameUnit(candidate, unit));
+  if (unit.kind === 'fix') return `esta sesión: ${unit.fix}${open ? '' : ' (cerrado)'}`;
+  const cycle = snapshot.cycles.find((c) => c.spec === unit.spec && c.cycle === unit.cycle);
+  if (!cycle) return `esta sesión: ${unit.spec} · ${unit.cycle} (cerrado)`;
+  return `esta sesión: ${cycle.spec} · ${cycle.cycle} · ${cycle.flow} · ${progress(cycle)}`;
+}
+
+function othersSegment(snapshot: Snapshot): string | null {
+  const rest = snapshot.openUnits.filter((unit) => !sameUnit(unit, snapshot.mine?.unit));
+  if (rest.length === 0) return null;
+  const shown = rest.slice(0, OTHERS_SHOWN).map(unitLabel);
+  const hidden = rest.length - shown.length;
+  return `otras: ${shown.join(', ')}${hidden > 0 ? `, +${hidden}` : ''}`;
+}
+
 /** One line for the band above the prompt; null when there is nothing to show. */
 export function bandLine(snapshot: Snapshot): string | null {
   if (!snapshot.settings.enabled) return null;
   if (snapshot.error) return `SDD ▸ no pude leer sdd/ (${snapshot.error}) · gate en pausa`;
-  const parts: string[] = [];
-  const [first, ...others] = snapshot.cycles;
-  if (first) {
-    parts.push(
-      `${first.spec} · ${first.cycle} · ${first.flow} · ${progress(first)} tareas`,
-    );
-    if (others.length > 0) parts.push(`+${others.length} ciclo(s)`);
-  }
-  if (snapshot.fixes.length > 0) parts.push(`${snapshot.fixes.length} fix abierto(s)`);
-  if (parts.length === 0) {
+  if (snapshot.openUnits.length === 0) {
     const effect = snapshot.settings.gate === 'block' ? 'bloqueado' : 'con aviso';
     return `SDD ▸ sin ciclo ni fix en curso · escribir código: ${effect} · /sdd`;
   }
+  const parts = [mineSegment(snapshot), othersSegment(snapshot)].filter(
+    (part): part is string => part !== null,
+  );
   return `SDD ▸ ${parts.join(' · ')} · /sdd`;
 }

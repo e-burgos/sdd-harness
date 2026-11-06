@@ -7,6 +7,7 @@
 import { existsSync, readdirSync, readFileSync } from 'fs';
 import { join, resolve } from 'path';
 import { fileURLToPath } from 'url';
+import { formatBindMarker } from './lib/session-registry.mjs';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 const SDD = resolve(__dirname, '..');
@@ -218,8 +219,13 @@ const cycleId = positional[1] ? normalizeCycle(positional[1]) : null;
 const result = cycleId ? gateB(spec, cycleId) : gateA(spec);
 const passed = result.checks.every((c) => c.ok);
 
+const bindMarker =
+  passed && result.gate === 'B'
+    ? formatBindMarker({ kind: 'cycle', spec: spec.id, cycle: result.cycle })
+    : null;
+
 if (json) {
-  console.log(JSON.stringify({ spec: spec.id, passed, ...result }, null, 2));
+  console.log(JSON.stringify({ spec: spec.id, passed, ...result, ...(bindMarker ? { marker: bindMarker } : {}) }, null, 2));
 } else {
   const title =
     result.gate === 'A'
@@ -235,5 +241,6 @@ if (json) {
       ? `\n→ APPROVED${result.gate === 'A' ? ` — next cycle: ${result.next.cycle}, suggested flow: ${result.next.flow} (profile: ${result.next.profile}; [LITE]/[FULL] in the request override it)` : ''}`
       : `\n→ BLOCKED — ${pending} pending condition(s). Complete them before continuing.`,
   );
+  if (bindMarker) console.log(bindMarker);
 }
 process.exit(passed ? 0 : 1);

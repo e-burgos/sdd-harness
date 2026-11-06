@@ -15,15 +15,16 @@
     "sdd:rebuild-tasks-index": "node sdd/scripts/rebuild-tasks-index.mjs",
     "sdd:rebuild-catalog": "node sdd/scripts/rebuild-catalog.mjs",
     "sdd:gate": "node sdd/scripts/spec-gate.mjs",
+    "sdd:use": "node sdd/scripts/sdd-use.mjs",
     "sdd:rtk": "node sdd/scripts/setup-rtk.mjs",
     "sdd:mod": "node sdd/scripts/sdd-mod.mjs",
     "sdd:tucu": "node sdd/scripts/sdd-tucu.mjs",
     "postinstall": "node -e \"const f='sdd/scripts/setup-rtk.mjs';if(require('fs').existsSync(f)){require('child_process').execFileSync(process.execPath,[f],{stdio:'inherit'})}\""
   },
   "dependencies": {
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
-    "react-router-dom": "^7.18.2"
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-router-dom": "^7.18.5"
   },
   "devDependencies": {
     "@nx/devkit": "23.1.1",
@@ -35,21 +36,21 @@
     "@swc-node/register": "~1.11.1",
     "@swc/core": "~1.15.5",
     "@swc/helpers": "~0.5.18",
-    "@tailwindcss/vite": "^4.3.3",
+    "@tailwindcss/vite": "^4.3.4",
     "@types/node": "^22.0.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
-    "@vitejs/plugin-react": "^6.0.0",
-    "@vitest/coverage-v8": "^4.1.10",
+    "@vitejs/plugin-react": "^6.2.1",
+    "@vitest/coverage-v8": "^5.1.0",
     "ajv": "^8.20.0",
     "ajv-formats": "^3.0.1",
     "eslint": "^9.8.0",
     "nx": "23.1.1",
     "prettier": "^3.9.6",
-    "tailwindcss": "^4.3.3",
+    "tailwindcss": "^4.3.4",
     "tslib": "^2.3.0",
     "typescript": "~6.0.3",
-    "vite": "^8.0.0",
-    "vitest": "^4.1.10"
+    "vite": "^8.3.5",
+    "vitest": "^5.1.0"
   }
 }

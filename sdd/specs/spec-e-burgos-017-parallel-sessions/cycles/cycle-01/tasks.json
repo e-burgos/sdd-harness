@@ -52,11 +52,21 @@
       "depends_on": [
         "TASK-001"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/cli/templates/sdd/scripts/sdd-use.mjs",
         "apps/cli/templates/sdd/scripts/spec-gate.mjs"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 40000,
+        "tokens_out": 8000,
+        "approx": true,
+        "recorded_at": "2026-11-06",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "source": "declared-estimate"
+      }
     },
     {
       "id": "TASK-003",
@@ -73,11 +83,21 @@
         "TASK-001",
         "TASK-002"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/cli/templates/sdd/skills/sdd-mod/hooks/.src/sdd.ts",
         "apps/cli/templates/sdd/skills/sdd-mod/hooks/.src/register.tsx"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 55000,
+        "tokens_out": 12000,
+        "approx": true,
+        "recorded_at": "2026-11-06",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "source": "declared-estimate"
+      }
     },
     {
       "id": "TASK-004",
