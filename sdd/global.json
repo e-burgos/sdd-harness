@@ -164,7 +164,20 @@
       "completed_at": "2026-11-05"
     }
   ],
-  "in_progress_modules": [],
+  "in_progress_modules": [
+    {
+      "module": "parallel-sessions",
+      "spec": "spec-e-burgos-017-parallel-sessions",
+      "apps": [
+        "apps/cli",
+        "apps/studio-bridge",
+        "apps/studio",
+        "libs/studio-protocol"
+      ],
+      "cycles_completed": 0,
+      "description": "Visibilidad multi-ciclo, atadura de sesión a spec/ciclo/fix y reservas de archivo con aviso entre sesiones."
+    }
+  ],
   "pending_modules": [
     {
       "module": "github-integration",

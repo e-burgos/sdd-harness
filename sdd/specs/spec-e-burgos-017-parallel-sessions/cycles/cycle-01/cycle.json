@@ -1,0 +1,34 @@
+{
+  "$schema": "../../../../schemas/cycle.schema.json",
+  "cycle": 1,
+  "module": "parallel-sessions",
+  "spec": "spec-e-burgos-017-parallel-sessions",
+  "apps": [
+    "apps/cli",
+    "apps/studio-bridge",
+    "apps/studio",
+    "libs/studio-protocol"
+  ],
+  "phase": "parallel-sessions",
+  "flow": "lite",
+  "objectives": [
+    "Ver todo lo que está en curso (US-1)",
+    "La sesión sabe en qué trabaja (US-2)",
+    "Atadura sin pasos extra (US-3)",
+    "Gate por sesión (US-4)"
+  ],
+  "status": "in-progress",
+  "started_at": "2026-11-06",
+  "completed_at": null,
+  "documents": {
+    "plan": "sdd/specs/spec-e-burgos-017-parallel-sessions/cycles/cycle-01/plan.md",
+    "tasks": "sdd/specs/spec-e-burgos-017-parallel-sessions/cycles/cycle-01/tasks.json"
+  },
+  "artifacts": [],
+  "metrics": null,
+  "tables_created": [],
+  "endpoints_implemented": [],
+  "components_created": [],
+  "issues_found": [],
+  "reviewer_report": null
+}
