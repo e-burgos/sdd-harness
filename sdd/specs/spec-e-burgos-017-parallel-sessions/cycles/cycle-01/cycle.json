@@ -17,18 +17,196 @@
     "Atadura sin pasos extra (US-3)",
     "Gate por sesión (US-4)"
   ],
-  "status": "in-progress",
+  "status": "completed",
   "started_at": "2026-11-06",
-  "completed_at": null,
+  "completed_at": "2026-11-06",
   "documents": {
     "plan": "sdd/specs/spec-e-burgos-017-parallel-sessions/cycles/cycle-01/plan.md",
     "tasks": "sdd/specs/spec-e-burgos-017-parallel-sessions/cycles/cycle-01/tasks.json"
   },
   "artifacts": [],
-  "metrics": null,
+  "metrics": {
+    "tasks_total": 7,
+    "tasks_completed": 7,
+    "tasks_skipped": 0,
+    "story_points": 19,
+    "files_created": [
+      "apps/cli/src/generators/__tests__/sdd-use.integration.spec.ts",
+      "apps/cli/src/utils/__tests__/session-registry.spec.ts",
+      "apps/cli/templates/sdd/schemas/session-binding.schema.json",
+      "apps/cli/templates/sdd/scripts/lib/session-registry.mjs",
+      "apps/cli/templates/sdd/scripts/sdd-use.mjs",
+      "apps/cli/templates/sdd/skills/sdd-mod/hooks/.src/session-registry.d.mts",
+      "apps/cli/templates/sdd/skills/sdd-mod/hooks/.src/session-registry.mjs",
+      "apps/studio-bridge/src/sessions/session-bindings.spec.ts",
+      "apps/studio-bridge/src/sessions/session-bindings.ts",
+      "apps/studio-bridge/src/workspace/sessions-feed.spec.ts",
+      "apps/studio-bridge/src/workspace/sessions-feed.ts",
+      "apps/studio/src/components/OpenUnitsList.tsx",
+      "apps/studio/src/components/OpenUnitsPill.tsx",
+      "apps/studio/src/components/openunits.spec.tsx",
+      "apps/studio/src/lib/i18n/modules/units.ts",
+      "apps/studio/src/lib/open-units.spec.ts",
+      "apps/studio/src/lib/open-units.ts",
+      "sdd/schemas/session-binding.schema.json",
+      "sdd/scripts/lib/session-registry.mjs",
+      "sdd/scripts/sdd-use.mjs",
+      "sdd/skills/sdd-mod/hooks/.src/session-registry.d.mts",
+      "sdd/skills/sdd-mod/hooks/.src/session-registry.mjs"
+    ],
+    "files_modified": [
+      "apps/cli/CHANGELOG.md",
+      "apps/cli/src/generators/__tests__/sdd-mod.spec.ts",
+      "apps/cli/src/generators/__tests__/spec-gate.integration.spec.ts",
+      "apps/cli/templates/sdd/agents/sdd-implementor-back.agent.md",
+      "apps/cli/templates/sdd/agents/sdd-implementor-front.agent.md",
+      "apps/cli/templates/sdd/agents/sdd-orchestrator.agent.md",
+      "apps/cli/templates/sdd/catalog.json",
+      "apps/cli/templates/sdd/documentation/en/HOW-TO-USE-SDD.md",
+      "apps/cli/templates/sdd/documentation/en/README.md",
+      "apps/cli/templates/sdd/documentation/es/HOW-TO-USE-SDD.md",
+      "apps/cli/templates/sdd/documentation/es/README.md",
+      "apps/cli/templates/sdd/dual-harness/CLAUDE.md",
+      "apps/cli/templates/sdd/dual-harness/rules/sdd-gates.md",
+      "apps/cli/templates/sdd/scripts/spec-gate.mjs",
+      "apps/cli/templates/sdd/skills/sdd-data-schemas/SKILL.md",
+      "apps/cli/templates/sdd/skills/sdd-file-structure/SKILL.md",
+      "apps/cli/templates/sdd/skills/sdd-mod/.claude-plugin/contract/index.d.ts",
+      "apps/cli/templates/sdd/skills/sdd-mod/hooks/.src/register.tsx",
+      "apps/cli/templates/sdd/skills/sdd-mod/hooks/.src/sdd.ts",
+      "apps/cli/templates/sdd/skills/sdd-orchestrator/SKILL.md",
+      "apps/cli/templates/sdd/skills/sdd-steward/SKILL.md",
+      "apps/cli/templates/sdd/templates/nx-workspace/package.json",
+      "apps/studio-bridge/src/gate/judge.ts",
+      "apps/studio-bridge/src/project/runtime.ts",
+      "apps/studio-bridge/src/sessions/session-manager.spec.ts",
+      "apps/studio-bridge/src/sessions/session-manager.ts",
+      "apps/studio/src/components/StudioHeader.tsx",
+      "apps/studio/src/components/mission-control/EcosystemDashboard.tsx",
+      "apps/studio/src/lib/i18n/en.ts",
+      "apps/studio/src/lib/i18n/es.ts",
+      "libs/studio-protocol/src/snapshot.spec.ts",
+      "libs/studio-protocol/src/snapshot.ts",
+      "package.json",
+      "sdd/agents/sdd-implementor-back.agent.md",
+      "sdd/agents/sdd-implementor-front.agent.md",
+      "sdd/agents/sdd-orchestrator.agent.md",
+      "sdd/catalog.json",
+      "sdd/documentation/en/HOW-TO-USE-SDD.md",
+      "sdd/documentation/en/README.md",
+      "sdd/documentation/es/HOW-TO-USE-SDD.md",
+      "sdd/documentation/es/README.md",
+      "sdd/dual-harness/CLAUDE.md",
+      "sdd/dual-harness/rules/sdd-gates.md",
+      "sdd/scripts/spec-gate.mjs",
+      "sdd/skills/sdd-data-schemas/SKILL.md",
+      "sdd/skills/sdd-file-structure/SKILL.md",
+      "sdd/skills/sdd-mod/.claude-plugin/contract/index.d.ts",
+      "sdd/skills/sdd-mod/hooks/.src/register.tsx",
+      "sdd/skills/sdd-mod/hooks/.src/sdd.ts",
+      "sdd/skills/sdd-orchestrator/SKILL.md",
+      "sdd/skills/sdd-steward/SKILL.md",
+      "sdd/templates/nx-workspace/package.json"
+    ],
+    "files_deleted": [],
+    "usage": {
+      "tokens_in": 740000,
+      "tokens_out": 91000,
+      "approx": true,
+      "source": "declared-estimate",
+      "by_tier": {
+        "claude/opus": {
+          "tokens_in": 450000,
+          "tokens_out": 30000,
+          "approx": true,
+          "source": "declared-estimate"
+        },
+        "claude/sonnet": {
+          "tokens_in": 290000,
+          "tokens_out": 61000,
+          "approx": true,
+          "source": "declared-estimate"
+        }
+      },
+      "by_agent": [
+        {
+          "agent": "orchestrator",
+          "label": "apertura y cierre del ciclo",
+          "provider_model": "claude/opus",
+          "effort": "medium",
+          "tokens_in": 150000,
+          "tokens_out": 15000,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-06"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-001 y TASK-007",
+          "provider_model": "claude/opus",
+          "effort": "medium",
+          "tokens_in": 300000,
+          "tokens_out": 15000,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-06"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "4 tasks (TASK-002, TASK-003, TASK-004, TASK-006)",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 230000,
+          "tokens_out": 46000,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-06"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-005",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 60000,
+          "tokens_out": 15000,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-06"
+        }
+      ]
+    }
+  },
   "tables_created": [],
   "endpoints_implemented": [],
-  "components_created": [],
-  "issues_found": [],
-  "reviewer_report": null
+  "components_created": [
+    "COMP-123",
+    "COMP-124"
+  ],
+  "issues_found": [
+    "Abierto (informativo): el CLI de Claude Code instalado en la terminal (2.1.123) no puede cargar mods (rechaza el formato «modules» de hooks.json: espera el record «hooks»); es previo y afecta al sdd-mod desde que existe. El motor de la app de escritorio (2.1.317) sí lo carga.",
+    "Abierto (informativo): `claude -p` headless no carga el mod desde .claude/skills; solo con --plugin-dir.",
+    "Corregido: el mensaje de denegación del puente apuntaba a `pnpm sdd:use`; ahora el puente usa un texto propio de Studio (vincular la conversación).",
+    "Corregido: la copia instalada sdd/templates/nx-workspace/package.json estaba desactualizada respecto del template del kit; se re-espejó."
+  ],
+  "reviewer_report": {
+    "approved": true,
+    "date": "2026-11-06",
+    "ca_results": {
+      "US-1": "PASS - Studio (header: «2 in progress», popover con ambos ciclos y la insignia de sesión claude-code) y la franja del mod muestran todas las unidades abiertas",
+      "US-2": "PASS - cada sesión ve a qué unidad está atada; sesiones de Claude Code y conversaciones de Studio aparecen en el snapshot (sessions)",
+      "US-3": "PASS - GATE B ata la sesión (fuente gate-b), `pnpm sdd:use` la ata a mano (sdd-use) y el puente ata cada conversación; ended_at al salir",
+      "US-4": "PASS - una sesión sin atar recibe la denegación «hay 2 unidades abiertas … pnpm sdd:use …»; la atada pasa su edit; dos sesiones en paralelo atadas a specs distintas a la vez"
+    },
+    "tests": {
+      "protocol": "OK - 176 tests",
+      "cli": "OK - 568 tests (11 skip)",
+      "bridge": "OK - 973 tests (5 skip)",
+      "studio": "OK - 1211 tests",
+      "build": "OK",
+      "typecheck": "OK",
+      "sdd-validate": "OK",
+      "real-check": "OK - examples/par-017 con el kit actualizado vía update sdd; motor 2.1.317 con el mod por --plugin-dir; Studio local sobre el puente compilado"
+    },
+    "notes": "Flow lite, profile solo, un solo actor. Telemetría declarada (estimación). Regla de código sin comentarios respetada (4 líneas JSDoc quitadas del contrato del mod). Retrocompatible: campo de protocolo opcional, mod apagado ⇒ sin cambios, kits viejos ⇒ el puente cae al comportamiento previo. El mod es una copia de la librería del kit protegida por un test de identidad de bytes. Queda cycle-02 de la spec (reservas de archivo con aviso entre sesiones)."
+  }
 }

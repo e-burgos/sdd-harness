@@ -174,7 +174,7 @@
         "apps/studio",
         "libs/studio-protocol"
       ],
-      "cycles_completed": 0,
+      "cycles_completed": 1,
       "description": "Visibilidad multi-ciclo, atadura de sesión a spec/ciclo/fix y reservas de archivo con aviso entre sesiones."
     }
   ],

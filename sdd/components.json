@@ -1999,6 +1999,11 @@
             "cycle": 1,
             "date": "2026-11-05",
             "change": "Registrado en spec-e-burgos-013 cycle-01 (existía sin registro): soporte de workspace nulo (modo launcher) y cambio de workspace."
+          },
+          {
+            "cycle": 1,
+            "date": "2026-11-06",
+            "change": "spec-e-burgos-017 cycle-01: Pill de unidades abiertas en el header (OpenUnitsPill)."
           }
         ]
       },
@@ -2167,6 +2172,48 @@
             "cycle": 1,
             "date": "2026-11-05",
             "change": "Creado en spec-e-burgos-016 cycle-01."
+          }
+        ]
+      },
+      {
+        "id": "COMP-123",
+        "name": "OpenUnitsPill",
+        "type": "component",
+        "module": "parallel-sessions",
+        "spec": "sdd/specs/spec-e-burgos-017-parallel-sessions",
+        "path": "src/components/OpenUnitsPill.tsx",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "description": "Pill del header con la cantidad de unidades en curso; abre un popover con la lista.",
+        "consumes": [],
+        "created_at": "2026-11-06",
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-11-06",
+            "change": "Creado en spec-e-burgos-017 cycle-01."
+          }
+        ]
+      },
+      {
+        "id": "COMP-124",
+        "name": "OpenUnitsList",
+        "type": "component",
+        "module": "parallel-sessions",
+        "spec": "sdd/specs/spec-e-burgos-017-parallel-sessions",
+        "path": "src/components/OpenUnitsList.tsx",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "description": "Lista de ciclos y fixes abiertos con las sesiones atadas a cada uno (insignia por arnés).",
+        "consumes": [],
+        "created_at": "2026-11-06",
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-11-06",
+            "change": "Creado en spec-e-burgos-017 cycle-01."
           }
         ]
       }

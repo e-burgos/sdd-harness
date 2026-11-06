@@ -203,10 +203,20 @@
         "TASK-005",
         "TASK-006"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "sdd/specs/spec-e-burgos-017-parallel-sessions/cycles/cycle-01/cycle.json"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 120000,
+        "tokens_out": 6000,
+        "approx": true,
+        "recorded_at": "2026-11-06",
+        "provider_model": "claude/opus",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "source": "declared-estimate"
+      }
     }
   ]
 }
