@@ -1,0 +1,212 @@
+{
+  "$schema": "../../../../schemas/cycle-tasks.schema.json",
+  "spec": "spec-e-burgos-017-parallel-sessions",
+  "cycle": 2,
+  "module": "parallel-sessions",
+  "apps": [
+    "apps/cli",
+    "apps/studio-bridge",
+    "apps/studio",
+    "libs/studio-protocol"
+  ],
+  "flow": "lite",
+  "user_stories_generated": true,
+  "prerequisites": {
+    "tasks_generated": true
+  },
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "Reservas y buzón en la librería del kit (schemas, judgeFileLease, pedidos)",
+      "user_stories": [
+        "US-5",
+        "US-6"
+      ],
+      "estimation_hours": 3,
+      "story_points": 5,
+      "depends_on": [],
+      "status": "done",
+      "files": [
+        "apps/cli/templates/sdd/schemas/file-lease.schema.json",
+        "apps/cli/templates/sdd/schemas/session-request.schema.json",
+        "apps/cli/templates/sdd/scripts/lib/session-registry.mjs"
+      ],
+      "usage": {
+        "tokens_in": 160000,
+        "tokens_out": 9000,
+        "approx": true,
+        "recorded_at": "2026-11-06",
+        "provider_model": "claude/opus",
+        "effort": "high",
+        "agent": "implementor-back",
+        "source": "declared-estimate"
+      }
+    },
+    {
+      "id": "TASK-002",
+      "title": "sdd:release libera reservas y avisa a quienes las pidieron",
+      "user_stories": [
+        "US-6"
+      ],
+      "estimation_hours": 1,
+      "story_points": 2,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "status": "done",
+      "files": [
+        "apps/cli/templates/sdd/scripts/sdd-release.mjs"
+      ],
+      "usage": {
+        "tokens_in": 70000,
+        "tokens_out": 4000,
+        "approx": true,
+        "recorded_at": "2026-11-06",
+        "provider_model": "claude/opus",
+        "effort": "high",
+        "agent": "implementor-back",
+        "source": "declared-estimate"
+      }
+    },
+    {
+      "id": "TASK-003",
+      "title": "Mod de Claude Code: reservas en Edit/Write, buzón en el contexto, liberar al salir",
+      "user_stories": [
+        "US-5",
+        "US-6"
+      ],
+      "estimation_hours": 3,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "status": "done",
+      "files": [
+        "apps/cli/templates/sdd/skills/sdd-mod/hooks/.src/sdd.ts",
+        "apps/cli/templates/sdd/skills/sdd-mod/hooks/.src/register.tsx"
+      ],
+      "usage": {
+        "tokens_in": 170000,
+        "tokens_out": 9000,
+        "approx": true,
+        "recorded_at": "2026-11-06",
+        "provider_model": "claude/opus",
+        "effort": "high",
+        "agent": "implementor-back",
+        "source": "declared-estimate"
+      }
+    },
+    {
+      "id": "TASK-004",
+      "title": "Puente y protocolo: reservas en las conversaciones de Studio y leases en el snapshot",
+      "user_stories": [
+        "US-5",
+        "US-7"
+      ],
+      "estimation_hours": 2,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio-bridge/src/sessions/session-bindings.ts",
+        "libs/studio-protocol/src/snapshot.ts"
+      ],
+      "usage": {
+        "tokens_in": 150000,
+        "tokens_out": 8000,
+        "approx": true,
+        "recorded_at": "2026-11-06",
+        "provider_model": "claude/opus",
+        "effort": "high",
+        "agent": "implementor-back",
+        "source": "declared-estimate"
+      }
+    },
+    {
+      "id": "TASK-005",
+      "title": "Studio muestra archivos reservados y pedidos por unidad",
+      "user_stories": [
+        "US-7"
+      ],
+      "estimation_hours": 2,
+      "story_points": 2,
+      "depends_on": [
+        "TASK-004"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/OpenUnitsList.tsx"
+      ],
+      "usage": {
+        "tokens_in": 80000,
+        "tokens_out": 5000,
+        "approx": true,
+        "recorded_at": "2026-11-06",
+        "provider_model": "claude/opus",
+        "effort": "high",
+        "agent": "implementor-front",
+        "source": "declared-estimate"
+      }
+    },
+    {
+      "id": "TASK-006",
+      "title": "Docs del kit: reservas, buzón y sdd:release",
+      "user_stories": [
+        "US-5",
+        "US-6",
+        "US-7"
+      ],
+      "estimation_hours": 1,
+      "story_points": 2,
+      "depends_on": [
+        "TASK-002",
+        "TASK-003"
+      ],
+      "status": "done",
+      "files": [
+        "apps/cli/templates/sdd/dual-harness/rules/sdd-gates.md"
+      ],
+      "usage": {
+        "tokens_in": 60000,
+        "tokens_out": 5000,
+        "approx": true,
+        "recorded_at": "2026-11-06",
+        "provider_model": "claude/opus",
+        "effort": "high",
+        "agent": "implementor-back",
+        "source": "declared-estimate"
+      }
+    },
+    {
+      "id": "TASK-007",
+      "title": "Verificación y cierre con dos sesiones reales sobre el mismo archivo",
+      "user_stories": [
+        "US-5",
+        "US-6",
+        "US-7"
+      ],
+      "estimation_hours": 2,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-003",
+        "TASK-004",
+        "TASK-005",
+        "TASK-006"
+      ],
+      "status": "done",
+      "files": [],
+      "usage": {
+        "tokens_in": 200000,
+        "tokens_out": 8000,
+        "approx": true,
+        "recorded_at": "2026-11-06",
+        "provider_model": "claude/opus",
+        "effort": "high",
+        "agent": "implementor-back",
+        "source": "declared-estimate"
+      }
+    }
+  ]
+}

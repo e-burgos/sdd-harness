@@ -146,6 +146,9 @@
       "file": "db-schema.schema.json"
     },
     {
+      "file": "file-lease.schema.json"
+    },
+    {
       "file": "fixes.schema.json"
     },
     {
@@ -153,6 +156,12 @@
     },
     {
       "file": "pricing.schema.json"
+    },
+    {
+      "file": "session-binding.schema.json"
+    },
+    {
+      "file": "session-request.schema.json"
     },
     {
       "file": "specs-index.schema.json"
@@ -165,6 +174,12 @@
     }
   ],
   "memory": [
+    {
+      "file": "2026-11-06-spec-e-burgos-017-cycle-02.md"
+    },
+    {
+      "file": "2026-11-06-spec-e-burgos-017-cycle-01.md"
+    },
     {
       "file": "2026-11-05-spec-e-burgos-016-cycle-01.md"
     },

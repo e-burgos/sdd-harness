@@ -5,9 +5,11 @@ import { useState } from 'react';
 import { Sun, Moon } from 'lucide-react';
 import { deriveConversationGate, gateLabel, type ConversationGate } from '@/lib/conversation-gate';
 import { useT } from '@/lib/i18n/i18n';
+import { openUnitsOf } from '@/lib/open-units';
 import { useSelectedConversation } from '@/lib/use-selected-conversation';
 import { useStudio } from './BridgeProvider';
 import { GateStatusModal } from './GateStatusModal';
+import { OpenUnitsPill } from './OpenUnitsPill';
 import { AgentAvatar } from './workspace/AgentAvatar';
 
 export function StudioHeader({ launcher = false }: { launcher?: boolean }) {
@@ -18,12 +20,12 @@ export function StudioHeader({ launcher = false }: { launcher?: boolean }) {
   const presence = useStudio((s) => s.presence ?? []);
 
   const workingAgents = (presence ?? []).filter((p) => p.state === 'working');
-  const activeCycle = snapshot?.cycles?.find((c) => c.status === 'in-progress');
+  const [firstUnit] = openUnitsOf(snapshot).filter((unit) => unit.kind === 'cycle');
   const { view, selectedThreadId } = useSelectedConversation();
   const gate: ConversationGate = view
     ? deriveConversationGate(view, snapshot)
-    : activeCycle
-      ? { kind: 'spec', specId: activeCycle.specId, cycle: activeCycle.cycle }
+    : firstUnit?.kind === 'cycle'
+      ? { kind: 'spec', specId: firstUnit.specId, cycle: firstUnit.cycle }
       : { kind: 'idle' };
   const label = gateLabel(gate, t);
   const gateMode = snapshot?.tools?.gate ?? snapshot?.gateMode ?? null;
@@ -84,6 +86,8 @@ export function StudioHeader({ launcher = false }: { launcher?: boolean }) {
             </span>
           )}
         </button>}
+
+        {!launcher && <OpenUnitsPill />}
 
         {/* Working Swarm Presence Counter */}
         {!launcher && <Tooltip size="xs" arrow={false} content={t('ui.header.activeHint', { n: workingAgents.length })}>

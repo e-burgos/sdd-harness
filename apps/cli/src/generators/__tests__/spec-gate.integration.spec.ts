@@ -206,6 +206,11 @@ describe.skipIf(process.platform === 'win32')('spec-gate.mjs (integration)', () 
     const approved = runGate('orders', 'cycle-01');
     expect(approved.status).toBe(0);
     expect(approved.output).toContain('APPROVED');
+    expect(approved.output).toContain(`SDD-BIND spec=${specId} cycle=cycle-01`);
+    const approvedJson = runGate('orders', 'cycle-01', '--json');
+    expect((approvedJson.json as { marker?: string }).marker).toBe(`SDD-BIND spec=${specId} cycle=cycle-01`);
+    expect(blocked.output).not.toContain('SDD-BIND');
+    expect(runGate('orders').output).not.toContain('SDD-BIND');
 
     // user_stories vacías son válidas en lite; plan.md es un archivo permitido en la raíz.
     const validated = runValidate();

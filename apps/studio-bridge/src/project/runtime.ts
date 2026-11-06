@@ -8,9 +8,11 @@ import { createHandlers } from '../server/router';
 import type { BridgeHandlers } from '../server/ws-server';
 import { createAttachmentStore } from '../sessions/attachment-store';
 import { SessionManager } from '../sessions/session-manager';
+import { SessionBindings } from '../sessions/session-bindings';
 import { ThreadStore } from '../sessions/store';
 import { createFileIndex } from '../workspace/file-index';
 import { KitIndexer } from '../workspace/kit-index';
+import { createSessionsFeed, type SessionsFeed } from '../workspace/sessions-feed';
 import { startWorkspaceWatcher } from '../workspace/watcher';
 
 export interface ProjectRuntime {
@@ -44,12 +46,15 @@ export async function openProjectRuntime(root: string, deps: ProjectRuntimeDeps)
     onChanged: ({ sections, revision }) => broadcast({ kind: 'kit.changed', sections, revision }),
   });
 
-  const watcher = await startWorkspaceWatcher({
+  let feed: SessionsFeed | null = null;
+  const bindings = await SessionBindings.load(root, { onChange: () => void feed?.refresh().catch(() => undefined) });
+
+  const rawWatcher = await startWorkspaceWatcher({
     root,
     onPath: (changedPath) => kitIndexer.notifyPath(changedPath),
     onError: (error) => console.error('[sdd-studio] watcher:', error),
     onUpdate: (update) => {
-      broadcast({ kind: 'workspace.changed', areas: update.areas, snapshot: update.snapshot });
+      broadcast({ kind: 'workspace.changed', areas: update.areas, snapshot: feed?.watcher.current() ?? update.snapshot });
       const at = new Date().toISOString();
       for (const event of update.events) {
         const stamped = { ...event, at };
@@ -58,6 +63,14 @@ export async function openProjectRuntime(root: string, deps: ProjectRuntimeDeps)
       }
     },
   });
+
+  feed = createSessionsFeed({
+    watcher: rawWatcher,
+    source: bindings,
+    broadcastChanged: (areas, snapshot) => broadcast({ kind: 'workspace.changed', areas, snapshot }),
+  });
+  const watcher = feed.watcher;
+  void feed.refresh().catch(() => undefined);
 
   const runner = new CommandRunner(root, broadcast);
   let sessions: SessionManager;
@@ -72,6 +85,7 @@ export async function openProjectRuntime(root: string, deps: ProjectRuntimeDeps)
       snapshot: () => watcher.current(),
       broadcast,
       refreshSnapshot: () => watcher.refresh().then(() => undefined),
+      ...(bindings ? { bindings } : {}),
     });
     await sessions.recover();
     handlers = createHandlers({
@@ -90,6 +104,7 @@ export async function openProjectRuntime(root: string, deps: ProjectRuntimeDeps)
     });
   } catch (error) {
     kitIndexer.close();
+    feed.close();
     await watcher.close().catch(() => undefined);
     throw error;
   }
@@ -98,8 +113,9 @@ export async function openProjectRuntime(root: string, deps: ProjectRuntimeDeps)
   const close = (): Promise<void> => {
     closing ??= (async () => {
       kitIndexer.close();
+      feed?.close();
       runner.terminateAll();
-      const results = await Promise.allSettled([watcher.close(), store.flush()]);
+      const results = await Promise.allSettled([sessions.shutdown(), watcher.close(), store.flush()]);
       const failed = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected');
       if (failed.length === 1) throw failed[0]!.reason;
       if (failed.length > 1) throw new AggregateError(failed.map((f) => f.reason), 'Project runtime shutdown failed');

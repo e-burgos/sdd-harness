@@ -250,6 +250,20 @@
       "depends_on": [
         "spec-e-burgos-013-studio-project-wizard"
       ]
+    },
+    {
+      "id": "spec-e-burgos-017-parallel-sessions",
+      "author": "e-burgos",
+      "slug": "parallel-sessions",
+      "folder": "sdd/specs/spec-e-burgos-017-parallel-sessions",
+      "file": "sdd/specs/spec-e-burgos-017-parallel-sessions/spec-e-burgos-017-parallel-sessions.spec.md",
+      "module": "parallel-sessions",
+      "app": "apps/cli",
+      "status": "completed",
+      "title": "Sesiones en paralelo: cada sesión sabe en qué spec, ciclo o fix trabaja y no pisa a las otras",
+      "created_at": "2026-11-06",
+      "completed_at": "2026-11-06",
+      "depends_on": []
     }
   ]
 }

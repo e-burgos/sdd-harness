@@ -1,0 +1,100 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "sdd/schemas/session-request.schema.json",
+  "title": "SDD session inbox message (<git-common-dir>/sdd-sessions/inbox/<session-id>/<id>.json)",
+  "description": "Mensaje entre sesiones sobre una reserva de archivo: el pedido que deja una sesión que choca con una reserva (`lease-request`, uno por par sesión/archivo mientras dure la reserva) o el aviso de que se liberó (`lease-released`). El mod de la sesión destinataria lo suma a su contexto y lo marca leído. Archivo LOCAL, fuera de git; nunca se edita a mano.",
+  "type": "object",
+  "required": [
+    "id",
+    "kind",
+    "path",
+    "from_session",
+    "from_unit",
+    "to_session",
+    "created_at",
+    "read_at"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._-]+$"
+    },
+    "kind": {
+      "type": "string",
+      "enum": [
+        "lease-request",
+        "lease-released"
+      ]
+    },
+    "path": {
+      "type": "string",
+      "minLength": 1
+    },
+    "from_session": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._-]+$"
+    },
+    "from_unit": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "spec",
+            "cycle"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "cycle"
+            },
+            "spec": {
+              "type": "string",
+              "minLength": 1
+            },
+            "cycle": {
+              "type": "string",
+              "pattern": "^cycle-\\d{2}$"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "fix"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "fix"
+            },
+            "fix": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "to_session": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._-]+$"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "read_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    }
+  }
+}

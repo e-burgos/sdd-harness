@@ -1,0 +1,45 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "sdd/schemas/session-binding.schema.json",
+  "title": "SDD session binding (<git-common-dir>/sdd-sessions/sessions/<session-id>.json)",
+  "description": "Atadura de una sesión de agente a la unidad de trabajo en la que trabaja: una spec con su ciclo, o un fix. Es un archivo LOCAL de la máquina, fuera de git (en la carpeta común de git, compartida por todos los worktrees; sin git, en sdd/.sessions/). Lo escriben el mod de Claude Code, el puente de Studio y `pnpm sdd:use`; nunca se edita a mano. Una sesión sin actividad por 30 minutos o con `ended_at` no está viva. Librería: sdd/scripts/lib/session-registry.mjs.",
+  "type": "object",
+  "required": ["session_id", "unit", "worktree", "harness", "source", "bound_at", "updated_at", "ended_at"],
+  "additionalProperties": false,
+  "properties": {
+    "session_id": { "type": "string", "pattern": "^[A-Za-z0-9._-]+$" },
+    "unit": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["kind", "spec", "cycle"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "const": "cycle" },
+            "spec": { "type": "string", "minLength": 1 },
+            "cycle": { "type": "string", "pattern": "^cycle-\\d{2}$" }
+          }
+        },
+        {
+          "type": "object",
+          "required": ["kind", "fix"],
+          "additionalProperties": false,
+          "properties": {
+            "kind": { "const": "fix" },
+            "fix": { "type": "string", "minLength": 1 }
+          }
+        }
+      ]
+    },
+    "worktree": { "type": "string", "description": "Carpeta de trabajo de la sesión, con `/` como separador." },
+    "harness": { "type": "string", "enum": ["claude-code", "studio", "manual"] },
+    "source": {
+      "type": "string",
+      "enum": ["gate-b", "sdd-use", "single-unit", "branch", "studio"],
+      "description": "Cómo quedó atada: GATE B aprobado, `sdd:use`, única unidad abierta, nombre de la rama o la conversación de Studio."
+    },
+    "bound_at": { "type": "string", "format": "date-time" },
+    "updated_at": { "type": "string", "format": "date-time" },
+    "ended_at": { "type": ["string", "null"], "format": "date-time" }
+  }
+}

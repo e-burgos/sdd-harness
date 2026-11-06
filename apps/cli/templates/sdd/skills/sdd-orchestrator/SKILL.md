@@ -53,7 +53,8 @@ Continuar con el flujo SDD normal (SPEC GATE A → flow → ciclo → agentes).
 6. Mueve el módulo a `in_progress_modules` en `sdd/global.json`
 7. **Crea `sdd/specs/{spec-id}/cycles/cycle-[XX]/cycle.json` con `status: "in-progress"` y `flow`** —
    obligatorio antes de que cualquier agente implementador escriba código (GATE B:
-   `pnpm sdd:gate <spec-id> cycle-[XX]`).
+   `pnpm sdd:gate <spec-id> cycle-[XX]`), corrido en la sesión que va a implementar: esa corrida
+   ata la sesión al ciclo (`SDD-BIND`; fix: `pnpm sdd:use FIX-…`).
 
 ## Consolidación de contexto (patrón changesets)
 

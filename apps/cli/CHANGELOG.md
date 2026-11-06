@@ -5,6 +5,27 @@ All notable changes to `@e-burgos/sdd-harness` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Parallel sessions.** Several specs can run at the same time, each in its own session. A local
+  session registry (`<git-common-dir>/sdd-sessions/`, outside git, `session-binding.schema.json`)
+  binds each session to a cycle or a fix. `pnpm sdd:use <spec> <cycle-XX>` / `pnpm sdd:use <FIX-id>`
+  binds by hand, and `sdd:gate` prints a `SDD-BIND` line when GATE B passes. The Claude Code mod's
+  band shows "this session / others", binds automatically (marker, single open unit or branch name)
+  and gates edits per session: unbound with several open units it rejects and lists them. Studio
+  shows every running unit. Mod off: nothing changes. Docs (es/en), agents and `sdd-gates.md` updated.
+- **File leases and an inbox between sessions.** With the mod on, the first allowed edit of a code
+  file leases it to that session (`locks/` in the same registry, `file-lease.schema.json`); another
+  session in the same folder is rejected with `SDD reserva: …` naming the holder (from another
+  worktree, only a warning). The clash leaves a request in the holder's inbox
+  (`session-request.schema.json`), which its mod adds to the context of its next tool result.
+  `pnpm sdd:release <file…>` releases leases and tells the requesters; `--list` shows them. Leases
+  expire after 30 min without edits and are released when the session ends. The Studio bridge takes
+  and honors leases for its conversations, and Studio lists each unit's leased files and who asks
+  for them.
+
 ## [0.18.0] - 2026-11-05
 
 ### Added

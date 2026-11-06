@@ -223,7 +223,8 @@ specs en progreso en paralelo — el gate es por spec.
 9. El Planner creará `sdd/specs/{spec-id}/cycles/cycle-[XX]/tasks.json` (en `lite` lo creás vos,
    con `flow: "lite"`) — el índice `sdd/tasks.json` se regenera con `pnpm sdd:rebuild-tasks-index`
    (nunca editarlo a mano). Antes de implementar, quien implemente corre
-   `pnpm sdd:gate <spec-id> cycle-[XX]` (GATE B)
+   `pnpm sdd:gate <spec-id> cycle-[XX]` (GATE B) **en la sesión que implementa** (la ata al ciclo;
+   para un fix, `pnpm sdd:use FIX-…`)
 10. Leer el contexto del subproyecto afectado en `sdd/context/[apps|libs|tools]/[nombre]/context_prompt.md` y adjuntarlo al brief para los agentes especializados
 11. Correr `pnpm sdd:validate` — el ciclo no queda registrado hasta que esté en verde
 

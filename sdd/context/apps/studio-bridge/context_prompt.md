@@ -1,6 +1,6 @@
 # Context prompt — apps/studio-bridge
 
-> Última actualización: cycle-01 (spec-e-burgos-013-studio-project-wizard) | Fecha: 2026-11-05
+> Última actualización: cycle-01 (spec-e-burgos-017-parallel-sessions) | Fecha: 2026-11-06
 
 > Entry point para agentes y desarrolladores trabajando en `@e-burgos/sdd-studio`.
 > Leer este documento antes de tocar el motor de agentes, el WebSocket o la validación del SPEC GATE.
@@ -21,10 +21,10 @@ Es el daemon/puente que corre localmente en la máquina del usuario (`sdd-studio
   - `src/engine/stable-prefix.ts`: prefijo de sistema estable (prompt caching).
   - `src/engine/input-channel.ts` y `src/engine/prompt-content.ts`: prompt streaming y armado de `SDKUserMessage`.
 - **Enforcement del SPEC GATE:** `src/gate/judge.ts` (función `judgeEdit`).
-- **Gestión de hilos y aprobaciones:** `src/sessions/session-manager.ts`, `store.ts`, `always-rule.ts`, `thread-link.ts`, `document-tracker.ts` y `attachment-store.ts`.
+- **Gestión de hilos y aprobaciones:** `src/sessions/session-manager.ts`, `session-bindings.ts` (ataduras a ciclo/fix), `store.ts`, `always-rule.ts`, `thread-link.ts`, `document-tracker.ts` y `attachment-store.ts`.
 - **Autenticación:** `src/auth/claude-login.ts` (login de suscripción vía CLI de Claude) y `src/auth-mode.ts` (preferencia de modo y entorno).
 - **Servidor y WebSocket:** `src/server/ws-server.ts` y `src/server/router.ts`.
-- **Observador del workspace:** `src/workspace/watcher.ts`, `snapshot.ts`, `file-index.ts` (menú `@`), `catalog.ts` (agentes, skills, prompts), `kit-index.ts`, `kit-tools.ts`, `rtk-gain.ts` y `profile.ts`.
+- **Observador del workspace:** `src/workspace/watcher.ts`, `snapshot.ts`, `sessions-feed.ts`, `file-index.ts` (menú `@`), `catalog.ts` (agentes, skills, prompts), `kit-index.ts`, `kit-tools.ts`, `rtk-gain.ts` y `profile.ts`.
 
 ## Comandos para desarrollo y verificación
 

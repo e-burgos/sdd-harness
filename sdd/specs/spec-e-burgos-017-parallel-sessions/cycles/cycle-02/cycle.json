@@ -1,0 +1,212 @@
+{
+  "$schema": "../../../../schemas/cycle.schema.json",
+  "cycle": 2,
+  "module": "parallel-sessions",
+  "spec": "spec-e-burgos-017-parallel-sessions",
+  "apps": [
+    "apps/cli",
+    "apps/studio-bridge",
+    "apps/studio",
+    "libs/studio-protocol"
+  ],
+  "phase": "parallel-sessions",
+  "flow": "lite",
+  "objectives": [
+    "Reserva de archivo (US-5)",
+    "Las sesiones se comunican (US-6)",
+    "Studio muestra ataduras y reservas (US-7)"
+  ],
+  "status": "completed",
+  "started_at": "2026-11-06",
+  "completed_at": "2026-11-06",
+  "documents": {
+    "plan": "sdd/specs/spec-e-burgos-017-parallel-sessions/cycles/cycle-02/plan.md",
+    "tasks": "sdd/specs/spec-e-burgos-017-parallel-sessions/cycles/cycle-02/tasks.json"
+  },
+  "artifacts": [],
+  "metrics": {
+    "tasks_total": 7,
+    "tasks_completed": 7,
+    "tasks_skipped": 0,
+    "story_points": 22,
+    "files_created": [
+      "apps/cli/src/generators/__tests__/sdd-release.integration.spec.ts",
+      "apps/cli/templates/sdd/schemas/file-lease.schema.json",
+      "apps/cli/templates/sdd/schemas/session-request.schema.json",
+      "apps/cli/templates/sdd/scripts/sdd-release.mjs",
+      "sdd/schemas/file-lease.schema.json",
+      "sdd/schemas/session-request.schema.json",
+      "sdd/scripts/sdd-release.mjs"
+    ],
+    "files_modified": [
+      "apps/cli/CHANGELOG.md",
+      "apps/cli/src/generators/__tests__/sdd-mod.spec.ts",
+      "apps/cli/src/utils/__tests__/session-registry.spec.ts",
+      "apps/cli/templates/sdd/agents/sdd-implementor-back.agent.md",
+      "apps/cli/templates/sdd/agents/sdd-implementor-front.agent.md",
+      "apps/cli/templates/sdd/catalog.json",
+      "apps/cli/templates/sdd/documentation/en/HOW-TO-USE-SDD.md",
+      "apps/cli/templates/sdd/documentation/en/README.md",
+      "apps/cli/templates/sdd/documentation/es/HOW-TO-USE-SDD.md",
+      "apps/cli/templates/sdd/documentation/es/README.md",
+      "apps/cli/templates/sdd/dual-harness/CLAUDE.md",
+      "apps/cli/templates/sdd/dual-harness/rules/sdd-gates.md",
+      "apps/cli/templates/sdd/scripts/lib/session-registry.mjs",
+      "apps/cli/templates/sdd/skills/sdd-data-schemas/SKILL.md",
+      "apps/cli/templates/sdd/skills/sdd-file-structure/SKILL.md",
+      "apps/cli/templates/sdd/skills/sdd-mod/.claude-plugin/contract/index.d.ts",
+      "apps/cli/templates/sdd/skills/sdd-mod/hooks/.src/register.tsx",
+      "apps/cli/templates/sdd/skills/sdd-mod/hooks/.src/sdd.ts",
+      "apps/cli/templates/sdd/skills/sdd-mod/hooks/.src/session-registry.d.mts",
+      "apps/cli/templates/sdd/skills/sdd-mod/hooks/.src/session-registry.mjs",
+      "apps/cli/templates/sdd/skills/sdd-steward/SKILL.md",
+      "apps/cli/templates/sdd/templates/nx-workspace/package.json",
+      "apps/studio-bridge/src/sessions/session-bindings.spec.ts",
+      "apps/studio-bridge/src/sessions/session-bindings.ts",
+      "apps/studio-bridge/src/workspace/sessions-feed.spec.ts",
+      "apps/studio-bridge/src/workspace/sessions-feed.ts",
+      "apps/studio/src/components/OpenUnitsList.tsx",
+      "apps/studio/src/components/openunits.spec.tsx",
+      "apps/studio/src/lib/i18n/modules/units.ts",
+      "apps/studio/src/lib/open-units.spec.ts",
+      "apps/studio/src/lib/open-units.ts",
+      "libs/studio-protocol/src/snapshot.spec.ts",
+      "libs/studio-protocol/src/snapshot.ts",
+      "package.json",
+      "sdd/agents/sdd-implementor-back.agent.md",
+      "sdd/agents/sdd-implementor-front.agent.md",
+      "sdd/catalog.json",
+      "sdd/documentation/en/HOW-TO-USE-SDD.md",
+      "sdd/documentation/en/README.md",
+      "sdd/documentation/es/HOW-TO-USE-SDD.md",
+      "sdd/documentation/es/README.md",
+      "sdd/dual-harness/CLAUDE.md",
+      "sdd/dual-harness/rules/sdd-gates.md",
+      "sdd/scripts/lib/session-registry.mjs",
+      "sdd/skills/sdd-data-schemas/SKILL.md",
+      "sdd/skills/sdd-file-structure/SKILL.md",
+      "sdd/skills/sdd-mod/.claude-plugin/contract/index.d.ts",
+      "sdd/skills/sdd-mod/hooks/.src/register.tsx",
+      "sdd/skills/sdd-mod/hooks/.src/sdd.ts",
+      "sdd/skills/sdd-mod/hooks/.src/session-registry.d.mts",
+      "sdd/skills/sdd-mod/hooks/.src/session-registry.mjs",
+      "sdd/skills/sdd-steward/SKILL.md",
+      "sdd/templates/nx-workspace/package.json"
+    ],
+    "files_deleted": [],
+    "usage": {
+      "tokens_in": 1200000,
+      "tokens_out": 76000,
+      "approx": true,
+      "source": "declared-estimate",
+      "by_tier": {
+        "claude/opus": {
+          "tokens_in": 970000,
+          "tokens_out": 60000,
+          "approx": true,
+          "source": "declared-estimate"
+        },
+        "claude/sonnet": {
+          "tokens_in": 149000,
+          "tokens_out": 8000,
+          "approx": true,
+          "source": "declared-estimate"
+        },
+        "claude/haiku": {
+          "tokens_in": 81000,
+          "tokens_out": 8000,
+          "approx": true,
+          "source": "declared-estimate"
+        }
+      },
+      "by_agent": [
+        {
+          "agent": "orchestrator",
+          "label": "apertura y cierre del ciclo",
+          "provider_model": "claude/opus",
+          "effort": "high",
+          "tokens_in": 80000,
+          "tokens_out": 12000,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-06"
+        },
+        {
+          "agent": "orchestrator",
+          "label": "consolidación de fragmentos de contexto (4 subproyectos)",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 149000,
+          "tokens_out": 8000,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-06"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "6 tasks (TASK-001..004, TASK-006, TASK-007)",
+          "provider_model": "claude/opus",
+          "effort": "high",
+          "tokens_in": 810000,
+          "tokens_out": 43000,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-06"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-005",
+          "provider_model": "claude/opus",
+          "effort": "high",
+          "tokens_in": 80000,
+          "tokens_out": 5000,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-06"
+        },
+        {
+          "agent": "custom",
+          "label": "pruebas reales: 6 sesiones de Claude Code en examples/par-017",
+          "provider_model": "claude/haiku",
+          "effort": "low",
+          "tokens_in": 81000,
+          "tokens_out": 8000,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-06"
+        }
+      ]
+    }
+  },
+  "tables_created": [],
+  "endpoints_implemented": [],
+  "components_created": [],
+  "issues_found": [
+    "Corregido: `prompt.compose` no sirve para el buzón: el motor arma el system prompt una vez por sesión y no vuelve a preguntar, así que el pedido nunca llegaba (prueba real). El buzón ahora viaja como `context` del resultado de la próxima herramienta de la sesión dueña.",
+    "Corregido: `sdd:release` comparaba la ruta real del repo (/private/var/…) con INIT_CWD sin resolver (/var/…) en macOS y daba «fuera del repositorio»; ahora resuelve ambas con realpath.",
+    "Corregido: al espejar el kit en el `sdd/` del repo se copió `dual-harness/CLAUDE.md` del template encima del del repo (perdía la sección absorbida); se restauró y se aplicó solo el párrafo nuevo.",
+    "Abierto (informativo): el `tsconfig.json` del mod incluye `hooks/.src`, pero tsc saltea carpetas con punto también en `include`, así que no chequea nada; el type-check real del mod se hizo con una lista explícita de archivos contra los tipos del motor 2.1.317.",
+    "Abierto (informativo): una sesión que muere sin `session.end` (proceso matado) deja su reserva viva hasta que vence a los 30 min; comprobado en la prueba real."
+  ],
+  "reviewer_report": {
+    "approved": true,
+    "date": "2026-11-06",
+    "ca_results": {
+      "US-5": "PASS - sesión A (spec-dev-001-auth) reserva apps/api/src/shared.ts al escribirlo; sesión B (spec-dev-002-billing) en la misma carpeta recibe «SDD reserva: … está reservado por otra sesión en esta misma carpeta (spec-dev-001-auth/cycle-01 …)» y el archivo queda intacto; desde otro worktree solo avisa (tests); al cerrar A la reserva queda liberada",
+      "US-6": "PASS - el choque dejó el pedido en el buzón de A; A lo recibió adjunto al resultado de su herramienta (read_at marcado), corrió `pnpm sdd:release` y B recibió el aviso lease-released; además session.send llegó entre procesos como bonus",
+      "US-7": "PASS - el puente toma y respeta reservas por conversación y suma `leases` (con requestedBy) al snapshot; Studio lista bajo cada unidad los archivos reservados y quién los pide (tests de componente). No se verificó visualmente en el navegador en este ciclo"
+    },
+    "tests": {
+      "protocol": "OK - 177 tests",
+      "cli": "OK - 585 tests (11 skip)",
+      "bridge": "OK - 976 tests (5 skip)",
+      "studio": "OK - 1214 tests",
+      "build": "OK",
+      "typecheck": "OK",
+      "mod-typecheck": "OK - register.tsx y sdd.ts contra los tipos del motor 2.1.317 (lista explícita)",
+      "sdd-validate": "OK",
+      "real-check": "OK - examples/par-017 con el kit actualizado vía update sdd; dos sesiones de Claude Code (motor 2.1.317, mod por --plugin-dir, haiku) sobre el mismo archivo"
+    },
+    "notes": "Flow lite, profile solo, un solo actor. Telemetría declarada (estimación). Código sin comentarios. Retrocompatible: campos de protocolo opcionales, mod apagado ⇒ sin cambios, kits viejos sin funciones de reserva ⇒ el puente no reserva. Con este ciclo la spec 017 queda completa."
+  }
+}

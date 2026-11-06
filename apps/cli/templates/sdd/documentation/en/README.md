@@ -125,6 +125,8 @@ sdd/
 │   ├── setup-agents.ps1               ← PowerShell script (Windows)
 │   ├── validate-sdd.mjs               ← Registry validator (pnpm sdd:validate)
 │   ├── spec-gate.mjs                  ← Answers SPEC GATE A and B (pnpm sdd:gate)
+│   ├── sdd-use.mjs                    ← Binds this session to a cycle or fix (pnpm sdd:use)
+│   ├── sdd-release.mjs                ← Releases file leases and notifies (pnpm sdd:release)
 │   ├── rebuild-tasks-index.mjs        ← Regenerates the tasks index (pnpm sdd:rebuild-tasks-index)
 │   ├── rebuild-catalog.mjs            ← Regenerates the viewer manifest (pnpm sdd:rebuild-catalog)
 │   ├── setup-rtk.mjs                  ← Installs/merges the rtk hooks (pnpm sdd:rtk)
@@ -346,6 +348,20 @@ spec from `draft` to `in-progress`. Only the reviewer later moves it to `status:
 | B5  | `constitution.md` for every subproject in `cycle.json → apps[]`                                         |
 
 **`BLOCKED` → zero lines of code** until what the script points at is completed.
+
+**Parallel sessions.** Several specs may each have an `in-progress` cycle at once (A3: one per
+spec). Each session binds to one unit —a cycle or a fix— through the `SDD-BIND` line that an
+`APPROVED` GATE B prints (run it in the session that implements), through
+`pnpm sdd:use <spec> cycle-XX` / `pnpm sdd:use <FIX-id>`, or on its own when there is a single open
+unit or the branch names the spec. With the Claude Code mod on, the band shows "this session /
+others" and, when unbound with several open units, code edits are rejected listing the units. The
+registry is local (`<git-common-dir>/sdd-sessions/`, outside git); with the mod off nothing
+changes. Studio shows every running unit.
+With the mod on, every code file a session edits is **leased** to it (`locks/` in the same
+registry): another session in the same folder does not edit it (from another worktree, only a
+warning), leaves a request in the holder's **inbox**, and the holder sees it on its next action.
+`pnpm sdd:release <file…>` releases and notifies; `--list` shows the leases. Studio shows each
+unit's leased files and who asks for them.
 
 ### Cycle flow — full · reduced · lite
 

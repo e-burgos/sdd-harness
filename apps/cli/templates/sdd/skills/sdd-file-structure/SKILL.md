@@ -23,7 +23,7 @@ description: >
 sdd/
 ├── global.json                    ← Estado general del proyecto (fuente de verdad — solo specs mergeadas a master)
 ├── schema.json                    ← Tablas de BD definidas hasta el momento
-├── schemas/                       ← JSON Schemas estrictos de TODOS los registros (fuente de verdad de máquina)
+├── schemas/                       ← JSON Schemas estrictos de TODOS los registros (fuente de verdad de máquina; incluye session-binding, file-lease y session-request: ataduras, reservas y buzón locales de sesiones)
 ├── api.json                       ← Endpoints implementados hasta el momento
 ├── components.json                ← Componentes frontend creados
 ├── tasks.json                     ← ÍNDICE de tasks (generado — canónico: cycles/cycle-XX/tasks.json)

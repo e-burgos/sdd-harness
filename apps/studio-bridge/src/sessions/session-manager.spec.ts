@@ -505,6 +505,82 @@ describe('SessionManager', () => {
         runs[0]!.finish();
       });
 
+      describe('parallel-session bindings', () => {
+        const unit = { kind: 'cycle' as const, spec: 'spec-dev-001-pagos', cycle: 'cycle-01' };
+        function stubBindings(verdict: { kind: 'allow' } | { kind: 'deny'; reason: string } | null) {
+          const calls = { sync: [] as Array<[string, unknown]>, judge: [] as unknown[], end: [] as string[], endAll: 0, touch: 0 };
+          const bindings = {
+            sync: (id: string, u: unknown) => calls.sync.push([id, u]),
+            touch: () => void calls.touch++,
+            end: (id: string) => calls.end.push(id),
+            has: () => false,
+            judge: (input: unknown) => (calls.judge.push(input), verdict),
+            endAll: async () => void calls.endAll++,
+            listLive: async () => [],
+          };
+          return { bindings, calls };
+        }
+
+        it('binds the thread to its linked open unit when a writing turn starts', async () => {
+          const { bindings, calls } = stubBindings({ kind: 'allow' });
+          const { engine, runs } = scripted();
+          const { m } = await manager(engine, undefined, { bindings });
+          const t = await m.createThread({ channelId: 'spec:spec-dev-001-pagos', options: acceptEdits, text: 'x' });
+          expect(calls.sync).toContainEqual([t.id, unit]);
+          runs[0]!.finish();
+        });
+
+        it('does not bind a thread without a linked unit', async () => {
+          const { bindings, calls } = stubBindings({ kind: 'allow' });
+          const { engine, runs } = scripted();
+          const { m } = await manager(engine, undefined, { bindings });
+          const t = await m.createThread({ channelId: 'general', options: acceptEdits, text: 'x' });
+          expect(calls.sync).toEqual([[t.id, null]]);
+          runs[0]!.finish();
+        });
+
+        it('judges edits per session with the thread unit and the open units of the snapshot', async () => {
+          const { bindings, calls } = stubBindings({ kind: 'deny', reason: 'SPEC GATE: unbound' });
+          const { engine, runs } = scripted();
+          const { m } = await manager(engine, undefined, { bindings });
+          const t = await m.createThread({ channelId: 'spec:spec-dev-001-pagos', options: acceptEdits, text: 'x' });
+          const verdict = runs[0]!.cb.judgeTool('Write', { file_path: path.join(root, 'apps', 'x.ts') });
+          expect(verdict).toEqual({ kind: 'deny', reason: 'SPEC GATE: unbound' });
+          expect(calls.judge[0]).toMatchObject({
+            threadId: t.id, unit, gate: 'block', rel: 'apps/x.ts',
+            openUnits: [unit, { kind: 'fix', fix: 'FIX-dev-001-001' }],
+          });
+          runs[0]!.finish();
+        });
+
+        it('falls back to the global rule when the registry cannot judge', async () => {
+          const { bindings } = stubBindings(null);
+          const { engine, runs } = scripted();
+          const { m } = await manager(engine, undefined, { bindings });
+          await m.createThread({ channelId: 'general', options: acceptEdits, text: 'x' });
+          expect(runs[0]!.cb.judgeTool('Write', { file_path: path.join(root, 'apps', 'x.ts') })).toEqual({ kind: 'allow' });
+          runs[0]!.finish();
+        });
+
+        it('keeps the old deny without open units and never consults the registry', async () => {
+          const { bindings, calls } = stubBindings({ kind: 'allow' });
+          const { engine, runs } = scripted();
+          const { m } = await manager(engine, undefined, { bindings });
+          await m.createThread({ channelId: 'general', options: acceptEdits, text: 'x' });
+          gated();
+          expect(runs[0]!.cb.judgeTool('Write', { file_path: path.join(root, 'apps', 'x.ts') })).toMatchObject({ kind: 'deny' });
+          expect(calls.judge).toEqual([]);
+          runs[0]!.finish();
+        });
+
+        it('ends every binding on shutdown', async () => {
+          const { bindings, calls } = stubBindings({ kind: 'allow' });
+          const { m } = await manager(new FakeEngine(1), undefined, { bindings });
+          await m.shutdown();
+          expect(calls.endAll).toBe(1);
+        });
+      });
+
       it('C1: requestApproval does not emit a second deny pair for a toolUseId the hook already denied', async () => {
         const { engine, runs } = scripted();
         const { m } = await manager(engine);

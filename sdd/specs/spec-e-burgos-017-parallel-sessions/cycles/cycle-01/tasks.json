@@ -1,0 +1,222 @@
+{
+  "$schema": "../../../../schemas/cycle-tasks.schema.json",
+  "spec": "spec-e-burgos-017-parallel-sessions",
+  "cycle": 1,
+  "module": "parallel-sessions",
+  "apps": [
+    "apps/cli",
+    "apps/studio-bridge",
+    "apps/studio",
+    "libs/studio-protocol"
+  ],
+  "flow": "lite",
+  "user_stories_generated": true,
+  "prerequisites": {
+    "tasks_generated": true
+  },
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "Registro de sesiones en el kit (schema, librería y gate por sesión)",
+      "user_stories": [
+        "US-3",
+        "US-4"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [],
+      "status": "done",
+      "files": [
+        "apps/cli/templates/sdd/schemas/session-binding.schema.json",
+        "apps/cli/templates/sdd/scripts/lib/session-registry.mjs"
+      ],
+      "usage": {
+        "tokens_in": 180000,
+        "tokens_out": 9000,
+        "approx": true,
+        "recorded_at": "2026-11-06",
+        "provider_model": "claude/opus",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "source": "declared-estimate"
+      }
+    },
+    {
+      "id": "TASK-002",
+      "title": "sdd:use y línea marcadora SDD-BIND en GATE B",
+      "user_stories": [
+        "US-3"
+      ],
+      "estimation_hours": 2,
+      "story_points": 2,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "status": "done",
+      "files": [
+        "apps/cli/templates/sdd/scripts/sdd-use.mjs",
+        "apps/cli/templates/sdd/scripts/spec-gate.mjs"
+      ],
+      "usage": {
+        "tokens_in": 40000,
+        "tokens_out": 8000,
+        "approx": true,
+        "recorded_at": "2026-11-06",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "source": "declared-estimate"
+      }
+    },
+    {
+      "id": "TASK-003",
+      "title": "Mod de Claude Code: franja multi-unidad, atadura automática y gate por sesión",
+      "user_stories": [
+        "US-1",
+        "US-2",
+        "US-3",
+        "US-4"
+      ],
+      "estimation_hours": 4,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002"
+      ],
+      "status": "done",
+      "files": [
+        "apps/cli/templates/sdd/skills/sdd-mod/hooks/.src/sdd.ts",
+        "apps/cli/templates/sdd/skills/sdd-mod/hooks/.src/register.tsx"
+      ],
+      "usage": {
+        "tokens_in": 55000,
+        "tokens_out": 12000,
+        "approx": true,
+        "recorded_at": "2026-11-06",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "source": "declared-estimate"
+      }
+    },
+    {
+      "id": "TASK-004",
+      "title": "Puente: atadura de las conversaciones, gate por sesión y ataduras en el snapshot",
+      "user_stories": [
+        "US-1",
+        "US-3",
+        "US-4"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio-bridge/src/sessions/session-manager.ts",
+        "libs/studio-protocol/src/snapshot.ts"
+      ],
+      "usage": {
+        "tokens_in": 90000,
+        "tokens_out": 20000,
+        "approx": true,
+        "recorded_at": "2026-11-06",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "source": "declared-estimate"
+      }
+    },
+    {
+      "id": "TASK-005",
+      "title": "Studio: header y Mission Control con todo lo que está en curso",
+      "user_stories": [
+        "US-1",
+        "US-2"
+      ],
+      "estimation_hours": 2,
+      "story_points": 2,
+      "depends_on": [
+        "TASK-004"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/StudioHeader.tsx",
+        "apps/studio/src/components/mission-control/EcosystemDashboard.tsx"
+      ],
+      "usage": {
+        "tokens_in": 60000,
+        "tokens_out": 15000,
+        "approx": true,
+        "recorded_at": "2026-11-06",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "source": "declared-estimate"
+      }
+    },
+    {
+      "id": "TASK-006",
+      "title": "Agentes y documentación del kit, espejo en sdd/",
+      "user_stories": [
+        "US-3",
+        "US-4"
+      ],
+      "estimation_hours": 2,
+      "story_points": 2,
+      "depends_on": [
+        "TASK-002",
+        "TASK-003"
+      ],
+      "status": "done",
+      "files": [
+        "apps/cli/templates/sdd/dual-harness/rules/sdd-gates.md",
+        "apps/cli/templates/sdd/documentation/es/README.md",
+        "apps/cli/templates/sdd/documentation/en/README.md"
+      ],
+      "usage": {
+        "tokens_in": 45000,
+        "tokens_out": 6000,
+        "approx": true,
+        "recorded_at": "2026-11-06",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "source": "declared-estimate"
+      }
+    },
+    {
+      "id": "TASK-007",
+      "title": "Verificación y cierre con dos sesiones reales en examples/",
+      "user_stories": [
+        "US-1",
+        "US-2",
+        "US-3",
+        "US-4"
+      ],
+      "estimation_hours": 2,
+      "story_points": 2,
+      "depends_on": [
+        "TASK-003",
+        "TASK-004",
+        "TASK-005",
+        "TASK-006"
+      ],
+      "status": "done",
+      "files": [
+        "sdd/specs/spec-e-burgos-017-parallel-sessions/cycles/cycle-01/cycle.json"
+      ],
+      "usage": {
+        "tokens_in": 120000,
+        "tokens_out": 6000,
+        "approx": true,
+        "recorded_at": "2026-11-06",
+        "provider_model": "claude/opus",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "source": "declared-estimate"
+      }
+    }
+  ]
+}

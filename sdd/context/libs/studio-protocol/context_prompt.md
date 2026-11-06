@@ -1,6 +1,6 @@
 # Context prompt — libs/studio-protocol
 
-> Última actualización: cycle-01 (spec-e-burgos-006-studio-auth-connect) | Fecha: 2026-10-26
+> Última actualización: consolida los fragmentos de spec-e-burgos-007, 008, 010 (cycle-01), 013 y 017 | Fecha: 2026-11-06
 
 > Entry point para agentes y desarrolladores trabajando en `@sdd-studio/protocol`.
 > Leer este documento antes de tocar tipos, esquemas o mensajes del protocolo.
@@ -15,8 +15,10 @@ Es la librería que define los tipos, esquemas Zod y códec binario/JSON para la
 - `src/commands.ts`: Catálogo de comandos que el frontend puede enviar al backend.
 - `src/events.ts`: Eventos en streaming (texto, deltas, diffs de herramientas, aprobaciones).
 - `src/handshake.ts`: Validación de tokens de pairing y protocolo de conexión inicial.
-- `src/snapshot.ts`: Definición del estado reactivo del workspace (specs, tasks, fixes, agentes, skills, global).
-- `src/limits.ts`: límites compartidos (frame, adjuntos, refs, búsqueda, pendientes) y `BRIDGE_FEATURES` (`conversation-sessions`, `auth-subscription`).
+- `src/snapshot.ts`: Definición del estado reactivo del workspace (specs, tasks, fixes, agentes, skills, global, tools y `sessions`).
+- `src/kit.ts`: contrato del índice del kit, `tools.json` y `rtk-gain`.
+- `src/wizard.ts`: contrato del wizard «Nuevo proyecto» y del cambio de workspace.
+- `src/limits.ts`: límites compartidos (frame, adjuntos, refs, búsqueda, pendientes, config, generación) y `BRIDGE_FEATURES` (lista de capacidades del puente; máx. 32).
 - `src/attachments.ts`: mimes y extensiones de adjuntos.
 - `src/version.ts`: `PROTOCOL_VERSION = 2`.
 - `src/codec.ts`: Funciones `decodeClientMessage` y `decodeServerMessage`.
@@ -36,4 +38,5 @@ Cada archivo `.ts` cuenta con su respectivo `.spec.ts`.
 ## Precauciones
 
 - **Cero APIs de Node.js:** Este paquete corre en el navegador de la web app. Prohibido importar `node:fs`, `node:path`, `node:crypto` o `process`.
+- **Retrocompatibilidad:** `PROTOCOL_VERSION` sigue en 2; todo campo, comando o evento nuevo entra opcional y anunciado por `BRIDGE_FEATURES`, y todo evento que viaje en `thread.history` necesita su opt-in.
 - **Zod 4 compatibility:** Los esquemas utilizan Zod 4. Cuidar operadores y métodos deprecated.

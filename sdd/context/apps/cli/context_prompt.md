@@ -1,5 +1,7 @@
 # Context prompt — apps/cli
 
+> Última actualización: consolida los fragmentos de spec-e-burgos-011, 012, 013, 016 y 017 | Fecha: 2026-11-06
+
 > Entry point para agentes y desarrolladores trabajando en `@e-burgos/sdd-harness`.
 > Leer este documento antes de modificar cualquier comando, generador o plantilla de la CLI.
 
@@ -16,6 +18,7 @@ La CLI `harness` es la herramienta central del repositorio. Permite inicializar 
   - Actualización segura: `commands/update/sdd.ts`
   - Ideación / Hermes: `commands/idea.ts`
   - Nuevas specs / apps: `commands/add/spec.ts`, `commands/add/app.ts`
+  - Catálogo y validación de config (consumidos por Studio): `commands/config/index.ts`, `config/catalog.ts`, `config/validate.ts`
 - **Generadores del sistema:** `src/generators/`
   - Inyección de SDD y dual-harness: `generators/sdd.generator.ts`
   - Actualización segura y manifiesto de hashes: `generators/update.generator.ts`, `generators/kit-manifest.ts`
@@ -38,4 +41,5 @@ Al modificar código en `apps/cli`:
 
 - **NO alterar `sdd/` para solucionar bugs del producto:** `sdd/` en la raíz es la instalación local. El producto vive en `apps/cli/templates/sdd/`. Cualquier cambio al kit debe hacerse en `apps/cli/templates/sdd/`.
 - **Invariante de portabilidad:** Ningún archivo dentro de `templates/sdd/` puede contener nombres fijos del proyecto o autores; todo debe abstraerse hacia `sdd/global.json`.
+- **Pendientes:** Nx 24 y TypeScript 7 en una spec propia (afectan a todos los generadores); interruptor de tucu-ui en el módulo Kit de Studio; casos de Windows de tucu-ui en una máquina Windows; cycle-02 de sesiones paralelas (reservas de archivo con aviso). El CLI de terminal de Claude Code 2.1.123 no carga mods; el motor de escritorio 2.1.317 sí.
 - **Consistencia multiplataforma:** La CLI corre en Linux, macOS y Windows (runners CI en Ubuntu y Windows Server). Cuida paths con barras invertidas (`\\`), permisos de symlinks vs junctions y terminaciones de línea CRLF/LF (verificado en `update.generator.crlf.spec.ts` y `sdd.generator.windows.spec.ts`).

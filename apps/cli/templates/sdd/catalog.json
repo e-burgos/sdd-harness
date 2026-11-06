@@ -146,6 +146,9 @@
       "file": "db-schema.schema.json"
     },
     {
+      "file": "file-lease.schema.json"
+    },
+    {
       "file": "fixes.schema.json"
     },
     {
@@ -153,6 +156,12 @@
     },
     {
       "file": "pricing.schema.json"
+    },
+    {
+      "file": "session-binding.schema.json"
+    },
+    {
+      "file": "session-request.schema.json"
     },
     {
       "file": "specs-index.schema.json"
