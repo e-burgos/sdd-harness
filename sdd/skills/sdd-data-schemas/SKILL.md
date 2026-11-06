@@ -146,7 +146,13 @@ pending_modules → in_progress_modules → completed_modules
 
 > ⛔ Regla de concurrencia: **un ciclo activo por spec**. Varios devs pueden tener módulos
 > en `in_progress_modules` a la vez (modelo multi-developer), pero una misma spec nunca
-> tiene dos ciclos abiertos.
+> tiene dos ciclos abiertos. Varias specs sí pueden estar en curso a la vez, cada una atada a su
+> sesión (`pnpm sdd:use`, ver `sdd/dual-harness/rules/sdd-gates.md` § Sesiones paralelas).
+
+> **`sdd/schemas/session-binding.schema.json`** — atadura de una sesión a una unidad (ciclo o
+> fix). Es un archivo **local** (`<git-common-dir>/sdd-sessions/sessions/<session-id>.json`), no
+> vive en `sdd/` ni en git, y `pnpm sdd:validate` no lo valida: lo escriben el mod de Claude Code
+> y el puente de Studio. No se edita a mano.
 
 ---
 

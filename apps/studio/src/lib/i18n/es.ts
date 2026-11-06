@@ -9,6 +9,7 @@ import { kitEs } from './modules/kit';
 import { architectureEs } from './modules/architecture';
 import { metricsEs } from './modules/metrics';
 import { wizardEs } from './modules/wizard';
+import { unitsEs } from './modules/units';
 
 export const es = {
   ...shellEs,
@@ -22,6 +23,7 @@ export const es = {
   ...architectureEs,
   ...metricsEs,
   ...wizardEs,
+  ...unitsEs,
   'connect.title': 'Conectá tu repo',
   'connect.steps': 'Pasos para conectar tu repo',
   'connect.step1.title': 'Instalá el kit SDD en tu repo',

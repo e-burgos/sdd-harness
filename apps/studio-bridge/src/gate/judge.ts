@@ -1,4 +1,5 @@
 import type { WorkspaceSnapshot } from '@sdd-studio/protocol';
+import type { RegistryUnit } from '../sessions/session-bindings';
 
 export type Verdict = { kind: 'allow' } | { kind: 'warn'; reason: string } | { kind: 'deny'; reason: string };
 
@@ -49,15 +50,25 @@ export function isCodePath(rel: string): boolean {
   return !EXEMPT_DIRS.has(first ?? '');
 }
 
-export function judgeEdit(snapshot: WorkspaceSnapshot, root: string, filePath: string): Verdict {
+export type SessionJudge = (input: { rel: string; openUnits: RegistryUnit[]; gate: 'block' | 'warn' }) => Verdict | null;
+
+export function openUnitsOfSnapshot(snapshot: WorkspaceSnapshot): RegistryUnit[] {
+  const closedSpecs = new Set(snapshot.specs.filter((sp) => CLOSED_SPEC.has(sp.status)).map((sp) => sp.id));
+  return [
+    ...snapshot.cycles
+      .filter((c) => c.status === 'in-progress' && !closedSpecs.has(c.specId))
+      .map((c): RegistryUnit => ({ kind: 'cycle', spec: c.specId, cycle: c.cycle })),
+    ...snapshot.fixes.filter((f) => OPEN_FIX.has(f.status)).map((f): RegistryUnit => ({ kind: 'fix', fix: f.id })),
+  ];
+}
+
+export function judgeEdit(snapshot: WorkspaceSnapshot, root: string, filePath: string, sessionJudge?: SessionJudge): Verdict {
   // Without good spec data (never readable) there is no basis to judge; with earlier data, judge on the last good one.
   if (snapshot.stale.includes('specs') && snapshot.specs.length === 0) return { kind: 'allow' };
   const rel = relativeToRoot(root, filePath);
   if (rel === null || !isCodePath(rel)) return { kind: 'allow' };
-  const closedSpecs = new Set(snapshot.specs.filter((sp) => CLOSED_SPEC.has(sp.status)).map((sp) => sp.id));
-  const active =
-    snapshot.cycles.some((c) => c.status === 'in-progress' && !closedSpecs.has(c.specId)) || snapshot.fixes.some((f) => OPEN_FIX.has(f.status));
-  if (active) return { kind: 'allow' };
+  const openUnits = openUnitsOfSnapshot(snapshot);
+  if (openUnits.length > 0) return sessionJudge?.({ rel, openUnits, gate: snapshot.gateMode }) ?? { kind: 'allow' };
   const reason =
     `SPEC GATE: there is no in-progress cycle nor open fix, so code cannot be written yet ` +
     `(${rel}). Open a cycle (pnpm sdd:gate <spec> → sdd-orchestrator) or register the change with ` +

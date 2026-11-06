@@ -5,6 +5,18 @@ All notable changes to `@e-burgos/sdd-harness` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Parallel sessions.** Several specs can run at the same time, each in its own session. A local
+  session registry (`<git-common-dir>/sdd-sessions/`, outside git, `session-binding.schema.json`)
+  binds each session to a cycle or a fix. `pnpm sdd:use <spec> <cycle-XX>` / `pnpm sdd:use <FIX-id>`
+  binds by hand, and `sdd:gate` prints a `SDD-BIND` line when GATE B passes. The Claude Code mod's
+  band shows "this session / others", binds automatically (marker, single open unit or branch name)
+  and gates edits per session: unbound with several open units it rejects and lists them. Studio
+  shows every running unit. Mod off: nothing changes. Docs (es/en), agents and `sdd-gates.md` updated.
+
 ## [0.18.0] - 2026-11-05
 
 ### Added

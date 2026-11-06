@@ -156,6 +156,13 @@ Copilot, Gemini y el resto de los agentes no lo ven y no cambian: siguen las mis
 `AGENTS.md`/`GEMINI.md`/`copilot-instructions.md`, y `pnpm sdd:validate` sigue siendo la red de
 seguridad común en CI. El gate del mod no cubre comandos de shell.
 
+**Sesiones paralelas.** Podés tener varias specs en curso, una por sesión de Claude Code. La franja
+muestra «esta sesión: <spec> · <cycle> …» y «otras: …». La sesión se ata sola al correr el GATE B
+(`pnpm sdd:gate <spec> cycle-XX`, que imprime `SDD-BIND`), cuando hay una sola unidad abierta o cuando
+la rama nombra la spec; a mano: `pnpm sdd:use <spec> cycle-XX` o `pnpm sdd:use <FIX-id>`. Sin
+atadura y con varias unidades abiertas, el gate rechaza la edición y las lista. Las ataduras
+viven en `<git-common-dir>/sdd-sessions/` (local, fuera de git) y vencen a los 30 min sin actividad.
+
 ---
 
 ## 3. Flujo normal — Funcionalidad nueva

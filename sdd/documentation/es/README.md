@@ -125,6 +125,7 @@ sdd/
 │   ├── setup-agents.ps1               ← Script PowerShell (Windows)
 │   ├── validate-sdd.mjs               ← Validador de registros (pnpm sdd:validate)
 │   ├── spec-gate.mjs                  ← Responde el SPEC GATE A y B (pnpm sdd:gate)
+│   ├── sdd-use.mjs                    ← Ata esta sesión a un ciclo o fix (pnpm sdd:use)
 │   ├── rebuild-tasks-index.mjs        ← Regenera el índice de tasks (pnpm sdd:rebuild-tasks-index)
 │   ├── rebuild-catalog.mjs            ← Regenera el manifest del visor (pnpm sdd:rebuild-catalog)
 │   ├── setup-rtk.mjs                  ← Instala/mergea los hooks de rtk (pnpm sdd:rtk)
@@ -346,6 +347,15 @@ de `draft` a `in-progress`. Solo el reviewer lo pasa después a `status: "comple
 | B5  | `constitution.md` de cada subproyecto en `cycle.json → apps[]`                                       |
 
 **`BLOCKED` → cero líneas de código** hasta completar lo que el script señala.
+
+**Sesiones paralelas.** Varias specs pueden tener un ciclo `in-progress` a la vez (A3: uno por
+spec). Cada sesión se ata a una unidad —ciclo o fix— con la línea `SDD-BIND` que imprime el GATE B
+`APPROVED` (corrélo en la sesión que implementa), con `pnpm sdd:use <spec> cycle-XX` /
+`pnpm sdd:use <FIX-id>`, o sola si hay una única unidad abierta o la rama nombra la spec. Con el
+mod de Claude Code prendido, la franja muestra «esta sesión / otras» y, sin atadura y con varias
+unidades abiertas, la edición de código se rechaza listando las unidades. El registro es local
+(`<git-common-dir>/sdd-sessions/`, fuera de git); con el mod apagado nada cambia. Studio muestra
+todas las unidades en curso.
 
 ### Flow del ciclo — full · reduced · lite
 

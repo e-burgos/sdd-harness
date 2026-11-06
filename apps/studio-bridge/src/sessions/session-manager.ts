@@ -37,12 +37,13 @@ import {
   type ToolRunContext,
   type ToolVerdict,
 } from '../engine/types';
-import { editTargetOf, judgeEdit } from '../gate/judge';
+import { editTargetOf, judgeEdit, openUnitsOfSnapshot, type SessionJudge } from '../gate/judge';
 import { alwaysOfferOf, matchesRule, ruleOf } from './always-rule';
 import type { AttachmentStore } from './attachment-store';
 import { DocumentChangeTracker, type AttributedTouch } from './document-tracker';
 import { addManual, assignLink, detectRef, detectRefs, legacyTargetOf, linkTargetExists, removeRef, type StoredLinkEntry } from './thread-link';
 import { PresenceTracker } from './presence';
+import type { RegistryUnit, ThreadBindings } from './session-bindings';
 import { storedLinkOf, toThreadInfo as toInfo, type HistoryEntry, type PendingMessage, type StoredThread, type ThreadStore } from './store';
 
 export class SessionError extends Error {
@@ -77,9 +78,11 @@ export interface SessionManagerDeps {
   refreshSnapshot?: () => Promise<void>;
   titleTimeoutMs?: number;
   tracker?: DocumentChangeTracker;
+  bindings?: ThreadBindings;
 }
 
 const BASH_TOOL = 'Bash';
+const unitKeyOf = (unit: RegistryUnit): string => (unit.kind === 'fix' ? unit.fix : `${unit.spec}/${unit.cycle}`);
 const EXACT_PATH_KEYS: Record<string, string> = { Write: 'file_path', Edit: 'file_path', MultiEdit: 'file_path', NotebookEdit: 'notebook_path' };
 const SDD_PATH_PREFIXES = ['sdd/specs/', 'sdd/fixes/'];
 
@@ -188,6 +191,31 @@ export class SessionManager {
     this.documents = deps.tracker ?? new DocumentChangeTracker(deps.root);
     this.tracker = new PresenceTracker(() => deps.snapshot().agents.map((a) => a.id));
     for (const thread of deps.store.list()) this.tracker.onThread(toInfo(thread));
+  }
+
+  async shutdown(): Promise<void> {
+    await this.deps.bindings?.endAll();
+  }
+
+  private unitOf(thread: StoredThread): RegistryUnit | null {
+    const { target } = legacyTargetOf(thread.link.targets);
+    if (target.kind === 'cycle') return { kind: 'cycle', spec: target.specId, cycle: target.cycle };
+    return target.kind === 'fix' ? { kind: 'fix', fix: target.fixId } : null;
+  }
+
+  private syncBinding(thread: StoredThread): void {
+    const bindings = this.deps.bindings;
+    if (!bindings) return;
+    const unit = this.unitOf(thread);
+    const open = unit !== null && openUnitsOfSnapshot(this.deps.snapshot()).some((candidate) => unitKeyOf(candidate) === unitKeyOf(unit));
+    bindings.sync(thread.id, open ? unit : null);
+  }
+
+  private sessionJudgeFor(thread: StoredThread): SessionJudge | undefined {
+    const bindings = this.deps.bindings;
+    if (!bindings) return undefined;
+    const unit = this.unitOf(thread);
+    return ({ rel, openUnits, gate }) => bindings.judge({ threadId: thread.id, unit, gate, openUnits, rel });
   }
 
   list(channelId?: string): ThreadInfo[] {
@@ -468,6 +496,7 @@ export class SessionManager {
     if (newMessage !== undefined) prompts.push(this.deliverNew(thread, newMessage));
     live.writes = this.writes(thread);
     live.interrupted = false;
+    if (live.writes) this.syncBinding(thread);
     if (this.blocked(thread)) {
       live.queued = prompts;
       live.queuedAt = ++this.queueCounter;
@@ -613,6 +642,7 @@ export class SessionManager {
   private replaceLinkEntries(thread: StoredThread, entries: StoredLinkEntry[], fallbackSource: ThreadLink['source']): void {
     if (JSON.stringify(entries) === JSON.stringify(thread.link.targets)) return;
     thread.link = { ...thread.link, ...legacyTargetOf(entries, fallbackSource), targets: entries };
+    if (this.deps.bindings?.has(thread.id) || this.liveOf(thread.id).turn !== null) this.syncBinding(thread);
     this.publishThread(thread);
   }
 
@@ -801,7 +831,7 @@ export class SessionManager {
     if (live.interrupted || live.gen !== gen) return { kind: 'deny', reason: 'interrupted' };
     const target = editTargetOf(toolName, input);
     if (!target) return { kind: 'allow' };
-    const verdict = judgeEdit(this.deps.snapshot(), this.deps.root, target);
+    const verdict = judgeEdit(this.deps.snapshot(), this.deps.root, target, this.sessionJudgeFor(thread));
     if (verdict.kind !== 'deny') return verdict;
     const author = ctx?.author ?? { agent: thread.agent, parentToolUseId: null };
     if (ctx?.toolUseId) live.hookDenied.set(ctx.toolUseId, verdict.reason);
@@ -827,13 +857,13 @@ export class SessionManager {
     let gateWarning: string | undefined;
     const target = editTargetOf(request.toolName, request.input);
     if (target) {
-      let verdict = judgeEdit(this.deps.snapshot(), this.deps.root, target);
+      let verdict = judgeEdit(this.deps.snapshot(), this.deps.root, target, this.sessionJudgeFor(thread));
       if (verdict.kind === 'deny' && this.deps.refreshSnapshot) {
         // The snapshot may lag behind due to the watcher debounce: a single re-read before denying.
         await this.deps.refreshSnapshot().catch(reportError);
         if (live.interrupted || live.gen !== gen) return { behavior: 'deny', message: 'interrupted' };
         if (signal.aborted) return { behavior: 'deny', message: 'aborted' };
-        verdict = judgeEdit(this.deps.snapshot(), this.deps.root, target);
+        verdict = judgeEdit(this.deps.snapshot(), this.deps.root, target, this.sessionJudgeFor(thread));
       }
       if (verdict.kind === 'deny') {
         this.announceDeny(thread, request.author, request.toolName, request.input, verdict.reason);
@@ -916,6 +946,7 @@ export class SessionManager {
       if (fromEngine && thread.status === 'interrupted') return;
       this.applyStatus(thread, event.status);
     }
+    this.deps.bindings?.touch(thread.id);
     const seq = this.deps.store.append(thread.id, event);
     this.deps.broadcast({ kind: 'thread.event', threadId: thread.id, seq, event });
     this.tracker.onEvent(thread.id, event);

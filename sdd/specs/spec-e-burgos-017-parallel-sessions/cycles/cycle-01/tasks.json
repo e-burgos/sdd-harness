@@ -112,11 +112,21 @@
       "depends_on": [
         "TASK-001"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/studio-bridge/src/sessions/session-manager.ts",
         "libs/studio-protocol/src/snapshot.ts"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 90000,
+        "tokens_out": 20000,
+        "approx": true,
+        "recorded_at": "2026-11-06",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "source": "declared-estimate"
+      }
     },
     {
       "id": "TASK-005",
@@ -130,11 +140,21 @@
       "depends_on": [
         "TASK-004"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/studio/src/components/StudioHeader.tsx",
         "apps/studio/src/components/mission-control/EcosystemDashboard.tsx"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 60000,
+        "tokens_out": 15000,
+        "approx": true,
+        "recorded_at": "2026-11-06",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "source": "declared-estimate"
+      }
     },
     {
       "id": "TASK-006",
@@ -149,12 +169,22 @@
         "TASK-002",
         "TASK-003"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/cli/templates/sdd/dual-harness/rules/sdd-gates.md",
         "apps/cli/templates/sdd/documentation/es/README.md",
         "apps/cli/templates/sdd/documentation/en/README.md"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 45000,
+        "tokens_out": 6000,
+        "approx": true,
+        "recorded_at": "2026-11-06",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "source": "declared-estimate"
+      }
     },
     {
       "id": "TASK-007",

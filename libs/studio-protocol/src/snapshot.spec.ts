@@ -86,6 +86,17 @@ describe('WorkspaceSnapshot kit additions', () => {
     const many = Array.from({ length: 65 }, (_, i) => `artifacts/${i}.md`);
     expect(WorkspaceSnapshot.parse({ ...snapshot, cycles: [{ ...cycle, documents: many }] }).cycles[0]?.documents).toBeUndefined();
   });
+  it('parses live session bindings and leaves them undefined when absent or malformed', () => {
+    const binding = {
+      sessionId: 'studio-1', unit: { kind: 'cycle', specId: 's', cycle: 'cycle-01' }, harness: 'studio', source: 'studio',
+      worktree: '/repo', boundAt: '2026-11-06T10:00:00.000Z', updatedAt: '2026-11-06T10:05:00.000Z',
+    };
+    const fixBinding = { ...binding, sessionId: 'claude-2', harness: 'claude-code', unit: { kind: 'fix', fixId: 'FIX-001' } };
+    expect(WorkspaceSnapshot.parse(snapshot).sessions).toBeUndefined();
+    expect(WorkspaceSnapshot.parse({ ...snapshot, sessions: [binding, fixBinding] }).sessions).toEqual([binding, fixBinding]);
+    expect(WorkspaceSnapshot.parse({ ...snapshot, sessions: [{ ...binding, sessionId: 'a b' }] }).sessions).toBeUndefined();
+    expect(WorkspaceSnapshot.parse({ ...snapshot, sessions: 'x' }).sessions).toBeUndefined();
+  });
   it('keeps Area closed to the known values', () => {
     expect(AREAS).toEqual(['global', 'specs', 'fixes', 'agents', 'tools', 'pricing', 'kit']);
   });

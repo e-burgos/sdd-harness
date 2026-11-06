@@ -65,7 +65,9 @@ Reporte compacto, en este orden, leyendo solo las fuentes del mapa:
    `node sdd/scripts/setup-rtk.mjs --status`; si falta el binario, ofrecer
    `pnpm sdd:rtk`.
 9. **Mod de Claude Code**: `pnpm sdd:mod -- --status` → prendido/apagado, modo del
-   gate y si `.claude/skills/sdd-mod` existe (si no, ofrecer `pnpm setup:agents`).
+   gate y si `.claude/skills/sdd-mod` existe (si no, ofrecer `pnpm setup:agents`). Con varios
+   ciclos abiertos, listar también las ataduras de sesión (qué sesión trabaja en qué unidad):
+   `pnpm sdd:use <spec> <cycle-XX>` / `<FIX-id>` ata una sesión.
 10. **tucu-ui**: `node sdd/scripts/sdd-tucu.mjs --status` → `off`, `complete` o
     `incomplete` (si es `incomplete`, ofrecer el `repair` que trae el JSON). Solo informar:
     prenderlo o apagarlo es decisión del dev.
@@ -175,6 +177,10 @@ resto siguen las mismas reglas desde los arneses y `pnpm sdd:validate`, que no c
    no aceptó el diálogo de confianza, aceptarlo y correr `/reload-plugins`.
 4. El gate del mod es un chequeo grueso (hay trabajo autorizado en curso); el gate fino
    sigue siendo `pnpm sdd:gate <spec> [cycle-XX]`. No cubre comandos de shell.
+5. **Sesiones paralelas**: cada sesión se ata a una unidad (ciclo o fix) con el `SDD-BIND` del
+   GATE B, `pnpm sdd:use` o, solas, por unidad única o rama. Sin atadura y con varias unidades
+   abiertas el gate rechaza y lista las unidades; el registro es local (fuera de git). Ante
+   ese rechazo, indicar `pnpm sdd:use`; nunca prender/apagar el mod por el dev.
 
 ## Playbook 8 — tucu-ui (herramienta auxiliar opcional)
 

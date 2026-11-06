@@ -116,6 +116,9 @@ transparente: pedís `git status` y se ejecuta `rtk git status`.
 - **Si una edición vuelve rechazada con `SPEC GATE: …`**, no la reintentes ni la rodees con
   comandos de shell: no hay ciclo `in-progress` ni fix abierto. Seguí el camino que indica el
   mensaje (abrir el ciclo vía `sdd-orchestrator`, o el FIX GATE).
+- **Si el rechazo dice que hay varias unidades abiertas** (o que tu atadura apunta a una cerrada),
+  elegí la tuya con `pnpm sdd:use <spec> <cycle-XX>` (o `pnpm sdd:use <FIX-id>`); no lo rodees.
+  Correr el GATE B en esta sesión también la ata.
 - **Nunca lo prendas, apagues ni cambies su modo por tu cuenta**: es decisión del dev
   (`pnpm sdd:mod -- --status | --enable | --disable | --gate=warn|block`; el sdd-steward lo
   opera a pedido).

@@ -88,6 +88,25 @@ export const KitToolsState = z.object({
 });
 export type KitToolsState = z.infer<typeof KitToolsState>;
 
+export const SessionUnit = z.discriminatedUnion('kind', [
+  z.object({ kind: z.literal('cycle'), specId: z.string().min(1), cycle: z.string().regex(/^cycle-\d{2}$/) }),
+  z.object({ kind: z.literal('fix'), fixId: z.string().min(1) }),
+]);
+export type SessionUnit = z.infer<typeof SessionUnit>;
+
+export const SessionBinding = z.object({
+  sessionId: z.string().regex(/^[A-Za-z0-9._-]+$/),
+  unit: SessionUnit,
+  harness: z.string().min(1).max(64),
+  source: z.string().min(1).max(64),
+  worktree: z.string().max(1024),
+  boundAt: z.string(),
+  updatedAt: z.string(),
+});
+export type SessionBinding = z.infer<typeof SessionBinding>;
+
+export const MAX_SESSION_BINDINGS = 64;
+
 export const WorkspaceSnapshot = z.object({
   project: z.string(),
   profile: z.string(),
@@ -100,6 +119,7 @@ export const WorkspaceSnapshot = z.object({
   gateMode: GateMode,
   pricing: z.record(z.string(), z.unknown()).nullable(),
   tools: KitToolsState.optional().catch(undefined),
+  sessions: z.array(SessionBinding).max(MAX_SESSION_BINDINGS).optional().catch(undefined),
   stale: z.array(Area),
 });
 export type WorkspaceSnapshot = z.infer<typeof WorkspaceSnapshot>;

@@ -1,10 +1,12 @@
 'use client';
 
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Badge, Card, BasicTable, type TableColumn } from '@e-burgos/tucu-ui';
 import { Globe, Folder, ScrollText } from 'lucide-react';
 import { useT } from '@/lib/i18n/i18n';
+import { openUnitsOf } from '@/lib/open-units';
 import { useBridge, useStudio } from '../BridgeProvider';
+import { OpenUnitsList } from '../OpenUnitsList';
 import { SubprojectIcon, classifySubproject, type SubprojectClassification } from './SubprojectIcon';
 
 export interface DiscoveredSubproject extends SubprojectClassification {
@@ -12,6 +14,7 @@ export interface DiscoveredSubproject extends SubprojectClassification {
   desc: string;
   specsCount: number;
   isActive: boolean;
+  activeCycle?: string;
   descRef?: DescRef;
 }
 
@@ -53,7 +56,8 @@ export function EcosystemDashboard() {
 
   const completedSpecs = specs.filter((s) => s.status === 'completed').length;
   const inProgressSpecs = specs.filter((s) => s.status === 'in-progress').length;
-  const activeCycle = cycles.find((c) => c.status === 'in-progress');
+  const inProgressCycles = useMemo(() => cycles.filter((c) => c.status === 'in-progress'), [cycles]);
+  const openUnits = openUnitsOf(snapshot);
 
   const totalTasks = cycles.reduce((acc, c) => acc + c.tasksTotal, 0);
   const doneTasks = cycles.reduce((acc, c) => acc + c.tasksDone, 0);
@@ -145,7 +149,8 @@ export function EcosystemDashboard() {
       const items: DiscoveredSubproject[] = Array.from(discoveredMap.entries()).map(([name, meta]) => {
         const classification = classifySubproject(name, meta.desc);
         const specsCount = specs.filter((s) => s.app === name || s.folder?.includes(name)).length;
-        const isActive = activeCycle?.apps?.includes(name) ?? false;
+        const activeIn = inProgressCycles.find((c) => c.apps?.includes(name));
+        const isActive = activeIn !== undefined;
 
         return {
           name,
@@ -153,6 +158,7 @@ export function EcosystemDashboard() {
           descRef: meta.descRef,
           specsCount,
           isActive,
+          activeCycle: activeIn?.cycle,
           ...classification,
         };
       });
@@ -166,7 +172,7 @@ export function EcosystemDashboard() {
     return () => {
       cancelled = true;
     };
-  }, [client, cycles, specs, activeCycle]);
+  }, [client, cycles, specs, inProgressCycles]);
 
   const roadmapRows: RoadmapRow[] = specs.map((s) => ({ id: s.id, title: s.title, module: s.module ?? '—', status: s.status }));
   const roadmapColumns: TableColumn<RoadmapRow>[] = [
@@ -204,11 +210,15 @@ export function EcosystemDashboard() {
         {/* Global Gate Status Pill */}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 rounded-2xl bg-ink-900 border border-foreground/10 px-4 py-2 shadow-lg">
-            <span className={`h-2.5 w-2.5 rounded-full ${activeCycle ? 'bg-emerald-400 animate-ping' : 'bg-sky-400'}`} />
+            <span className={`h-2.5 w-2.5 rounded-full ${inProgressCycles.length > 0 ? 'bg-emerald-400 animate-ping' : 'bg-sky-400'}`} />
             <div>
               <p className="text-micro font-mono uppercase text-ink-500">{t('ui.eco.gateStatus')}</p>
               <p className="text-xs font-mono font-bold text-emerald-400">
-                {activeCycle ? t('ui.eco.cycleInProgress', { flow: activeCycle.flow }) : t('ui.eco.idle')}
+                {inProgressCycles.length === 0
+                  ? t('ui.eco.idle')
+                  : inProgressCycles.length === 1
+                    ? t('ui.eco.cycleInProgress', { flow: inProgressCycles[0]!.flow })
+                    : t('units.pill', { n: inProgressCycles.length })}
               </p>
             </div>
           </div>
@@ -238,6 +248,23 @@ export function EcosystemDashboard() {
         <KpiCard label={t('ui.eco.kpi.fixes')} value={fixes.length} sub={t('ui.eco.kpi.fixesSub')} subClass="text-amber-400" />
       </div>
 
+      <section data-testid="open-units-section">
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="flex items-center gap-2 text-sm font-semibold tracking-tight text-ink-100">
+            <span className="h-2 w-2 rounded-full bg-emerald-400" />
+            <span>{t('units.title')}</span>
+          </h3>
+          <span className="font-mono text-meta text-ink-500">{t('units.subtitle')}</span>
+        </div>
+        {openUnits.length === 0 ? (
+          <div className="rounded-xl border border-foreground/10 bg-ink-900/40 p-6 text-center font-mono text-xs text-ink-500">{t('units.none')}</div>
+        ) : (
+          <Card>
+            <OpenUnitsList units={openUnits} detailed />
+          </Card>
+        )}
+      </section>
+
       {/* Subprojects Grid (Apps, Libs, Tools) */}
       <div>
         <div className="flex items-center justify-between mb-3">
@@ -265,7 +292,7 @@ export function EcosystemDashboard() {
                       {app.isActive ? (
                         <div className="flex items-center gap-1.5 font-semibold text-emerald-400">
                           <span className="h-1.5 w-1.5 animate-ping rounded-full bg-emerald-400" />
-                          <span>{t('ui.eco.activeIn', { cycle: activeCycle?.cycle ?? '' })}</span>
+                          <span>{t('ui.eco.activeIn', { cycle: app.activeCycle ?? '' })}</span>
                         </div>
                       ) : (
                         <div className="flex items-center gap-1.5 text-ink-500">

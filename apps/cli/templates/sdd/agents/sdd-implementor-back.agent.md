@@ -61,6 +61,10 @@ Antes de escribir cualquier código (fuente canónica: `sdd/dual-harness/rules/s
 pnpm sdd:gate <spec-id> cycle-[XX]   # GATE B — lee el flow del ciclo y exige SUS documentos
 ```
 
+Corré el GATE B en **la sesión que va a implementar**: al dar `APPROVED` ata esa sesión al ciclo
+(línea `SDD-BIND`). Para un fix: `pnpm sdd:use FIX-…`. Con varias specs en paralelo, sin atadura
+el mod rechaza la edición (`sdd-gates.md` § Sesiones paralelas).
+
 Además de `APPROVED`, verificar:
 
 ```
