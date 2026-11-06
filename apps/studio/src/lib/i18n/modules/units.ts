@@ -11,6 +11,11 @@ export const unitsEs = {
   'units.noSession': 'sin sesión atada',
   'units.session': 'Sesión {harness} {id}',
   'units.sessionBy': 'Sesión: {harness} · {id}',
+  'units.leases': 'Archivos reservados',
+  'units.leaseBy': 'Reservado por {harness} · {id}',
+  'units.requestedBy': 'lo pide {who}',
+  'units.moreLeases': '+{n} archivos',
+  'units.unboundLeases': 'Reservas sin unidad',
 };
 
 export const unitsEn = {
@@ -26,4 +31,9 @@ export const unitsEn = {
   'units.noSession': 'no session bound',
   'units.session': 'Session {harness} {id}',
   'units.sessionBy': 'Session: {harness} · {id}',
+  'units.leases': 'Reserved files',
+  'units.leaseBy': 'Reserved by {harness} · {id}',
+  'units.requestedBy': 'requested by {who}',
+  'units.moreLeases': '+{n} files',
+  'units.unboundLeases': 'Leases without a unit',
 } satisfies Record<keyof typeof unitsEs, string>;

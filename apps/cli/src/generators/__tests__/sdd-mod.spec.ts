@@ -25,6 +25,8 @@ type Snapshot = {
   openUnits: Unit[];
   mine: Binding | null;
   others: Binding[];
+  sessionId?: string;
+  leases?: { path: string; session_id: string }[];
   registryError?: string;
   error?: string;
 };
@@ -46,6 +48,17 @@ type SddModule = {
   touchSession: (store: Store, root: string, session: Session) => Promise<Binding | null>;
   endSession: (store: Store, root: string, session: Session) => Promise<Binding | null>;
   holderOf: (s: Snapshot, unit: Unit) => 'mine' | 'other' | null;
+  leaseEdit: (
+    store: Store,
+    s: Snapshot,
+    root: string,
+    filePath: string,
+    session: Session,
+  ) => Promise<{ verdict: { kind: string; reason?: string }; request: { toSessionId: string; text: string } | null }>;
+  unreadInbox: (store: Reader, root: string, session: Session) => Promise<{ id: string; path: string }[]>;
+  markInboxSeen: (store: Store, root: string, session: Session, ids: string[]) => Promise<void>;
+  inboxSection: (messages: { id: string; path: string }[]) => string | null;
+  leasesOf: (s: Snapshot, sessionId: string) => { path: string }[];
 };
 
 let sdd: SddModule;
@@ -393,5 +406,73 @@ describe('sdd-mod: copia del registro de sesiones', () => {
     const lib = readFileSync(resolve(kit, 'scripts/lib/session-registry.mjs'), 'utf8');
     const copy = readFileSync(resolve(kit, 'skills/sdd-mod/hooks/.src/session-registry.mjs'), 'utf8');
     expect(copy).toBe(lib);
+  });
+});
+
+describe('sdd-mod: reservas de archivo y buzón', () => {
+  const NOW = Date.parse('2026-11-06T12:00:00.000Z');
+  const specIndex = {
+    specs: [
+      { id: 'spec-x-001-a', title: 'A', status: 'in-progress', folder: 'sdd/specs/spec-x-001-a' },
+      { id: 'spec-x-002-b', title: 'B', status: 'in-progress', folder: 'sdd/specs/spec-x-002-b' },
+    ],
+  };
+  const files = (): Record<string, unknown> => ({
+    '/repo/sdd/tools.json': { claude_mod: { enabled: true, gate: 'block' } },
+    '/repo/sdd/specs/index.json': specIndex,
+    '/repo/sdd/specs/spec-x-001-a/cycles/cycle-01/cycle.json': { status: 'in-progress', flow: 'lite' },
+    '/repo/sdd/specs/spec-x-001-a/cycles/cycle-01/tasks.json': { tasks: [] },
+    '/repo/sdd/specs/spec-x-002-b/cycles/cycle-01/cycle.json': { status: 'in-progress', flow: 'lite' },
+    '/repo/sdd/specs/spec-x-002-b/cycles/cycle-01/tasks.json': { tasks: [] },
+  });
+  const a: Session = { id: 'sess-a', now: NOW };
+  const b: Session = { id: 'sess-b', now: NOW + 1000 };
+
+  async function boundPair() {
+    const store = memoryStore(files());
+    await sdd.bindFromCommand(store, ROOT, a, 'pnpm sdd:use a 1', 'SDD-BIND spec=spec-x-001-a cycle=cycle-01');
+    await sdd.bindFromCommand(store, ROOT, b, 'pnpm sdd:use b 1', 'SDD-BIND spec=spec-x-002-b cycle=cycle-01');
+    const snapOf = (session: Session) => sdd.loadSnapshot(store, ROOT, session);
+    return { store, snapOf };
+  }
+
+  it('la primera sesión reserva el archivo y la segunda, en la misma carpeta, queda frenada con pedido', async () => {
+    const { store, snapOf } = await boundPair();
+    const first = await sdd.leaseEdit(store, await snapOf(a), ROOT, '/repo/src/auth.ts', a);
+    expect(first).toEqual({ verdict: { kind: 'allow' }, request: null });
+    const second = await sdd.leaseEdit(store, await snapOf(b), ROOT, 'src/auth.ts', b);
+    expect(second.verdict.kind).toBe('deny');
+    expect(second.verdict.reason).toContain('spec-x-001-a/cycle-01');
+    expect(second.request).toMatchObject({ toSessionId: 'sess-a' });
+    expect(second.request?.text).toContain('spec-x-002-b/cycle-01 necesita src/auth.ts');
+    const retry = await sdd.leaseEdit(store, await snapOf(b), ROOT, 'src/auth.ts', b);
+    expect(retry.verdict.kind).toBe('deny');
+    expect(retry.request).toBeNull();
+    expect(sdd.leasesOf(await snapOf(a), 'sess-a').map((l) => l.path)).toEqual(['src/auth.ts']);
+  });
+
+  it('la dueña ve el pedido en su buzón una vez y al cerrar la sesión libera el archivo', async () => {
+    const { store, snapOf } = await boundPair();
+    await sdd.leaseEdit(store, await snapOf(a), ROOT, 'src/auth.ts', a);
+    await sdd.leaseEdit(store, await snapOf(b), ROOT, 'src/auth.ts', b);
+    const inbox = await sdd.unreadInbox(store, ROOT, a);
+    expect(sdd.inboxSection(inbox)).toContain('pnpm sdd:release src/auth.ts');
+    await sdd.markInboxSeen(store, ROOT, a, inbox.map((m) => m.id));
+    expect(sdd.inboxSection(await sdd.unreadInbox(store, ROOT, a))).toBeNull();
+    await sdd.endSession(store, ROOT, { id: 'sess-a', now: NOW + 2000 });
+    const after = await sdd.leaseEdit(store, await snapOf({ id: 'sess-b', now: NOW + 3000 }), ROOT, 'src/auth.ts', {
+      id: 'sess-b',
+      now: NOW + 3000,
+    });
+    expect(after.verdict.kind).toBe('allow');
+  });
+
+  it('no reserva archivos que no son código y solo avisa en modo warn', async () => {
+    const { store, snapOf } = await boundPair();
+    await sdd.leaseEdit(store, await snapOf(a), ROOT, 'sdd/specs/x.md', a);
+    expect(sdd.leasesOf(await snapOf(a), 'sess-a')).toEqual([]);
+    await sdd.leaseEdit(store, await snapOf(a), ROOT, 'src/x.ts', a);
+    const warnSnap = { ...(await snapOf(b)), settings: { enabled: true, gate: 'warn' as const } };
+    expect((await sdd.leaseEdit(store, warnSnap, ROOT, 'src/x.ts', b)).verdict.kind).toBe('warn');
   });
 });

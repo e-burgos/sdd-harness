@@ -1,5 +1,5 @@
 import type { WorkspaceSnapshot } from '@sdd-studio/protocol';
-import { openUnitsOf, sessionsOfUnit, shortSessionId } from './open-units';
+import { leasesOfUnit, openUnitsOf, sessionsOfUnit, shortSessionId, unboundLeases } from './open-units';
 
 const base: WorkspaceSnapshot = {
   project: 'p', profile: 'team', kitVersion: null, gateMode: 'block', pricing: null, stale: [], agents: [], skills: [], specs: [],
@@ -45,5 +45,24 @@ describe('sessionsOfUnit', () => {
   it('shortens ids', () => {
     expect(shortSessionId('studio-12345678-9999')).toBe('12345678');
     expect(shortSessionId('claude-aaaaaaaaaa')).toBe('claude-a');
+  });
+});
+
+describe('leasesOfUnit', () => {
+  const lease = (path: string, unit: NonNullable<WorkspaceSnapshot['leases']>[number]['unit']) => ({
+    path, unit, sessionId: 'claude-1', harness: 'claude-code', worktree: '/r', acquiredAt: '2026-11-06T10:00:00Z', updatedAt: '2026-11-06T10:00:00Z', requestedBy: [],
+  });
+  const leases = [
+    lease('src/a.ts', { kind: 'cycle', specId: 'spec-a', cycle: 'cycle-02' }),
+    lease('src/b.ts', { kind: 'fix', fixId: 'FIX-1' }),
+    lease('src/c.ts', null),
+  ];
+  it('groups leased files by unit and keeps unbound ones apart', () => {
+    const [cycleA, cycleB, fixOne] = openUnitsOf(base);
+    expect(leasesOfUnit({ ...base, leases }, cycleA!).map((l) => l.path)).toEqual(['src/a.ts']);
+    expect(leasesOfUnit({ ...base, leases }, cycleB!)).toEqual([]);
+    expect(leasesOfUnit({ ...base, leases }, fixOne!).map((l) => l.path)).toEqual(['src/b.ts']);
+    expect(unboundLeases({ ...base, leases }).map((l) => l.path)).toEqual(['src/c.ts']);
+    expect(leasesOfUnit(base, cycleA!)).toEqual([]);
   });
 });

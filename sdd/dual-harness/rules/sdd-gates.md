@@ -107,6 +107,17 @@ mod de Claude Code (y el del puente de Studio) parte de esa atadura, no de «el 
   cerrada. No se rodea con comandos de shell: se elige la unidad.
 - **Mod apagado ⇒ nada cambia.** El registro es local (`<git-common-dir>/sdd-sessions/`, fuera de
   git, ataduras que vencen a los 30 min sin actividad); `sdd:validate` no lo mira.
+- **Reserva de archivo.** Con el mod prendido, el primer `Edit`/`Write`/`NotebookEdit` permitido
+  sobre un archivo de código lo reserva para esa sesión (`<git-common-dir>/sdd-sessions/locks/`). Otra
+  sesión que lo quiere editar **en la misma carpeta** recibe un rechazo `SDD reserva: …` (o un aviso
+  con `warn`) que nombra a la dueña; **desde otro worktree** solo se le avisa (el choque llega en el
+  merge). Las reservas vencen a los 30 min sin edición y se liberan al cerrar la sesión. `sdd/`,
+  las superficies de arneses y el markdown raíz no se reservan.
+- **Buzón entre sesiones.** El choque deja un pedido en el buzón de la sesión dueña (uno por
+  sesión y archivo mientras dure la reserva); su mod lo suma al contexto en su próxima acción. La
+  dueña libera con `pnpm sdd:release <archivo…>` (`--list` muestra las reservas vivas), que avisa a
+  quienes lo pidieron. Ante un rechazo por reserva no se rodea el gate: se espera, se sigue con
+  otra task o se coordina con el dev.
 
 **Raíz del ciclo (whitelist, `sdd:validate` falla si hay otra cosa):** `brief.yaml`,
 `functional.md`, `planner.md`, `architect.md`, `plan.md`, `cycle.json`, `tasks.json` y el

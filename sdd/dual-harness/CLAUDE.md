@@ -119,6 +119,9 @@ transparente: pedís `git status` y se ejecuta `rtk git status`.
 - **Si el rechazo dice que hay varias unidades abiertas** (o que tu atadura apunta a una cerrada),
   elegí la tuya con `pnpm sdd:use <spec> <cycle-XX>` (o `pnpm sdd:use <FIX-id>`); no lo rodees.
   Correr el GATE B en esta sesión también la ata.
+- **Si una edición vuelve con `SDD reserva: …`**, otra sesión tiene ese archivo: no lo rodees con
+  shell; esperá, seguí con otra task o coordiná con el dev. Si recibís un pedido de otra sesión por
+  un archivo tuyo que ya no vas a tocar, liberalo con `pnpm sdd:release <archivo>`.
 - **Nunca lo prendas, apagues ni cambies su modo por tu cuenta**: es decisión del dev
   (`pnpm sdd:mod -- --status | --enable | --disable | --gate=warn|block`; el sdd-steward lo
   opera a pedido).

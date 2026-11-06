@@ -181,6 +181,9 @@ resto siguen las mismas reglas desde los arneses y `pnpm sdd:validate`, que no c
    GATE B, `pnpm sdd:use` o, solas, por unidad única o rama. Sin atadura y con varias unidades
    abiertas el gate rechaza y lista las unidades; el registro es local (fuera de git). Ante
    ese rechazo, indicar `pnpm sdd:use`; nunca prender/apagar el mod por el dev.
+   Un rechazo `SDD reserva: …` es otra sesión con el archivo tomado: `pnpm sdd:release --list`
+   muestra las reservas y `pnpm sdd:release <archivo>` libera una (lo hace la sesión dueña o el
+   dev, nunca para rodear el gate).
 
 ## Playbook 8 — tucu-ui (herramienta auxiliar opcional)
 

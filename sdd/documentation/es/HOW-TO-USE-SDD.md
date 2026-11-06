@@ -162,6 +162,10 @@ muestra «esta sesión: <spec> · <cycle> …» y «otras: …». La sesión se 
 la rama nombra la spec; a mano: `pnpm sdd:use <spec> cycle-XX` o `pnpm sdd:use <FIX-id>`. Sin
 atadura y con varias unidades abiertas, el gate rechaza la edición y las lista. Las ataduras
 viven en `<git-common-dir>/sdd-sessions/` (local, fuera de git) y vencen a los 30 min sin actividad.
+Si dos sesiones van por el mismo archivo, la primera que lo edita lo reserva y la otra, en la misma
+carpeta, recibe `SDD reserva: …` con el nombre de la dueña (desde otro worktree solo un aviso); la
+dueña ve el pedido en su próxima acción y libera con `pnpm sdd:release <archivo>`. Las reservas
+vencen a los 30 min sin edición y se liberan al cerrar la sesión.
 
 ---
 

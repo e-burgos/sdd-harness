@@ -1,4 +1,4 @@
-import type { SessionBinding, WorkspaceSnapshot } from '@sdd-studio/protocol';
+import type { FileLeaseSummary, SessionBinding, WorkspaceSnapshot } from '@sdd-studio/protocol';
 import { isFixOpen } from './sdd-status';
 
 const IN_PROGRESS = 'in-progress';
@@ -25,10 +25,19 @@ export function openUnitsOf(snapshot: WorkspaceSnapshot | null): OpenUnit[] {
   return [...cycles, ...fixes];
 }
 
+const belongsTo = (bound: SessionBinding['unit'], unit: OpenUnit): boolean =>
+  unit.kind === 'fix' ? bound.kind === 'fix' && bound.fixId === unit.fixId : bound.kind === 'cycle' && bound.specId === unit.specId && bound.cycle === unit.cycle;
+
 export function sessionsOfUnit(snapshot: WorkspaceSnapshot | null, unit: OpenUnit): SessionBinding[] {
-  return (snapshot?.sessions ?? []).filter((s) =>
-    unit.kind === 'fix' ? s.unit.kind === 'fix' && s.unit.fixId === unit.fixId : s.unit.kind === 'cycle' && s.unit.specId === unit.specId && s.unit.cycle === unit.cycle,
-  );
+  return (snapshot?.sessions ?? []).filter((s) => belongsTo(s.unit, unit));
+}
+
+export function leasesOfUnit(snapshot: WorkspaceSnapshot | null, unit: OpenUnit): FileLeaseSummary[] {
+  return (snapshot?.leases ?? []).filter((lease) => lease.unit !== null && belongsTo(lease.unit, unit));
+}
+
+export function unboundLeases(snapshot: WorkspaceSnapshot | null): FileLeaseSummary[] {
+  return (snapshot?.leases ?? []).filter((lease) => lease.unit === null);
 }
 
 const SHORT_ID_LENGTH = 8;

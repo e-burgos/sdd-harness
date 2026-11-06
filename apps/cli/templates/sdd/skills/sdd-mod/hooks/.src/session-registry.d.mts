@@ -58,3 +58,72 @@ export function judgeSessionEdit(input: {
   rel: string;
   now: number;
 }): EditVerdict;
+
+export type Harness = 'claude-code' | 'studio' | 'manual';
+
+export type FileLease = {
+  path: string;
+  session_id: string;
+  unit: UnitRef | null;
+  worktree: string;
+  harness: Harness;
+  acquired_at: string;
+  updated_at: string;
+  released_at: string | null;
+};
+
+export type InboxMessage = {
+  id: string;
+  kind: 'lease-request' | 'lease-released';
+  path: string;
+  from_session: string;
+  from_unit: UnitRef | null;
+  to_session: string;
+  created_at: string;
+  read_at: string | null;
+};
+
+export type LeaseVerdict =
+  | { kind: 'allow' }
+  | { kind: 'warn' | 'deny'; code: string; reason: string; lease?: FileLease };
+
+export const LEASE_TTL_MS: number;
+export function normalizeRel(rel: string): string;
+export function leaseKey(rel: string): string;
+export function isLeaseLive(lease: FileLease | null | undefined, now: number): boolean;
+export function readLease(fs: Pick<RegistryFs, 'read'>, dir: string, rel: string): Promise<FileLease | null>;
+export function listLiveLeases(fs: Pick<RegistryFs, 'read' | 'list'>, dir: string, now: number): Promise<FileLease[]>;
+export function acquireLease(
+  fs: RegistryFs,
+  dir: string,
+  input: { rel: string; sessionId: string; unit: UnitRef | null; worktree: string; harness: Harness; now: number },
+): Promise<{ acquired: boolean; lease: FileLease }>;
+export function releaseLease(
+  fs: RegistryFs,
+  dir: string,
+  rel: string,
+  now: number,
+  options?: { sessionId?: string },
+): Promise<FileLease | null>;
+export function releaseSessionLeases(fs: RegistryFs, dir: string, sessionId: string, now: number): Promise<FileLease[]>;
+export function judgeFileLease(input: {
+  gate: 'block' | 'warn';
+  lease: FileLease | null;
+  sessionId: string;
+  worktree: string;
+  now: number;
+}): LeaseVerdict;
+export function requestLease(
+  fs: RegistryFs,
+  dir: string,
+  input: { lease: FileLease; fromSessionId: string; fromUnit: UnitRef | null; now: number },
+): Promise<{ created: boolean; message: InboxMessage }>;
+export function listInbox(
+  fs: Pick<RegistryFs, 'read' | 'list'>,
+  dir: string,
+  sessionId: string,
+  options?: { unreadOnly?: boolean },
+): Promise<InboxMessage[]>;
+export function markInboxRead(fs: RegistryFs, dir: string, sessionId: string, ids: string[], now: number): Promise<void>;
+export function notifyRequesters(fs: RegistryFs, dir: string, released: FileLease, now: number): Promise<string[]>;
+export function inboxText(messages: InboxMessage[]): string;

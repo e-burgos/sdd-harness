@@ -15,7 +15,7 @@
   Los archivos que no son código (`sdd/`, superficies de arneses, markdown raíz) no se reservan.
 - US-6 — Las sesiones se comunican. CA: al chocar con una reserva se deja un pedido en el buzón de
   la sesión dueña (uno por par sesión/archivo mientras dure esa reserva) y se intenta además
-  `$.session.send`; el mod de la dueña suma los pedidos sin leer a su contexto en el próximo turno
+  `$.session.send`; el mod de la dueña suma los pedidos sin leer a su contexto en su próxima acción
   y los marca leídos; `pnpm sdd:release <archivo…>` libera reservas y avisa en su buzón a quienes
   las pidieron.
 - US-7 — Studio muestra ataduras y reservas. CA: el snapshot del protocolo suma las reservas vivas
@@ -33,8 +33,8 @@
   `--json`), registrado donde están los demás `sdd:*`, deja un aviso «liberado» en el buzón de
   quienes la pidieron; tests de integración.
 - TASK-003 — Mod de Claude Code: después del gate por sesión, chequeo de reserva y toma en
-  `Edit`/`Write`/`NotebookEdit`; pedido al buzón + `session.send`; `prompt.compose` suma los pedidos
-  sin leer y los marca leídos; `session.end` libera las reservas de la sesión; el pane lista las
+  `Edit`/`Write`/`NotebookEdit`; pedido al buzón + `session.send`; el resultado de la próxima
+  herramienta suma los pedidos sin leer (`context`) y los marca leídos; `session.end` libera las reservas de la sesión; el pane lista las
   reservas propias y los pedidos; tests.
 - TASK-004 — Puente y protocolo: el gate del puente aplica `judgeFileLease` y toma reservas por
   conversación; cerrar la conversación las libera; el snapshot suma `leases` (opcional, con tope)
@@ -57,6 +57,9 @@
 - El id del pedido incluye la clave, la sesión que pide y el instante en que se tomó la reserva: un
   pedido por par sesión/archivo mientras dure esa reserva, sin repetir en cada intento.
 - Una sesión sin atadura (una sola unidad abierta) también reserva, con `unit: null`.
+- El buzón llega como `context` del resultado de la próxima herramienta de la sesión dueña (lo lee
+  el modelo, no el usuario). `prompt.compose` no sirve: el motor arma el system prompt una vez por
+  sesión y no vuelve a preguntar (comprobado en la prueba real con 2.1.317).
 - Un registro roto o ilegible nunca bloquea: la reserva se saltea y la edición pasa.
 - Compatibilidad: campos nuevos del protocolo opcionales; sin mod prendido nada cambia; el
   validador no exige nada nuevo.

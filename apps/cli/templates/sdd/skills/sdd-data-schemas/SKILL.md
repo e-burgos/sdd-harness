@@ -154,6 +154,11 @@ pending_modules → in_progress_modules → completed_modules
 > vive en `sdd/` ni en git, y `pnpm sdd:validate` no lo valida: lo escriben el mod de Claude Code
 > y el puente de Studio. No se edita a mano.
 
+> **`sdd/schemas/file-lease.schema.json`** y **`session-request.schema.json`** — reserva de un
+> archivo de código por una sesión (`<git-common-dir>/sdd-sessions/locks/<clave>.json`) y mensaje
+> del buzón entre sesiones (`inbox/<session-id>/<id>.json`). También locales y fuera de
+> `sdd:validate`; los escriben el mod, el puente y `pnpm sdd:release`. No se editan a mano.
+
 ---
 
 ## 3. `sdd/api.json` — Registro de endpoints

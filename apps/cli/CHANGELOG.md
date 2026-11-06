@@ -16,6 +16,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   band shows "this session / others", binds automatically (marker, single open unit or branch name)
   and gates edits per session: unbound with several open units it rejects and lists them. Studio
   shows every running unit. Mod off: nothing changes. Docs (es/en), agents and `sdd-gates.md` updated.
+- **File leases and an inbox between sessions.** With the mod on, the first allowed edit of a code
+  file leases it to that session (`locks/` in the same registry, `file-lease.schema.json`); another
+  session in the same folder is rejected with `SDD reserva: …` naming the holder (from another
+  worktree, only a warning). The clash leaves a request in the holder's inbox
+  (`session-request.schema.json`), which its mod adds to the context of its next tool result.
+  `pnpm sdd:release <file…>` releases leases and tells the requesters; `--list` shows them. Leases
+  expire after 30 min without edits and are released when the session ends. The Studio bridge takes
+  and honors leases for its conversations, and Studio lists each unit's leased files and who asks
+  for them.
 
 ## [0.18.0] - 2026-11-05
 

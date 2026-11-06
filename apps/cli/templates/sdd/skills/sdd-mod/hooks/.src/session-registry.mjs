@@ -234,3 +234,233 @@ export function judgeSessionEdit({ gate, binding, openUnits, rel, now }) {
 function verdictFor(gate, code, reason) {
   return { kind: gate === 'warn' ? 'warn' : 'deny', code, reason };
 }
+
+export const LEASE_TTL_MS = SESSION_TTL_MS;
+
+function fnv1a32(text, seed) {
+  let hash = seed >>> 0;
+  for (let index = 0; index < text.length; index += 1) {
+    hash ^= text.charCodeAt(index);
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  return hash.toString(16).padStart(8, '0');
+}
+
+export function normalizeRel(rel) {
+  return toPosix(rel).replace(/^\.\//, '').replace(/^\/+/, '');
+}
+
+export function leaseKey(rel) {
+  const path = normalizeRel(rel);
+  return `${fnv1a32(path, 0x811c9dc5)}${fnv1a32(path, 0x050c5d1f)}`;
+}
+
+function leaseFile(dir, rel) {
+  return joinPath(dir, 'locks', `${leaseKey(rel)}.json`);
+}
+
+async function readJsonOptional(fs, path) {
+  const text = await readOptional(fs, path);
+  if (text === null) return null;
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+}
+
+async function writeJson(fs, path, value) {
+  await fs.write(path, `${JSON.stringify(value, null, 2)}\n`);
+}
+
+export function isLeaseLive(lease, now) {
+  if (!lease || lease.released_at) return false;
+  const touched = Date.parse(lease.updated_at);
+  return Number.isFinite(touched) && now - touched < LEASE_TTL_MS;
+}
+
+export async function readLease(fs, dir, rel) {
+  const lease = await readJsonOptional(fs, leaseFile(dir, rel));
+  return lease && lease.path === normalizeRel(rel) ? lease : null;
+}
+
+export async function listLiveLeases(fs, dir, now) {
+  let entries;
+  try {
+    entries = await fs.list(joinPath(dir, 'locks'));
+  } catch {
+    return [];
+  }
+  const leases = [];
+  for (const entry of entries) {
+    if (!entry.name.endsWith('.json')) continue;
+    const lease = await readJsonOptional(fs, joinPath(dir, 'locks', entry.name));
+    if (lease && typeof lease.path === 'string' && isLeaseLive(lease, now)) leases.push(lease);
+  }
+  return leases.sort((a, b) => a.path.localeCompare(b.path));
+}
+
+export async function acquireLease(fs, dir, { rel, sessionId, unit, worktree, harness, now }) {
+  const path = normalizeRel(rel);
+  const current = await readLease(fs, dir, path);
+  if (isLeaseLive(current, now) && current.session_id !== sessionId) {
+    return { acquired: false, lease: current };
+  }
+  const stamp = new Date(now).toISOString();
+  const keep = isLeaseLive(current, now) && current.session_id === sessionId;
+  const lease = {
+    path,
+    session_id: sessionId,
+    unit: unit ?? null,
+    worktree: toPosix(worktree),
+    harness,
+    acquired_at: keep ? current.acquired_at : stamp,
+    updated_at: stamp,
+    released_at: null,
+  };
+  await writeJson(fs, leaseFile(dir, path), lease);
+  const settled = await readLease(fs, dir, path);
+  if (settled && settled.session_id !== sessionId) return { acquired: false, lease: settled };
+  return { acquired: true, lease };
+}
+
+export async function releaseLease(fs, dir, rel, now, { sessionId } = {}) {
+  const lease = await readLease(fs, dir, rel);
+  if (!isLeaseLive(lease, now)) return null;
+  if (sessionId && lease.session_id !== sessionId) return null;
+  const next = { ...lease, released_at: new Date(now).toISOString() };
+  await writeJson(fs, leaseFile(dir, lease.path), next);
+  return next;
+}
+
+export async function releaseSessionLeases(fs, dir, sessionId, now) {
+  const released = [];
+  for (const lease of await listLiveLeases(fs, dir, now)) {
+    if (lease.session_id !== sessionId) continue;
+    const next = await releaseLease(fs, dir, lease.path, now, { sessionId });
+    if (next) released.push(next);
+  }
+  return released;
+}
+
+function holderLabel(lease) {
+  return lease.unit ? unitKey(lease.unit) : 'sin unidad';
+}
+
+function minutesSince(iso, now) {
+  return Math.max(0, Math.round((now - Date.parse(iso)) / 60000));
+}
+
+export function judgeFileLease({ gate, lease, sessionId, worktree, now }) {
+  if (!isLeaseLive(lease, now) || lease.session_id === sessionId) return { kind: 'allow' };
+  const holder = holderLabel(lease);
+  const since = minutesSince(lease.updated_at, now);
+  if (toPosix(lease.worktree) !== toPosix(worktree)) {
+    return {
+      kind: 'warn',
+      code: 'leased-elsewhere',
+      lease,
+      reason: `SDD reserva: ${lease.path} lo está editando otra sesión desde otro worktree (${holder}, última edición hace ${since} min). La edición pasa, pero el choque llegaría en el merge; le dejé el aviso.`,
+    };
+  }
+  return verdictFor(
+    gate,
+    'leased-here',
+    `SDD reserva: ${lease.path} está reservado por otra sesión en esta misma carpeta (${holder}, última edición hace ${since} min), así que no lo edito para no pisarla. Le dejé el pedido: esperá a que lo libere (pnpm sdd:release ${lease.path}) o coordiná el cambio con esa sesión. La reserva vence sola a los ${LEASE_TTL_MS / 60000} min sin edición.`,
+  );
+}
+
+function inboxDir(dir, sessionId) {
+  if (!SESSION_FILE.test(sessionId)) throw new Error(`invalid session id: ${sessionId}`);
+  return joinPath(dir, 'inbox', sessionId);
+}
+
+export function requestIdFor(kind, lease, fromSessionId) {
+  const stamp = Date.parse(kind === 'lease-released' ? lease.released_at : lease.acquired_at);
+  return `${kind === 'lease-released' ? 'rel' : 'req'}-${leaseKey(lease.path)}-${fromSessionId}-${stamp}`;
+}
+
+export async function writeInboxMessage(fs, dir, { kind, lease, toSessionId, fromSessionId, fromUnit, now }) {
+  const id = requestIdFor(kind, lease, fromSessionId);
+  const path = joinPath(inboxDir(dir, toSessionId), `${id}.json`);
+  const existing = await readJsonOptional(fs, path);
+  if (existing) return { created: false, message: existing };
+  const message = {
+    id,
+    kind,
+    path: lease.path,
+    from_session: fromSessionId,
+    from_unit: fromUnit ?? null,
+    to_session: toSessionId,
+    created_at: new Date(now).toISOString(),
+    read_at: null,
+  };
+  await writeJson(fs, path, message);
+  return { created: true, message };
+}
+
+export function requestLease(fs, dir, { lease, fromSessionId, fromUnit, now }) {
+  return writeInboxMessage(fs, dir, {
+    kind: 'lease-request',
+    lease,
+    toSessionId: lease.session_id,
+    fromSessionId,
+    fromUnit,
+    now,
+  });
+}
+
+export async function listInbox(fs, dir, sessionId, { unreadOnly = true } = {}) {
+  let entries;
+  try {
+    entries = await fs.list(inboxDir(dir, sessionId));
+  } catch {
+    return [];
+  }
+  const messages = [];
+  for (const entry of entries) {
+    if (!entry.name.endsWith('.json')) continue;
+    const message = await readJsonOptional(fs, joinPath(inboxDir(dir, sessionId), entry.name));
+    if (message && typeof message.id === 'string' && (!unreadOnly || !message.read_at)) messages.push(message);
+  }
+  return messages.sort((a, b) => a.created_at.localeCompare(b.created_at));
+}
+
+export async function markInboxRead(fs, dir, sessionId, ids, now) {
+  const wanted = new Set(ids);
+  for (const message of await listInbox(fs, dir, sessionId)) {
+    if (!wanted.has(message.id)) continue;
+    await writeJson(fs, joinPath(inboxDir(dir, sessionId), `${message.id}.json`), {
+      ...message,
+      read_at: new Date(now).toISOString(),
+    });
+  }
+}
+
+export async function notifyRequesters(fs, dir, released, now) {
+  const notified = [];
+  for (const message of await listInbox(fs, dir, released.session_id, { unreadOnly: false })) {
+    if (message.kind !== 'lease-request' || message.path !== released.path) continue;
+    if (Date.parse(message.created_at) < Date.parse(released.acquired_at)) continue;
+    const { created } = await writeInboxMessage(fs, dir, {
+      kind: 'lease-released',
+      lease: released,
+      toSessionId: message.from_session,
+      fromSessionId: released.session_id,
+      fromUnit: released.unit,
+      now,
+    });
+    if (created) notified.push(message.from_session);
+  }
+  return notified;
+}
+
+export function inboxText(messages) {
+  const lines = messages.map((message) => {
+    const who = message.from_unit ? unitKey(message.from_unit) : message.from_session;
+    return message.kind === 'lease-released'
+      ? `- ${message.path}: la sesión que lo tenía (${who}) lo liberó; ya podés editarlo.`
+      : `- ${who} necesita ${message.path}, que esta sesión tiene reservado. Si ya no lo vas a tocar, liberalo con \`pnpm sdd:release ${message.path}\`; si lo seguís editando, terminá ese cambio y avisale al dev para coordinar.`;
+  });
+  return `Pedidos de otras sesiones SDD sobre archivos reservados:\n${lines.join('\n')}`;
+}

@@ -94,3 +94,43 @@ describe('EcosystemDashboard open units', () => {
     expect(within(screen.getByTestId('open-units-section')).getByText('No hay ciclos en curso ni fixes abiertos')).toBeInTheDocument();
   });
 });
+
+describe('Open units file leases', () => {
+  const leases: NonNullable<WorkspaceSnapshot['leases']> = [
+    {
+      path: 'apps/a/src/auth.ts',
+      sessionId: 'claude-code-abcdef12',
+      unit: { kind: 'cycle', specId: 'spec-a', cycle: 'cycle-01' },
+      harness: 'claude-code',
+      worktree: '/r',
+      acquiredAt: '2026-11-06T10:00:00Z',
+      updatedAt: '2026-11-06T10:05:00Z',
+      requestedBy: ['spec-b/cycle-02'],
+    },
+    {
+      path: 'apps/b/src/x.ts',
+      sessionId: 'claude-code-zz',
+      unit: null,
+      harness: 'claude-code',
+      worktree: '/r',
+      acquiredAt: '2026-11-06T10:00:00Z',
+      updatedAt: '2026-11-06T10:05:00Z',
+      requestedBy: [],
+    },
+  ];
+
+  it('shows the reserved files under their unit, who asks for them, and the unbound ones apart', () => {
+    mount(<EcosystemDashboard />, { ...snapshot, leases });
+    const section = screen.getByTestId('open-units-section');
+    const [first, second] = within(section).getAllByTestId('open-unit');
+    expect(within(first!).getByTestId('unit-lease')).toHaveTextContent('apps/a/src/auth.ts');
+    expect(within(first!).getByTestId('unit-lease-request')).toHaveTextContent('lo pide spec-b/cycle-02');
+    expect(within(second!).queryByTestId('unit-lease')).toBeNull();
+    expect(within(section).getByTestId('open-unit-unbound-leases')).toHaveTextContent('apps/b/src/x.ts');
+  });
+
+  it('renders no lease rows against a bridge that sends no leases', () => {
+    mount(<EcosystemDashboard />);
+    expect(screen.queryAllByTestId('unit-lease')).toEqual([]);
+  });
+});

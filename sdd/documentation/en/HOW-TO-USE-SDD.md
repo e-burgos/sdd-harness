@@ -162,6 +162,10 @@ GATE B (`pnpm sdd:gate <spec> cycle-XX`, which prints `SDD-BIND`), when there is
 unit, or when the branch names the spec; by hand: `pnpm sdd:use <spec> cycle-XX` or
 `pnpm sdd:use <FIX-id>`. Unbound with several open units, the gate rejects the edit and lists them.
 Bindings live in `<git-common-dir>/sdd-sessions/` (local, outside git) and expire after 30 min idle.
+If two sessions go for the same file, the first one to edit it reserves it and the other, in the same
+folder, gets `SDD reserva: …` naming the holder (from another worktree, only a warning); the holder
+sees the request on its next action and releases it with `pnpm sdd:release <file>`. Leases expire
+after 30 min without edits and are released when the session ends.
 
 ---
 

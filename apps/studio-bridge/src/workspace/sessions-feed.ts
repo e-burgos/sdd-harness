@@ -1,12 +1,15 @@
-import type { Area, SessionBinding, WorkspaceSnapshot } from '@sdd-studio/protocol';
-import { MAX_SESSION_BINDINGS } from '@sdd-studio/protocol';
+import type { Area, FileLeaseSummary, SessionBinding, WorkspaceSnapshot } from '@sdd-studio/protocol';
+import { MAX_FILE_LEASES, MAX_SESSION_BINDINGS } from '@sdd-studio/protocol';
 import type { WorkspaceWatcher } from './watcher';
 
 export const SESSIONS_REFRESH_MS = 30_000;
 
 export interface SessionsSource {
   listLive(): Promise<SessionBinding[]>;
+  listLeases?(): Promise<FileLeaseSummary[]>;
 }
+
+type Registry = { sessions: SessionBinding[]; leases?: FileLeaseSummary[] };
 
 export interface SessionsFeed {
   readonly watcher: WorkspaceWatcher;
@@ -14,8 +17,11 @@ export interface SessionsFeed {
   close(): void;
 }
 
-export function withSessions(snapshot: WorkspaceSnapshot, sessions: SessionBinding[] | null): WorkspaceSnapshot {
-  return sessions === null ? snapshot : { ...snapshot, sessions };
+export function withSessions(snapshot: WorkspaceSnapshot, registry: Registry | null): WorkspaceSnapshot {
+  if (registry === null) return snapshot;
+  return registry.leases === undefined
+    ? { ...snapshot, sessions: registry.sessions }
+    : { ...snapshot, sessions: registry.sessions, leases: registry.leases };
 }
 
 export function createSessionsFeed(opts: {
@@ -25,13 +31,15 @@ export function createSessionsFeed(opts: {
   intervalMs?: number;
 }): SessionsFeed {
   const { watcher, source } = opts;
-  let sessions: SessionBinding[] | null = source ? [] : null;
+  let sessions: Registry | null = source ? { sessions: [], ...(source.listLeases ? { leases: [] } : {}) } : null;
   let key = JSON.stringify(sessions);
   let closed = false;
 
   const refresh = async (): Promise<void> => {
     if (!source || closed) return;
-    const next = (await source.listLive()).slice(0, MAX_SESSION_BINDINGS);
+    const live = (await source.listLive()).slice(0, MAX_SESSION_BINDINGS);
+    const leases = source.listLeases ? (await source.listLeases()).slice(0, MAX_FILE_LEASES) : undefined;
+    const next: Registry = leases === undefined ? { sessions: live } : { sessions: live, leases };
     const nextKey = JSON.stringify(next);
     if (nextKey === key) return;
     sessions = next;

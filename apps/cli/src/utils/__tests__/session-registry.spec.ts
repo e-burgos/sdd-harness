@@ -266,3 +266,161 @@ describe('judgeSessionEdit', () => {
     expect(judge(null, [SPEC_A, SPEC_B], 'warn')).toMatchObject({ kind: 'warn', code: 'unbound' });
   });
 });
+
+type Lease = {
+  path: string;
+  session_id: string;
+  unit: Unit | null;
+  worktree: string;
+  harness: string;
+  acquired_at: string;
+  updated_at: string;
+  released_at: string | null;
+};
+type InboxMessage = { id: string; kind: string; path: string; from_session: string; to_session: string; read_at: string | null };
+type LeaseRegistry = {
+  LEASE_TTL_MS: number;
+  leaseKey: (rel: string) => string;
+  readLease: (fs: MemoryFs, dir: string, rel: string) => Promise<Lease | null>;
+  listLiveLeases: (fs: MemoryFs, dir: string, now: number) => Promise<Lease[]>;
+  acquireLease: (
+    fs: MemoryFs,
+    dir: string,
+    args: { rel: string; sessionId: string; unit: Unit | null; worktree: string; harness: string; now: number },
+  ) => Promise<{ acquired: boolean; lease: Lease }>;
+  releaseLease: (fs: MemoryFs, dir: string, rel: string, now: number, options?: { sessionId?: string }) => Promise<Lease | null>;
+  releaseSessionLeases: (fs: MemoryFs, dir: string, sessionId: string, now: number) => Promise<Lease[]>;
+  judgeFileLease: (args: { gate: 'block' | 'warn'; lease: Lease | null; sessionId: string; worktree: string; now: number }) => Verdict;
+  requestLease: (
+    fs: MemoryFs,
+    dir: string,
+    args: { lease: Lease; fromSessionId: string; fromUnit: Unit | null; now: number },
+  ) => Promise<{ created: boolean; message: InboxMessage }>;
+  listInbox: (fs: MemoryFs, dir: string, sessionId: string, options?: { unreadOnly?: boolean }) => Promise<InboxMessage[]>;
+  markInboxRead: (fs: MemoryFs, dir: string, sessionId: string, ids: string[], now: number) => Promise<void>;
+  notifyRequesters: (fs: MemoryFs, dir: string, released: Lease, now: number) => Promise<string[]>;
+  inboxText: (messages: InboxMessage[]) => string;
+};
+
+describe('file leases', () => {
+  const lib = () => registry as unknown as LeaseRegistry;
+  const take = (fs: MemoryFs, sessionId: string, rel = 'src/auth/session.ts', now = NOW, worktree = '/repo') =>
+    lib().acquireLease(fs, DIR, { rel, sessionId, unit: SPEC_A, worktree, harness: 'claude-code', now });
+
+  it('derives the same key for equivalent paths', () => {
+    expect(lib().leaseKey('./src/a.ts')).toBe(lib().leaseKey('src/a.ts'));
+    expect(lib().leaseKey('src/a.ts')).not.toBe(lib().leaseKey('src/b.ts'));
+    expect(lib().leaseKey('src/a.ts')).toMatch(/^[0-9a-f]{16}$/);
+  });
+
+  it('takes a free file and keeps acquired_at while the owner refreshes it', async () => {
+    const fs = memoryFs();
+    const first = await take(fs, 'a');
+    expect(first.acquired).toBe(true);
+    const again = await take(fs, 'a', 'src/auth/session.ts', NOW + 1000);
+    expect(again.lease.acquired_at).toBe(first.lease.acquired_at);
+    expect(again.lease.updated_at).not.toBe(first.lease.updated_at);
+  });
+
+  it('refuses a file another live session holds and frees it after the TTL', async () => {
+    const fs = memoryFs();
+    await take(fs, 'a');
+    const blocked = await take(fs, 'b', 'src/auth/session.ts', NOW + 10);
+    expect(blocked).toMatchObject({ acquired: false, lease: { session_id: 'a' } });
+    const later = await take(fs, 'b', 'src/auth/session.ts', NOW + lib().LEASE_TTL_MS + 1);
+    expect(later.acquired).toBe(true);
+  });
+
+  it('releases one file, only for its owner when asked, and all of a session', async () => {
+    const fs = memoryFs();
+    await take(fs, 'a', 'src/a.ts');
+    await take(fs, 'a', 'src/b.ts');
+    await take(fs, 'c', 'src/c.ts');
+    expect(await lib().releaseLease(fs, DIR, 'src/a.ts', NOW + 1, { sessionId: 'c' })).toBeNull();
+    expect(await lib().releaseLease(fs, DIR, 'src/a.ts', NOW + 1)).toMatchObject({ path: 'src/a.ts' });
+    expect((await lib().releaseSessionLeases(fs, DIR, 'a', NOW + 2)).map((l) => l.path)).toEqual(['src/b.ts']);
+    expect((await lib().listLiveLeases(fs, DIR, NOW + 3)).map((l) => l.path)).toEqual(['src/c.ts']);
+  });
+
+  it('ignores a lock file whose stored path does not match', async () => {
+    const fs = memoryFs();
+    fs.files.set(`${DIR}/locks/${lib().leaseKey('src/a.ts')}.json`, JSON.stringify({ path: 'src/other.ts' }));
+    expect(await lib().readLease(fs, DIR, 'src/a.ts')).toBeNull();
+  });
+});
+
+describe('judgeFileLease', () => {
+  const lib = () => registry as unknown as LeaseRegistry;
+  const lease = (worktree = '/repo', released: string | null = null): Lease => ({
+    path: 'src/a.ts',
+    session_id: 'owner',
+    unit: SPEC_A,
+    worktree,
+    harness: 'claude-code',
+    acquired_at: new Date(NOW - 120000).toISOString(),
+    updated_at: new Date(NOW - 60000).toISOString(),
+    released_at: released,
+  });
+  const judge = (l: Lease | null, sessionId = 'me', gate: 'block' | 'warn' = 'block') =>
+    lib().judgeFileLease({ gate, lease: l, sessionId, worktree: '/repo', now: NOW });
+
+  it('allows free files, own leases and released ones', () => {
+    expect(judge(null)).toEqual({ kind: 'allow' });
+    expect(judge(lease(), 'owner')).toEqual({ kind: 'allow' });
+    expect(judge(lease('/repo', new Date(NOW).toISOString()))).toEqual({ kind: 'allow' });
+  });
+
+  it('denies in the same folder and names the holder', () => {
+    const verdict = judge(lease());
+    expect(verdict).toMatchObject({ kind: 'deny', code: 'leased-here' });
+    expect(verdict.reason).toContain(`${SPEC_A.spec}/${SPEC_A.cycle}`);
+    expect(verdict.reason).toContain('pnpm sdd:release src/a.ts');
+  });
+
+  it('only warns in warn mode or from another worktree', () => {
+    expect(judge(lease(), 'me', 'warn')).toMatchObject({ kind: 'warn', code: 'leased-here' });
+    expect(judge(lease('/wt/other'))).toMatchObject({ kind: 'warn', code: 'leased-elsewhere' });
+  });
+});
+
+describe('inbox', () => {
+  const lib = () => registry as unknown as LeaseRegistry;
+
+  it('leaves one request per session and lease, reads it and marks it read', async () => {
+    const fs = memoryFs();
+    const { lease } = await lib().acquireLease(fs, DIR, {
+      rel: 'src/a.ts',
+      sessionId: 'owner',
+      unit: SPEC_A,
+      worktree: '/repo',
+      harness: 'claude-code',
+      now: NOW,
+    });
+    expect((await lib().requestLease(fs, DIR, { lease, fromSessionId: 'me', fromUnit: SPEC_B, now: NOW + 1 })).created).toBe(true);
+    expect((await lib().requestLease(fs, DIR, { lease, fromSessionId: 'me', fromUnit: SPEC_B, now: NOW + 2 })).created).toBe(false);
+    const unread = await lib().listInbox(fs, DIR, 'owner');
+    expect(unread).toHaveLength(1);
+    expect(lib().inboxText(unread)).toContain(`${SPEC_B.spec}/${SPEC_B.cycle} necesita src/a.ts`);
+    await lib().markInboxRead(fs, DIR, 'owner', unread.map((m) => m.id), NOW + 3);
+    expect(await lib().listInbox(fs, DIR, 'owner')).toEqual([]);
+  });
+
+  it('tells the requesters once the lease is released', async () => {
+    const fs = memoryFs();
+    const { lease } = await lib().acquireLease(fs, DIR, {
+      rel: 'src/a.ts',
+      sessionId: 'owner',
+      unit: SPEC_A,
+      worktree: '/repo',
+      harness: 'claude-code',
+      now: NOW,
+    });
+    await lib().requestLease(fs, DIR, { lease, fromSessionId: 'me', fromUnit: SPEC_B, now: NOW + 1 });
+    const released = await lib().releaseLease(fs, DIR, 'src/a.ts', NOW + 2);
+    expect(await lib().notifyRequesters(fs, DIR, released!, NOW + 3)).toEqual(['me']);
+    expect(await lib().notifyRequesters(fs, DIR, released!, NOW + 4)).toEqual([]);
+    const [notice] = await lib().listInbox(fs, DIR, 'me');
+    expect(notice).toMatchObject({ kind: 'lease-released', path: 'src/a.ts' });
+    expect(lib().inboxText([notice])).toContain('lo liberó');
+  });
+});

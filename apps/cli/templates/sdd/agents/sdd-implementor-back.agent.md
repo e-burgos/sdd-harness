@@ -64,6 +64,9 @@ pnpm sdd:gate <spec-id> cycle-[XX]   # GATE B — lee el flow del ciclo y exige 
 Corré el GATE B en **la sesión que va a implementar**: al dar `APPROVED` ata esa sesión al ciclo
 (línea `SDD-BIND`). Para un fix: `pnpm sdd:use FIX-…`. Con varias specs en paralelo, sin atadura
 el mod rechaza la edición (`sdd-gates.md` § Sesiones paralelas).
+Si una edición vuelve con `SDD reserva: …`, ese archivo lo tiene otra sesión: no lo rodees con
+comandos de shell; seguí con otra task o esperá. Si te llega un pedido de otra sesión por un
+archivo tuyo y ya no lo vas a tocar, liberalo con `pnpm sdd:release <archivo>`.
 
 Además de `APPROVED`, verificar:
 

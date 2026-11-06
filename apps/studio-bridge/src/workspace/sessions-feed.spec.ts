@@ -62,6 +62,7 @@ describe('sessions feed', () => {
 
   it('withSessions keeps the snapshot when sessions are unavailable', () => {
     expect(withSessions(snapshot, null)).toBe(snapshot);
-    expect(withSessions(snapshot, []).sessions).toEqual([]);
+    expect(withSessions(snapshot, { sessions: [] }).sessions).toEqual([]);
+    expect(withSessions(snapshot, { sessions: [], leases: [] }).leases).toEqual([]);
   });
 });

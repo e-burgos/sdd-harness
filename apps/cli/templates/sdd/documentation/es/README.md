@@ -126,6 +126,7 @@ sdd/
 │   ├── validate-sdd.mjs               ← Validador de registros (pnpm sdd:validate)
 │   ├── spec-gate.mjs                  ← Responde el SPEC GATE A y B (pnpm sdd:gate)
 │   ├── sdd-use.mjs                    ← Ata esta sesión a un ciclo o fix (pnpm sdd:use)
+│   ├── sdd-release.mjs                ← Libera reservas de archivo y avisa (pnpm sdd:release)
 │   ├── rebuild-tasks-index.mjs        ← Regenera el índice de tasks (pnpm sdd:rebuild-tasks-index)
 │   ├── rebuild-catalog.mjs            ← Regenera el manifest del visor (pnpm sdd:rebuild-catalog)
 │   ├── setup-rtk.mjs                  ← Instala/mergea los hooks de rtk (pnpm sdd:rtk)
@@ -356,6 +357,11 @@ mod de Claude Code prendido, la franja muestra «esta sesión / otras» y, sin a
 unidades abiertas, la edición de código se rechaza listando las unidades. El registro es local
 (`<git-common-dir>/sdd-sessions/`, fuera de git); con el mod apagado nada cambia. Studio muestra
 todas las unidades en curso.
+Con el mod prendido, cada archivo de código que una sesión edita queda **reservado** a su nombre
+(`locks/` en el mismo registro): otra sesión en la misma carpeta no lo edita (desde otro worktree,
+solo un aviso), le deja un pedido en el **buzón** de la dueña y esta lo ve en su próxima acción.
+`pnpm sdd:release <archivo…>` libera y avisa; `--list` muestra las reservas. Studio muestra los
+archivos reservados de cada unidad y quién los pide.
 
 ### Flow del ciclo — full · reduced · lite
 

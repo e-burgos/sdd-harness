@@ -10,8 +10,17 @@ import type {
   UnitRef,
 } from '../../.claude-plugin/contract';
 import {
+  acquireLease,
   autoBindUnit,
   endBinding,
+  inboxText,
+  judgeFileLease,
+  listInbox,
+  listLiveLeases,
+  markInboxRead,
+  readLease,
+  releaseSessionLeases,
+  requestLease,
   judgeSessionEdit,
   listLiveBindings,
   openUnitsOf,
@@ -24,7 +33,7 @@ import {
   unitKey,
   writeBinding,
 } from './session-registry.mjs';
-import type { BindSource } from './session-registry.mjs';
+import type { BindSource, FileLease, InboxMessage } from './session-registry.mjs';
 
 export type Reader = {
   read: (path: string) => Promise<string>;
@@ -178,7 +187,8 @@ export async function loadSnapshot(
           mine = await bindSession(reader, root, state.dir, session, decision.unit, decision.source);
         }
       }
-      return { ...base, mine, others: state.others };
+      const leases = await listLiveLeases(reader, state.dir, session.now).catch(() => []);
+      return { ...base, sessionId: session.id, mine, others: state.others, leases };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       return { ...base, registryError: message.slice(0, 120) };
@@ -226,7 +236,75 @@ export async function touchSession(store: SessionStore, root: string, session: S
 
 export async function endSession(store: SessionStore, root: string, session: SessionContext) {
   const dir = await resolveRegistryDir(store, root);
+  await releaseSessionLeases(store, dir, session.id, session.now).catch(() => []);
   return endBinding(store, dir, session.id, session.now);
+}
+
+export type LeaseRequest = { toSessionId: string; text: string };
+
+export type LeaseOutcome = { verdict: Verdict; request: LeaseRequest | null };
+
+const ALLOW_OUTCOME: LeaseOutcome = { verdict: { kind: 'allow' }, request: null };
+
+function requestTextFor(lease: FileLease, from: UnitRef | null, sessionId: string): string {
+  const who = from ? unitKey(from) : sessionId;
+  return `SDD: ${who} necesita ${lease.path}, que esta sesión tiene reservado. Si ya no lo vas a tocar, liberalo con pnpm sdd:release ${lease.path}.`;
+}
+
+export async function leaseEdit(
+  store: SessionStore,
+  snapshot: Snapshot,
+  root: string,
+  filePath: string,
+  session: SessionContext,
+): Promise<LeaseOutcome> {
+  if (!snapshot.settings.enabled || snapshot.error || snapshot.registryError) return ALLOW_OUTCOME;
+  const rel = relativeToRoot(root, filePath);
+  if (rel === null || !isCodePath(rel)) return ALLOW_OUTCOME;
+  const dir = await resolveRegistryDir(store, root);
+  const unit = snapshot.mine?.unit ?? null;
+  let lease = await readLease(store, dir, rel);
+  const judge = (current: FileLease | null) =>
+    judgeFileLease({ gate: snapshot.settings.gate, lease: current, sessionId: session.id, worktree: root, now: session.now });
+  let verdict = judge(lease);
+  if (verdict.kind === 'allow') {
+    const taken = await acquireLease(store, dir, {
+      rel,
+      sessionId: session.id,
+      unit,
+      worktree: root,
+      harness: HARNESS,
+      now: session.now,
+    });
+    if (taken.acquired) return ALLOW_OUTCOME;
+    lease = taken.lease;
+    verdict = judge(lease);
+  }
+  if (verdict.kind === 'allow' || lease === null) return ALLOW_OUTCOME;
+  const { created } = await requestLease(store, dir, { lease, fromSessionId: session.id, fromUnit: unit, now: session.now });
+  return {
+    verdict: { kind: verdict.kind, reason: verdict.reason },
+    request: created ? { toSessionId: lease.session_id, text: requestTextFor(lease, unit, session.id) } : null,
+  };
+}
+
+export async function unreadInbox(store: Reader, root: string, session: SessionContext): Promise<InboxMessage[]> {
+  const dir = await resolveRegistryDir(store, root);
+  return listInbox(store, dir, session.id);
+}
+
+export async function markInboxSeen(store: SessionStore, root: string, session: SessionContext, ids: string[]) {
+  if (ids.length === 0) return;
+  const dir = await resolveRegistryDir(store, root);
+  await markInboxRead(store, dir, session.id, ids, session.now);
+}
+
+export function inboxSection(messages: InboxMessage[]): string | null {
+  return messages.length === 0 ? null : inboxText(messages);
+}
+
+export function leasesOf(snapshot: Snapshot, sessionId: string): FileLease[] {
+  return (snapshot.leases ?? []).filter((lease) => lease.session_id === sessionId);
 }
 
 export async function currentBinding(store: Reader, root: string, session: SessionContext) {

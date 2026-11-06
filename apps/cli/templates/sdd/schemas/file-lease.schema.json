@@ -1,0 +1,103 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "sdd/schemas/file-lease.schema.json",
+  "title": "SDD file lease (<git-common-dir>/sdd-sessions/locks/<clave>.json)",
+  "description": "Reserva de un archivo de código por la sesión que lo está editando. Archivo LOCAL de la máquina, fuera de git, al lado de las ataduras de sesión. La toman el mod de Claude Code y el puente de Studio al editar; la libera `pnpm sdd:release`, el cierre de la sesión o el vencimiento (30 minutos sin edición). La clave es un hash de `path`; nunca se edita a mano. Librería: sdd/scripts/lib/session-registry.mjs.",
+  "type": "object",
+  "required": [
+    "path",
+    "session_id",
+    "unit",
+    "worktree",
+    "harness",
+    "acquired_at",
+    "updated_at",
+    "released_at"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "path": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Ruta del archivo relativa a la raíz del repo, con `/` como separador."
+    },
+    "session_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9._-]+$"
+    },
+    "unit": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "spec",
+            "cycle"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "cycle"
+            },
+            "spec": {
+              "type": "string",
+              "minLength": 1
+            },
+            "cycle": {
+              "type": "string",
+              "pattern": "^cycle-\\d{2}$"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "fix"
+          ],
+          "additionalProperties": false,
+          "properties": {
+            "kind": {
+              "const": "fix"
+            },
+            "fix": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Unidad de la sesión dueña; null si la sesión no estaba atada (una sola unidad abierta)."
+    },
+    "worktree": {
+      "type": "string",
+      "description": "Carpeta de trabajo de la sesión dueña: en la misma carpeta se frena la edición, desde otra solo se avisa."
+    },
+    "harness": {
+      "type": "string",
+      "enum": [
+        "claude-code",
+        "studio",
+        "manual"
+      ]
+    },
+    "acquired_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "released_at": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "format": "date-time"
+    }
+  }
+}

@@ -133,3 +133,71 @@ describe('SessionBindings', () => {
     });
   });
 });
+
+const reasonOf = (verdict: ReturnType<SessionBindings['judge']>): string =>
+  verdict && verdict.kind !== 'allow' ? verdict.reason : '';
+
+describe('SessionBindings file leases', () => {
+  const judge = (bindings: SessionBindings, threadId: string, unit: RegistryUnit, rel = 'src/auth.ts') =>
+    bindings.judge({ threadId, unit, gate: 'block', openUnits: [cycleA, cycleB], rel });
+
+  it('takes a lease on an allowed edit and denies the same file to another conversation', async () => {
+    await installRegistry();
+    const bindings = (await load())!;
+    bindings.sync('t1', cycleA);
+    bindings.sync('t2', cycleB);
+    expect(judge(bindings, 't1', cycleA)).toEqual({ kind: 'allow' });
+    await bindings.listLive();
+    const denied = judge(bindings, 't2', cycleB);
+    expect(denied?.kind).toBe('deny');
+    expect(reasonOf(denied)).toContain('reserved by another session in this same folder (spec-a-001/cycle-01');
+    const leases = await bindings.listLeases();
+    expect(leases).toEqual([
+      expect.objectContaining({
+        path: 'src/auth.ts',
+        sessionId: 'studio-t1',
+        unit: { kind: 'cycle', specId: 'spec-a-001', cycle: 'cycle-01' },
+        requestedBy: ['spec-b-002/cycle-01'],
+      }),
+    ]);
+  });
+
+  it('releases the leases of a conversation when it ends', async () => {
+    await installRegistry();
+    const bindings = (await load())!;
+    bindings.sync('t1', cycleA);
+    bindings.sync('t2', cycleB);
+    judge(bindings, 't1', cycleA);
+    await bindings.listLive();
+    bindings.end('t1');
+    await bindings.listLive();
+    expect(await bindings.listLeases()).toEqual([]);
+    expect(judge(bindings, 't2', cycleB)).toEqual({ kind: 'allow' });
+  });
+
+  it('only warns when the holder works from another worktree', async () => {
+    await installRegistry();
+    const lib = await import(path.join(root, 'sdd', 'scripts', 'lib', 'session-registry.mjs'));
+    const fs = {
+      read: (file: string) => readFile(file, 'utf8'),
+      write: async (file: string, text: string) => {
+        await mkdir(path.dirname(file), { recursive: true });
+        await writeFile(file, text, 'utf8');
+      },
+      list: async (dir: string) => (await readdir(dir)).map((name) => ({ name })),
+    };
+    await lib.acquireLease(fs, path.join(root, '.git', 'sdd-sessions').replace(/\\/g, '/'), {
+      rel: 'src/auth.ts',
+      sessionId: 'claude-other',
+      unit: cycleA,
+      worktree: '/somewhere/else',
+      harness: 'claude-code',
+      now: NOW,
+    });
+    const bindings = (await load())!;
+    bindings.sync('t2', cycleB);
+    const verdict = judge(bindings, 't2', cycleB);
+    expect(verdict?.kind).toBe('warn');
+    expect(reasonOf(verdict)).toContain('from another worktree');
+  });
+});

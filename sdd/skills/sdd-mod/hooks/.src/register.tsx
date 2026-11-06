@@ -12,10 +12,15 @@ import {
   bindFromCommand,
   endSession,
   holderOf,
+  inboxSection,
   judgeEdit,
+  leaseEdit,
+  leasesOf,
   loadSnapshot,
+  markInboxSeen,
   progress,
   touchSession,
+  unreadInbox,
 } from './sdd';
 import type { SessionStore } from './sdd';
 
@@ -50,9 +55,19 @@ async function touch($: EngineInterface) {
 async function gate($: EngineInterface, filePath: string) {
   try {
     const current = await refresh($);
-    const verdict = judgeEdit(current, await $.session.root(), filePath);
-    if (verdict.kind !== 'deny') await touch($);
-    return verdict;
+    const root = await $.session.root();
+    const verdict = judgeEdit(current, root, filePath);
+    if (verdict.kind === 'deny') return verdict;
+    const session = await sessionOf($);
+    const leased = await leaseEdit(storeOf($), current, root, filePath, session).catch(() => null);
+    if (leased?.request) {
+      await $.session
+        .send({ to: { sessionId: leased.request.toSessionId }, text: leased.request.text })
+        .catch(() => undefined);
+    }
+    const final = leased && leased.verdict.kind !== 'allow' ? leased.verdict : verdict;
+    if (final.kind !== 'deny') await touch($);
+    return final;
   } catch {
     return { kind: 'allow' } as const;
   }
@@ -71,6 +86,24 @@ export const register: Register = (on) => {
     });
     await refresh($).catch(() => undefined);
     return next(e);
+  });
+
+  on('tool.call', async ($, e, next) => {
+    const result = await next(e);
+    if (result.deny !== undefined) return result;
+    try {
+      const current = await read($, snapshot);
+      if (!current?.settings.enabled) return result;
+      const root = await $.session.root();
+      const session = await sessionOf($);
+      const messages = await unreadInbox(storeOf($), root, session);
+      const text = inboxSection(messages);
+      if (text === null) return result;
+      await markInboxSeen(storeOf($), root, session, messages.map((message) => message.id));
+      return { ...result, context: [...(result.context ?? []), text] };
+    } catch {
+      return result;
+    }
   });
 
   on('turn.complete', async ($, e, next) => {
@@ -186,10 +219,18 @@ export const register: Register = (on) => {
             ))}
           </Box>
         )}
+        {current.sessionId && leasesOf(current, current.sessionId).length > 0 && (
+          <Box flexDirection="column" marginTop={1}>
+            <Text bold>Archivos reservados por esta sesión</Text>
+            {leasesOf(current, current.sessionId).map((lease) => (
+              <Text dimColor>{lease.path}</Text>
+            ))}
+          </Box>
+        )}
         {current.mine === null && current.openUnits.length > 0 && (
           <Text color="warning">Esta sesión no está atada a ninguna unidad: pnpm sdd:use {'<spec>'} {'<cycle-XX>'} | {'<FIX-id>'}</Text>
         )}
-        <Text dimColor>pnpm sdd:gate {'<spec>'} [cycle-XX] · pnpm sdd:validate</Text>
+        <Text dimColor>pnpm sdd:gate {'<spec>'} [cycle-XX] · pnpm sdd:release {'<archivo>'} · pnpm sdd:validate</Text>
       </Box>
     );
   });

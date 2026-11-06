@@ -107,6 +107,20 @@ export type SessionBinding = z.infer<typeof SessionBinding>;
 
 export const MAX_SESSION_BINDINGS = 64;
 
+export const FileLeaseSummary = z.object({
+  path: z.string().min(1).max(1024),
+  sessionId: z.string().regex(/^[A-Za-z0-9._-]+$/),
+  unit: SessionUnit.nullable(),
+  harness: z.string().min(1).max(64),
+  worktree: z.string().max(1024),
+  acquiredAt: z.string(),
+  updatedAt: z.string(),
+  requestedBy: z.array(z.string().max(256)).max(16),
+});
+export type FileLeaseSummary = z.infer<typeof FileLeaseSummary>;
+
+export const MAX_FILE_LEASES = 256;
+
 export const WorkspaceSnapshot = z.object({
   project: z.string(),
   profile: z.string(),
@@ -120,6 +134,7 @@ export const WorkspaceSnapshot = z.object({
   pricing: z.record(z.string(), z.unknown()).nullable(),
   tools: KitToolsState.optional().catch(undefined),
   sessions: z.array(SessionBinding).max(MAX_SESSION_BINDINGS).optional().catch(undefined),
+  leases: z.array(FileLeaseSummary).max(MAX_FILE_LEASES).optional().catch(undefined),
   stale: z.array(Area),
 });
 export type WorkspaceSnapshot = z.infer<typeof WorkspaceSnapshot>;

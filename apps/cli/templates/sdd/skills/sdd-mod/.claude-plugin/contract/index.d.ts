@@ -29,6 +29,17 @@ export type SessionBinding = {
   ended_at: string | null;
 };
 
+export type FileLease = {
+  path: string;
+  session_id: string;
+  unit: UnitRef | null;
+  worktree: string;
+  harness: 'claude-code' | 'studio' | 'manual';
+  acquired_at: string;
+  updated_at: string;
+  released_at: string | null;
+};
+
 export type Snapshot = {
   settings: ModSettings;
   cycles: ActiveCycle[];
@@ -36,6 +47,8 @@ export type Snapshot = {
   openUnits: UnitRef[];
   mine: SessionBinding | null;
   others: SessionBinding[];
+  sessionId?: string;
+  leases?: FileLease[];
   registryError?: string;
   /** Set when sdd/ could not be read: the gate stays open and the band says why. */
   error?: string;
