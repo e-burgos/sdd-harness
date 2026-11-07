@@ -3,22 +3,146 @@
   "cycle": 1,
   "module": "studio-entry-wizard",
   "spec": "spec-e-burgos-019-studio-entry-wizard",
-  "apps": ["apps/studio"],
+  "apps": [
+    "apps/studio"
+  ],
   "phase": "studio-entry-wizard",
   "flow": "lite",
-  "objectives": ["La primera pantalla de Studio es un wizard de entrada de pantalla completa (US-1..US-5)"],
-  "status": "in-progress",
+  "objectives": [
+    "La primera pantalla de Studio es un wizard de entrada de pantalla completa (US-1..US-5)"
+  ],
+  "status": "completed",
   "started_at": "2026-11-07",
-  "completed_at": null,
+  "completed_at": "2026-11-07",
   "documents": {
     "plan": "sdd/specs/spec-e-burgos-019-studio-entry-wizard/cycles/cycle-01/plan.md",
     "tasks": "sdd/specs/spec-e-burgos-019-studio-entry-wizard/cycles/cycle-01/tasks.json"
   },
   "artifacts": [],
-  "metrics": null,
+  "metrics": {
+    "tasks_total": 2,
+    "tasks_completed": 2,
+    "tasks_skipped": 0,
+    "story_points": 11,
+    "files_created": [
+      "apps/studio/src/components/entry/CommandLine.tsx",
+      "apps/studio/src/components/entry/EntryBackdrop.tsx",
+      "apps/studio/src/components/entry/EntryProgress.tsx",
+      "apps/studio/src/components/entry/EntryWizard.tsx",
+      "apps/studio/src/components/entry/__tests__/bridge-link.spec.ts",
+      "apps/studio/src/components/entry/__tests__/entry-wizard.spec.tsx",
+      "apps/studio/src/components/entry/bridge-link.ts",
+      "apps/studio/src/components/entry/entry-backdrop-motion.ts",
+      "apps/studio/src/components/entry/entry-model.ts",
+      "apps/studio/src/components/entry/entry-storage.ts",
+      "apps/studio/src/components/entry/steps/AgentOrbit.tsx",
+      "apps/studio/src/components/entry/steps/ConnectStep.tsx",
+      "apps/studio/src/components/entry/steps/JourneyStep.tsx",
+      "apps/studio/src/components/entry/steps/PasteLinkForm.tsx",
+      "apps/studio/src/components/entry/steps/PathStep.tsx",
+      "apps/studio/src/components/entry/steps/RequirementsStep.tsx",
+      "apps/studio/src/components/entry/steps/StepHeader.tsx",
+      "apps/studio/src/components/entry/steps/WelcomeStep.tsx",
+      "apps/studio/src/components/entry/steps/journey-motion.ts",
+      "apps/studio/src/components/entry/steps/welcome-motion.ts",
+      "apps/studio/src/components/entry/use-element-size.ts",
+      "apps/studio/src/lib/i18n/modules/entry.ts"
+    ],
+    "files_modified": [
+      "apps/studio/src/app/globals.css",
+      "apps/studio/src/app/page.tsx",
+      "apps/studio/src/components/WorkspaceApp.tsx",
+      "apps/studio/src/components/connection.spec.tsx",
+      "apps/studio/src/lib/i18n/en.ts",
+      "apps/studio/src/lib/i18n/es.ts"
+    ],
+    "files_deleted": [
+      "apps/studio/src/components/ConnectScreen.tsx",
+      "apps/studio/src/components/connect-screen.spec.tsx"
+    ],
+    "usage": {
+      "tokens_in": 464000,
+      "tokens_out": 60000,
+      "approx": true,
+      "source": "declared-estimate",
+      "by_tier": {
+        "claude/opus": {
+          "tokens_in": 464000,
+          "tokens_out": 60000,
+          "approx": true,
+          "source": "declared-estimate"
+        }
+      },
+      "by_agent": [
+        {
+          "agent": "orchestrator",
+          "label": "spec, apertura y cierre",
+          "provider_model": "claude/opus",
+          "effort": "high",
+          "tokens_in": 60000,
+          "tokens_out": 7000,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-07"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-001 wizard de entrada",
+          "provider_model": "claude/opus",
+          "effort": "high",
+          "tokens_in": 254000,
+          "tokens_out": 45000,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-07"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-002 verificación en el navegador y ajustes",
+          "provider_model": "claude/opus",
+          "effort": "high",
+          "tokens_in": 150000,
+          "tokens_out": 8000,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-07"
+        }
+      ]
+    }
+  },
   "tables_created": [],
   "endpoints_implemented": [],
-  "components_created": [],
-  "issues_found": [],
-  "reviewer_report": null
+  "components_created": [
+    "COMP-130",
+    "COMP-131",
+    "COMP-132",
+    "COMP-133"
+  ],
+  "issues_found": [
+    "Corregido (navegador): al pasar de paso el contenedor raíz (`overflow-hidden`) se desplazaba 147 px en horizontal porque el foco movido al nuevo paso lo scrolleaba (overflow hidden sigue siendo scrolleable por programa) y la capa del fondo trasladada lo ensanchaba; ahora `overflow-clip` y `focus({ preventScroll: true })` en las puertas.",
+    "Corregido (navegador): la costura del shader quedaba sobre el texto en los pasos con mucho contenido; ahora en requisitos, lo que viene y conectar se va al borde con menos brillo.",
+    "Corregido (navegador): el contenido de los pasos quedaba arriba con media pantalla vacía; ahora se centra en vertical cuando entra.",
+    "Corregido (navegador): en español las tarjetas de la órbita cortaban «Implementador» y «tasks del ciclo»; tarjetas más anchas.",
+    "Corregido: la alternativa sin Studio decía `init` (que desde 0.20.0 pregunta Studio o terminal); ahora `init --terminal`.",
+    "Abierto (informativo): sin detección automática del puente (no expone rutas sin token); el puente abre el navegador solo y queda el enlace pegado."
+  ],
+  "reviewer_report": {
+    "approved": true,
+    "date": "2026-11-07",
+    "ca_results": {
+      "US-1": "PASS - bienvenida de pantalla completa (desktop 1440x900): título, bajada, Empezar, «Ya tengo el puente», nota de privacidad, costura del shader y órbita de los seis agentes con su artefacto",
+      "US-2": "PASS - tres puertas con Recomendado, flechas del teclado y elección recordada",
+      "US-3": "PASS - Node 20+ y Claude Code con verificar/resolver, copiar y «Lo tengo»; no bloquean",
+      "US-4": "PASS - comandos por camino con copiar, aviso de apertura automática, enlace pegado validado (rechaza otro sitio con mensaje), ayuda de bloqueos; el caso de error abre en conectar (tests)",
+      "US-5": "PASS - línea de tiempo animada de los Primeros pasos"
+    },
+    "tests": {
+      "studio": "OK - 1294 tests",
+      "typecheck": "OK",
+      "build": "OK - export estático",
+      "sdd-validate": "OK",
+      "real-check": "OK - Studio web local sin puente: recorrido completo en desktop, mobile 375 px sin desborde, es/en, enlace inválido rechazado"
+    },
+    "notes": "Flow lite. Telemetría declarada. Código sin comentarios. Solo apps/studio: se publica con el merge a main (deploy-studio.yml)."
+  }
 }

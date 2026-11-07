@@ -200,19 +200,19 @@
       "cycles_completed": 1,
       "description": "Primer uso guiado en Studio: conectar Claude, wizard, GitHub y primera idea/spec; harness init ofrece Studio.",
       "completed_at": "2026-11-07"
-    }
-  ],
-  "in_progress_modules": [
+    },
     {
       "module": "studio-entry-wizard",
       "spec": "spec-e-burgos-019-studio-entry-wizard",
       "apps": [
         "apps/studio"
       ],
-      "cycles_completed": 0,
-      "description": "Wizard de entrada de pantalla completa con graphic motion para quien llega a la web sin puente conectado."
+      "cycles_completed": 1,
+      "description": "Wizard de entrada de pantalla completa con graphic motion para quien llega a la web sin puente conectado.",
+      "completed_at": "2026-11-07"
     }
   ],
+  "in_progress_modules": [],
   "pending_modules": [
     {
       "module": "studio-framework-vision",

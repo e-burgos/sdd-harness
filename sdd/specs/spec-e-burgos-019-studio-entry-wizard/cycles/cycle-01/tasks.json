@@ -25,10 +25,20 @@
       "estimation_hours": 5,
       "story_points": 8,
       "depends_on": [],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/studio/src/components/entry/EntryWizard.tsx"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 254000,
+        "tokens_out": 45000,
+        "approx": true,
+        "recorded_at": "2026-11-07",
+        "provider_model": "claude/opus",
+        "effort": "high",
+        "agent": "implementor-front",
+        "source": "declared-estimate"
+      }
     },
     {
       "id": "TASK-002",
@@ -45,8 +55,18 @@
       "depends_on": [
         "TASK-001"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [],
+      "usage": {
+        "tokens_in": 150000,
+        "tokens_out": 8000,
+        "approx": true,
+        "recorded_at": "2026-11-07",
+        "provider_model": "claude/opus",
+        "effort": "high",
+        "agent": "implementor-front",
+        "source": "declared-estimate"
+      }
     }
   ]
 }

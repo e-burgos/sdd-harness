@@ -1,6 +1,6 @@
 # SPEC-e-burgos-019: La primera pantalla de Studio es un wizard de entrada
 
-> Estado: **in-progress** (2026-11-07). cycle-01 abierto. Sigue a spec-e-burgos-018 (primer uso
+> Estado: **completed** (2026-11-07). cycle-01 cerrado (flow lite, 2/2 tasks). Sigue a spec-e-burgos-018 (primer uso
 > guiado dentro de Studio): esta cubre lo que ve quien llega a la web sin puente conectado.
 
 ## Resumen ejecutivo
