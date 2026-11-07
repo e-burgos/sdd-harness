@@ -6,7 +6,7 @@
     "auto_install": true
   },
   "claude_mod": {
-    "enabled": false,
+    "enabled": true,
     "gate": "block"
   }
 }
