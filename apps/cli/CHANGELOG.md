@@ -5,6 +5,25 @@ All notable changes to `@e-burgos/sdd-harness` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **GitHub integration.** `harness github connect | status | protect` uses the developer's `gh`
+  (no tokens stored): creates the repo (private by default), pushes the kit CI
+  (`sdd/templates/github/workflows/sdd-validate.yml` → `.github/workflows/`) and, only on request,
+  requires `sdd:validate` on the default branch. New kit scripts `pnpm sdd:branch` (branch per cycle
+  by profile: team on, solo off, override `global.json → github.branch_per_cycle`) and `pnpm sdd:pr`
+  (PR title and body from `cycle.json`; plan without `--yes`). Optional `github` block in
+  `global.schema.json`; orchestrator, reviewer and docs updated.
+- **GitHub in Studio.** Studio shows whether the project is on GitHub, connects it from a dialog
+  (also the project the wizard just generated) and lists the PR and CI state of each running cycle
+  (bridge `github.status` / `github.connect` and an optional `snapshot.github`).
+- **Guided first run.** Studio's launcher and Home show **First steps** (connect Claude → create the
+  project → connect GitHub → first idea or spec) that check themselves off; Claude can be connected
+  from the launcher and GitHub right after generation. `harness init` asks whether to continue in
+  Studio (recommended) or the terminal; `--studio` / `--terminal` skip the question.
+
 ## [0.19.0] - 2026-11-06
 
 ### Added

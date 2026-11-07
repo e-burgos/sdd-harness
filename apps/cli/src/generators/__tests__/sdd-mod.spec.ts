@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { resolve } from 'node:path';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 
 // The mod's pure logic (templates/sdd/skills/sdd-mod/hooks/.src/sdd.ts) is loaded at run time: its
 // type contract augments the 'claude-code' module, which only Claude Code provides, so tsc must
@@ -406,6 +406,18 @@ describe('sdd-mod: copia del registro de sesiones', () => {
     const lib = readFileSync(resolve(kit, 'scripts/lib/session-registry.mjs'), 'utf8');
     const copy = readFileSync(resolve(kit, 'skills/sdd-mod/hooks/.src/session-registry.mjs'), 'utf8');
     expect(copy).toBe(lib);
+  });
+});
+
+describe('sdd-mod: type-check del mod', () => {
+  it('el tsconfig lista cada fuente TypeScript de hooks/.src, porque tsc saltea carpetas con punto en include', () => {
+    const mod = resolve(__dirname, '../../../templates/sdd/skills/sdd-mod');
+    const config = JSON.parse(readFileSync(resolve(mod, 'tsconfig.json'), 'utf8')) as { files?: string[]; include?: string[] };
+    const sources = readdirSync(resolve(mod, 'hooks/.src'))
+      .filter((name) => /\.(tsx?|d\.mts)$/.test(name))
+      .map((name) => `hooks/.src/${name}`);
+    expect(config.files).toEqual(expect.arrayContaining([...sources, '.claude-plugin/contract/index.d.ts']));
+    expect(config.include).toEqual(['.claude-plugin/types']);
   });
 });
 

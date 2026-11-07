@@ -167,6 +167,11 @@ carpeta, recibe `SDD reserva: …` con el nombre de la dueña (desde otro worktr
 dueña ve el pedido en su próxima acción y libera con `pnpm sdd:release <archivo>`. Las reservas
 vencen a los 30 min sin edición y se liberan al cerrar la sesión.
 
+**Proyecto en GitHub.** Con `gh` instalado y autenticado, `harness github connect` crea el repo,
+sube el CI del kit y deja `origin`; `--protect` (o `harness github protect`) exige `sdd:validate`.
+En perfil `team` cada ciclo abre su rama con `pnpm sdd:branch <spec> cycle-XX` y cierra con
+`pnpm sdd:pr <spec> cycle-XX` (sin `--yes` muestra el plan; con `--yes` pushea y abre el PR).
+
 ---
 
 ## 3. Flujo normal — Funcionalidad nueva

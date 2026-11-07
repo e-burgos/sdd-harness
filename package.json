@@ -22,6 +22,8 @@
     "sdd:gate": "node sdd/scripts/spec-gate.mjs",
     "sdd:use": "node sdd/scripts/sdd-use.mjs",
     "sdd:release": "node sdd/scripts/sdd-release.mjs",
+    "sdd:branch": "node sdd/scripts/sdd-branch.mjs",
+    "sdd:pr": "node sdd/scripts/sdd-pr.mjs",
     "sdd:rtk": "node sdd/scripts/setup-rtk.mjs",
     "sdd:mod": "node sdd/scripts/sdd-mod.mjs",
     "sdd:tucu": "node sdd/scripts/sdd-tucu.mjs",

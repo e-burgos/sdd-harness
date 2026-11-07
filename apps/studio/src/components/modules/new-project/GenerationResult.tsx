@@ -7,10 +7,11 @@ import { useT } from '@/lib/i18n/i18n';
 import type { Dict } from '@/lib/i18n/es';
 import { buildHermesIdea } from '@/lib/wizard/hermes-idea';
 import { joinLog } from '@/lib/wizard/log-text';
-import { savePendingIdea } from '@/lib/wizard/persist';
+import { isGithubSkipped, saveGithubSkipped, savePendingIdea } from '@/lib/wizard/persist';
 import { errorMessage } from '@/lib/wizard/wizard-client';
 import { useBridgeFeatures } from '@/lib/use-bridge-features';
 import { useBridge, useStudio } from '../../BridgeProvider';
+import { GithubConnectPanel } from '../../github/GithubConnectPanel';
 import { CapabilityNotice } from '../../mission-control/CapabilityNotice';
 import { CopyButton } from './CopyButton';
 import { StageList } from './GenerationProgress';
@@ -37,6 +38,36 @@ function GateLine({ label, status }: { label: string; status: GenerationState['g
     <li data-gate-status={status} className={`text-copy ${tone}`}>
       {label}: {t(`wizard.result.gate.${status}` as keyof Dict)}
     </li>
+  );
+}
+
+function GithubStep({ generationId, defaultName }: { generationId: string; defaultName: string }) {
+  const { t } = useT();
+  const { client } = useBridge();
+  const [skipped, setSkipped] = useState(() => isGithubSkipped(generationId));
+  if (skipped) return null;
+  const supported = client?.supports?.('github') === true;
+  return (
+    <section data-testid="result-github" className="flex flex-col gap-2 rounded-md border border-foreground/10 p-3">
+      <h3 className="text-small font-medium text-ink-400">{t('onboarding.github.result.title')}</h3>
+      {supported ? (
+        <>
+          <p className="text-small text-ink-300">{t('onboarding.github.result.hint')}</p>
+          <GithubConnectPanel
+            generationId={generationId}
+            defaultName={defaultName}
+            onSkip={() => {
+              saveGithubSkipped(generationId);
+              setSkipped(true);
+            }}
+          />
+        </>
+      ) : (
+        <p data-testid="result-github-unavailable" className="text-small text-ink-300">
+          {t('onboarding.github.result.unavailable')}
+        </p>
+      )}
+    </section>
   );
 }
 
@@ -145,6 +176,8 @@ export function GenerationResult({ state }: { state: GenerationState }) {
           </section>
         </>
       )}
+
+      {variant === 'success' && <GithubStep generationId={state.id} defaultName={wizard.state.project.name.trim()} />}
 
       {actionError !== null && (
         <p role="alert" className="text-small text-roseish">

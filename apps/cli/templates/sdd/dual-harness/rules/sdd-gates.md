@@ -123,6 +123,14 @@ mod de Claude Code (y el del puente de Studio) parte de esa atadura, no de «el 
 `functional.md`, `planner.md`, `architect.md`, `plan.md`, `cycle.json`, `tasks.json` y el
 directorio `artifacts/` (documentos de apoyo, referenciados en `cycle.json["artifacts"]`).
 
+### Ramas y PRs por ciclo (GitHub)
+
+Con el repo conectado (`harness github connect`, con el `gh` del dev): perfil `team` ⇒ rama por
+ciclo, `solo` ⇒ opcional (override `global.json → github.branch_per_cycle`: `"on"`|`"off"`). Al
+abrir, el orquestador corre `pnpm sdd:branch <spec> cycle-XX`; al cerrar, el reviewer corre
+`pnpm sdd:pr <spec> cycle-XX`, muestra el plan al dev y solo con su confirmación usa `--yes`
+(push + PR). Proteger la rama por defecto es solo a pedido (`harness github protect`).
+
 **Naming** (detalle en `sdd-file-structure` §2): `spec-[gh-user]-[NNN]-[slug]` (contador
 personal del dev), `cycle-01`, `cycle-02`… por spec, `TASK-[NNN]` por ciclo,
 `fix-[gh-user]-[spec-NNN]-[seq].md` (o `sdd/fixes/` repo-level).

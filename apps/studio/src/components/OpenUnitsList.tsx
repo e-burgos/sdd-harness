@@ -1,9 +1,9 @@
 'use client';
 
 import { Badge } from '@e-burgos/tucu-ui';
-import type { FileLeaseSummary, SessionBinding } from '@sdd-studio/protocol';
+import type { CycleGithub, FileLeaseSummary, SessionBinding } from '@sdd-studio/protocol';
 import { useT } from '@/lib/i18n/i18n';
-import { leasesOfUnit, sessionsOfUnit, shortSessionId, unboundLeases, type OpenUnit } from '@/lib/open-units';
+import { githubOfUnit, leasesOfUnit, sessionsOfUnit, shortSessionId, unboundLeases, type OpenUnit } from '@/lib/open-units';
 import { useStudio } from './BridgeProvider';
 
 function SessionBadges({ sessions }: { sessions: SessionBinding[] }) {
@@ -29,6 +29,37 @@ function SessionBadges({ sessions }: { sessions: SessionBinding[] }) {
   );
 }
 
+const CHECKS_TONE = { success: 'success', failure: 'danger', pending: 'warning' } as const;
+
+function CycleGithubLine({ github }: { github: CycleGithub }) {
+  const { t } = useT();
+  const { pr, checks } = github;
+  return (
+    <div data-testid="unit-github" className="flex flex-wrap items-center gap-1.5 pl-3.5 font-mono text-micro">
+      {pr ? (
+        <>
+          <a data-testid="unit-pr" href={pr.url} target="_blank" rel="noreferrer" className="text-sky-300 underline-offset-2 hover:underline">
+            {t('github.cycle.pr', { n: pr.number })}
+          </a>
+          <span className="text-ink-400">
+            {t(`github.cycle.state.${pr.state}`)}
+            {pr.isDraft ? ` · ${t('github.cycle.draft')}` : ''}
+          </span>
+        </>
+      ) : (
+        <span data-testid="unit-branch" className="truncate text-ink-500" title={github.branch}>
+          {t('github.cycle.branch', { branch: github.branch })}
+        </span>
+      )}
+      {checks !== 'none' && (
+        <Badge variant="soft" size="micro" shape="pill" tone={CHECKS_TONE[checks]} data-testid="unit-ci" className="gap-1 px-2 py-0.5 font-mono text-micro">
+          {t(`github.cycle.checks.${checks}`)}
+        </Badge>
+      )}
+    </div>
+  );
+}
+
 const LEASES_SHOWN = 5;
 
 function LeasedFiles({ leases }: { leases: FileLeaseSummary[] }) {
@@ -41,13 +72,17 @@ function LeasedFiles({ leases }: { leases: FileLeaseSummary[] }) {
         <li
           key={lease.path}
           data-testid="unit-lease"
-          className="flex items-center gap-1.5 font-mono text-micro text-ink-400"
+          className="flex flex-col font-mono text-micro text-ink-400"
           title={t('units.leaseBy', { harness: lease.harness, id: shortSessionId(lease.sessionId) })}
         >
-          <span aria-hidden className="text-ink-500">⌁</span>
-          <span className="truncate">{lease.path}</span>
+          <span className="flex min-w-0 items-center gap-1.5">
+            <span aria-hidden className="text-ink-500">⌁</span>
+            <span className="truncate" title={lease.path}>
+              {lease.path}
+            </span>
+          </span>
           {lease.requestedBy.length > 0 && (
-            <span data-testid="unit-lease-request" className="shrink-0 text-amber-300">
+            <span data-testid="unit-lease-request" className="truncate pl-3.5 text-amber-300">
               {t('units.requestedBy', { who: lease.requestedBy.join(', ') })}
             </span>
           )}
@@ -83,6 +118,7 @@ export function OpenUnitsList({ units, detailed = false }: { units: OpenUnit[]; 
           <div className="flex flex-wrap items-center gap-1.5 pl-3.5">
             <SessionBadges sessions={sessionsOfUnit(snapshot, unit)} />
           </div>
+          {githubOfUnit(snapshot, unit) && <CycleGithubLine github={githubOfUnit(snapshot, unit)!} />}
           <LeasedFiles leases={leasesOfUnit(snapshot, unit)} />
         </li>
       ))}

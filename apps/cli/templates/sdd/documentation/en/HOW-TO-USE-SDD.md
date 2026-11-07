@@ -167,6 +167,12 @@ folder, gets `SDD reserva: …` naming the holder (from another worktree, only a
 sees the request on its next action and releases it with `pnpm sdd:release <file>`. Leases expire
 after 30 min without edits and are released when the session ends.
 
+**Project on GitHub.** With `gh` installed and logged in, `harness github connect` creates the repo,
+pushes the kit CI and sets `origin`; `--protect` (or `harness github protect`) requires
+`sdd:validate`. With profile `team` each cycle opens its branch with `pnpm sdd:branch <spec> cycle-XX`
+and closes with `pnpm sdd:pr <spec> cycle-XX` (without `--yes` it shows the plan; with `--yes` it
+pushes and opens the PR).
+
 ---
 
 ## 3. Normal flow — New functionality

@@ -114,6 +114,9 @@ description: >
   `"solo"` abre `flow: "lite"` (un solo actor, `plan.md`). Lo cambia el **sdd-steward** a pedido
   del dev; el prefijo `[LITE]`/`[FULL]` del pedido gana sobre el perfil. Detalle:
   `sdd/dual-harness/rules/sdd-gates.md` § Flow.
+- `github` (opcional, desde v0.20.0): `branch_per_cycle` (`"on"` | `"off"`; si falta, `team` ⇒ on y
+  `solo` ⇒ off) y `default_branch` (base de los PRs de ciclo, default `main`). Lo leen
+  `pnpm sdd:branch` y `pnpm sdd:pr`; ver `sdd-gates.md` § Ramas y PRs por ciclo.
 
 ### ModuleEntry — campos
 

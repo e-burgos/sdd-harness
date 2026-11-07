@@ -11,6 +11,7 @@ import { startBridgeServer, type BridgeServer } from './server/ws-server';
 import { SessionError } from './sessions/session-manager';
 import type { HarnessCli } from './wizard/cli-locator';
 import { GenerationRegistry } from './wizard/generation';
+import { GithubService, isGithubCommand } from './github/service';
 import { createWizardCommands } from './wizard/service';
 import { BRIDGE_VERSION } from './version';
 
@@ -95,6 +96,12 @@ export class BridgeHost {
   }
 }
 
+function defaultHostCommands(host: BridgeHost, cli: HarnessCli | undefined): (command: HostCommand) => Promise<unknown> {
+  const wizard = createWizardCommands(host, { cli });
+  const github = new GithubService(host, { cli });
+  return (command) => (isGithubCommand(command) ? github.handle(command) : wizard(command));
+}
+
 export async function startBridge(o: {
   root: string;
   port: number;
@@ -141,7 +148,7 @@ export async function startBridge(o: {
         auth: host.auth,
         login: host.login,
         runtime: () => host.runtime,
-        hostCommands: o.hostCommands ? o.hostCommands(host) : createWizardCommands(host, { cli: o.harnessCli }),
+        hostCommands: o.hostCommands ? o.hostCommands(host) : defaultHostCommands(host, o.harnessCli),
       }),
     });
   } catch (error) {

@@ -34,6 +34,7 @@ export const BRIDGE_FEATURES = [
   'rtk-gain',
   'project-wizard',
   'workspace-switch',
+  'github',
 ] as const;
 export const TEXT_ATTACHMENT_EXTENSIONS = [
   'txt', 'md', 'mdx', 'markdown', 'json', 'jsonc', 'yaml', 'yml', 'toml', 'ini', 'csv', 'log', 'diff', 'patch',

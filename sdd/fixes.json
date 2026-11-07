@@ -1271,6 +1271,53 @@
           }
         ]
       }
+    },
+    {
+      "id": "FIX-e-burgos-017-001",
+      "author": "e-burgos",
+      "spec_id": "spec-e-burgos-017-parallel-sessions",
+      "fix_document": "sdd/specs/spec-e-burgos-017-parallel-sessions/fixes/fix-e-burgos-017-001.md",
+      "type": "IMPROVEMENT",
+      "severity": "low",
+      "created_at": "2026-11-07",
+      "resolved_at": "2026-11-07",
+      "validated_at": null,
+      "title": "Type-check real del mod y reservas legibles en Studio",
+      "estimation_hours": 1,
+      "description": "El tsconfig del mod lista sus fuentes en files (tsc salteaba hooks/.src por ser carpeta con punto) con un test que lo exige; en Studio, el pedido de una reserva va en su propia línea y la ruta completa en title.",
+      "justification": "Hallazgos del cierre del cycle-02 de spec 017; sin contratos ni entidades nuevas.",
+      "related_modules": [
+        "parallel-sessions"
+      ],
+      "affected_files": [
+        "apps/cli/templates/sdd/skills/sdd-mod/tsconfig.json",
+        "sdd/skills/sdd-mod/tsconfig.json",
+        "apps/cli/src/generators/__tests__/sdd-mod.spec.ts",
+        "apps/studio/src/components/OpenUnitsList.tsx"
+      ],
+      "test_reference": "sdd-mod.spec.ts (type-check del mod), openunits.spec.tsx y verificación visual con --local-ui",
+      "status": "implemented",
+      "cycle": null,
+      "usage": {
+        "provider_model": "claude/opus",
+        "effort": "high",
+        "tokens_in": 90000,
+        "tokens_out": 5000,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-11-07",
+        "by_agent": [
+          {
+            "agent": "implementor-front",
+            "provider_model": "claude/opus",
+            "effort": "high",
+            "tokens_in": 90000,
+            "tokens_out": 5000,
+            "approx": true,
+            "source": "declared-estimate"
+          }
+        ]
+      }
     }
   ]
 }

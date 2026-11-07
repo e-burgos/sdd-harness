@@ -285,6 +285,32 @@
         }
       }
     },
+    "spec-e-burgos-014-github-integration": {
+      "cycles": {
+        "cycle-01": {
+          "file": "sdd/specs/spec-e-burgos-014-github-integration/cycles/cycle-01/tasks.json",
+          "module": "github-integration",
+          "apps": [
+            "apps/cli"
+          ],
+          "status": "completed",
+          "tasks_total": 5,
+          "tasks_done": 5
+        },
+        "cycle-02": {
+          "file": "sdd/specs/spec-e-burgos-014-github-integration/cycles/cycle-02/tasks.json",
+          "module": "github-integration",
+          "apps": [
+            "libs/studio-protocol",
+            "apps/studio-bridge",
+            "apps/studio"
+          ],
+          "status": "completed",
+          "tasks_total": 4,
+          "tasks_done": 4
+        }
+      }
+    },
     "spec-e-burgos-016-studio-wizard-motion": {
       "cycles": {
         "cycle-01": {
@@ -327,6 +353,21 @@
           "status": "completed",
           "tasks_total": 7,
           "tasks_done": 7
+        }
+      }
+    },
+    "spec-e-burgos-018-guided-onboarding": {
+      "cycles": {
+        "cycle-01": {
+          "file": "sdd/specs/spec-e-burgos-018-guided-onboarding/cycles/cycle-01/tasks.json",
+          "module": "guided-onboarding",
+          "apps": [
+            "apps/studio",
+            "apps/cli"
+          ],
+          "status": "completed",
+          "tasks_total": 5,
+          "tasks_done": 5
         }
       }
     }

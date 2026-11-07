@@ -127,6 +127,8 @@ sdd/
 │   ├── spec-gate.mjs                  ← Answers SPEC GATE A and B (pnpm sdd:gate)
 │   ├── sdd-use.mjs                    ← Binds this session to a cycle or fix (pnpm sdd:use)
 │   ├── sdd-release.mjs                ← Releases file leases and notifies (pnpm sdd:release)
+│   ├── sdd-branch.mjs                 ← Cycle branch per profile (pnpm sdd:branch)
+│   ├── sdd-pr.mjs                     ← Cycle PR with the reviewer summary (pnpm sdd:pr)
 │   ├── rebuild-tasks-index.mjs        ← Regenerates the tasks index (pnpm sdd:rebuild-tasks-index)
 │   ├── rebuild-catalog.mjs            ← Regenerates the viewer manifest (pnpm sdd:rebuild-catalog)
 │   ├── setup-rtk.mjs                  ← Installs/merges the rtk hooks (pnpm sdd:rtk)
@@ -362,6 +364,13 @@ registry): another session in the same folder does not edit it (from another wor
 warning), leaves a request in the holder's **inbox**, and the holder sees it on its next action.
 `pnpm sdd:release <file…>` releases and notifies; `--list` shows the leases. Studio shows each
 unit's leased files and who asks for them.
+
+**GitHub.** `harness github connect` creates the repo with your `gh` (private by default), pushes the
+kit CI (`.github/workflows/sdd-validate.yml`) and, only if you ask (`--protect` or
+`harness github protect`), requires `sdd:validate` as a status check. With a branch per cycle
+(profile `team`, or `github.branch_per_cycle` in `global.json`), `pnpm sdd:branch <spec> cycle-XX`
+creates `feat/<slug>-cycle-XX` when the cycle opens and `pnpm sdd:pr <spec> cycle-XX` prepares the
+PR at close (`--yes` pushes and opens it). `harness github status` shows the state.
 
 ### Cycle flow — full · reduced · lite
 

@@ -21,6 +21,11 @@ import {
 import { IDEA_FILENAME } from "../generators/idea.generator.js";
 import { parseProfile } from "../generators/sdd.generator.js";
 import type { SddProfile } from "../generators/sdd.generator.js";
+import {
+  launchStudio,
+  manualStudioHint,
+  resolveStudioRoute,
+} from "../utils/studio-launch.js";
 import { CONFIG_SCHEMA_FILENAME } from "../config/json-schema.js";
 import {
   TUCU_UI_CONFLICT_MESSAGE,
@@ -167,6 +172,17 @@ export const initCommand = defineCommand({
         "Skip the FASE 3 gate (sdd:validate + nx run-many -t lint test build) that init runs and fails on",
       default: false,
     },
+    studio: {
+      type: "boolean",
+      description:
+        "Skip the question and open SDD Studio (visual wizard) in the target directory",
+      default: false,
+    },
+    terminal: {
+      type: "boolean",
+      description: "Skip the question and use this terminal wizard",
+      default: false,
+    },
     "tucu-ui": {
       type: "boolean",
       description:
@@ -206,6 +222,12 @@ export const initCommand = defineCommand({
 
     if (args.config) {
       await runConfigFlow(args.config, target);
+      return;
+    }
+
+    const route = await chooseOnboardingRoute(args, rawArgs, target.interactive ?? false);
+    if (route === "studio") {
+      await runStudioFlow(args.name, target);
       return;
     }
 
@@ -281,6 +303,67 @@ export const initCommand = defineCommand({
     }
   },
 });
+
+const PRE_ANSWER_FLAGS = ["--tucu-ui", "--no-tucu-ui"];
+
+export async function chooseOnboardingRoute(
+  args: {
+    studio?: boolean;
+    terminal?: boolean;
+    config?: string;
+    yes?: boolean;
+    name?: string;
+    mode?: string;
+    standalone?: boolean;
+    profile?: string;
+    skipVerify?: boolean;
+  },
+  rawArgs: string[],
+  interactive: boolean,
+): Promise<"studio" | "terminal"> {
+  const route = resolveStudioRoute({
+    studio: Boolean(args.studio),
+    terminal: Boolean(args.terminal),
+    interactive,
+    config: args.config,
+    yes: Boolean(args.yes),
+    preAnswered:
+      Boolean(args.name || args.mode || args.standalone || args.profile || args.skipVerify) ||
+      rawArgs.some((a) => PRE_ANSWER_FLAGS.includes(a)),
+  });
+  if (route !== "ask") return route;
+  const choice = await p.select({
+    message: "¿Dónde querés armar el proyecto?",
+    options: [
+      { value: "studio", label: "Studio — wizard visual con guía (recomendado)" },
+      { value: "terminal", label: "Terminal — este asistente" },
+    ],
+    initialValue: "studio",
+  });
+  if (p.isCancel(choice)) {
+    p.cancel("Operation cancelled.");
+    process.exit(0);
+  }
+  return choice as "studio" | "terminal";
+}
+
+async function runStudioFlow(
+  name: string | undefined,
+  flags: TargetFlags,
+): Promise<void> {
+  const { targetDir } = resolveInitTarget(process.cwd(), name ?? basename(process.cwd()), {
+    ...flags,
+    here: flags.here || !name,
+  });
+  fs.ensureDirSync(targetDir);
+  p.log.info(`Abriendo SDD Studio en ${targetDir}… (Ctrl+C para salir)`);
+  const code = await launchStudio(targetDir);
+  if (code === -1) {
+    logger.error(manualStudioHint(targetDir));
+    process.exit(1);
+  }
+  process.exit(code);
+}
 
 // ─── Config-driven flow (non-interactive, for AI agents and CI) ───────────────
 

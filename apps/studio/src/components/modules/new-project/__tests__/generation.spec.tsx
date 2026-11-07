@@ -245,7 +245,7 @@ describe('GenerationResult', () => {
       expect(result.querySelectorAll('[data-gate-status="pass"]')).toHaveLength(2);
       expect(result).toHaveTextContent('next-web · nextjs');
       expect(result).toHaveTextContent('shared-types · shared-types');
-      expect(result).toHaveTextContent('Vincular a un repositorio remoto llega en una próxima versión.');
+      expect(result).toHaveTextContent('Conectalo a GitHub en el panel de abajo, o más tarde desde el header.');
       expect(within(result).queryByRole('button', { name: 'Editar y volver a intentar' })).not.toBeInTheDocument();
     });
 

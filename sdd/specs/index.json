@@ -213,10 +213,10 @@
       "file": "sdd/specs/spec-e-burgos-014-github-integration/spec-e-burgos-014-github-integration.spec.md",
       "module": "github-integration",
       "app": "apps/cli",
-      "status": "draft",
+      "status": "completed",
       "title": "Conectar el proyecto a GitHub: repo, CI y flujo de PRs del ciclo SDD",
       "created_at": "2026-11-03",
-      "completed_at": null,
+      "completed_at": "2026-11-07",
       "depends_on": [
         "spec-e-burgos-013-studio-project-wizard"
       ]
@@ -264,6 +264,22 @@
       "created_at": "2026-11-06",
       "completed_at": "2026-11-06",
       "depends_on": []
+    },
+    {
+      "id": "spec-e-burgos-018-guided-onboarding",
+      "author": "e-burgos",
+      "slug": "guided-onboarding",
+      "folder": "sdd/specs/spec-e-burgos-018-guided-onboarding",
+      "file": "sdd/specs/spec-e-burgos-018-guided-onboarding/spec-e-burgos-018-guided-onboarding.spec.md",
+      "module": "guided-onboarding",
+      "app": "apps/studio",
+      "status": "completed",
+      "title": "Primer uso guiado: de Studio vacío a la primera spec",
+      "created_at": "2026-11-07",
+      "completed_at": "2026-11-07",
+      "depends_on": [
+        "spec-e-burgos-014-github-integration"
+      ]
     }
   ]
 }

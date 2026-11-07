@@ -7,6 +7,7 @@ import { configureCommand } from './commands/configure/index.js';
 import { configCommand } from './commands/config/index.js';
 import { updateCommand } from './commands/update/index.js';
 import { infoCommand } from './commands/info.js';
+import { githubCommand } from './commands/github/index.js';
 
 const main = defineCommand({
   meta: {
@@ -22,6 +23,7 @@ const main = defineCommand({
     config: configCommand,
     update: updateCommand,
     info: infoCommand,
+    github: githubCommand,
   },
 });
 
