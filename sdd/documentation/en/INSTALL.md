@@ -29,6 +29,15 @@ files.
 This folder is a **clean, portable** copy of the SDD system: no specs, fixes, tasks or
 contexts from any project. Every registry is empty and validates against its schema.
 
+## Recommended start: a new project with SDD Studio
+
+For a project from scratch, the guided path is **SDD Studio**: `npx @e-burgos/sdd-studio` in an empty
+folder (or `npx @e-burgos/sdd-harness init` and pick "Studio"; `--studio` skips the question).
+Studio shows the **First steps** and checks them off by itself: connect Claude, create the project
+with the wizard, connect it to GitHub (with your `gh`, optional) and send the first idea to Hermes or
+create the first spec. The terminal wizard (`init --terminal`) and the manual steps below are still
+available.
+
 ## Steps
 
 1. **Copy this folder into the target repo as `sdd/`** (the name matters: scripts,

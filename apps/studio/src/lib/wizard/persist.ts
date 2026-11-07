@@ -3,6 +3,7 @@ import { initialWizardState, type WizardState } from './state';
 export const WIZARD_STATE_KEY = 'sdd-studio:wizard:state';
 export const WIZARD_GENERATION_KEY = 'sdd-studio:wizard:generation';
 export const WIZARD_IDEA_KEY = 'sdd-studio:wizard:idea';
+export const WIZARD_GITHUB_SKIP_KEY = 'sdd-studio:wizard:github-skipped';
 
 const STATE_VERSION = 1;
 
@@ -141,7 +142,15 @@ export function loadPendingIdea(storage: StorageLike | null = sessionStore()): s
 
 export const clearPendingIdea = (storage: StorageLike | null = sessionStore()): void => remove(storage, WIZARD_IDEA_KEY);
 
+export const saveGithubSkipped = (generationId: string, storage: StorageLike | null = sessionStore()): void => write(storage, WIZARD_GITHUB_SKIP_KEY, { generationId });
+
+export function isGithubSkipped(generationId: string, storage: StorageLike | null = sessionStore()): boolean {
+  const stored = read(storage, WIZARD_GITHUB_SKIP_KEY);
+  return isRecord(stored) && stored.generationId === generationId;
+}
+
 export function clearWizardSession(storage: StorageLike | null = sessionStore()): void {
+  remove(storage, WIZARD_GITHUB_SKIP_KEY);
   clearWizardState(storage);
   clearGenerationPointer(storage);
   clearPendingIdea(storage);

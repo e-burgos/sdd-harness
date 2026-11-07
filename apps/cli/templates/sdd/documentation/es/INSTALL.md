@@ -29,6 +29,15 @@ Esta carpeta es una copia **limpia y portable** del sistema SDD: sin specs, fixe
 tasks ni contextos de ningún proyecto. Todos los registros están vacíos y validan
 contra sus schemas.
 
+## Arranque recomendado: proyecto nuevo con SDD Studio
+
+Para un proyecto desde cero, el camino guiado es **SDD Studio**: `npx @e-burgos/sdd-studio` en una
+carpeta vacía (o `npx @e-burgos/sdd-harness init` y elegir «Studio»; `--studio` salta la pregunta).
+Studio muestra los **Primeros pasos** y los marca solos: conectar Claude, crear el proyecto con el
+wizard, conectarlo a GitHub (con tu `gh`, opcional) y mandar la primera idea a Hermes o crear la
+primera spec. El asistente de terminal (`init --terminal`) y los pasos manuales de abajo siguen
+disponibles.
+
 ## Pasos
 
 1. **Copiar esta carpeta al repo destino como `sdd/`** (el nombre importa: scripts,

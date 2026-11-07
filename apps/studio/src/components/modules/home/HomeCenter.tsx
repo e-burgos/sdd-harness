@@ -5,6 +5,7 @@ import type { PreparedConversation } from '@/lib/auto-conversation';
 import { draftKey } from '@/lib/store/state';
 import { useNav } from '@/lib/nav/use-nav';
 import { useBridge, useStudio } from '../../BridgeProvider';
+import { FirstStepsCard } from '../../onboarding/FirstStepsCard';
 import { Composer } from '../../workspace/Composer';
 import { PreparedConversations } from '../../workspace/PreparedConversations';
 import { RunOutput } from '../../workspace/RunOutput';
@@ -44,6 +45,7 @@ export function HomeCenter() {
 
   return (
     <div className="relative flex h-full min-h-0 min-w-0 flex-1 flex-col">
+      <FirstStepsCard />
       <PreparedConversations onOpen={openPrepared} />
       {home.kind === 'thread' ? (
         <ThreadView
