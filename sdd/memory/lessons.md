@@ -1,6 +1,6 @@
 # 🧠 Memoria del proyecto — lecciones destiladas
 
-> Versión 1.2 | Última destilación: 2026-11-03 (journal de spec-e-burgos-009 cycle-01/03/04, 010 cycle-01 y 012 cycle-01)
+> Versión 1.2 | Última destilación: 2026-11-07 (journal de spec-e-burgos-013 cycle-01, 014 cycle-01, 016 cycle-01 y 017 cycle-01/02)
 > **Cap duro: 120 líneas.** Este archivo se lee COMPLETO al inicio de cada sesión de agente —
 > cada línea acá cuesta tokens en todas las sesiones futuras. Si al destilar se supera el cap,
 > primero podar lecciones obsoletas o absorbidas por constitutions/skills.
@@ -23,6 +23,12 @@ Reglas de este archivo (ver sección 🧠 MEMORIA GATE del dual-harness):
   pasarle la ruta: con `isolation: "worktree"` del Agent tool git queda bloqueado adentro.
 - Depreciar o reapuntar en `sdd/components.json` todo componente que una task borra o mueve,
   en el mismo cambio: Studio lee ese registro y muestra como vivos los archivos que ya no existen.
+- Validar sobre el payload exacto todo lo que habilita una acción irreversible (generar, escribir,
+  publicar): una cola o caché que fusiona pedidos sirve solo para vistas previas.
+- Cuando un subproyecto consume el contrato de otro, los límites los publica el productor (en el
+  catálogo) y un spec de contrato corre el binario real: nunca duplicar topes a mano en el consumidor.
+- Antes de diagnosticar motion "trabado", medir los fps de `requestAnimationFrame` y confirmar que
+  la pestaña o el panel esté visible: un panel oculto frena rAF a ~2 fps.
 
 ## Técnica (stack, herramientas, gotchas transversales)
 
@@ -37,6 +43,15 @@ Reglas de este archivo (ver sección 🧠 MEMORIA GATE del dual-harness):
   una generación real en `examples/` con `lint test build`: los tests unitarios no lo detectan.
 - Revisar en modo claro y oscuro todo override sobre un componente con variantes `dark:`:
   revisar uno solo esconde la regresión del otro.
+- Cerrar una task de UI async solo con sus specs pasando con la suite completa del paquete (no
+  filtrados); subir el timeout de `findBy`/`waitFor` en los specs con mucho render.
+- Probar un mod de Claude Code en uso real con el binario del motor de la app de escritorio
+  (`~/Library/Application Support/Claude/claude-code/<ver>/…/claude`, `--plugin-dir`): el CLI de
+  terminal puede ser viejo y `-p` no autocarga mods de carpetas de skills.
+- Para que un mod entregue al modelo algo que aparece a mitad de sesión, usar el `context` del
+  resultado de un `tool.call` o `$.session.send`; `prompt.compose`/`context`/`section` se cachean.
+- Verificar un template de GitHub Actions corriéndolo en un repo real: los ids de job no admiten
+  `:` y el nombre del check requerido sale del `name:` del job, no de su id.
 
 ## Costo (qué gastó tokens/tiempo de más y cómo evitarlo)
 
@@ -45,3 +60,5 @@ Reglas de este archivo (ver sección 🧠 MEMORIA GATE del dual-harness):
   dashboard de Costos miente.
 - Capturar `subagent_tokens` de la notificación de cada subagente (Claude Code) en el
   momento: es la única medición exacta gratuita y no se recupera después.
+- Definir en el architect el contrato entre subproyectos y el uso de colas, y correr la suite
+  completa del paquete en cada task de front: evita un ciclo de fix de revisión (~363K tokens).
