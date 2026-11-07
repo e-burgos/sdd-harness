@@ -1,0 +1,81 @@
+{
+  "$schema": "../../../../schemas/cycle-tasks.schema.json",
+  "spec": "spec-e-burgos-014-github-integration",
+  "cycle": 2,
+  "module": "github-integration",
+  "apps": [
+    "libs/studio-protocol",
+    "apps/studio-bridge",
+    "apps/studio"
+  ],
+  "flow": "lite",
+  "user_stories_generated": true,
+  "prerequisites": {
+    "tasks_generated": true
+  },
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "Protocolo: github.status, github.connect, feature github y snapshot.github",
+      "user_stories": [
+        "US-4"
+      ],
+      "estimation_hours": 1,
+      "story_points": 2,
+      "depends_on": [],
+      "status": "pending",
+      "files": [
+        "libs/studio-protocol/src/commands.ts",
+        "libs/studio-protocol/src/snapshot.ts"
+      ]
+    },
+    {
+      "id": "TASK-002",
+      "title": "Puente: servicio GitHub y feed de PR/CI por ciclo",
+      "user_stories": [
+        "US-4"
+      ],
+      "estimation_hours": 3,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "status": "pending",
+      "files": [
+        "apps/studio-bridge/src/github/service.ts",
+        "apps/studio-bridge/src/github/pr-feed.ts"
+      ]
+    },
+    {
+      "id": "TASK-003",
+      "title": "Studio: estado y conexión de GitHub, PR/CI por ciclo",
+      "user_stories": [
+        "US-4"
+      ],
+      "estimation_hours": 3,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "status": "pending",
+      "files": [
+        "apps/studio/src/components/GithubStatus.tsx"
+      ]
+    },
+    {
+      "id": "TASK-004",
+      "title": "Verificación y cierre contra el repo de prueba",
+      "user_stories": [
+        "US-4"
+      ],
+      "estimation_hours": 1,
+      "story_points": 2,
+      "depends_on": [
+        "TASK-002",
+        "TASK-003"
+      ],
+      "status": "pending",
+      "files": []
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 # SPEC-e-burgos-014: Conectar el proyecto a GitHub (repo, CI y flujo de PRs del ciclo SDD)
 
-> Estado: **in-progress** (2026-11-07). Decisiones del dev tomadas el 2026-11-07; cycle-01 cerrado, queda cycle-02.
+> Estado: **in-progress** (2026-11-07). Decisiones del dev tomadas el 2026-11-07; cycle-01 cerrado, cycle-02 en curso.
 > Paso 4 del plan: tucu-ui en el kit → generadores → wizard → **GitHub**. La consume
 > spec-e-burgos-018 (onboarding guiado), que usa la conexión como paso del primer uso.
 

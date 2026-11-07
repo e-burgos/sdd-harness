@@ -173,21 +173,5 @@
       "file": "tools.schema.json"
     }
   ],
-  "memory": [
-    {
-      "file": "2026-11-07-spec-e-burgos-014-cycle-01.md"
-    },
-    {
-      "file": "2026-11-06-spec-e-burgos-017-cycle-02.md"
-    },
-    {
-      "file": "2026-11-06-spec-e-burgos-017-cycle-01.md"
-    },
-    {
-      "file": "2026-11-05-spec-e-burgos-016-cycle-01.md"
-    },
-    {
-      "file": "2026-11-05-spec-e-burgos-013-cycle-01.md"
-    }
-  ]
+  "memory": []
 }
