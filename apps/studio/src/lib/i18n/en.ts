@@ -11,6 +11,7 @@ import { architectureEn } from './modules/architecture';
 import { metricsEn } from './modules/metrics';
 import { wizardEn } from './modules/wizard';
 import { unitsEn } from './modules/units';
+import { githubEn } from './modules/github';
 
 export const en = {
   ...shellEn,
@@ -25,6 +26,7 @@ export const en = {
   ...metricsEn,
   ...wizardEn,
   ...unitsEn,
+  ...githubEn,
   'connect.title': 'Connect your repo',
   'connect.steps': 'Steps to connect your repo',
   'connect.step1.title': 'Install the SDD kit in your repo',

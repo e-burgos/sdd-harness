@@ -1,9 +1,9 @@
 'use client';
 
 import { Badge } from '@e-burgos/tucu-ui';
-import type { FileLeaseSummary, SessionBinding } from '@sdd-studio/protocol';
+import type { CycleGithub, FileLeaseSummary, SessionBinding } from '@sdd-studio/protocol';
 import { useT } from '@/lib/i18n/i18n';
-import { leasesOfUnit, sessionsOfUnit, shortSessionId, unboundLeases, type OpenUnit } from '@/lib/open-units';
+import { githubOfUnit, leasesOfUnit, sessionsOfUnit, shortSessionId, unboundLeases, type OpenUnit } from '@/lib/open-units';
 import { useStudio } from './BridgeProvider';
 
 function SessionBadges({ sessions }: { sessions: SessionBinding[] }) {
@@ -26,6 +26,37 @@ function SessionBadges({ sessions }: { sessions: SessionBinding[] }) {
         </Badge>
       ))}
     </>
+  );
+}
+
+const CHECKS_TONE = { success: 'success', failure: 'danger', pending: 'warning' } as const;
+
+function CycleGithubLine({ github }: { github: CycleGithub }) {
+  const { t } = useT();
+  const { pr, checks } = github;
+  return (
+    <div data-testid="unit-github" className="flex flex-wrap items-center gap-1.5 pl-3.5 font-mono text-micro">
+      {pr ? (
+        <>
+          <a data-testid="unit-pr" href={pr.url} target="_blank" rel="noreferrer" className="text-sky-300 underline-offset-2 hover:underline">
+            {t('github.cycle.pr', { n: pr.number })}
+          </a>
+          <span className="text-ink-400">
+            {t(`github.cycle.state.${pr.state}`)}
+            {pr.isDraft ? ` · ${t('github.cycle.draft')}` : ''}
+          </span>
+        </>
+      ) : (
+        <span data-testid="unit-branch" className="truncate text-ink-500" title={github.branch}>
+          {t('github.cycle.branch', { branch: github.branch })}
+        </span>
+      )}
+      {checks !== 'none' && (
+        <Badge variant="soft" size="micro" shape="pill" tone={CHECKS_TONE[checks]} data-testid="unit-ci" className="gap-1 px-2 py-0.5 font-mono text-micro">
+          {t(`github.cycle.checks.${checks}`)}
+        </Badge>
+      )}
+    </div>
   );
 }
 
@@ -87,6 +118,7 @@ export function OpenUnitsList({ units, detailed = false }: { units: OpenUnit[]; 
           <div className="flex flex-wrap items-center gap-1.5 pl-3.5">
             <SessionBadges sessions={sessionsOfUnit(snapshot, unit)} />
           </div>
+          {githubOfUnit(snapshot, unit) && <CycleGithubLine github={githubOfUnit(snapshot, unit)!} />}
           <LeasedFiles leases={leasesOfUnit(snapshot, unit)} />
         </li>
       ))}

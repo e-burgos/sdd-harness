@@ -9,6 +9,7 @@ import { openUnitsOf } from '@/lib/open-units';
 import { useSelectedConversation } from '@/lib/use-selected-conversation';
 import { useStudio } from './BridgeProvider';
 import { GateStatusModal } from './GateStatusModal';
+import { GithubHeaderStatus } from './github/GithubHeaderStatus';
 import { OpenUnitsPill } from './OpenUnitsPill';
 import { AgentAvatar } from './workspace/AgentAvatar';
 
@@ -88,6 +89,8 @@ export function StudioHeader({ launcher = false }: { launcher?: boolean }) {
         </button>}
 
         {!launcher && <OpenUnitsPill />}
+
+        {!launcher && <GithubHeaderStatus />}
 
         {/* Working Swarm Presence Counter */}
         {!launcher && <Tooltip size="xs" arrow={false} content={t('ui.header.activeHint', { n: workingAgents.length })}>

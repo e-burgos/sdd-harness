@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { AttachmentMime, AttachmentUpload, PromptRefs, Sha256 } from './attachments';
 import { AuthPreference, ChannelId, DevProfile, MAX_QUESTIONS, QuestionAnswer, ThreadLinkRef, ThreadLinkTarget, ThreadOptions } from './domain';
+import { GithubConnectRequest } from './github';
 import { ToolsChange } from './kit';
 import { FILE_SEARCH_MAX, MAX_ATTACHMENTS } from './limits';
 import { ToolsRevision } from './snapshot';
@@ -105,6 +106,8 @@ export const ClientCommand = z.discriminatedUnion('cmd', [
   z.object({ ...cmd('wizard.generation.cancel'), generationId: GenerationId }),
   z.object({ ...cmd('wizard.reveal'), generationId: GenerationId }),
   z.object({ ...cmd('workspace.open'), generationId: GenerationId }),
+  z.object({ ...cmd('github.status'), generationId: GenerationId.optional() }),
+  z.object({ ...cmd('github.connect'), ...GithubConnectRequest.shape }),
 ]);
 export type ClientCommand = z.infer<typeof ClientCommand>;
 

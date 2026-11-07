@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { CatalogId } from './attachments';
+import { SnapshotGithub } from './github';
 import { MAX_CYCLE_DOCUMENTS } from './limits';
 
 export const AREAS = ['global', 'specs', 'fixes', 'agents', 'tools', 'pricing', 'kit'] as const;
@@ -135,6 +136,7 @@ export const WorkspaceSnapshot = z.object({
   tools: KitToolsState.optional().catch(undefined),
   sessions: z.array(SessionBinding).max(MAX_SESSION_BINDINGS).optional().catch(undefined),
   leases: z.array(FileLeaseSummary).max(MAX_FILE_LEASES).optional().catch(undefined),
+  github: SnapshotGithub.optional().catch(undefined),
   stale: z.array(Area),
 });
 export type WorkspaceSnapshot = z.infer<typeof WorkspaceSnapshot>;

@@ -10,6 +10,7 @@ import { createAttachmentStore } from '../sessions/attachment-store';
 import { SessionManager } from '../sessions/session-manager';
 import { SessionBindings } from '../sessions/session-bindings';
 import { ThreadStore } from '../sessions/store';
+import { createGithubFeed, type GithubFeed } from '../github/pr-feed';
 import { createFileIndex } from '../workspace/file-index';
 import { KitIndexer } from '../workspace/kit-index';
 import { createSessionsFeed, type SessionsFeed } from '../workspace/sessions-feed';
@@ -22,6 +23,7 @@ export interface ProjectRuntime {
   welcomePart(): { workspace: { root: string; project: string }; kitVersion: string | null };
   presence(): Presence[];
   isBusy(): boolean;
+  refreshGithub(): Promise<void>;
   close(): Promise<void>;
 }
 
@@ -47,6 +49,7 @@ export async function openProjectRuntime(root: string, deps: ProjectRuntimeDeps)
   });
 
   let feed: SessionsFeed | null = null;
+  let githubFeed: GithubFeed | null = null;
   const bindings = await SessionBindings.load(root, { onChange: () => void feed?.refresh().catch(() => undefined) });
 
   const rawWatcher = await startWorkspaceWatcher({
@@ -54,7 +57,8 @@ export async function openProjectRuntime(root: string, deps: ProjectRuntimeDeps)
     onPath: (changedPath) => kitIndexer.notifyPath(changedPath),
     onError: (error) => console.error('[sdd-studio] watcher:', error),
     onUpdate: (update) => {
-      broadcast({ kind: 'workspace.changed', areas: update.areas, snapshot: feed?.watcher.current() ?? update.snapshot });
+      broadcast({ kind: 'workspace.changed', areas: update.areas, snapshot: githubFeed?.watcher.current() ?? update.snapshot });
+      githubFeed?.notifyWorkspaceChanged();
       const at = new Date().toISOString();
       for (const event of update.events) {
         const stamped = { ...event, at };
@@ -67,10 +71,16 @@ export async function openProjectRuntime(root: string, deps: ProjectRuntimeDeps)
   feed = createSessionsFeed({
     watcher: rawWatcher,
     source: bindings,
+    broadcastChanged: (areas) => broadcast({ kind: 'workspace.changed', areas, snapshot: (githubFeed ?? feed)?.watcher.current() ?? rawWatcher.current() }),
+  });
+  githubFeed = createGithubFeed({
+    watcher: feed.watcher,
+    root,
     broadcastChanged: (areas, snapshot) => broadcast({ kind: 'workspace.changed', areas, snapshot }),
   });
-  const watcher = feed.watcher;
+  const watcher = githubFeed.watcher;
   void feed.refresh().catch(() => undefined);
+  void githubFeed.refresh().catch(() => undefined);
 
   const runner = new CommandRunner(root, broadcast);
   let sessions: SessionManager;
@@ -105,6 +115,7 @@ export async function openProjectRuntime(root: string, deps: ProjectRuntimeDeps)
   } catch (error) {
     kitIndexer.close();
     feed.close();
+    githubFeed.close();
     await watcher.close().catch(() => undefined);
     throw error;
   }
@@ -114,6 +125,7 @@ export async function openProjectRuntime(root: string, deps: ProjectRuntimeDeps)
     closing ??= (async () => {
       kitIndexer.close();
       feed?.close();
+      githubFeed?.close();
       runner.terminateAll();
       const results = await Promise.allSettled([sessions.shutdown(), watcher.close(), store.flush()]);
       const failed = results.filter((r): r is PromiseRejectedResult => r.status === 'rejected');
@@ -129,6 +141,7 @@ export async function openProjectRuntime(root: string, deps: ProjectRuntimeDeps)
     handle: handlers.handle,
     welcomePart: () => ({ workspace: { root, project: watcher.current().project }, kitVersion: watcher.current().kitVersion }),
     presence: () => sessions.presence(),
+    refreshGithub: () => githubFeed?.refresh() ?? Promise.resolve(),
     isBusy: () => sessions.isBusy() || runner.activeRuns() > 0,
     close,
   };

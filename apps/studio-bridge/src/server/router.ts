@@ -150,10 +150,10 @@ export function createHandlers(d: {
   };
 }
 
-export type HostCommand = Extract<ClientCommand, { cmd: `wizard.${string}` | 'workspace.open' }>;
+export type HostCommand = Extract<ClientCommand, { cmd: `wizard.${string}` | `github.${string}` | 'workspace.open' }>;
 
 const isHostCommand = (command: ClientCommand): command is HostCommand =>
-  command.cmd.startsWith('wizard.') || command.cmd === 'workspace.open';
+  command.cmd.startsWith('wizard.') || command.cmd.startsWith('github.') || command.cmd === 'workspace.open';
 
 export function createHostHandlers(d: {
   bridgeVersion: string;

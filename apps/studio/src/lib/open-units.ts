@@ -1,4 +1,4 @@
-import type { FileLeaseSummary, SessionBinding, WorkspaceSnapshot } from '@sdd-studio/protocol';
+import type { CycleGithub, FileLeaseSummary, SessionBinding, WorkspaceSnapshot } from '@sdd-studio/protocol';
 import { isFixOpen } from './sdd-status';
 
 const IN_PROGRESS = 'in-progress';
@@ -43,3 +43,8 @@ export function unboundLeases(snapshot: WorkspaceSnapshot | null): FileLeaseSumm
 const SHORT_ID_LENGTH = 8;
 
 export const shortSessionId = (sessionId: string): string => sessionId.replace(/^studio-/, '').slice(0, SHORT_ID_LENGTH);
+
+export function githubOfUnit(snapshot: WorkspaceSnapshot | null, unit: OpenUnit): CycleGithub | null {
+  if (unit.kind !== 'cycle') return null;
+  return snapshot?.github?.cycles.find((entry) => entry.specId === unit.specId && entry.cycle === unit.cycle) ?? null;
+}
