@@ -2321,6 +2321,90 @@
             "change": "Creado en spec-e-burgos-018 cycle-01."
           }
         ]
+      },
+      {
+        "id": "COMP-130",
+        "name": "EntryWizard",
+        "type": "component",
+        "module": "studio-entry-wizard",
+        "spec": "sdd/specs/spec-e-burgos-019-studio-entry-wizard",
+        "path": "src/components/entry/EntryWizard.tsx",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "description": "Wizard de entrada de pantalla completa que reemplaza a ConnectScreen: bienvenida, camino, requisitos, lo que viene y conectar.",
+        "consumes": [],
+        "created_at": "2026-11-07",
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-11-07",
+            "change": "Creado en spec-e-burgos-019 cycle-01."
+          }
+        ]
+      },
+      {
+        "id": "COMP-131",
+        "name": "EntryBackdrop",
+        "type": "component",
+        "module": "studio-entry-wizard",
+        "spec": "sdd/specs/spec-e-burgos-019-studio-entry-wizard",
+        "path": "src/components/entry/EntryBackdrop.tsx",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "description": "Fondo con la costura del shader de spec 016 que sigue al paso, al camino y al puntero.",
+        "consumes": [],
+        "created_at": "2026-11-07",
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-11-07",
+            "change": "Creado en spec-e-burgos-019 cycle-01."
+          }
+        ]
+      },
+      {
+        "id": "COMP-132",
+        "name": "AgentOrbit",
+        "type": "component",
+        "module": "studio-entry-wizard",
+        "spec": "sdd/specs/spec-e-burgos-019-studio-entry-wizard",
+        "path": "src/components/entry/steps/AgentOrbit.tsx",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "description": "Órbita de los seis agentes SDD alrededor de «Tu idea» con su artefacto y spotlight animado.",
+        "consumes": [],
+        "created_at": "2026-11-07",
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-11-07",
+            "change": "Creado en spec-e-burgos-019 cycle-01."
+          }
+        ]
+      },
+      {
+        "id": "COMP-133",
+        "name": "PasteLinkForm",
+        "type": "component",
+        "module": "studio-entry-wizard",
+        "spec": "sdd/specs/spec-e-burgos-019-studio-entry-wizard",
+        "path": "src/components/entry/steps/PasteLinkForm.tsx",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "description": "Campo para pegar el enlace del puente, validado contra este sitio o 127.0.0.1/localhost.",
+        "consumes": [],
+        "created_at": "2026-11-07",
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-11-07",
+            "change": "Creado en spec-e-burgos-019 cycle-01."
+          }
+        ]
       }
     ]
   }

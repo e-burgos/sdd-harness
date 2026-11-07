@@ -13,6 +13,7 @@ import { wizardEn } from './modules/wizard';
 import { unitsEn } from './modules/units';
 import { githubEn } from './modules/github';
 import { onboardingEn } from './modules/onboarding';
+import { entryEn } from './modules/entry';
 
 export const en = {
   ...shellEn,
@@ -29,25 +30,7 @@ export const en = {
   ...unitsEn,
   ...githubEn,
   ...onboardingEn,
-  'connect.title': 'Connect your repo',
-  'connect.steps': 'Steps to connect your repo',
-  'connect.step1.title': 'Install the SDD kit in your repo',
-  'connect.step1.body': 'Your repo needs an sdd/ folder. If it does not have one yet:',
-  'connect.step1.existing': 'Existing repo',
-  'connect.step1.new': 'New project',
-  'connect.step1.docs': 'How to install SDD Harness',
-  'connect.step2.title': 'Start the local bridge',
-  'connect.step2.body': 'In a terminal, at the root of the repo, run:',
-  'connect.step3.title': 'Done: this page opens connected to your repo',
-  'connect.step3.body': 'The bridge prints a link with a token that changes on every start. If the browser does not open by itself, copy that link.',
-  'connect.launcherHint': 'If you run it in a folder without sdd/, Studio opens the "New project" wizard so you can create one from scratch.',
-  'connect.requirements': 'Requirements',
-  'connect.req.node': 'Node 20 or later.',
-  'connect.req.chrome': 'In Chrome, allow the local network access permission the first time.',
-  'connect.copy': 'Copy',
-  'connect.copied': 'Copied',
-  'connect.localUi': 'In Safari, or offline, use npx @e-burgos/sdd-studio --local-ui (the bridge serves the web itself).',
-  'connect.auth': 'Claude Code signed in (claude login) or ANTHROPIC_API_KEY. The web never sees credentials.',
+  ...entryEn,
   'conn.syncError': 'Could not sync with the bridge: {message}',
   'conn.retry': 'Retry',
   'conn.connecting': 'Connecting to the bridge…',

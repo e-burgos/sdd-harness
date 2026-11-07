@@ -12,6 +12,7 @@ import { wizardEs } from './modules/wizard';
 import { unitsEs } from './modules/units';
 import { githubEs } from './modules/github';
 import { onboardingEs } from './modules/onboarding';
+import { entryEs } from './modules/entry';
 
 export const es = {
   ...shellEs,
@@ -28,25 +29,7 @@ export const es = {
   ...unitsEs,
   ...githubEs,
   ...onboardingEs,
-  'connect.title': 'Conectá tu repo',
-  'connect.steps': 'Pasos para conectar tu repo',
-  'connect.step1.title': 'Instalá el kit SDD en tu repo',
-  'connect.step1.body': 'Tu repo tiene que tener la carpeta sdd/. Si todavía no la tiene:',
-  'connect.step1.existing': 'Repo existente',
-  'connect.step1.new': 'Proyecto nuevo',
-  'connect.step1.docs': 'Cómo instalar SDD Harness',
-  'connect.step2.title': 'Levantá el puente local',
-  'connect.step2.body': 'En una terminal, parado en la raíz del repo, corré:',
-  'connect.step3.title': 'Listo: se abre esta web conectada a tu repo',
-  'connect.step3.body': 'El puente imprime un enlace con un token que cambia en cada arranque. Si el navegador no se abre solo, copiá ese enlace.',
-  'connect.launcherHint': 'Si lo corrés en una carpeta sin sdd/, Studio abre el asistente «Nuevo proyecto» para crear uno desde cero.',
-  'connect.requirements': 'Requisitos',
-  'connect.req.node': 'Node 20 o superior.',
-  'connect.req.chrome': 'En Chrome, aceptá el permiso de acceso a la red local la primera vez.',
-  'connect.copy': 'Copiar',
-  'connect.copied': 'Copiado',
-  'connect.localUi': 'En Safari, o sin internet, usá npx @e-burgos/sdd-studio --local-ui (la web la sirve el propio puente).',
-  'connect.auth': 'Claude Code con sesión iniciada (claude login) o ANTHROPIC_API_KEY. La web nunca ve credenciales.',
+  ...entryEs,
   'conn.syncError': 'No se pudo sincronizar con el puente: {message}',
   'conn.retry': 'Reintentar',
   'conn.connecting': 'Conectando con el puente…',

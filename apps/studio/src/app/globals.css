@@ -19,6 +19,8 @@
   --text-title--line-height: 1.5;
   --text-display: 1.625rem;
   --text-display--line-height: 1.15;
+  --text-hero: 2.75rem;
+  --text-hero--line-height: 1.05;
 }
 
 @theme inline {
@@ -191,5 +193,31 @@ html[data-app-shell] body {
   }
   .wizard-sweep {
     animation: wizard-sweep 1.8s cubic-bezier(0.87, 0, 0.13, 1) 0.4s both;
+  }
+}
+
+@keyframes entry-dash {
+  to {
+    stroke-dashoffset: -100;
+  }
+}
+
+[data-active] [data-hub-default] {
+  opacity: 0;
+}
+
+@media (min-width: 1024px) and (prefers-reduced-motion: no-preference) {
+  [data-intro='pending'] [data-hero-eyebrow],
+  [data-intro='pending'] [data-hero-copy],
+  [data-intro='pending'] [data-hub],
+  [data-intro='pending'] [data-node],
+  [data-intro='pending'] [data-stop-node],
+  [data-intro='pending'] [data-stop-copy],
+  [data-intro='pending'] [data-journey-fill] {
+    opacity: 0;
+  }
+  .entry-link-pulse {
+    stroke-dasharray: 12 88;
+    animation: entry-dash 1.6s linear infinite;
   }
 }

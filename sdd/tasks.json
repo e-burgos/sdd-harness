@@ -370,6 +370,20 @@
           "tasks_done": 5
         }
       }
+    },
+    "spec-e-burgos-019-studio-entry-wizard": {
+      "cycles": {
+        "cycle-01": {
+          "file": "sdd/specs/spec-e-burgos-019-studio-entry-wizard/cycles/cycle-01/tasks.json",
+          "module": "studio-entry-wizard",
+          "apps": [
+            "apps/studio"
+          ],
+          "status": "completed",
+          "tasks_total": 2,
+          "tasks_done": 2
+        }
+      }
     }
   }
 }

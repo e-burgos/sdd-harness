@@ -3,7 +3,8 @@ import { I18nProvider } from '@/lib/i18n/i18n';
 import { PAIRING_KEY } from '@/lib/bridge/pairing';
 import type { ConnectionState } from '@/lib/bridge/client';
 import { BridgeContext } from './BridgeProvider';
-import { ConnectScreen } from './ConnectScreen';
+import { EntryWizard } from './entry/EntryWizard';
+import { ENTRY_STORAGE_KEY } from './entry/entry-storage';
 import { ConnectionBanner } from './ConnectionBanner';
 import { Connected } from './WorkspaceApp';
 
@@ -21,14 +22,17 @@ function renderConnected(connection: ConnectionState) {
 }
 
 describe('connection UI', () => {
+  beforeEach(() => sessionStorage.clear());
+
   it('shows the bridge command and an error', () => {
-    wrap(<ConnectScreen error="invalid token" />);
+    wrap(<EntryWizard error="invalid token" />);
     expect(screen.getByText('npx @e-burgos/sdd-studio')).toBeInTheDocument();
     expect(screen.getByRole('alert')).toHaveTextContent('invalid token');
   });
-  it('explains the launcher mode on the connect screen', () => {
-    wrap(<ConnectScreen />);
-    expect(screen.getByText(/carpeta sin sdd\/, Studio abre el asistente/)).toBeInTheDocument();
+  it('explains the launcher mode on the connect step of a new project', async () => {
+    sessionStorage.setItem(ENTRY_STORAGE_KEY, JSON.stringify({ path: 'new', checked: [] }));
+    wrap(<EntryWizard error="boom" />);
+    expect(await screen.findByText(/carpeta sin sdd\/, Studio abre el asistente/)).toBeInTheDocument();
   });
   it('shows reconnect countdown and hides when open', () => {
     const { rerender } = wrap(<ConnectionBanner connection={{ status: 'reconnecting', attempt: 2, delayMs: 2000 }} />);
@@ -75,7 +79,7 @@ describe('connection UI', () => {
   });
   it('does not claim copied without clipboard', async () => {
     Object.defineProperty(navigator, 'clipboard', { value: undefined, configurable: true });
-    wrap(<ConnectScreen />);
+    wrap(<EntryWizard error="boom" />);
     fireEvent.click(screen.getByRole('button', { name: 'Copiar: npx @e-burgos/sdd-studio' }));
     await Promise.resolve();
     expect(screen.queryByText('Copiado')).toBeNull();

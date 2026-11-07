@@ -1,0 +1,72 @@
+{
+  "$schema": "../../../../schemas/cycle-tasks.schema.json",
+  "spec": "spec-e-burgos-019-studio-entry-wizard",
+  "cycle": 1,
+  "module": "studio-entry-wizard",
+  "apps": [
+    "apps/studio"
+  ],
+  "flow": "lite",
+  "user_stories_generated": true,
+  "prerequisites": {
+    "tasks_generated": true
+  },
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "Wizard de entrada con motion que reemplaza ConnectScreen",
+      "user_stories": [
+        "US-1",
+        "US-2",
+        "US-3",
+        "US-4",
+        "US-5"
+      ],
+      "estimation_hours": 5,
+      "story_points": 8,
+      "depends_on": [],
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/entry/EntryWizard.tsx"
+      ],
+      "usage": {
+        "tokens_in": 254000,
+        "tokens_out": 45000,
+        "approx": true,
+        "recorded_at": "2026-11-07",
+        "provider_model": "claude/opus",
+        "effort": "high",
+        "agent": "implementor-front",
+        "source": "declared-estimate"
+      }
+    },
+    {
+      "id": "TASK-002",
+      "title": "Verificación real en el navegador y cierre",
+      "user_stories": [
+        "US-1",
+        "US-2",
+        "US-3",
+        "US-4",
+        "US-5"
+      ],
+      "estimation_hours": 2,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "status": "done",
+      "files": [],
+      "usage": {
+        "tokens_in": 150000,
+        "tokens_out": 8000,
+        "approx": true,
+        "recorded_at": "2026-11-07",
+        "provider_model": "claude/opus",
+        "effort": "high",
+        "agent": "implementor-front",
+        "source": "declared-estimate"
+      }
+    }
+  ]
+}
