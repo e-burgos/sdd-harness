@@ -3,7 +3,10 @@
   "cycle": 1,
   "module": "guided-onboarding",
   "spec": "spec-e-burgos-018-guided-onboarding",
-  "apps": ["apps/studio", "apps/cli"],
+  "apps": [
+    "apps/studio",
+    "apps/cli"
+  ],
   "phase": "guided-onboarding",
   "flow": "lite",
   "objectives": [
@@ -12,18 +15,148 @@
     "Guía de primeros pasos en Home (US-3)",
     "harness init ofrece Studio (US-4)"
   ],
-  "status": "in-progress",
+  "status": "completed",
   "started_at": "2026-11-07",
-  "completed_at": null,
+  "completed_at": "2026-11-07",
   "documents": {
     "plan": "sdd/specs/spec-e-burgos-018-guided-onboarding/cycles/cycle-01/plan.md",
     "tasks": "sdd/specs/spec-e-burgos-018-guided-onboarding/cycles/cycle-01/tasks.json"
   },
   "artifacts": [],
-  "metrics": null,
+  "metrics": {
+    "tasks_total": 5,
+    "tasks_completed": 5,
+    "tasks_skipped": 0,
+    "story_points": 13,
+    "files_created": [
+      "apps/cli/src/commands/__tests__/init-studio.spec.ts",
+      "apps/cli/src/utils/studio-launch.ts",
+      "apps/studio/src/components/modules/new-project/__tests__/generation-github.spec.tsx",
+      "apps/studio/src/components/onboarding/ClaudeConnectDialog.tsx",
+      "apps/studio/src/components/onboarding/FirstStepsCard.tsx",
+      "apps/studio/src/components/onboarding/OnboardingSteps.tsx",
+      "apps/studio/src/components/onboarding/onboarding.spec.tsx",
+      "apps/studio/src/lib/i18n/modules/onboarding.ts",
+      "apps/studio/src/lib/onboarding.spec.ts",
+      "apps/studio/src/lib/onboarding.ts",
+      "apps/studio/src/lib/use-claude-connected.ts"
+    ],
+    "files_modified": [
+      "apps/cli/CHANGELOG.md",
+      "apps/cli/src/commands/init.ts",
+      "apps/cli/templates/sdd/documentation/en/INSTALL.md",
+      "apps/cli/templates/sdd/documentation/es/INSTALL.md",
+      "apps/studio/src/components/modules/home/HomeCenter.tsx",
+      "apps/studio/src/components/modules/new-project/GenerationResult.tsx",
+      "apps/studio/src/components/modules/new-project/__tests__/generation.spec.tsx",
+      "apps/studio/src/components/shell/LauncherShell.tsx",
+      "apps/studio/src/lib/i18n/en.ts",
+      "apps/studio/src/lib/i18n/es.ts",
+      "apps/studio/src/lib/i18n/modules/wizard.ts",
+      "apps/studio/src/lib/wizard/persist.ts",
+      "sdd/documentation/en/INSTALL.md",
+      "sdd/documentation/es/INSTALL.md"
+    ],
+    "files_deleted": [],
+    "usage": {
+      "tokens_in": 475000,
+      "tokens_out": 38000,
+      "approx": true,
+      "source": "declared-estimate",
+      "by_tier": {
+        "claude/opus": {
+          "tokens_in": 220000,
+          "tokens_out": 15000,
+          "approx": true,
+          "source": "declared-estimate"
+        },
+        "claude/sonnet": {
+          "tokens_in": 255000,
+          "tokens_out": 23000,
+          "approx": true,
+          "source": "declared-estimate"
+        }
+      },
+      "by_agent": [
+        {
+          "agent": "orchestrator",
+          "label": "apertura y cierre",
+          "provider_model": "claude/opus",
+          "effort": "high",
+          "tokens_in": 60000,
+          "tokens_out": 6000,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-07"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-001..003",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 150000,
+          "tokens_out": 15000,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-07"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-004",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 105000,
+          "tokens_out": 8000,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-07"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-005 docs, verificación real y fixes",
+          "provider_model": "claude/opus",
+          "effort": "high",
+          "tokens_in": 160000,
+          "tokens_out": 9000,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-07"
+        }
+      ]
+    }
+  },
   "tables_created": [],
   "endpoints_implemented": [],
-  "components_created": [],
-  "issues_found": [],
-  "reviewer_report": null
+  "components_created": [
+    "COMP-127",
+    "COMP-128",
+    "COMP-129"
+  ],
+  "issues_found": [
+    "Corregido (verificación real): «Ocultar guía» no sobrevivía a recargar: la tarjeta leía localStorage en el inicializador de useState, cuando la raíz del proyecto todavía no había llegado; ahora lo lee en cada render con la raíz vigente. Test de regresión agregado.",
+    "Corregido (verificación real): el resultado del wizard seguía diciendo que vincular un repositorio remoto «llega en una próxima versión»; ahora remite al panel de GitHub.",
+    "Abierto (informativo): `harness init --studio` lanza `npx @e-burgos/sdd-studio@latest`; hasta publicar el próximo release abre el Studio publicado, sin estas pantallas. No se probó el spawn real (tests con spawner inyectado).",
+    "Abierto (informativo): en el navegador integrado las puertas con shader del primer paso del wizard se ven vacías (WebGL del pane); previo a este ciclo."
+  ],
+  "reviewer_report": {
+    "approved": true,
+    "date": "2026-11-07",
+    "ca_results": {
+      "US-1": "PASS - Studio en carpeta vacía (examples/onb-018) muestra «Getting started» con Claude hecho (login local detectado), Create the project actual y GitHub/primera idea pendientes; el diálogo Conectar Claude con AuthPanel cubierto por tests",
+      "US-2": "PASS - generación real (Hono standalone, gate verde) y el resultado muestra Connect GitHub con el nombre precargado, privado por defecto y protección apagada; «Not now» lo oculta y «Open in Studio» abre el proyecto",
+      "US-3": "PASS - Home muestra la guía con GitHub, primera idea (composer con el borrador del wizard) y primera spec; Connect abre el diálogo, Go to Specs navega, Hide guide la oculta y persiste al recargar (tras el fix)",
+      "US-4": "PASS - `harness init` interactivo pregunta Studio o terminal; --studio/--terminal saltan la pregunta; config/--yes/no-TTY sin cambios (13 tests con spawner inyectado; --help lista los flags)"
+    },
+    "tests": {
+      "protocol": "OK - 185 tests",
+      "cli": "OK - 647 tests (11 skip)",
+      "bridge": "OK - 996 tests (5 skip)",
+      "studio": "OK - 1259 tests",
+      "build": "OK",
+      "typecheck": "OK",
+      "sdd-validate": "OK",
+      "real-check": "OK - recorrido completo en el navegador con Studio local: launcher, wizard, generación real, paso GitHub, apertura y guía en Home"
+    },
+    "notes": "Flow lite. Telemetría declarada. Código sin comentarios. Sin comandos nuevos de protocolo: reutiliza auth.*, github.* y el borrador para Hermes. Con este ciclo la spec 018 queda completa."
+  }
 }

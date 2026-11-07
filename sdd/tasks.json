@@ -365,9 +365,9 @@
             "apps/studio",
             "apps/cli"
           ],
-          "status": "in-progress",
+          "status": "completed",
           "tasks_total": 5,
-          "tasks_done": 0
+          "tasks_done": 5
         }
       }
     }

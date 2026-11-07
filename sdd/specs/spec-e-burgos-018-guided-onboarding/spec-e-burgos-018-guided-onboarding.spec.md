@@ -1,6 +1,6 @@
 # SPEC-e-burgos-018: Primer uso guiado — de Studio vacío a la primera spec
 
-> Estado: **in-progress** (2026-11-07). cycle-01 abierto; spec-e-burgos-014 (GitHub) ya completada.
+> Estado: **completed** (2026-11-07). cycle-01 cerrado (flow lite, 5/5 tasks).
 
 ## Resumen ejecutivo
 Las piezas del arranque ya existen por separado (conectar Claude, wizard que genera el proyecto,

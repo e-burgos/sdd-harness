@@ -22,11 +22,21 @@
       "estimation_hours": 3,
       "story_points": 3,
       "depends_on": [],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/studio/src/lib/onboarding.ts",
         "apps/studio/src/components/onboarding/OnboardingSteps.tsx"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 60000,
+        "tokens_out": 6000,
+        "approx": true,
+        "recorded_at": "2026-11-07",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "source": "declared-estimate"
+      }
     },
     {
       "id": "TASK-002",
@@ -39,10 +49,20 @@
       "depends_on": [
         "TASK-001"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/studio/src/components/modules/new-project/GenerationResult.tsx"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 40000,
+        "tokens_out": 4000,
+        "approx": true,
+        "recorded_at": "2026-11-07",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "source": "declared-estimate"
+      }
     },
     {
       "id": "TASK-003",
@@ -55,10 +75,20 @@
       "depends_on": [
         "TASK-001"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/studio/src/components/onboarding/FirstStepsCard.tsx"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 50000,
+        "tokens_out": 5000,
+        "approx": true,
+        "recorded_at": "2026-11-07",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "source": "declared-estimate"
+      }
     },
     {
       "id": "TASK-004",
@@ -69,10 +99,20 @@
       "estimation_hours": 2,
       "story_points": 2,
       "depends_on": [],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/cli/src/commands/init.ts"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 105000,
+        "tokens_out": 9000,
+        "approx": true,
+        "recorded_at": "2026-11-07",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "source": "declared-estimate"
+      }
     },
     {
       "id": "TASK-005",
@@ -90,8 +130,18 @@
         "TASK-003",
         "TASK-004"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [],
+      "usage": {
+        "tokens_in": 160000,
+        "tokens_out": 9000,
+        "approx": true,
+        "recorded_at": "2026-11-07",
+        "provider_model": "claude/opus",
+        "effort": "high",
+        "agent": "implementor-front",
+        "source": "declared-estimate"
+      }
     }
   ]
 }
