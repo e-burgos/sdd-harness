@@ -73,6 +73,9 @@ Sos el último paso antes de que el ciclo se marque como completado.
   7. Actualizar `sdd/specs/index.json`: si era el último ciclo de la spec → `status: "completed"` + `completed_at`
   8. Revisar `sdd/fixes.json`: fixes del ciclo con `status: "implemented"` → marcarlos `"validated"` o `"absorbed"`
   9. **ESCRIBIR el fragmento aditivo de contexto del subproyecto afectado** (ver sección “Actualización de contexto”)
+  10. **PR del ciclo** (si el repo está en GitHub y trabaja con rama por ciclo): `pnpm sdd:pr <spec-id> cycle-[XX]`
+     muestra el plan (rama, base, título y cuerpo desde `cycle.json`); **mostráselo al dev y pedí su
+     confirmación** antes de `pnpm sdd:pr <spec-id> cycle-[XX] --yes`, que pushea la rama y abre el PR.
   10. **MEMORIA GATE (regla 🧠 del dual-harness):** si el ciclo dejó una lección real (supuesto
       que falló, descubrimiento costoso, gasto de tokens evitable), escribir la entrada episódica
       `sdd/memory/journal/YYYY-MM-DD-[spec-id]-cycle-[XX].md` (qué pasó / lección / costo evitable).

@@ -5,6 +5,18 @@ All notable changes to `@e-burgos/sdd-harness` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **GitHub integration.** `harness github connect | status | protect` uses the developer's `gh`
+  (no tokens stored): creates the repo (private by default), pushes the kit CI
+  (`sdd/templates/github/workflows/sdd-validate.yml` → `.github/workflows/`) and, only on request,
+  requires `sdd:validate` on the default branch. New kit scripts `pnpm sdd:branch` (branch per cycle
+  by profile: team on, solo off, override `global.json → github.branch_per_cycle`) and `pnpm sdd:pr`
+  (PR title and body from `cycle.json`; plan without `--yes`). Optional `github` block in
+  `global.schema.json`; orchestrator, reviewer and docs updated.
+
 ## [0.19.0] - 2026-11-06
 
 ### Added

@@ -40,8 +40,9 @@
 
 ## Decisiones técnicas
 - `gh` y `git` se invocan con execFile/spawn sin shell. Nada guarda tokens.
-- El workflow del kit solo necesita Node (el validador no tiene dependencias): job `sdd:validate`,
-  nombre que usa la protección como check requerido.
+- El workflow del kit instala con pnpm (`--frozen-lockfile`) porque el validador usa `ajv` y
+  `ajv-formats` (devDependencies del workspace) y corre `node sdd/scripts/validate-sdd.mjs`; job
+  `sdd:validate`, nombre que usa la protección como check requerido.
 - Flow lite por perfil `solo`, como en spec 017: los contratos nuevos (comandos, scripts y bloque
   opcional del schema) los consume esta misma spec (el puente en el cycle-02).
 - Compatibilidad: bloque `github` opcional; sin `gh`, `sdd:branch` funciona (es git local) y

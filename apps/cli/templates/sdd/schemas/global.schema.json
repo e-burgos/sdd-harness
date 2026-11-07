@@ -23,6 +23,15 @@
       "enum": ["team", "solo"],
       "description": "Working profile (optional, default team). team = full cycles (brief/functional/planner/architect, one role per document) unless a request carries [LITE]. solo = the orchestrator opens flow: lite cycles (single actor, plan.md instead of the four documents) unless the spec or a [FULL] prefix asks for full. Switched by the sdd-steward on request."
     },
+    "github": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Integracion con GitHub (opcional). branch_per_cycle fuerza la politica de rama por ciclo (on|off); ausente, team => on y solo => off. default_branch es la rama por defecto del repo (ausente => main).",
+      "properties": {
+        "branch_per_cycle": { "enum": ["on", "off"] },
+        "default_branch": { "type": "string", "minLength": 1 }
+      }
+    },
     "completed_modules": {
       "type": "array",
       "items": {

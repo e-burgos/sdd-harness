@@ -127,6 +127,8 @@ sdd/
 │   ├── spec-gate.mjs                  ← Responde el SPEC GATE A y B (pnpm sdd:gate)
 │   ├── sdd-use.mjs                    ← Ata esta sesión a un ciclo o fix (pnpm sdd:use)
 │   ├── sdd-release.mjs                ← Libera reservas de archivo y avisa (pnpm sdd:release)
+│   ├── sdd-branch.mjs                 ← Rama del ciclo según perfil (pnpm sdd:branch)
+│   ├── sdd-pr.mjs                     ← PR del ciclo con el resumen del reviewer (pnpm sdd:pr)
 │   ├── rebuild-tasks-index.mjs        ← Regenera el índice de tasks (pnpm sdd:rebuild-tasks-index)
 │   ├── rebuild-catalog.mjs            ← Regenera el manifest del visor (pnpm sdd:rebuild-catalog)
 │   ├── setup-rtk.mjs                  ← Instala/mergea los hooks de rtk (pnpm sdd:rtk)
@@ -362,6 +364,13 @@ Con el mod prendido, cada archivo de código que una sesión edita queda **reser
 solo un aviso), le deja un pedido en el **buzón** de la dueña y esta lo ve en su próxima acción.
 `pnpm sdd:release <archivo…>` libera y avisa; `--list` muestra las reservas. Studio muestra los
 archivos reservados de cada unidad y quién los pide.
+
+**GitHub.** `harness github connect` crea el repo con tu `gh` (privado por defecto), sube el CI del
+kit (`.github/workflows/sdd-validate.yml`) y, solo si lo pedís (`--protect` o
+`harness github protect`), exige `sdd:validate` como check requerido. Con rama por ciclo (perfil
+`team`, o `github.branch_per_cycle` en `global.json`), `pnpm sdd:branch <spec> cycle-XX` crea
+`feat/<slug>-cycle-XX` al abrir y `pnpm sdd:pr <spec> cycle-XX` arma el PR al cerrar (con `--yes`
+pushea y lo abre). `harness github status` muestra el estado.
 
 ### Flow del ciclo — full · reduced · lite
 
