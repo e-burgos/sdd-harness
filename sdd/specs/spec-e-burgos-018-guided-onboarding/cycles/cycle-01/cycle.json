@@ -1,0 +1,29 @@
+{
+  "$schema": "../../../../schemas/cycle.schema.json",
+  "cycle": 1,
+  "module": "guided-onboarding",
+  "spec": "spec-e-burgos-018-guided-onboarding",
+  "apps": ["apps/studio", "apps/cli"],
+  "phase": "guided-onboarding",
+  "flow": "lite",
+  "objectives": [
+    "Launcher guiado con Conectar Claude (US-1)",
+    "Conectar GitHub tras generar (US-2)",
+    "Guía de primeros pasos en Home (US-3)",
+    "harness init ofrece Studio (US-4)"
+  ],
+  "status": "in-progress",
+  "started_at": "2026-11-07",
+  "completed_at": null,
+  "documents": {
+    "plan": "sdd/specs/spec-e-burgos-018-guided-onboarding/cycles/cycle-01/plan.md",
+    "tasks": "sdd/specs/spec-e-burgos-018-guided-onboarding/cycles/cycle-01/tasks.json"
+  },
+  "artifacts": [],
+  "metrics": null,
+  "tables_created": [],
+  "endpoints_implemented": [],
+  "components_created": [],
+  "issues_found": [],
+  "reviewer_report": null
+}

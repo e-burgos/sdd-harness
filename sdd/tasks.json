@@ -355,6 +355,21 @@
           "tasks_done": 7
         }
       }
+    },
+    "spec-e-burgos-018-guided-onboarding": {
+      "cycles": {
+        "cycle-01": {
+          "file": "sdd/specs/spec-e-burgos-018-guided-onboarding/cycles/cycle-01/tasks.json",
+          "module": "guided-onboarding",
+          "apps": [
+            "apps/studio",
+            "apps/cli"
+          ],
+          "status": "in-progress",
+          "tasks_total": 5,
+          "tasks_done": 0
+        }
+      }
     }
   }
 }

@@ -273,7 +273,7 @@
       "file": "sdd/specs/spec-e-burgos-018-guided-onboarding/spec-e-burgos-018-guided-onboarding.spec.md",
       "module": "guided-onboarding",
       "app": "apps/studio",
-      "status": "draft",
+      "status": "in-progress",
       "title": "Primer uso guiado: de Studio vacío a la primera spec",
       "created_at": "2026-11-07",
       "completed_at": null,

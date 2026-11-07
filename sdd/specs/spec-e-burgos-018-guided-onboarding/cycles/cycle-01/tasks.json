@@ -1,0 +1,97 @@
+{
+  "$schema": "../../../../schemas/cycle-tasks.schema.json",
+  "spec": "spec-e-burgos-018-guided-onboarding",
+  "cycle": 1,
+  "module": "guided-onboarding",
+  "apps": [
+    "apps/studio",
+    "apps/cli"
+  ],
+  "flow": "lite",
+  "user_stories_generated": true,
+  "prerequisites": {
+    "tasks_generated": true
+  },
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "Modelo de pasos, OnboardingSteps y launcher con Conectar Claude",
+      "user_stories": [
+        "US-1"
+      ],
+      "estimation_hours": 3,
+      "story_points": 3,
+      "depends_on": [],
+      "status": "pending",
+      "files": [
+        "apps/studio/src/lib/onboarding.ts",
+        "apps/studio/src/components/onboarding/OnboardingSteps.tsx"
+      ]
+    },
+    {
+      "id": "TASK-002",
+      "title": "Paso GitHub en GenerationResult",
+      "user_stories": [
+        "US-2"
+      ],
+      "estimation_hours": 2,
+      "story_points": 2,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "status": "pending",
+      "files": [
+        "apps/studio/src/components/modules/new-project/GenerationResult.tsx"
+      ]
+    },
+    {
+      "id": "TASK-003",
+      "title": "Guía de primeros pasos en Home",
+      "user_stories": [
+        "US-3"
+      ],
+      "estimation_hours": 2,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "status": "pending",
+      "files": [
+        "apps/studio/src/components/onboarding/FirstStepsCard.tsx"
+      ]
+    },
+    {
+      "id": "TASK-004",
+      "title": "harness init ofrece Studio",
+      "user_stories": [
+        "US-4"
+      ],
+      "estimation_hours": 2,
+      "story_points": 2,
+      "depends_on": [],
+      "status": "pending",
+      "files": [
+        "apps/cli/src/commands/init.ts"
+      ]
+    },
+    {
+      "id": "TASK-005",
+      "title": "Docs y verificación real del recorrido",
+      "user_stories": [
+        "US-1",
+        "US-2",
+        "US-3",
+        "US-4"
+      ],
+      "estimation_hours": 2,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-002",
+        "TASK-003",
+        "TASK-004"
+      ],
+      "status": "pending",
+      "files": []
+    }
+  ]
+}
