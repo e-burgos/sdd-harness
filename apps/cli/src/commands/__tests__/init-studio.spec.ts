@@ -88,7 +88,7 @@ describe('init: oferta de Studio', () => {
     const code = await runInit({ studio: true, dir: 'nuevo' });
     expect(code).toBe(0);
     expect(existsSync(resolve(dir, 'nuevo'))).toBe(true);
-    expect(spawner.mock.calls[0][0].cwd).toBe(process.cwd() + '/nuevo');
+    expect(spawner.mock.calls[0][0].cwd).toBe(resolve(process.cwd(), 'nuevo'));
   });
 
   it('ENOENT sale con 1 e indica cómo correrlo a mano', async () => {
