@@ -1,0 +1,28 @@
+{
+  "$schema": "../../../../schemas/cycle.schema.json",
+  "cycle": 1,
+  "module": "github-integration",
+  "spec": "spec-e-burgos-014-github-integration",
+  "apps": ["apps/cli"],
+  "phase": "github-integration",
+  "flow": "lite",
+  "objectives": [
+    "Crear el repo en GitHub con el CI del kit (US-1)",
+    "Protección de rama a pedido (US-2)",
+    "Rama y PR por ciclo según perfil (US-3)"
+  ],
+  "status": "in-progress",
+  "started_at": "2026-11-07",
+  "completed_at": null,
+  "documents": {
+    "plan": "sdd/specs/spec-e-burgos-014-github-integration/cycles/cycle-01/plan.md",
+    "tasks": "sdd/specs/spec-e-burgos-014-github-integration/cycles/cycle-01/tasks.json"
+  },
+  "artifacts": [],
+  "metrics": null,
+  "tables_created": [],
+  "endpoints_implemented": [],
+  "components_created": [],
+  "issues_found": [],
+  "reviewer_report": null
+}

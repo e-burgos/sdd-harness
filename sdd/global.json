@@ -177,17 +177,21 @@
       "completed_at": "2026-11-06"
     }
   ],
-  "in_progress_modules": [],
-  "pending_modules": [
+  "in_progress_modules": [
     {
       "module": "github-integration",
       "spec": "spec-e-burgos-014-github-integration",
       "apps": [
-        "apps/cli"
+        "apps/cli",
+        "apps/studio-bridge",
+        "apps/studio",
+        "libs/studio-protocol"
       ],
       "cycles_completed": 0,
       "description": "Repo en GitHub, CI del kit y ramas/PRs por ciclo SDD."
-    },
+    }
+  ],
+  "pending_modules": [
     {
       "module": "studio-framework-vision",
       "spec": "spec-e-burgos-015-studio-framework-vision",
@@ -196,6 +200,17 @@
       ],
       "cycles_completed": 0,
       "description": "Visión de Studio como framework de trabajo sobre el kit independiente: regla de independencia y decisiones para formalizarlo."
+    },
+    {
+      "module": "guided-onboarding",
+      "spec": "spec-e-burgos-018-guided-onboarding",
+      "apps": [
+        "apps/studio",
+        "apps/cli",
+        "apps/studio-bridge"
+      ],
+      "cycles_completed": 0,
+      "description": "Primer uso guiado en Studio: conectar Claude, wizard, GitHub y primera idea/spec; harness init ofrece Studio."
     }
   ],
   "monorepo": {

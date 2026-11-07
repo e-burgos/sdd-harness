@@ -1,0 +1,103 @@
+{
+  "$schema": "../../../../schemas/cycle-tasks.schema.json",
+  "spec": "spec-e-burgos-014-github-integration",
+  "cycle": 1,
+  "module": "github-integration",
+  "apps": [
+    "apps/cli"
+  ],
+  "flow": "lite",
+  "user_stories_generated": true,
+  "prerequisites": {
+    "tasks_generated": true
+  },
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "Librería github.mjs, workflow de CI del kit y bloque github en global.schema",
+      "user_stories": [
+        "US-1",
+        "US-3"
+      ],
+      "estimation_hours": 2,
+      "story_points": 3,
+      "depends_on": [],
+      "status": "pending",
+      "files": [
+        "apps/cli/templates/sdd/scripts/lib/github.mjs",
+        "apps/cli/templates/sdd/templates/github/workflows/sdd-validate.yml",
+        "apps/cli/templates/sdd/schemas/global.schema.json"
+      ]
+    },
+    {
+      "id": "TASK-002",
+      "title": "Scripts sdd:branch y sdd:pr",
+      "user_stories": [
+        "US-3"
+      ],
+      "estimation_hours": 3,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "status": "pending",
+      "files": [
+        "apps/cli/templates/sdd/scripts/sdd-branch.mjs",
+        "apps/cli/templates/sdd/scripts/sdd-pr.mjs"
+      ]
+    },
+    {
+      "id": "TASK-003",
+      "title": "CLI harness github connect, status y protect",
+      "user_stories": [
+        "US-1",
+        "US-2"
+      ],
+      "estimation_hours": 3,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "status": "pending",
+      "files": [
+        "apps/cli/src/commands/github/index.ts",
+        "apps/cli/src/utils/github.ts"
+      ]
+    },
+    {
+      "id": "TASK-004",
+      "title": "Agentes y docs: rama al abrir, PR al cerrar, protección",
+      "user_stories": [
+        "US-1",
+        "US-2",
+        "US-3"
+      ],
+      "estimation_hours": 1,
+      "story_points": 2,
+      "depends_on": [
+        "TASK-002",
+        "TASK-003"
+      ],
+      "status": "pending",
+      "files": [
+        "apps/cli/templates/sdd/dual-harness/rules/sdd-gates.md"
+      ]
+    },
+    {
+      "id": "TASK-005",
+      "title": "Verificación y cierre con generación real en examples/",
+      "user_stories": [
+        "US-1",
+        "US-2",
+        "US-3"
+      ],
+      "estimation_hours": 2,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-004"
+      ],
+      "status": "pending",
+      "files": []
+    }
+  ]
+}
