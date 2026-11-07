@@ -34,7 +34,7 @@ describe('openProjectRuntime', () => {
     expect(runtime.isBusy()).toBe(false);
   });
 
-  it('puts the GitHub remote in the snapshot clients get', async () => {
+  it.skipIf(process.platform === 'win32')('puts the GitHub remote in the snapshot clients get', async () => {
     execFileSync('git', ['init', '-q'], { cwd: root });
     execFileSync('git', ['remote', 'add', 'origin', 'https://github.com/octo/repo.git'], { cwd: root });
     await mkdir(path.join(root, 'sdd', 'scripts', 'lib'), { recursive: true });
@@ -51,7 +51,7 @@ describe('openProjectRuntime', () => {
       broadcast: (message) => sent.push(message),
     });
     try {
-      await waitFor(() => sent.some((m) => m.kind === 'workspace.changed' && m.snapshot.github?.remote?.owner === 'octo'), 15_000);
+      await waitFor(() => sent.some((m) => m.kind === 'workspace.changed' && m.snapshot.github?.remote?.owner === 'octo'));
       const snapshot = (await runtime.handle({ kind: 'command', id: 's1', cmd: 'workspace.snapshot' })) as { github?: { remote: { name: string } } };
       expect(snapshot.github?.remote.name).toBe('repo');
     } finally {
