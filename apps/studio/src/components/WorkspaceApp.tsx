@@ -7,8 +7,8 @@ import { NavProvider, useNav, type KnownEntities } from '@/lib/nav/use-nav';
 import { AppShell } from './AppShell';
 import { ErrorBoundary } from './ErrorBoundary';
 import { BridgeProvider, useBridge, useStudio } from './BridgeProvider';
-import { ConnectScreen } from './ConnectScreen';
 import { ConnectionBanner } from './ConnectionBanner';
+import { EntryWizard } from './entry/EntryWizard';
 import { StudioHeader } from './StudioHeader';
 import { LauncherShell } from './shell/LauncherShell';
 import { StudioShell } from './shell/StudioShell';
@@ -31,7 +31,7 @@ export function Connected() {
         : failedReason === 'protocol-mismatch' && mismatchHint === 'web-older'
           ? t('conn.protocol-mismatch.web-older')
           : t(`conn.${failedReason}`);
-    return <ConnectScreen error={message} />;
+    return <EntryWizard error={message} />;
   }
 
   return <ConnectedShell />;
@@ -81,7 +81,7 @@ export function WorkspaceApp() {
     <I18nProvider>
       <ErrorBoundary>
         {pairing === undefined ? null : pairing === null ? (
-          <ConnectScreen />
+          <EntryWizard />
         ) : (
           <BridgeProvider pairing={pairing}>
             <Connected />
