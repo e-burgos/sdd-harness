@@ -2216,6 +2216,48 @@
             "change": "Creado en spec-e-burgos-017 cycle-01."
           }
         ]
+      },
+      {
+        "id": "COMP-125",
+        "name": "GithubConnectPanel",
+        "type": "component",
+        "module": "github-integration",
+        "spec": "sdd/specs/spec-e-burgos-014-github-integration",
+        "path": "src/components/github/GithubConnectPanel.tsx",
+        "status": "implemented",
+        "created_in_cycle": 2,
+        "updated_in_cycle": null,
+        "description": "Estado de gh y formulario para conectar el proyecto (o una generación) a GitHub vía github.connect; reutilizable en el onboarding.",
+        "consumes": [],
+        "created_at": "2026-11-07",
+        "changelog": [
+          {
+            "cycle": 2,
+            "date": "2026-11-07",
+            "change": "Creado en spec-e-burgos-014 cycle-02."
+          }
+        ]
+      },
+      {
+        "id": "COMP-126",
+        "name": "GithubHeaderStatus",
+        "type": "component",
+        "module": "github-integration",
+        "spec": "sdd/specs/spec-e-burgos-014-github-integration",
+        "path": "src/components/github/GithubHeaderStatus.tsx",
+        "status": "implemented",
+        "created_in_cycle": 2,
+        "updated_in_cycle": null,
+        "description": "Indicador del header: repo conectado con link, o botón que abre el diálogo de conexión.",
+        "consumes": [],
+        "created_at": "2026-11-07",
+        "changelog": [
+          {
+            "cycle": 2,
+            "date": "2026-11-07",
+            "change": "Creado en spec-e-burgos-014 cycle-02."
+          }
+        ]
       }
     ]
   }

@@ -3,22 +3,164 @@
   "cycle": 2,
   "module": "github-integration",
   "spec": "spec-e-burgos-014-github-integration",
-  "apps": ["libs/studio-protocol", "apps/studio-bridge", "apps/studio"],
+  "apps": [
+    "libs/studio-protocol",
+    "apps/studio-bridge",
+    "apps/studio"
+  ],
   "phase": "github-integration",
   "flow": "lite",
-  "objectives": ["Studio ve, conecta y sigue GitHub: estado, conexión y PR/CI por ciclo (US-4)"],
-  "status": "in-progress",
+  "objectives": [
+    "Studio ve, conecta y sigue GitHub: estado, conexión y PR/CI por ciclo (US-4)"
+  ],
+  "status": "completed",
   "started_at": "2026-11-07",
-  "completed_at": null,
+  "completed_at": "2026-11-07",
   "documents": {
     "plan": "sdd/specs/spec-e-burgos-014-github-integration/cycles/cycle-02/plan.md",
     "tasks": "sdd/specs/spec-e-burgos-014-github-integration/cycles/cycle-02/tasks.json"
   },
   "artifacts": [],
-  "metrics": null,
+  "metrics": {
+    "tasks_total": 4,
+    "tasks_completed": 4,
+    "tasks_skipped": 0,
+    "story_points": 14,
+    "files_created": [
+      "apps/studio-bridge/src/github/exec.ts",
+      "apps/studio-bridge/src/github/pr-feed.spec.ts",
+      "apps/studio-bridge/src/github/pr-feed.ts",
+      "apps/studio-bridge/src/github/service.spec.ts",
+      "apps/studio-bridge/src/github/service.ts",
+      "apps/studio-bridge/src/github/wiring.spec.ts",
+      "apps/studio/src/components/github/GithubConnectPanel.tsx",
+      "apps/studio/src/components/github/GithubHeaderStatus.tsx",
+      "apps/studio/src/components/github/github.spec.tsx",
+      "apps/studio/src/lib/i18n/modules/github.ts",
+      "libs/studio-protocol/src/github.spec.ts",
+      "libs/studio-protocol/src/github.ts"
+    ],
+    "files_modified": [
+      "apps/studio-bridge/src/main.ts",
+      "apps/studio-bridge/src/project/runtime.spec.ts",
+      "apps/studio-bridge/src/project/runtime.ts",
+      "apps/studio-bridge/src/server/router.ts",
+      "apps/studio/src/components/OpenUnitsList.tsx",
+      "apps/studio/src/components/StudioHeader.tsx",
+      "apps/studio/src/lib/i18n/en.ts",
+      "apps/studio/src/lib/i18n/es.ts",
+      "apps/studio/src/lib/open-units.ts",
+      "libs/studio-protocol/src/commands.ts",
+      "libs/studio-protocol/src/handshake.spec.ts",
+      "libs/studio-protocol/src/index.ts",
+      "libs/studio-protocol/src/limits.ts",
+      "libs/studio-protocol/src/snapshot.ts"
+    ],
+    "files_deleted": [],
+    "usage": {
+      "tokens_in": 624000,
+      "tokens_out": 57000,
+      "approx": true,
+      "source": "declared-estimate",
+      "by_tier": {
+        "claude/opus": {
+          "tokens_in": 160000,
+          "tokens_out": 15000,
+          "approx": true,
+          "source": "declared-estimate"
+        },
+        "claude/sonnet": {
+          "tokens_in": 464000,
+          "tokens_out": 42000,
+          "approx": true,
+          "source": "declared-estimate"
+        }
+      },
+      "by_agent": [
+        {
+          "agent": "orchestrator",
+          "label": "apertura, integración y cierre",
+          "provider_model": "claude/opus",
+          "effort": "high",
+          "tokens_in": 70000,
+          "tokens_out": 10000,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-07"
+        },
+        {
+          "agent": "orchestrator",
+          "label": "destilación del journal",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 93000,
+          "tokens_out": 7000,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-07"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-001 y TASK-002",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 238000,
+          "tokens_out": 20000,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-07"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-003",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 133000,
+          "tokens_out": 15000,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-07"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-004 verificación",
+          "provider_model": "claude/opus",
+          "effort": "high",
+          "tokens_in": 90000,
+          "tokens_out": 5000,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-07"
+        }
+      ]
+    }
+  },
   "tables_created": [],
   "endpoints_implemented": [],
-  "components_created": [],
-  "issues_found": [],
-  "reviewer_report": null
+  "components_created": [
+    "COMP-125",
+    "COMP-126"
+  ],
+  "issues_found": [
+    "Abierto (informativo): a 800 px de ancho el header se aprieta: la píldora «N in progress» parte en dos líneas y el repo de GitHub se trunca. No bloquea; revisar en un pulido de Studio.",
+    "Abierto (informativo): el puente solo acepta conectar generaciones `succeeded` (no `gate-failed`, que `workspace.open` sí abre)."
+  ],
+  "reviewer_report": {
+    "approved": true,
+    "date": "2026-11-07",
+    "ca_results": {
+      "US-4": "PASS - Studio local sobre examples/par-017 (conectado a e-burgos/sdd-gh-smoke-017): el header muestra el repo enlazado y la lista «en curso» muestra «PR #1 open · CI passing» para spec-dev-001-auth cycle-01 (datos reales de gh) y la rama feat/billing-cycle-01 para el ciclo sin PR. github.status/github.connect (también por generationId) y el diálogo de conexión cubiertos por tests; sin la feature no se muestra nada"
+    },
+    "tests": {
+      "protocol": "OK - 185 tests",
+      "cli": "OK - 634 tests (11 skip)",
+      "bridge": "OK - 996 tests (5 skip)",
+      "studio": "OK - 1228 tests",
+      "build": "OK",
+      "typecheck": "OK",
+      "sdd-validate": "OK",
+      "real-check": "OK - Studio local (--local-ui) contra el repo de prueba real con PR #1 y su CI"
+    },
+    "notes": "Flow lite. Telemetría declarada. Código sin comentarios. Retrocompatible: comandos y snapshot.github opcionales tras la feature github. Con este ciclo la spec 014 queda completa; el panel de conexión lo reusa la spec 018 tras la generación."
+  }
 }

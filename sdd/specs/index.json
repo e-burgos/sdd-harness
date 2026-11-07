@@ -213,10 +213,10 @@
       "file": "sdd/specs/spec-e-burgos-014-github-integration/spec-e-burgos-014-github-integration.spec.md",
       "module": "github-integration",
       "app": "apps/cli",
-      "status": "in-progress",
+      "status": "completed",
       "title": "Conectar el proyecto a GitHub: repo, CI y flujo de PRs del ciclo SDD",
       "created_at": "2026-11-03",
-      "completed_at": null,
+      "completed_at": "2026-11-07",
       "depends_on": [
         "spec-e-burgos-013-studio-project-wizard"
       ]

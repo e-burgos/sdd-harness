@@ -175,9 +175,7 @@
       "cycles_completed": 2,
       "description": "Visibilidad multi-ciclo, atadura de sesión a spec/ciclo/fix y reservas de archivo con aviso entre sesiones.",
       "completed_at": "2026-11-06"
-    }
-  ],
-  "in_progress_modules": [
+    },
     {
       "module": "github-integration",
       "spec": "spec-e-burgos-014-github-integration",
@@ -187,10 +185,12 @@
         "apps/studio",
         "libs/studio-protocol"
       ],
-      "cycles_completed": 1,
-      "description": "Repo en GitHub, CI del kit y ramas/PRs por ciclo SDD."
+      "cycles_completed": 2,
+      "description": "Repo en GitHub, CI del kit y ramas/PRs por ciclo SDD.",
+      "completed_at": "2026-11-07"
     }
   ],
+  "in_progress_modules": [],
   "pending_modules": [
     {
       "module": "studio-framework-vision",

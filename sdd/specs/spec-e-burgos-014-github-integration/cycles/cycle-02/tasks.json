@@ -23,11 +23,21 @@
       "estimation_hours": 1,
       "story_points": 2,
       "depends_on": [],
-      "status": "pending",
+      "status": "done",
       "files": [
         "libs/studio-protocol/src/commands.ts",
         "libs/studio-protocol/src/snapshot.ts"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 103000,
+        "tokens_out": 6000,
+        "approx": true,
+        "recorded_at": "2026-11-07",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "source": "declared-estimate"
+      }
     },
     {
       "id": "TASK-002",
@@ -40,11 +50,21 @@
       "depends_on": [
         "TASK-001"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/studio-bridge/src/github/service.ts",
         "apps/studio-bridge/src/github/pr-feed.ts"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 135000,
+        "tokens_out": 14000,
+        "approx": true,
+        "recorded_at": "2026-11-07",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "source": "declared-estimate"
+      }
     },
     {
       "id": "TASK-003",
@@ -57,10 +77,20 @@
       "depends_on": [
         "TASK-001"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/studio/src/components/GithubStatus.tsx"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 133000,
+        "tokens_out": 15000,
+        "approx": true,
+        "recorded_at": "2026-11-07",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "source": "declared-estimate"
+      }
     },
     {
       "id": "TASK-004",
@@ -74,8 +104,18 @@
         "TASK-002",
         "TASK-003"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [],
+      "usage": {
+        "tokens_in": 90000,
+        "tokens_out": 5000,
+        "approx": true,
+        "recorded_at": "2026-11-07",
+        "provider_model": "claude/opus",
+        "effort": "high",
+        "agent": "implementor-back",
+        "source": "declared-estimate"
+      }
     }
   ]
 }
