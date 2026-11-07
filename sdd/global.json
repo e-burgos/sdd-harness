@@ -202,7 +202,17 @@
       "completed_at": "2026-11-07"
     }
   ],
-  "in_progress_modules": [],
+  "in_progress_modules": [
+    {
+      "module": "studio-entry-wizard",
+      "spec": "spec-e-burgos-019-studio-entry-wizard",
+      "apps": [
+        "apps/studio"
+      ],
+      "cycles_completed": 0,
+      "description": "Wizard de entrada de pantalla completa con graphic motion para quien llega a la web sin puente conectado."
+    }
+  ],
   "pending_modules": [
     {
       "module": "studio-framework-vision",

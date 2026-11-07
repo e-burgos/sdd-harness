@@ -280,6 +280,22 @@
       "depends_on": [
         "spec-e-burgos-014-github-integration"
       ]
+    },
+    {
+      "id": "spec-e-burgos-019-studio-entry-wizard",
+      "author": "e-burgos",
+      "slug": "studio-entry-wizard",
+      "folder": "sdd/specs/spec-e-burgos-019-studio-entry-wizard",
+      "file": "sdd/specs/spec-e-burgos-019-studio-entry-wizard/spec-e-burgos-019-studio-entry-wizard.spec.md",
+      "module": "studio-entry-wizard",
+      "app": "apps/studio",
+      "status": "in-progress",
+      "title": "La primera pantalla de Studio es un wizard de entrada",
+      "created_at": "2026-11-07",
+      "completed_at": null,
+      "depends_on": [
+        "spec-e-burgos-018-guided-onboarding"
+      ]
     }
   ]
 }

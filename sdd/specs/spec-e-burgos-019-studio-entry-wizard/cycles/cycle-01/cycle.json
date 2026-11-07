@@ -1,0 +1,24 @@
+{
+  "$schema": "../../../../schemas/cycle.schema.json",
+  "cycle": 1,
+  "module": "studio-entry-wizard",
+  "spec": "spec-e-burgos-019-studio-entry-wizard",
+  "apps": ["apps/studio"],
+  "phase": "studio-entry-wizard",
+  "flow": "lite",
+  "objectives": ["La primera pantalla de Studio es un wizard de entrada de pantalla completa (US-1..US-5)"],
+  "status": "in-progress",
+  "started_at": "2026-11-07",
+  "completed_at": null,
+  "documents": {
+    "plan": "sdd/specs/spec-e-burgos-019-studio-entry-wizard/cycles/cycle-01/plan.md",
+    "tasks": "sdd/specs/spec-e-burgos-019-studio-entry-wizard/cycles/cycle-01/tasks.json"
+  },
+  "artifacts": [],
+  "metrics": null,
+  "tables_created": [],
+  "endpoints_implemented": [],
+  "components_created": [],
+  "issues_found": [],
+  "reviewer_report": null
+}
