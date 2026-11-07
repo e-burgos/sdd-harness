@@ -41,13 +41,17 @@ function LeasedFiles({ leases }: { leases: FileLeaseSummary[] }) {
         <li
           key={lease.path}
           data-testid="unit-lease"
-          className="flex items-center gap-1.5 font-mono text-micro text-ink-400"
+          className="flex flex-col font-mono text-micro text-ink-400"
           title={t('units.leaseBy', { harness: lease.harness, id: shortSessionId(lease.sessionId) })}
         >
-          <span aria-hidden className="text-ink-500">⌁</span>
-          <span className="truncate">{lease.path}</span>
+          <span className="flex min-w-0 items-center gap-1.5">
+            <span aria-hidden className="text-ink-500">⌁</span>
+            <span className="truncate" title={lease.path}>
+              {lease.path}
+            </span>
+          </span>
           {lease.requestedBy.length > 0 && (
-            <span data-testid="unit-lease-request" className="shrink-0 text-amber-300">
+            <span data-testid="unit-lease-request" className="truncate pl-3.5 text-amber-300">
               {t('units.requestedBy', { who: lease.requestedBy.join(', ') })}
             </span>
           )}
