@@ -22,12 +22,22 @@
       "estimation_hours": 2,
       "story_points": 3,
       "depends_on": [],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/cli/templates/sdd/scripts/lib/github.mjs",
         "apps/cli/templates/sdd/templates/github/workflows/sdd-validate.yml",
         "apps/cli/templates/sdd/schemas/global.schema.json"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 103000,
+        "tokens_out": 6000,
+        "approx": true,
+        "recorded_at": "2026-11-07",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "source": "declared-estimate"
+      }
     },
     {
       "id": "TASK-002",
@@ -40,11 +50,21 @@
       "depends_on": [
         "TASK-001"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/cli/templates/sdd/scripts/sdd-branch.mjs",
         "apps/cli/templates/sdd/scripts/sdd-pr.mjs"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 112000,
+        "tokens_out": 9000,
+        "approx": true,
+        "recorded_at": "2026-11-07",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "source": "declared-estimate"
+      }
     },
     {
       "id": "TASK-003",
@@ -58,11 +78,21 @@
       "depends_on": [
         "TASK-001"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/cli/src/commands/github/index.ts",
         "apps/cli/src/utils/github.ts"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 121000,
+        "tokens_out": 12000,
+        "approx": true,
+        "recorded_at": "2026-11-07",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "source": "declared-estimate"
+      }
     },
     {
       "id": "TASK-004",
@@ -78,10 +108,20 @@
         "TASK-002",
         "TASK-003"
       ],
-      "status": "pending",
+      "status": "done",
       "files": [
         "apps/cli/templates/sdd/dual-harness/rules/sdd-gates.md"
-      ]
+      ],
+      "usage": {
+        "tokens_in": 60000,
+        "tokens_out": 6000,
+        "approx": true,
+        "recorded_at": "2026-11-07",
+        "provider_model": "claude/opus",
+        "effort": "high",
+        "agent": "implementor-back",
+        "source": "declared-estimate"
+      }
     },
     {
       "id": "TASK-005",
@@ -96,8 +136,18 @@
       "depends_on": [
         "TASK-004"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [],
+      "usage": {
+        "tokens_in": 120000,
+        "tokens_out": 6000,
+        "approx": true,
+        "recorded_at": "2026-11-07",
+        "provider_model": "claude/opus",
+        "effort": "high",
+        "agent": "implementor-back",
+        "source": "declared-estimate"
+      }
     }
   ]
 }

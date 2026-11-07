@@ -3,7 +3,9 @@
   "cycle": 1,
   "module": "github-integration",
   "spec": "spec-e-burgos-014-github-integration",
-  "apps": ["apps/cli"],
+  "apps": [
+    "apps/cli"
+  ],
   "phase": "github-integration",
   "flow": "lite",
   "objectives": [
@@ -11,18 +13,167 @@
     "Protección de rama a pedido (US-2)",
     "Rama y PR por ciclo según perfil (US-3)"
   ],
-  "status": "in-progress",
+  "status": "completed",
   "started_at": "2026-11-07",
-  "completed_at": null,
+  "completed_at": "2026-11-07",
   "documents": {
     "plan": "sdd/specs/spec-e-burgos-014-github-integration/cycles/cycle-01/plan.md",
     "tasks": "sdd/specs/spec-e-burgos-014-github-integration/cycles/cycle-01/tasks.json"
   },
   "artifacts": [],
-  "metrics": null,
+  "metrics": {
+    "tasks_total": 5,
+    "tasks_completed": 5,
+    "tasks_skipped": 0,
+    "story_points": 18,
+    "files_created": [
+      "apps/cli/src/commands/github/__tests__/github.command.spec.ts",
+      "apps/cli/src/commands/github/connect.ts",
+      "apps/cli/src/commands/github/index.ts",
+      "apps/cli/src/commands/github/protect.ts",
+      "apps/cli/src/commands/github/shared.ts",
+      "apps/cli/src/commands/github/status.ts",
+      "apps/cli/src/generators/__tests__/sdd-branch-pr.integration.spec.ts",
+      "apps/cli/src/utils/__tests__/github-lib.spec.ts",
+      "apps/cli/src/utils/__tests__/github.spec.ts",
+      "apps/cli/src/utils/github.ts",
+      "apps/cli/templates/sdd/scripts/lib/github.mjs",
+      "apps/cli/templates/sdd/scripts/sdd-branch.mjs",
+      "apps/cli/templates/sdd/scripts/sdd-pr.mjs",
+      "apps/cli/templates/sdd/templates/github/workflows/sdd-validate.yml",
+      "sdd/scripts/lib/github.mjs",
+      "sdd/scripts/sdd-branch.mjs",
+      "sdd/scripts/sdd-pr.mjs",
+      "sdd/templates/github/workflows/sdd-validate.yml"
+    ],
+    "files_modified": [
+      "apps/cli/CHANGELOG.md",
+      "apps/cli/src/cli.ts",
+      "apps/cli/templates/sdd/agents/sdd-orchestrator.agent.md",
+      "apps/cli/templates/sdd/agents/sdd-reviewer.agent.md",
+      "apps/cli/templates/sdd/documentation/en/HOW-TO-USE-SDD.md",
+      "apps/cli/templates/sdd/documentation/en/README.md",
+      "apps/cli/templates/sdd/documentation/es/HOW-TO-USE-SDD.md",
+      "apps/cli/templates/sdd/documentation/es/README.md",
+      "apps/cli/templates/sdd/dual-harness/rules/sdd-gates.md",
+      "apps/cli/templates/sdd/schemas/global.schema.json",
+      "apps/cli/templates/sdd/skills/sdd-data-schemas/SKILL.md",
+      "apps/cli/templates/sdd/skills/sdd-orchestrator/SKILL.md",
+      "apps/cli/templates/sdd/templates/nx-workspace/package.json",
+      "package.json",
+      "sdd/agents/sdd-orchestrator.agent.md",
+      "sdd/agents/sdd-reviewer.agent.md",
+      "sdd/documentation/en/HOW-TO-USE-SDD.md",
+      "sdd/documentation/en/README.md",
+      "sdd/documentation/es/HOW-TO-USE-SDD.md",
+      "sdd/documentation/es/README.md",
+      "sdd/dual-harness/rules/sdd-gates.md",
+      "sdd/schemas/global.schema.json",
+      "sdd/skills/sdd-data-schemas/SKILL.md",
+      "sdd/skills/sdd-orchestrator/SKILL.md",
+      "sdd/templates/nx-workspace/package.json"
+    ],
+    "files_deleted": [],
+    "usage": {
+      "tokens_in": 855000,
+      "tokens_out": 51000,
+      "approx": true,
+      "source": "declared-estimate",
+      "by_tier": {
+        "claude/opus": {
+          "tokens_in": 300000,
+          "tokens_out": 24000,
+          "approx": true,
+          "source": "declared-estimate"
+        },
+        "claude/sonnet": {
+          "tokens_in": 336000,
+          "tokens_out": 27000,
+          "approx": true,
+          "source": "declared-estimate"
+        },
+        "claude/haiku": {
+          "tokens_in": 219000,
+          "tokens_out": 0,
+          "approx": true,
+          "source": "declared-estimate"
+        }
+      },
+      "by_agent": [
+        {
+          "agent": "orchestrator",
+          "label": "specs 014 y 018, apertura y cierre",
+          "provider_model": "claude/opus",
+          "effort": "high",
+          "tokens_in": 120000,
+          "tokens_out": 12000,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-07"
+        },
+        {
+          "agent": "custom",
+          "label": "lectores de código (2)",
+          "provider_model": "claude/haiku",
+          "effort": "medium",
+          "tokens_in": 219000,
+          "tokens_out": 0,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-07"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-001..003",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 336000,
+          "tokens_out": 27000,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-07"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-004 y TASK-005",
+          "provider_model": "claude/opus",
+          "effort": "high",
+          "tokens_in": 180000,
+          "tokens_out": 12000,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-07"
+        }
+      ]
+    }
+  },
   "tables_created": [],
   "endpoints_implemented": [],
   "components_created": [],
-  "issues_found": [],
-  "reviewer_report": null
+  "issues_found": [
+    "Corregido: el workflow del kit tenía el id de job `sdd:validate` y GitHub rechaza `:` en los ids (primera corrida real: «workflow file issue»). El id pasa a `sdd-validate` y el `name:` sigue siendo `sdd:validate` (el check que exige la protección). Un test valida los ids.",
+    "Corregido: la sección nueva de sdd-gates.md pasaba el tope de 12k caracteres de las rules de Antigravity; se acortó y el detalle quedó en la documentación.",
+    "Abierto (informativo): el workflow usa `pnpm install --frozen-lockfile`; un repo sin `pnpm-lock.yaml` commiteado fallaría en CI (los generados por el kit lo traen).",
+    "Abierto (informativo): queda el repo privado de prueba e-burgos/sdd-gh-smoke-017 (con el PR #1); borrarlo es del dev (`gh repo delete` necesita el scope delete_repo)."
+  ],
+  "reviewer_report": {
+    "approved": true,
+    "date": "2026-11-07",
+    "ca_results": {
+      "US-1": "PASS - `harness github connect --yes` en examples/par-017 creó e-burgos/sdd-gh-smoke-017 (privado), commiteó el workflow y pusheó; el CI del kit corrió en GitHub y pasó (tras corregir el id del job). Sin `--yes` solo muestra el plan y no toca nada; `status --json` reporta gh, git, remoto y workflow",
+      "US-2": "PASS - `--protect` / `harness github protect` arman `gh api PUT …/protection` con el check `sdd:validate` (tests con runner simulado); no se probó contra GitHub real: en repos privados la protección requiere plan pago",
+      "US-3": "PASS - `pnpm sdd:branch` creó feat/auth-cycle-01 en perfil team (solo ⇒ informa, --force); `pnpm sdd:pr --yes` pusheó la rama y abrió e-burgos/sdd-gh-smoke-017#1 con título y cuerpo desde cycle.json"
+    },
+    "tests": {
+      "protocol": "OK - 177 tests",
+      "cli": "OK - 634 tests (11 skip)",
+      "bridge": "OK - 976 tests (5 skip)",
+      "studio": "OK - 1214 tests",
+      "build": "OK",
+      "typecheck": "OK",
+      "sdd-validate": "OK",
+      "real-check": "OK - examples/par-017 con el kit actualizado vía update sdd; repo privado real, CI verde en GitHub y PR real"
+    },
+    "notes": "Flow lite, profile solo. Telemetría declarada (estimación). Código sin comentarios. Retrocompatible: bloque github opcional; sin gh nada bloquea. Queda cycle-02 (Studio)."
+  }
 }
