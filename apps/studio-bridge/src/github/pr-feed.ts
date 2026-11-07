@@ -123,9 +123,11 @@ export function createGithubFeed(opts: {
     if (kit === null) return null;
     const remote = await readRemote(kit);
     if (remote === null) return null;
+    const cyclesToRead = inProgress(watcher.current()).slice(0, MAX_GITHUB_CYCLES);
+    if (cyclesToRead.length === 0) return { remote, cycles: [] };
     const ghReady = (await gh(['auth', 'status'])).code === 0;
     const cycles: CycleGithub[] = [];
-    for (const cycle of inProgress(watcher.current()).slice(0, MAX_GITHUB_CYCLES)) {
+    for (const cycle of cyclesToRead) {
       cycles.push(await readCycle(kit, ghReady, cycle.specId, cycle.cycle));
     }
     return { remote, cycles };

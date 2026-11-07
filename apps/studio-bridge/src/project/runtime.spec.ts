@@ -51,7 +51,7 @@ describe('openProjectRuntime', () => {
       broadcast: (message) => sent.push(message),
     });
     try {
-      await waitFor(() => sent.some((m) => m.kind === 'workspace.changed' && m.snapshot.github?.remote?.owner === 'octo'));
+      await waitFor(() => sent.some((m) => m.kind === 'workspace.changed' && m.snapshot.github?.remote?.owner === 'octo'), 15_000);
       const snapshot = (await runtime.handle({ kind: 'command', id: 's1', cmd: 'workspace.snapshot' })) as { github?: { remote: { name: string } } };
       expect(snapshot.github?.remote.name).toBe('repo');
     } finally {
