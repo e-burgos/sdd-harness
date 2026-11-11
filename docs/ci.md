@@ -46,7 +46,6 @@ nuevo cambia el SHA y vuelve a pedir el status. Un colaborador sin `ci:local` ti
 | Workflow             | Dispara                                                           |
 | -------------------- | ----------------------------------------------------------------- |
 | `ci.yml`             | PRs (salvo las que solo tocan `docs/`, `apps/documentation/`, `README.md` o `LICENSE`) y a mano. Ya no corre en push a `main`: el SHA ya se verificó en la PR. Un push nuevo cancela la corrida anterior de la misma PR. |
-| `windows.yml`        | PRs que tocan archivos sensibles a Windows (`.ps1`, `.gitattributes`, `apps/cli/templates/sdd/scripts/`, los generadores `sdd`/`update`/`kit-manifest` y sus specs de Windows/CRLF) y a mano. |
 | `deploy-docs.yml`    | Push a `main` que toca `apps/documentation/`.                     |
 | `deploy-studio.yml`  | Push a `main` que toca `apps/studio/` o `libs/studio-protocol/`, salvo tests, e2e y Markdown. |
 | `release.yml`        | Tag `v*`. Corre typecheck, test y build antes de publicar en npm. |
@@ -54,7 +53,9 @@ nuevo cambia el SHA y vuelve a pedir el status. Un colaborador sin `ci:local` ti
 
 ## Windows
 
-Windows ya no corre en cada PR. Esto es lo que solo se prueba en Windows:
+Windows no corre en Actions: costaba el doble y no es una plataforma prioritaria. Se prueba en local.
+
+Qué cubre solo Windows:
 
 - `apps/cli/src/generators/__tests__/sdd.generator.windows.spec.ts`: 10 casos que ejecutan
   `setup-agents.ps1` con Windows PowerShell 5.1 de verdad (links de la raíz, junctions y
@@ -65,22 +66,22 @@ Windows ya no corre en cada PR. Esto es lo que solo se prueba en Windows:
 - Toda la suite corriendo con separadores `\`. Los tests que usan `path.win32` explícito
   también corren en la Mac.
 
-**En la Mac** solo se cubre una parte: `pwsh` (`brew install powershell`) valida la sintaxis de
-los `.ps1` dentro de `pnpm ci:local`. PowerShell 7 en macOS no crea junctions ni hardlinks de
-Windows, así que **no reemplaza** la suite de Windows.
+**En la Mac:** `pwsh` (`brew install powershell`) valida la sintaxis de los `.ps1` dentro de
+`pnpm ci:local`. PowerShell 7 en macOS no crea junctions ni hardlinks de Windows, así que no
+reemplaza la suite.
 
-**Para correr la suite de Windows de verdad**, tenés dos caminos:
+**La suite completa**, en una VM con Windows 11 ARM (UTM o Parallels) con Node 22 y pnpm:
 
-1. **En Actions, a mano** (unos 14 minutos facturados):
+```powershell
+git config --global core.longpaths true
+git config --global core.autocrlf true
+git clone https://github.com/e-burgos/sdd-harness.git
+cd sdd-harness
+pnpm install --frozen-lockfile
+pnpm build
+pnpm typecheck
+$env:SDD_RTK_SKIP_INSTALL = '1'; pnpm test
+```
 
-   ```bash
-   GH_TOKEN=$(gh auth token -u e-burgos) gh workflow run windows.yml -R e-burgos/sdd-harness --ref <rama>
-   ```
-
-2. **En una VM con Windows 11 ARM** (UTM o Parallels): `git config --global core.longpaths true`,
-   `git config --global core.autocrlf true`, clonar el repo y correr
-   `pnpm install --frozen-lockfile && pnpm build && pnpm typecheck && pnpm test`.
-
-**Cuándo:** antes de cada release (`v*`) que cambie el kit o la CLI, y cuando una PR toque
-`setup-agents.ps1`, `sdd-tucu`, la creación de symlinks o el manejo de fin de línea. `windows.yml`
-ya se dispara solo en las PRs que tocan esos archivos.
+**Cuándo:** antes de un release (`v*`) que toque `setup-agents.ps1`, `sdd-tucu`, la creación de
+symlinks del kit o el manejo de fin de línea. Para el resto de los cambios no hace falta.

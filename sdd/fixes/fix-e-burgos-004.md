@@ -22,8 +22,9 @@ mismo CI.
    test y e2e, pushea la rama y publica el commit status `ci-local=success` sobre el SHA.
 2. `ci.yml`: un job `local` busca ese status (`scripts/ci/wait-ci-local-status.sh`); si está, los
    jobs pesados se saltean. Deja de correr en push a `main` y cancela corridas viejas de la misma PR.
-3. Windows sale de la matriz de `ci.yml` y pasa a `windows.yml`: corre solo en PRs que tocan
-   archivos sensibles a Windows y a mano (`workflow_dispatch`) antes de un release.
+3. Windows sale de Actions: la suite de Windows se corre en local (VM con Windows 11 ARM)
+   antes de un release que toque los scripts del kit; `ci:local` valida la sintaxis de los
+   `.ps1` con `pwsh` si está instalado.
 4. Guía en `docs/ci.md`.
 
 ## Validación
