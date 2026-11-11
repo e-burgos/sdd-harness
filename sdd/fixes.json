@@ -1346,7 +1346,8 @@
         "package.json",
         "docs/ci.md",
         "README.md",
-        "sdd/fixes/fix-e-burgos-004.md"
+        "sdd/fixes/fix-e-burgos-004.md",
+        "apps/cli/bin/harness.mjs"
       ],
       "test_reference": "pnpm ci:local sobre la rama: status ci-local publicado y CI de la PR salteado",
       "status": "implemented",
