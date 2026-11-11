@@ -13,6 +13,7 @@ done
 
 fail() { echo "ci:local ERROR: $*" >&2; exit 1; }
 step() { echo; echo "==> $*"; }
+free_port() { node -e "const s=require('net').createServer().listen(0,'127.0.0.1',()=>{console.log(s.address().port);s.close()})"; }
 
 unset NX_WORKSPACE_ROOT_PATH
 
@@ -62,7 +63,7 @@ SDD_RTK_SKIP_INSTALL=1 pnpm test
 
 step "studio e2e (playwright)"
 pnpm --filter sdd-studio-web exec playwright install chromium
-pnpm --filter sdd-studio-web e2e
+E2E_PORT="$(free_port)" E2E_LAUNCHER_PORT="$(free_port)" pnpm --filter sdd-studio-web e2e
 
 step "Sintaxis de los scripts .ps1"
 if command -v pwsh >/dev/null 2>&1; then
