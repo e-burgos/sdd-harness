@@ -35,6 +35,10 @@ pnpm typecheck
 pnpm test         # full suite, includes real integration tests
 ```
 
+Before opening or updating a PR, run `pnpm ci:local`: it runs the same checks as CI on your
+machine, pushes the branch and publishes a `ci-local` status, so GitHub skips the heavy jobs.
+Windows-only coverage and when to run it: [`docs/ci.md`](docs/ci.md).
+
 Full CLI documentation: [`apps/cli/README.md`](apps/cli/README.md).
 
 ## SDD Studio

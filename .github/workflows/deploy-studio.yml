@@ -6,6 +6,13 @@ on:
     paths:
       - 'apps/studio/**'
       - 'libs/studio-protocol/**'
+      - '!apps/studio/e2e/**'
+      - '!apps/studio/**/*.spec.ts'
+      - '!apps/studio/**/*.spec.tsx'
+      - '!apps/studio/**/__tests__/**'
+      - '!apps/studio/**/*.md'
+      - '!libs/studio-protocol/**/*.spec.ts'
+      - '!libs/studio-protocol/**/*.md'
       - '.github/workflows/deploy-studio.yml'
   workflow_dispatch:
 

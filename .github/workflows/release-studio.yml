@@ -6,8 +6,13 @@ on:
       - 'studio-v*'
   workflow_dispatch:
 
+concurrency:
+  group: release-studio-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   publish:
+    timeout-minutes: 30
     runs-on: ubuntu-latest
     permissions:
       id-token: write

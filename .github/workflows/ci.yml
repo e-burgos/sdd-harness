@@ -2,14 +2,58 @@ name: CI
 
 on:
   pull_request:
-  push:
-    branches: [main]
+    paths-ignore:
+      - 'docs/**'
+      - 'apps/documentation/**'
+      - 'README.md'
+      - 'LICENSE'
   workflow_dispatch:
+    inputs:
+      force:
+        description: 'Ignorar el status ci-local y correr todo el CI'
+        type: boolean
+        default: false
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  statuses: read
 
 jobs:
+  local:
+    name: ci-local status
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    outputs:
+      verified: ${{ steps.local.outputs.verified }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          sparse-checkout: scripts/ci
+      - name: Buscar status ci-local (pnpm ci:local)
+        id: local
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FORCE: ${{ inputs.force }}
+        run: |
+          sha="${{ github.event.pull_request.head.sha || github.sha }}"
+          if [ "$FORCE" = "true" ]; then
+            echo "verified=false" >> "$GITHUB_OUTPUT"
+            echo "force=true: corre el CI completo"
+            exit 0
+          fi
+          bash scripts/ci/wait-ci-local-status.sh "${{ github.repository }}" "$sha" >> "$GITHUB_OUTPUT"
+          grep -q 'verified=true' "$GITHUB_OUTPUT" && echo "ci-local en success sobre $sha: se saltea el CI pesado" || echo "sin status ci-local sobre $sha: corre el CI completo"
+
   sdd-validate:
     name: sdd:validate
+    needs: local
+    if: needs.local.outputs.verified != 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
@@ -21,58 +65,31 @@ jobs:
       - run: pnpm sdd:validate
 
   test:
-    name: build · typecheck · test (${{ matrix.os }})
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, windows-latest]
-    runs-on: ${{ matrix.os }}
+    name: build · typecheck · test
+    needs: local
+    if: needs.local.outputs.verified != 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
-      # The java-api blueprint has 138-character paths: without core.longpaths the Windows
-      # checkout fails half-way. Symlinks are what the kit produces; Git creates them itself
-      # when core.symlinks is on (the runner has no Developer Mode, so mklink falls back to
-      # junctions/hardlinks inside the tests — that path is exercised too).
-      #
-      # core.autocrlf mirrors a stock Git for Windows install, so the repo's own sources are
-      # checked out CRLF. It does NOT give us a CRLF kit: templates/sdd ships its own
-      # .gitattributes with eol=lf. The CRLF-checkout behaviour of the kit is covered by
-      # update.generator.crlf.spec.ts, which converts a generated workspace itself.
-      - name: Git settings for Windows
-        if: runner.os == 'Windows'
-        run: |
-          git config --global core.longpaths true
-          git config --global core.autocrlf true
-        shell: bash
-
-      - name: Checkout
-        uses: actions/checkout@v7
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v6
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v7
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build
-        run: pnpm build
-
-      - name: Typecheck
-        run: pnpm typecheck
-
-      - name: Test
-        run: pnpm test
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm typecheck
+      - run: pnpm test
         env:
           SDD_RTK_SKIP_INSTALL: '1'
 
   e2e:
     name: studio e2e (playwright)
+    needs: local
+    if: needs.local.outputs.verified != 'true'
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6

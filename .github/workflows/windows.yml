@@ -1,0 +1,47 @@
+name: Windows
+
+on:
+  pull_request:
+    paths:
+      - '**/*.ps1'
+      - '**/.gitattributes'
+      - 'apps/cli/templates/sdd/scripts/**'
+      - 'apps/cli/src/generators/sdd.generator.ts'
+      - 'apps/cli/src/generators/update.generator.ts'
+      - 'apps/cli/src/generators/kit-manifest.ts'
+      - 'apps/cli/src/generators/__tests__/sdd.generator.windows.spec.ts'
+      - 'apps/cli/src/generators/__tests__/update.generator.crlf.spec.ts'
+      - '.github/workflows/windows.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: windows-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: build · typecheck · test (windows-latest)
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      # java-api blueprint paths exceed 260 chars without core.longpaths; autocrlf mirrors stock Git for Windows
+      - name: Git settings for Windows
+        run: |
+          git config --global core.longpaths true
+          git config --global core.autocrlf true
+        shell: bash
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
+      - run: pnpm typecheck
+      - run: pnpm test
+        env:
+          SDD_RTK_SKIP_INSTALL: '1'
