@@ -325,6 +325,31 @@ describe('update.generator', () => {
     expect(await fs.pathExists(resolve(ws, 'sdd/tools.json.new'))).toBe(false);
   });
 
+  it('video_maker prendido en tools.json sobrevive al update: ni versión ni claves cambian', async () => {
+    const tools = {
+      $schema: './schemas/tools.schema.json',
+      rtk: { enabled: true },
+      video_maker: { enabled: true, plugin: true, mcp: false, version: '0.0.9', extra: 1 },
+    };
+    await fs.writeJSON(resolve(ws, 'sdd/tools.json'), tools);
+    const report = await updateSDD(ws);
+    expect(report.added).not.toContain('tools.json');
+    expect(report.conflicts).not.toContain('tools.json');
+    expect(await fs.readJSON(resolve(ws, 'sdd/tools.json'))).toEqual(tools);
+    expect(await fs.pathExists(resolve(ws, 'sdd/tools.json.new'))).toBe(false);
+    expect(await fs.pathExists(resolve(ws, 'sdd/scripts/sdd-video.mjs'))).toBe(true);
+    expect(await fs.pathExists(resolve(ws, 'sdd/scripts/video-maker-common.mjs'))).toBe(true);
+  });
+
+  it('el schema valida video_maker y rechaza versiones o tipos equivocados', async () => {
+    await updateSDD(ws);
+    const schema = await fs.readJSON(resolve(ws, 'sdd/schemas/tools.schema.json'));
+    const validate = new Ajv({ strict: false }).compile(schema);
+    expect(validate({ rtk: { enabled: true }, video_maker: { enabled: true, version: '0.1.0', extra: 1 } })).toBe(true);
+    expect(validate({ rtk: { enabled: true }, video_maker: { enabled: 'yes' } })).toBe(false);
+    expect(validate({ rtk: { enabled: true }, video_maker: { version: 'latest' } })).toBe(false);
+  });
+
   it('el schema nuevo valida un repo viejo sin tucu_ui y rechaza tipos equivocados', async () => {
     await updateSDD(ws);
     const schema = await fs.readJSON(resolve(ws, 'sdd/schemas/tools.schema.json'));
@@ -360,6 +385,7 @@ describe('update.generator', () => {
     expect(pkg.scripts['sdd:rtk']).toBe('node sdd/scripts/setup-rtk.mjs');
     expect(pkg.scripts['sdd:gate']).toBe('node sdd/scripts/spec-gate.mjs');
     expect(pkg.scripts['sdd:tucu']).toBe('node sdd/scripts/sdd-tucu.mjs');
+    expect(pkg.scripts['sdd:video']).toBe('node sdd/scripts/sdd-video.mjs');
     expect(pkg.scripts.postinstall).toContain('setup-rtk.mjs');
 
     pkg.scripts.postinstall = 'echo mine';

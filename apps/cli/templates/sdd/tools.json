@@ -1,6 +1,6 @@
 {
   "$schema": "./schemas/tools.schema.json",
-  "_description": "Herramientas auxiliares del kit. rtk comprime la salida de los comandos de shell que leen los agentes (Claude Code y Gemini CLI) y viene activo por defecto; para apagarlo: `pnpm sdd:rtk -- --disable` (o pedírselo al sdd-steward). Este archivo es del proyecto: `harness update sdd` no lo toca. claude_mod es el mod de Claude Code del kit (franja con el ciclo en curso, /sdd y SPEC GATE sobre las ediciones de código): viene apagado; se prende con `pnpm sdd:mod -- --enable`. tucu_ui es la integración opcional con @e-burgos/tucu-ui (skill de diseño + servidor MCP para frontends React/Next): viene apagada; se prende con `pnpm sdd:tucu -- --enable`.",
+  "_description": "Herramientas auxiliares del kit. rtk comprime la salida de los comandos de shell que leen los agentes (Claude Code y Gemini CLI) y viene activo por defecto; para apagarlo: `pnpm sdd:rtk -- --disable` (o pedírselo al sdd-steward). Este archivo es del proyecto: `harness update sdd` no lo toca. claude_mod es el mod de Claude Code del kit (franja con el ciclo en curso, /sdd y SPEC GATE sobre las ediciones de código): viene apagado; se prende con `pnpm sdd:mod -- --enable`. tucu_ui es la integración opcional con @e-burgos/tucu-ui (skill de diseño + servidor MCP para frontends React/Next): viene apagada; se prende con `pnpm sdd:tucu -- --enable`. video_maker es la integración opcional con video-maker (plugin de Claude Code + servidor MCP @e-burgos/video-maker-mcp para Copilot y Gemini/Antigravity): viene apagada; se prende con `pnpm sdd:video -- --enable`.",
   "rtk": {
     "enabled": true,
     "auto_install": true
@@ -12,6 +12,11 @@
   "tucu_ui": {
     "enabled": false,
     "skill": true,
+    "mcp": true
+  },
+  "video_maker": {
+    "enabled": false,
+    "plugin": true,
     "mcp": true
   }
 }

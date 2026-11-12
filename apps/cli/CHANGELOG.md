@@ -19,6 +19,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Ads) and Cristal Líquido / Liquid Glass (ópticagestión).
 - The frontend implementor agent and skill load both skills when the subproject uses tucu-ui or
   the task designs UI.
+- Optional video-maker integration (`pnpm sdd:video -- --status | --enable | --disable`, switch
+  `video_maker` in `sdd/tools.json`, off by default, no network): in Claude Code it declares the
+  `video-maker@video-maker` plugin from the `e-burgos/video-maker` marketplace in
+  `.claude/settings.json` (its skills plus its own MCP, so `.mcp.json` is not touched); Copilot and
+  Gemini/Antigravity get `@e-burgos/video-maker-mcp@0.1.0` pinned in `.vscode/mcp.json` and
+  `.gemini/settings.json`. `harness init` / `configure sdd` take `--video-maker`; the validator
+  warns when it is on and incomplete; the steward operates it on request. Docs: `VIDEO-MAKER.md`.
 
 ## [0.20.0] - 2026-11-07
 

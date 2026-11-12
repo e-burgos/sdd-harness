@@ -684,6 +684,49 @@ if (existsSync(join(SDD, 'tools.json'))) {
       tucu = null;
     }
   }
+  let video = null;
+  try {
+    video = await import(new URL('./video-maker-common.mjs', import.meta.url));
+  } catch {
+    video = null;
+  }
+  const videoSection = toolsDoc?.video_maker;
+  if (video && videoSection && typeof videoSection === 'object' && !Array.isArray(videoSection)) {
+    try {
+      const repair = 'run pnpm sdd:video -- --enable';
+      const mcpHarness = { '.vscode/mcp.json': 'Copilot', '.gemini/settings.json': 'Gemini CLI, Antigravity' };
+      const problem = {
+        missing: 'has no video-maker entry',
+        'no-file': 'does not exist',
+        broken: 'is not valid JSON',
+        'invalid-container': 'has a section that is not an object',
+      };
+      const status = video.videoMakerStatus(REPO, toolsDoc);
+      for (const key of status.unknown_keys) {
+        warn('tools.json', `video_maker.${key} is not a known setting (${video.VIDEO_MAKER_KNOWN_KEYS.join(', ')}) — ignored`);
+      }
+      if (status.enabled && status.state !== 'off') {
+        if (status.parts.plugin && problem[status.plugin.state]) {
+          warn('tools.json', `video_maker on but ${status.plugin.file} ${problem[status.plugin.state]} (Claude Code plugin) — ${repair}`);
+        }
+        if (status.parts.mcp) {
+          for (const [file, state] of Object.entries(status.mcp)) {
+            if (problem[state]) {
+              warn('tools.json', `video_maker on but ${file} ${problem[state]} (${mcpHarness[file]}) — ${repair}`);
+            }
+          }
+        }
+        if (status.update_available) {
+          warn(
+            'tools.json',
+            `video_maker uses ${video.VIDEO_MAKER_PACKAGE} ${status.version}, the kit pins ${status.kit_version} — pnpm sdd:video -- --enable --force to upgrade`,
+          );
+        }
+      }
+    } catch {
+      video = null;
+    }
+  }
 }
 
 // ---- 12b. Rule zero (model/effort/context) — warning only: repos from before v0.17 lack it ----

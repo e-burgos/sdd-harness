@@ -1148,6 +1148,22 @@ entries.
 
 Full detail, per-harness map and the Windows note: [TUCU-UI.md](TUCU-UI.md).
 
+### 9. video-maker — product videos (optional, off by default)
+
+To produce promos, reels, explainers or tutorials of the product with the local video-maker
+studio. `pnpm sdd:video -- --enable` declares the `video-maker@video-maker` plugin in
+`.claude/settings.json` (Claude Code: skills + its own MCP) and adds the `video-maker` MCP (pinned
+version) to `.vscode/mcp.json` and `.gemini/settings.json` **without overwriting** your own entries.
+
+- **Switch**: `video_maker` in `sdd/tools.json` (`enabled`, `plugin`, `mcp`, `version`). Project
+  data: `harness update sdd` never overwrites it.
+- **Who decides**: the dev; the sdd-steward operates it on request.
+- **Commands**: `pnpm sdd:video -- --status | --enable | --disable` (`--parts=plugin,mcp`). No network.
+- **Requirements**: Node 22+ and the video-maker studio running.
+- **From the CLI**: `harness init --video-maker | --no-video-maker`.
+
+Details, end-to-end flow and traps: [VIDEO-MAKER.md](VIDEO-MAKER.md).
+
 ---
 
 ## Quick reference

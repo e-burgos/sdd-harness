@@ -1148,6 +1148,22 @@ Para repos con un frontend React o Next. `pnpm sdd:tucu -- --enable` instala la 
 
 Detalle completo, mapa por arnés y nota de Windows: [TUCU-UI.md](TUCU-UI.md).
 
+### 9. video-maker — videos del producto (opcional, apagado por defecto)
+
+Para producir promos, reels, explicativos o tutoriales del producto con el estudio local de
+video-maker. `pnpm sdd:video -- --enable` declara el plugin `video-maker@video-maker` en
+`.claude/settings.json` (Claude Code: skills + su propio MCP) y agrega el MCP `video-maker`
+(versión fijada) a `.vscode/mcp.json` y `.gemini/settings.json` **sin pisar** entradas propias.
+
+- **Interruptor**: `video_maker` en `sdd/tools.json` (`enabled`, `plugin`, `mcp`, `version`). Dato
+  del proyecto: `harness update sdd` no lo pisa.
+- **Quién decide**: el dev; el sdd-steward lo opera a pedido.
+- **Comandos**: `pnpm sdd:video -- --status | --enable | --disable` (`--parts=plugin,mcp`). Sin red.
+- **Requisitos**: Node 22+ y el studio de video-maker corriendo.
+- **Desde la CLI**: `harness init --video-maker | --no-video-maker`.
+
+Detalle, flujo de punta a punta y trampas: [VIDEO-MAKER.md](VIDEO-MAKER.md).
+
 ---
 
 ## Referencia rápida

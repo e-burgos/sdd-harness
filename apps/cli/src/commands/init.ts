@@ -40,6 +40,12 @@ import {
   logTucuUiSummary,
   type TucuUiOfferOutcome,
 } from "../utils/tucu-ui-run.js";
+import {
+  VIDEO_MAKER_CONFLICT_MESSAGE,
+  chainBeforeGate,
+  hasConflictingVideoMakerFlags,
+  planVideoMaker,
+} from "../utils/video-maker-run.js";
 
 /** Flags de destino compartidos por las tres vías de init. */
 interface TargetFlags {
@@ -48,6 +54,7 @@ interface TargetFlags {
   dir?: string;
   skipVerify: boolean;
   tucuUi?: boolean;
+  videoMaker?: boolean;
   interactive?: boolean;
 }
 
@@ -188,6 +195,11 @@ export const initCommand = defineCommand({
       description:
         "Scaffold react/nextjs apps with tucu-ui and turn on its design skill + MCP (default). --no-tucu-ui generates plain apps and keeps it off. With --config, sdd.tucu_ui is the fallback",
     },
+    "video-maker": {
+      type: "boolean",
+      description:
+        "Turn on the video-maker integration (Claude Code plugin + MCP for Copilot and Gemini/Antigravity). Off by default; --no-video-maker keeps it off",
+    },
     profile: {
       type: "string",
       description:
@@ -200,6 +212,11 @@ export const initCommand = defineCommand({
 
     if (hasConflictingTucuUiFlags(rawArgs)) {
       logger.error(TUCU_UI_CONFLICT_MESSAGE);
+      process.exit(1);
+    }
+
+    if (hasConflictingVideoMakerFlags(rawArgs)) {
+      logger.error(VIDEO_MAKER_CONFLICT_MESSAGE);
       process.exit(1);
     }
 
@@ -217,6 +234,7 @@ export const initCommand = defineCommand({
       skipVerify: args.skipVerify,
       profile,
       tucuUi: args["tucu-ui"],
+      videoMaker: args["video-maker"],
       interactive: Boolean(process.stdin.isTTY) && !args.yes && !args.config,
     };
 
@@ -387,6 +405,7 @@ async function runConfigFlow(
     configPath,
   );
   const modules = config.sdd?.modules ?? [];
+  const videoMaker = planVideoMaker(flags.videoMaker);
   const tucuUi = await planTucuUi(
     flags,
     config.apps.map((a) => ({
@@ -427,7 +446,7 @@ async function runConfigFlow(
         targetDir,
         harnessFiles,
         skipVerify: flags.skipVerify,
-        beforeGate: tucuUi.beforeGate,
+        beforeGate: chainBeforeGate(tucuUi.beforeGate, videoMaker.beforeGate),
       });
     } else {
       await generateWorkspace({
@@ -436,7 +455,7 @@ async function runConfigFlow(
         targetDir,
         harnessFiles,
         skipVerify: flags.skipVerify,
-        beforeGate: tucuUi.beforeGate,
+        beforeGate: chainBeforeGate(tucuUi.beforeGate, videoMaker.beforeGate),
       });
     }
   } catch (err) {
@@ -445,6 +464,7 @@ async function runConfigFlow(
   }
 
   tucuUi.report();
+  videoMaker.report();
   outroReady("Done! Your workspace is ready.");
 }
 
@@ -500,6 +520,7 @@ async function runStandaloneFlow(
     process.exit(0);
   }
 
+  const videoMaker = planVideoMaker(flags.videoMaker);
   const tucuUi = await planTucuUi(flags, [{ type: appType as string }]);
 
   logger.title("Generating standalone repo...");
@@ -515,7 +536,7 @@ async function runStandaloneFlow(
       ...resolveInitTarget(process.cwd(), projectName, flags),
       harnessFiles: harnessFilesNextTo(undefined, process.cwd()),
       skipVerify: flags.skipVerify,
-      beforeGate: tucuUi.beforeGate,
+      beforeGate: chainBeforeGate(tucuUi.beforeGate, videoMaker.beforeGate),
     });
   } catch (err) {
     logger.error((err as Error).message);
@@ -523,6 +544,7 @@ async function runStandaloneFlow(
   }
 
   tucuUi.report();
+  videoMaker.report();
   outroReady("Done! Your standalone repo is ready.");
 }
 
@@ -686,6 +708,7 @@ async function runNxFlow(
     process.exit(0);
   }
 
+  const videoMaker = planVideoMaker(flags.videoMaker);
   const tucuUi = await planTucuUi(flags, apps);
 
   logger.title("Generating workspace...");
@@ -702,7 +725,7 @@ async function runNxFlow(
       ...resolveInitTarget(process.cwd(), projectName, flags),
       harnessFiles: harnessFilesNextTo(undefined, process.cwd()),
       skipVerify: flags.skipVerify,
-      beforeGate: tucuUi.beforeGate,
+      beforeGate: chainBeforeGate(tucuUi.beforeGate, videoMaker.beforeGate),
     });
   } catch (err) {
     logger.error((err as Error).message);
@@ -710,5 +733,6 @@ async function runNxFlow(
   }
 
   tucuUi.report();
+  videoMaker.report();
   outroReady("Done! Your workspace is ready.");
 }
