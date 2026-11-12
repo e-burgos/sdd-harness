@@ -220,19 +220,19 @@
       "cycles_completed": 1,
       "description": "Skills de diseño del kit: tucu-ui profesional y lenguajes visuales replicables (Display Ads, Cristal Líquido).",
       "completed_at": "2026-11-12"
-    }
-  ],
-  "in_progress_modules": [
+    },
     {
       "module": "video-maker-integration",
       "spec": "spec-e-burgos-021-video-maker-integration",
       "apps": [
         "apps/cli"
       ],
-      "cycles_completed": 0,
-      "description": "Vinculación opcional del kit con video-maker: plugin de Claude Code y MCP fijado para Copilot y Gemini."
+      "cycles_completed": 1,
+      "description": "Vinculación opcional del kit con video-maker: plugin de Claude Code y MCP fijado para Copilot y Gemini.",
+      "completed_at": "2026-11-12"
     }
   ],
+  "in_progress_modules": [],
   "pending_modules": [
     {
       "module": "studio-framework-vision",

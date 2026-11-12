@@ -1,6 +1,6 @@
 # SPEC-e-burgos-021: El kit trae la vinculación con video-maker
 
-> Estado: **in-progress** (2026-11-12). cycle-01 abierto (flow lite). Mismo patrón que la integración
+> Estado: **completed** (2026-11-12). cycle-01 cerrado (flow lite, 3/3 tasks). Mismo patrón que la integración
 > tucu-ui (spec-e-burgos-011): interruptor en `sdd/tools.json`, comando `pnpm sdd:<x>`, opt-in.
 
 ## Resumen ejecutivo
