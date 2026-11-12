@@ -43,6 +43,7 @@ description: Conserje del kit SDD - puerta de entrada para status del harness, a
 | ¿rtk está activo / instalado?         | `node sdd/scripts/setup-rtk.mjs --status` (JSON: switch + binario) |
 | ¿Cuánto ahorró rtk?                   | `rtk gain --project` — o el visor: Costos → pestaña **RTK**      |
 | ¿tucu-ui (skill + MCP) está activo?   | `node sdd/scripts/sdd-tucu.mjs --status` (JSON: estado por arnés, sin red) |
+| ¿video-maker (plugin + MCP) está activo? | `node sdd/scripts/sdd-video.mjs --status` (JSON: estado por arnés, sin red) |
 | ¿Qué contiene el kit (índice)?        | `sdd/catalog.json` — jamás listar directorios a mano             |
 | ¿Cómo funciona X de la metodología?   | `sdd/documentation/{es,en}/` (README = referencia, HOW-TO = guía)|
 | ¿Los registros están sanos?           | `pnpm sdd:validate`                                              |
@@ -203,6 +204,23 @@ necesita red (una sola vez, con Node >= 20); el resto funciona sin red.
    falte; `pnpm setup:agents` solo vuelve a enlazar la skill.
 4. **Sin red al prender**: el comando falla sin cambiar `sdd/tools.json`; reintentar con red.
 
+## Playbook 9 — video-maker (herramienta auxiliar opcional)
+
+video-maker es el estudio local de video (promos, reels, explicativos, tutoriales grabados). El
+kit puede vincular el repo: en Claude Code declara el plugin `video-maker@video-maker` en
+`.claude/settings.json` (trae las skills y su propio MCP) y en Copilot y Gemini/Antigravity deja el
+MCP `video-maker` fijado en `.vscode/mcp.json` y `.gemini/settings.json`. Viene **apagado**; la
+decisión es del dev. No usa red ni API keys; necesita Node >= 22 y el studio corriendo
+(`pnpm studio` en el repo de video-maker, o `VIDEO_MAKER_API_URL` + `VIDEO_MAKER_API_TOKEN`).
+
+1. **Estado**: `node sdd/scripts/sdd-video.mjs --status` (o `pnpm sdd:video -- --status`).
+2. **Prender / apagar — solo a pedido del dev**: `pnpm sdd:video -- --enable` y
+   `pnpm sdd:video -- --disable` (`--parts=plugin,mcp` elige las partes). Nunca prenderlo por
+   iniciativa propia ni editar `video_maker` en `sdd/tools.json` a mano.
+3. **Incompleto o con avisos de `sdd:validate`**: `pnpm sdd:video -- --enable` repara lo que falte.
+4. **Pedido de un video**: no lo produce el steward; con el plugin cargado, la skill `video-maker`
+   conduce el flujo. Detalle y trampas: `sdd/documentation/{es,en}/VIDEO-MAKER.md`.
+
 ## Ruteo (pedidos que NO son del steward)
 
 | Pedido                                  | Destino                                        |
@@ -222,8 +240,8 @@ Ninguno en operación normal. Las únicas escrituras permitidas son las que
 ejecutan sus playbooks a través de las herramientas oficiales (`update sdd`,
 `setup:agents`, `harness idea`) — nunca ediciones manuales de registros SDD.
 
-Única excepción: `sdd/tools.json` (interruptores de rtk, del mod de Claude Code y de
-tucu-ui), y solo a pedido explícito del dev — preferentemente vía
+Única excepción: `sdd/tools.json` (interruptores de rtk, del mod de Claude Code, de
+tucu-ui y de video-maker), y solo a pedido explícito del dev — preferentemente vía
 `pnpm sdd:rtk -- --disable|--enable`, `pnpm sdd:mod -- --enable|--disable|--gate=…` y
 `pnpm sdd:tucu -- --enable|--disable`.
 

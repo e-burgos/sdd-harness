@@ -14,6 +14,8 @@ model: sonnet
 | -------------------------- | ------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
 | `sdd-implementor-front`    | `sdd/skills/sdd-implementor-front/SKILL.md` | Guía completa del rol: protocolo task-by-task, verificaciones, actualización de components.json          |
 | `generate-*` (según stack) | `sdd/skills/generate-*/SKILL.md`            | Elegir la skill del stack frontend del subproyecto (`constitution.md`): `generate-react-component`, etc. |
+| `tucu-ui-pro`              | `sdd/skills/tucu-ui-pro/SKILL.md`           | Si el subproyecto usa (o va a usar) `@e-burgos/tucu-ui`: montaje Vite/Next, theming, catálogo con props válidos, trampas que rompen en runtime |
+| `design-languages`         | `sdd/skills/design-languages/SKILL.md`      | Si la task diseña o rediseña UI o nombra un look: elegir o derivar el lenguaje visual; recetas de Sky Console y Cristal Líquido |
 | `crafted-motion`           | `sdd/skills/crafted-motion/SKILL.md`        | Si la task toca motion, animaciones o dirección visual: capas, tokens, recetas, transiciones de pasos y QA |
 | `sdd-data-schemas`         | `sdd/skills/sdd-data-schemas/SKILL.md`      | Schema de components.json y del tasks.json per-cycle para actualizar al finalizar cada task              |
 

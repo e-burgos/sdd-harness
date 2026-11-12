@@ -1,0 +1,178 @@
+{
+  "$schema": "../../../../schemas/cycle.schema.json",
+  "cycle": 1,
+  "module": "kit-design-skills",
+  "spec": "spec-e-burgos-020-kit-design-skills",
+  "apps": [
+    "apps/cli"
+  ],
+  "phase": "kit-design-skills",
+  "flow": "lite",
+  "objectives": [
+    "El agente de frontend del kit usa tucu-ui como un profesional y replica lenguajes visuales (US-1..US-5)"
+  ],
+  "status": "completed",
+  "started_at": "2026-11-12",
+  "completed_at": "2026-11-12",
+  "documents": {
+    "plan": "sdd/specs/spec-e-burgos-020-kit-design-skills/cycles/cycle-01/plan.md",
+    "tasks": "sdd/specs/spec-e-burgos-020-kit-design-skills/cycles/cycle-01/tasks.json"
+  },
+  "artifacts": [],
+  "metrics": {
+    "tasks_total": 3,
+    "tasks_completed": 3,
+    "tasks_skipped": 0,
+    "story_points": 13,
+    "files_created": [
+      "apps/cli/templates/sdd/skills/tucu-ui-pro/SKILL.md",
+      "apps/cli/templates/sdd/skills/tucu-ui-pro/references/01-montaje.md",
+      "apps/cli/templates/sdd/skills/tucu-ui-pro/references/02-theming.md",
+      "apps/cli/templates/sdd/skills/tucu-ui-pro/references/03-componentes.md",
+      "apps/cli/templates/sdd/skills/tucu-ui-pro/references/04-trampas.md",
+      "apps/cli/templates/sdd/skills/design-languages/SKILL.md",
+      "apps/cli/templates/sdd/skills/design-languages/references/metodo.md",
+      "apps/cli/templates/sdd/skills/design-languages/references/sky-console.md",
+      "apps/cli/templates/sdd/skills/design-languages/references/liquid-glass.md"
+    ],
+    "files_modified": [
+      "apps/cli/templates/sdd/agents/sdd-implementor-front.agent.md",
+      "apps/cli/templates/sdd/skills/sdd-implementor-front/SKILL.md",
+      "apps/cli/templates/sdd/catalog.json",
+      "apps/cli/templates/sdd/documentation/es/README.md",
+      "apps/cli/templates/sdd/documentation/en/README.md",
+      "apps/cli/CHANGELOG.md",
+      "sdd/agents/sdd-implementor-front.agent.md",
+      "sdd/catalog.json",
+      "sdd/documentation/es/README.md",
+      "sdd/documentation/en/README.md"
+    ],
+    "files_deleted": [],
+    "usage": {
+      "tokens_in": 518193,
+      "tokens_out": 81092,
+      "approx": true,
+      "source": "declared-estimate",
+      "by_tier": {
+        "claude/opus": {
+          "tokens_in": 240000,
+          "tokens_out": 32000,
+          "approx": true,
+          "source": "declared-estimate"
+        },
+        "claude/sonnet": {
+          "tokens_in": 278193,
+          "tokens_out": 49092,
+          "approx": true,
+          "source": "agent-usage-notification"
+        }
+      },
+      "by_agent": [
+        {
+          "agent": "orchestrator",
+          "label": "spec, apertura, cierre y revisión",
+          "provider_model": "claude/opus",
+          "effort": "medium",
+          "tokens_in": 70000,
+          "tokens_out": 8000,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-12"
+        },
+        {
+          "agent": "custom",
+          "label": "relevamiento del diseño de Display Ads (Explore)",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 86053,
+          "tokens_out": 15186,
+          "source": "agent-usage-notification",
+          "approx": true,
+          "recorded_at": "2026-11-12"
+        },
+        {
+          "agent": "custom",
+          "label": "relevamiento de Cristal Líquido en ópticagestión (Explore)",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 92404,
+          "tokens_out": 16306,
+          "source": "agent-usage-notification",
+          "approx": true,
+          "recorded_at": "2026-11-12"
+        },
+        {
+          "agent": "custom",
+          "label": "relevamiento de tucu-ui, su MCP y la integración del kit (Explore)",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 99736,
+          "tokens_out": 17600,
+          "source": "agent-usage-notification",
+          "approx": true,
+          "recorded_at": "2026-11-12"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-001 Skill tucu-ui-pro: montaje, theming, catálogo y trampas de tucu-ui",
+          "provider_model": "claude/opus",
+          "effort": "medium",
+          "tokens_in": 60000,
+          "tokens_out": 9000,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-12"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-002 Skill design-languages: método + Display Ads + Cristal Líquido",
+          "provider_model": "claude/opus",
+          "effort": "medium",
+          "tokens_in": 60000,
+          "tokens_out": 11000,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-12"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-003 Cableado en el agente front, espejo, catálogo, docs y verificación",
+          "provider_model": "claude/opus",
+          "effort": "medium",
+          "tokens_in": 50000,
+          "tokens_out": 4000,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-12"
+        }
+      ]
+    }
+  },
+  "tables_created": [],
+  "endpoints_implemented": [],
+  "components_created": [],
+  "issues_found": [
+    "Corregido (verificación contra tucu-ui 3.10): Display Ads (tucu-ui 3.0) usa `Button variant=\"brand\"`, que en 3.10 no existe; la receta usa `variant=\"solid\"` con color primary.",
+    "Corregido: el `GlassPanel` de tucu-ui 3.10 aplica solo blur, borde de 1 px y no tiene fallback; la receta de Cristal Líquido agrega saturate, borde de 0,5 px, `@supports`, modo sólido, reduced-transparency y prefers-contrast sin layer, después del tema.",
+    "Corregido: `--color-accent` de tucu-ui sigue siendo amarillo en 3.10; las dos recetas y `tucu-ui-pro` lo fijan.",
+    "Abierto (informativo): las skills propias de display-ads divergen de su código (la de motion describe otra landing; `PageHeader` usa la clase muerta `text-muted-foreground`); la receta del kit sigue al código real.",
+    "Abierto (informativo): los nombres de los tokens de tabla de ópticagestión (`--color-table-*`) pueden no coincidir con la familia `--tucu-table-*` de 3.10; la receta pide confirmarlos con `tucu://tokens`."
+  ],
+  "reviewer_report": {
+    "approved": true,
+    "date": "2026-11-12",
+    "ca_results": {
+      "US-1": "PASS - tucu-ui-pro: montaje Vite/Next/Tailwind propio, theming en 4 palancas, catálogo por necesidad y trampas; props verificados contra el código de tucu-ui 3.10 (Button, GlassPanel, ThemeWrapper, LAYOUT_OPTIONS, BackgroundVariant, ThemePreset, tokens)",
+      "US-2": "PASS - sky-console.md: tokens, provider, landing, tipografía, layout, 11 componentes firma, motion y no hacer, extraídos del código de display-ads",
+      "US-3": "PASS - liquid-glass.md: materiales con valores light/dark, montaje sobre GlassPanel con overrides, fallbacks, escena aurora, tipografía, componentes firma y motion, extraídos del código de opticagestion",
+      "US-4": "PASS - design-languages SKILL.md + metodo.md: brief, contrato de tokens, jerarquía, escena, componentes firma, motion, a11y y checklist de verificación",
+      "US-5": "PASS - agente y skill sdd-implementor-front las referencian; catálogos regenerados; generación real en examples/ds-020 las instala con links por arnés"
+    },
+    "tests": {
+      "cli": "OK - 647 tests (54 archivos)",
+      "sdd-validate": "OK",
+      "real-check": "OK - configure sdd en examples/ds-020: skills, references, catálogo, agente y links en .claude/skills; validate del workspace generado OK"
+    },
+    "notes": "Flow lite. Telemetría: subagentes por notificación del harness (85/15), main loop declarado. Solo documentación del kit: sin cambios de código."
+  }
+}

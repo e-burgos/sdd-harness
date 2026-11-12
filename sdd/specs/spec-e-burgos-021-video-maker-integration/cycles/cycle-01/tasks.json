@@ -1,0 +1,116 @@
+{
+  "$schema": "../../../../schemas/cycle-tasks.schema.json",
+  "spec": "spec-e-burgos-021-video-maker-integration",
+  "cycle": 1,
+  "module": "video-maker-integration",
+  "apps": [
+    "apps/cli"
+  ],
+  "flow": "lite",
+  "user_stories_generated": true,
+  "prerequisites": {
+    "tasks_generated": true
+  },
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "Kit: video-maker-common, sdd:video, tools.json/schema y validador",
+      "user_stories": [
+        "US-1",
+        "US-2",
+        "US-3"
+      ],
+      "estimation_hours": 4,
+      "story_points": 5,
+      "depends_on": [],
+      "status": "done",
+      "files": [
+        "apps/cli/templates/sdd/scripts/video-maker-common.mjs",
+        "apps/cli/templates/sdd/scripts/sdd-video.mjs",
+        "apps/cli/templates/sdd/scripts/validate-sdd.mjs",
+        "apps/cli/templates/sdd/tools.json",
+        "apps/cli/templates/sdd/schemas/tools.schema.json",
+        "apps/cli/templates/sdd/templates/nx-workspace/package.json",
+        "package.json",
+        "apps/cli/src/utils/__tests__/video-maker-common.spec.ts",
+        "apps/cli/src/generators/__tests__/video-maker.integration.spec.ts"
+      ],
+      "usage": {
+        "tokens_in": 110678,
+        "tokens_out": 19532,
+        "approx": true,
+        "recorded_at": "2026-11-12",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "source": "agent-usage-notification"
+      }
+    },
+    {
+      "id": "TASK-002",
+      "title": "CLI: --video-maker en init/configure y preservación en update",
+      "user_stories": [
+        "US-4"
+      ],
+      "estimation_hours": 3,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "status": "done",
+      "files": [
+        "apps/cli/src/utils/video-maker-run.ts",
+        "apps/cli/src/commands/init.ts",
+        "apps/cli/src/commands/configure/sdd.ts",
+        "apps/cli/src/commands/__tests__/video-maker-flow.spec.ts",
+        "apps/cli/src/generators/__tests__/update.generator.spec.ts",
+        "apps/cli/src/generators/__tests__/standalone.generator.spec.ts"
+      ],
+      "usage": {
+        "tokens_in": 73460,
+        "tokens_out": 12963,
+        "approx": true,
+        "recorded_at": "2026-11-12",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "source": "agent-usage-notification"
+      }
+    },
+    {
+      "id": "TASK-003",
+      "title": "Docs, steward, generación real y cierre",
+      "user_stories": [
+        "US-4"
+      ],
+      "estimation_hours": 2,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002"
+      ],
+      "status": "done",
+      "files": [
+        "apps/cli/templates/sdd/documentation/es/VIDEO-MAKER.md",
+        "apps/cli/templates/sdd/documentation/en/VIDEO-MAKER.md",
+        "apps/cli/templates/sdd/documentation/es/README.md",
+        "apps/cli/templates/sdd/documentation/en/README.md",
+        "apps/cli/templates/sdd/skills/sdd-steward/SKILL.md",
+        "apps/cli/templates/sdd/dual-harness/AGENTS.md",
+        "apps/cli/templates/sdd/dual-harness/CLAUDE.md",
+        "apps/cli/templates/sdd/dual-harness/GEMINI.md",
+        "apps/cli/CHANGELOG.md"
+      ],
+      "usage": {
+        "tokens_in": 70000,
+        "tokens_out": 12000,
+        "approx": true,
+        "recorded_at": "2026-11-12",
+        "provider_model": "claude/opus",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "source": "declared-estimate"
+      }
+    }
+  ]
+}
