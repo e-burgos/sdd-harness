@@ -1,0 +1,11 @@
+{
+  "$schema": "../../../../schemas/cycle-tasks.schema.json",
+  "spec": "spec-e-burgos-020-kit-design-skills", "cycle": 1, "module": "kit-design-skills", "apps": ["apps/cli"], "flow": "lite",
+  "user_stories_generated": true,
+  "prerequisites": { "tasks_generated": true },
+  "tasks": [
+    { "id": "TASK-001", "title": "Skill tucu-ui-pro: montaje, theming, catálogo y trampas de tucu-ui", "user_stories": ["US-1"], "estimation_hours": 3, "story_points": 5, "depends_on": [], "status": "pending", "files": ["apps/cli/templates/sdd/skills/tucu-ui-pro/SKILL.md"] },
+    { "id": "TASK-002", "title": "Skill design-languages: método + Display Ads + Cristal Líquido", "user_stories": ["US-2", "US-3", "US-4"], "estimation_hours": 3, "story_points": 5, "depends_on": [], "status": "pending", "files": ["apps/cli/templates/sdd/skills/design-languages/SKILL.md"] },
+    { "id": "TASK-003", "title": "Cableado en el agente front, espejo, catálogo, docs y verificación", "user_stories": ["US-5"], "estimation_hours": 2, "story_points": 3, "depends_on": ["TASK-001", "TASK-002"], "status": "pending", "files": ["apps/cli/templates/sdd/agents/sdd-implementor-front.agent.md"] }
+  ]
+}

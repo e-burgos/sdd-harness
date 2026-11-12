@@ -296,6 +296,22 @@
       "depends_on": [
         "spec-e-burgos-018-guided-onboarding"
       ]
+    },
+    {
+      "id": "spec-e-burgos-020-kit-design-skills",
+      "author": "e-burgos",
+      "slug": "kit-design-skills",
+      "folder": "sdd/specs/spec-e-burgos-020-kit-design-skills",
+      "file": "sdd/specs/spec-e-burgos-020-kit-design-skills/spec-e-burgos-020-kit-design-skills.spec.md",
+      "module": "kit-design-skills",
+      "app": "apps/cli",
+      "status": "in-progress",
+      "title": "El agente de frontend del kit diseña con tucu-ui como un profesional",
+      "created_at": "2026-11-12",
+      "completed_at": null,
+      "depends_on": [
+        "spec-e-burgos-012-generators-tucu-ui"
+      ]
     }
   ]
 }

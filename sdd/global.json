@@ -212,7 +212,17 @@
       "completed_at": "2026-11-07"
     }
   ],
-  "in_progress_modules": [],
+  "in_progress_modules": [
+    {
+      "module": "kit-design-skills",
+      "spec": "spec-e-burgos-020-kit-design-skills",
+      "apps": [
+        "apps/cli"
+      ],
+      "cycles_completed": 0,
+      "description": "Skills de diseño del kit: tucu-ui profesional y lenguajes visuales replicables (Display Ads, Cristal Líquido)."
+    }
+  ],
   "pending_modules": [
     {
       "module": "studio-framework-vision",

@@ -384,6 +384,20 @@
           "tasks_done": 2
         }
       }
+    },
+    "spec-e-burgos-020-kit-design-skills": {
+      "cycles": {
+        "cycle-01": {
+          "file": "sdd/specs/spec-e-burgos-020-kit-design-skills/cycles/cycle-01/tasks.json",
+          "module": "kit-design-skills",
+          "apps": [
+            "apps/cli"
+          ],
+          "status": "in-progress",
+          "tasks_total": 3,
+          "tasks_done": 0
+        }
+      }
     }
   }
 }
