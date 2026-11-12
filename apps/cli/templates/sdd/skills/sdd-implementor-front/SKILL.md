@@ -9,6 +9,11 @@ description: Skill del Agente Implementador Frontend SDD. Implementa una task fr
 > no esta skill. Para scaffolding usar la skill `generate-*` que corresponda al stack
 > (ej: `generate-react-component` para React).
 
+> **UI y diseño**: si el subproyecto usa `@e-burgos/tucu-ui`, leé `tucu-ui-pro` antes de la primera
+> task (montaje, props válidos, trampas). Si la task diseña o rediseña pantallas, `design-languages`
+> define el lenguaje visual (contrato de tokens, superficies, componentes firma) y su verificación;
+> `crafted-motion`, el motion. El lenguaje que ya declara `constitution.md` manda.
+
 ## Protocolo task-by-task
 
 1. Leer la task asignada en `sdd/specs/{spec-id}/cycles/cycle-[XX]/tasks.json` (status `"pending"`)

@@ -5,6 +5,21 @@ All notable changes to `@e-burgos/sdd-harness` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- Kit skill `tucu-ui-pro`: using `@e-burgos/tucu-ui` like a professional — setup for Vite, Next 16
+  and apps with their own Tailwind v4, ThemeProvider/`themeStyle`/layout/presets/ThemeScope,
+  `customPaletteColor` and `--tucu-*` token overrides, a component catalog by need with the valid
+  props of 3.10, and the props and behaviours that crash or surprise at runtime. Works with or
+  without the tucu-ui MCP.
+- Kit skill `design-languages`: a method to choose or derive a complete visual language for any
+  project (token contract, surface hierarchy, scene, signature components, motion, accessibility,
+  verification) plus two production languages ready to replicate on tucu-ui — Sky Console (Display
+  Ads) and Cristal Líquido / Liquid Glass (ópticagestión).
+- The frontend implementor agent and skill load both skills when the subproject uses tucu-ui or
+  the task designs UI.
+
 ## [0.20.0] - 2026-11-07
 
 ### Added

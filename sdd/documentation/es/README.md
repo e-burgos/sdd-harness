@@ -186,6 +186,8 @@ sdd/
     ├── generate-api-contract/
     ├── generate-react-component/
     ├── crafted-motion/                ← Graphic motion para frontends React/Next
+    ├── design-languages/              ← Lenguajes visuales: método + Sky Console + Cristal Líquido
+    ├── tucu-ui-pro/                   ← tucu-ui como un profesional: montaje, theming, props y trampas
     ├── generate-nestjs-module/
     └── generate-prisma-schema/
 ```
@@ -793,6 +795,8 @@ Skills son micro-agentes especializados invocados con `/skill [nombre]`.
 | `generate-api-contract`    | Genera contratos OpenAPI, DTOs y mappers                           |
 | `generate-react-component` | Genera componente React con props tipadas y tests                  |
 | `crafted-motion`           | Graphic motion en React/Next: capas CSS / framer-motion / GSAP / WebGL, tokens, recetas, wizards y QA |
+| `tucu-ui-pro`              | tucu-ui en React/Next: montaje (Vite, Next 16, Tailwind propio), theming, catálogo con props válidos y trampas que rompen en runtime |
+| `design-languages`         | Lenguaje visual de cualquier proyecto: método para derivarlo y recetas replicables de Sky Console (Display Ads) y Cristal Líquido (ópticagestión) |
 | `generate-nestjs-module`   | Genera módulo NestJS (reservado para futuros proyectos)            |
 | `generate-prisma-schema`   | Genera schema Prisma (reservado para futuros proyectos)            |
 
