@@ -1,6 +1,6 @@
 # SPEC-e-burgos-020: El agente de frontend del kit diseña con tucu-ui como un profesional
 
-> Estado: **in-progress** (2026-11-12). cycle-01 abierto (flow lite). Sigue a spec-e-burgos-011/012
+> Estado: **completed** (2026-11-12). cycle-01 cerrado (flow lite, 3/3 tasks). Sigue a spec-e-burgos-011/012
 > (integración tucu-ui del kit y generadores con tucu-ui).
 
 ## Resumen ejecutivo

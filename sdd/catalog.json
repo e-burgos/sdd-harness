@@ -33,6 +33,10 @@
       "file": "SKILL.md"
     },
     {
+      "dir": "design-languages",
+      "file": "SKILL.md"
+    },
+    {
       "dir": "generate-api-contract",
       "file": "SKILL.md"
     },
@@ -107,6 +111,10 @@
     {
       "dir": "setup-graphify",
       "file": "SKILL.md"
+    },
+    {
+      "dir": "tucu-ui-pro",
+      "file": "SKILL.md"
     }
   ],
   "prompts": [
@@ -174,6 +182,9 @@
     }
   ],
   "memory": [
+    {
+      "file": "2026-11-12-spec-e-burgos-020-cycle-01.md"
+    },
     {
       "file": "2026-11-07-spec-e-burgos-019-cycle-01.md"
     },

@@ -210,19 +210,19 @@
       "cycles_completed": 1,
       "description": "Wizard de entrada de pantalla completa con graphic motion para quien llega a la web sin puente conectado.",
       "completed_at": "2026-11-07"
-    }
-  ],
-  "in_progress_modules": [
+    },
     {
       "module": "kit-design-skills",
       "spec": "spec-e-burgos-020-kit-design-skills",
       "apps": [
         "apps/cli"
       ],
-      "cycles_completed": 0,
-      "description": "Skills de diseño del kit: tucu-ui profesional y lenguajes visuales replicables (Display Ads, Cristal Líquido)."
+      "cycles_completed": 1,
+      "description": "Skills de diseño del kit: tucu-ui profesional y lenguajes visuales replicables (Display Ads, Cristal Líquido).",
+      "completed_at": "2026-11-12"
     }
   ],
+  "in_progress_modules": [],
   "pending_modules": [
     {
       "module": "studio-framework-vision",
