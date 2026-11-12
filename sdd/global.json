@@ -222,7 +222,17 @@
       "completed_at": "2026-11-12"
     }
   ],
-  "in_progress_modules": [],
+  "in_progress_modules": [
+    {
+      "module": "video-maker-integration",
+      "spec": "spec-e-burgos-021-video-maker-integration",
+      "apps": [
+        "apps/cli"
+      ],
+      "cycles_completed": 0,
+      "description": "Vinculación opcional del kit con video-maker: plugin de Claude Code y MCP fijado para Copilot y Gemini."
+    }
+  ],
   "pending_modules": [
     {
       "module": "studio-framework-vision",

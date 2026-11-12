@@ -1,0 +1,10 @@
+{
+  "$schema": "../../../../schemas/cycle-tasks.schema.json",
+  "spec": "spec-e-burgos-021-video-maker-integration", "cycle": 1, "module": "video-maker-integration", "apps": ["apps/cli"], "flow": "lite",
+  "user_stories_generated": true, "prerequisites": { "tasks_generated": true },
+  "tasks": [
+    { "id": "TASK-001", "title": "Kit: video-maker-common, sdd:video, tools.json/schema y validador", "user_stories": ["US-1", "US-2", "US-3"], "estimation_hours": 4, "story_points": 5, "depends_on": [], "status": "pending", "files": ["apps/cli/templates/sdd/scripts/sdd-video.mjs"] },
+    { "id": "TASK-002", "title": "CLI: --video-maker en init/configure y preservación en update", "user_stories": ["US-4"], "estimation_hours": 3, "story_points": 5, "depends_on": ["TASK-001"], "status": "pending", "files": ["apps/cli/src/commands/init.ts"] },
+    { "id": "TASK-003", "title": "Docs, steward, generación real y cierre", "user_stories": ["US-4"], "estimation_hours": 2, "story_points": 3, "depends_on": ["TASK-001", "TASK-002"], "status": "pending", "files": [] }
+  ]
+}

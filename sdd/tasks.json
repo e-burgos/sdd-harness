@@ -398,6 +398,20 @@
           "tasks_done": 3
         }
       }
+    },
+    "spec-e-burgos-021-video-maker-integration": {
+      "cycles": {
+        "cycle-01": {
+          "file": "sdd/specs/spec-e-burgos-021-video-maker-integration/cycles/cycle-01/tasks.json",
+          "module": "video-maker-integration",
+          "apps": [
+            "apps/cli"
+          ],
+          "status": "in-progress",
+          "tasks_total": 3,
+          "tasks_done": 0
+        }
+      }
     }
   }
 }

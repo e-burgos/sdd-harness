@@ -312,6 +312,22 @@
       "depends_on": [
         "spec-e-burgos-012-generators-tucu-ui"
       ]
+    },
+    {
+      "id": "spec-e-burgos-021-video-maker-integration",
+      "author": "e-burgos",
+      "slug": "video-maker-integration",
+      "folder": "sdd/specs/spec-e-burgos-021-video-maker-integration",
+      "file": "sdd/specs/spec-e-burgos-021-video-maker-integration/spec-e-burgos-021-video-maker-integration.spec.md",
+      "module": "video-maker-integration",
+      "app": "apps/cli",
+      "status": "in-progress",
+      "title": "El kit trae la vinculación con video-maker",
+      "created_at": "2026-11-12",
+      "completed_at": null,
+      "depends_on": [
+        "spec-e-burgos-011-kit-tucu-ui"
+      ]
     }
   ]
 }
