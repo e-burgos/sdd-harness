@@ -5,7 +5,7 @@ All notable changes to `@e-burgos/sdd-harness` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.21.0] - 2026-11-12
 
 ### Added
 - Kit skill `tucu-ui-pro`: using `@e-burgos/tucu-ui` like a professional — setup for Vite, Next 16
