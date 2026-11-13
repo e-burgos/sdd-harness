@@ -1,9 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { I18nProvider } from '@/lib/i18n/i18n';
-import { optionNames, pickOption, waitForSelectToClose } from '@/lib/test-utils/pick-option';
+import { optionNames, pickOption } from '@/lib/test-utils/pick-option';
 import { HelpSelect } from './HelpSelect';
 
-afterEach(waitForSelectToClose);
 
 const OPTIONS = [
   { value: 'a', label: 'A' },
@@ -64,7 +63,6 @@ describe('HelpSelect', () => {
     const combobox = screen.getByRole('combobox', { name: 'Modelo' });
     pickOption(combobox, 'A');
     expect(onChange).not.toHaveBeenCalled();
-    await waitForSelectToClose();
     pickOption(combobox, 'B');
     expect(onChange).toHaveBeenCalledTimes(1);
     expect(onChange).toHaveBeenCalledWith('b');

@@ -5,6 +5,21 @@ All notable changes to `@e-burgos/sdd-harness` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- The kit CI workflow (`sdd/templates/github/workflows/sdd-validate.yml`, copied by `harness github
+  connect`) no longer depends on the repo's package manager: it used `pnpm/action-setup` without a
+  version and `pnpm install --frozen-lockfile`, so on repos without `packageManager`, with npm/yarn
+  or without a pnpm lockfile the `sdd:validate` check always failed (and `protect` locked the
+  branch). It now installs only the validator's dependencies (`ajv`, `ajv-formats`) with npm into
+  `sdd/`. Repos connected before this version can copy the new file over
+  `.github/workflows/sdd-validate.yml` (FIX-e-burgos-014-002).
+
+### Changed
+- Generated frontend apps ask for `@e-burgos/tucu-ui` `^3.10.1`, which fixes the `Select` close
+  timer (a menu reopened during its leave animation closed again) (FIX-e-burgos-013-002).
+
 ## [0.21.0] - 2026-11-12
 
 ### Added

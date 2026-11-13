@@ -1,9 +1,5 @@
 import { fireEvent, screen } from '@testing-library/react';
 
-const TUCU_SELECT_CLOSE_MS = 100;
-
-export const waitForSelectToClose = (): Promise<void> => new Promise((resolve) => setTimeout(resolve, TUCU_SELECT_CLOSE_MS + 20));
-
 const nameOf = (option: HTMLElement): string => option.querySelector(':scope > div > span')?.textContent ?? option.textContent ?? '';
 
 export function openSelect(combobox: HTMLElement): void {

@@ -110,8 +110,8 @@ importers:
   apps/studio:
     dependencies:
       '@e-burgos/tucu-ui':
-        specifier: 3.10.0
-        version: 3.10.0(@types/react@19.2.18)(immer@11.2.9)(next@16.4.3(@playwright/test@1.63.0)(@types/node@20.19.43)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react-dom@19.3.0(react@19.3.0))(react-is@17.0.2)(react@19.3.0)(redux@5.0.1)(tailwindcss@4.3.3)(use-sync-external-store@1.7.0(react@19.3.0))
+        specifier: 3.10.1
+        version: 3.10.1(@types/react@19.2.18)(immer@11.2.9)(next@16.4.3(@playwright/test@1.63.0)(@types/node@20.19.43)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react-dom@19.3.0(react@19.3.0))(react-is@17.0.2)(react@19.3.0)(redux@5.0.1)(tailwindcss@4.3.3)(use-sync-external-store@1.7.0(react@19.3.0))
       '@sdd-studio/protocol':
         specifier: workspace:*
         version: link:../../libs/studio-protocol
@@ -464,8 +464,8 @@ packages:
     peerDependencies:
       react: '>=16.8.0'
 
-  '@e-burgos/tucu-ui@3.10.0':
-    resolution: {integrity: sha512-3tALYkKpROpnjVvG0s446lCFUkEloXXvKzlv6j0xDk3Pm7clhh716lgCSZY5/JbaH+H8Hw4+Q2aPB8gMYNT7Xw==}
+  '@e-burgos/tucu-ui@3.10.1':
+    resolution: {integrity: sha512-XybXVVvckjiMSPjYO/i4bQDCd41gyGsDvVR7rCL/R00PuhvqFnykvTc93f0LTgpwheT7tDQWVvEdmhYJ+Ul6YA==}
     peerDependencies:
       next: '>=16'
       react: '>=18.0.0'
@@ -3254,7 +3254,7 @@ snapshots:
       react: 19.3.0
       tslib: 2.8.1
 
-  '@e-burgos/tucu-ui@3.10.0(@types/react@19.2.18)(immer@11.2.9)(next@16.4.3(@playwright/test@1.63.0)(@types/node@20.19.43)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react-dom@19.3.0(react@19.3.0))(react-is@17.0.2)(react@19.3.0)(redux@5.0.1)(tailwindcss@4.3.3)(use-sync-external-store@1.7.0(react@19.3.0))':
+  '@e-burgos/tucu-ui@3.10.1(@types/react@19.2.18)(immer@11.2.9)(next@16.4.3(@playwright/test@1.63.0)(@types/node@20.19.43)(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react-dom@19.3.0(react@19.3.0))(react-is@17.0.2)(react@19.3.0)(redux@5.0.1)(tailwindcss@4.3.3)(use-sync-external-store@1.7.0(react@19.3.0))':
     dependencies:
       '@dnd-kit/core': 6.3.1(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       '@dnd-kit/modifiers': 9.0.0(@dnd-kit/core@6.3.1(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react@19.3.0)

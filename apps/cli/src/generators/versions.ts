@@ -12,7 +12,7 @@ export const FRONTEND_VERSIONS = {
   "@tailwindcss/postcss": "^4.3.4",
   vitest: "^5.1.0",
   "@vitest/coverage-v8": "^5.1.0",
-  "@e-burgos/tucu-ui": "^3.10.0",
+  "@e-burgos/tucu-ui": "^3.10.1",
 } as const;
 
 export const PYTHON_VERSIONS = {
