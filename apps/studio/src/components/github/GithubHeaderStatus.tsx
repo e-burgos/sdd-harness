@@ -46,7 +46,7 @@ export function GithubHeaderStatus() {
         target="_blank"
         rel="noreferrer"
         title={t('github.header.open', { repo })}
-        className="hidden max-w-[200px] items-center truncate rounded-full border border-foreground/10 bg-foreground/5 px-2.5 py-1 font-mono text-meta text-ink-300 transition-colors hover:bg-foreground/10 lg:flex"
+        className="hidden min-w-0 max-w-[200px] items-center truncate whitespace-nowrap rounded-full border border-foreground/10 bg-foreground/5 px-2.5 py-1 font-mono text-meta text-ink-300 transition-colors hover:bg-foreground/10 lg:flex"
       >
         {repo}
       </a>
@@ -55,7 +55,7 @@ export function GithubHeaderStatus() {
 
   return (
     <>
-      <Button type="button" data-testid="github-header-connect" size="tiny" variant="outline" color="gray" className="hidden font-mono text-meta lg:inline-flex" title={t('github.header.connectHint')} onClick={() => setOpen(true)}>
+      <Button type="button" data-testid="github-header-connect" size="tiny" variant="outline" color="gray" className="hidden shrink-0 whitespace-nowrap font-mono text-meta lg:inline-flex" title={t('github.header.connectHint')} onClick={() => setOpen(true)}>
         {t('github.header.connect')}
       </Button>
       <Modal isOpen={open} setIsOpen={() => undefined} onClose={() => setOpen(false)} hideButtons size="md" text={{ title: t('github.dialog.title') }}>

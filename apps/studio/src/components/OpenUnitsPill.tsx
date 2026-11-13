@@ -31,7 +31,7 @@ export function OpenUnitsPill() {
 
   if (units.length === 0) return null;
   return (
-    <div ref={ref} className="relative hidden lg:block">
+    <div ref={ref} className="relative hidden shrink-0 lg:block">
       <button
         type="button"
         data-testid="open-units-pill"
@@ -39,7 +39,7 @@ export function OpenUnitsPill() {
         aria-expanded={open}
         title={t('units.pill.hint')}
         onClick={() => setOpen((v) => !v)}
-        className="flex items-center gap-1.5 rounded-full border border-foreground/10 bg-foreground/5 px-2.5 py-1 font-mono text-meta text-ink-300 transition-colors hover:bg-foreground/10"
+        className="flex items-center gap-1.5 whitespace-nowrap rounded-full border border-foreground/10 bg-foreground/5 px-2.5 py-1 font-mono text-meta text-ink-300 transition-colors hover:bg-foreground/10"
       >
         {t('units.pill', { n: units.length })}
       </button>
