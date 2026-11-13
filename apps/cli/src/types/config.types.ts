@@ -76,8 +76,9 @@ export interface SDDConfig {
 }
 
 export interface NxConfig {
-  plugins: string[];
+  plugins?: string[];
   defaultProject?: string;
+  version?: 22 | 23 | 24;
 }
 
 export interface NpmScope {

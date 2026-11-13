@@ -1,3 +1,4 @@
+import type { NxMajor } from '../generators/versions.js';
 import { extname, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import fs from 'fs-extra';
@@ -56,6 +57,7 @@ export function normalizeModuleSeeds(config: HarnessConfig): ModuleSeed[] {
 
 export interface ConfigOptionOverrides {
   tucuUi?: boolean;
+  nxMajor?: NxMajor;
 }
 
 export function toWorkspaceOptions(
@@ -82,6 +84,7 @@ export function toWorkspaceOptions(
     npmScopes: config.npm?.scopes ?? [],
     sddAuthor: config.sdd?.author,
     sddProfile: config.sdd?.profile,
+    nxMajor: overrides.nxMajor ?? config.nx?.version,
     modules: normalizeModuleSeeds(config),
   };
 }

@@ -188,6 +188,7 @@ sdd/
     ├── crafted-motion/                ← Graphic motion for React/Next frontends
     ├── design-languages/              ← Visual languages: method + Sky Console + Liquid Glass
     ├── tucu-ui-pro/                   ← tucu-ui like a pro: setup, theming, props and pitfalls
+    ├── nx-migration/                  ← Migrate Nx one major at a time: method, command and per-version pitfalls
     ├── generate-nestjs-module/
     └── generate-prisma-schema/
 ```
@@ -797,6 +798,7 @@ Skills are specialized micro-agents invoked with `/skill [name]`.
 | `crafted-motion`           | Graphic motion in React/Next: CSS / framer-motion / GSAP / WebGL layers, tokens, recipes, wizards and QA |
 | `tucu-ui-pro`              | tucu-ui in React/Next: setup (Vite, Next 16, own Tailwind), theming, catalog with valid props and runtime-crashing pitfalls |
 | `design-languages`         | Visual language for any project: a method to derive it plus replicable recipes for Sky Console (Display Ads) and Liquid Glass (ópticagestión) |
+| `nx-migration`             | Nx migration by majors (22→23→24): method, SDD fix, checklist, per-version pitfalls and TypeScript 7 |
 | `generate-nestjs-module`   | Generates a NestJS module (reserved for future projects)            |
 | `generate-prisma-schema`   | Generates a Prisma schema (reserved for future projects)            |
 

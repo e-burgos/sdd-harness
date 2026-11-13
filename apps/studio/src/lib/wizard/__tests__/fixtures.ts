@@ -56,6 +56,12 @@ export const catalogFixture: ConfigCatalog = {
   jsonSchema: {},
 };
 
+export const nxCatalogFixture: ConfigCatalog = {
+  ...catalogFixture,
+  nx: { majors: [22, 23, 24], default: 24, versions: { '22': '22.7.1', '23': '23.1.0', '24': '24.0.2' } },
+};
+
+
 export const run = (actions: WizardAction[], from: WizardState = initialWizardState()): WizardState =>
   actions.reduce((state, action) => wizardReducer(state, action, catalogFixture), from);
 
@@ -78,3 +84,5 @@ export const catalogResultFixture = {
   suggestedParent: '/home/dev/projects',
   platform: 'posix' as const,
 };
+
+export const nxCatalogResultFixture = { ...catalogResultFixture, catalog: nxCatalogFixture };

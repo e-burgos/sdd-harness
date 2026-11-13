@@ -1,5 +1,7 @@
 import { resolve } from 'node:path';
 import fs from 'fs-extra';
+import { detectNxMajor, ensureNxPlugins, eslintPluginEntry, stripRemovedExecutors, usesInferredTasks } from './nx-inferred.js';
+import type { NxMajor } from './versions.js';
 import { copyBlueprint, resolveBlueprintDir } from '../utils/blueprint.js';
 
 const LIB_TYPE_TAGS: Record<string, string> = {
@@ -19,6 +21,7 @@ export async function generateLib(
   root: string,
   lib: { name: string; type: string },
   packageScope: string,
+  nxMajor?: NxMajor,
 ): Promise<void> {
   const libDir = resolve(root, 'libs', lib.name);
   const blueprint = resolveBlueprintDir(root, 'libs/ts-lib');
@@ -47,6 +50,11 @@ export async function generateLib(
   );
 
   await registerTsconfigPath(root, lib.name);
+
+  if (usesInferredTasks(nxMajor ?? (await detectNxMajor(root)))) {
+    await stripRemovedExecutors(libDir);
+    await ensureNxPlugins(root, [eslintPluginEntry()]);
+  }
 }
 
 async function registerTsconfigPath(root: string, name: string): Promise<void> {

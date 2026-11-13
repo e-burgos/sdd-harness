@@ -67,6 +67,7 @@ export function SummaryStep() {
       <SummarySection id="profile" title={t('wizard.summary.profile')} editStep="shape">
         <p className="text-copy text-ink-100">{state.project.name}</p>
         <p className="text-small text-ink-300">{state.project.description}</p>
+        {model.nxVersion !== null && <p className="text-small text-ink-300">{t('wizard.summary.nx', { version: model.nxVersion })}</p>}
         <p className="text-small text-ink-300">
           {model.mode !== null && t('wizard.summary.mode', { mode: t(`wizard.mode.${model.mode}.label` as keyof Dict) })} · {t('wizard.summary.profileValue', { profile: model.profile })}
         </p>

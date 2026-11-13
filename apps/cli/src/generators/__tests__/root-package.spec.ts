@@ -4,7 +4,7 @@ import {
   addAppScriptsToRootPkg,
   addAppTypeDepsToRootPkg,
 } from '../root-package.js';
-import { FRONTEND_VERSIONS } from '../versions.js';
+import { FRONTEND_VERSIONS, NX_PEER_OVERRIDES, NX_VERSIONS } from '../versions.js';
 
 const emptyPkg = () => ({
   scripts: {} as Record<string, string>,
@@ -51,12 +51,12 @@ describe('generators/root-package', () => {
     const reference = {
       scripts: {},
       dependencies: { react: '^19.0.0', 'react-dom': '^19.0.0', 'react-router-dom': '^7.0.0' },
-      devDependencies: { '@nx/react': '23.1.1', vite: '^8.0.0', vitest: '^4.1.10' },
+      devDependencies: { '@nx/react': '22.7.12', vite: '^8.0.0', vitest: '^4.1.10' },
     };
     addAppTypeDepsToRootPkg(pkg, 'react', reference);
     expect(pkg.dependencies['react']).toBe(FRONTEND_VERSIONS.react);
     expect(pkg.devDependencies['vite']).toBe(FRONTEND_VERSIONS.vite);
-    expect(pkg.devDependencies['@nx/react']).toBe('23.1.1');
+    expect(pkg.devDependencies['@nx/react']).toBe(NX_VERSIONS[24]);
   });
 
   it('react y nextjs agregan tucu-ui por defecto y respetan tucuUi=false', () => {
@@ -124,5 +124,28 @@ describe('generators/root-package', () => {
     pkg.dependencies['react'] = '^18.3.0';
     addAppTypeDepsToRootPkg(pkg, 'react', reference);
     expect(pkg.dependencies['react']).toBe('^18.3.0');
+  });
+
+  it('nxMajor elige la versión de @nx/* y los peers por mayor', () => {
+    const pkg = emptyPkg();
+    addAppTypeDepsToRootPkg(pkg, 'nestjs', undefined, { nxMajor: 22 });
+    addAppTypeDepsToRootPkg(pkg, 'hono', undefined, { nxMajor: 22 });
+    expect(pkg.devDependencies['@nx/nest']).toBe(NX_VERSIONS[22]);
+    expect(pkg.devDependencies['vitest']).toBe(NX_PEER_OVERRIDES[22]['vitest']);
+    const latest = emptyPkg();
+    addAppTypeDepsToRootPkg(latest, 'hono', undefined, { nxMajor: 24 });
+    expect(latest.devDependencies['vitest']).toBe(FRONTEND_VERSIONS.vitest);
+  });
+
+  it('nxVersion explícito manda sobre la tabla y sobre la referencia', () => {
+    const pkg = emptyPkg();
+    const reference = {
+      scripts: {},
+      dependencies: { react: '^19.0.0', 'react-dom': '^19.0.0', 'react-router-dom': '^7.0.0' },
+      devDependencies: { '@nx/react': '24.0.6', '@nx/vite': '24.0.6' },
+    };
+    addAppTypeDepsToRootPkg(pkg, 'react', reference, { nxMajor: 23, nxVersion: '23.1.1' });
+    expect(pkg.devDependencies['@nx/react']).toBe('23.1.1');
+    expect(pkg.devDependencies['@nx/vite']).toBe('23.1.1');
   });
 });

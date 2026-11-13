@@ -130,9 +130,12 @@ const SDDConfigSchema = z.object({
     .optional(),
 });
 
+const NxMajorSchema = z.union([z.literal(22), z.literal(23), z.literal(24)]);
+
 const NxConfigSchema = z.object({
-  plugins: z.array(z.string()),
+  plugins: z.array(z.string()).default([]),
   defaultProject: z.string().optional(),
+  version: NxMajorSchema.optional(),
 });
 
 // Scopes npm privados → `.npmrc` del repo (`@org:registry=https://npm.pkg.github.com`).

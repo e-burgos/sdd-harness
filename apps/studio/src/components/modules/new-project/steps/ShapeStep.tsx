@@ -2,7 +2,9 @@
 
 import { useT } from '@/lib/i18n/i18n';
 import type { Dict } from '@/lib/i18n/es';
-import { modeBlockReason, type WizardMode } from '@/lib/wizard/catalog';
+import { HelpSelect } from '../../../HelpSelect';
+import { modeBlockReason, nxChoices, nxSelectable, type WizardMode } from '@/lib/wizard/catalog';
+import { effectiveNxVersion } from '@/lib/wizard/state';
 import { isRecommended } from '@/lib/wizard/recommendations';
 import { OptionCard, OptionGroup } from '../OptionCard';
 import { WizardField } from '../WizardField';
@@ -15,6 +17,7 @@ export function ShapeStep() {
   const { t } = useT();
   const { catalog, state, requestChange, dispatch, fieldError, touch, recommendations } = useWizard();
   if (catalog === null) return null;
+  const nxMajor = effectiveNxVersion(state, catalog);
   const modeRecommendation = recommendations.find((item) => item.kind === 'mode');
   return (
     <div className="flex flex-col gap-6">
@@ -38,6 +41,22 @@ export function ShapeStep() {
         </OptionGroup>
         {modeRecommendation && <p className="text-small text-ink-400">{recommendationText(t, modeRecommendation)}</p>}
       </div>
+      {nxSelectable(catalog, state.mode) && nxMajor !== null && (
+        <div data-testid="nx-version" className="flex flex-col gap-1">
+          <span className="text-small font-medium text-ink-300">{t('wizard.nx.label')}</span>
+          <HelpSelect
+            label={t('wizard.nx.label')}
+            help={t('wizard.nx.help')}
+            value={String(nxMajor)}
+            options={nxChoices(catalog).map((choice) => ({
+              value: String(choice.major),
+              label: t(choice.recommended ? 'wizard.nx.optionRecommended' : 'wizard.nx.option', { major: choice.major }),
+              description: t('wizard.nx.full', { version: choice.version }),
+            }))}
+            onChange={(value) => dispatch({ type: 'nx-version', major: Number(value) })}
+          />
+        </div>
+      )}
       <div className="flex flex-col gap-3">
         <WizardField
           field="project.name"

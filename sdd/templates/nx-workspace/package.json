@@ -23,6 +23,7 @@
     "sdd:mod": "node sdd/scripts/sdd-mod.mjs",
     "sdd:tucu": "node sdd/scripts/sdd-tucu.mjs",
     "sdd:video": "node sdd/scripts/sdd-video.mjs",
+    "sdd:nx-migrate": "node sdd/scripts/sdd-nx-migrate.mjs",
     "postinstall": "node -e \"const f='sdd/scripts/setup-rtk.mjs';if(require('fs').existsSync(f)){require('child_process').execFileSync(process.execPath,[f],{stdio:'inherit'})}\""
   },
   "dependencies": {

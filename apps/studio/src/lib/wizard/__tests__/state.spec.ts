@@ -1,5 +1,5 @@
-import { applyChange, canAddApp, effectiveProfile, initialWizardState, planDiscards, stepApplies, visibleSteps } from '../state';
-import { catalogFixture, idOf, run, scoped } from './fixtures';
+import { applyChange, canAddApp, effectiveNxVersion, effectiveProfile, initialWizardState, planDiscards, stepApplies, visibleSteps } from '../state';
+import { catalogFixture, idOf, nxCatalogFixture, run, scoped } from './fixtures';
 
 describe('scope matrix', () => {
   it.each([
@@ -207,5 +207,19 @@ describe('project, libs, services and profile', () => {
     const state = run([{ type: 'service-toggle', serviceType: 'redis' }, { type: 'service-toggle', serviceType: 'postgres' }, { type: 'service-toggle', serviceType: 'redis' }]);
     expect(state.services).toEqual(['postgres']);
     expect(run([{ type: 'reset' }], state)).toEqual(initialWizardState());
+  });
+});
+
+describe('nx version', () => {
+  it('starts on the catalog default and follows the chosen major', () => {
+    const state = scoped('front', 'nx');
+    expect(state.nxVersion).toBeNull();
+    expect(effectiveNxVersion(state, nxCatalogFixture)).toBe(24);
+    expect(effectiveNxVersion(run([{ type: 'nx-version', major: 23 }], state), nxCatalogFixture)).toBe(23);
+  });
+
+  it('is absent for standalone and for catalogs without nx', () => {
+    expect(effectiveNxVersion(scoped('front', 'standalone'), nxCatalogFixture)).toBeNull();
+    expect(effectiveNxVersion(scoped('front', 'nx'), catalogFixture)).toBeNull();
   });
 });

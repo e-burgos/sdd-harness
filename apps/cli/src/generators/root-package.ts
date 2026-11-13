@@ -1,6 +1,13 @@
 import { tucuUiPackageDeps } from "./tucu-ui-app.js";
+import { ESBUILD_VERSION, usesInferredTasks } from "./nx-inferred.js";
 import { logger } from "../utils/logger.js";
-import { FRONTEND_VERSIONS, NX_VERSION } from "./versions.js";
+import {
+  DEFAULT_NX_MAJOR,
+  FRONTEND_VERSIONS,
+  frontendVersionFor,
+  nxVersionFor,
+  type NxMajor,
+} from "./versions.js";
 
 function nextMajor(range: string): number {
   const match = /\d+/.exec(range);
@@ -40,16 +47,18 @@ export function addAppTypeDepsToRootPkg(
   pkg: PackageJson,
   type: string,
   referencePkg?: PackageJson,
-  options: { tucuUi?: boolean } = {},
+  options: { tucuUi?: boolean; nxMajor?: NxMajor; nxVersion?: string } = {},
 ): void {
+  const nxMajor = options.nxMajor ?? DEFAULT_NX_MAJOR;
+  const nxVersion = options.nxVersion ?? nxVersionFor(nxMajor);
   const addMissingFromReference = (
     section: "dependencies" | "devDependencies",
     names: string[],
   ) => {
     for (const name of names) {
       if (name in pkg[section]) continue;
-      const pinned = (FRONTEND_VERSIONS as Record<string, string>)[name];
-      const version = pinned ?? referencePkg?.[section][name];
+      const pinned = frontendVersionFor(name, nxMajor);
+      const version = name.startsWith("@nx/") ? nxVersion : (pinned ?? referencePkg?.[section][name]);
       if (version) pkg[section][name] = version;
     }
   };
@@ -97,10 +106,10 @@ export function addAppTypeDepsToRootPkg(
       // webpack-cli: el build inferido por @nx/webpack/plugin lo invoca directamente.
       // jest-environment-node + ts-jest: el target test corre jest.config.js (CommonJS).
       Object.assign(pkg.devDependencies, {
-        "@nx/nest": NX_VERSION,
-        "@nx/node": NX_VERSION,
-        "@nx/webpack": NX_VERSION,
-        "@nx/jest": NX_VERSION,
+        "@nx/nest": nxVersion,
+        "@nx/node": nxVersion,
+        "@nx/webpack": nxVersion,
+        "@nx/jest": nxVersion,
         "@nestjs/testing": "^11.0.0",
         "@types/express": "^5.0.0",
         jest: "^29.7.0",
@@ -113,13 +122,13 @@ export function addAppTypeDepsToRootPkg(
     case "nextjs":
     case "next-bff":
       if (!pkg.dependencies["next"]) {
-        pkg.dependencies["next"] = FRONTEND_VERSIONS.next;
+        pkg.dependencies["next"] = frontendVersionFor("next", nxMajor) ?? FRONTEND_VERSIONS.next;
       } else if (options.tucuUi !== false && nextMajor(pkg.dependencies["next"]) < 16) {
         logger.warn(
           `Root package.json pins next ${pkg.dependencies["next"]}, but tucu-ui needs Next 16 — upgrade it manually.`,
         );
       }
-      pkg.devDependencies["@nx/next"] = NX_VERSION;
+      pkg.devDependencies["@nx/next"] = nxVersion;
       addMissingFromReference("dependencies", ["react", "react-dom"]);
       addMissingFromReference("devDependencies", [
         "@types/react",
@@ -137,8 +146,9 @@ export function addAppTypeDepsToRootPkg(
     case "fastify":
       pkg.dependencies["fastify"] = "^5.0.0";
       Object.assign(pkg.devDependencies, {
-        "@nx/node": NX_VERSION,
-        "@nx/esbuild": NX_VERSION,
+        "@nx/node": nxVersion,
+        "@nx/esbuild": nxVersion,
+        ...(usesInferredTasks(nxMajor) ? { esbuild: ESBUILD_VERSION } : {}),
       });
       break;
     case "hono":
@@ -147,9 +157,10 @@ export function addAppTypeDepsToRootPkg(
         "@hono/node-server": "^1.14.0",
       });
       Object.assign(pkg.devDependencies, {
-        "@nx/node": NX_VERSION,
-        vite: pkg.devDependencies["vite"] ?? FRONTEND_VERSIONS.vite,
-        vitest: pkg.devDependencies["vitest"] ?? FRONTEND_VERSIONS.vitest,
+        "@nx/node": nxVersion,
+        ...(usesInferredTasks(nxMajor) ? { esbuild: ESBUILD_VERSION } : {}),
+        vite: pkg.devDependencies["vite"] ?? frontendVersionFor("vite", nxMajor),
+        vitest: pkg.devDependencies["vitest"] ?? frontendVersionFor("vitest", nxMajor),
       });
       break;
   }

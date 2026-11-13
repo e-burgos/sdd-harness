@@ -4,6 +4,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import fs from 'fs-extra';
 
+import { HarnessConfigSchema } from '../schema.js';
 import {
   loadHarnessConfig,
   toStandaloneOptions,
@@ -308,5 +309,19 @@ describe('config/load', () => {
       await writeConfig({ ...VALID_CONFIG, mode: 'standalone' }, 'multi.json'),
     );
     expect(() => toStandaloneOptions(multi)).toThrow(/exactly one app/);
+  });
+
+  describe('nx.version', () => {
+    it('lo acepta y llega a las opciones del workspace; el flag gana sobre el config', () => {
+      const config = HarnessConfigSchema.parse({ ...VALID_CONFIG, nx: { version: 22 } });
+      expect(toWorkspaceOptions(config).nxMajor).toBe(22);
+      expect(toWorkspaceOptions(config, { nxMajor: 23 }).nxMajor).toBe(23);
+      expect(toWorkspaceOptions(HarnessConfigSchema.parse(VALID_CONFIG)).nxMajor).toBeUndefined();
+    });
+
+    it('rechaza mayores fuera de 22|23|24', () => {
+      expect(HarnessConfigSchema.safeParse({ ...VALID_CONFIG, nx: { version: 21 } }).success).toBe(false);
+      expect(HarnessConfigSchema.safeParse({ ...VALID_CONFIG, nx: { version: '24' } }).success).toBe(false);
+    });
   });
 });

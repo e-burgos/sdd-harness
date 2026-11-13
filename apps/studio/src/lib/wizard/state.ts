@@ -55,6 +55,7 @@ export interface WizardState {
   profile: WizardProfile | null;
   author: string;
   modules: string[];
+  nxVersion: number | null;
   nextAppId: number;
   stash: WizardStash;
 }
@@ -87,6 +88,7 @@ export type WizardAction =
   | { type: 'profile'; profile: WizardProfile | null }
   | { type: 'author'; author: string }
   | { type: 'modules'; modules: string[] }
+  | { type: 'nx-version'; major: number | null }
   | { type: 'reset' };
 
 export const initialWizardState = (): WizardState => ({
@@ -99,6 +101,7 @@ export const initialWizardState = (): WizardState => ({
   profile: null,
   author: '',
   modules: [],
+  nxVersion: null,
   nextAppId: 1,
   stash: { apps: [], libs: [] },
 });
@@ -118,6 +121,11 @@ export const stepApplies = (scope: WizardScope | null, step: WizardStepId): bool
 export const visibleSteps = (scope: WizardScope | null): WizardStepId[] => WIZARD_STEPS.filter((step) => stepApplies(scope, step));
 
 export const effectiveProfile = (state: WizardState): WizardProfile => state.profile ?? (state.mode === 'standalone' ? 'solo' : 'team');
+
+export function effectiveNxVersion(state: WizardState, catalog: ConfigCatalog): number | null {
+  if (!catalog.nx || state.mode !== 'nx') return null;
+  return state.nxVersion !== null && catalog.nx.majors.includes(state.nxVersion) ? state.nxVersion : catalog.nx.default;
+}
 
 export const derivedPackageScope = (name: string): string => (name === '' ? '' : `@${name}`);
 
@@ -353,6 +361,8 @@ export function wizardReducer(state: WizardState, action: WizardAction, catalog:
       return { ...state, author: action.author };
     case 'modules':
       return { ...state, modules: action.modules };
+    case 'nx-version':
+      return { ...state, nxVersion: action.major };
     case 'reset':
       return initialWizardState();
   }

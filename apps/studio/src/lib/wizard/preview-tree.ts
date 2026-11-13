@@ -1,9 +1,10 @@
 import type { ConfigCatalog, ResolvedConfig } from '@sdd-studio/protocol';
 import { appTypeEntry, stackDescription } from './catalog';
-import type { WizardState } from './state';
+import { effectiveNxVersion, type WizardState } from './state';
 
 export interface PreviewSource {
   mode: 'nx' | 'standalone';
+  nxVersion?: number | null;
   project: string;
   apps: Array<{ name: string; type: string; path: string; stack: string }>;
   libs: Array<{ name: string; type: string; path: string }>;
@@ -33,6 +34,7 @@ export function sourceFromState(state: WizardState, catalog: ConfigCatalog): Pre
   const standalone = state.mode === 'standalone';
   return {
     mode: state.mode,
+    nxVersion: effectiveNxVersion(state, catalog),
     project: state.project.name,
     apps: state.apps.map((app) => {
       const entry = appTypeEntry(catalog, app.type);
@@ -51,7 +53,7 @@ export function sourceFromState(state: WizardState, catalog: ConfigCatalog): Pre
 const node = (id: string, depth: number, name: string, kind: TreeNodeKind, detail: string | null = null): TreeNode => ({ id, depth, name, detail, kind });
 
 export function previewTree(source: PreviewSource): TreeNode[] {
-  const nodes: TreeNode[] = [node('root', 0, `${source.project === '' ? '…' : source.project}/`, 'dir')];
+  const nodes: TreeNode[] = [node('root', 0, `${source.project === '' ? '…' : source.project}/`, 'dir', source.nxVersion ? `Nx ${source.nxVersion}` : null)];
   if (source.mode === 'nx') {
     nodes.push(node('apps', 1, 'apps/', 'dir'));
     for (const app of source.apps) nodes.push(node(`app:${app.path}`, 2, `${app.name}/`, 'app', `${app.type} · ${app.stack}`));
