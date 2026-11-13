@@ -5,7 +5,23 @@ All notable changes to `@e-burgos/sdd-harness` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.22.0] - 2026-11-13
+
+### Added
+- **Nx 22, 23 or 24 per workspace.** `harness init --nx <22|23|24>` (or `nx.version` in
+  `harness.config.json`, or the Studio wizard) generates the monorepo with that Nx major and the
+  peers it accepts (Nx 22 pins vitest `^4.1.12`); default 24 (24.0.6). `harness config catalog`
+  exposes the majors; `harness add app` keeps the repo's own Nx version. TypeScript stays `~6.0.3`
+  for all of them: TypeScript 7 is blocked by the ecosystem (typescript-eslint, @nestjs/cli,
+  ts-jest and Nx itself still require 6).
+- **Nx migrations built into the kit.** Skill `nx-migration` (one major at a time, a checklist per
+  hop, known breaking changes of 22→23 and 23→24, the project fix to record) and
+  `pnpm sdd:nx-migrate -- --to <major> [--yes]`: plans the hops from the repo's current Nx major
+  and, with `--yes`, runs `nx migrate`, install and `--run-migrations` hop by hop, stopping at the
+  first failure; never commits or pushes.
+- **Kit integrations from Studio.** The Kit module shows tucu-ui and video-maker with their state per
+  harness and turns them on, off or repairs them by running `sdd:tucu` / `sdd:video` through the
+  bridge (Studio side; the kit scripts are unchanged).
 
 ### Fixed
 - The kit CI workflow (`sdd/templates/github/workflows/sdd-validate.yml`, copied by `harness github
