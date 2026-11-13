@@ -1,6 +1,6 @@
 # SPEC-e-burgos-022: Las integraciones opcionales del kit se prenden desde Studio
 
-> Estado: **in-progress** (2026-11-13). cycle-01 abierto (flow lite). Cierra el pendiente
+> Estado: **completed** (2026-11-13). cycle-01 cerrado (flow lite, 3/3 tasks). Cierra el pendiente
 > «interruptor de tucu-ui en el módulo Kit de Studio» (spec-e-burgos-011) y suma video-maker
 > (spec-e-burgos-021), que usa el mismo mecanismo.
 

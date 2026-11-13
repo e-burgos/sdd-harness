@@ -337,10 +337,10 @@
       "file": "sdd/specs/spec-e-burgos-022-studio-kit-integrations/spec-e-burgos-022-studio-kit-integrations.spec.md",
       "module": "studio-kit-integrations",
       "app": "apps/studio",
-      "status": "in-progress",
+      "status": "completed",
       "title": "Las integraciones opcionales del kit se prenden desde Studio",
       "created_at": "2026-11-13",
-      "completed_at": null,
+      "completed_at": "2026-11-13",
       "depends_on": [
         "spec-e-burgos-011-kit-tucu-ui",
         "spec-e-burgos-021-video-maker-integration"

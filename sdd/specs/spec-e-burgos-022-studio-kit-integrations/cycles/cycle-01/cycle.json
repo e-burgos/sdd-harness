@@ -1,12 +1,144 @@
 {
   "$schema": "../../../../schemas/cycle.schema.json",
-  "cycle": 1, "module": "studio-kit-integrations", "spec": "spec-e-burgos-022-studio-kit-integrations",
-  "apps": ["libs/studio-protocol", "apps/studio-bridge", "apps/studio"],
-  "phase": "studio-kit-integrations", "flow": "lite",
-  "objectives": ["Las integraciones tucu-ui y video-maker se ven y se operan desde el módulo Kit de Studio (US-1..US-4)"],
-  "status": "in-progress", "started_at": "2026-11-13", "completed_at": null,
-  "documents": { "plan": "sdd/specs/spec-e-burgos-022-studio-kit-integrations/cycles/cycle-01/plan.md", "tasks": "sdd/specs/spec-e-burgos-022-studio-kit-integrations/cycles/cycle-01/tasks.json" },
+  "cycle": 1,
+  "module": "studio-kit-integrations",
+  "spec": "spec-e-burgos-022-studio-kit-integrations",
+  "apps": [
+    "libs/studio-protocol",
+    "apps/studio-bridge",
+    "apps/studio"
+  ],
+  "phase": "studio-kit-integrations",
+  "flow": "lite",
+  "objectives": [
+    "Las integraciones tucu-ui y video-maker se ven y se operan desde el módulo Kit de Studio (US-1..US-4)"
+  ],
+  "status": "completed",
+  "started_at": "2026-11-13",
+  "completed_at": "2026-11-13",
+  "documents": {
+    "plan": "sdd/specs/spec-e-burgos-022-studio-kit-integrations/cycles/cycle-01/plan.md",
+    "tasks": "sdd/specs/spec-e-burgos-022-studio-kit-integrations/cycles/cycle-01/tasks.json"
+  },
   "artifacts": [],
-  "metrics": { "tasks_total": 3, "tasks_completed": 0, "tasks_skipped": 0, "story_points": 0, "files_created": [], "files_modified": [], "files_deleted": [], "usage": { "tokens_in": 0, "tokens_out": 0, "by_agent": [] } },
-  "tables_created": [], "endpoints_implemented": [], "components_created": [], "issues_found": [], "reviewer_report": null
+  "metrics": {
+    "tasks_total": 3,
+    "tasks_completed": 3,
+    "tasks_skipped": 0,
+    "story_points": 12,
+    "files_created": [
+      "apps/studio-bridge/src/workspace/kit-integrations.ts",
+      "apps/studio-bridge/src/workspace/kit-integrations.spec.ts",
+      "apps/studio/src/components/modules/kit/KitIntegrations.tsx",
+      "apps/studio/src/components/modules/kit/use-kit-integrations.ts"
+    ],
+    "files_modified": [
+      "libs/studio-protocol/src/kit.ts",
+      "libs/studio-protocol/src/commands.ts",
+      "libs/studio-protocol/src/events.ts",
+      "libs/studio-protocol/src/limits.ts",
+      "apps/studio-bridge/src/server/router.ts",
+      "apps/studio-bridge/src/server/router.spec.ts",
+      "apps/studio-bridge/src/sessions/store.ts",
+      "apps/studio/src/components/modules/kit/KitToolsView.tsx",
+      "apps/studio/src/components/modules/kit/kit-module.spec.tsx",
+      "apps/studio/src/lib/i18n/modules/kit.ts",
+      "apps/studio/src/lib/format.ts",
+      "apps/studio/src/components/modules/activity/activity-model.ts"
+    ],
+    "files_deleted": [],
+    "usage": {
+      "tokens_in": 276798,
+      "tokens_out": 37906,
+      "approx": true,
+      "source": "declared-estimate",
+      "by_tier": {
+        "claude/opus": {
+          "tokens_in": 130000,
+          "tokens_out": 12000,
+          "approx": true,
+          "source": "declared-estimate"
+        },
+        "claude/sonnet": {
+          "tokens_in": 146798,
+          "tokens_out": 25906,
+          "approx": true,
+          "source": "agent-usage-notification"
+        }
+      },
+      "by_agent": [
+        {
+          "agent": "orchestrator",
+          "label": "spec, diseño, apertura y cierre",
+          "provider_model": "claude/opus",
+          "effort": "medium",
+          "tokens_in": 50000,
+          "tokens_out": 6000,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-13"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-001 Protocolo y puente: kit.integration.status/set y ejecución de los scripts",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 73399,
+          "tokens_out": 12953,
+          "source": "agent-usage-notification",
+          "approx": true,
+          "recorded_at": "2026-11-13"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-002 UI: sección Integraciones en el módulo Kit",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 73399,
+          "tokens_out": 12953,
+          "source": "agent-usage-notification",
+          "approx": true,
+          "recorded_at": "2026-11-13"
+        },
+        {
+          "agent": "reviewer",
+          "label": "TASK-003 Verificación real en el navegador y cierre",
+          "provider_model": "claude/opus",
+          "effort": "medium",
+          "tokens_in": 80000,
+          "tokens_out": 6000,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-13"
+        }
+      ]
+    }
+  },
+  "tables_created": [],
+  "endpoints_implemented": [],
+  "components_created": [
+    "COMP-134"
+  ],
+  "issues_found": [
+    "Verificado: una captura durante la animación del Switch lo mostró en OFF estando prendido; el DOM y una captura posterior confirman ON (no era un bug).",
+    "Abierto (informativo): las tarjetas no se refrescan solas si la integración se cambia desde la terminal mientras Studio está abierto; se actualizan al montar y tras cada acción propia."
+  ],
+  "reviewer_report": {
+    "approved": true,
+    "date": "2026-11-13",
+    "ca_results": {
+      "US-1": "PASS - sección Integraciones con estado, versión fijada, partes y chips por arnés (examples/kit-int, Studio --local-ui)",
+      "US-2": "PASS - prender video-maker (sin red) y tucu-ui (descarga la skill: «Turning on…» y luego Active, Skills 22→23) y apagar video-maker; tools.json, .claude/settings.json y .vscode/mcp.json escritos por los scripts del kit",
+      "US-3": "PASS - con el link .claude/skills/tucu-ui-design borrado a mano: Incomplete, claude incomplete y «Repair»; Repair lo restaura (Active, cuatro arneses complete)",
+      "US-4": "PASS - descripción y requisitos por tarjeta en es/en; 375 px sin desborde; cada cambio queda en #general"
+    },
+    "tests": {
+      "protocol": "OK - 192 tests",
+      "bridge": "OK - 1012 tests",
+      "studio": "OK - 1303 tests",
+      "typecheck": "OK",
+      "sdd-validate": "OK"
+    },
+    "notes": "Flow lite pese al contrato: protocolo, puente y Studio cambian juntos y por el mismo actor (como spec 014 cycle-02 y 017). Implementación por subagente sonnet/medium (consumo por notificación 85/15 repartido en TASK-001/002)."
+  }
 }
