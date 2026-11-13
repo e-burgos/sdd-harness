@@ -13,7 +13,7 @@
     "deploy": "wrangler pages deploy out --project-name sdd-studio --branch main"
   },
   "dependencies": {
-    "@e-burgos/tucu-ui": "3.10.0",
+    "@e-burgos/tucu-ui": "3.10.1",
     "@sdd-studio/protocol": "workspace:*",
     "framer-motion": "12.43.0",
     "gsap": "3.15.1",

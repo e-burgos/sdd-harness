@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `sdd/`. Repos connected before this version can copy the new file over
   `.github/workflows/sdd-validate.yml` (FIX-e-burgos-014-002).
 
+### Changed
+- Generated frontend apps ask for `@e-burgos/tucu-ui` `^3.10.1`, which fixes the `Select` close
+  timer (a menu reopened during its leave animation closed again) (FIX-e-burgos-013-002).
+
 ## [0.21.0] - 2026-11-12
 
 ### Added

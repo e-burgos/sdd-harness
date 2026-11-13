@@ -1463,6 +1463,57 @@
           }
         ]
       }
+    },
+    {
+      "id": "FIX-e-burgos-013-002",
+      "author": "e-burgos",
+      "spec_id": "spec-e-burgos-013-studio-project-wizard",
+      "fix_document": "sdd/specs/spec-e-burgos-013-studio-project-wizard/fixes/fix-e-burgos-013-002.md",
+      "type": "IMPROVEMENT",
+      "severity": "low",
+      "created_at": "2026-11-13",
+      "resolved_at": "2026-11-13",
+      "validated_at": "2026-11-13",
+      "title": "Studio y los generadores pasan a tucu-ui 3.10.1; fuera el parche de 100 ms",
+      "estimation_hours": 0.5,
+      "description": "tucu-ui 3.10.1 arregla el timer de cierre del Select: Studio fija 3.10.1, los generadores piden ^3.10.1 y se quita waitForSelectToClose de los specs.",
+      "justification": "Subida de versión de una dependencia propia y limpieza de tests; sin contratos ni entidades nuevas.",
+      "related_modules": [
+        "studio-project-wizard"
+      ],
+      "affected_files": [
+        "apps/studio/package.json",
+        "pnpm-lock.yaml",
+        "apps/cli/src/generators/versions.ts",
+        "apps/studio/src/lib/test-utils/pick-option.ts",
+        "apps/studio/src/components/helpselect.spec.tsx",
+        "apps/studio/src/components/workspace/modes.spec.tsx",
+        "apps/studio/src/components/workspace/composer.spec.tsx",
+        "apps/studio/src/components/workspace/threadlink.spec.tsx"
+      ],
+      "test_reference": "studio 1294 tests y typecheck OK; los cuatro specs con Select 3 corridas seguidas 68/68 sin errores no manejados; versions.spec.ts OK",
+      "status": "validated",
+      "cycle": null,
+      "usage": {
+        "provider_model": "claude/opus",
+        "effort": "medium",
+        "tokens_in": 40000,
+        "tokens_out": 3000,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-11-13",
+        "by_agent": [
+          {
+            "agent": "implementor-front",
+            "provider_model": "claude/opus",
+            "effort": "medium",
+            "tokens_in": 40000,
+            "tokens_out": 3000,
+            "approx": true,
+            "source": "declared-estimate"
+          }
+        ]
+      }
     }
   ]
 }
