@@ -147,4 +147,10 @@ describe('kit CI workflow', () => {
     for (const id of jobIds) expect(id).toMatch(/^[A-Za-z_][A-Za-z0-9_-]*$/);
     expect(workflow).toMatch(/^ {4}name: sdd:validate$/m);
   });
+
+  it('runs on any repo regardless of its package manager or lockfile', () => {
+    expect(workflow).not.toMatch(/pnpm|yarn|frozen-lockfile|npm ci/);
+    expect(workflow).toMatch(/npm install --prefix sdd --no-save --no-package-lock --ignore-scripts[^\n]* ajv@\^8[^\n]* ajv-formats@\^3/);
+    expect(workflow).toMatch(/^ {6}- run: node sdd\/scripts\/validate-sdd\.mjs$/m);
+  });
 });

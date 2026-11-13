@@ -11,10 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
+      - name: Install the validator dependencies
+        run: npm install --prefix sdd --no-save --no-package-lock --ignore-scripts --no-audit --no-fund ajv@^8.20.0 ajv-formats@^3.0.1
       - run: node sdd/scripts/validate-sdd.mjs
