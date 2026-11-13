@@ -1318,6 +1318,59 @@
           }
         ]
       }
+    },
+    {
+      "id": "FIX-e-burgos-004",
+      "author": "e-burgos",
+      "spec_id": null,
+      "fix_document": "sdd/fixes/fix-e-burgos-004.md",
+      "type": "IMPROVEMENT",
+      "severity": "low",
+      "created_at": "2026-11-11",
+      "resolved_at": "2026-11-11",
+      "validated_at": null,
+      "title": "CI verificado en local (ci:local) y Windows fuera de Actions",
+      "estimation_hours": 2,
+      "description": "pnpm ci:local corre en la Mac lo mismo que el CI, pushea y publica el status ci-local; el CI de GitHub lo detecta y saltea los jobs pesados. Windows sale de Actions: su suite se corre en local antes de un release. CI deja de correr en push a main.",
+      "justification": "La cuenta superó los 3000 minutos de Actions; Windows factura x2. Solo toca workflows, un script de CI y documentación: sin contratos ni entidades nuevas.",
+      "related_modules": [],
+      "affected_files": [
+        ".github/workflows/ci.yml",
+        ".github/workflows/deploy-studio.yml",
+        ".github/workflows/release.yml",
+        ".github/workflows/release-studio.yml",
+        "scripts/ci/ci-local.sh",
+        "scripts/ci/wait-ci-local-status.sh",
+        "scripts/ci/check-ps1-syntax.ps1",
+        "package.json",
+        "docs/ci.md",
+        "README.md",
+        "sdd/fixes/fix-e-burgos-004.md",
+        "apps/cli/bin/harness.mjs"
+      ],
+      "test_reference": "pnpm ci:local sobre la rama: status ci-local publicado y CI de la PR salteado",
+      "status": "implemented",
+      "cycle": null,
+      "usage": {
+        "provider_model": "claude/opus",
+        "effort": "low",
+        "tokens_in": 150000,
+        "tokens_out": 15000,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-11-11",
+        "by_agent": [
+          {
+            "agent": "implementor-back",
+            "provider_model": "claude/opus",
+            "effort": "low",
+            "tokens_in": 150000,
+            "tokens_out": 15000,
+            "approx": true,
+            "source": "declared-estimate"
+          }
+        ]
+      }
     }
   ]
 }

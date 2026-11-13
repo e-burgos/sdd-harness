@@ -11,6 +11,7 @@
     "test": "pnpm --filter @e-burgos/sdd-harness --filter @sdd-studio/protocol --filter @e-burgos/sdd-studio --filter sdd-studio-web test",
     "test:watch": "pnpm --filter @e-burgos/sdd-harness test:watch",
     "typecheck": "pnpm --filter @e-burgos/sdd-harness --filter @sdd-studio/protocol --filter @e-burgos/sdd-studio --filter sdd-studio-web typecheck",
+    "ci:local": "bash scripts/ci/ci-local.sh",
     "studio:bridge": "node apps/studio-bridge/bin/sdd-studio.mjs --web-url http://localhost:3100 --port 4330",
     "dev:studio": "pnpm run studio:bridge & pnpm --filter sdd-studio-web dev --port 3100",
     "dev:docs": "cd apps/documentation && pnpm dev",
