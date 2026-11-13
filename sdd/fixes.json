@@ -1174,7 +1174,7 @@
       "severity": "low",
       "created_at": "2026-11-05",
       "resolved_at": "2026-11-05",
-      "validated_at": null,
+      "validated_at": "2026-11-13",
       "title": "CI de PR #64: reveal en Windows y timer de tucu-ui Select en jsdom",
       "estimation_hours": 1,
       "description": "revealPath usaba la plataforma del abridor para la semántica de rutas y fallaba en Windows; el Select de tucu-ui deja un setTimeout que se dispara tras desmontar jsdom y Vitest lo reporta como error no manejado. En Windows, además, openStep de los specs del wizard perdía el click contra el posicionamiento inicial del wizard.",
@@ -1194,8 +1194,8 @@
         "apps/studio/src/components/modules/new-project/wizard-context.tsx",
         "apps/studio/src/components/modules/new-project/NewProjectCenter.tsx"
       ],
-      "test_reference": "reveal.spec.ts y specs con Select — verde local; pendiente CI ubuntu + windows-latest de PR #64",
-      "status": "implemented",
+      "test_reference": "reveal.spec.ts y specs con Select — verde en CI ubuntu + windows-latest (PR #64, 0acc003)",
+      "status": "validated",
       "cycle": null,
       "usage": {
         "provider_model": "claude/opus",
@@ -1227,7 +1227,7 @@
       "severity": "low",
       "created_at": "2026-11-05",
       "resolved_at": "2026-11-05",
-      "validated_at": null,
+      "validated_at": "2026-11-13",
       "title": "Hallazgos de la prueba del wizard contra la CLI 0.17.0 publicada",
       "estimation_hours": 1,
       "description": "Nombre accesible de las puertas, versión del kit real en el header y borrador de Hermes con la descripción del proyecto. Además, los specs que abren el mismo Select de tucu-ui dos veces esperan su cierre de 100 ms entre una y otra (fallaba bajo carga).",
@@ -1248,8 +1248,8 @@
         "apps/studio/src/components/workspace/modes.spec.tsx",
         "apps/studio/src/components/workspace/threadlink.spec.tsx"
       ],
-      "test_reference": "wizard-motion.spec.tsx, studioheader.spec.tsx, hermes-idea.spec.ts y e2e del wizard",
-      "status": "implemented",
+      "test_reference": "wizard-motion.spec.tsx, studioheader.spec.tsx, hermes-idea.spec.ts y e2e del wizard — verde en CI ubuntu + windows-latest (PR #65, 7c03c93)",
+      "status": "validated",
       "cycle": null,
       "usage": {
         "provider_model": "claude/opus",
@@ -1281,7 +1281,7 @@
       "severity": "low",
       "created_at": "2026-11-07",
       "resolved_at": "2026-11-07",
-      "validated_at": null,
+      "validated_at": "2026-11-13",
       "title": "Type-check real del mod y reservas legibles en Studio",
       "estimation_hours": 1,
       "description": "El tsconfig del mod lista sus fuentes en files (tsc salteaba hooks/.src por ser carpeta con punto) con un test que lo exige; en Studio, el pedido de una reserva va en su propia línea y la ruta completa en title.",
@@ -1295,8 +1295,8 @@
         "apps/cli/src/generators/__tests__/sdd-mod.spec.ts",
         "apps/studio/src/components/OpenUnitsList.tsx"
       ],
-      "test_reference": "sdd-mod.spec.ts (type-check del mod), openunits.spec.tsx y verificación visual con --local-ui",
-      "status": "implemented",
+      "test_reference": "sdd-mod.spec.ts (type-check real del mod) y OpenUnitsList — verde en CI ubuntu + windows-latest (PR #67, c1c5124)",
+      "status": "validated",
       "cycle": null,
       "usage": {
         "provider_model": "claude/opus",
@@ -1328,7 +1328,7 @@
       "severity": "low",
       "created_at": "2026-11-11",
       "resolved_at": "2026-11-11",
-      "validated_at": null,
+      "validated_at": "2026-11-13",
       "title": "CI verificado en local (ci:local) y Windows fuera de Actions",
       "estimation_hours": 2,
       "description": "pnpm ci:local corre en la Mac lo mismo que el CI, pushea y publica el status ci-local; el CI de GitHub lo detecta y saltea los jobs pesados. Windows sale de Actions: su suite se corre en local antes de un release. CI deja de correr en push a main.",
@@ -1348,8 +1348,8 @@
         "sdd/fixes/fix-e-burgos-004.md",
         "apps/cli/bin/harness.mjs"
       ],
-      "test_reference": "pnpm ci:local sobre la rama: status ci-local publicado y CI de la PR salteado",
-      "status": "implemented",
+      "test_reference": "ci.yml nuevo en uso real: sin status ci-local corrió el CI completo en ubuntu, verde (PR #74); ci:local verificado en local antes",
+      "status": "validated",
       "cycle": null,
       "usage": {
         "provider_model": "claude/opus",
