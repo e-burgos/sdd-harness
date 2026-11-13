@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { AttachmentMime, AttachmentUpload, PromptRefs, Sha256 } from './attachments';
 import { AuthPreference, ChannelId, DevProfile, MAX_QUESTIONS, QuestionAnswer, ThreadLinkRef, ThreadLinkTarget, ThreadOptions } from './domain';
 import { GithubConnectRequest } from './github';
-import { ToolsChange } from './kit';
+import { KitIntegrationId, ToolsChange } from './kit';
 import { FILE_SEARCH_MAX, MAX_ATTACHMENTS } from './limits';
 import { ToolsRevision } from './snapshot';
 import { AbsPathInput, ConfigDraft, GenerationId } from './wizard';
@@ -67,6 +67,8 @@ export const ClientCommand = z.discriminatedUnion('cmd', [
   z.object({ ...cmd('kit.index') }),
   z.object({ ...cmd('kit.rtkGain') }),
   z.object({ ...cmd('kit.tools.set'), change: ToolsChange, expectedRevision: ToolsRevision }),
+  z.object({ ...cmd('kit.integration.status'), integration: KitIntegrationId }),
+  z.object({ ...cmd('kit.integration.set'), integration: KitIntegrationId, enabled: z.boolean() }),
   z.object({
     ...cmd('approval.respond'),
     approvalId: Id,

@@ -33,7 +33,7 @@ Detalle completo de comandos, overlays y checklist de cierre: [skills/scaffold-n
 
 ## Política de versiones en `nx-workspace/package.json`
 
-`nx` y `@nx/*` van en la **última versión estable** (hoy `23.1.1`). El resto del ecosistema **no**
+`nx` y `@nx/*` van en la **última versión estable** (hoy `24.0.6`; `harness init --nx 22|23|24` reescribe estas versiones). El resto del ecosistema **no**
 se toma del `latest` del registry, sino de los constants que los propios generadores de Nx usan al
 instalar (`node_modules/@nx/<plugin>/dist/src/utils/versions.js`).
 
@@ -41,7 +41,7 @@ Por eso hay divergencias deliberadas con el `latest`:
 
 | Paquete      | Acá       | `latest` | Por qué                                                   |
 | ------------ | --------- | -------- | --------------------------------------------------------- |
-| `typescript` | `~6.0.3`  | `7.0.2`  | Es lo que instala `@nx/js` 23.1.1 (mín. soportado: 5.8.0) |
+| `typescript` | `~6.0.3`  | `7.0.2`  | Es lo que instala `@nx/js` 24.0.6 (mín. soportado: 5.8.0) |
 | `eslint`     | `^9.8.0`  | `10.8.0` | `@nx/eslint` acepta 9 y 10, pero instala 9                |
 | `pnpm`       | `10.14.0` | `11.x`   | Versión verificada de punta a punta en este repo          |
 

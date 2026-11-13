@@ -84,6 +84,7 @@ function isWizardState(value: unknown): value is WizardState {
     (value.profile === null || value.profile === 'team' || value.profile === 'solo') &&
     isString(value.author) &&
     isStringArray(value.modules) &&
+    (value.nxVersion === undefined || value.nxVersion === null || typeof value.nxVersion === 'number') &&
     typeof value.nextAppId === 'number' &&
     Array.isArray(stash.apps) &&
     stash.apps.every(isApp) &&
@@ -99,7 +100,7 @@ export function saveWizardState(state: WizardState, storage: StorageLike | null 
 export function loadWizardState(storage: StorageLike | null = sessionStore()): WizardState | null {
   const stored = read(storage, WIZARD_STATE_KEY);
   if (!isRecord(stored) || stored.v !== STATE_VERSION || !isWizardState(stored.state)) return null;
-  return stored.state;
+  return { ...stored.state, nxVersion: stored.state.nxVersion ?? null };
 }
 
 export const clearWizardState = (storage: StorageLike | null = sessionStore()): void => remove(storage, WIZARD_STATE_KEY);

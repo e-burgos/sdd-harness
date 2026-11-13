@@ -6,6 +6,17 @@ import {
   toFlatCase,
   toPascalCase,
 } from "../utils/blueprint.js";
+import {
+  detectNxMajor,
+  ensureNxPlugins,
+  eslintPluginEntry,
+  esbuildBuildTarget,
+  inferredPluginsForAppType,
+  nodeServeOnBuildTarget,
+  stripRemovedExecutors,
+  usesInferredTasks,
+} from "./nx-inferred.js";
+import type { NxMajor } from "./versions.js";
 import { writeNextTucuUiFiles, writeViteTucuUiFiles } from "./tucu-ui-app.js";
 import { pythonPackageName, pythonUvCommands, writePythonAppFiles } from "./python-app.js";
 import { appEnvPrefix, mfesOfShell, resolveMfeShell } from "./app-types.js";
@@ -77,6 +88,7 @@ export function resolveAppPort(app: AppSpec, apps: readonly AppSpec[] = []): num
 
 export interface GenerateAppContext {
   apps?: readonly AppSpec[];
+  nxMajor?: NxMajor;
 }
 
 /**
@@ -96,6 +108,7 @@ export async function generateApp(
   await fs.ensureDir(appDir);
   const allApps = context.apps ?? [app];
   const port = resolveAppPort(app, allApps);
+  const inferred = usesInferredTasks(context.nxMajor ?? (await detectNxMajor(root)));
 
   switch (app.type) {
     case "nestjs":
@@ -136,7 +149,7 @@ export async function generateApp(
       );
       break;
     case "fastify":
-      await generateFastifyApp(appDir, app.name, port);
+      await generateFastifyApp(appDir, app.name, port, inferred);
       break;
     case "python":
       await generatePythonApp(appDir, app.name, port, app.ml === true);
@@ -145,9 +158,20 @@ export async function generateApp(
       await generateSpringBootApp(root, appDir, app.name);
       break;
     case "hono":
-      await generateHonoApp(appDir, app.name, port);
+      await generateHonoApp(appDir, app.name, port, inferred);
       break;
   }
+
+  if (inferred) await adaptAppToInferredTasks(root, appDir, app.type);
+}
+
+async function adaptAppToInferredTasks(
+  root: string,
+  appDir: string,
+  type: string,
+): Promise<void> {
+  await stripRemovedExecutors(appDir);
+  await ensureNxPlugins(root, [eslintPluginEntry(), ...inferredPluginsForAppType(type)]);
 }
 
 async function findSharedTypesLib(root: string): Promise<SharedTypesLib | undefined> {
@@ -609,6 +633,7 @@ async function generateFastifyApp(
   dir: string,
   name: string,
   port: number,
+  inferred: boolean,
 ): Promise<void> {
   await fs.ensureDir(resolve(dir, "src"));
 
@@ -621,7 +646,9 @@ async function generateFastifyApp(
         sourceRoot: `apps/${name}/src`,
         projectType: "application",
         tags: ["scope:api", "type:app"],
-        targets: {
+        targets: inferred
+          ? { build: esbuildBuildTarget(name), serve: nodeServeOnBuildTarget(name) }
+          : {
           build: {
             executor: "@nx/esbuild:esbuild",
             options: {
@@ -751,6 +778,7 @@ async function generateHonoApp(
   dir: string,
   name: string,
   port: number,
+  inferred: boolean,
 ): Promise<void> {
   await fs.ensureDir(resolve(dir, "src"));
 
@@ -765,24 +793,28 @@ async function generateHonoApp(
         projectType: "application",
         tags: ["scope:api", "type:app"],
         targets: {
-          build: {
-            executor: "@nx/vite:build",
-            outputs: ["{options.outputPath}"],
-            options: {
-              outputPath: `dist/apps/${name}`,
-              main: `apps/${name}/src/main.ts`,
-              tsConfig: `apps/${name}/tsconfig.app.json`,
-            },
-          },
-          serve: {
-            executor: "@nx/js:node",
-            defaultConfiguration: "development",
-            options: { buildTarget: `${name}:build` },
-            configurations: {
-              development: { buildTarget: `${name}:build:development` },
-              production: { buildTarget: `${name}:build:production` },
-            },
-          },
+          build: inferred
+            ? esbuildBuildTarget(name)
+            : {
+                executor: "@nx/vite:build",
+                outputs: ["{options.outputPath}"],
+                options: {
+                  outputPath: `dist/apps/${name}`,
+                  main: `apps/${name}/src/main.ts`,
+                  tsConfig: `apps/${name}/tsconfig.app.json`,
+                },
+              },
+          serve: inferred
+            ? nodeServeOnBuildTarget(name)
+            : {
+                executor: "@nx/js:node",
+                defaultConfiguration: "development",
+                options: { buildTarget: `${name}:build` },
+                configurations: {
+                  development: { buildTarget: `${name}:build:development` },
+                  production: { buildTarget: `${name}:build:production` },
+                },
+              },
           lint: { executor: "@nx/eslint:lint" },
           test: {
             // @nx/vite:test no existe en Nx 23 — mismo patrón que react-app

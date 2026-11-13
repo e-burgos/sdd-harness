@@ -65,6 +65,21 @@ export const supportsTucuUi = (catalog: ConfigCatalog, type: string): boolean =>
 export const supportsMl = (catalog: ConfigCatalog, type: string): boolean => appTypeEntry(catalog, type)?.ml ?? false;
 export const acceptsShell = (catalog: ConfigCatalog, type: string): boolean => appTypeEntry(catalog, type)?.shell ?? false;
 
+export interface NxChoice {
+  major: number;
+  version: string;
+  recommended: boolean;
+}
+
+export const nxChoices = (catalog: ConfigCatalog): NxChoice[] =>
+  (catalog.nx?.majors ?? []).map((major) => ({
+    major,
+    version: catalog.nx?.versions[String(major)] ?? String(major),
+    recommended: major === catalog.nx?.default,
+  }));
+
+export const nxSelectable = (catalog: ConfigCatalog, mode: WizardMode | null): boolean => mode === 'nx' && catalog.nx !== undefined;
+
 export const stackDescription = (entry: CatalogAppType, plain: boolean): string =>
   plain && entry.stackPlain !== null ? entry.stackPlain : entry.stack;
 

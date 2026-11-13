@@ -35,6 +35,11 @@ describe('buildConfigCatalog', () => {
       author: AUTHOR_PATTERN.source,
     });
     expect(catalog.portRange).toEqual(PORT_RANGE);
+    expect(catalog.nx).toEqual({
+      majors: [22, 23, 24],
+      default: 24,
+      versions: { '22': '22.7.12', '23': '23.3.2', '24': '24.0.6' },
+    });
     expect(new RegExp(catalog.patterns.name).test('my-app')).toBe(true);
     expect(new RegExp(catalog.patterns.name).test('My_App')).toBe(false);
   });

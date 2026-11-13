@@ -1,7 +1,7 @@
 import type { ConfigCatalog, ResolvedConfig } from '@sdd-studio/protocol';
 import { appTypeEntry, stackDescription } from './catalog';
 import { explicitPortOf } from './field-checks';
-import { effectiveProfile, type WizardProfile, type WizardState } from './state';
+import { effectiveNxVersion, effectiveProfile, type WizardProfile, type WizardState } from './state';
 
 export type PortSource = 'explicit' | 'default' | 'shifted';
 
@@ -24,6 +24,7 @@ export interface SummaryService {
 
 export interface SummaryModel {
   mode: 'nx' | 'standalone' | null;
+  nxVersion: string | null;
   profile: WizardProfile;
   apps: SummaryApp[];
   libs: Array<{ name: string; type: string }>;
@@ -51,8 +52,10 @@ export function summaryModel(state: WizardState, catalog: ConfigCatalog, resolve
     const entry = catalog.serviceTypes.find((candidate) => candidate.type === type);
     return { type, label: entry?.label ?? type, port: resolved?.services[index]?.port ?? entry?.defaultPort ?? 0 };
   });
+  const nxMajor = effectiveNxVersion(state, catalog);
   return {
     mode: state.mode,
+    nxVersion: nxMajor === null ? null : (catalog.nx?.versions[String(nxMajor)] ?? String(nxMajor)),
     profile: resolved?.profile ?? effectiveProfile(state),
     apps,
     libs: state.libs.map((lib) => ({ name: lib.name, type: lib.type })),

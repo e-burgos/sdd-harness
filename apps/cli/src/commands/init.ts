@@ -19,6 +19,7 @@ import {
   SERVICE_OPTIONS,
 } from "../config/app-options.js";
 import { IDEA_FILENAME } from "../generators/idea.generator.js";
+import { parseNxMajor, type NxMajor } from "../generators/versions.js";
 import { parseProfile } from "../generators/sdd.generator.js";
 import type { SddProfile } from "../generators/sdd.generator.js";
 import {
@@ -51,6 +52,7 @@ import {
 interface TargetFlags {
   here: boolean;
   profile?: SddProfile;
+  nxMajor?: NxMajor;
   dir?: string;
   skipVerify: boolean;
   tucuUi?: boolean;
@@ -200,6 +202,11 @@ export const initCommand = defineCommand({
       description:
         "Turn on the video-maker integration (Claude Code plugin + MCP for Copilot and Gemini/Antigravity). Off by default; --no-video-maker keeps it off",
     },
+    nx: {
+      type: "string",
+      description:
+        "Nx major for monorepo mode: 22 | 23 | 24 (default 24). Ignored in standalone mode. With --config, --nx wins over nx.version",
+    },
     profile: {
       type: "string",
       description:
@@ -228,8 +235,17 @@ export const initCommand = defineCommand({
       process.exit(1);
     }
 
+    let nxMajor: NxMajor | undefined;
+    try {
+      nxMajor = parseNxMajor(args.nx);
+    } catch (err) {
+      logger.error((err as Error).message);
+      process.exit(1);
+    }
+
     const target: TargetFlags = {
       here: args.here,
+      nxMajor,
       dir: args.dir,
       skipVerify: args.skipVerify,
       profile,
@@ -305,6 +321,7 @@ export const initCommand = defineCommand({
     }
 
     if (mode === "standalone") {
+      if (nxMajor) logger.warn("--nx is ignored in standalone mode (no Nx).");
       await runStandaloneFlow(
         projectName as string,
         (description as string) || "",
@@ -334,6 +351,7 @@ export async function chooseOnboardingRoute(
     mode?: string;
     standalone?: boolean;
     profile?: string;
+    nx?: string;
     skipVerify?: boolean;
   },
   rawArgs: string[],
@@ -346,7 +364,7 @@ export async function chooseOnboardingRoute(
     config: args.config,
     yes: Boolean(args.yes),
     preAnswered:
-      Boolean(args.name || args.mode || args.standalone || args.profile || args.skipVerify) ||
+      Boolean(args.name || args.mode || args.standalone || args.profile || args.nx || args.skipVerify) ||
       rawArgs.some((a) => PRE_ANSWER_FLAGS.includes(a)),
   });
   if (route !== "ask") return route;
@@ -440,6 +458,7 @@ async function runConfigFlow(
   const harnessFiles = harnessFilesNextTo(configPath, cwd);
   try {
     if (config.mode === "standalone") {
+      if (flags.nxMajor) logger.warn("--nx is ignored in standalone mode (no Nx).");
       await generateStandalone({
         ...toStandaloneOptions(config, { tucuUi: flags.tucuUi }),
         sddProfile: config.sdd?.profile ?? flags.profile,
@@ -450,7 +469,7 @@ async function runConfigFlow(
       });
     } else {
       await generateWorkspace({
-        ...toWorkspaceOptions(config, { tucuUi: flags.tucuUi }),
+        ...toWorkspaceOptions(config, { tucuUi: flags.tucuUi, nxMajor: flags.nxMajor }),
         sddProfile: config.sdd?.profile ?? flags.profile,
         targetDir,
         harnessFiles,
@@ -722,6 +741,7 @@ async function runNxFlow(
       libs,
       services: services as string[],
       sddProfile: flags.profile,
+      nxMajor: flags.nxMajor,
       ...resolveInitTarget(process.cwd(), projectName, flags),
       harnessFiles: harnessFilesNextTo(undefined, process.cwd()),
       skipVerify: flags.skipVerify,

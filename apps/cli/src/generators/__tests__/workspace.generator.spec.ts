@@ -141,6 +141,7 @@ describe('workspace.generator', () => {
       apps: [{ name: 'portal', type: 'react' }],
       libs: [],
       services: [],
+      nxMajor: 23,
     });
 
     const root = resolve(parentDir, 'test-react');
@@ -449,7 +450,7 @@ describe('workspace.generator v0.11.0', () => {
   });
 
   it('NestJS: build inferido por @nx/webpack/plugin con webpack.config.js, jest en CommonJS y tsconfig.spec', async () => {
-    await generateWorkspace({ ...baseOpts, projectName: 'nest' });
+    await generateWorkspace({ ...baseOpts, projectName: 'nest', nxMajor: 23 });
     const root = resolve(parentDir, 'nest');
     const appDir = resolve(root, 'apps/catalog-api');
 
@@ -488,6 +489,69 @@ describe('workspace.generator v0.11.0', () => {
     expect(pkg.devDependencies['ts-node']).toBeUndefined();
   });
 
+  it('Nx 24: ningun project.json usa executors eliminados y nx.json registra los plugins inferidos', async () => {
+    await generateWorkspace({
+      projectName: 'nx24-ws',
+      description: 'Nx 24',
+      packageScope: '@nx24',
+      apps: [
+        { name: 'api', type: 'nestjs', port: 3100 },
+        { name: 'web', type: 'react', port: 4300 },
+        { name: 'site', type: 'nextjs', port: 3000 },
+        { name: 'svc', type: 'fastify', port: 3200 },
+        { name: 'edge', type: 'hono', port: 3300 },
+      ],
+      libs: [{ name: 'shared-types', type: 'shared-types' }],
+      services: [],
+      nxMajor: 24,
+    });
+    const root = resolve(parentDir, 'nx24-ws');
+    const removed = [
+      '@nx/eslint:lint',
+      '@nx/jest:jest',
+      '@nx/vite:build',
+      '@nx/vite:dev-server',
+      '@nx/esbuild:esbuild',
+      '@nx/next:build',
+    ];
+    for (const dir of ['apps/api', 'apps/web', 'apps/site', 'apps/svc', 'apps/edge', 'libs/shared-types']) {
+      const project = fs.readJSONSync(resolve(root, dir, 'project.json'));
+      for (const target of Object.values<{ executor?: string }>(project.targets ?? {})) {
+        expect(removed).not.toContain(target.executor);
+      }
+      expect(project.targets?.lint).toBeUndefined();
+    }
+
+    const api = fs.readJSONSync(resolve(root, 'apps/api/project.json'));
+    expect(api.targets.test).toBeUndefined();
+    expect(api.targets.serve.options.command).toBe('node dist/apps/api/main.js');
+    const web = fs.readJSONSync(resolve(root, 'apps/web/project.json'));
+    expect(web.targets.build).toBeUndefined();
+    expect(web.targets.serve).toBeUndefined();
+    expect(web.targets.test.executor).toBe('nx:run-commands');
+    const svc = fs.readJSONSync(resolve(root, 'apps/svc/project.json'));
+    expect(svc.targets.build.options.command).toContain('esbuild apps/svc/src/main.ts');
+    expect(svc.targets.serve.options.command).toBe('node dist/apps/svc/main.mjs');
+    const edge = fs.readJSONSync(resolve(root, 'apps/edge/project.json'));
+    expect(edge.targets.build.options.command).toContain('esbuild apps/edge/src/main.ts');
+    expect(edge.targets.test.executor).toBe('nx:run-commands');
+
+    const plugins = fs
+      .readJSONSync(resolve(root, 'nx.json'))
+      .plugins.map((p: { plugin: string }) => p.plugin);
+    expect(plugins).toEqual(
+      expect.arrayContaining([
+        '@nx/eslint/plugin',
+        '@nx/jest/plugin',
+        '@nx/vite/plugin',
+        '@nx/webpack/plugin',
+        '@nx/next/plugin',
+      ]),
+    );
+    const pkg = fs.readJSONSync(resolve(root, 'package.json'));
+    expect(pkg.devDependencies.esbuild).toBeDefined();
+  });
+
   it('Next.js: targets inferidos por @nx/next/plugin, public/ presente y .next ignorado', async () => {
     await generateWorkspace({
       projectName: 'next-project',
@@ -496,6 +560,7 @@ describe('workspace.generator v0.11.0', () => {
       apps: [{ name: 'site', type: 'nextjs', port: 3100 }],
       libs: [],
       services: [],
+      nxMajor: 23,
     });
     const root = resolve(parentDir, 'next-project');
 
@@ -578,5 +643,45 @@ describe('workspace.generator v0.11.0', () => {
     await expect(
       generateWorkspace({ ...baseOpts, projectName: 'busy', targetDir: busy }),
     ).rejects.toThrow(/empty directory/);
+  });
+
+  it.each([
+    [22, '22.7.12', '^4.1.12'],
+    [23, '23.3.2', FRONTEND_VERSIONS.vitest],
+    [24, '24.0.6', FRONTEND_VERSIONS.vitest],
+  ] as const)('nxMajor %i fija nx/@nx/* y los peers de esa mayor', async (nxMajor, nxVersion, vitest) => {
+    await generateWorkspace({
+      projectName: `nx-${nxMajor}`,
+      description: 'Nx major',
+      packageScope: '@test',
+      apps: [
+        { name: 'api', type: 'nestjs' },
+        { name: 'web', type: 'react' },
+      ],
+      libs: [],
+      services: [],
+      nxMajor,
+    });
+    const pkg = await fs.readJSON(resolve(parentDir, `nx-${nxMajor}`, 'package.json'));
+    const dev = pkg.devDependencies as Record<string, string>;
+    const nxEntries = Object.entries(dev).filter(([n]) => n === 'nx' || n.startsWith('@nx/'));
+    expect(nxEntries.length).toBeGreaterThan(8);
+    for (const [name, version] of nxEntries) expect(version, name).toBe(nxVersion);
+    expect(dev['vitest']).toBe(vitest);
+    expect(dev['@vitest/coverage-v8']).toBe(vitest);
+  });
+
+  it('sin nxMajor usa la mayor por defecto', async () => {
+    await generateWorkspace({
+      projectName: 'nx-default',
+      description: 'Nx default',
+      packageScope: '@test',
+      apps: [{ name: 'api', type: 'nestjs' }],
+      libs: [],
+      services: [],
+    });
+    const pkg = await fs.readJSON(resolve(parentDir, 'nx-default', 'package.json'));
+    expect(pkg.devDependencies['nx']).toBe('24.0.6');
+    expect(pkg.devDependencies['@nx/nest']).toBe('24.0.6');
   });
 });

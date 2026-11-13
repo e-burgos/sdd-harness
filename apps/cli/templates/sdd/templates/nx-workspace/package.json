@@ -23,6 +23,7 @@
     "sdd:mod": "node sdd/scripts/sdd-mod.mjs",
     "sdd:tucu": "node sdd/scripts/sdd-tucu.mjs",
     "sdd:video": "node sdd/scripts/sdd-video.mjs",
+    "sdd:nx-migrate": "node sdd/scripts/sdd-nx-migrate.mjs",
     "postinstall": "node -e \"const f='sdd/scripts/setup-rtk.mjs';if(require('fs').existsSync(f)){require('child_process').execFileSync(process.execPath,[f],{stdio:'inherit'})}\""
   },
   "dependencies": {
@@ -31,12 +32,12 @@
     "react-router-dom": "^7.18.5"
   },
   "devDependencies": {
-    "@nx/devkit": "23.1.1",
-    "@nx/eslint": "23.1.1",
-    "@nx/js": "23.1.1",
-    "@nx/react": "23.1.1",
-    "@nx/vite": "23.1.1",
-    "@nx/workspace": "23.1.1",
+    "@nx/devkit": "24.0.6",
+    "@nx/eslint": "24.0.6",
+    "@nx/js": "24.0.6",
+    "@nx/react": "24.0.6",
+    "@nx/vite": "24.0.6",
+    "@nx/workspace": "24.0.6",
     "@swc-node/register": "~1.11.1",
     "@swc/core": "~1.15.5",
     "@swc/helpers": "~0.5.18",
@@ -49,7 +50,7 @@
     "ajv": "^8.20.0",
     "ajv-formats": "^3.0.1",
     "eslint": "^9.8.0",
-    "nx": "23.1.1",
+    "nx": "24.0.6",
     "prettier": "^3.9.6",
     "tailwindcss": "^4.3.4",
     "tslib": "^2.3.0",

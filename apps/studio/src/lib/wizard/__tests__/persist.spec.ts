@@ -15,6 +15,16 @@ import { memoryStorage } from './fake-client';
 import { run, scoped } from './fixtures';
 
 describe('wizard state persistence', () => {
+  it('restores the chosen nx version and defaults it for states saved without one', () => {
+    const storage = memoryStorage();
+    const chosen = run([{ type: 'nx-version', major: 22 }], scoped('front', 'nx'));
+    saveWizardState(chosen, storage);
+    expect(loadWizardState(storage)?.nxVersion).toBe(22);
+    const { nxVersion: _omitted, ...legacy } = chosen;
+    storage.setItem(WIZARD_STATE_KEY, JSON.stringify({ v: 1, state: legacy }));
+    expect(loadWizardState(storage)?.nxVersion).toBeNull();
+  });
+
   it('round-trips the state including the stash', () => {
     const storage = memoryStorage();
     const state = run(

@@ -1,9 +1,10 @@
 import type { ConfigCatalog } from '@sdd-studio/protocol';
 import { acceptsShell, MFE_SHELL_TYPE, supportsMl, supportsTucuUi } from './catalog';
-import { effectiveProfile, type WizardApp, type WizardState } from './state';
+import { effectiveNxVersion, effectiveProfile, type WizardApp, type WizardState } from './state';
 
 export type HarnessConfigDraft = {
   mode?: 'nx' | 'standalone';
+  nx?: { version: number };
   project: { name: string; description: string; packageScope: string };
   apps: Array<{ name: string; type: string; port?: number; tucuUi?: false; ml?: true; shell?: string }>;
   libs?: Array<{ name: string; type: string }>;
@@ -33,8 +34,10 @@ function toAppConfig(app: WizardApp, state: WizardState, catalog: ConfigCatalog)
 
 export function toHarnessConfig(state: WizardState, catalog: ConfigCatalog): HarnessConfigDraft {
   const author = state.author.trim();
+  const nxVersion = effectiveNxVersion(state, catalog);
   return {
     ...(state.mode !== null ? { mode: state.mode } : {}),
+    ...(nxVersion !== null ? { nx: { version: nxVersion } } : {}),
     project: {
       name: state.project.name,
       description: state.project.description.trim(),

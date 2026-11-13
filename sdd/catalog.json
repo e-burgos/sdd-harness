@@ -61,6 +61,10 @@
       "file": "SKILL.md"
     },
     {
+      "dir": "nx-migration",
+      "file": "SKILL.md"
+    },
+    {
       "dir": "scaffold-nx",
       "file": "SKILL.md"
     },
@@ -182,6 +186,9 @@
     }
   ],
   "memory": [
+    {
+      "file": "2026-11-13-spec-e-burgos-023-cycle-01.md"
+    },
     {
       "file": "2026-11-12-spec-e-burgos-020-cycle-01.md"
     },

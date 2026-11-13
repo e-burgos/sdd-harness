@@ -2405,6 +2405,27 @@
             "change": "Creado en spec-e-burgos-019 cycle-01."
           }
         ]
+      },
+      {
+        "id": "COMP-134",
+        "name": "KitIntegrations",
+        "type": "component",
+        "module": "studio-kit-integrations",
+        "spec": "sdd/specs/spec-e-burgos-022-studio-kit-integrations",
+        "path": "src/components/modules/kit/KitIntegrations.tsx",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "description": "Sección Integraciones del módulo Kit: tarjeta por integración (tucu-ui, video-maker) con interruptor, estado por arnés, versión, reparar y salida del último intento fallido.",
+        "consumes": [],
+        "created_at": "2026-11-13",
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-11-13",
+            "change": "Creado en spec-e-burgos-022 cycle-01."
+          }
+        ]
       }
     ]
   }

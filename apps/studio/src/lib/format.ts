@@ -8,6 +8,11 @@ export const formatTokens = (n: number): string => (n >= 1000 ? `${(n / 1000).to
 
 export function botText(t: TFunction, e: BotEvent): string {
   if (e.botKind === 'tools.changed') return t('bot.tools.changed', toolChangeVars(t, e.payload));
+  if (e.botKind === 'integration.changed') {
+    const integration = typeof e.payload['integration'] === 'string' ? e.payload['integration'] : '';
+    const state = typeof e.payload['state'] === 'string' ? e.payload['state'] : 'unavailable';
+    return t('bot.integration.changed', { integration, state: t(`module.kit.integrations.state.${state}` as Parameters<TFunction>[0]) });
+  }
   const vars = Object.fromEntries(
     Object.entries(e.payload).map(([k, v]) => [k, typeof v === 'string' || typeof v === 'number' ? v : String(v ?? '')]),
   );

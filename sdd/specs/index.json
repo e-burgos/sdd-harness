@@ -328,6 +328,39 @@
       "depends_on": [
         "spec-e-burgos-011-kit-tucu-ui"
       ]
+    },
+    {
+      "id": "spec-e-burgos-022-studio-kit-integrations",
+      "author": "e-burgos",
+      "slug": "studio-kit-integrations",
+      "folder": "sdd/specs/spec-e-burgos-022-studio-kit-integrations",
+      "file": "sdd/specs/spec-e-burgos-022-studio-kit-integrations/spec-e-burgos-022-studio-kit-integrations.spec.md",
+      "module": "studio-kit-integrations",
+      "app": "apps/studio",
+      "status": "completed",
+      "title": "Las integraciones opcionales del kit se prenden desde Studio",
+      "created_at": "2026-11-13",
+      "completed_at": "2026-11-13",
+      "depends_on": [
+        "spec-e-burgos-011-kit-tucu-ui",
+        "spec-e-burgos-021-video-maker-integration"
+      ]
+    },
+    {
+      "id": "spec-e-burgos-023-nx-versions-and-migration",
+      "author": "e-burgos",
+      "slug": "nx-versions-and-migration",
+      "folder": "sdd/specs/spec-e-burgos-023-nx-versions-and-migration",
+      "file": "sdd/specs/spec-e-burgos-023-nx-versions-and-migration/spec-e-burgos-023-nx-versions-and-migration.spec.md",
+      "module": "nx-versions-and-migration",
+      "app": "apps/cli",
+      "status": "completed",
+      "title": "El kit genera con Nx 22, 23 o 24 y sabe migrar entre versiones",
+      "created_at": "2026-11-13",
+      "completed_at": "2026-11-13",
+      "depends_on": [
+        "spec-e-burgos-012-generators-tucu-ui"
+      ]
     }
   ]
 }

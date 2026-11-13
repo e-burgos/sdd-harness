@@ -245,6 +245,9 @@ describe('wizard result types', () => {
     const limits = { nameMax: 64, packageScopeMax: 64, maxApps: 32, maxLibs: 32, maxServices: 16, configBytes: 65_536 };
     expect(ConfigCatalog.safeParse({ ...catalog, limits }).success).toBe(true);
     expect(ConfigCatalog.safeParse({ ...catalog, limits: { ...limits, maxApps: 0 } }).success).toBe(false);
+    const nx = { majors: [22, 23, 24], default: 24, versions: { '22': '22.7.12', '23': '23.3.2', '24': '24.0.6' } };
+    expect(ConfigCatalog.safeParse({ ...catalog, nx }).success).toBe(true);
+    expect(ConfigCatalog.safeParse({ ...catalog, nx: { ...nx, majors: [] } }).success).toBe(false);
     const result = { catalog, initArgv: ['harness', 'init'], home: '/h', suggestedParent: '/h', platform: 'posix' };
     expect(WizardCatalogResult.safeParse(result).success).toBe(true);
     expect(WizardCatalogResult.safeParse({ ...result, platform: 'darwin' }).success).toBe(false);

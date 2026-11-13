@@ -16,6 +16,12 @@ import {
   PORT_RANGE,
   PROFILE_VALUES,
 } from './schema.js';
+import {
+  DEFAULT_NX_MAJOR,
+  NX_MAJORS,
+  NX_VERSIONS,
+  type NxMajor,
+} from '../generators/versions.js';
 import { DEFAULT_APP_PORTS } from '../generators/app.generator.js';
 import {
   TUCU_UI_APP_TYPES,
@@ -53,6 +59,7 @@ export interface ConfigCatalog {
     version: string;
   }>;
   profiles: Array<'team' | 'solo'>;
+  nx: { majors: NxMajor[]; default: NxMajor; versions: Record<string, string> };
   patterns: { name: string; packageScope: string; author: string };
   portRange: { min: number; max: number };
   targetDir: { tolerated: string[] };
@@ -106,6 +113,11 @@ export function buildConfigCatalog(): ConfigCatalog {
       version: DEFAULT_SERVICES[value]?.version ?? 'latest',
     })),
     profiles: [...PROFILE_VALUES],
+    nx: {
+      majors: [...NX_MAJORS],
+      default: DEFAULT_NX_MAJOR,
+      versions: Object.fromEntries(NX_MAJORS.map((major) => [String(major), NX_VERSIONS[major]])),
+    },
     patterns: {
       name: KEBAB_NAME_PATTERN.source,
       packageScope: PACKAGE_SCOPE_PATTERN.source,
@@ -138,6 +150,7 @@ export function formatConfigCatalog(catalog: ConfigCatalog): string {
     '',
     `Modes: ${catalog.modes.map((m) => `${m.mode} (${m.maxApps === null ? 'any apps' : `${m.maxApps} app`}, libs ${m.libs ? 'yes' : 'no'})`).join(', ')}`,
     `Profiles: ${catalog.profiles.join(', ')}`,
+    `Nx majors: ${catalog.nx.majors.map((m) => `${m} (${catalog.nx.versions[String(m)]})`).join(', ')} — default ${catalog.nx.default}`,
     `Ports: ${catalog.portRange.min}-${catalog.portRange.max}`,
     `Tolerated target entries: ${catalog.targetDir.tolerated.join(', ')}`,
   ];

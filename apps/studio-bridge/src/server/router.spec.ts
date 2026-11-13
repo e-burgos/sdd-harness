@@ -13,6 +13,7 @@ import { SessionManager } from '../sessions/session-manager';
 import { ThreadStore } from '../sessions/store';
 import { copyFixture, waitFor } from '../test-utils/fixture';
 import { loadWorkspaceSnapshot } from '../workspace/snapshot';
+import type { KitIntegrations } from '../workspace/kit-integrations';
 import { createHandlers } from './router';
 
 let root: string;
@@ -23,7 +24,7 @@ afterEach(() => cleanup());
 async function handlers(
   broadcast: (e: ServerEvent) => void = () => {},
   refresh: () => Promise<unknown> = async () => null,
-  extra: { rtkGain?: (root: string) => Promise<RtkGain>; now?: () => Date } = {},
+  extra: { rtkGain?: (root: string) => Promise<RtkGain>; now?: () => Date; integrations?: KitIntegrations } = {},
 ) {
   const snapshot = (await loadWorkspaceSnapshot(root)).snapshot;
   const store = new ThreadStore(root);
@@ -127,6 +128,60 @@ describe('createHandlers', () => {
       await rm(toolsPath());
       await expect(h.handle(cmd({ cmd: 'kit.tools.set', change: { tool: 'rtk', enabled: true }, expectedRevision: '0123456789abcdef' }))).rejects.toMatchObject({ code: 'not-found' });
       await expect(readFile(toolsPath())).rejects.toMatchObject({ code: 'ENOENT' });
+    });
+  });
+
+  describe('kit.integration', () => {
+    const at = new Date('2026-11-13T12:00:00.000Z');
+    const status = (state: 'off' | 'complete', enabled: boolean) => ({
+      integration: 'tucu-ui' as const, available: true, enabled, state, parts: { skill: true, mcp: true }, version: '0.16.0', kitVersion: '0.16.0',
+      updateAvailable: false, nodeOk: true, harnesses: { claude: 'complete' as const, copilot: 'complete' as const, gemini: 'complete' as const, antigravity: 'complete' as const }, repair: null,
+    });
+    const fake = (ok: boolean): { integrations: KitIntegrations; calls: unknown[][] } => {
+      const calls: unknown[][] = [];
+      return {
+        calls,
+        integrations: {
+          status: async (_root, integration) => { calls.push(['status', integration]); return status('off', false); },
+          set: async (_root, integration, enabled) => { calls.push(['set', integration, enabled]); return { ok, exitCode: ok ? 0 : 1, output: ok ? 'on' : 'boom', status: status(ok ? 'complete' : 'off', ok) }; },
+        },
+      };
+    };
+
+    it('advertises kit-integrations in the welcome', async () => {
+      expect((await handlers()).welcome().features).toContain('kit-integrations');
+    });
+
+    it('status delegates to the runner', async () => {
+      const { integrations, calls } = fake(true);
+      const h = await handlers(undefined, undefined, { integrations });
+      expect(await h.handle(cmd({ cmd: 'kit.integration.status', integration: 'tucu-ui' }))).toEqual(status('off', false));
+      expect(calls).toEqual([['status', 'tucu-ui']]);
+    });
+
+    it('a successful set refreshes the watcher, records integration.changed in #general and broadcasts it', async () => {
+      const events: ServerEvent[] = [];
+      let refreshed = 0;
+      const { integrations } = fake(true);
+      const h = await handlers((e) => events.push(e), async () => { refreshed++; }, { integrations, now: () => at });
+      const result = await h.handle(cmd({ cmd: 'kit.integration.set', integration: 'tucu-ui', enabled: true }));
+      expect(result).toMatchObject({ ok: true, output: 'on' });
+      expect(refreshed).toBe(1);
+      const expected = { channelId: 'general', botKind: 'integration.changed', payload: { integration: 'tucu-ui', enabled: true, state: 'complete' }, at: at.toISOString() };
+      expect(events).toEqual([{ kind: 'bot.event', ...expected }]);
+      expect(await h.handle(cmd({ cmd: 'channel.botHistory', channelId: 'general', limit: 10, includeKitEvents: true }))).toEqual([expected]);
+      expect(await h.handle(cmd({ cmd: 'channel.botHistory', channelId: 'general', limit: 10 }))).toEqual([]);
+    });
+
+    it('a failed set returns ok false and neither refreshes nor records anything', async () => {
+      const events: ServerEvent[] = [];
+      let refreshed = 0;
+      const { integrations } = fake(false);
+      const h = await handlers((e) => events.push(e), async () => { refreshed++; }, { integrations });
+      expect(await h.handle(cmd({ cmd: 'kit.integration.set', integration: 'tucu-ui', enabled: true }))).toMatchObject({ ok: false, exitCode: 1, output: 'boom' });
+      expect(refreshed).toBe(0);
+      expect(events).toEqual([]);
+      expect(await h.handle(cmd({ cmd: 'channel.botHistory', channelId: 'general', limit: 10, includeKitEvents: true }))).toEqual([]);
     });
   });
 

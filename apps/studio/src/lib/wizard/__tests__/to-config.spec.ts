@@ -1,5 +1,5 @@
 import { toHarnessConfig } from '../to-config';
-import { catalogFixture, idOf, run, scoped } from './fixtures';
+import { catalogFixture, idOf, nxCatalogFixture, run, scoped } from './fixtures';
 
 const named = (state: ReturnType<typeof scoped>) =>
   run([{ type: 'project', patch: { name: 'demo', description: ' Demo project ' } }], state);
@@ -92,5 +92,32 @@ describe('toHarnessConfig', () => {
 
   it('omits the mode until it is chosen', () => {
     expect(toHarnessConfig(named(run([])), catalogFixture)).not.toHaveProperty('mode');
+  });
+
+  describe('nx version', () => {
+    const monorepo = () => named(run([{ type: 'app-add', appType: 'react' }], scoped('front', 'nx')));
+
+    it('writes the catalog default for a monorepo when nothing was chosen', () => {
+      expect(toHarnessConfig(monorepo(), nxCatalogFixture).nx).toEqual({ version: 24 });
+    });
+
+    it('writes the chosen major', () => {
+      const state = run([{ type: 'nx-version', major: 22 }], monorepo());
+      expect(toHarnessConfig(state, nxCatalogFixture).nx).toEqual({ version: 22 });
+    });
+
+    it('falls back to the default when the chosen major left the catalog', () => {
+      const state = run([{ type: 'nx-version', major: 19 }], monorepo());
+      expect(toHarnessConfig(state, nxCatalogFixture).nx).toEqual({ version: 24 });
+    });
+
+    it('writes nothing for standalone', () => {
+      const state = named(run([{ type: 'app-add', appType: 'react' }], scoped('front', 'standalone')));
+      expect(toHarnessConfig(state, nxCatalogFixture)).not.toHaveProperty('nx');
+    });
+
+    it('writes nothing when the catalog has no nx', () => {
+      expect(toHarnessConfig(monorepo(), catalogFixture)).not.toHaveProperty('nx');
+    });
   });
 });

@@ -1,5 +1,5 @@
 import { act, fireEvent, screen, waitFor, within } from '@testing-library/react';
-import type { BotEvent, KitIndex, KitToolsState, ServerEvent, WorkspaceSnapshot } from '@sdd-studio/protocol';
+import type { BotEvent, KitIndex, KitIntegrationStatus, KitToolsState, ServerEvent, WorkspaceSnapshot } from '@sdd-studio/protocol';
 import { BridgeError } from '@/lib/bridge/client';
 import { bridgeValue, renderShell, shellSnapshot } from '../../shell/shell-test-utils';
 import { kitModule } from './index';
@@ -53,6 +53,8 @@ interface Harness {
   indexFails?: boolean;
   connected?: boolean;
   readError?: BridgeError;
+  integrationStatus?: Partial<Record<string, KitIntegrationStatus>>;
+  integrationSet?: (cmd: Record<string, unknown>) => unknown;
 }
 
 function setup(selected: string | null, options: Harness = { features: ['kit-index', 'kit-tools'], tools: TOOLS }) {
@@ -77,6 +79,10 @@ function setup(selected: string | null, options: Harness = { features: ['kit-ind
           return [];
         case 'kit.tools.set':
           return options.setResult?.(cmd);
+        case 'kit.integration.status':
+          return options.integrationStatus?.[cmd.integration as string] ?? {};
+        case 'kit.integration.set':
+          return options.integrationSet?.(cmd);
         case 'workspace.snapshot':
           return snapshot({ ...TOOLS, rtkEnabled: false, revision: 'bbbbbbbbbbbbbbbb' });
         default:
@@ -402,5 +408,111 @@ describe('Kit tools', () => {
     const event: BotEvent = { channelId: 'general', botKind: 'tools.changed', payload: { tool: 'rtk', from: true, to: false }, at: '2026-10-27T10:00:00Z' };
     act(() => value.store.getState().receive({ kind: 'bot.event', ...event }));
     expect(value.store.getState().bot['general']).toContainEqual(event);
+  });
+});
+
+describe('Kit integrations', () => {
+  beforeEach(() => window.localStorage.clear());
+
+  const status = (integration: 'tucu-ui' | 'video-maker', patch: Partial<KitIntegrationStatus> = {}): KitIntegrationStatus => ({
+    integration, available: true, enabled: false, state: 'off', parts: {}, version: '0.16.0', kitVersion: '0.16.0', updateAvailable: false, nodeOk: true,
+    harnesses: { claude: 'incomplete', copilot: 'incomplete', gemini: 'incomplete', antigravity: 'incomplete' }, repair: null, ...patch,
+  });
+  const FEATURES = ['kit-index', 'kit-tools', 'kit-integrations'];
+  const both = (patch: Partial<KitIntegrationStatus> = {}) => ({ 'tucu-ui': status('tucu-ui', patch), 'video-maker': status('video-maker', patch) });
+
+  it('is hidden when the bridge lacks kit-integrations and asks nothing', () => {
+    const { requests } = setup('tools', { features: ['kit-index', 'kit-tools'], tools: TOOLS });
+    expect(screen.queryByTestId('kit-integrations')).toBeNull();
+    expect(requests.some((r) => r.cmd === 'kit.integration.status')).toBe(false);
+  });
+
+  it('loads both statuses on mount and renders a card per integration', async () => {
+    const { requests } = setup('tools', { features: FEATURES, tools: TOOLS, integrationStatus: both() });
+    expect(await screen.findByTestId('integration-state-tucu-ui')).toHaveTextContent('Desactivada');
+    expect(requests).toContainEqual({ cmd: 'kit.integration.status', integration: 'tucu-ui' });
+    expect(requests).toContainEqual({ cmd: 'kit.integration.status', integration: 'video-maker' });
+    expect(screen.getByTestId('integration-tucu-ui')).toHaveTextContent('Skill de diseño y MCP para frontends React/Next');
+    expect(screen.getByTestId('integration-tucu-ui')).toHaveTextContent('Necesita red la primera vez');
+    expect(screen.getByTestId('integration-video-maker')).toHaveTextContent('Node 22+');
+    expect(screen.getByRole('switch', { name: 'tucu-ui' })).not.toBeChecked();
+  });
+
+  it('shows the harness chips, version and update notice when active', async () => {
+    setup('tools', {
+      features: FEATURES, tools: TOOLS,
+      integrationStatus: { 'tucu-ui': status('tucu-ui', { enabled: true, state: 'complete', updateAvailable: true, harnesses: { claude: 'complete', copilot: 'complete', gemini: 'incomplete', antigravity: 'complete' } }), 'video-maker': status('video-maker') },
+    });
+    expect(await screen.findByTestId('integration-state-tucu-ui')).toHaveTextContent('Activa');
+    expect(screen.getByRole('switch', { name: 'tucu-ui' })).toBeChecked();
+    expect(screen.getByTestId('integration-harness-claude')).toHaveTextContent('completo');
+    expect(screen.getByTestId('integration-harness-gemini')).toHaveTextContent('incompleto');
+    expect(screen.getByTestId('integration-tucu-ui')).toHaveTextContent('v0.16.0');
+    expect(screen.getByTestId('integration-tucu-ui')).toHaveTextContent('actualización disponible');
+  });
+
+  it('toggling sends kit.integration.set, shows the busy state and applies the returned status', async () => {
+    let finish: (value: unknown) => void = () => undefined;
+    const result = new Promise((resolve) => { finish = resolve; });
+    const { requests } = setup('tools', { features: FEATURES, tools: TOOLS, integrationStatus: both(), integrationSet: () => result });
+    await screen.findByTestId('integration-state-tucu-ui');
+    fireEvent.click(screen.getByRole('switch', { name: 'tucu-ui' }));
+    expect(await screen.findByTestId('integration-busy-tucu-ui')).toHaveTextContent('Activando');
+    expect(screen.getByRole('switch', { name: 'tucu-ui' })).toBeDisabled();
+    expect(requests).toContainEqual({ cmd: 'kit.integration.set', integration: 'tucu-ui', enabled: true });
+    await act(async () => finish({ ok: true, exitCode: 0, output: 'on', status: status('tucu-ui', { enabled: true, state: 'complete' }) }));
+    await waitFor(() => expect(screen.getByTestId('integration-state-tucu-ui')).toHaveTextContent('Activa'));
+    expect(screen.queryByTestId('integration-busy-tucu-ui')).toBeNull();
+    expect(screen.queryByTestId('integration-failure-tucu-ui')).toBeNull();
+  });
+
+  it('a failed attempt shows the trimmed output in an alert and keeps the previous state', async () => {
+    setup('tools', {
+      features: FEATURES, tools: TOOLS, integrationStatus: both(),
+      integrationSet: () => ({ ok: false, exitCode: 1, output: 'npx exploded', status: status('tucu-ui') }),
+    });
+    await screen.findByTestId('integration-state-tucu-ui');
+    fireEvent.click(screen.getByRole('switch', { name: 'tucu-ui' }));
+    const alert = await screen.findByTestId('integration-failure-tucu-ui');
+    expect(alert).toHaveTextContent('El último intento falló.');
+    expect(alert).toHaveTextContent('npx exploded');
+    expect(screen.getByTestId('integration-state-tucu-ui')).toHaveTextContent('Desactivada');
+  });
+
+  it('a rejected request also surfaces as a failure', async () => {
+    setup('tools', {
+      features: FEATURES, tools: TOOLS, integrationStatus: both(),
+      integrationSet: () => { throw new BridgeError('internal', 'bridge down'); },
+    });
+    await screen.findByTestId('integration-state-tucu-ui');
+    fireEvent.click(screen.getByRole('switch', { name: 'video-maker' }));
+    expect(await screen.findByTestId('integration-failure-video-maker')).toHaveTextContent('bridge down');
+  });
+
+  it('an incomplete integration offers Reparar, which re-enables it', async () => {
+    const { requests } = setup('tools', {
+      features: FEATURES, tools: TOOLS,
+      integrationStatus: { 'tucu-ui': status('tucu-ui', { enabled: true, state: 'incomplete' }), 'video-maker': status('video-maker') },
+      integrationSet: () => ({ ok: true, exitCode: 0, output: '', status: status('tucu-ui', { enabled: true, state: 'complete' }) }),
+    });
+    fireEvent.click(await screen.findByRole('button', { name: 'Reparar' }));
+    await waitFor(() => expect(requests).toContainEqual({ cmd: 'kit.integration.set', integration: 'tucu-ui', enabled: true }));
+    await waitFor(() => expect(screen.queryByRole('button', { name: 'Reparar' })).toBeNull());
+  });
+
+  it('an unavailable integration is disabled with the reason', async () => {
+    setup('tools', {
+      features: FEATURES, tools: TOOLS,
+      integrationStatus: { 'tucu-ui': status('tucu-ui', { available: false, state: 'unavailable' }), 'video-maker': status('video-maker') },
+    });
+    expect(await screen.findByTestId('integration-unavailable-tucu-ui')).toHaveTextContent('sdd/scripts');
+    expect(screen.getByRole('switch', { name: 'tucu-ui' })).toBeDisabled();
+    expect(screen.getByRole('switch', { name: 'video-maker' })).toBeEnabled();
+  });
+
+  it('disables the switches while disconnected', async () => {
+    setup('tools', { features: FEATURES, tools: TOOLS, integrationStatus: both(), connected: false });
+    expect(screen.getByRole('switch', { name: 'tucu-ui' })).toBeDisabled();
+    expect(screen.getByTestId('kit-integrations')).toHaveTextContent('Sin conexión');
   });
 });

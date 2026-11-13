@@ -1,7 +1,8 @@
 import { fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { optionNames, pickOption } from '@/lib/test-utils/pick-option';
 import { saveWizardState } from '@/lib/wizard/persist';
 import type { WizardAction } from '@/lib/wizard/state';
-import { run, scoped } from '@/lib/wizard/__tests__/fixtures';
+import { nxCatalogResultFixture, run, scoped } from '@/lib/wizard/__tests__/fixtures';
 import { renderWizard, validation, wizardClient } from './harness';
 
 const named: WizardAction[] = [
@@ -183,5 +184,41 @@ describe('wizard steps 1 to 3', () => {
       await waitFor(() => expect(screen.getByTestId('next-blocked-reason')).toHaveTextContent('Hay más de un shell: elegí el de «mfe».'));
       expect(screen.getByRole('button', { name: /Hay más de un shell/ })).toBeInTheDocument();
     });
+  });
+});
+
+describe('nx version control', () => {
+  beforeEach(() => window.sessionStorage.clear());
+
+  const withNx = () => wizardClient({ 'wizard.catalog': () => nxCatalogResultFixture });
+
+  it('renders from the catalog with the recommended major selected', async () => {
+    saveWizardState(scoped('front', 'nx'), window.sessionStorage);
+    renderWizard({ fake: withNx() });
+    const control = await screen.findByTestId('nx-version');
+    expect(within(control).getByRole('combobox', { name: 'Versión de Nx' })).toHaveTextContent('Nx 24 (recomendada)');
+  });
+
+  it('is hidden for standalone', async () => {
+    saveWizardState(scoped('front', 'standalone'), window.sessionStorage);
+    renderWizard({ fake: withNx() });
+    await screen.findByTestId('mode-nx');
+    expect(screen.queryByTestId('nx-version')).not.toBeInTheDocument();
+  });
+
+  it('is hidden when the catalog has no nx', async () => {
+    saveWizardState(scoped('front', 'nx'), window.sessionStorage);
+    renderWizard();
+    await screen.findByTestId('mode-nx');
+    expect(screen.queryByTestId('nx-version')).not.toBeInTheDocument();
+  });
+
+  it('lets the user pick another major', async () => {
+    saveWizardState(scoped('front', 'nx'), window.sessionStorage);
+    renderWizard({ fake: withNx() });
+    const control = await screen.findByTestId('nx-version');
+    expect(optionNames(within(control).getByRole('combobox', { name: 'Versión de Nx' }))).toEqual(['Nx 22', 'Nx 23', 'Nx 24 (recomendada)']);
+    pickOption(within(control).getByRole('combobox', { name: 'Versión de Nx' }), 'Nx 22');
+    await waitFor(() => expect(within(control).getByRole('combobox', { name: 'Versión de Nx' })).toHaveTextContent('Nx 22'));
   });
 });

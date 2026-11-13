@@ -48,6 +48,13 @@ export const ConfigCatalog = z.object({
     )
     .max(16),
   profiles: z.array(z.enum(['team', 'solo'])).max(4),
+  nx: z
+    .object({
+      majors: z.array(z.number().int().positive()).min(1).max(8),
+      default: z.number().int().positive(),
+      versions: z.record(z.string().max(8), z.string().max(40)),
+    })
+    .optional(),
   patterns: z.object({ name: z.string().max(200), packageScope: z.string().max(200), author: z.string().max(200) }),
   portRange: z.object({ min: z.number().int(), max: z.number().int() }),
   targetDir: z.object({ tolerated: z.array(z.string().max(64)).max(64) }),

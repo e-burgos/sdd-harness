@@ -14,6 +14,9 @@ describe('format', () => {
   it('renders bot events', () => {
     expect(botText(t, { channelId: 'spec:s', botKind: 'task.status', payload: { taskId: 'T1', title: 'Tests', from: 'pending', to: 'done' } })).toBe('T1 «Tests»: pending → done');
   });
+  it('renders integration.changed with the localized state', () => {
+    expect(botText(t, { channelId: 'general', botKind: 'integration.changed', payload: { integration: 'tucu-ui', enabled: true, state: 'complete' } })).toBe('tucu-ui: Activa (sdd/tools.json)');
+  });
   it('renders tools.changed with localized tool and values', () => {
     expect(botText(t, { channelId: 'general', botKind: 'tools.changed', payload: { tool: 'gate', from: 'block', to: 'warn' } })).toBe('SPEC GATE: Bloquear → Avisar (sdd/tools.json)');
     expect(botText(t, { channelId: 'general', botKind: 'tools.changed', payload: { tool: 'rtk', from: null, to: true } })).toBe('rtk: — → Activado (sdd/tools.json)');

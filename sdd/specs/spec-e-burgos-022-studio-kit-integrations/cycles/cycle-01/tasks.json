@@ -1,0 +1,115 @@
+{
+  "$schema": "../../../../schemas/cycle-tasks.schema.json",
+  "spec": "spec-e-burgos-022-studio-kit-integrations",
+  "cycle": 1,
+  "module": "studio-kit-integrations",
+  "apps": [
+    "libs/studio-protocol",
+    "apps/studio-bridge",
+    "apps/studio"
+  ],
+  "flow": "lite",
+  "user_stories_generated": true,
+  "prerequisites": {
+    "tasks_generated": true
+  },
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "Protocolo y puente: kit.integration.status/set y ejecución de los scripts",
+      "user_stories": [
+        "US-1",
+        "US-2",
+        "US-3"
+      ],
+      "estimation_hours": 3,
+      "story_points": 5,
+      "depends_on": [],
+      "status": "done",
+      "files": [
+        "libs/studio-protocol/src/kit.ts",
+        "libs/studio-protocol/src/commands.ts",
+        "libs/studio-protocol/src/events.ts",
+        "libs/studio-protocol/src/limits.ts",
+        "apps/studio-bridge/src/workspace/kit-integrations.ts",
+        "apps/studio-bridge/src/workspace/kit-integrations.spec.ts",
+        "apps/studio-bridge/src/server/router.ts",
+        "apps/studio-bridge/src/server/router.spec.ts",
+        "apps/studio-bridge/src/sessions/store.ts"
+      ],
+      "usage": {
+        "tokens_in": 73399,
+        "tokens_out": 12953,
+        "approx": true,
+        "recorded_at": "2026-11-13",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "source": "agent-usage-notification"
+      }
+    },
+    {
+      "id": "TASK-002",
+      "title": "UI: sección Integraciones en el módulo Kit",
+      "user_stories": [
+        "US-1",
+        "US-2",
+        "US-3",
+        "US-4"
+      ],
+      "estimation_hours": 3,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/modules/kit/KitIntegrations.tsx",
+        "apps/studio/src/components/modules/kit/use-kit-integrations.ts",
+        "apps/studio/src/components/modules/kit/KitToolsView.tsx",
+        "apps/studio/src/components/modules/kit/kit-module.spec.tsx",
+        "apps/studio/src/lib/i18n/modules/kit.ts",
+        "apps/studio/src/lib/format.ts",
+        "apps/studio/src/components/modules/activity/activity-model.ts"
+      ],
+      "usage": {
+        "tokens_in": 73399,
+        "tokens_out": 12953,
+        "approx": true,
+        "recorded_at": "2026-11-13",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "source": "agent-usage-notification"
+      }
+    },
+    {
+      "id": "TASK-003",
+      "title": "Verificación real en el navegador y cierre",
+      "user_stories": [
+        "US-1",
+        "US-2",
+        "US-3",
+        "US-4"
+      ],
+      "estimation_hours": 1,
+      "story_points": 2,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002"
+      ],
+      "status": "done",
+      "files": [],
+      "usage": {
+        "tokens_in": 80000,
+        "tokens_out": 6000,
+        "approx": true,
+        "recorded_at": "2026-11-13",
+        "provider_model": "claude/opus",
+        "effort": "medium",
+        "agent": "reviewer",
+        "source": "declared-estimate"
+      }
+    }
+  ]
+}

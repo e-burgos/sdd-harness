@@ -218,6 +218,7 @@ export const es = {
   'bot.fix.created': 'Fix nuevo: {fixId}',
   'bot.fix.status': '{fixId}: {from} → {to}',
   'bot.tools.changed': '{tool}: {from} → {to} (sdd/tools.json)',
+  'bot.integration.changed': '{integration}: {state} (sdd/tools.json)',
   'mention.label': 'Sugerencias',
   'mention.files': 'Archivos',
   'mention.agents': 'Agentes',

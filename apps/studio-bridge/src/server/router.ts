@@ -10,6 +10,7 @@ import { SessionError, type SessionManager } from '../sessions/session-manager';
 import type { ThreadStore } from '../sessions/store';
 import type { FileIndex } from '../workspace/file-index';
 import type { KitIndexer } from '../workspace/kit-index';
+import { createKitIntegrations, type KitIntegrations } from '../workspace/kit-integrations';
 import { setKitTool } from '../workspace/kit-tools';
 import { readRtkGain } from '../workspace/rtk-gain';
 import { resolveSddPath } from '../workspace/paths';
@@ -31,8 +32,10 @@ export function createHandlers(d: {
   kitIndexer: Pick<KitIndexer, 'index'>;
   broadcast: (message: ServerMessage) => void;
   rtkGain?: (root: string) => Promise<RtkGain>;
+  integrations?: KitIntegrations;
   now?: () => Date;
 }): BridgeHandlers {
+  const integrations = d.integrations ?? createKitIntegrations();
   return {
     welcome: () => {
       const snapshot = d.watcher.current();
@@ -110,6 +113,23 @@ export function createHandlers(d: {
               channelId: 'general',
               botKind: 'tools.changed',
               payload: { tool: result.tool, from: result.from, to: result.to, file: 'sdd/tools.json' },
+              at: (d.now?.() ?? new Date()).toISOString(),
+            };
+            d.store.appendBot(event);
+            d.broadcast({ kind: 'bot.event', ...event });
+          }
+          return result;
+        }
+        case 'kit.integration.status':
+          return integrations.status(d.root, command.integration);
+        case 'kit.integration.set': {
+          const result = await integrations.set(d.root, command.integration, command.enabled);
+          if (result.ok) {
+            await d.watcher.refresh().catch(() => null);
+            const event: BotEvent = {
+              channelId: 'general',
+              botKind: 'integration.changed',
+              payload: { integration: command.integration, enabled: command.enabled, state: result.status.state },
               at: (d.now?.() ?? new Date()).toISOString(),
             };
             d.store.appendBot(event);

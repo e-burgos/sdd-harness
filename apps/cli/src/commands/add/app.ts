@@ -22,6 +22,7 @@ import {
   addAppTypeDepsToRootPkg,
   sortKeys,
 } from '../../generators/root-package.js';
+import { nxMajorOfRange } from '../../generators/versions.js';
 
 /**
  * Alta en el package.json raíz: los mismos scripts nx y dependencias por tipo
@@ -48,7 +49,13 @@ function registerAppInRootPackageJson(
   const referencePkg = existsSync(referencePath)
     ? JSON.parse(readFileSync(referencePath, 'utf-8'))
     : undefined;
-  addAppTypeDepsToRootPkg(pkg, appType, referencePkg, { tucuUi });
+  const repoNx: string | undefined = pkg.devDependencies.nx ?? pkg.dependencies.nx;
+  const nxMajor = nxMajorOfRange(repoNx);
+  addAppTypeDepsToRootPkg(pkg, appType, referencePkg, {
+    tucuUi,
+    nxMajor,
+    ...(nxMajor && repoNx ? { nxVersion: repoNx } : {}),
+  });
 
   pkg.dependencies = sortKeys(pkg.dependencies);
   pkg.devDependencies = sortKeys(pkg.devDependencies);

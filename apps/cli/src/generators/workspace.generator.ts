@@ -4,7 +4,13 @@ import { copyTemplate, getTemplatesDir } from "../utils/fs.js";
 import { exec } from "../utils/exec.js";
 import { initGitRepo } from "../utils/git.js";
 import { logger } from "../utils/logger.js";
-import { FRONTEND_VERSIONS, NX_VERSION } from "./versions.js";
+import {
+  DEFAULT_NX_MAJOR,
+  FRONTEND_VERSIONS,
+  NX_PEER_OVERRIDES,
+  nxVersionFor,
+  type NxMajor,
+} from "./versions.js";
 import {
   addAppScriptsToRootPkg,
   addAppTypeDepsToRootPkg,
@@ -22,6 +28,12 @@ import {
   type AppSpec,
 } from "./app.generator.js";
 import { generateLib } from "./lib.generator.js";
+import {
+  eslintPluginEntry,
+  inferredPluginsForAppType,
+  usesInferredTasks,
+  type NxPluginEntry,
+} from "./nx-inferred.js";
 import { assertValidAppTopology } from "./app-types.js";
 import { seedModules } from "./spec.generator.js";
 import type { ModuleSeed, NpmScope } from "../types/config.types.js";
@@ -41,6 +53,7 @@ export interface WorkspaceOptions {
   sddAuthor?: string;
   /** Perfil de trabajo → `sdd/global.json.profile`: team (ciclos full) | solo (ciclos lite). Ausente = team. */
   sddProfile?: SddProfile;
+  nxMajor?: NxMajor;
   /** Backlog inicial: una spec `draft` + entrada en pending_modules por módulo. */
   modules?: ModuleSeed[];
   /**
@@ -171,12 +184,12 @@ export async function generateWorkspace(opts: WorkspaceOptions): Promise<void> {
 
   for (const lib of opts.libs) {
     logger.step(`Generating lib: ${lib.name} (${lib.type})...`);
-    await generateLib(root, lib, opts.packageScope);
+    await generateLib(root, lib, opts.packageScope, opts.nxMajor);
   }
 
   for (const app of opts.apps) {
     logger.step(`Generating app: ${app.name} (${app.type}, port ${resolveAppPort(app, opts.apps)})...`);
-    await generateApp(root, app, opts.packageScope, { apps: opts.apps });
+    await generateApp(root, app, opts.packageScope, { apps: opts.apps, nxMajor: opts.nxMajor });
   }
 
   if (opts.modules?.length) {
@@ -407,7 +420,9 @@ async function writeRootPackageJson(
   // La CLI escribe su propio eslint.config.mjs (el kit no trae uno: asume
   // create-nx-workspace), así que lo que ese config importa va siempre:
   // @nx/eslint-plugin y typescript-eslint (requerido por flat/typescript).
-  pkg.devDependencies["@nx/eslint-plugin"] = NX_VERSION;
+  const nxMajor = opts.nxMajor ?? DEFAULT_NX_MAJOR;
+  const nxVersion = nxVersionFor(nxMajor);
+  pkg.devDependencies["@nx/eslint-plugin"] = nxVersion;
   pkg.devDependencies["typescript-eslint"] = "^8.40.0";
 
   const has = (type: string) => opts.apps.some((a) => a.type === type);
@@ -435,14 +450,20 @@ async function writeRootPackageJson(
   }
 
   for (const section of [pkg.dependencies, pkg.devDependencies]) {
-    for (const [name, version] of Object.entries(FRONTEND_VERSIONS)) {
+    for (const [name, version] of Object.entries({
+      ...FRONTEND_VERSIONS,
+      ...NX_PEER_OVERRIDES[nxMajor],
+    })) {
       if (name in section) section[name] = version;
+    }
+    for (const name of Object.keys(section)) {
+      if (name === "nx" || name.startsWith("@nx/")) section[name] = nxVersion;
     }
   }
 
   for (const type of new Set(opts.apps.map((a) => a.type))) {
     const tucuUi = opts.apps.some((a) => a.type === type && a.tucuUi !== false);
-    addAppTypeDepsToRootPkg(pkg, type, undefined, { tucuUi });
+    addAppTypeDepsToRootPkg(pkg, type, undefined, { tucuUi, nxMajor });
   }
 
   pkg.dependencies = sortKeys(pkg.dependencies);
@@ -458,7 +479,7 @@ async function writeNxJson(
 ): Promise<void> {
   const nxJson = await fs.readJSON(resolve(nxWorkspaceDir, "nx.json"));
 
-  nxJson.plugins = getNxPlugins(opts.apps);
+  nxJson.plugins = getNxPlugins(opts.apps, opts.nxMajor);
   if (opts.apps[0]) nxJson.defaultProject = opts.apps[0].name;
 
   await fs.writeJSON(resolve(root, "nx.json"), nxJson, { spaces: 2 });
@@ -486,9 +507,7 @@ async function writeTsconfigBase(
   await fs.writeJSON(resolve(root, "tsconfig.base.json"), tsconfig, { spaces: 2 });
 }
 
-type NxPluginEntry = { plugin: string; options?: Record<string, string> };
-
-function getNxPlugins(apps: AppSpec[]): NxPluginEntry[] {
+function getNxPlugins(apps: AppSpec[], nxMajor?: NxMajor): NxPluginEntry[] {
   const plugins = new Map<string, NxPluginEntry>();
   const add = (entry: NxPluginEntry) => {
     if (!plugins.has(entry.plugin)) plugins.set(entry.plugin, entry);
@@ -528,6 +547,11 @@ function getNxPlugins(apps: AppSpec[]): NxPluginEntry[] {
         add({ plugin: "@nx/node" });
         break;
     }
+  }
+
+  if (usesInferredTasks(nxMajor)) {
+    add(eslintPluginEntry());
+    for (const app of apps) inferredPluginsForAppType(app.type).forEach(add);
   }
 
   return Array.from(plugins.values());

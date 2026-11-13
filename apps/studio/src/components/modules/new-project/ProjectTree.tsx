@@ -12,7 +12,8 @@ export function ProjectTree() {
   const { t } = useT();
   const { catalog, state, validation } = useWizard();
   const resolved = validation.validation?.resolved ?? null;
-  const source = resolved ? sourceFromResolved(resolved) : catalog ? sourceFromState(state, catalog) : null;
+  const fromState = catalog ? sourceFromState(state, catalog) : null;
+  const source = resolved ? { ...sourceFromResolved(resolved), nxVersion: fromState?.nxVersion ?? null } : fromState;
   if (source === null) return <p className="text-small text-ink-400">{t('wizard.right.treeEmpty')}</p>;
   return (
     <ul data-testid="project-tree" className="flex flex-col gap-px font-mono text-meta text-ink-100">
