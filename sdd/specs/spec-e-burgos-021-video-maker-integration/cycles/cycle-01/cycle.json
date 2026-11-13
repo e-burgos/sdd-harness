@@ -1,0 +1,153 @@
+{
+  "$schema": "../../../../schemas/cycle.schema.json",
+  "cycle": 1,
+  "module": "video-maker-integration",
+  "spec": "spec-e-burgos-021-video-maker-integration",
+  "apps": [
+    "apps/cli"
+  ],
+  "phase": "video-maker-integration",
+  "flow": "lite",
+  "objectives": [
+    "El kit trae la vinculación opcional con video-maker: plugin para Claude Code y MCP fijado para Copilot y Gemini (US-1..US-4)"
+  ],
+  "status": "completed",
+  "started_at": "2026-11-12",
+  "completed_at": "2026-11-12",
+  "documents": {
+    "plan": "sdd/specs/spec-e-burgos-021-video-maker-integration/cycles/cycle-01/plan.md",
+    "tasks": "sdd/specs/spec-e-burgos-021-video-maker-integration/cycles/cycle-01/tasks.json"
+  },
+  "artifacts": [],
+  "metrics": {
+    "tasks_total": 3,
+    "tasks_completed": 3,
+    "tasks_skipped": 0,
+    "story_points": 13,
+    "files_created": [
+      "apps/cli/templates/sdd/scripts/video-maker-common.mjs",
+      "apps/cli/templates/sdd/scripts/sdd-video.mjs",
+      "apps/cli/src/utils/video-maker-run.ts",
+      "apps/cli/src/utils/__tests__/video-maker-common.spec.ts",
+      "apps/cli/src/generators/__tests__/video-maker.integration.spec.ts",
+      "apps/cli/src/commands/__tests__/video-maker-flow.spec.ts",
+      "apps/cli/templates/sdd/documentation/es/VIDEO-MAKER.md",
+      "apps/cli/templates/sdd/documentation/en/VIDEO-MAKER.md"
+    ],
+    "files_modified": [
+      "apps/cli/templates/sdd/scripts/validate-sdd.mjs",
+      "apps/cli/templates/sdd/tools.json",
+      "apps/cli/templates/sdd/schemas/tools.schema.json",
+      "apps/cli/templates/sdd/templates/nx-workspace/package.json",
+      "package.json",
+      "apps/cli/src/commands/init.ts",
+      "apps/cli/src/commands/configure/sdd.ts",
+      "apps/cli/src/generators/__tests__/update.generator.spec.ts",
+      "apps/cli/src/generators/__tests__/standalone.generator.spec.ts",
+      "apps/cli/templates/sdd/documentation/es/README.md",
+      "apps/cli/templates/sdd/documentation/en/README.md",
+      "apps/cli/templates/sdd/skills/sdd-steward/SKILL.md",
+      "apps/cli/templates/sdd/dual-harness/AGENTS.md",
+      "apps/cli/templates/sdd/dual-harness/CLAUDE.md",
+      "apps/cli/templates/sdd/dual-harness/GEMINI.md",
+      "apps/cli/CHANGELOG.md"
+    ],
+    "files_deleted": [],
+    "usage": {
+      "tokens_in": 344138,
+      "tokens_out": 53495,
+      "approx": true,
+      "source": "declared-estimate",
+      "by_tier": {
+        "claude/opus": {
+          "tokens_in": 160000,
+          "tokens_out": 21000,
+          "approx": true,
+          "source": "declared-estimate"
+        },
+        "claude/sonnet": {
+          "tokens_in": 184138,
+          "tokens_out": 32495,
+          "approx": true,
+          "source": "agent-usage-notification"
+        }
+      },
+      "by_agent": [
+        {
+          "agent": "orchestrator",
+          "label": "consulta a la sesión de video-maker, diseño, apertura, revisión y cierre",
+          "provider_model": "claude/opus",
+          "effort": "medium",
+          "tokens_in": 90000,
+          "tokens_out": 9000,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-12"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-001 Kit: video-maker-common, sdd:video, tools.json/schema y validador",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 110678,
+          "tokens_out": 19532,
+          "source": "agent-usage-notification",
+          "approx": true,
+          "recorded_at": "2026-11-12"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-002 CLI: --video-maker en init/configure y preservación en update",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 73460,
+          "tokens_out": 12963,
+          "source": "agent-usage-notification",
+          "approx": true,
+          "recorded_at": "2026-11-12"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-003 Docs, steward, generación real y cierre",
+          "provider_model": "claude/opus",
+          "effort": "medium",
+          "tokens_in": 70000,
+          "tokens_out": 12000,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-12"
+        }
+      ]
+    }
+  },
+  "tables_created": [],
+  "endpoints_implemented": [],
+  "components_created": [],
+  "issues_found": [
+    "Decidido: en Claude Code se declara el plugin (trae su propio MCP) y no se agrega `video-maker` a `.mcp.json`, para no registrar el servidor dos veces (recomendación de la sesión de video-maker).",
+    "Decidido: sin oferta interactiva en init (la de tucu-ui depende de que haya un frontend); solo los flags `--video-maker` / `--no-video-maker`.",
+    "Abierto (informativo): la app de escritorio de video-maker 0.4.3 todavía no publica `~/.video-maker/studio.json`; hasta su próxima versión el MCP encuentra el studio con `pnpm studio` o con `VIDEO_MAKER_API_URL` + `VIDEO_MAKER_API_TOKEN`. La doc no la promociona como requisito.",
+    "Abierto (informativo): el `.mcp.json` del plugin lanza el paquete sin versión fijada; el kit fija `0.1.0` solo en las entradas que escribe (Copilot y Gemini)."
+  ],
+  "reviewer_report": {
+    "approved": true,
+    "date": "2026-11-12",
+    "ca_results": {
+      "US-1": "PASS - `pnpm sdd:video -- --status|--enable|--disable` (`--parts`, `--force`), sin red; ida y vuelta disable/enable real en examples/vm-021 sin tocar lo ajeno (tests de preservación)",
+      "US-2": "PASS - `.claude/settings.json` con `extraKnownMarketplaces.video-maker` (github e-burgos/video-maker) y `enabledPlugins[\"video-maker@video-maker\"]`; `.mcp.json` sin entrada; marketplace verificado en el repo público",
+      "US-3": "PASS - `.vscode/mcp.json` (stdio) y `.gemini/settings.json` con `npx -y @e-burgos/video-maker-mcp@0.1.0`; el paquete fijado se lanzó de verdad por stdio y lista 41 tools",
+      "US-4": "PASS - `harness init`/`configure sdd --video-maker`, aviso del validador, playbook 9 del steward, sección en AGENTS/CLAUDE/GEMINI, README §9 y VIDEO-MAKER.md es/en"
+    },
+    "tests": {
+      "build": "OK",
+      "typecheck": "OK",
+      "cli": "OK - 719 tests",
+      "bridge": "OK - 996 tests",
+      "studio": "OK - 1294 tests",
+      "protocol": "OK - 185 tests",
+      "sdd-validate": "OK",
+      "real-check": "OK - configure sdd --video-maker en examples/vm-021: estado complete en los 4 arneses, validate OK; MCP 0.1.0 real: serverInfo studio 0.1.0, 41 tools"
+    },
+    "notes": "Flow lite. Implementación por subagente sonnet/medium (consumo por notificación, 85/15, repartido entre TASK-001 y TASK-002); docs y revisión en el main loop."
+  }
+}

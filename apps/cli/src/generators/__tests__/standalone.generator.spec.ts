@@ -67,6 +67,7 @@ describe('standalone.generator', () => {
     expect(pkg.scripts['dev']).toBe('vite');
     expect(pkg.scripts['sdd:validate']).toBe('node sdd/scripts/validate-sdd.mjs');
     expect(pkg.scripts['sdd:tucu']).toBe('node sdd/scripts/sdd-tucu.mjs');
+    expect(pkg.scripts['sdd:video']).toBe('node sdd/scripts/sdd-video.mjs');
     expect(pkg.scripts['setup:agents']).toBeDefined();
     expect(pkg.devDependencies['ajv']).toBeDefined();
     expect(pkg.devDependencies['ajv-formats']).toBeDefined();

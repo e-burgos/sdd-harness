@@ -143,6 +143,20 @@ Next. Con la integración prendida, el repo trae la skill `tucu-ui-design`
 - Si `pnpm sdd:validate` avisa de enlaces o entradas faltantes, informá al dev: reparar es
   `pnpm sdd:tucu -- --enable`, decisión suya.
 
+## 🎬 video-maker — videos del producto (OPCIONAL, apagado por defecto)
+
+Con la integración prendida, el repo queda vinculado al estudio local de
+[video-maker](https://github.com/e-burgos/video-maker): en Claude Code, el plugin
+`video-maker@video-maker` (declarado en `.claude/settings.json`) trae las skills de producción de
+video y su MCP; Copilot y Gemini reciben el MCP `video-maker` fijado en `.vscode/mcp.json` y
+`.gemini/settings.json`.
+
+- **Para producir un video** (promo, reel, explicativo, tutorial), seguí la skill `video-maker` del
+  plugin; requiere el studio corriendo. Publicar y borrar los hace el dev desde el studio.
+- **Nunca prendas ni apagues video-maker por tu cuenta**: el interruptor es del dev
+  (`sdd/tools.json`; `pnpm sdd:video -- --status | --enable | --disable`; el sdd-steward lo opera a
+  pedido). No edites a mano sus entradas en los archivos MCP ni en `.claude/settings.json`.
+
 ## ⚙️ Selección de modelo y esfuerzo — anexo de la REGLA CERO (OBLIGATORIO — optimización de tokens/contexto)
 
 > [!IMPORTANT]

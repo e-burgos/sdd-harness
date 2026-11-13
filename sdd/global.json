@@ -210,6 +210,26 @@
       "cycles_completed": 1,
       "description": "Wizard de entrada de pantalla completa con graphic motion para quien llega a la web sin puente conectado.",
       "completed_at": "2026-11-07"
+    },
+    {
+      "module": "kit-design-skills",
+      "spec": "spec-e-burgos-020-kit-design-skills",
+      "apps": [
+        "apps/cli"
+      ],
+      "cycles_completed": 1,
+      "description": "Skills de diseño del kit: tucu-ui profesional y lenguajes visuales replicables (Display Ads, Cristal Líquido).",
+      "completed_at": "2026-11-12"
+    },
+    {
+      "module": "video-maker-integration",
+      "spec": "spec-e-burgos-021-video-maker-integration",
+      "apps": [
+        "apps/cli"
+      ],
+      "cycles_completed": 1,
+      "description": "Vinculación opcional del kit con video-maker: plugin de Claude Code y MCP fijado para Copilot y Gemini.",
+      "completed_at": "2026-11-12"
     }
   ],
   "in_progress_modules": [],

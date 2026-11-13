@@ -20,6 +20,15 @@ import {
   runTucuUiOffer,
 } from '../../utils/tucu-ui-run.js';
 import {
+  VIDEO_MAKER_CONFLICT_MESSAGE,
+  applyVideoMaker,
+  hasConflictingVideoMakerFlags,
+  logVideoMakerSummary,
+  readVideoMakerSection,
+  readVideoMakerState,
+  restoreVideoMakerSection,
+} from '../../utils/video-maker-run.js';
+import {
   SUBPROJECT_NAME_RE,
   describeApp,
   detectAppType,
@@ -73,6 +82,11 @@ export const configureSddCommand = defineCommand({
       description:
         'Turn on the tucu-ui design skill + MCP (React/Next apps). --no-tucu-ui keeps it off',
     },
+    'video-maker': {
+      type: 'boolean',
+      description:
+        'Turn on the video-maker integration (Claude Code plugin + MCP for Copilot and Gemini/Antigravity). --no-video-maker keeps it off',
+    },
     apps: {
       type: 'string',
       description:
@@ -84,6 +98,11 @@ export const configureSddCommand = defineCommand({
 
     if (hasConflictingTucuUiFlags(rawArgs)) {
       logger.error(TUCU_UI_CONFLICT_MESSAGE);
+      process.exit(1);
+    }
+
+    if (hasConflictingVideoMakerFlags(rawArgs)) {
+      logger.error(VIDEO_MAKER_CONFLICT_MESSAGE);
       process.exit(1);
     }
 
@@ -218,6 +237,9 @@ export const configureSddCommand = defineCommand({
 
     const previousTucuUi = readTucuUiState(cwd) === 'off' ? undefined : readTucuUiSection(cwd);
 
+    const previousVideoMaker =
+      readVideoMakerState(cwd) === 'off' ? undefined : readVideoMakerSection(cwd);
+
     try {
       await generateSDD(cwd, opts, {
         layout: isMonorepo ? 'nx' : 'standalone',
@@ -257,6 +279,13 @@ export const configureSddCommand = defineCommand({
       interactive: Boolean(process.stdin.isTTY) && !args.yes,
       current: readTucuUiState(cwd),
     });
+
+    if (previousVideoMaker) restoreVideoMakerSection(cwd, previousVideoMaker);
+
+    const videoMakerFlag = args['video-maker'] ?? (previousVideoMaker ? true : undefined);
+    if (videoMakerFlag === true) {
+      logVideoMakerSummary(applyVideoMaker(cwd));
+    }
 
     p.outro(pc.green('SDD configured.'));
   },

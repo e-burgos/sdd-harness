@@ -5,6 +5,28 @@ All notable changes to `@e-burgos/sdd-harness` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.21.0] - 2026-11-12
+
+### Added
+- Kit skill `tucu-ui-pro`: using `@e-burgos/tucu-ui` like a professional — setup for Vite, Next 16
+  and apps with their own Tailwind v4, ThemeProvider/`themeStyle`/layout/presets/ThemeScope,
+  `customPaletteColor` and `--tucu-*` token overrides, a component catalog by need with the valid
+  props of 3.10, and the props and behaviours that crash or surprise at runtime. Works with or
+  without the tucu-ui MCP.
+- Kit skill `design-languages`: a method to choose or derive a complete visual language for any
+  project (token contract, surface hierarchy, scene, signature components, motion, accessibility,
+  verification) plus two production languages ready to replicate on tucu-ui — Sky Console (Display
+  Ads) and Cristal Líquido / Liquid Glass (ópticagestión).
+- The frontend implementor agent and skill load both skills when the subproject uses tucu-ui or
+  the task designs UI.
+- Optional video-maker integration (`pnpm sdd:video -- --status | --enable | --disable`, switch
+  `video_maker` in `sdd/tools.json`, off by default, no network): in Claude Code it declares the
+  `video-maker@video-maker` plugin from the `e-burgos/video-maker` marketplace in
+  `.claude/settings.json` (its skills plus its own MCP, so `.mcp.json` is not touched); Copilot and
+  Gemini/Antigravity get `@e-burgos/video-maker-mcp@0.1.0` pinned in `.vscode/mcp.json` and
+  `.gemini/settings.json`. `harness init` / `configure sdd` take `--video-maker`; the validator
+  warns when it is on and incomplete; the steward operates it on request. Docs: `VIDEO-MAKER.md`.
+
 ## [0.20.0] - 2026-11-07
 
 ### Added

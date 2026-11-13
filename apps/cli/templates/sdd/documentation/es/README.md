@@ -186,6 +186,8 @@ sdd/
     ├── generate-api-contract/
     ├── generate-react-component/
     ├── crafted-motion/                ← Graphic motion para frontends React/Next
+    ├── design-languages/              ← Lenguajes visuales: método + Sky Console + Cristal Líquido
+    ├── tucu-ui-pro/                   ← tucu-ui como un profesional: montaje, theming, props y trampas
     ├── generate-nestjs-module/
     └── generate-prisma-schema/
 ```
@@ -793,6 +795,8 @@ Skills son micro-agentes especializados invocados con `/skill [nombre]`.
 | `generate-api-contract`    | Genera contratos OpenAPI, DTOs y mappers                           |
 | `generate-react-component` | Genera componente React con props tipadas y tests                  |
 | `crafted-motion`           | Graphic motion en React/Next: capas CSS / framer-motion / GSAP / WebGL, tokens, recetas, wizards y QA |
+| `tucu-ui-pro`              | tucu-ui en React/Next: montaje (Vite, Next 16, Tailwind propio), theming, catálogo con props válidos y trampas que rompen en runtime |
+| `design-languages`         | Lenguaje visual de cualquier proyecto: método para derivarlo y recetas replicables de Sky Console (Display Ads) y Cristal Líquido (ópticagestión) |
 | `generate-nestjs-module`   | Genera módulo NestJS (reservado para futuros proyectos)            |
 | `generate-prisma-schema`   | Genera schema Prisma (reservado para futuros proyectos)            |
 
@@ -1143,6 +1147,22 @@ Para repos con un frontend React o Next. `pnpm sdd:tucu -- --enable` instala la 
 - **Validador**: `pnpm sdd:validate` avisa (nunca falla) de enlaces o entradas MCP faltantes.
 
 Detalle completo, mapa por arnés y nota de Windows: [TUCU-UI.md](TUCU-UI.md).
+
+### 9. video-maker — videos del producto (opcional, apagado por defecto)
+
+Para producir promos, reels, explicativos o tutoriales del producto con el estudio local de
+video-maker. `pnpm sdd:video -- --enable` declara el plugin `video-maker@video-maker` en
+`.claude/settings.json` (Claude Code: skills + su propio MCP) y agrega el MCP `video-maker`
+(versión fijada) a `.vscode/mcp.json` y `.gemini/settings.json` **sin pisar** entradas propias.
+
+- **Interruptor**: `video_maker` en `sdd/tools.json` (`enabled`, `plugin`, `mcp`, `version`). Dato
+  del proyecto: `harness update sdd` no lo pisa.
+- **Quién decide**: el dev; el sdd-steward lo opera a pedido.
+- **Comandos**: `pnpm sdd:video -- --status | --enable | --disable` (`--parts=plugin,mcp`). Sin red.
+- **Requisitos**: Node 22+ y el studio de video-maker corriendo.
+- **Desde la CLI**: `harness init --video-maker | --no-video-maker`.
+
+Detalle, flujo de punta a punta y trampas: [VIDEO-MAKER.md](VIDEO-MAKER.md).
 
 ---
 
