@@ -1,6 +1,6 @@
 # Constitución — apps/cli
 
-> Versión 1.0 | Última actualización: 2026-11-06 (consolidación de fragmentos 011, 012, 013, 016, 017)
+> Versión 1.1 | Última actualización: 2026-11-13 (consolidación de fragmentos 014, 017 cycle-02, 018, 020, 021)
 
 ## 1. Propósito y Alcance
 
@@ -24,7 +24,8 @@
 - `init.ts`: Orquesta la creación de workspaces completos.
   - Modos: `nx` (monorepo con apps/libs/tools) o `standalone` (aplicación única en la raíz sin Nx).
   - Vías: Asistente interactivo con prompts o desatendido mediante `--config <archivo>` / `--yes`.
-  - Opciones clave: `--profile team|solo` (fija el flujo por defecto de SDD), `--here`, `--dir`.
+  - Opciones clave: `--profile team|solo` (fija el flujo por defecto de SDD), `--here`, `--dir`, `--tucu-ui` / `--no-tucu-ui`, `--video-maker` / `--no-video-maker`.
+  - Onboarding: en modo interactivo pregunta si seguir en Studio (recomendado) o en la terminal; `--studio` / `--terminal` saltan la pregunta. Studio corre `npx -y @e-burgos/sdd-studio@latest` en la carpeta destino (`src/utils/studio-launch.ts`: `resolveStudioRoute`, `launchStudio`, `setStudioSpawner`).
 - `idea.ts`: Entrada del protocolo Hermes (Fase 1). Registra la idea en lenguaje natural en `harness.idea.md` y siembra el stub `harness.config.json` para ejecución autónoma por agentes.
 - `configure/`:
   - `sdd.ts`: Instala el kit SDD en un repositorio preexistente preservando instrucciones previas (`teamContribution`) y creando symlinks de arnés dual.
@@ -36,6 +37,7 @@
   - `config catalog [--json]`: tipos de app/lib, servicios, perfiles, patrones, rango de puertos, entradas toleradas del destino, límites (`CONFIG_LIMITS`, `configBytes`) y el JSON Schema.
   - `config validate <archivo|-> [--json]`: no genera nada; chequea schema, topología de apps y precondiciones de `init`; devuelve `{ format, cliVersion, ok, issues[], resolved }`. Exit 0 válida, 1 con errores, 2 ilegible (`.json`, `.mjs`, `.js` o stdin, máx. 64 KiB; con `--json` el exit 2 escribe `{ ok: false, error: { code, message } }`).
   - Código en `src/config/{catalog,validate,app-options}.ts`; `init.ts` reutiliza `app-options.ts`.
+- `github/` (`index`, `status`, `connect`, `protect`, `shared`) + `src/utils/github.ts` (`Runner` inyectable con execFile): conecta el proyecto a GitHub con el `gh` del dev, sin tokens propios; las acciones hacia afuera piden `--yes` o confirmación. `connect` crea el repo (privado por defecto), copia el CI del kit (`sdd/templates/github/workflows/sdd-validate.yml`, job `sdd-validate` con `name: sdd:validate`) y pushea; `protect` exige `sdd:validate` en la rama por defecto solo a pedido.
 - `info.ts`: Diagnóstico de salud y metadatos del workspace.
 
 ### 3.2 Generadores (`src/generators/`)
@@ -56,7 +58,10 @@
 - Integraciones opcionales del kit (apagadas por defecto):
   - tucu-ui: `tucu_ui` en `sdd/tools.json`, `pnpm sdd:tucu -- --status | --enable [--parts=skill,mcp] [--force] | --disable [--purge]`. Instala la skill `tucu-ui-design` (`@e-burgos/tucu-ui-mcp@0.16.0`) en `sdd/integrations/skills/`, la enlaza en `.claude/skills`, `.github/skills` y `.agents/skills`, y suma el servidor `tucu-ui` a `.mcp.json`, `.vscode/mcp.json` y `.gemini/settings.json` sin pisar claves ajenas (`scripts/{sdd-tucu,tucu-ui-common,mcp-config}.mjs`). `integrations/` es prefijo de datos en `kit-manifest.ts`; `configure mcp` y `configure memory` usan el mismo merge. `harness init` y `configure sdd` lo ofrecen con `--tucu-ui` / `--no-tucu-ui`.
   - Sesiones paralelas: cada sesión queda atada a un ciclo o fix en `sdd/.sessions/` (`scripts/lib/session-registry.mjs`, `scripts/sdd-use.mjs`, `schemas/session-binding.schema.json`); GATE B ata la sesión sola (línea `SDD-BIND` de `spec-gate.mjs`) y `pnpm sdd:use` la ata a mano. El mod `sdd-mod` (`skills/sdd-mod/hooks/.src/`, con copia de `session-registry.mjs` protegida por test de bytes) muestra todas las unidades abiertas y aplica el gate por sesión; con el mod apagado nada cambia.
-  - Skill `crafted-motion` (`skills/crafted-motion/`): método y recetas de graphic motion para frontends React/Next.
+  - video-maker: `video_maker` en `sdd/tools.json` (`enabled`, `plugin`, `mcp`, `version`), `pnpm sdd:video -- --status | --enable [--parts=plugin,mcp] [--force] | --disable`, sin red. Claude Code: plugin `video-maker@video-maker` (marketplace github `e-burgos/video-maker`) declarado en `.claude/settings.json`, que trae sus skills y su propio MCP, así que `.mcp.json` no se toca; Copilot y Gemini: `@e-burgos/video-maker-mcp@0.1.0` en `.vscode/mcp.json` y `.gemini/settings.json` (`scripts/{sdd-video,video-maker-common}.mjs`; reusa `readToolsDocument`/`compareVersions` de `tucu-ui-common.mjs`). Requiere Node ≥ 22 y el studio de video-maker corriendo. Al subir el MCP: `VIDEO_MAKER_PINNED_VERSION` y su test.
+  - Reservas de archivo y buzón entre sesiones (mod prendido): el primer `Edit`/`Write`/`NotebookEdit` sobre código reserva el archivo (`<git-common-dir>/sdd-sessions/locks/`, clave FNV-1a 64 bits, vence a los 30 min sin edición o en `session.end`); otra sesión en la misma carpeta recibe `SDD reserva: …` y desde otro worktree solo un aviso. El choque deja un pedido en `inbox/<sesión>/`, que el mod entrega como `context` del resultado de la próxima herramienta (el motor no vuelve a pedir `prompt.compose`). `pnpm sdd:release <archivo…> [--list]` (`scripts/sdd-release.mjs`); schemas `file-lease` y `session-request`. El `tsconfig.json` del mod lista sus fuentes en `files` (tsc saltea carpetas con punto) y un test lo exige.
+  - Ramas y PRs por ciclo: `pnpm sdd:branch` (rama `feat/<slug>-cycle-XX` según perfil: `team` on, `solo` off, override `global.json → github.branch_per_cycle`) y `pnpm sdd:pr` (título y cuerpo desde `cycle.json`; plan sin `--yes`), sobre `scripts/lib/github.mjs` (pura). Bloque `github` opcional en `global.schema.json`.
+  - Skills de diseño y motion: `crafted-motion` (graphic motion React/Next), `tucu-ui-pro` (montaje Vite/Next/Tailwind propio, theming, catálogo con props válidos de tucu-ui 3.10 y trampas de runtime, con o sin MCP) y `design-languages` (método para derivar un lenguaje visual + recetas de Sky Console y Cristal Líquido). Las cargan el agente y la skill `sdd-implementor-front`; al subir tucu-ui, re-verificar los props y tokens citados (`GlassPanel`, `Button`, `--color-accent`, familia `--tucu-table-*`).
 - `templates/workspace/`: Archivos auxiliares (como `eslint.config.mjs` para workspaces Nx).
 
 ## 4. Comandos de Trabajo
@@ -74,3 +79,4 @@
 3. **Preservación en actualizaciones:** Toda adición al kit debe registrarse en `templates/sdd/catalog.json` y respetar la clasificación de pertenencia de `kit-manifest.ts` para no pisar trabajo del usuario en futuros updates.
 4. **Sincronización con documentación:** Cualquier comando, flag o cambio de comportamiento en la CLI debe reflejarse en los archivos bilingües de `apps/documentation/src/data/content.ts` y `content.en.ts`.
 5. **Contrato con el puente de Studio:** `@e-burgos/sdd-studio` depende de `@e-burgos/sdd-harness` (`workspace:*`) y fija su versión porque consume `config catalog`/`validate`. Una subida de la CLI que cambie el texto de salida de `init` obliga a regrabar los fixtures `apps/studio-bridge/src/wizard/__fixtures__/init-output/`. Orden de release: CLI, luego la web, luego el puente.
+6. **Windows fuera del CI de cada PR (FIX-e-burgos-004):** `ci.yml` corre solo en ubuntu y se saltea si `pnpm ci:local` publicó el status `ci-local=success` sobre el SHA. La suite de Windows (`sdd.generator.windows.spec.ts`, junctions, CRLF, `setup-agents.ps1`) se corre en local antes de un release que toque esas zonas (`docs/ci.md`). Los ids de job de GitHub no admiten `:`.
