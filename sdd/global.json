@@ -244,7 +244,18 @@
       "completed_at": "2026-11-13"
     }
   ],
-  "in_progress_modules": [],
+  "in_progress_modules": [
+    {
+      "module": "nx-versions-and-migration",
+      "spec": "spec-e-burgos-023-nx-versions-and-migration",
+      "apps": [
+        "apps/cli",
+        "apps/studio"
+      ],
+      "cycles_completed": 0,
+      "description": "Generadores con Nx 22, 23 o 24 (24 por defecto) y migración entre mayores (skill nx-migration + sdd:nx-migrate)."
+    }
+  ],
   "pending_modules": [
     {
       "module": "studio-framework-vision",

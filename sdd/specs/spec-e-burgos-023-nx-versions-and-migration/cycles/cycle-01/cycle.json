@@ -1,0 +1,11 @@
+{
+  "$schema": "../../../../schemas/cycle.schema.json",
+  "cycle": 1, "module": "nx-versions-and-migration", "spec": "spec-e-burgos-023-nx-versions-and-migration", "apps": ["apps/cli", "apps/studio"],
+  "phase": "nx-versions-and-migration", "flow": "lite",
+  "objectives": ["El kit genera con Nx 22, 23 o 24 y sabe migrar entre mayores (US-1..US-4)"],
+  "status": "in-progress", "started_at": "2026-11-13", "completed_at": null,
+  "documents": { "plan": "sdd/specs/spec-e-burgos-023-nx-versions-and-migration/cycles/cycle-01/plan.md", "tasks": "sdd/specs/spec-e-burgos-023-nx-versions-and-migration/cycles/cycle-01/tasks.json" },
+  "artifacts": [],
+  "metrics": { "tasks_total": 4, "tasks_completed": 0, "tasks_skipped": 0, "story_points": 0, "files_created": [], "files_modified": [], "files_deleted": [], "usage": { "tokens_in": 0, "tokens_out": 0, "by_agent": [] } },
+  "tables_created": [], "endpoints_implemented": [], "components_created": [], "issues_found": [], "reviewer_report": null
+}

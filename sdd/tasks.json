@@ -428,6 +428,21 @@
           "tasks_done": 3
         }
       }
+    },
+    "spec-e-burgos-023-nx-versions-and-migration": {
+      "cycles": {
+        "cycle-01": {
+          "file": "sdd/specs/spec-e-burgos-023-nx-versions-and-migration/cycles/cycle-01/tasks.json",
+          "module": "nx-versions-and-migration",
+          "apps": [
+            "apps/cli",
+            "apps/studio"
+          ],
+          "status": "in-progress",
+          "tasks_total": 4,
+          "tasks_done": 0
+        }
+      }
     }
   }
 }
