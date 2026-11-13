@@ -232,7 +232,19 @@
       "completed_at": "2026-11-12"
     }
   ],
-  "in_progress_modules": [],
+  "in_progress_modules": [
+    {
+      "module": "studio-kit-integrations",
+      "spec": "spec-e-burgos-022-studio-kit-integrations",
+      "apps": [
+        "libs/studio-protocol",
+        "apps/studio-bridge",
+        "apps/studio"
+      ],
+      "cycles_completed": 0,
+      "description": "Integraciones opcionales del kit (tucu-ui, video-maker) visibles y operables desde el módulo Kit de Studio."
+    }
+  ],
   "pending_modules": [
     {
       "module": "studio-framework-vision",
