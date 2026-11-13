@@ -1,6 +1,6 @@
 # Context prompt — apps/studio
 
-> Última actualización: consolida los fragmentos de spec-e-burgos-009 cycle-07, 010 cycle-02, 013 cycle-01, 016 cycle-01 y 017 cycle-01 | Fecha: 2026-11-06
+> Última actualización: consolida los fragmentos de spec-e-burgos-017 cycle-02, 014 cycle-02, 018 cycle-01 y 019 cycle-01 | Fecha: 2026-11-13
 
 > Entry point para agentes y desarrolladores trabajando en `sdd-studio-web`.
 > Leer este documento antes de realizar cambios en la UI, componentes de workspace o stores de Zustand.
@@ -11,11 +11,12 @@ Es la aplicación web frontend de **SDD Studio**: una interfaz tipo Slack que se
 
 ## Mapa de navegación rápido
 
-- **Página principal y emparejamiento:** `src/app/w/page.tsx` y `src/components/ConnectScreen.tsx`.
+- **Página principal y entrada:** `src/app/w/page.tsx` y `src/components/entry/` (`EntryWizard`, wizard de pantalla completa que se muestra sin puente conectado).
 - **Proveedor de WebSocket:** `src/components/BridgeProvider.tsx` y cliente en `src/lib/bridge/client.ts`.
 - **Shell y módulos:** `src/components/shell/` (`StudioShell`, `ModuleRail`, `ModulePanel`, `RightPanelFrame`), `src/components/modules/{home,specs,fixes,agents,activity,map,kit,architecture,metrics}` y navegación persistida en `src/lib/nav/`; estados SDD compartidos en `src/lib/sdd-status.ts`.
 - **Nuevo proyecto (wizard):** `src/components/modules/new-project/` (incluye `motion/` y `steps/scope/`), `src/components/shell/LauncherShell.tsx`, `src/lib/wizard/`, `src/lib/motion/`; requiere las features `project-wizard` y `workspace-switch` del puente.
-- **Unidades abiertas:** `src/components/OpenUnitsPill.tsx`, `OpenUnitsList.tsx` y `src/lib/open-units.ts` (header y Mission Control).
+- **Unidades abiertas:** `src/components/OpenUnitsPill.tsx`, `OpenUnitsList.tsx` y `src/lib/open-units.ts` (header y Mission Control; incluye reservas de archivo, PR y CI por ciclo).
+- **Primeros pasos y GitHub:** `src/components/onboarding/`, `src/lib/onboarding.ts`, `src/components/github/` (`GithubConnectPanel`, `GithubHeaderStatus`).
 - **Hilos y Streaming:** `src/components/workspace/ThreadView.tsx`, `Timeline.tsx`, `Composer.tsx`, `PendingMessages.tsx` y `ThreadLinkPicker.tsx`.
 - **Aprobaciones de herramientas:** `src/components/workspace/ApprovalCard.tsx`.
 - **Autenticación:** `src/components/workspace/AuthPanel.tsx`, `ApiKeyField.tsx`, `src/lib/use-subscription.ts`, `auth-preference.ts`, `usage-limit.ts`.
