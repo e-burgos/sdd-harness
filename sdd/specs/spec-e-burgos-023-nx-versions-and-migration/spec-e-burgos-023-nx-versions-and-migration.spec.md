@@ -1,6 +1,6 @@
 # SPEC-e-burgos-023: El kit genera con Nx 22, 23 o 24 y sabe migrar entre versiones
 
-> Estado: **in-progress** (2026-11-13). cycle-01 abierto (flow lite).
+> Estado: **completed** (2026-11-13). cycle-01 cerrado (flow lite, 4/4 tasks).
 
 ## Resumen ejecutivo
 Los generadores fijan Nx 23.1.1 y los proyectos del dev están repartidos entre Nx 21, 22 y 23. En

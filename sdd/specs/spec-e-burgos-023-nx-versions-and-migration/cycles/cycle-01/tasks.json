@@ -1,11 +1,144 @@
 {
   "$schema": "../../../../schemas/cycle-tasks.schema.json",
-  "spec": "spec-e-burgos-023-nx-versions-and-migration", "cycle": 1, "module": "nx-versions-and-migration", "apps": ["apps/cli", "apps/studio"], "flow": "lite",
-  "user_stories_generated": true, "prerequisites": { "tasks_generated": true },
+  "spec": "spec-e-burgos-023-nx-versions-and-migration",
+  "cycle": 1,
+  "module": "nx-versions-and-migration",
+  "apps": [
+    "apps/cli",
+    "apps/studio"
+  ],
+  "flow": "lite",
+  "user_stories_generated": true,
+  "prerequisites": {
+    "tasks_generated": true
+  },
   "tasks": [
-    { "id": "TASK-001", "title": "Matriz de versiones de Nx en generadores, CLI, config y catálogo", "user_stories": ["US-1"], "estimation_hours": 4, "story_points": 8, "depends_on": [], "status": "pending", "files": ["apps/cli/src/generators/versions.ts"] },
-    { "id": "TASK-002", "title": "Skill nx-migration y comando sdd:nx-migrate", "user_stories": ["US-2", "US-3", "US-4"], "estimation_hours": 3, "story_points": 5, "depends_on": [], "status": "pending", "files": ["apps/cli/templates/sdd/scripts/sdd-nx-migrate.mjs"] },
-    { "id": "TASK-003", "title": "Versión de Nx en el wizard de Studio", "user_stories": ["US-1"], "estimation_hours": 1, "story_points": 2, "depends_on": ["TASK-001"], "status": "pending", "files": [] },
-    { "id": "TASK-004", "title": "Generación real por mayor y cierre", "user_stories": ["US-1", "US-2", "US-3"], "estimation_hours": 2, "story_points": 3, "depends_on": ["TASK-001", "TASK-002", "TASK-003"], "status": "pending", "files": [] }
+    {
+      "id": "TASK-001",
+      "title": "Matriz de versiones de Nx en generadores, CLI, config y catálogo",
+      "user_stories": [
+        "US-1"
+      ],
+      "estimation_hours": 4,
+      "story_points": 8,
+      "depends_on": [],
+      "status": "done",
+      "files": [
+        "apps/cli/src/generators/versions.ts",
+        "apps/cli/src/generators/nx-inferred.ts",
+        "apps/cli/src/generators/root-package.ts",
+        "apps/cli/src/generators/workspace.generator.ts",
+        "apps/cli/src/generators/app.generator.ts",
+        "apps/cli/src/generators/lib.generator.ts",
+        "apps/cli/src/commands/init.ts",
+        "apps/cli/src/commands/add/app.ts",
+        "apps/cli/src/config/schema.ts",
+        "apps/cli/src/config/catalog.ts",
+        "apps/cli/templates/sdd/templates/nx-workspace/package.json",
+        "libs/studio-protocol/src/wizard.ts"
+      ],
+      "usage": {
+        "tokens_in": 248436,
+        "tokens_out": 43841,
+        "approx": true,
+        "recorded_at": "2026-11-13",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "source": "agent-usage-notification"
+      }
+    },
+    {
+      "id": "TASK-002",
+      "title": "Skill nx-migration y comando sdd:nx-migrate",
+      "user_stories": [
+        "US-2",
+        "US-3",
+        "US-4"
+      ],
+      "estimation_hours": 3,
+      "story_points": 5,
+      "depends_on": [],
+      "status": "done",
+      "files": [
+        "apps/cli/templates/sdd/skills/nx-migration/SKILL.md",
+        "apps/cli/templates/sdd/skills/nx-migration/references/22-to-23.md",
+        "apps/cli/templates/sdd/skills/nx-migration/references/23-to-24.md",
+        "apps/cli/templates/sdd/skills/nx-migration/references/typescript-7.md",
+        "apps/cli/templates/sdd/scripts/sdd-nx-migrate.mjs",
+        "apps/cli/templates/sdd/scripts/lib/nx-migrate.mjs",
+        "apps/cli/src/utils/__tests__/nx-migrate.spec.ts"
+      ],
+      "usage": {
+        "tokens_in": 193149,
+        "tokens_out": 34084,
+        "approx": true,
+        "recorded_at": "2026-11-13",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "source": "agent-usage-notification"
+      }
+    },
+    {
+      "id": "TASK-003",
+      "title": "Versión de Nx en el wizard de Studio",
+      "user_stories": [
+        "US-1"
+      ],
+      "estimation_hours": 1,
+      "story_points": 2,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/modules/new-project/steps/ShapeStep.tsx",
+        "apps/studio/src/lib/wizard/state.ts",
+        "apps/studio/src/lib/wizard/to-config.ts",
+        "apps/studio/src/lib/wizard/catalog.ts",
+        "apps/studio/src/lib/i18n/modules/wizard.ts"
+      ],
+      "usage": {
+        "tokens_in": 117877,
+        "tokens_out": 20802,
+        "approx": true,
+        "recorded_at": "2026-11-13",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "source": "agent-usage-notification"
+      }
+    },
+    {
+      "id": "TASK-004",
+      "title": "Generación real por mayor y cierre",
+      "user_stories": [
+        "US-1",
+        "US-2",
+        "US-3"
+      ],
+      "estimation_hours": 2,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002",
+        "TASK-003"
+      ],
+      "status": "done",
+      "files": [
+        "apps/cli/CHANGELOG.md"
+      ],
+      "usage": {
+        "tokens_in": 150000,
+        "tokens_out": 12000,
+        "approx": true,
+        "recorded_at": "2026-11-13",
+        "provider_model": "claude/opus",
+        "effort": "medium",
+        "agent": "reviewer",
+        "source": "declared-estimate"
+      }
+    }
   ]
 }

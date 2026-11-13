@@ -1,11 +1,177 @@
 {
   "$schema": "../../../../schemas/cycle.schema.json",
-  "cycle": 1, "module": "nx-versions-and-migration", "spec": "spec-e-burgos-023-nx-versions-and-migration", "apps": ["apps/cli", "apps/studio"],
-  "phase": "nx-versions-and-migration", "flow": "lite",
-  "objectives": ["El kit genera con Nx 22, 23 o 24 y sabe migrar entre mayores (US-1..US-4)"],
-  "status": "in-progress", "started_at": "2026-11-13", "completed_at": null,
-  "documents": { "plan": "sdd/specs/spec-e-burgos-023-nx-versions-and-migration/cycles/cycle-01/plan.md", "tasks": "sdd/specs/spec-e-burgos-023-nx-versions-and-migration/cycles/cycle-01/tasks.json" },
+  "cycle": 1,
+  "module": "nx-versions-and-migration",
+  "spec": "spec-e-burgos-023-nx-versions-and-migration",
+  "apps": [
+    "apps/cli",
+    "apps/studio"
+  ],
+  "phase": "nx-versions-and-migration",
+  "flow": "lite",
+  "objectives": [
+    "El kit genera con Nx 22, 23 o 24 y sabe migrar entre mayores (US-1..US-4)"
+  ],
+  "status": "completed",
+  "started_at": "2026-11-13",
+  "completed_at": "2026-11-13",
+  "documents": {
+    "plan": "sdd/specs/spec-e-burgos-023-nx-versions-and-migration/cycles/cycle-01/plan.md",
+    "tasks": "sdd/specs/spec-e-burgos-023-nx-versions-and-migration/cycles/cycle-01/tasks.json"
+  },
   "artifacts": [],
-  "metrics": { "tasks_total": 4, "tasks_completed": 0, "tasks_skipped": 0, "story_points": 0, "files_created": [], "files_modified": [], "files_deleted": [], "usage": { "tokens_in": 0, "tokens_out": 0, "by_agent": [] } },
-  "tables_created": [], "endpoints_implemented": [], "components_created": [], "issues_found": [], "reviewer_report": null
+  "metrics": {
+    "tasks_total": 4,
+    "tasks_completed": 4,
+    "tasks_skipped": 0,
+    "story_points": 18,
+    "files_created": [
+      "apps/cli/src/generators/nx-inferred.ts",
+      "apps/cli/templates/sdd/skills/nx-migration/SKILL.md",
+      "apps/cli/templates/sdd/skills/nx-migration/references/22-to-23.md",
+      "apps/cli/templates/sdd/skills/nx-migration/references/23-to-24.md",
+      "apps/cli/templates/sdd/skills/nx-migration/references/typescript-7.md",
+      "apps/cli/templates/sdd/scripts/sdd-nx-migrate.mjs",
+      "apps/cli/templates/sdd/scripts/lib/nx-migrate.mjs",
+      "apps/cli/src/utils/__tests__/nx-migrate.spec.ts"
+    ],
+    "files_modified": [
+      "apps/cli/src/generators/versions.ts",
+      "apps/cli/src/generators/root-package.ts",
+      "apps/cli/src/generators/workspace.generator.ts",
+      "apps/cli/src/generators/app.generator.ts",
+      "apps/cli/src/generators/lib.generator.ts",
+      "apps/cli/src/commands/init.ts",
+      "apps/cli/src/commands/add/app.ts",
+      "apps/cli/src/config/schema.ts",
+      "apps/cli/src/config/catalog.ts",
+      "apps/cli/templates/sdd/templates/nx-workspace/package.json",
+      "libs/studio-protocol/src/wizard.ts",
+      "apps/studio/src/components/modules/new-project/steps/ShapeStep.tsx",
+      "apps/studio/src/lib/wizard/state.ts",
+      "apps/studio/src/lib/wizard/to-config.ts",
+      "apps/studio/src/lib/wizard/catalog.ts",
+      "apps/studio/src/lib/i18n/modules/wizard.ts",
+      "apps/cli/CHANGELOG.md"
+    ],
+    "files_deleted": [],
+    "usage": {
+      "tokens_in": 889501,
+      "tokens_out": 135616,
+      "approx": true,
+      "source": "declared-estimate",
+      "by_tier": {
+        "claude/opus": {
+          "tokens_in": 240000,
+          "tokens_out": 21000,
+          "approx": true,
+          "source": "declared-estimate"
+        },
+        "claude/sonnet": {
+          "tokens_in": 649501,
+          "tokens_out": 114616,
+          "approx": true,
+          "source": "agent-usage-notification"
+        }
+      },
+      "by_agent": [
+        {
+          "agent": "orchestrator",
+          "label": "investigación Nx 24 / TS 7, spec, apertura, coordinación y cierre",
+          "provider_model": "claude/opus",
+          "effort": "medium",
+          "tokens_in": 90000,
+          "tokens_out": 9000,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-13"
+        },
+        {
+          "agent": "custom",
+          "label": "investigación de Nx 24 y TypeScript 7 (subagente)",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 90039,
+          "tokens_out": 15889,
+          "source": "agent-usage-notification",
+          "approx": true,
+          "recorded_at": "2026-11-13"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-001 Matriz de versiones de Nx en generadores, CLI, config y catálogo",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 248436,
+          "tokens_out": 43841,
+          "source": "agent-usage-notification",
+          "approx": true,
+          "recorded_at": "2026-11-13"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-002 Skill nx-migration y comando sdd:nx-migrate",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 193149,
+          "tokens_out": 34084,
+          "source": "agent-usage-notification",
+          "approx": true,
+          "recorded_at": "2026-11-13"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-003 Versión de Nx en el wizard de Studio",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 117877,
+          "tokens_out": 20802,
+          "source": "agent-usage-notification",
+          "approx": true,
+          "recorded_at": "2026-11-13"
+        },
+        {
+          "agent": "reviewer",
+          "label": "TASK-004 Generación real por mayor y cierre",
+          "provider_model": "claude/opus",
+          "effort": "medium",
+          "tokens_in": 150000,
+          "tokens_out": 12000,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-13"
+        }
+      ]
+    }
+  },
+  "tables_created": [],
+  "endpoints_implemented": [],
+  "components_created": [],
+  "issues_found": [
+    "Corregido (generación real): Nx 24 eliminó los executors de @nx/eslint, @nx/jest, @nx/vite, @nx/node, @nx/nest, @nx/react y @nx/esbuild; el kit los escribía en project.json y el gate fallaba («Unable to resolve @nx/eslint:lint»). Para Nx ≥ 24 los generadores usan plugins inferidos en nx.json y run-commands para esbuild/vitest; 22 y 23 sin cambios.",
+    "Corregido (migración real): en la rama por defecto, `nx migrate --run-migrations` de Nx 24 se niega a correr y sale 0; sdd:nx-migrate lo daba por bueno y borraba migrations.json. Ahora crea `chore/nx-<n>` si está en la rama por defecto, usa `--no-agentic` desde Nx 24, falla si nx no arrancó la corrida y conserva migrations.json.",
+    "Verificado: las migraciones de 23→24 convierten los executors a plugins inferidos y el gate pasa; dejan prompts «finish-inferred-conversion» en tools/ai-migrations/ que el comando lista para el agente del proyecto.",
+    "Abierto (informativo): el target inferido `serve-static` de apps vite/webpack apunta a @nx/web:file-server, que no se instala; inerte salvo que se ejecute.",
+    "Bloqueado externamente: TypeScript 7 (typescript-eslint <6.1, @nestjs/cli ~6.0, ts-jest <7, Nx 24 depende de typescript ~6.0.3, sin API programática hasta 7.1)."
+  ],
+  "reviewer_report": {
+    "approved": true,
+    "date": "2026-11-13",
+    "ca_results": {
+      "US-1": "PASS - generación real con `harness init --nx 22|23|24` (nest + react + lib) y una Nx 24 con nextjs + fastify: las cuatro pasan sdd:validate y `nx run-many -t lint test build`; wizard de Studio con «Versión de Nx» desde el catálogo",
+      "US-2": "PASS - skill nx-migration con método, checklist por salto y referencias 22→23 / 23→24 (con comportamiento verificado) y TypeScript 7",
+      "US-3": "PASS - `sdd:nx-migrate --to 24 --yes` real sobre un monorepo Nx 23 en main: crea chore/nx-24, corre 13 migraciones, convierte executors, lista 4 prompts pendientes; el gate pasa",
+      "US-4": "PASS - la skill indica registrar la migración como fix del proyecto (FIX GATE)"
+    },
+    "tests": {
+      "protocol": "OK - 192",
+      "cli": "OK - 756",
+      "bridge": "OK - 1012",
+      "studio": "OK - 1316",
+      "typecheck": "OK",
+      "build": "OK",
+      "sdd-validate": "OK"
+    },
+    "notes": "Flow lite. Cinco subagentes sonnet/medium (consumo por notificación 85/15); generaciones y migración reales en examples/ hechas por el main loop."
+  }
 }
