@@ -5,6 +5,7 @@ import { type ReactNode } from 'react';
 import type { KitToolsState } from '@sdd-studio/protocol';
 import { useT, type TFunction } from '@/lib/i18n/i18n';
 import { useNav } from '@/lib/nav/use-nav';
+import { KitIntegrations } from './KitIntegrations';
 import { CenterFrame, Notice } from './KitParts';
 import { toolValueOf, useKitTools, type PendingToolChange, type ToolId, type ToolValue, type ToolsNotice } from './use-kit-tools';
 
@@ -126,6 +127,7 @@ export function KitToolsView() {
             )}
           </ToolRow>
         </div>
+        <KitIntegrations />
         <p className="flex flex-wrap items-center gap-2 text-small text-ink-400">
           <span>{t('module.kit.tools.log')}</span>
           <button

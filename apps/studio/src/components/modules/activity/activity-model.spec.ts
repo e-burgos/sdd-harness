@@ -32,6 +32,7 @@ describe('activity model', () => {
     expect(kindOfBotEvent(bot('cycle.opened', 'spec:s', {}))).toBe('spec');
     expect(kindOfBotEvent(bot('fix.status', 'fixes', {}))).toBe('fix');
     expect(kindOfBotEvent(bot('tools.changed', 'general', {}))).toBe('tools');
+    expect(kindOfBotEvent(bot('integration.changed', 'general', {}))).toBe('tools');
   });
 
   it('merges bot and thread events newest first, undated last in reverse file order', () => {

@@ -87,8 +87,10 @@ async function readLines(file: string): Promise<string[]> {
 
 const serializeBotEvent = (event: BotEvent): string => JSON.stringify(event);
 
+const isKitBotKind = (kind: BotEvent['botKind']): boolean => kind === 'tools.changed' || kind === 'integration.changed';
+
 const botDedupeKey = (event: BotEvent): string =>
-  event.botKind === 'tools.changed' ? serializeBotEvent(event) : JSON.stringify({ ...event, at: undefined });
+  isKitBotKind(event.botKind) ? serializeBotEvent(event) : JSON.stringify({ ...event, at: undefined });
 
 const lineDedupeKey = (line: string): string => {
   try {
@@ -283,7 +285,7 @@ export class ThreadStore {
         // idem
       }
     }
-    return (includeKitEvents ? parsed : parsed.filter((event) => event.botKind !== 'tools.changed')).slice(-limit);
+    return (includeKitEvents ? parsed : parsed.filter((event) => !isKitBotKind(event.botKind))).slice(-limit);
   }
 
   flush(): Promise<void> {

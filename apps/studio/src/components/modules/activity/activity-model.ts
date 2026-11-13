@@ -49,7 +49,7 @@ export function kindOfBotEvent(event: BotEvent): ActivityKind | null {
   if (event.botKind === 'task.status') return event.payload['to'] === 'done' ? 'task' : null;
   if (SPEC_BOT_KINDS.has(event.botKind)) return 'spec';
   if (FIX_BOT_KINDS.has(event.botKind)) return 'fix';
-  return event.botKind === 'tools.changed' ? 'tools' : null;
+  return event.botKind === 'tools.changed' || event.botKind === 'integration.changed' ? 'tools' : null;
 }
 
 function targetOfBotEvent(kind: ActivityKind, event: BotEvent): ActivityTarget | null {

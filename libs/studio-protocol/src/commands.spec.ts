@@ -176,6 +176,24 @@ describe('kit commands', () => {
   });
 });
 
+describe('kit integration commands', () => {
+  it('kit.integration.status requires a known integration', () => {
+    const cmd = { ...base, cmd: 'kit.integration.status', integration: 'tucu-ui' };
+    expect(ClientCommand.parse(cmd)).toEqual(cmd);
+    expect(ClientCommand.safeParse({ ...cmd, integration: 'other' }).success).toBe(false);
+    expect(ClientCommand.safeParse({ ...base, cmd: 'kit.integration.status' }).success).toBe(false);
+  });
+  it('kit.integration.set requires an integration and a boolean', () => {
+    const cmd = { ...base, cmd: 'kit.integration.set', integration: 'video-maker', enabled: true };
+    expect(ClientCommand.parse(cmd)).toEqual(cmd);
+    expect(ClientCommand.safeParse({ ...cmd, enabled: 'yes' }).success).toBe(false);
+    expect(ClientCommand.safeParse({ ...cmd, integration: 'x' }).success).toBe(false);
+    const { enabled, ...withoutEnabled } = cmd;
+    expect(enabled).toBe(true);
+    expect(ClientCommand.safeParse(withoutEnabled).success).toBe(false);
+  });
+});
+
 describe('result schemas', () => {
   it('SendResult discriminates started and pending', () => {
     expect(SendResult.parse({ delivery: 'started' })).toEqual({ delivery: 'started' });

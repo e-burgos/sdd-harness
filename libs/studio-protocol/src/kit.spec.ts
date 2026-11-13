@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { KIT_SECTIONS, KitEntry, KitIndex, MAX_KIT_ENTRIES, RtkGain, ToolsChange, ToolsSetResult } from './index';
+import { KIT_SECTIONS, KitIntegrationSetResult, KitIntegrationStatus, KitEntry, KitIndex, MAX_KIT_ENTRIES, RtkGain, ToolsChange, ToolsSetResult } from './index';
 
 const entry = { section: 'docs', role: 'doc', group: 'es', path: 'sdd/documentation/es/a.md', size: 10, mtime: '2026-10-27T00:00:00.000Z' };
 const tools = { status: 'ok', rtkEnabled: true, modEnabled: false, gate: 'block', modLinked: false, revision: 'a1b2c3d4e5f60718' };
@@ -63,5 +63,32 @@ describe('RtkGain', () => {
   });
   it('degrades an unknown status to error', () => {
     expect(RtkGain.parse({ ...gain, status: 'timeout' }).status).toBe('error');
+  });
+});
+
+describe('KitIntegrationStatus', () => {
+  const status = {
+    integration: 'tucu-ui', available: true, enabled: true, state: 'complete', parts: { skill: true, mcp: true },
+    version: '0.16.0', kitVersion: '0.16.0', updateAvailable: false, nodeOk: true,
+    harnesses: { claude: 'complete', copilot: 'complete', gemini: 'incomplete', antigravity: 'complete' }, repair: null,
+  };
+  it('round-trips a normalized status', () => {
+    expect(KitIntegrationStatus.parse(status)).toEqual(status);
+  });
+  it('tolerates unknown states and harness values', () => {
+    const parsed = KitIntegrationStatus.parse({ ...status, state: 'future', harnesses: { claude: 'weird' }, parts: 'x', version: 4 });
+    expect(parsed.state).toBe('unavailable');
+    expect(parsed.harnesses.claude).toBe('incomplete');
+    expect(parsed.harnesses.gemini).toBe('incomplete');
+    expect(parsed.parts).toEqual({});
+    expect(parsed.version).toBeNull();
+  });
+  it('rejects an unknown integration', () => {
+    expect(KitIntegrationStatus.safeParse({ ...status, integration: 'x' }).success).toBe(false);
+  });
+  it('set result caps the output at 8 KiB', () => {
+    const result = { ok: false, exitCode: 1, output: 'boom', status };
+    expect(KitIntegrationSetResult.parse(result)).toEqual(result);
+    expect(KitIntegrationSetResult.safeParse({ ...result, output: 'x'.repeat(8 * 1024 + 1) }).success).toBe(false);
   });
 });

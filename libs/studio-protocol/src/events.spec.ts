@@ -87,8 +87,12 @@ describe('kit events', () => {
     expect(ServerEvent.parse(stamped)).toEqual(stamped);
     expect(ServerEvent.safeParse({ ...event, at: 'x'.repeat(41) }).success).toBe(false);
   });
+  it('parses bot.event integration.changed', () => {
+    const event = { kind: 'bot.event', channelId: 'general', botKind: 'integration.changed', payload: { integration: 'tucu-ui', enabled: true, state: 'complete' } };
+    expect(ServerEvent.parse(event)).toEqual(event);
+  });
   it('keeps the previous bot kinds parsing and a copy of the old enum rejecting tools.changed', () => {
-    const previous = BotKind.options.filter((kind) => kind !== 'tools.changed');
+    const previous = BotKind.options.filter((kind) => kind !== 'tools.changed' && kind !== 'integration.changed');
     expect(previous).toHaveLength(7);
     const legacy = z.enum(previous as [string, ...string[]]);
     expect(legacy.safeParse('tools.changed').success).toBe(false);

@@ -104,6 +104,7 @@ export const BotKind = z.enum([
   'fix.created',
   'fix.status',
   'tools.changed',
+  'integration.changed',
 ]);
 export type BotKind = z.infer<typeof BotKind>;
 export const BotEvent = z.object({

@@ -49,3 +49,37 @@ export const RtkGain = z.object({
   readAt: z.string().max(40),
 });
 export type RtkGain = z.infer<typeof RtkGain>;
+
+export const KIT_INTEGRATIONS = ['tucu-ui', 'video-maker'] as const;
+export const KitIntegrationId = z.enum(KIT_INTEGRATIONS);
+export type KitIntegrationId = z.infer<typeof KitIntegrationId>;
+
+export const KIT_INTEGRATION_HARNESSES = ['claude', 'copilot', 'gemini', 'antigravity'] as const;
+const HarnessState = z.enum(['complete', 'incomplete']).catch('incomplete');
+
+export const KitIntegrationStatus = z.object({
+  integration: KitIntegrationId,
+  available: z.boolean(),
+  enabled: z.boolean(),
+  state: z.enum(['off', 'complete', 'incomplete', 'unavailable']).catch('unavailable'),
+  parts: z.record(z.string().max(32), z.boolean()).catch({}),
+  version: z.string().max(40).nullable().catch(null),
+  kitVersion: z.string().max(40).nullable().catch(null),
+  updateAvailable: z.boolean().catch(false),
+  nodeOk: z.boolean().catch(true),
+  harnesses: z
+    .object({ claude: HarnessState, copilot: HarnessState, gemini: HarnessState, antigravity: HarnessState })
+    .catch({ claude: 'incomplete', copilot: 'incomplete', gemini: 'incomplete', antigravity: 'incomplete' }),
+  repair: z.string().max(256).nullable().catch(null),
+});
+export type KitIntegrationStatus = z.infer<typeof KitIntegrationStatus>;
+
+export const MAX_INTEGRATION_OUTPUT_BYTES = 8 * 1024;
+
+export const KitIntegrationSetResult = z.object({
+  ok: z.boolean(),
+  exitCode: z.number().int().nullable(),
+  output: z.string().max(MAX_INTEGRATION_OUTPUT_BYTES),
+  status: KitIntegrationStatus,
+});
+export type KitIntegrationSetResult = z.infer<typeof KitIntegrationSetResult>;
