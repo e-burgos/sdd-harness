@@ -34,12 +34,11 @@ export function StudioHeader({ launcher = false }: { launcher?: boolean }) {
   const thread = useStudio((s) => (selectedThreadId ? (s.threads[selectedThreadId]?.info ?? null) : null));
 
   return (
-    <header className="flex h-12 shrink-0 items-center justify-between border-b border-foreground/10 bg-ink-950/90 px-4 backdrop-blur-md z-30 select-none">
-      {/* Brand & Active Project */}
-      <div className="flex items-center gap-3">
-        <div className="flex items-center gap-2">
+    <header className="flex h-12 shrink-0 items-center justify-between gap-3 border-b border-foreground/10 bg-ink-950/90 px-4 backdrop-blur-md z-30 select-none">
+      <div className="flex min-w-0 items-center gap-3">
+        <div className="flex shrink-0 items-center gap-2">
           <AgentAvatar agent="sdd-orchestrator" size={24} showBadge={false} />
-          <span className="font-semibold text-sm tracking-tight text-ink-100 flex items-center gap-1.5">
+          <span className="flex items-center gap-1.5 whitespace-nowrap text-sm font-semibold tracking-tight text-ink-100">
             SDD Studio
             {snapshot?.kitVersion && (
               <Badge variant="soft" size="micro" shape="pill" tone="success" title={t('header.kitVersion')} className="gap-1.5 px-2 py-0.5 font-mono text-micro">
@@ -49,19 +48,18 @@ export function StudioHeader({ launcher = false }: { launcher?: boolean }) {
           </span>
         </div>
         {launcher && (
-          <span className="hidden sm:inline-flex items-center text-xs text-ink-500 border-l border-foreground/10 pl-3 truncate max-w-[240px]">
+          <span className="hidden min-w-0 max-w-[240px] truncate whitespace-nowrap border-l border-foreground/10 pl-3 text-xs text-ink-500 sm:block">
             {t('launcher.noProject')}
           </span>
         )}
         {!launcher && snapshot?.project && (
-          <span className="hidden sm:inline-flex items-center text-xs text-ink-500 border-l border-foreground/10 pl-3 font-mono truncate max-w-[200px]">
+          <span title={snapshot.project} className="hidden min-w-0 max-w-[200px] truncate whitespace-nowrap border-l border-foreground/10 pl-3 font-mono text-xs text-ink-500 sm:block">
             {snapshot.project}
           </span>
         )}
       </div>
 
-      {/* Right Telemetry Pills & Language */}
-      <div className="flex items-center gap-2.5">
+      <div className="flex min-w-0 items-center justify-end gap-2.5">
         {!launcher && <button
           type="button"
           data-testid="gate-chip"
@@ -71,7 +69,7 @@ export function StudioHeader({ launcher = false }: { launcher?: boolean }) {
           aria-label={t('gate.modal.open')}
           aria-haspopup="dialog"
           onClick={() => setStatusOpen(true)}
-          className={`hidden max-w-[320px] items-center gap-1.5 rounded-full border px-2.5 py-1 font-mono text-meta transition-colors lg:flex ${
+          className={`hidden min-w-0 max-w-[220px] items-center gap-1.5 whitespace-nowrap rounded-full border px-2.5 py-1 font-mono text-meta transition-colors lg:flex xl:max-w-[320px] ${
             gate.kind === 'fix'
               ? 'border-amber-500/25 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20'
               : gate.kind === 'spec'
@@ -92,15 +90,13 @@ export function StudioHeader({ launcher = false }: { launcher?: boolean }) {
 
         {!launcher && <GithubHeaderStatus />}
 
-        {/* Working Swarm Presence Counter */}
         {!launcher && <Tooltip size="xs" arrow={false} content={t('ui.header.activeHint', { n: workingAgents.length })}>
-          <Badge variant="soft" size="micro" shape="pill" tone={workingAgents.length > 0 ? 'info' : 'neutral'} data-testid="presence-pill" className={`gap-1.5 px-2.5 py-1 font-mono text-meta ${workingAgents.length > 0 ? 'animate-pulse' : ''}`}>
+          <Badge variant="soft" size="micro" shape="pill" tone={workingAgents.length > 0 ? 'info' : 'neutral'} data-testid="presence-pill" className={`shrink-0 gap-1.5 whitespace-nowrap px-2.5 py-1 font-mono text-meta ${workingAgents.length > 0 ? 'animate-pulse' : ''}`}>
             <span className={`h-1.5 w-1.5 rounded-full ${workingAgents.length > 0 ? 'bg-sky-400' : 'bg-emerald-400'}`} />
             <span>{workingAgents.length > 0 ? t('ui.header.activeCount', { n: workingAgents.length }) : t('ui.header.ready')}</span>
           </Badge>
         </Tooltip>}
 
-        {/* Language Toggle */}
         <Tooltip size="xs" arrow={false} content={t('ui.header.langToggle')}>
           <Button type="button" onClick={() => setLang(lang === 'es' ? 'en' : 'es')} variant="transparent" color="gray" size="tiny" className="font-mono uppercase">
             {lang}
