@@ -1,6 +1,6 @@
 # Constitución — libs/studio-protocol
 
-> Versión 1.4 | Última actualización: consolida los fragmentos de spec-e-burgos-007, 008, 010 (cycle-01), 013 y 017 | Fecha: 2026-11-06
+> Versión 1.5 | Última actualización: consolida los fragmentos de spec-e-burgos-017 (cycle-02) y 014 (cycle-02) | Fecha: 2026-11-13
 
 ## 1. Propósito y Alcance
 
@@ -18,7 +18,7 @@
 ## 3. Estructura y Módulos del Contrato
 
 - `version.ts`: Constante `PROTOCOL_VERSION = 2`. El handshake valida coincidencia exacta. El bump a 2 cubre los contratos de toda spec-e-burgos-001; cycle-02 los implementó del lado puente/web sin nuevo bump.
-- `limits.ts`: `MAX_FRAME_BYTES` (1 MiB), `FRAME_BUDGET_BYTES`, `MAX_ATTACHMENTS`, `IMAGE_MAX_SIDE`, `MAX_PROMPT_REFS`, `FILE_SEARCH_MAX`, `MAX_PENDING_PER_THREAD` (10), `MAX_LINK_TARGETS` (32), `MAX_CONFIG_BYTES` (64 KiB), `GENERATION_CHUNK_MAX`, `GENERATION_BUFFER_BYTES` (4 MiB), `MAX_DIR_ENTRIES`, `WS_CLOSE_WORKSPACE_SWITCHED` (4010) y `BRIDGE_FEATURES` (entre otras `conversation-sessions`, `auth-subscription`, `session-title`, `link-targets`, `document-touched`, `questions`, `context-usage`, `profile-set`, `kit-index`, `kit-tools`, `rtk-gain`, `project-wizard` y `workspace-switch`; máximo 32).
+- `limits.ts`: `MAX_FRAME_BYTES` (1 MiB), `FRAME_BUDGET_BYTES`, `MAX_ATTACHMENTS`, `IMAGE_MAX_SIDE`, `MAX_PROMPT_REFS`, `FILE_SEARCH_MAX`, `MAX_PENDING_PER_THREAD` (10), `MAX_LINK_TARGETS` (32), `MAX_CONFIG_BYTES` (64 KiB), `GENERATION_CHUNK_MAX`, `GENERATION_BUFFER_BYTES` (4 MiB), `MAX_DIR_ENTRIES`, `WS_CLOSE_WORKSPACE_SWITCHED` (4010) y `BRIDGE_FEATURES` (entre otras `conversation-sessions`, `auth-subscription`, `session-title`, `link-targets`, `document-touched`, `questions`, `context-usage`, `profile-set`, `kit-index`, `kit-tools`, `rtk-gain`, `project-wizard`, `workspace-switch` y `github`; máximo 32).
 - `attachments.ts`: mimes de imagen/PDF/texto y `TEXT_ATTACHMENT_EXTENSIONS`.
 - `domain.ts`: Tipos base y entidades de dominio:
   - `ChannelId`: `general`, `fixes`, `spec:<id>` o `dm:<agentId>`.
@@ -44,14 +44,16 @@
   - `auth.status`, `auth.login`, `auth.logout`: login de la suscripción de Claude lanzado por el puente.
   - `thread.updateLinks` (`add`/`remove` de `ThreadLinkRef`, máx. 8 cada uno, por defecto `[]`), `question.answer { questionId, answers, decline }`, `profile.set { profile }`; `thread.history` con opt-ins `includeDocumentTouched` e `includeQuestions` (por defecto `false`).
   - Kit: `kit.index`, `kit.tools.set` (con `expectedRevision`), `kit.rtkGain`; `channel.botHistory` con `includeKitEvents`.
+  - GitHub (feature `github`): `github.status { generationId? }` → `GithubStatus` y `github.connect { generationId?, name?, owner?, visibility, protect }` → `GithubConnectResult`.
   - Wizard: `wizard.catalog`, `wizard.preflight`, `wizard.validate`, `wizard.listDirs`, `wizard.checkTarget`, `wizard.generate`, `wizard.generation.get`, `wizard.generation.cancel`, `wizard.reveal` y `workspace.open`.
 - `events.ts`: Eventos emitidos desde el puente hacia la web:
   - `ThreadEvent` (mensajes, `message.delta`, tool call start/end con diff y resumen, `subagent.start|stop`, `approval.requested` con warnings del SPEC GATE y `always`, `approval.resolved` con `remembered`, `pending.added|edited|removed|reverted`, `user.message` con `pendingId` y `delivery` `cut-point` | `next-turn`).
   - `ThreadEvent` también incluye `document.touched` (`path` 1..1024, `op` `created | modified | deleted`, `author`; sin `seq` propio), `question.requested { questionId, author, questions }`, `question.resolved { questionId, outcome: answered|declined|cancelled, answers? }` y `tool.start.summaryTruncated` opcional.
   - `ServerEvent` (`kit.changed`, `generation.status`, `generation.output` con `seq`, `workspace.switched`, `thread.event`, `channel.event`, `bot.activity`, `workspace.changed`, `presence.changed`).
 - `handshake.ts`: `hello` (token del hash de la URL y versión) y `welcome` (ruta del workspace —nula con el puente en modo launcher—, proyecto, versión del kit, `AuthMode` y `features` opcional con `BRIDGE_FEATURES`, para detectar capacidades sin otro bump). Errores: `handshake.error`.
-- `snapshot.ts`: Esquema `WorkspaceSnapshot` que modela en memoria el estado completo del kit: módulos en `global.json`, `specs` (`SpecSummary`), `cycles` (`CycleSummary` con tareas y estado), `fixes` (`FixSummary` con `createdAt`/`closedAt`), agentes (con `source`/`path`), `skills[]`, herramientas (`tools.json`, opcional; bot event `tools.changed`), pricing y `sessions` (opcional): ataduras `SessionBinding` (`sessionId`, `unit` ciclo o fix, `harness`, `source`, `worktree`, `boundAt`, `updatedAt`) con tope `MAX_SESSION_BINDINGS` (64) y `.catch(undefined)` para tolerar puentes o kits viejos.
+- `snapshot.ts`: Esquema `WorkspaceSnapshot` que modela en memoria el estado completo del kit: módulos en `global.json`, `specs` (`SpecSummary`), `cycles` (`CycleSummary` con tareas y estado), `fixes` (`FixSummary` con `createdAt`/`closedAt`), agentes (con `source`/`path`), `skills[]`, herramientas (`tools.json`, opcional; bot event `tools.changed`), pricing y `sessions` (opcional): ataduras `SessionBinding` (`sessionId`, `unit` ciclo o fix, `harness`, `source`, `worktree`, `boundAt`, `updatedAt`) con tope `MAX_SESSION_BINDINGS` (64) y `.catch(undefined)` para tolerar puentes o kits viejos; `leases` (opcional, `.catch(undefined)`): reservas de archivo `FileLeaseSummary` (`path`, `sessionId`, `unit` nullable, `harness`, `worktree`, `acquiredAt`, `updatedAt`, `requestedBy` ≤ 16) con tope `MAX_FILE_LEASES` (256); y `github` (opcional): `SnapshotGithub` con el remoto y `CycleGithub[]` (rama, PR y checks por ciclo en curso), tope `MAX_GITHUB_CYCLES` (64). Ninguno de los tres cambió `PROTOCOL_VERSION`.
 - `kit.ts`: esquemas del índice del kit, `tools.json` y `rtk-gain`.
+- `github.ts`: `GithubStatus`, `GithubConnectRequest`, `GithubConnectResult`, `CycleGithub`, `SnapshotGithub` y `MAX_GITHUB_CYCLES` (la CLI del kit hace el trabajo con el `gh` del dev; el contrato solo transporta el resultado).
 - `wizard.ts`: schemas del wizard «Nuevo proyecto» (`ConfigDraft`, `ConfigCatalog` con `limits` opcional, `ConfigValidation`, `ConfigCliFailure`, `Preflight`, `DirListing`, `TargetCheck`/`TargetState`, `GenerationState`/`Stage`/`Status`, `GenerateResult`, `GenerationSnapshot`, `WorkspaceOpenResult`). Reflejan el contrato `config catalog`/`validate` de la CLI: un cambio de ese contrato se versiona aquí y en el puente a la vez; el tope de `ConfigDraft` se mide en bytes UTF-8.
 - `codec.ts`: Encoders y decoders seguros (`decodeClientMessage`, `decodeServerMessage`, `encodeMessage`).
 
@@ -71,4 +73,4 @@
 
 - Todo comando nuevo se usa solo si `client.supports(feature)`: un puente viejo lo ignora y la petición vence a los 15 s.
 - Todo campo nuevo del protocolo entra opcional; la web detecta bridges viejos por `features`. Volver obligatorio un campo requiere bump de `PROTOCOL_VERSION` (hoy 2).
-- Pendientes: campos de hora en aprobaciones y preguntas; cycle-02 de sesiones paralelas (eventos o campos para reservas de archivo, si hacen falta).
+- Pendientes: campos de hora en aprobaciones y preguntas.
