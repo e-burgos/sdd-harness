@@ -1,6 +1,6 @@
 # Context prompt — apps/studio
 
-> Última actualización: consolida los fragmentos de spec-e-burgos-017 cycle-02, 014 cycle-02, 018 cycle-01 y 019 cycle-01 | Fecha: 2026-11-13
+> Última actualización: consolida los fragmentos de spec-e-burgos-017 cycle-02, 014 cycle-02, 018 cycle-01, 019 cycle-01, 022 cycle-01 y 023 cycle-01 | Fecha: 2026-11-14
 
 > Entry point para agentes y desarrolladores trabajando en `sdd-studio-web`.
 > Leer este documento antes de realizar cambios en la UI, componentes de workspace o stores de Zustand.
@@ -13,8 +13,8 @@ Es la aplicación web frontend de **SDD Studio**: una interfaz tipo Slack que se
 
 - **Página principal y entrada:** `src/app/w/page.tsx` y `src/components/entry/` (`EntryWizard`, wizard de pantalla completa que se muestra sin puente conectado).
 - **Proveedor de WebSocket:** `src/components/BridgeProvider.tsx` y cliente en `src/lib/bridge/client.ts`.
-- **Shell y módulos:** `src/components/shell/` (`StudioShell`, `ModuleRail`, `ModulePanel`, `RightPanelFrame`), `src/components/modules/{home,specs,fixes,agents,activity,map,kit,architecture,metrics}` y navegación persistida en `src/lib/nav/`; estados SDD compartidos en `src/lib/sdd-status.ts`.
-- **Nuevo proyecto (wizard):** `src/components/modules/new-project/` (incluye `motion/` y `steps/scope/`), `src/components/shell/LauncherShell.tsx`, `src/lib/wizard/`, `src/lib/motion/`; requiere las features `project-wizard` y `workspace-switch` del puente.
+- **Shell y módulos:** `src/components/shell/` (`StudioShell`, `ModuleRail`, `ModulePanel`, `RightPanelFrame`), `src/components/modules/{home,specs,fixes,agents,activity,map,kit,architecture,metrics}` (Kit incluye `KitIntegrations.tsx` y `use-kit-integrations.ts`: interruptores de tucu-ui y video-maker, feature `kit-integrations`) y navegación persistida en `src/lib/nav/`; estados SDD compartidos en `src/lib/sdd-status.ts`.
+- **Nuevo proyecto (wizard):** `src/components/modules/new-project/` (incluye `motion/` y `steps/scope/`), `src/components/shell/LauncherShell.tsx`, `src/lib/wizard/`, `src/lib/motion/`; requiere las features `project-wizard` y `workspace-switch` del puente; el paso de forma ofrece la versión de Nx desde `catalog.nx` (`steps/ShapeStep.tsx`).
 - **Unidades abiertas:** `src/components/OpenUnitsPill.tsx`, `OpenUnitsList.tsx` y `src/lib/open-units.ts` (header y Mission Control; incluye reservas de archivo, PR y CI por ciclo).
 - **Primeros pasos y GitHub:** `src/components/onboarding/`, `src/lib/onboarding.ts`, `src/components/github/` (`GithubConnectPanel`, `GithubHeaderStatus`).
 - **Hilos y Streaming:** `src/components/workspace/ThreadView.tsx`, `Timeline.tsx`, `Composer.tsx`, `PendingMessages.tsx` y `ThreadLinkPicker.tsx`.
@@ -23,7 +23,7 @@ Es la aplicación web frontend de **SDD Studio**: una interfaz tipo Slack que se
 - **Panel derecho:** `src/components/shell/RightPanelFrame.tsx` (solo en Inicio, Specs, Fixes, Agentes y Mapa).
 - **Adjuntos y menú `@`/`/`:** `src/lib/attachments/`, `use-attachment-*.ts`, `use-mention-menu.ts`, `AttachmentTray`, `AttachmentView`, `MentionMenu`.
 - **Mission Control:** `src/components/StudioHeader.tsx` (idioma, tema, chip de gate) y `src/components/mission-control/` (mapa del enjambre, Gates, inspector, visor de documentos, ecosistema, telemetría); modelos en `src/lib/agents.ts`, `gates.ts`, `agent-documents.ts` y `conversation.ts` (conversación elegida, sesión/proveedor reales, documentos y specs/fixes derivados de eventos; sin guiones ficticios).
-- **Tema y UI kit:** `@e-burgos/tucu-ui` 3.10.0 (`app/layout.tsx` con `ThemeModeScript`, `StudioThemeProvider.tsx`, `app/globals.css`, `lib/typography-tokens.ts`); envoltorios `HelpSelect` y `SegmentedControl`, el resto de componentes de tucu-ui directo; modo claro/oscuro desde `StudioHeader`; escala `text-micro|meta|ui|small|copy|title`.
+- **Tema y UI kit:** `@e-burgos/tucu-ui` 3.10.1 (`app/layout.tsx` con `ThemeModeScript`, `StudioThemeProvider.tsx`, `app/globals.css`, `lib/typography-tokens.ts`); envoltorios `HelpSelect` y `SegmentedControl`, el resto de componentes de tucu-ui directo; modo claro/oscuro desde `StudioHeader`; escala `text-micro|meta|ui|small|copy|title`.
 - **Capacidades del puente y flujo de spec:** `src/lib/use-bridge-features.ts`, `CapabilityNotice.tsx`, `QuestionForm.tsx`, `ContextMeter.tsx`, `ModeSelectors.tsx` + `lib/flow-choice.ts`, `PreparedConversations.tsx` + `lib/auto-conversation.ts`, `lib/link-targets.ts`, `lib/conversation-gate.ts`, `GateStatusModal`.
 - **Stores de Zustand:** `src/lib/store/` (`timeline.ts`, `state.ts`, `activity.ts`, `selectors.ts`); hooks en `src/lib/` (`use-collapsed-state.ts`, `use-stick-to-bottom.ts`, `use-panel-state.ts`).
 
