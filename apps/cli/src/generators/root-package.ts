@@ -84,6 +84,7 @@ export function addAppTypeDepsToRootPkg(
       addMissingFromReference("devDependencies", [
         "@nx/react",
         "@nx/vite",
+        "@nx/web",
         "@vitejs/plugin-react",
         "@types/react",
         "@types/react-dom",

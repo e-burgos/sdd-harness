@@ -142,10 +142,11 @@ describe('generators/root-package', () => {
     const reference = {
       scripts: {},
       dependencies: { react: '^19.0.0', 'react-dom': '^19.0.0', 'react-router-dom': '^7.0.0' },
-      devDependencies: { '@nx/react': '24.0.6', '@nx/vite': '24.0.6' },
+      devDependencies: { '@nx/react': '24.0.6', '@nx/vite': '24.0.6', '@nx/web': '24.0.6' },
     };
     addAppTypeDepsToRootPkg(pkg, 'react', reference, { nxMajor: 23, nxVersion: '23.1.1' });
     expect(pkg.devDependencies['@nx/react']).toBe('23.1.1');
     expect(pkg.devDependencies['@nx/vite']).toBe('23.1.1');
+    expect(pkg.devDependencies['@nx/web']).toBe('23.1.1');
   });
 });

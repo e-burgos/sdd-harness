@@ -60,6 +60,9 @@ describe('workspace.generator', () => {
     const apiDir = resolve(root, 'apps/api');
     expect(fs.existsSync(resolve(apiDir, 'project.json'))).toBe(true);
     expect(fs.existsSync(resolve(apiDir, 'src/main.ts'))).toBe(true);
+    const pkg = fs.readJSONSync(resolve(root, 'package.json'));
+    expect(pkg.devDependencies['@nx/vite']).toBeUndefined();
+    expect(pkg.devDependencies['@nx/web']).toBeUndefined();
   });
 
   it('genera docker-compose con servicios', async () => {
@@ -550,6 +553,7 @@ describe('workspace.generator v0.11.0', () => {
     );
     const pkg = fs.readJSONSync(resolve(root, 'package.json'));
     expect(pkg.devDependencies.esbuild).toBeDefined();
+    expect(pkg.devDependencies['@nx/web']).toBe(pkg.devDependencies['@nx/vite']);
   });
 
   it('Next.js: targets inferidos por @nx/next/plugin, public/ presente y .next ignorado', async () => {

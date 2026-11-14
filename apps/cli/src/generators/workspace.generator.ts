@@ -436,6 +436,7 @@ async function writeRootPackageJson(
     for (const dep of [
       "@nx/react",
       "@nx/vite",
+      "@nx/web",
       "@vitejs/plugin-react",
       "@types/react",
       "@types/react-dom",
