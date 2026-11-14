@@ -2,7 +2,7 @@
 
 import { KIT_INTEGRATIONS, KitIntegrationSetResult, KitIntegrationStatus, type KitIntegrationId } from '@sdd-studio/protocol';
 import { useCallback, useEffect, useState } from 'react';
-import { useBridge } from '../../BridgeProvider';
+import { useBridge, useStudio } from '../../BridgeProvider';
 
 export interface IntegrationEntry {
   status: KitIntegrationStatus | null;
@@ -20,6 +20,7 @@ export function useKitIntegrations() {
   const { client, connection } = useBridge();
   const supported = client.supports('kit-integrations');
   const open = connection.status === 'open';
+  const toolsRevision = useStudio((s) => s.snapshot?.tools?.revision ?? null);
   const [entries, setEntries] = useState(initialEntries);
 
   const patch = useCallback((id: KitIntegrationId, change: Partial<IntegrationEntry>) => {
@@ -43,7 +44,7 @@ export function useKitIntegrations() {
     return () => {
       cancelled = true;
     };
-  }, [client, supported, open, patch]);
+  }, [client, supported, open, patch, toolsRevision]);
 
   const toggle = useCallback(
     async (id: KitIntegrationId, enabled: boolean) => {

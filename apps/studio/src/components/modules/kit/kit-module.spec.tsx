@@ -451,6 +451,16 @@ describe('Kit integrations', () => {
     expect(screen.getByTestId('integration-tucu-ui')).toHaveTextContent('actualización disponible');
   });
 
+  it('reloads the statuses when sdd/tools.json changes outside Studio', async () => {
+    const options: Harness = { features: FEATURES, tools: TOOLS, integrationStatus: both() };
+    const { value, requests } = setup('tools', options);
+    expect(await screen.findByTestId('integration-state-tucu-ui')).toHaveTextContent('Desactivada');
+    options.integrationStatus = { ...both(), 'tucu-ui': status('tucu-ui', { enabled: true, state: 'complete' }) };
+    act(() => value.store.getState().setSnapshot(snapshot({ ...TOOLS, revision: 'dddddddddddddddd' })));
+    await waitFor(() => expect(screen.getByTestId('integration-state-tucu-ui')).toHaveTextContent('Activa'));
+    expect(requests.filter((r) => r.cmd === 'kit.integration.status' && r.integration === 'tucu-ui')).toHaveLength(2);
+  });
+
   it('toggling sends kit.integration.set, shows the busy state and applies the returned status', async () => {
     let finish: (value: unknown) => void = () => undefined;
     const result = new Promise((resolve) => { finish = resolve; });

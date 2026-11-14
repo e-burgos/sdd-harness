@@ -1514,6 +1514,84 @@
           }
         ]
       }
+    },
+    {
+      "id": "FIX-e-burgos-023-001",
+      "author": "e-burgos",
+      "type": "BUGFIX",
+      "severity": "low",
+      "created_at": "2026-11-14",
+      "resolved_at": "2026-11-14",
+      "validated_at": "2026-11-14",
+      "estimation_hours": 0.5,
+      "status": "validated",
+      "cycle": null,
+      "spec_id": "spec-e-burgos-023-nx-versions-and-migration",
+      "fix_document": "sdd/specs/spec-e-burgos-023-nx-versions-and-migration/fixes/fix-e-burgos-023-001.md",
+      "title": "Los workspaces React generados instalan @nx/web para serve-static",
+      "description": "@nx/vite/plugin infiere el target serve-static con el executor @nx/web:file-server, pero los generadores no instalaban @nx/web: el target existía y fallaba al correrlo.",
+      "justification": "Una devDependency más en el template y en los generadores; sin contratos ni entidades nuevas; perfil solo.",
+      "related_modules": [
+        "nx-versions-and-migration"
+      ],
+      "affected_files": [
+        "apps/cli/templates/sdd/templates/nx-workspace/package.json",
+        "sdd/templates/nx-workspace/package.json",
+        "apps/cli/src/generators/root-package.ts",
+        "apps/cli/src/generators/workspace.generator.ts",
+        "sdd/specs/spec-e-burgos-023-nx-versions-and-migration/fixes/fix-e-burgos-023-001.md",
+        "apps/cli/src/generators/__tests__/workspace.generator.spec.ts",
+        "apps/cli/src/generators/__tests__/root-package.spec.ts",
+        "sdd/context/apps/cli/updates/2026-11-14-fix-e-burgos-023-001.md"
+      ],
+      "test_reference": "workspace.generator.spec.ts y root-package.spec.ts (con y sin apps React, Nx 23 y 24); generación real React en Nx 24: serve-static levanta @nx/web:file-server; suite completa OK",
+      "usage": {
+        "provider_model": "claude/opus",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "tokens_in": 90000,
+        "tokens_out": 6000,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-11-14"
+      }
+    },
+    {
+      "id": "FIX-e-burgos-022-001",
+      "author": "e-burgos",
+      "type": "BUGFIX",
+      "severity": "low",
+      "created_at": "2026-11-14",
+      "resolved_at": "2026-11-14",
+      "validated_at": "2026-11-14",
+      "estimation_hours": 0.5,
+      "status": "validated",
+      "cycle": null,
+      "spec_id": "spec-e-burgos-022-studio-kit-integrations",
+      "fix_document": "sdd/specs/spec-e-burgos-022-studio-kit-integrations/fixes/fix-e-burgos-022-001.md",
+      "title": "Las tarjetas de integraciones se refrescan cuando sdd/tools.json cambia afuera de Studio",
+      "description": "useKitIntegrations pedía el estado solo al montar: un pnpm sdd:tucu/sdd:video desde la terminal dejaba las tarjetas desactualizadas hasta recargar.",
+      "justification": "Recarga del estado cuando cambia snapshot.tools.revision; sin cambios de protocolo; perfil solo.",
+      "related_modules": [
+        "studio-kit-integrations"
+      ],
+      "affected_files": [
+        "apps/studio/src/components/modules/kit/use-kit-integrations.ts",
+        "apps/studio/src/components/modules/kit/kit-module.spec.tsx",
+        "sdd/specs/spec-e-burgos-022-studio-kit-integrations/fixes/fix-e-burgos-022-001.md",
+        "sdd/context/apps/studio/updates/2026-11-14-fix-e-burgos-022-001.md"
+      ],
+      "test_reference": "kit-module.spec.tsx: «reloads the statuses when sdd/tools.json changes outside Studio» (falla sin el arreglo); studio 1317 tests y typecheck OK",
+      "usage": {
+        "provider_model": "claude/opus",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "tokens_in": 50000,
+        "tokens_out": 3000,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-11-14"
+      }
     }
   ]
 }
