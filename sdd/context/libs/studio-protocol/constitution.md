@@ -1,6 +1,6 @@
 # Constitución — libs/studio-protocol
 
-> Versión 1.5 | Última actualización: consolida los fragmentos de spec-e-burgos-017 (cycle-02) y 014 (cycle-02) | Fecha: 2026-11-13
+> Versión 1.6 | Última actualización: consolida los fragmentos de spec-e-burgos-017 (cycle-02), 014 (cycle-02), 022 (cycle-01) y 023 (cycle-01) | Fecha: 2026-11-14
 
 ## 1. Propósito y Alcance
 
@@ -44,6 +44,7 @@
   - `auth.status`, `auth.login`, `auth.logout`: login de la suscripción de Claude lanzado por el puente.
   - `thread.updateLinks` (`add`/`remove` de `ThreadLinkRef`, máx. 8 cada uno, por defecto `[]`), `question.answer { questionId, answers, decline }`, `profile.set { profile }`; `thread.history` con opt-ins `includeDocumentTouched` e `includeQuestions` (por defecto `false`).
   - Kit: `kit.index`, `kit.tools.set` (con `expectedRevision`), `kit.rtkGain`; `channel.botHistory` con `includeKitEvents`.
+  - Integraciones del kit (feature `kit-integrations`): `kit.integration.status { integration }` → `KitIntegrationStatus` y `kit.integration.set { integration, enabled }` → `KitIntegrationSetResult` (`ok`, `exitCode`, `output` ≤ 8 KiB, `status`).
   - GitHub (feature `github`): `github.status { generationId? }` → `GithubStatus` y `github.connect { generationId?, name?, owner?, visibility, protect }` → `GithubConnectResult`.
   - Wizard: `wizard.catalog`, `wizard.preflight`, `wizard.validate`, `wizard.listDirs`, `wizard.checkTarget`, `wizard.generate`, `wizard.generation.get`, `wizard.generation.cancel`, `wizard.reveal` y `workspace.open`.
 - `events.ts`: Eventos emitidos desde el puente hacia la web:
@@ -52,9 +53,9 @@
   - `ServerEvent` (`kit.changed`, `generation.status`, `generation.output` con `seq`, `workspace.switched`, `thread.event`, `channel.event`, `bot.activity`, `workspace.changed`, `presence.changed`).
 - `handshake.ts`: `hello` (token del hash de la URL y versión) y `welcome` (ruta del workspace —nula con el puente en modo launcher—, proyecto, versión del kit, `AuthMode` y `features` opcional con `BRIDGE_FEATURES`, para detectar capacidades sin otro bump). Errores: `handshake.error`.
 - `snapshot.ts`: Esquema `WorkspaceSnapshot` que modela en memoria el estado completo del kit: módulos en `global.json`, `specs` (`SpecSummary`), `cycles` (`CycleSummary` con tareas y estado), `fixes` (`FixSummary` con `createdAt`/`closedAt`), agentes (con `source`/`path`), `skills[]`, herramientas (`tools.json`, opcional; bot event `tools.changed`), pricing y `sessions` (opcional): ataduras `SessionBinding` (`sessionId`, `unit` ciclo o fix, `harness`, `source`, `worktree`, `boundAt`, `updatedAt`) con tope `MAX_SESSION_BINDINGS` (64) y `.catch(undefined)` para tolerar puentes o kits viejos; `leases` (opcional, `.catch(undefined)`): reservas de archivo `FileLeaseSummary` (`path`, `sessionId`, `unit` nullable, `harness`, `worktree`, `acquiredAt`, `updatedAt`, `requestedBy` ≤ 16) con tope `MAX_FILE_LEASES` (256); y `github` (opcional): `SnapshotGithub` con el remoto y `CycleGithub[]` (rama, PR y checks por ciclo en curso), tope `MAX_GITHUB_CYCLES` (64). Ninguno de los tres cambió `PROTOCOL_VERSION`.
-- `kit.ts`: esquemas del índice del kit, `tools.json` y `rtk-gain`.
+- `kit.ts`: esquemas del índice del kit, `tools.json` y `rtk-gain`, más las integraciones: `KIT_INTEGRATIONS`, `KitIntegrationId` (`tucu-ui` | `video-maker`), `KIT_INTEGRATION_HARNESSES`, `KitIntegrationStatus` (con `.catch` tolerantes), `KitIntegrationSetResult` y `MAX_INTEGRATION_OUTPUT_BYTES`; el evento `integration.changed` (bot event) vive en `events.ts` y su límite en `limits.ts`.
 - `github.ts`: `GithubStatus`, `GithubConnectRequest`, `GithubConnectResult`, `CycleGithub`, `SnapshotGithub` y `MAX_GITHUB_CYCLES` (la CLI del kit hace el trabajo con el `gh` del dev; el contrato solo transporta el resultado).
-- `wizard.ts`: schemas del wizard «Nuevo proyecto» (`ConfigDraft`, `ConfigCatalog` con `limits` opcional, `ConfigValidation`, `ConfigCliFailure`, `Preflight`, `DirListing`, `TargetCheck`/`TargetState`, `GenerationState`/`Stage`/`Status`, `GenerateResult`, `GenerationSnapshot`, `WorkspaceOpenResult`). Reflejan el contrato `config catalog`/`validate` de la CLI: un cambio de ese contrato se versiona aquí y en el puente a la vez; el tope de `ConfigDraft` se mide en bytes UTF-8.
+- `wizard.ts`: schemas del wizard «Nuevo proyecto» (`ConfigDraft`, `ConfigCatalog` con `limits` y `nx { majors, default, versions }` opcionales (los catálogos de CLIs viejas siguen validando), `ConfigValidation`, `ConfigCliFailure`, `Preflight`, `DirListing`, `TargetCheck`/`TargetState`, `GenerationState`/`Stage`/`Status`, `GenerateResult`, `GenerationSnapshot`, `WorkspaceOpenResult`). Reflejan el contrato `config catalog`/`validate` de la CLI: un cambio de ese contrato se versiona aquí y en el puente a la vez; el tope de `ConfigDraft` se mide en bytes UTF-8.
 - `codec.ts`: Encoders y decoders seguros (`decodeClientMessage`, `decodeServerMessage`, `encodeMessage`).
 
 ## 4. Comandos de Trabajo

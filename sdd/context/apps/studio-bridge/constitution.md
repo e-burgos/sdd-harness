@@ -1,6 +1,6 @@
 # Constitución — apps/studio-bridge
 
-> Versión 1.6 | Última actualización: consolida los fragmentos de spec-e-burgos-017 cycle-02 y 014 cycle-02 (reservas de archivo, integración con GitHub) | Fecha: 2026-11-13
+> Versión 1.7 | Última actualización: consolida los fragmentos de spec-e-burgos-017 cycle-02, 014 cycle-02 y 022 cycle-01 (reservas de archivo, integración con GitHub, integraciones del kit) | Fecha: 2026-11-14
 
 ## 1. Propósito y Alcance
 
@@ -58,7 +58,7 @@
 - `file-index.ts`: `createFileIndex(root)` — `git ls-files --cached --others --exclude-standard` con fallback a walk acotado (profundidad 12, 50 000 entradas); excluye secretos (`.env*` salvo example/sample/template, `.pem`, `.key`, `id_rsa*`, `.npmrc`, `.netrc`…), `node_modules`, `.git`, `.sdd-studio`, `.nx`, `.next`, `dist`, `coverage`, `.claude/worktrees/`; re-verifica cada resultado con realpath. Ranking por tiers (prefijo de basename, substring de basename, substring de ruta); no devuelve subsecuencias débiles en búsquedas cortas. Caché TTL 15 s; `listGit` inyectable.
 - `catalog.ts`: `loadCatalog` — agentes de `.claude/agents` y `sdd/agents`, skills de `.claude/skills` y `sdd/skills`, prompts de `sdd/prompts`; dedupe por realpath canónico (symlinks `.claude` → `sdd/`), tope 200 por tipo, descripciones a 300 caracteres.
 - `paths.ts`: Sanitización estricta de rutas de archivos para evitar directory traversal fuera de la raíz del repo.
-- `kit-index.ts` (`kit.index`, evento `kit.changed`), `kit-tools.ts` (`kit.tools.set` con `expectedRevision` sha256-16, validación ajv contra el schema del kit, escritura atómica, test de paridad con los scripts del kit; conserva claves como `tucu_ui`; emite `tools.changed`) y `rtk-gain.ts` (`kit.rtkGain`).
+- `kit-index.ts` (`kit.index`, evento `kit.changed`), `kit-tools.ts` (`kit.tools.set` con `expectedRevision` sha256-16, validación ajv contra el schema del kit, escritura atómica, test de paridad con los scripts del kit; conserva claves como `tucu_ui`; emite `tools.changed`), `kit-integrations.ts` (`createKitIntegrations`, `normalizeIntegrationStatus`: `kit.integration.status|set` corren `sdd/scripts/sdd-tucu.mjs` y `sdd-video.mjs` del workspace con `execFile` de `process.execPath`, sin shell, reusando `Exec` de `github/exec.ts`; `--status` con tope de 15 s, enable/disable de 180 s; sin el script responde `unavailable`; tras un `set` exitoso refresca el watcher y emite `integration.changed` en #general, oculto del historial salvo `includeKitEvents`; `sessions/store.ts` lo trata como `tools.changed`; handlers en `server/router.ts`) y `rtk-gain.ts` (`kit.rtkGain`).
 - `profile.ts`: `writeProfile` (`profile.set`, escritura atómica de `sdd/global.json`).
 
 ### 3.4.1 Host, runtime y launcher (`src/main.ts`, `src/project/`)
@@ -74,7 +74,7 @@
 
 ### 3.5 Servidor y Seguridad (`src/server/`)
 - `ws-server.ts`: Servidor WebSocket en `127.0.0.1` con autenticación estricta en el handshake (`handshake.ts`), `features` en el welcome y `maxPayload` = `MAX_FRAME_BYTES`.
-- `router.ts`: despacho de comandos. `Welcome.features` anuncia `BRIDGE_FEATURES` de `@sdd-studio/protocol` (entre otras `attachments`, `file-search`, `catalog`, `conversation-sessions`, `auth-subscription`, `kit-index`, `kit-tools`, `rtk-gain`, `project-wizard` y `workspace-switch`), todas implementadas. `PROTOCOL_VERSION` sigue en 2: las webs anteriores siguen funcionando.
+- `router.ts`: despacho de comandos. `Welcome.features` anuncia `BRIDGE_FEATURES` de `@sdd-studio/protocol` (entre otras `attachments`, `file-search`, `catalog`, `conversation-sessions`, `auth-subscription`, `kit-index`, `kit-tools`, `kit-integrations`, `rtk-gain`, `project-wizard` y `workspace-switch`), todas implementadas. `PROTOCOL_VERSION` sigue en 2: las webs anteriores siguen funcionando.
 - `security.ts`: Genera tokens criptográficamente seguros para la URL de pairing (`/w#bridge=ws://127.0.0.1:...&token=...`).
 - `static.ts`: Sirve la interfaz web estática si se pasa la bandera `--local-ui`.
 
@@ -108,5 +108,5 @@
 - Monitorear la performance del índice de archivos en workspaces de más de 50k archivos.
 - Bash en segundo plano (`run_in_background`) solo se observa mientras dura su tool; escrituras fuera de `sdd/` durante un Bash no se detectan; un `touch` sin cambio cuenta como `modified`. Si recorrer `sdd/` dos veces por Bash molesta, reusar la instantánea como índice vivo alimentado por el watcher.
 - `getContextUsage` se pide tras cada resultado; si se vuelve costoso, pedirlo solo al cruzar el umbral.
-- Exponer la hora exacta de aprobaciones y preguntas para Actividad; exponer el interruptor de tucu-ui en el módulo Kit (requiere correr `sdd-tucu.mjs`).
+- Exponer la hora exacta de aprobaciones y preguntas para Actividad.
 - Wizard: `SIGKILL` al puente deja huérfano el grupo de procesos en POSIX (R-3); `pnpm install` escribe en el store global y corre postinstall de terceros (R-6); pendientes de Windows del review de spec-e-burgos-013 (seguimiento).

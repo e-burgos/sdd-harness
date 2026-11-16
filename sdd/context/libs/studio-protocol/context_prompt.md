@@ -1,6 +1,6 @@
 # Context prompt — libs/studio-protocol
 
-> Última actualización: consolida los fragmentos de spec-e-burgos-017 (cycle-02) y 014 (cycle-02) | Fecha: 2026-11-13
+> Última actualización: consolida los fragmentos de spec-e-burgos-017 (cycle-02), 014 (cycle-02), 022 (cycle-01) y 023 (cycle-01) | Fecha: 2026-11-14
 
 > Entry point para agentes y desarrolladores trabajando en `@sdd-studio/protocol`.
 > Leer este documento antes de tocar tipos, esquemas o mensajes del protocolo.
@@ -16,9 +16,9 @@ Es la librería que define los tipos, esquemas Zod y códec binario/JSON para la
 - `src/events.ts`: Eventos en streaming (texto, deltas, diffs de herramientas, aprobaciones).
 - `src/handshake.ts`: Validación de tokens de pairing y protocolo de conexión inicial.
 - `src/snapshot.ts`: Definición del estado reactivo del workspace (specs, tasks, fixes, agentes, skills, global, tools, `sessions`, `leases` y `github`).
-- `src/kit.ts`: contrato del índice del kit, `tools.json` y `rtk-gain`.
+- `src/kit.ts`: contrato del índice del kit, `tools.json`, `rtk-gain` e integraciones del kit (`kit.integration.status|set`).
 - `src/github.ts`: contrato de la integración con GitHub (`github.status`, `github.connect`, `SnapshotGithub`).
-- `src/wizard.ts`: contrato del wizard «Nuevo proyecto» y del cambio de workspace.
+- `src/wizard.ts`: contrato del wizard «Nuevo proyecto» y del cambio de workspace (`ConfigCatalog.nx` opcional con la matriz de Nx).
 - `src/limits.ts`: límites compartidos (frame, adjuntos, refs, búsqueda, pendientes, config, generación) y `BRIDGE_FEATURES` (lista de capacidades del puente; máx. 32).
 - `src/attachments.ts`: mimes y extensiones de adjuntos.
 - `src/version.ts`: `PROTOCOL_VERSION = 2`.

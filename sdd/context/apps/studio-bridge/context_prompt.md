@@ -1,6 +1,6 @@
 # Context prompt — apps/studio-bridge
 
-> Última actualización: consolida los fragmentos de spec-e-burgos-017 cycle-02 y 014 cycle-02 | Fecha: 2026-11-13
+> Última actualización: consolida los fragmentos de spec-e-burgos-017 cycle-02, 014 cycle-02 y 022 cycle-01 | Fecha: 2026-11-14
 
 > Entry point para agentes y desarrolladores trabajando en `@e-burgos/sdd-studio`.
 > Leer este documento antes de tocar el motor de agentes, el WebSocket o la validación del SPEC GATE.
@@ -25,7 +25,7 @@ Es el daemon/puente que corre localmente en la máquina del usuario (`sdd-studio
 - **GitHub:** `src/github/` (`service.ts`, `pr-feed.ts`, `exec.ts`): `github.*` delega en la CLI del kit; `snapshot.github` con PR y checks por ciclo.
 - **Autenticación:** `src/auth/claude-login.ts` (login de suscripción vía CLI de Claude) y `src/auth-mode.ts` (preferencia de modo y entorno).
 - **Servidor y WebSocket:** `src/server/ws-server.ts` y `src/server/router.ts`.
-- **Observador del workspace:** `src/workspace/watcher.ts`, `snapshot.ts`, `sessions-feed.ts`, `file-index.ts` (menú `@`), `catalog.ts` (agentes, skills, prompts), `kit-index.ts`, `kit-tools.ts`, `rtk-gain.ts` y `profile.ts`.
+- **Observador del workspace:** `src/workspace/watcher.ts`, `snapshot.ts`, `sessions-feed.ts`, `file-index.ts` (menú `@`), `catalog.ts` (agentes, skills, prompts), `kit-index.ts`, `kit-tools.ts`, `kit-integrations.ts` (opera `sdd-tucu.mjs` y `sdd-video.mjs` del workspace; sin el script → `unavailable`), `rtk-gain.ts` y `profile.ts`.
 
 ## Comandos para desarrollo y verificación
 
