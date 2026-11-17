@@ -55,8 +55,25 @@
       "estimation_hours": 2,
       "story_points": 3,
       "depends_on": [],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/cli/src/generators/__tests__/sdd-task.integration.spec.ts",
+        "apps/cli/src/utils/__tests__/task-registry.spec.ts",
+        "apps/cli/templates/sdd/scripts/lib/task-registry.mjs",
+        "apps/cli/templates/sdd/scripts/sdd-task.mjs",
+        "apps/cli/templates/sdd/templates/nx-workspace/package.json"
+      ],
+      "usage": {
+        "tokens_in": 29459,
+        "tokens_out": 5199,
+        "tokens_total": 34658,
+        "approx": false,
+        "recorded_at": "2026-11-17",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "source": "agent-usage-notification"
+      }
     },
     {
       "id": "TASK-003",
