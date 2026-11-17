@@ -80,5 +80,5 @@ No tenés fila propia en `tasks.json`: al terminar `functional.md` hacé push de
 ya creó `metrics` con `by_agent: []` al abrir el ciclo — nunca está en `null`). Entrada:
 `{ "agent": "functional", "provider_model", "effort", "tokens_in", "tokens_out", "approx",
 "source", "recorded_at" }`. Declará modelo y effort ANTES de escribir el documento; registrá
-tokens AL CERRARLO. Fuente del número según el arnés: tabla en `sdd/dual-harness/AGENTS.md`
-§ Selección de modelo y esfuerzo.
+tokens AL CERRARLO. Fuente del número según el arnés: tabla en
+`sdd/dual-harness/rules/sdd-model-budget.md`.

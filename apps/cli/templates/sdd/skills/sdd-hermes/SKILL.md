@@ -21,17 +21,16 @@ description: Loop agéntico punta a punta - de una idea en lenguaje natural a pr
    (fin de FASE 2) y cada **spec** antes de implementar (fin de FASE 4). El resto
    corre solo, salvo que el usuario pida modo asistido (checkpoint por fase).
 3. **Presupuesto explícito.** Cada fase declara su tier de modelo/esfuerzo ANTES de
-   ejecutar (regla ⚙️ del dual-harness — vale para Claude, Gemini/Antigravity y
+   ejecutar (regla de modelo y esfuerzo, `rules/sdd-model-budget.md` — vale para Claude, Gemini/Antigravity y
    Copilot por igual). Hermes es un loop largo: sin esta disciplina el costo explota.
 4. **Todo queda registrado en `sdd/`.** Si Hermes se interrumpe en cualquier punto,
    otro agente retoma desde los registros — el loop no tiene estado propio.
 
-## Presupuesto por fase (regla ⚙️ aplicada al loop)
+## Presupuesto por fase (`rules/sdd-model-budget.md` aplicada al loop)
 
 Los tiers son abstractos a propósito: la equivalencia concreta por proveedor
 (Claude `model`/`effort`, Gemini modelo/`thinking`, Copilot picker/agents) vive en
-**una sola fuente**: la tabla canónica ⚙️ del dual-harness (`AGENTS.md`/`CLAUDE.md`/
-`GEMINI.md` raíz). No duplicar esa tabla acá.
+**una sola fuente**: la tabla canónica de `sdd/dual-harness/rules/sdd-model-budget.md`. No duplicar esa tabla acá.
 
 | Fase                           | Tier             | Nota                                                                       |
 | ------------------------------ | ---------------- | -------------------------------------------------------------------------- |
@@ -39,7 +38,7 @@ Los tiers son abstractos a propósito: la equivalencia concreta por proveedor
 | 2. Decisión de stack           | **alto**         | Una sola vez, cross-cutting, caro equivocarse                              |
 | 3. Configuración del workspace | **económico**    | Mecánica: escribir config + correr CLI                                     |
 | 4. Redacción de specs          | **alto**         | La spec es el contrato de todo lo que sigue                                |
-| 5. Loop de ciclos              | según agente SDD | La tabla canónica ⚙️ manda: implementores **estándar**, orquestador/arquitecto/reviewer **alto** |
+| 5. Loop de ciclos              | según agente SDD | La tabla canónica de `rules/sdd-model-budget.md` manda: implementores **estándar**, orquestador/arquitecto/reviewer **alto** |
 
 ## FASE 1 — Descubrimiento (una ronda de preguntas, máximo)
 
@@ -213,7 +212,7 @@ inicio de cada sesión; graphify si existe; los implementores en tier **estánda
 contexto acotado a su task — mecanismo según proveedor: subagentes con `model`/`effort`
 explícitos en Claude Code, subagentes de modelo económico/estándar en Gemini CLI,
 custom agents con `model:` pinneado en Copilot, y en Antigravity verificar el dropdown
-antes de cada fase (regla ⚙️).
+antes de cada fase (`rules/sdd-model-budget.md`).
 
 **Telemetría del loop (obligatoria al cerrar cada ciclo):** cada agente registra su
 propia unidad en `cycle.json → metrics.usage.by_agent[]` al cerrarla — la task
@@ -249,7 +248,7 @@ esa base, cada proveedor tiene su mecanismo:
 | **Claude Code**    | `/hermes-resume` (slash command)                       | `/loop 15m` con el prompt; Routines/cron en sesión nueva; hook `SessionStart` (abajo)      |
 | **Copilot**        | coding agent: asignar un issue con el prompt; CLI: `/hermes-resume` | hooks repo-level en `.github/hooks/` (p. ej. inyectar `lessons.md`); custom agents pinneados |
 | **Gemini CLI**     | `/hermes-resume` (comando TOML generado)               | hooks first-party del CLI; subagentes para las fases mecánicas                             |
-| **Antigravity**    | `/hermes-resume` (workflow de `.agent/workflows/`)     | workflows encadenables; el modelo por fase lo fija el usuario en el dropdown (regla ⚙️)    |
+| **Antigravity**    | `/hermes-resume` (workflow de `.agent/workflows/`)     | workflows encadenables; el modelo por fase lo fija el usuario en el dropdown (`rules/sdd-model-budget.md`)    |
 
 - **Memoria al inicio de sesión (hook opcional, Claude Code):** en
   `.claude/settings.json` del repo, un hook `SessionStart` que imprima la memoria

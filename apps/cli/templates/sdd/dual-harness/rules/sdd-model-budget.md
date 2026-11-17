@@ -57,7 +57,7 @@ Todo agente que participe de un flujo SDD o de un fix y consuma tokens registra,
 su unidad de trabajo** (task, documento, ciclo, fix), `provider_model` (`claude/sonnet`,
 `gemini/pro`, `copilot/claude-sonnet`), `effort`/thinking, `tokens_in`, `tokens_out`, `source`
 y `approx`. Sin ese registro la unidad no está cerrada. Modelo y effort se declaran ANTES de
-ejecutar (regla ⚙️); los tokens se registran AL CERRAR. No es una estimación reconstruida al
+ejecutar (regla cero); los tokens se registran AL CERRAR. No es una estimación reconstruida al
 final: es un registro por unidad.
 
 **Quién escribe qué, y cuándo:**

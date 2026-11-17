@@ -126,6 +126,8 @@ sdd/
 │   ├── validate-sdd.mjs               ← Registry validator (pnpm sdd:validate)
 │   ├── spec-gate.mjs                  ← Answers SPEC GATE A and B (pnpm sdd:gate)
 │   ├── sdd-use.mjs                    ← Binds this session to a cycle or fix (pnpm sdd:use)
+│   ├── sdd-task.mjs                   ← Opens/closes a task with its usage, no hand-editing of tasks.json (pnpm sdd:task)
+│   ├── sdd-verify.mjs                 ← Verifies a subproject, quick or full, with a machine-wide lease (pnpm sdd:verify)
 │   ├── sdd-release.mjs                ← Releases file leases and notifies (pnpm sdd:release)
 │   ├── sdd-branch.mjs                 ← Cycle branch per profile (pnpm sdd:branch)
 │   ├── sdd-pr.mjs                     ← Cycle PR with the reviewer summary (pnpm sdd:pr)
@@ -145,14 +147,19 @@ sdd/
 │   ├── apps/java-api/                 ← Spring Boot app under Nx (Nx does not generate it)
 │   └── libs/ts-lib/                   ← Shared TypeScript lib
 │
-├── dual-harness/                      ← LAYER 1 — source of truth for the root AGENTS.md, CLAUDE.md and GEMINI.md
-│   ├── AGENTS.md                      ← Instructions for GitHub Copilot Agents
-│   ├── CLAUDE.md                      ← Instructions for Claude Code
-│   ├── GEMINI.md                      ← Instructions for Antigravity IDE and Gemini CLI
+├── dual-harness/                      ← LAYER 1 — core (< 6 KB) of the root AGENTS.md, CLAUDE.md and GEMINI.md
+│   ├── AGENTS.md                      ← Core for GitHub Copilot Agents
+│   ├── CLAUDE.md                      ← Core for Claude Code
+│   ├── GEMINI.md                      ← Core for Antigravity IDE and Gemini CLI
+│   │                                    (the repo's own instructions go in project.md, which the kit does not ship)
 │   ├── copilot-instructions.md        ← Seed for .github/copilot-instructions.md (copied by setup:agents)
 │   └── rules/                         ← LAYER 2 — read on demand; also the always-on Antigravity rules
 │       ├── sdd-gates.md               ← CANONICAL SOURCE for the gates (SPEC GATE A/B, flows, FIX GATE)
-│       ├── sdd-model-budget.md        ← CANONICAL SOURCE for the telemetry contract
+│       ├── sdd-model-budget.md        ← CANONICAL SOURCE for model tiers and the telemetry contract
+│       ├── sdd-execution.md           ← Running a cycle: blocks, sdd:task, sdd:verify
+│       ├── sdd-context.md             ← Close: context fragments, CONTEXT and MEMORY GATE
+│       ├── sdd-tools.md               ← graphify, rtk, sdd-mod, tucu-ui, video-maker
+│       ├── sdd-workspace.md           ← Workspace check, pnpm/Nx invariants
 │       └── sdd-code-style.md          ← Comment-free code
 │
 ├── prompts/                           ← Entry prompts for agents
@@ -255,7 +262,9 @@ GEMINI.md  (root)        → symlink to sdd/dual-harness/GEMINI.md
 ```
 
 > `.github/skills/` and `.github/prompts/` use individual symlinks so as to **not overwrite** existing Nx and Copilot files.  
-> `AGENTS.md`, `CLAUDE.md` and `GEMINI.md` at the root are symlinks: **always** edit in `sdd/dual-harness/`.
+> `AGENTS.md`, `CLAUDE.md` and `GEMINI.md` at the root are symlinks to the kit's core: do not edit them.
+> Your repo's own instructions go in `sdd/dual-harness/project.md` (project data: the kit does not ship it
+> and `update sdd` never touches it); the core imports it.
 > `.github/copilot-instructions.md` is a real file on purpose: GitHub's server-side readers
 > (Copilot code review) do not follow symlinks. `pnpm setup:agents` **seeds** it from
 > `sdd/dual-harness/copilot-instructions.md` **only if it does not exist**; an existing file is
@@ -527,7 +536,7 @@ tokens. Two layers with asymmetric read cost by design:
   line of `lessons.md` (Process / Technique / Cost) and deletes what it distilled.
   `pnpm sdd:validate` warns when that is pending.
 - Journal naming is identical to the context fragments → unique by construction,
-  no merge conflicts. Full rule: the dual-harness 🧠 section.
+  no merge conflicts. Full rule: `sdd/dual-harness/rules/sdd-context.md`.
 
 Related: on closing each cycle the reviewer records the **usage telemetry**
 (`cycle.json → metrics.usage`: tokens per provider/tier via `by_tier`, minutes) that
@@ -690,20 +699,20 @@ Each cycle generates these files in `sdd/specs/spec-[author]-[NNN]-[slug]/cycles
                         │ YES
                         ▼
 [4] BACKEND IMPLEMENTOR
-    Reads cycle-XX/tasks.json + architect.md → implements one task at a time
-    Writes code + tests → marks the task "done" in cycle-XX/tasks.json
-    Updates api.json (status: "implemented") + rebuild-index + sdd:validate
+    Reads cycle-XX/tasks.json + architect.md → implements its block, one task at a time
+    Writes code + tests + sdd:verify quick → commit; the orchestrator closes the task with sdd:task
+    Updates api.json (status: "implemented")
                         │ (all backend tasks done)
                         ▼
 [5] FRONTEND IMPLEMENTOR
-    Reads cycle-XX/tasks.json + api.json → implements one task at a time
-    Writes UI components + tests → marks the task "done"
-    Updates components.json + rebuild-index + sdd:validate
+    Reads cycle-XX/tasks.json + api.json → implements its block, one task at a time
+    Writes UI components + tests + sdd:verify quick → commit; the orchestrator closes the task with sdd:task
+    Updates components.json
                         │ (all frontend tasks done)
                         ▼
 [6] REVIEWER
     ⛔ VALIDATION GATE: pnpm sdd:validate BEFORE and AFTER the close
-    Verifies artifacts + runs build/tests/lint
+    Verifies artifacts + sdd:verify <app> full --reuse
     Validates RF and RNF compliance (ca_results per CA-[NNN])
     Updates cycle.json (status: "completed" + reviewer_report)
     Moves the module to completed_modules + closes the spec in index.json
@@ -1011,10 +1020,10 @@ FUNCTIONAL ──── (parallel) ──── PLANNER ──── (parallel) 
     ↓
 [GATE CHECK: brief + functional + planner + architect + tasks.json + cycle.json ready]
     ↓
-BACKEND IMPLEMENTOR (task by task)
-    ↓ (all backend tasks done)
-FRONTEND IMPLEMENTOR (task by task)
-    ↓ (all frontend tasks done)
+BACKEND IMPLEMENTOR (one agent per block; the orchestrator closes each task with sdd:task)
+    ↓ (all backend blocks done)
+FRONTEND IMPLEMENTOR (per block)
+    ↓ (all frontend blocks done)
 REVIEWER (VALIDATION GATE + cycle close)
 ```
 
@@ -1101,7 +1110,8 @@ model names are not guaranteed stable — they are editable in each agent's `mod
 (`sdd/agents/*.agent.md`) and in `sdd/pricing.json`. Enforcement differs per provider (Claude
 Code sets `model`/`effort` programmatically, Copilot pins `model:` on the SDD agents,
 Antigravity asks the user to switch the dropdown, Gemini CLI picks the model per session) —
-full detail in `sdd/dual-harness/{CLAUDE,AGENTS,GEMINI}.md` → ⚙️ section.
+full detail in `sdd/dual-harness/rules/sdd-model-budget.md`. **Maximum is not the default for hard work**:
+before choosing that tier, rule zero requires deciding "maximum or high" and writing why high is not enough.
 
 ### 6. graphify — optional
 
@@ -1188,8 +1198,11 @@ Details, end-to-end flow and traps: [VIDEO-MAKER.md](VIDEO-MAKER.md).
 | `sdd/components.json`           | Frontend components                                  |
 | `sdd/fixes.json`                | Fixes registry (FIX GATE)                            |
 | `sdd/agents/`                   | **Centralized agent definitions (v2.0)**             |
-| `sdd/dual-harness/rules/`       | Layer 2: canonical gates (`sdd-gates.md`) and telemetry (`sdd-model-budget.md`) |
+| `sdd/dual-harness/rules/`       | Layer 2, on demand: gates, execution, context, workspace, tools, tiers and telemetry, style |
+| `sdd/dual-harness/project.md`   | The repo's own instructions (project data; imported by the core) |
+| `sdd/verify.json`               | `quick`/`full` commands per subproject for `pnpm sdd:verify` (project data) |
 | `sdd/scripts/spec-gate.mjs`     | SPEC GATE as a command (`pnpm sdd:gate`)             |
+| `sdd/scripts/sdd-verify.mjs`, `sdd-task.mjs` | `pnpm sdd:verify` and `pnpm sdd:task`   |
 | `sdd/context/**/updates/`       | Additive context fragments (anti merge-conflict)     |
 | `sdd/docs/`                     | SDD viewer in vanilla JS (`pnpm sdd:docs`)           |
 | `sdd/tools.json`                | rtk switch (user data)                               |
@@ -1258,6 +1271,13 @@ pnpm sdd:gate <spec-id|slug> cycle-01
 
 # Validate ALL the SDD registries against their schemas
 pnpm sdd:validate
+
+# Verify a subproject (quick per task, full per block; --init seeds sdd/verify.json)
+pnpm sdd:verify <app> quick|full
+pnpm sdd:verify --init
+
+# Open/close a task with its usage (no hand-editing of tasks.json)
+pnpm sdd:task <spec-id|slug> cycle-01 TASK-001 start|done …
 
 # rtk state (switch, binary and hooks)
 pnpm sdd:rtk -- --status

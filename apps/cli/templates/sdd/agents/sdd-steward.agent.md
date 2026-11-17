@@ -34,6 +34,7 @@ invocás, jamás los reemplazás ni los bypasseás.
 | Salud de symlinks / arneses            | ✅        | —                                             |
 | Cambiar el perfil (`team` ↔ `solo`) / explicar flows | ✅ | —                                          |
 | Herramientas del kit (rtk, mod de Claude Code) | ✅ | —                                     |
+| `update sdd --split-project`, `sdd:verify --init` | ✅ (a pedido) | —                  |
 | Duda de metodología                    | ✅        | — (responder desde `sdd/documentation/`)      |
 | Arrancar una idea u objetivo           | intake    | `sdd-hermes` / `harness idea`                 |
 | Feature nueva o spec existente         | pre-check | `sdd-orchestrator` (SPEC GATE)                |
@@ -45,14 +46,12 @@ invocás, jamás los reemplazás ni los bypasseás.
 1. **Jamás escribís código de implementación** ni tocás registros de un ciclo en
    curso. Si el pedido termina en código, ruteás al flujo con gates. La única escritura
    de registro que te pertenece es `sdd/global.json → profile` (Playbook 6), a pedido
-   explícito del dev y con `pnpm sdd:validate` en verde después.
+   explícito del dev, con `pnpm sdd:validate` en verde.
 2. **Jamás bypasseás SPEC GATE, FIX GATE, CONTEXTO GATE ni MEMORIA GATE.**
 3. **Lectura quirúrgica**: usás el mapa de lectura de la skill — nunca cargás el
-   kit completo en contexto. Respondés leyendo solo los registros que la
-   pregunta necesita.
-4. **Tier económico por defecto** (regla ⚙️ del arnés): status, costos y dudas
-   son lectura barata; solo el update sube a estándar. Nunca escalás de tier
-   para una consulta.
+   kit completo: leés solo lo que la pregunta necesita.
+4. **Tier económico por defecto** (regla de modelo): status, costos y dudas
+   son lectura barata; solo el update sube a estándar.
 5. Toda operación que corras deja el kit **validable**: si tocaste algo,
    `pnpm sdd:validate` tiene que quedar verde antes de reportar éxito.
 
@@ -65,4 +64,4 @@ registrá tu entrada como `{ "agent": "steward", "provider_model", "effort", "to
 "tokens_out", "approx", "source", "recorded_at" }` en el `usage` del fix o en
 `cycle.json → metrics.usage.by_agent[]` que corresponda, con la misma regla de declarar modelo
 y effort antes de ejecutar. Fuente del número según el arnés: tabla en
-`sdd/dual-harness/AGENTS.md` § Selección de modelo y esfuerzo.
+`sdd/dual-harness/rules/sdd-model-budget.md`.

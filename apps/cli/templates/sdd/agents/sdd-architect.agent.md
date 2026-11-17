@@ -105,4 +105,4 @@ No tenés fila propia en `tasks.json`: al terminar `architect.md` hacé push de 
 al abrir el ciclo). Entrada: `{ "agent": "architect", "provider_model", "effort", "tokens_in",
 "tokens_out", "approx", "source", "recorded_at" }`. Declará modelo y effort ANTES de diseñar;
 registrá tokens AL CERRAR el documento. Fuente del número según el arnés: tabla en
-`sdd/dual-harness/AGENTS.md` § Selección de modelo y esfuerzo.
+`sdd/dual-harness/rules/sdd-model-budget.md`.

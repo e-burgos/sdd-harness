@@ -691,7 +691,7 @@ El bloque `usage` vive en tres lugares:
 | `tokens_total`    | Total exacto cuando la fuente reporta un único número (`agent-usage-notification`). `tokens_in`/`tokens_out` llevan igual el split documentado 85/15 para que la fórmula de costo funcione; el visor muestra `tokens_total`. |
 | `duration_minutes`| Opcional.                                                                                                    |
 | `provider_model` / `model_tier` | **Proveedor y modelo son obligatorios.** Claves `proveedor/modelo`: `claude/opus`, `gemini/pro`, `copilot/claude-sonnet`. Antigravity registra bajo `gemini/*` (corre modelos Gemini). Claves legacy sueltas (`haiku`, `sonnet`, `opus`, `fable`) se leen como `claude/*`. `model_tier` es el alias legacy pre-0.11: se sigue leyendo, ya no se escribe. |
-| `effort`          | Nivel de esfuerzo/razonamiento **declarado antes de ejecutar** (regla ⚙️): `low\|medium\|high\|xhigh\|max` en Claude, `minimal\|low\|medium\|high` en Gemini. |
+| `effort`          | Nivel de esfuerzo/razonamiento **declarado antes de ejecutar** (regla cero; tabla en `sdd/dual-harness/rules/sdd-model-budget.md`): `low\|medium\|high\|xhigh\|max` en Claude, `minimal\|low\|medium\|high` en Gemini. |
 | `agent`           | Rol SDD que hizo el trabajo (`functional\|planner\|architect\|implementor-back\|implementor-front\|reviewer\|orchestrator\|steward\|hermes\|custom`). Obligatorio en `by_agent[]`; `custom` lleva `label`. |
 | `recorded_at`     | Fecha (o datetime ISO) en que se cerró la unidad. |
 | `allocation`      | Opcional: `{ batch: "B-NN", batch_tokens: N }` cuando un agente hizo varias tasks sin cortes y el total del bloque se repartió entre ellas. Exige `approx: true`. |

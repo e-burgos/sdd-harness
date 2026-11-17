@@ -1,6 +1,6 @@
 ---
 name: sdd-implementor-back
-description: Skill del Agente Implementador Backend SDD. Implementa una task backend a la vez siguiendo el contrato del Arquitecto y el stack del subproyecto. Invocar una task por vez.
+description: Skill del Agente Implementador Backend SDD. Implementa un bloque de tasks backend, una por vez en la misma conversación, siguiendo el contrato del Arquitecto y el stack del subproyecto.
 ---
 
 # Skill: sdd-implementor-back
@@ -9,19 +9,26 @@ description: Skill del Agente Implementador Backend SDD. Implementa una task bac
 > no esta skill. Para scaffolding usar la skill `generate-*` que corresponda al stack
 > (ej: `generate-springboot-api` para Spring Boot, `generate-nestjs-module` para NestJS).
 
-## Protocolo task-by-task
+## Protocolo de bloque
 
-1. Leer la task asignada en `sdd/specs/{spec-id}/cycles/cycle-[XX]/tasks.json` (status debe ser `"pending"`)
-2. Leer el contrato en `architect.md` y el detalle en `planner.md` — **implementar exactamente eso, ni más ni menos**
-3. Marcar la task `"in-progress"` antes de escribir código
-4. Implementar código + tests de la task (los tests del ciclo son tasks propias, pero cada task debe dejar el build en verde)
-5. Verificar localmente: build + tests del subproyecto afectado
-6. Cerrar la task (ver abajo) y recién entonces pedir la siguiente
-7. Si la task falla 2 veces → escalar al Reviewer con el detalle del bloqueo, no improvisar fuera del contrato
+Trabajás un bloque (`batches` de `tasks.json`): las tasks llegan de a una, en la misma conversación.
+Protocolo completo: `sdd/dual-harness/rules/sdd-execution.md`.
 
-## Archivos que modifica al cerrar cada task
+1. Leer la task actual en `sdd/specs/{spec-id}/cycles/cycle-[XX]/tasks.json` y su detalle en `planner.md`; el contrato está en `architect.md`
+2. Implementar exactamente lo del contrato (código + tests; cada task deja el build en verde)
+3. `pnpm sdd:verify <app> quick --files <archivos tocados> --unit TASK-NNN` (código 3 = el subproyecto
+   no tiene entrada en `sdd/verify.json`: verificá con sus comandos de lint/test y decilo)
+4. Commit y responder **UNA línea**: task, sha, resultado del verify
+5. Última task del bloque: además `pnpm sdd:verify <app> full --unit B-NN`
+6. Si la task falla 2 veces → avisar al orquestador con el detalle, no improvisar fuera del contrato
 
-- `cycles/cycle-[XX]/tasks.json` — `"status": "done"` + `files[]` con todo lo creado/modificado
+El orquestador cierra cada task con `pnpm sdd:task` (estado, `files`, `usage`): **no edites
+`tasks.json` a mano**. Sin continuación de subagentes (Copilot, Gemini), la sesión cierra cada task
+con `pnpm sdd:task <spec> cycle-XX TASK-NNN done --commit <sha> --tokens <n> --model … --effort …
+--agent implementor-back --approx`.
+
+## Archivos que modificás por task
+
 - `sdd/api.json` — endpoint bajo el **app-key correcto** → `"status": "implemented"`
 
 ```json
@@ -35,17 +42,14 @@ description: Skill del Agente Implementador Backend SDD. Implementa una task bac
 // { "cycle": N, "date": "YYYY-MM-DD", "change": "descripción" }
 ```
 
-- Luego: `pnpm sdd:rebuild-tasks-index && pnpm sdd:validate` — **ambos en verde antes de continuar**
-
 ## Desviaciones del contrato
 
 Si el contrato del Arquitecto no es implementable tal cual (limitación de librería, comportamiento
 real distinto al asumido): implementar la alternativa mínima razonable y **documentar la desviación**
 únicamente con una entrada en `## Pendiente de documentar en contexto` del `planner.md` (nunca como
-comentario en el código — ver "Estilo de código" del agente) para que el Reviewer la evalúe al
+comentario en el código — `rules/sdd-code-style.md`) para que el Reviewer la evalúe al
 cerrar. Nunca desviarse en silencio.
 
-## Registro de consumo (obligatorio)
+## Registro de consumo
 
-Ver `sdd/agents/sdd-implementor-back.agent.md` § Registro de consumo: `tasks.json → usage` con
-`provider_model`, `effort`, `agent: "implementor-back"` y `recorded_at`, al cerrar CADA task.
+Lo registra el orquestador con `pnpm sdd:task … done` (ver `sdd/dual-harness/rules/sdd-model-budget.md`).

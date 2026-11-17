@@ -5,7 +5,7 @@
 > cada línea acá cuesta tokens en todas las sesiones futuras. Si al destilar se supera el cap,
 > primero podar lecciones obsoletas o absorbidas por constitutions/skills.
 
-Reglas de este archivo (ver sección 🧠 MEMORIA GATE del dual-harness):
+Reglas de este archivo (ver `sdd/dual-harness/rules/sdd-context.md`):
 
 - **Solo lecciones destiladas**: una línea por lección, accionable, empezando por el verbo
   o la prohibición. Nada de narrativa ni historia — eso vive en `journal/`.

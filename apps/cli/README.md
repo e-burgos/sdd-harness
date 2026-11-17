@@ -111,7 +111,7 @@ $ npx @e-burgos/sdd-harness init
 > | `configure docker`  | `--services postgres,redis`                                                       |
 > | `configure mcp`     | `--servers <a,b>`                                                                 |
 > | `configure memory`  | `--providers <a,b>`                                                               |
-> | `update sdd`        | `-y`                                                                              |
+> | `update sdd`        | `-y` `[--split-project]`                                                          |
 > | `idea`              | `["<text>"] [--author <user>] [--show] [--force]`                                 |
 >
 > **`NX_WORKSPACE_ROOT_PATH`.** If it is set and does not point at the current directory, `init`,
@@ -528,6 +528,8 @@ Then it re-merges the `sdd:*` scripts into `package.json`, refreshes the harness
 `sdd:validate` — if new schemas are stricter than your existing registries, the report tells you
 exactly what to migrate.
 
+`harness update sdd --split-project` (never runs on its own) migrates a repo whose own instructions still sit inside `dual-harness/{CLAUDE,AGENTS,GEMINI}.md`: it moves them to `project.md`, replaces a file whose remainder equals the old or new kit's, and keeps any other as-is with the new one as `.new`. Those three files are hybrids (always `.new`) only when the installed manifest is from a kit older than 0.23.0.
+
 Installations made before the manifest existed run a one-time **conservative mode** (asks for
 confirmation): pure kit dirs are replaced, hybrids (`dual-harness/`, global
 `constitution.md`/`context_prompt.md`) are never overwritten, and the manifest is written so the
@@ -568,7 +570,7 @@ harness configure sdd [--name <project>] [--description <text>] [--profile team|
 - **Names**: every registered app must satisfy what the registries and `add spec` require, `^[a-z][a-z0-9-]*$`. Discovery normalises the usual Nx names (`@acme/api` → `api`, `Api_Gateway` → `api-gateway`, `2fa` → `app-2fa`) and fails if two apps end up with the same id; `--apps` requires the name already valid and suggests the normalised form. `--apps` on a repo without `nx.json`/`apps/` registers a multi-app repo without writing `.nxignore` or labelling it Nx
 - **Apps outside `apps/`** keep the logical id `apps/<name>` in every SDD registry (the schemas require it, and `sdd:gate` only looks at `sdd/context/apps/<name>/`); `sdd/global.json` records where the code really lives (`src/api — springboot (código en src/api; id lógico apps/api)`) and the generated `constitution.md` opens with the same note. A monorepo where no application can be found **fails instead of installing an empty kit** — pass `--apps`
 - **Automatic `package.json` merge**: injects the `sdd:*` + `setup:agents` scripts and `ajv`/`ajv-formats` devDependencies without touching your existing scripts — and creates a minimal `package.json` if the repo has none (pure Java/Python repos)
-- **Absorbs your existing `AGENTS.md`/`CLAUDE.md`**: their content is preserved under an "Instrucciones previas del proyecto" section inside `sdd/dual-harness/` before the root files become symlinks — nothing is lost
+- **Absorbs your existing `AGENTS.md`/`CLAUDE.md`**: their content is preserved in `sdd/dual-harness/project.md` (the kit's core files stay untouched) before the root files become symlinks — nothing is lost
 - **Keeps your existing `.claude/`, `.github/` and `.agents/` content**: real directories are not replaced — the kit agents/skills/prompts are linked inside them, and a name collision (say, your own `.github/skills/sdd-reviewer/`) keeps yours and leaves the kit version next to it as `<name>.new`, listed at the end of `setup:agents`
 - If `sdd/global.json` already exists, asks for confirmation before resetting the whole `sdd/` directory (or warns and proceeds with `-y`)
 - After install: run `pnpm install` (so `sdd:validate` finds ajv) and fill the `[...]` markers in `sdd/context/`
@@ -786,7 +788,7 @@ The kit is portable by design: **`sdd/global.json` is the single source of truth
 | `.claude/settings.json` / `.gemini/settings.json` | Pre-command hooks routing shell commands through the rtk bridge (merged, never clobbered) |
 | `.nxignore`               | Keeps `sdd/templates` blueprints out of the Nx project graph             |
 
-The root `package.json` ships the kit scripts: `setup:agents`, `sdd:docs`, `sdd:validate`, `sdd:gate` (answers the SPEC GATE for a spec or a cycle), `sdd:rebuild-tasks-index`, `sdd:rebuild-catalog`, `sdd:rtk`, `sdd:mod`, `sdd:tucu` and — when the project has none of its own — a `postinstall` that keeps the rtk binary installed for whoever clones the repo (plus `ajv`/`ajv-formats` as devDependencies for the validator).
+The root `package.json` ships the kit scripts: `setup:agents`, `sdd:docs`, `sdd:validate`, `sdd:gate` (answers the SPEC GATE for a spec or a cycle), `sdd:verify` (per-subproject verification from `sdd/verify.json`), `sdd:task` (opens/closes a task with its usage), `sdd:rebuild-tasks-index`, `sdd:rebuild-catalog`, `sdd:rtk`, `sdd:mod`, `sdd:tucu` and — when the project has none of its own — a `postinstall` that keeps the rtk binary installed for whoever clones the repo (plus `ajv`/`ajv-formats` as devDependencies for the validator).
 
 ### The SDD Cycle
 
