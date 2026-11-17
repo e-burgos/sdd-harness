@@ -457,6 +457,20 @@
           "tasks_done": 5
         }
       }
+    },
+    "spec-e-burgos-025-agent-context": {
+      "cycles": {
+        "cycle-01": {
+          "file": "sdd/specs/spec-e-burgos-025-agent-context/cycles/cycle-01/tasks.json",
+          "module": "agent-context",
+          "apps": [
+            "apps/cli"
+          ],
+          "status": "in-progress",
+          "tasks_total": 9,
+          "tasks_done": 0
+        }
+      }
     }
   }
 }

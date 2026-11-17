@@ -265,7 +265,17 @@
       "completed_at": "2026-11-17"
     }
   ],
-  "in_progress_modules": [],
+  "in_progress_modules": [
+    {
+      "module": "agent-context",
+      "spec": "spec-e-burgos-025-agent-context",
+      "apps": [
+        "apps/cli"
+      ],
+      "cycles_completed": 0,
+      "description": "Contexto por agente y ejecución de ciclos: núcleo mínimo, paquete determinista por unidad, bloques continuados y verificación en dos niveles."
+    }
+  ],
   "pending_modules": [
     {
       "module": "studio-framework-vision",

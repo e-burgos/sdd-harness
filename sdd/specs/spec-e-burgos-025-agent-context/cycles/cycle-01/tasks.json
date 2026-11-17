@@ -1,0 +1,151 @@
+{
+  "$schema": "../../../../schemas/cycle-tasks.schema.json",
+  "spec": "spec-e-burgos-025-agent-context",
+  "cycle": 1,
+  "module": "agent-context",
+  "apps": [
+    "apps/cli"
+  ],
+  "flow": "lite",
+  "user_stories_generated": true,
+  "prerequisites": {
+    "tasks_generated": true
+  },
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "verify.json, sdd:verify y lease de máquina para la verificación completa",
+      "user_stories": [
+        "US-3"
+      ],
+      "estimation_hours": 3,
+      "story_points": 5,
+      "depends_on": [],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-002",
+      "title": "sdd:task start|done escribe status, files y usage sin editar tasks.json a mano",
+      "user_stories": [
+        "US-2"
+      ],
+      "estimation_hours": 2,
+      "story_points": 3,
+      "depends_on": [],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-003",
+      "title": "Schemas opcionales (batches, allocation, pack_misses) y avisos del validador",
+      "user_stories": [
+        "US-1",
+        "US-2",
+        "US-3"
+      ],
+      "estimation_hours": 2,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-004",
+      "title": "Núcleo adelgazado de los arneses, reglas bajo demanda y regla «máximo no es el default»",
+      "user_stories": [
+        "US-1"
+      ],
+      "estimation_hours": 4,
+      "story_points": 8,
+      "depends_on": [],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-005",
+      "title": "project.md: absorbedor, referencias en los arneses y update sdd --split-project",
+      "user_stories": [
+        "US-1"
+      ],
+      "estimation_hours": 3,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-004"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-006",
+      "title": "Gate de edición: .md fuera de apps|libs|tools exento y claude_mod.exempt",
+      "user_stories": [
+        "US-4"
+      ],
+      "estimation_hours": 2,
+      "story_points": 3,
+      "depends_on": [],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-007",
+      "title": "Generadores escriben verify.json y registran sdd:verify y sdd:task",
+      "user_stories": [
+        "US-3"
+      ],
+      "estimation_hours": 2,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-008",
+      "title": "Agentes, skills y docs: bloques continuados, piso del planner y niveles de verify",
+      "user_stories": [
+        "US-2",
+        "US-3"
+      ],
+      "estimation_hours": 3,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002",
+        "TASK-003",
+        "TASK-004"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-009",
+      "title": "Verificación: build, typecheck, test, generación real, auditoría de bugs y cierre",
+      "user_stories": [
+        "US-1",
+        "US-2",
+        "US-3",
+        "US-4"
+      ],
+      "estimation_hours": 2,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002",
+        "TASK-003",
+        "TASK-004",
+        "TASK-005",
+        "TASK-006",
+        "TASK-007",
+        "TASK-008"
+      ],
+      "status": "pending",
+      "files": []
+    }
+  ]
+}
