@@ -1,6 +1,6 @@
 # SPEC-e-burgos-024: Cada sesión muestra dónde trabaja — unidad SDD y worktree, desde el primer documento
 
-> Estado: **in-progress** (2026-11-17). Pedido del dev tras ver la franja del mod decir «sin ciclo
+> Estado: **completed** (2026-11-17). cycle-01 cerrado (flow lite, 5/5 tasks). Pedido del dev tras ver la franja del mod decir «sin ciclo
 > ni fix en curso» en una sesión que llevaba la spec-eburgos-048 en un worktree hermano.
 
 ## Resumen ejecutivo
