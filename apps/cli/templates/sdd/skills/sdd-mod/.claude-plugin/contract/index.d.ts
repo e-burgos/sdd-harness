@@ -1,6 +1,6 @@
 export type GateMode = 'block' | 'warn';
 
-export type ModSettings = { enabled: boolean; gate: GateMode };
+export type ModSettings = { enabled: boolean; gate: GateMode; exempt?: string[] };
 
 export type CycleTask = { id: string; title: string; status: string };
 

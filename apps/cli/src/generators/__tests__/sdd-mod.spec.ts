@@ -19,7 +19,7 @@ type Binding = {
   ended_at: string | null;
 };
 type Snapshot = {
-  settings: { enabled: boolean; gate: 'block' | 'warn' };
+  settings: { enabled: boolean; gate: 'block' | 'warn'; exempt?: string[] };
   cycles: { spec: string; cycle: string; flow: string; tasks: { status: string }[] }[];
   fixes: { id: string; status: string }[];
   openUnits: Unit[];
@@ -42,7 +42,8 @@ type Session = { id: string; now: number };
 type SddModule = {
   readSettings: (tools: unknown) => Snapshot['settings'];
   relativeToRoot: (root: string, filePath: string) => string | null;
-  isCodePath: (rel: string) => boolean;
+  isCodePath: (rel: string, exempt?: readonly string[]) => boolean;
+  matchesGlob: (rel: string, glob: string) => boolean;
   judgeEdit: (s: Snapshot, root: string, filePath: string, now?: number) => { kind: string; reason?: string };
   loadSnapshot: (reader: Reader | Store, root: string, session?: Session) => Promise<Snapshot>;
   bandLine: (s: Snapshot) => string | null;
@@ -122,13 +123,26 @@ function memoryReader(files: Record<string, unknown>): Reader {
 
 describe('sdd-mod: settings', () => {
   it('apagado por defecto; gate block salvo "warn" explícito', () => {
-    expect(sdd.readSettings(null)).toEqual({ enabled: false, gate: 'block' });
-    expect(sdd.readSettings({ rtk: { enabled: true } })).toEqual({ enabled: false, gate: 'block' });
-    expect(sdd.readSettings({ claude_mod: { enabled: true } })).toEqual({ enabled: true, gate: 'block' });
+    expect(sdd.readSettings(null)).toEqual({ enabled: false, gate: 'block', exempt: [] });
+    expect(sdd.readSettings({ rtk: { enabled: true } })).toEqual({ enabled: false, gate: 'block', exempt: [] });
+    expect(sdd.readSettings({ claude_mod: { enabled: true } })).toEqual({ enabled: true, gate: 'block', exempt: [] });
     expect(sdd.readSettings({ claude_mod: { enabled: 'yes', gate: 'warn' } })).toEqual({
       enabled: false,
       gate: 'warn',
+      exempt: [],
     });
+  });
+
+  it('exempt: solo strings no vacíos; cualquier otra forma es lista vacía y nunca lanza', () => {
+    const exemptOf = (exempt: unknown) =>
+      sdd.readSettings({ claude_mod: { enabled: true, exempt } }).exempt;
+    expect(exemptOf(['apps/docs/**/*.mdx', 'x/*.md'])).toEqual(['apps/docs/**/*.mdx', 'x/*.md']);
+    expect(exemptOf(['a', 1, null, {}, '', 'b'])).toEqual(['a', 'b']);
+    for (const bad of [undefined, null, 'apps/**', 5, true, { 0: 'a' }]) {
+      expect(exemptOf(bad)).toEqual([]);
+    }
+    expect(sdd.readSettings('garbage').exempt).toEqual([]);
+    expect(sdd.readSettings({ claude_mod: null }).exempt).toEqual([]);
   });
 });
 
@@ -149,6 +163,94 @@ describe('sdd-mod: paths', () => {
     for (const rel of ['src/a.ts', 'apps/web/README.md', 'package.json', 'Dockerfile']) {
       expect(sdd.isCodePath(rel), rel).toBe(true);
     }
+  });
+
+  it('markdown fuera de apps|libs|tools no es código; el resto sí', () => {
+    for (const rel of ['docs/prompts/x.md', 'docs/guide/a.mdx', 'README.mdx', 'sdd/anything', 'sdd/a/b.ts']) {
+      expect(sdd.isCodePath(rel), rel).toBe(false);
+    }
+    for (const rel of ['docs/script.ts', 'apps/web/README.md', 'libs/a/doc.mdx', 'tools/x/y.md']) {
+      expect(sdd.isCodePath(rel), rel).toBe(true);
+    }
+    expect(sdd.isCodePath('src/notes.md')).toBe(false);
+    expect(sdd.isCodePath('docs\\prompts\\x.md')).toBe(false);
+    expect(sdd.isCodePath('docs\\script.ts')).toBe(true);
+    expect(sdd.isCodePath('apps\\web\\README.md')).toBe(true);
+    expect(sdd.isCodePath('sdd\\anything')).toBe(false);
+  });
+
+  it('sin exempt, los veredictos de hoy no cambian', () => {
+    const table: [string, boolean][] = [
+      ['apps/a/src/x.ts', true],
+      ['apps/a/README.md', true],
+      ['apps/a/pages/p.mdx', true],
+      ['libs/l/index.ts', true],
+      ['libs/l/CHANGELOG.md', true],
+      ['tools/t/run.mjs', true],
+      ['tools/t/NOTES.md', true],
+      ['src/a.ts', true],
+      ['package.json', true],
+      ['Dockerfile', true],
+      ['scripts/build.sh', true],
+      ['docs/script.ts', true],
+      ['sdd/fixes.json', false],
+      ['sdd/specs/x/brief.yaml', false],
+      ['.claude/settings.json', false],
+      ['.github/workflows/ci.yml', false],
+      ['.gemini/settings.json', false],
+      ['.agents/skills/a.md', false],
+      ['.agent/x', false],
+      ['.vscode/mcp.json', false],
+      ['.idea/x.xml', false],
+      ['README.md', false],
+      ['CHANGELOG.MD', false],
+    ];
+    for (const [rel, code] of table) {
+      expect(sdd.isCodePath(rel), rel).toBe(code);
+      expect(sdd.isCodePath(rel, []), rel).toBe(code);
+    }
+  });
+
+  it('exempt saca de código lo que matchea y nada más', () => {
+    const exempt = ['apps/docs/**/*.mdx'];
+    expect(sdd.isCodePath('apps/docs/pages/a.mdx')).toBe(true);
+    expect(sdd.isCodePath('apps/docs/pages/a.mdx', exempt)).toBe(false);
+    expect(sdd.isCodePath('apps/docs/a.mdx', exempt)).toBe(false);
+    expect(sdd.isCodePath('apps/docs/pages/a.tsx', exempt)).toBe(true);
+    expect(sdd.isCodePath('apps/web/pages/a.mdx', exempt)).toBe(true);
+    expect(sdd.isCodePath('src/a.ts', ['docs/**'])).toBe(true);
+    expect(sdd.isCodePath('src/a.ts', ['src/*.ts'])).toBe(false);
+    expect(sdd.isCodePath('apps\\docs\\pages\\a.mdx', exempt)).toBe(false);
+  });
+
+  it('globs: **, *, ? y metacaracteres literales', () => {
+    const m = sdd.matchesGlob;
+    expect(m('a/b/c.md', '**/c.md')).toBe(true);
+    expect(m('c.md', '**/c.md')).toBe(true);
+    expect(m('a/b/c.md', '**/*.md')).toBe(true);
+    expect(m('a/x/y/b', 'a/**/b')).toBe(true);
+    expect(m('a/b', 'a/**/b')).toBe(true);
+    expect(m('a/xb', 'a/**/b')).toBe(false);
+    expect(m('a/b/c/d', 'a/**')).toBe(true);
+    expect(m('a/b', 'a/**')).toBe(true);
+    expect(m('b/a', 'a/**')).toBe(false);
+    expect(m('a/b.md', 'a/*.md')).toBe(true);
+    expect(m('a/b/c.md', 'a/*.md')).toBe(false);
+    expect(m('a/b/c.md', '*.md')).toBe(false);
+    expect(m('a/bc', 'a/b?')).toBe(true);
+    expect(m('a/b', 'a/b?')).toBe(false);
+    expect(m('a/b/', 'a/b?')).toBe(false);
+    expect(m('a/b.c', 'a/b.c')).toBe(true);
+    expect(m('a/bxc', 'a/b.c')).toBe(false);
+    expect(m('a/b+c', 'a/b+c')).toBe(true);
+    expect(m('a/bbc', 'a/b+c')).toBe(false);
+    expect(m('a/(x)', 'a/(x)')).toBe(true);
+    expect(m('a/x', 'a/(x)')).toBe(false);
+    expect(m('a/[x]', 'a/[x]')).toBe(true);
+    expect(m('a/x', 'a/[x]')).toBe(false);
+    expect(m('a/b', 'a/b|c')).toBe(false);
+    expect(m('a/$b^', 'a/$b^')).toBe(true);
+    expect(m('a/b/c.md', 'a\\**\\*.md')).toBe(true);
   });
 });
 
@@ -247,7 +349,7 @@ describe('sdd-mod: lectura de sdd/', () => {
     });
 
     const result = await sdd.loadSnapshot(reader, ROOT);
-    expect(result.settings).toEqual({ enabled: true, gate: 'warn' });
+    expect(result.settings).toEqual({ enabled: true, gate: 'warn', exempt: [] });
     expect(result.cycles.map((c) => `${c.spec}/${c.cycle}/${c.flow}`)).toEqual([
       'spec-x-001-a/cycle-02/lite',
     ]);

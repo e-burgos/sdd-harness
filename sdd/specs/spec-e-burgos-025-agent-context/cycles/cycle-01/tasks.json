@@ -87,8 +87,25 @@
       "estimation_hours": 2,
       "story_points": 3,
       "depends_on": [],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/cli/src/generators/__tests__/sdd-mod.integration.spec.ts",
+        "apps/cli/src/generators/__tests__/sdd-mod.spec.ts",
+        "apps/cli/templates/sdd/schemas/tools.schema.json",
+        "apps/cli/templates/sdd/skills/sdd-mod/.claude-plugin/contract/index.d.ts",
+        "apps/cli/templates/sdd/skills/sdd-mod/hooks/.src/sdd.ts"
+      ],
+      "usage": {
+        "tokens_in": 98081,
+        "tokens_out": 17308,
+        "tokens_total": 115389,
+        "approx": false,
+        "recorded_at": "2026-11-17",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "source": "agent-usage-notification"
+      }
     },
     {
       "id": "TASK-007",

@@ -43,6 +43,12 @@
           "type": "string",
           "enum": ["block", "warn"],
           "description": "block (default) → sin ciclo in-progress ni fix abierto, Edit/Write/NotebookEdit sobre código se rechazan. warn → se permiten con un aviso."
+        },
+        "exempt": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Globs de rutas (relativas a la raíz del repo, con `/`) que el gate NO trata como código aunque estén bajo apps/, libs/ o tools/ (p. ej. un sitio de documentación). Soporta `**` (cualquier profundidad), `*` (dentro de un segmento) y `?`; un glob sin `/` se compara contra la ruta completa, no contra el nombre del archivo. Fuera de apps/, libs/ y tools/ los .md y .mdx ya no son código. Lo edita el dev, no el agente.",
+          "examples": [["apps/docs/**/*.mdx"]]
         }
       }
     },

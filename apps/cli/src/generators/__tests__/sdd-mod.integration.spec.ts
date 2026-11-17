@@ -91,6 +91,22 @@ describe.skipIf(process.platform === 'win32')('sdd-mod (integration)', () => {
     expect(bad.stderr).toContain('block or warn');
   });
 
+  it('--enable/--disable/--gate conservan claude_mod.exempt', () => {
+    setupAgents(ws);
+    const file = resolve(ws, 'sdd/tools.json');
+    const tools = fs.readJSONSync(file);
+    tools.claude_mod = { enabled: false, gate: 'block', exempt: ['apps/docs/**/*.mdx'] };
+    fs.writeJSONSync(file, tools);
+    expect(sddMod(ws, '--enable').status).toBe(0);
+    expect(sddMod(ws, '--gate=warn').status).toBe(0);
+    expect(sddMod(ws, '--disable').status).toBe(0);
+    expect(fs.readJSONSync(file).claude_mod).toEqual({
+      enabled: false,
+      gate: 'warn',
+      exempt: ['apps/docs/**/*.mdx'],
+    });
+  });
+
   it('un tools.json previo sin claude_mod se completa al prenderlo; sin link avisa', () => {
     fs.writeJSONSync(resolve(ws, 'sdd/tools.json'), {
       $schema: './schemas/tools.schema.json',

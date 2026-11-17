@@ -75,11 +75,14 @@ const EXEMPT_DIRS = new Set([
 const OPEN_FIX = new Set(['pending', 'in-progress']);
 
 export function readSettings(tools: unknown): ModSettings {
-  const mod = (tools as { claude_mod?: { enabled?: unknown; gate?: unknown } })
+  const mod = (tools as { claude_mod?: { enabled?: unknown; gate?: unknown; exempt?: unknown } })
     ?.claude_mod;
   return {
     enabled: mod?.enabled === true,
     gate: mod?.gate === 'warn' ? 'warn' : 'block',
+    exempt: Array.isArray(mod?.exempt)
+      ? mod.exempt.filter((g): g is string => typeof g === 'string' && g.length > 0)
+      : [],
   };
 }
 
@@ -329,7 +332,7 @@ export async function bindFromEdit(
   let unit: UnitRef | null = null;
   let source: BindSource = 'document';
   if (fromDocument && !sameUnit(fromDocument, live?.unit)) unit = fromDocument;
-  else if (!fromDocument && live === null && isCodePath(rel)) {
+  else if (!fromDocument && live === null && isCodePath(rel, snapshot.settings.exempt)) {
     const here = unitsIn(snapshot, tree);
     if (here.length === 1) {
       unit = here[0] ?? null;
@@ -385,7 +388,7 @@ export async function leaseEdit(
   const dir = await resolveRegistryDir(store, root);
   root = treeFor(snapshot, root, filePath);
   const rel = relativeToRoot(root, filePath);
-  if (rel === null || !isCodePath(rel)) return ALLOW_OUTCOME;
+  if (rel === null || !isCodePath(rel, snapshot.settings.exempt)) return ALLOW_OUTCOME;
   const unit = snapshot.mine?.unit ?? null;
   let lease = await readLease(store, dir, rel);
   const judge = (current: FileLease | null) =>
@@ -453,10 +456,34 @@ export function relativeToRoot(root: string, filePath: string): string | null {
   return full.slice(base.length + 1);
 }
 
-export function isCodePath(rel: string): boolean {
-  const [first, ...rest] = rel.split('/');
-  if (rest.length === 0) return !/\.md$/i.test(first ?? '');
-  return !EXEMPT_DIRS.has(first ?? '');
+const CODE_ROOTS = new Set(['apps', 'libs', 'tools']);
+
+function globToRegExp(glob: string): RegExp {
+  let source = '';
+  for (let i = 0; i < glob.length; i++) {
+    const c = glob.charAt(i);
+    if (c === '*' && glob.charAt(i + 1) === '*') {
+      const slashAfter = glob.charAt(i + 2) === '/';
+      source += slashAfter ? '(?:.*/)?' : '.*';
+      i += slashAfter ? 2 : 1;
+    } else if (c === '*') source += '[^/]*';
+    else if (c === '?') source += '[^/]';
+    else source += c.replace(/[.+^${}()|[\]\\]/g, '\\$&');
+  }
+  return new RegExp(`^${source}$`);
+}
+
+export function matchesGlob(rel: string, glob: string): boolean {
+  return globToRegExp(glob.replace(/\\/g, '/')).test(rel);
+}
+
+export function isCodePath(rel: string, exempt: readonly string[] = []): boolean {
+  const path = rel.replace(/\\/g, '/');
+  const [first = ''] = path.split('/');
+  if (EXEMPT_DIRS.has(first) && path.includes('/')) return false;
+  if (exempt.some((glob) => matchesGlob(path, glob))) return false;
+  if (CODE_ROOTS.has(first) && path.includes('/')) return true;
+  return !/\.mdx?$/i.test(path);
 }
 
 export function judgeEdit(
@@ -468,7 +495,7 @@ export function judgeEdit(
   if (!snapshot.settings.enabled || snapshot.error) return { kind: 'allow' };
   const tree = treeFor(snapshot, root, filePath);
   const rel = relativeToRoot(tree, filePath);
-  if (rel === null || !isCodePath(rel)) return { kind: 'allow' };
+  if (rel === null || !isCodePath(rel, snapshot.settings.exempt)) return { kind: 'allow' };
   if (snapshot.registryError && snapshot.openUnits.length > 0) return { kind: 'allow' };
   const bound = isBindingLive(snapshot.mine, now);
   const verdict = judgeSessionEdit({
