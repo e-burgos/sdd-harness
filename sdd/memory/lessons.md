@@ -1,6 +1,6 @@
 # 🧠 Memoria del proyecto — lecciones destiladas
 
-> Versión 1.2 | Última destilación: 2026-11-07 (journal de spec-e-burgos-013 cycle-01, 014 cycle-01, 016 cycle-01 y 017 cycle-01/02)
+> Versión 1.3 | Última destilación: 2026-11-17 (journal de spec-e-burgos-018, 019, 020, 023 y 024 cycle-01)
 > **Cap duro: 120 líneas.** Este archivo se lee COMPLETO al inicio de cada sesión de agente —
 > cada línea acá cuesta tokens en todas las sesiones futuras. Si al destilar se supera el cap,
 > primero podar lecciones obsoletas o absorbidas por constitutions/skills.
@@ -29,6 +29,12 @@ Reglas de este archivo (ver sección 🧠 MEMORIA GATE del dual-harness):
   catálogo) y un spec de contrato corre el binario real: nunca duplicar topes a mano en el consumidor.
 - Antes de diagnosticar motion "trabado", medir los fps de `requestAnimationFrame` y confirmar que
   la pestaña o el panel esté visible: un panel oculto frena rAF a ~2 fps.
+- Validar una subida de mayor de una herramienta de build con una generación real y una migración
+  real antes de publicar: las notas de release y los peerDependencies no alcanzan.
+- Extraer una receta de diseño del código real y verificarla prop por prop contra la fuente de la
+  versión de la librería que el kit fija, nunca contra la skill o la doc del proyecto de origen.
+- Llevar el worktree en toda referencia a una unidad SDD que cruce sesiones (marca, atadura,
+  gate): nunca asumir que la raíz de la sesión es donde se trabaja.
 
 ## Técnica (stack, herramientas, gotchas transversales)
 
@@ -52,6 +58,11 @@ Reglas de este archivo (ver sección 🧠 MEMORIA GATE del dual-harness):
   resultado de un `tool.call` o `$.session.send`; `prompt.compose`/`context`/`section` se cachean.
 - Verificar un template de GitHub Actions corriéndolo en un repo real: los ids de job no admiten
   `:` y el nombre del check requerido sale del `name:` del job, no de su id.
+- Leer en cada render, con el dato vigente, todo valor persistido que depende de un dato async
+  (raíz, usuario, conexión), no en el inicializador de `useState`; el test monta primero sin ese
+  dato y después con él.
+- Usar `overflow: clip` (no `hidden`) y `focus({ preventScroll: true })` en contenedores de
+  pantalla completa con capas animadas; jsdom no hace layout, así que solo se ve en el navegador.
 
 ## Costo (qué gastó tokens/tiempo de más y cómo evitarlo)
 
