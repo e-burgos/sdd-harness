@@ -183,6 +183,9 @@
     },
     {
       "file": "tools.schema.json"
+    },
+    {
+      "file": "verify.schema.json"
     }
   ],
   "memory": []

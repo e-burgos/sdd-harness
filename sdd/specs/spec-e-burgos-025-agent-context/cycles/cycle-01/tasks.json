@@ -21,8 +21,30 @@
       "estimation_hours": 3,
       "story_points": 5,
       "depends_on": [],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/cli/src/generators/__tests__/sdd-verify.integration.spec.ts",
+        "apps/cli/src/generators/kit-manifest.ts",
+        "apps/cli/src/utils/__tests__/verify.spec.ts",
+        "apps/cli/templates/sdd/catalog.json",
+        "apps/cli/templates/sdd/schemas/verify.schema.json",
+        "apps/cli/templates/sdd/scripts/lib/verify-lease.mjs",
+        "apps/cli/templates/sdd/scripts/lib/verify.mjs",
+        "apps/cli/templates/sdd/scripts/sdd-verify.mjs",
+        "apps/cli/templates/sdd/templates/nx-workspace/package.json",
+        "apps/cli/templates/sdd/verify.json"
+      ],
+      "usage": {
+        "tokens_in": 129056,
+        "tokens_out": 22774,
+        "tokens_total": 151830,
+        "approx": false,
+        "recorded_at": "2026-11-17",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "source": "agent-usage-notification"
+      }
     },
     {
       "id": "TASK-002",

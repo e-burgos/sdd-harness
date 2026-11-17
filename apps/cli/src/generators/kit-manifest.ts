@@ -29,6 +29,7 @@ const DATA_FILES = new Set([
   'components.json',
   'fixes.json',
   'tools.json',
+  'verify.json',
   // La memoria destilada del proyecto. El kit aporta su contenido inicial (se sirve
   // en la instalación, que copia el kit entero) pero a partir de ahí es del usuario:
   // como híbrido, cualquier release que tocara el seed dejaba un lessons.md.new con
