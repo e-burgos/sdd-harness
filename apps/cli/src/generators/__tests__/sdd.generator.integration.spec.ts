@@ -114,6 +114,9 @@ describe.skipIf(process.platform === 'win32')(
           .lstatSync(resolve(ws, '.agents/rules/sdd-gates.md'))
           .isSymbolicLink(),
       ).toBe(true);
+      for (const rule of ['sdd-execution', 'sdd-context', 'sdd-tools', 'sdd-workspace']) {
+        expect(fs.lstatSync(resolve(ws, `.agents/rules/${rule}.md`)).isSymbolicLink()).toBe(true);
+      }
       expect(
         fs
           .lstatSync(resolve(ws, '.agents/skills/sdd-orchestrator'))
@@ -173,14 +176,20 @@ describe.skipIf(process.platform === 'win32')(
       expect(schema.properties.tucu_ui.additionalProperties).toBe(true);
     });
 
-    it('las rules de Antigravity quedan bajo el cap de 12k caracteres', () => {
+    it('las rules de Antigravity quedan bajo el cap de 12k caracteres y con el trigger que les toca', () => {
       const rulesDir = resolve(ws, 'sdd/dual-harness/rules');
       const rules = fs.readdirSync(rulesDir);
-      expect(rules.length).toBeGreaterThan(0);
+      const alwaysOn = ['sdd-gates.md', 'sdd-model-budget.md', 'sdd-code-style.md'];
+      const onDemand = ['sdd-execution.md', 'sdd-context.md', 'sdd-tools.md', 'sdd-workspace.md'];
+      expect(rules.sort()).toEqual([...alwaysOn, ...onDemand].sort());
       for (const rule of rules) {
         const content = fs.readFileSync(resolve(rulesDir, rule), 'utf-8');
         expect(content.length).toBeLessThan(12000);
-        expect(content).toContain('trigger: always_on');
+        expect(content).toContain(alwaysOn.includes(rule) ? 'trigger: always_on' : 'trigger: model_decision');
+        expect(content).toMatch(/^description: .+/m);
+      }
+      for (const rule of onDemand) {
+        expect(fs.readFileSync(resolve(rulesDir, rule), 'utf-8').length).toBeLessThan(8000);
       }
     });
 

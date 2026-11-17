@@ -25,11 +25,30 @@ describe('regla cero en el kit', () => {
     const end = text.indexOf(END);
     expect(start).toBeGreaterThan(-1);
     expect(end).toBeGreaterThan(start);
-    expect(text.indexOf('AL INICIAR SESIÓN')).toBeGreaterThan(end);
+    expect(text.indexOf('## Siempre')).toBeGreaterThan(end);
     expect(text.slice(start, end)).toContain('Regla cero → tier:');
     expect(text.slice(start, end)).toContain('REGLA UNO');
     expect(text.slice(start, end)).toContain('Unidad SDD →');
     expect(text.slice(start, end)).toContain('pnpm sdd:use');
+  });
+
+  it.each(['CLAUDE.md', 'AGENTS.md', 'GEMINI.md'])('%s es un núcleo de a lo sumo 6.000 bytes con disparadores a reglas que existen', (name) => {
+    const text = readFileSync(resolve(KIT_DIR, 'dual-harness', name), 'utf8');
+    expect(Buffer.byteLength(text)).toBeLessThanOrEqual(6000);
+    expect(text).toContain(START);
+    expect(text).toContain(END);
+    expect(text).toContain('REGLA UNO');
+    expect(text).toContain('Máximo no es el default del trabajo difícil');
+    const rows = text.split('\n').filter((line) => /^\| .+ \| .+ \|$/.test(line) && !line.startsWith('| Si pasa') && !line.startsWith('| ---'));
+    expect(rows.length).toBeGreaterThanOrEqual(6);
+    const rulesDir = resolve(KIT_DIR, 'dual-harness/rules');
+    for (const row of rows) {
+      const target = row.split('|')[2];
+      for (const [, ref] of target.matchAll(/`([^`]+\.md)`/g)) {
+        const path = ref.startsWith('sdd/') ? resolve(KIT_DIR, ref.slice('sdd/'.length)) : resolve(rulesDir, ref);
+        expect(fs.existsSync(path), `${name}: ${ref}`).toBe(true);
+      }
+    }
   });
 
   it('todos los prompts del kit mencionan la regla cero', () => {

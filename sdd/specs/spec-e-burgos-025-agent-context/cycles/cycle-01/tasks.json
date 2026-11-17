@@ -83,8 +83,32 @@
       "estimation_hours": 4,
       "story_points": 8,
       "depends_on": [],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/cli/src/generators/__tests__/rule-zero.integration.spec.ts",
+        "apps/cli/src/generators/__tests__/sdd.generator.integration.spec.ts",
+        "apps/cli/templates/sdd/dual-harness/AGENTS.md",
+        "apps/cli/templates/sdd/dual-harness/CLAUDE.md",
+        "apps/cli/templates/sdd/dual-harness/GEMINI.md",
+        "apps/cli/templates/sdd/dual-harness/copilot-instructions.md",
+        "apps/cli/templates/sdd/dual-harness/rules/sdd-code-style.md",
+        "apps/cli/templates/sdd/dual-harness/rules/sdd-context.md",
+        "apps/cli/templates/sdd/dual-harness/rules/sdd-execution.md",
+        "apps/cli/templates/sdd/dual-harness/rules/sdd-model-budget.md",
+        "apps/cli/templates/sdd/dual-harness/rules/sdd-tools.md",
+        "apps/cli/templates/sdd/dual-harness/rules/sdd-workspace.md"
+      ],
+      "usage": {
+        "tokens_in": 159183,
+        "tokens_out": 28091,
+        "tokens_total": 187274,
+        "approx": false,
+        "recorded_at": "2026-11-17",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "source": "agent-usage-notification"
+      }
     },
     {
       "id": "TASK-005",
