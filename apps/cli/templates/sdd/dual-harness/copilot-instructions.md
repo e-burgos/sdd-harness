@@ -16,6 +16,8 @@ Reglas mínimas no negociables:
 
 0. **REGLA CERO** (⓪ de AGENTS.md): antes de cualquier acción de una tarea nueva, una línea
    visible `Regla cero → tier · modelo · esfuerzo`; el tier más barato que cumpla.
+   **REGLA UNO** (① de AGENTS.md): antes de trabajar una spec, un ciclo o un fix, una línea
+   visible `Unidad SDD → <unidad> · worktree: <ruta>` y `pnpm sdd:use …` desde ese worktree.
 
 1. **SPEC GATE** (fuente: `sdd/dual-harness/rules/sdd-gates.md`): ninguna línea de código de
    implementación sin spec registrada, `cycle.json` in-progress y `tasks.json`. Lo responde un

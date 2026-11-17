@@ -33,6 +33,26 @@ Por favor, lee este archivo antes de realizar cualquier cambio en el repositorio
   necesario, avisá y escalá (subagente `opus`/`high` o `/model`).
 - **Contexto mínimo:** si existe `graphify-out/graph.json`, consultalo antes de grep/lecturas a
   ciegas; no releas lo ya establecido en la sesión ni narres opciones que no vas a seguir.
+
+## ① REGLA UNO — la unidad SDD de la sesión, visible y atada (INVIOLABLE, antes de trabajarla)
+
+> [!IMPORTANT]
+> **Antes de escribir CUALQUIER cosa de una spec, un ciclo o un fix —en flow full o lite, sea
+> spec nueva, ciclo nuevo, documento, código, fix o improvement— escribí UNA línea visible y atá
+> la sesión a esa unidad:**
+>
+> `Unidad SDD → <spec-id · cycle-XX · flow | spec-id (preparando) | FIX-id (tipo)> · worktree: <ruta>`
+>
+> Atarla es correr, **desde el worktree donde vive la unidad**, `pnpm sdd:use <spec> [cycle-XX]`
+> o `pnpm sdd:use <FIX-id>` (el GATE A y el GATE B también atan). Al cambiar de unidad, otra línea
+> y otra atadura. Sin línea no se trabaja la unidad.
+
+- **Varias sesiones en paralelo:** cada sesión trabaja UNA unidad; nunca toques documentos ni
+  código de una unidad atada a otra sesión.
+- **Worktrees:** si la unidad vive en otro worktree (uno que abriste o al que entraste con `cd`),
+  la ruta va en la línea y `sdd:use` se corre ahí: la marca `SDD-BIND` lleva ese worktree.
+- **Mod de Claude Code:** la franja muestra `esta sesión: …` y el worktree. Si dice `sin unidad`
+  o una unidad que no es la tuya, la atadura falló: volvé a correr `sdd:use` desde el worktree.
 <!-- regla-cero:end -->
 
 ---

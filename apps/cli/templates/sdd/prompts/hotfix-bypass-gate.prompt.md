@@ -144,6 +144,11 @@ El ID sigue la convención: `FIX-[gh-user]-[spec-NNN]-[seq]` para fixes vinculad
 
 ### PASO 7 — Autorizar al implementador
 
+Antes de confirmar, atá la sesión al fix (regla ① del dual-harness), **desde el worktree donde
+quedó registrado**: `pnpm sdd:use FIX-[gh-user]-[seq]`, y escribí la línea
+`Unidad SDD → FIX-[gh-user]-[seq] ([tipo]) · worktree: <ruta>`. Si el implementador es otra sesión,
+la atadura la corre esa sesión.
+
 Una vez registrado el fix, confirmar al desarrollador:
 
 ```

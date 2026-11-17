@@ -157,10 +157,13 @@ rules from `AGENTS.md`/`GEMINI.md`/`copilot-instructions.md`, and `pnpm sdd:vali
 shared safety net in CI. The mod's gate does not cover shell commands.
 
 **Parallel sessions.** You can run several specs at once, one per Claude Code session. The band
-shows "this session: <spec> · <cycle> …" and "others: …". A session binds itself when it runs
-GATE B (`pnpm sdd:gate <spec> cycle-XX`, which prints `SDD-BIND`), when there is a single open
-unit, or when the branch names the spec; by hand: `pnpm sdd:use <spec> cycle-XX` or
-`pnpm sdd:use <FIX-id>`. Unbound with several open units, the gate rejects the edit and lists them.
+shows "this session: <spec> · <cycle> …" (or the spec in preparation, or the fix and its type), the
+worktree when it is not the session's, and "others: …". The mod reads the units of every worktree
+of the repo. A session binds itself when it runs GATE A (to the spec) or GATE B (to the cycle; both
+print `SDD-BIND` with the worktree), when it writes a document of the spec or cycle, when it edits
+code in a worktree with a single open unit, when there is a single open unit, or when the branch
+names the spec (id or slug); by hand: `pnpm sdd:use <spec> [cycle-XX]` or `pnpm sdd:use <FIX-id>`,
+from the unit's worktree. Rule ① of the harnesses also asks for the `Unidad SDD → …` line. Unbound with several open units, the gate rejects the edit and lists them.
 Bindings live in `<git-common-dir>/sdd-sessions/` (local, outside git) and expire after 30 min idle.
 If two sessions go for the same file, the first one to edit it reserves it and the other, in the same
 folder, gets `SDD reserva: …` naming the holder (from another worktree, only a warning); the holder

@@ -742,6 +742,11 @@ if (existsSync(join(SDD, 'tools.json'))) {
         name,
         'rule-zero block (<!-- regla-cero:start/end -->) is missing — run `harness update sdd` (a hybrid file keeps your copy; the kit version lands next to it as *.new)',
       );
+    else if (!text.slice(text.indexOf(START), text.indexOf(END)).includes('REGLA UNO'))
+      warn(
+        name,
+        'rule one (the session declares and binds its SDD unit: `Unidad SDD → …` + `pnpm sdd:use`) is missing from the rule-zero block — run `harness update sdd` and merge the *.new',
+      );
   }
   const claudeSettings = join(REPO, '.claude', 'settings.json');
   if (existsSync(join(REPO, '.claude'))) {

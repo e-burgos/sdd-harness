@@ -27,6 +27,9 @@ describe('regla cero en el kit', () => {
     expect(end).toBeGreaterThan(start);
     expect(text.indexOf('AL INICIAR SESIÓN')).toBeGreaterThan(end);
     expect(text.slice(start, end)).toContain('Regla cero → tier:');
+    expect(text.slice(start, end)).toContain('REGLA UNO');
+    expect(text.slice(start, end)).toContain('Unidad SDD →');
+    expect(text.slice(start, end)).toContain('pnpm sdd:use');
   });
 
   it('todos los prompts del kit mencionan la regla cero', () => {
@@ -56,6 +59,7 @@ describe.skipIf(process.platform === 'win32')('rule-zero-hook y setup (integrati
     const out = JSON.parse(res.stdout);
     expect(out.hookSpecificOutput.hookEventName).toBe('SessionStart');
     expect(out.hookSpecificOutput.additionalContext).toContain('REGLA CERO');
+    expect(out.hookSpecificOutput.additionalContext).toContain('Unidad SDD →');
     expect(out.hookSpecificOutput.additionalContext).not.toContain(START);
   });
 
@@ -107,5 +111,9 @@ describe.skipIf(process.platform === 'win32')('rule-zero-hook y setup (integrati
     expect(output).toContain('rule-zero block');
     expect(output).toContain('SessionStart hook for rule zero is missing');
     expect(output).not.toMatch(/rule[- ]zero[^\n]*(✗|ERROR)/i);
+
+    await fs.writeFile(resolve(ws, 'CLAUDE.md'), `${START}\n## ⓪ REGLA CERO\n${END}\n`);
+    const old = node(ws, 'validate-sdd.mjs');
+    expect(`${old.stdout}${old.stderr}`).toContain('rule one');
   });
 });

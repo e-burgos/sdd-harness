@@ -157,9 +157,13 @@ Copilot, Gemini y el resto de los agentes no lo ven y no cambian: siguen las mis
 seguridad común en CI. El gate del mod no cubre comandos de shell.
 
 **Sesiones paralelas.** Podés tener varias specs en curso, una por sesión de Claude Code. La franja
-muestra «esta sesión: <spec> · <cycle> …» y «otras: …». La sesión se ata sola al correr el GATE B
-(`pnpm sdd:gate <spec> cycle-XX`, que imprime `SDD-BIND`), cuando hay una sola unidad abierta o cuando
-la rama nombra la spec; a mano: `pnpm sdd:use <spec> cycle-XX` o `pnpm sdd:use <FIX-id>`. Sin
+muestra «esta sesión: <spec> · <cycle> …» (o la spec en preparación, o el fix y su tipo), el worktree
+si no es el de la sesión, y «otras: …». El mod lee las unidades de todos los worktrees del repo. La
+sesión se ata sola al correr el GATE A (a la spec) o el GATE B (al ciclo; los dos imprimen `SDD-BIND`
+con el worktree), al escribir un documento de la spec o del ciclo, al editar código en un worktree
+con una sola unidad abierta, cuando hay una sola unidad abierta o cuando la rama nombra la spec (id o
+slug); a mano: `pnpm sdd:use <spec> [cycle-XX]` o `pnpm sdd:use <FIX-id>`, desde el worktree de la
+unidad. La regla ① de los arneses pide además la línea `Unidad SDD → …`. Sin
 atadura y con varias unidades abiertas, el gate rechaza la edición y las lista. Las ataduras
 viven en `<git-common-dir>/sdd-sessions/` (local, fuera de git) y vencen a los 30 min sin actividad.
 Si dos sesiones van por el mismo archivo, la primera que lo edita lo reserva y la otra, en la misma
