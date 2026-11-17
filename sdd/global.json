@@ -255,7 +255,17 @@
       "completed_at": "2026-11-13"
     }
   ],
-  "in_progress_modules": [],
+  "in_progress_modules": [
+    {
+      "module": "session-where",
+      "spec": "spec-e-burgos-024-session-where",
+      "apps": [
+        "apps/cli"
+      ],
+      "cycles_completed": 0,
+      "description": "La sesión muestra y ata su unidad SDD y su worktree desde el primer documento, en todos los worktrees del repo."
+    }
+  ],
   "pending_modules": [
     {
       "module": "studio-framework-vision",

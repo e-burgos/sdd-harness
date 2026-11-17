@@ -361,6 +361,22 @@
       "depends_on": [
         "spec-e-burgos-012-generators-tucu-ui"
       ]
+    },
+    {
+      "id": "spec-e-burgos-024-session-where",
+      "author": "e-burgos",
+      "slug": "session-where",
+      "folder": "sdd/specs/spec-e-burgos-024-session-where",
+      "file": "sdd/specs/spec-e-burgos-024-session-where/spec-e-burgos-024-session-where.spec.md",
+      "module": "session-where",
+      "app": "apps/cli",
+      "status": "in-progress",
+      "title": "Cada sesión muestra dónde trabaja: unidad SDD y worktree desde el primer documento",
+      "created_at": "2026-11-17",
+      "completed_at": null,
+      "depends_on": [
+        "spec-e-burgos-017-parallel-sessions"
+      ]
     }
   ]
 }

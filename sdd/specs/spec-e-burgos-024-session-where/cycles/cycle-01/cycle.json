@@ -1,0 +1,36 @@
+{
+  "$schema": "../../../../schemas/cycle.schema.json",
+  "spec": "spec-e-burgos-024-session-where",
+  "cycle": 1,
+  "module": "session-where",
+  "apps": [
+    "apps/cli"
+  ],
+  "flow": "lite",
+  "phase": "session-where",
+  "objectives": [
+    "La sesión muestra y ata su unidad SDD y su worktree desde el primer documento (US-1..US-4)"
+  ],
+  "status": "in-progress",
+  "started_at": "2026-11-17",
+  "completed_at": null,
+  "documents": {
+    "plan": "sdd/specs/spec-e-burgos-024-session-where/cycles/cycle-01/plan.md",
+    "tasks": "sdd/specs/spec-e-burgos-024-session-where/cycles/cycle-01/tasks.json"
+  },
+  "artifacts": [],
+  "metrics": {
+    "tasks_total": 5,
+    "tasks_completed": 0,
+    "tasks_skipped": 0,
+    "story_points": 21,
+    "files_created": [],
+    "files_modified": [],
+    "files_deleted": []
+  },
+  "tables_created": [],
+  "endpoints_implemented": [],
+  "components_created": [],
+  "issues_found": [],
+  "reviewer_report": null
+}
