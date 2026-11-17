@@ -266,14 +266,20 @@ describe.skipIf(process.platform === 'win32')('sdd-verify.mjs (integration)', ()
       await fs.ensureDir(join(nxWs, 'apps/demo-api'));
       await fs.writeJSON(join(nxWs, 'apps/demo-api/project.json'), { name: 'demo-api', targets: { test: {}, build: {} } });
       const script = resolve(nxWs, 'sdd/scripts/sdd-verify.mjs');
+      const globalFile = resolve(nxWs, 'sdd/global.json');
+      const globalDoc = await fs.readJSON(globalFile);
+      globalDoc.monorepo.tools = { ghost: 'tools/ghost — tool' };
+      await fs.writeJSON(globalFile, globalDoc);
       const first = spawnSync('node', [script, '--init'], { encoding: 'utf-8', cwd: nxWs });
       expect(first.status).toBe(0);
+      expect(first.stdout).toContain('– tools/ghost: not an nx project yet (no project.json or package.json) — run pnpm sdd:verify --init again once it has code');
       const seeded = await fs.readJSON(resolve(nxWs, 'sdd/verify.json'));
       expect(seeded['apps/demo-api']).toEqual({
-        quick: ['pnpm nx run-many -t test -p demo-api'],
-        full: ['pnpm nx run-many -t test build -p demo-api'],
+        quick: ['pnpm nx run-many -t lint test -p demo-api'],
+        full: ['pnpm nx run-many -t lint test build -p demo-api'],
         full_exclusive: true,
       });
+      expect(seeded['tools/ghost']).toBeUndefined();
       seeded['apps/demo-api'].quick = ['custom'];
       await fs.writeJSON(resolve(nxWs, 'sdd/verify.json'), seeded);
       spawnSync('node', [script, '--init'], { encoding: 'utf-8', cwd: nxWs });
@@ -296,6 +302,32 @@ describe.skipIf(process.platform === 'win32')('sdd-verify.mjs (integration)', ()
       const seeded = await fs.readJSON(resolve(pkgWs, 'sdd/verify.json'));
       expect(seeded['apps/demo-api'].quick).toEqual(['pnpm --filter @n/demo-api run lint', 'pnpm --filter @n/demo-api run test']);
       expect(seeded['apps/demo-api'].full).toContain('pnpm --filter @n/demo-api run build');
+    } finally {
+      rmSync(pkgWs, { recursive: true, force: true });
+    }
+  });
+
+  it('--init skips subprojects with no usable scripts and standalone libs without their own directory', async () => {
+    const pkgWs = mkdtempSync(resolve(tmpdir(), 'harness verify skip '));
+    try {
+      await generateSDD(pkgWs, {
+        projectName: 'skipp', description: 'x', packageScope: '@n', apps: [{ name: 'demo-api', type: 'nestjs' }], libs: [], services: [], sddProfile: 'solo',
+      }, { mergePackageJson: true });
+      const globalFile = resolve(pkgWs, 'sdd/global.json');
+      const globalDoc = await fs.readJSON(globalFile);
+      globalDoc.monorepo.tool = 'none (standalone repo)';
+      globalDoc.monorepo.libs = { shared: 'libs/shared — lib' };
+      await fs.writeJSON(globalFile, globalDoc);
+      await fs.writeJSON(join(pkgWs, 'package.json'), { name: 'root', scripts: { test: 'x' } });
+      const run = spawnSync('node', [resolve(pkgWs, 'sdd/scripts/sdd-verify.mjs'), '--init'], { encoding: 'utf-8', cwd: pkgWs });
+      const seeded = await fs.readJSON(resolve(pkgWs, 'sdd/verify.json'));
+      expect(seeded['apps/demo-api']).toEqual({ quick: ['pnpm run test'], full: ['pnpm run test'] });
+      expect(seeded['libs/shared']).toBeUndefined();
+      expect(run.stdout).toContain('– libs/shared: no directory of its own in a standalone repo');
+      await fs.ensureDir(join(pkgWs, 'libs/shared'));
+      await fs.writeJSON(join(pkgWs, 'libs/shared/package.json'), { name: '@n/shared', scripts: { start: 'x' } });
+      const again = spawnSync('node', [resolve(pkgWs, 'sdd/scripts/sdd-verify.mjs'), '--init'], { encoding: 'utf-8', cwd: pkgWs });
+      expect(again.stdout).toContain('– libs/shared: no lint, typecheck, test or build script in its package.json');
     } finally {
       rmSync(pkgWs, { recursive: true, force: true });
     }

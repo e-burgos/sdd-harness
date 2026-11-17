@@ -134,27 +134,46 @@ function scriptCommands(scripts, wanted, runner) {
   return wanted.filter((script) => script in scripts).map((script) => runner(script));
 }
 
-export function inferEntry({ name, nx, projectTargets, packageJson, rootPackageJson, hasDir }) {
-  if (nx) {
-    const targets = projectTargets ?? ['lint', 'test', 'build'];
-    const quick = ['lint', 'test'].filter((target) => targets.includes(target));
-    const full = ['lint', 'test', 'build'].filter((target) => targets.includes(target));
-    const entry = {};
-    if (quick.length) entry.quick = [nxCommand(quick, name)];
-    if (full.length) entry.full = [nxCommand(full, name)];
-    if (!entry.quick && !entry.full) return null;
-    entry.full_exclusive = true;
-    return entry;
-  }
-  const source = hasDir ? packageJson : rootPackageJson;
+export const INFERRED_SCRIPTS = ['lint', 'typecheck', 'test', 'build'];
+
+export const isStandaloneTool = (tool) => String(tool ?? '').startsWith('none (standalone');
+
+const bucketOf = (id) => id.slice(0, id.indexOf('/'));
+
+function nxEntry(name) {
+  return {
+    quick: [nxCommand(['lint', 'test'], name)],
+    full: [nxCommand(['lint', 'test', 'build'], name)],
+    full_exclusive: true,
+  };
+}
+
+function scriptSourceOf({ hasDir, packageJson, rootPackageJson, standalone, id }) {
+  if (hasDir) return packageJson;
+  return standalone && bucketOf(id) === 'apps' ? rootPackageJson : null;
+}
+
+export function inferEntry({ id, name, nx, hasProjectJson, packageJson, rootPackageJson, hasDir, standalone }) {
+  if (nx) return hasProjectJson || packageJson ? nxEntry(name) : null;
+  const source = scriptSourceOf({ hasDir, packageJson, rootPackageJson, standalone, id });
   if (!source?.scripts) return null;
   const run = hasDir && source.name ? (script) => `pnpm --filter ${source.name} run ${script}` : (script) => `pnpm run ${script}`;
   const quick = scriptCommands(source.scripts, ['lint', 'typecheck', 'test'], run);
-  const full = scriptCommands(source.scripts, ['lint', 'typecheck', 'test', 'build'], run);
+  const full = scriptCommands(source.scripts, INFERRED_SCRIPTS, run);
   const entry = {};
   if (quick.length) entry.quick = quick;
   if (full.length) entry.full = full;
   return entry.quick || entry.full ? entry : null;
+}
+
+export function whyNoEntry({ id, nx, hasProjectJson, packageJson, hasDir, standalone }) {
+  const again = 'run pnpm sdd:verify --init again once it has code';
+  if (nx) return `not an nx project yet (no project.json or package.json) — ${again}`;
+  if (!hasDir && !(standalone && bucketOf(id) === 'apps')) {
+    return standalone ? `no directory of its own in a standalone repo — ${again}` : `no directory yet — ${again}`;
+  }
+  if (hasDir && !packageJson) return `no package.json in its directory — ${again}`;
+  return `no ${INFERRED_SCRIPTS.slice(0, -1).join(', ')} or build script in its package.json — add one and ${again}`;
 }
 
 export function descendantsOf(pid, listChildren) {

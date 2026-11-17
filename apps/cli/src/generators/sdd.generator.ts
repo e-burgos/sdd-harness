@@ -116,6 +116,19 @@ export async function generateSDD(
   await ensureRootHarnessFiles(root, linked);
 }
 
+export const VERIFY_INIT_COMMAND = 'node sdd/scripts/sdd-verify.mjs --init';
+
+export function seedVerifyEntries(root: string): void {
+  try {
+    const output = exec(VERIFY_INIT_COMMAND, { cwd: root, silent: true });
+    for (const line of output.split('\n').filter(Boolean)) logger.info(`verify: ${line}`);
+  } catch {
+    logger.warn(
+      'Could not seed sdd/verify.json automatically. Run `pnpm sdd:verify --init` in the workspace.',
+    );
+  }
+}
+
 /**
  * Registra una app, lib o tool en sdd/global.json (sección monorepo) y crea su
  * contexto de subproyecto. Usado por `harness add app` y `harness add tool` en

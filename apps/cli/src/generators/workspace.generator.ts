@@ -17,7 +17,7 @@ import {
   sortKeys,
 } from "./root-package.js";
 import { generateDockerCompose, writeEnvExample } from "./docker.generator.js";
-import { generateSDD } from "./sdd.generator.js";
+import { generateSDD, seedVerifyEntries } from "./sdd.generator.js";
 import type { SddProfile } from "./sdd.generator.js";
 import {
   generateApp,
@@ -202,6 +202,8 @@ export async function generateWorkspace(opts: WorkspaceOptions): Promise<void> {
   }
 
   await writeReadme(root, opts);
+
+  seedVerifyEntries(root);
 
   await opts.beforeGate?.(root);
 

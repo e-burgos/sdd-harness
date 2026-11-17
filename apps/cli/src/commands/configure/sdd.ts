@@ -4,7 +4,7 @@ import pc from 'picocolors';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve, basename } from 'node:path';
 import { logger } from '../../utils/logger.js';
-import { generateSDD } from '../../generators/sdd.generator.js';
+import { generateSDD, seedVerifyEntries } from '../../generators/sdd.generator.js';
 import type { WorkspaceOptions } from '../../generators/workspace.generator.js';
 import type { AppSpec } from '../../generators/app.generator.js';
 import { parseProfile } from '../../generators/sdd.generator.js';
@@ -247,6 +247,8 @@ export const configureSddCommand = defineCommand({
         mergePackageJson: true,
         absorbExistingHarness: true,
       });
+
+      seedVerifyEntries(cwd);
 
       logger.success(
         'sdd/ installed (agents, skills, prompts, schemas, docs viewer, templates)',

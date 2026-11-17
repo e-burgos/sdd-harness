@@ -235,8 +235,34 @@
         "TASK-001",
         "TASK-002"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/cli/src/commands/add/app.ts",
+        "apps/cli/src/commands/add/tool.ts",
+        "apps/cli/src/commands/configure/sdd.ts",
+        "apps/cli/src/generators/__tests__/sdd-verify.integration.spec.ts",
+        "apps/cli/src/generators/__tests__/sdd.generator.verify-seed.integration.spec.ts",
+        "apps/cli/src/generators/__tests__/sdd.generator.verify-seed.spec.ts",
+        "apps/cli/src/generators/__tests__/standalone.generator.spec.ts",
+        "apps/cli/src/generators/__tests__/workspace.generator.spec.ts",
+        "apps/cli/src/generators/sdd.generator.ts",
+        "apps/cli/src/generators/standalone.generator.ts",
+        "apps/cli/src/generators/workspace.generator.ts",
+        "apps/cli/src/utils/__tests__/verify.spec.ts",
+        "apps/cli/templates/sdd/scripts/lib/verify.mjs",
+        "apps/cli/templates/sdd/scripts/sdd-verify.mjs"
+      ],
+      "usage": {
+        "tokens_in": 41693,
+        "tokens_out": 7358,
+        "tokens_total": 49051,
+        "approx": false,
+        "recorded_at": "2026-11-17",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "source": "agent-usage-notification"
+      }
     },
     {
       "id": "TASK-008",

@@ -20,6 +20,7 @@ type Lib = {
     input: { app: string; changedSincePrevious: string[] | null; dirtyNow: string[]; prefix: string },
   ): boolean;
   inferEntry(input: object): Entry | null;
+  whyNoEntry(input: object): string;
   tailOf(text: string, lines?: number): string;
   logicalIdsOf(globalJson: object): string[];
   descendantsOf(pid: number, list: (pid: number) => number[]): number[];
@@ -90,21 +91,41 @@ describe('verify.mjs', () => {
     expect(lib.canReuse({ ...previous, ok: false }, base)).toBe(false);
   });
 
-  it('infers nx, package-script and standalone entries', () => {
-    expect(lib.inferEntry({ name: 'api', nx: true, projectTargets: ['test', 'build'] })).toEqual({
-      quick: ['pnpm nx run-many -t test -p api'],
-      full: ['pnpm nx run-many -t test build -p api'],
+  it('writes the full nx command for every nx project that has project.json or package.json', () => {
+    const expected = {
+      quick: ['pnpm nx run-many -t lint test -p api'],
+      full: ['pnpm nx run-many -t lint test build -p api'],
       full_exclusive: true,
-    });
-    expect(lib.inferEntry({ name: 'api', nx: true, projectTargets: null })?.full).toEqual(['pnpm nx run-many -t lint test build -p api']);
+    };
+    expect(lib.inferEntry({ id: 'apps/api', name: 'api', nx: true, hasProjectJson: true })).toEqual(expected);
+    expect(lib.inferEntry({ id: 'apps/api', name: 'api', nx: true, hasProjectJson: false, packageJson: { name: 'x' } })).toEqual(expected);
+  });
+
+  it('writes no entry for an nx id without project.json or package.json and says why', () => {
+    const facts = { id: 'tools/ghost', name: 'ghost', nx: true, hasProjectJson: false, hasDir: false };
+    expect(lib.inferEntry(facts)).toBeNull();
+    expect(lib.whyNoEntry(facts)).toBe('not an nx project yet (no project.json or package.json) — run pnpm sdd:verify --init again once it has code');
+  });
+
+  it('infers package scripts without nx and falls back to the root scripts only for standalone apps', () => {
     expect(
-      lib.inferEntry({ name: 'cli', nx: false, hasDir: true, packageJson: { name: '@s/cli', scripts: { test: 'x', build: 'y' } } }),
+      lib.inferEntry({ id: 'apps/cli', name: 'cli', nx: false, hasDir: true, packageJson: { name: '@s/cli', scripts: { test: 'x', build: 'y' } } }),
     ).toEqual({ quick: ['pnpm --filter @s/cli run test'], full: ['pnpm --filter @s/cli run test', 'pnpm --filter @s/cli run build'] });
-    expect(lib.inferEntry({ name: 'app', nx: false, hasDir: false, rootPackageJson: { scripts: { lint: 'x' } } })).toEqual({
+    const root = { scripts: { lint: 'x' } };
+    expect(lib.inferEntry({ id: 'apps/app', name: 'app', nx: false, hasDir: false, standalone: true, rootPackageJson: root })).toEqual({
       quick: ['pnpm run lint'],
       full: ['pnpm run lint'],
     });
-    expect(lib.inferEntry({ name: 'app', nx: false, hasDir: false, rootPackageJson: {} })).toBeNull();
+    const libFacts = { id: 'libs/shared', name: 'shared', nx: false, hasDir: false, standalone: true, rootPackageJson: root };
+    expect(lib.inferEntry(libFacts)).toBeNull();
+    expect(lib.whyNoEntry(libFacts)).toContain('no directory of its own in a standalone repo');
+    expect(lib.inferEntry({ id: 'apps/app', name: 'app', nx: false, hasDir: false, standalone: false, rootPackageJson: root })).toBeNull();
+  });
+
+  it('writes no entry for a package.json without any of lint, typecheck, test or build and names them', () => {
+    const facts = { id: 'apps/x', name: 'x', nx: false, hasDir: true, packageJson: { name: '@s/x', scripts: { start: 'node .' } } };
+    expect(lib.inferEntry(facts)).toBeNull();
+    expect(lib.whyNoEntry(facts)).toContain('no lint, typecheck, test or build script in its package.json');
   });
 
   it('collects descendants children-first', () => {

@@ -17,6 +17,7 @@ import {
   expandFiles,
   formatDuration,
   inferEntry,
+  isStandaloneTool,
   logicalIdsOf,
   nonSddPaths,
   normalizeCycleId,
@@ -27,6 +28,7 @@ import {
   resultFileName,
   selectCycle,
   tailOf,
+  whyNoEntry,
 } from './lib/verify.mjs';
 import {
   LEASE_DEFAULT_WAIT_S,
@@ -278,16 +280,19 @@ function initEntries() {
     const dir = join(REPO, id);
     const name = id.slice(id.indexOf('/') + 1);
     const projectJson = readJson(join(dir, 'project.json'));
-    const entry = inferEntry({
+    const facts = {
+      id,
       name: projectJson?.name ?? name,
       nx,
-      projectTargets: projectJson?.targets ? Object.keys(projectJson.targets) : null,
+      hasProjectJson: projectJson !== null,
       packageJson: readJson(join(dir, 'package.json')),
       rootPackageJson,
       hasDir: existsSync(dir),
-    });
+      standalone: isStandaloneTool(globalJson?.monorepo?.tool),
+    };
+    const entry = inferEntry(facts);
     if (!entry) {
-      say(`– ${id}: nothing to infer (no nx.json and no package.json scripts)`);
+      say(`– ${id}: ${whyNoEntry(facts)}`);
       continue;
     }
     config[id] = entry;
