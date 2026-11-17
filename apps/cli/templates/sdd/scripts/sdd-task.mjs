@@ -53,7 +53,7 @@ function filesOfCommits(commits) {
   const prefix = sddPrefix();
   return commits.flatMap((sha) => {
     if (git(['rev-parse', '--verify', '--quiet', `${sha}^{commit}`]) === null) usageError(`commit "${sha}" does not exist in this repository`);
-    return filesFromShow(git(['show', '--name-only', '--format=', sha]) ?? '', prefix);
+    return filesFromShow(git(['show', '--name-only', '--format=', '--first-parent', '-m', sha]) ?? '', prefix);
   });
 }
 

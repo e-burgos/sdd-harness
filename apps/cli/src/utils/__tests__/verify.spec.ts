@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll } from 'vitest';
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, rmSync, utimesSync, writeFileSync, statSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
-import { tmpdir } from 'node:os';
+import { hostname, tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
@@ -22,9 +22,12 @@ type Lib = {
   inferEntry(input: object): Entry | null;
   tailOf(text: string, lines?: number): string;
   logicalIdsOf(globalJson: object): string[];
+  descendantsOf(pid: number, list: (pid: number) => number[]): number[];
 };
 type LeaseLib = {
-  tryAcquire(file: string, info: object): { acquired: boolean; owner?: { pid: number } };
+  judgeLease(input: { owner: object | null; ageMs: number; host: string; pidAlive: boolean }): string;
+  startHeartbeat(file: string, intervalMs: number): () => void;
+  tryAcquire(file: string, info: object, options?: { suspect?: string }): { acquired: boolean; owner?: { pid: number }; suspect?: string };
   releaseLease(file: string): boolean;
   isPidAlive(pid: number): boolean;
   acquireWithWait(file: string, info: object, options: { waitMs: number; pollMs: number }): Promise<{ acquired: boolean }>;
@@ -104,6 +107,11 @@ describe('verify.mjs', () => {
     expect(lib.inferEntry({ name: 'app', nx: false, hasDir: false, rootPackageJson: {} })).toBeNull();
   });
 
+  it('collects descendants children-first', () => {
+    const tree: Record<number, number[]> = { 1: [2, 3], 2: [4] };
+    expect(lib.descendantsOf(1, (pid) => tree[pid] ?? [])).toEqual([4, 2, 3]);
+  });
+
   it('keeps the last lines and maps global.json to logical ids', () => {
     expect(lib.tailOf('1\n2\n3\n', 2)).toBe('2\n3');
     expect(lib.logicalIdsOf({ monorepo: { apps: { a: '' }, libs: { l: '' } } })).toEqual(['apps/a', 'libs/l']);
@@ -127,7 +135,7 @@ describe('verify-lease.mjs', () => {
   it('takes a lease whose owner pid is dead', () => {
     const file = tempFile();
     const dead = spawnSync(process.execPath, ['-e', '0']).pid as number;
-    writeFileSync(file, JSON.stringify({ pid: dead, repo: '/x' }));
+    writeFileSync(file, JSON.stringify({ pid: dead, host: hostname(), repo: '/x' }));
     expect(lease.isPidAlive(dead)).toBe(false);
     expect(lease.tryAcquire(file, {}).acquired).toBe(true);
     rmSync(file, { force: true });
@@ -138,6 +146,68 @@ describe('verify-lease.mjs', () => {
     lease.tryAcquire(file, {});
     const outcome = await lease.acquireWithWait(file, {}, { waitMs: 150, pollMs: 50 });
     expect(outcome.acquired).toBe(false);
+    rmSync(file, { force: true });
+  });
+
+  it('judges every liveness branch', () => {
+    const me = 'host-a';
+    const judge = (owner: object | null, ageMs: number, host: string, pidAlive: boolean) => lease.judgeLease({ owner, ageMs, host, pidAlive });
+    expect(judge({ pid: 1, host: me }, 1000, me, false)).toBe('dead');
+    expect(judge({ pid: 1, host: me }, 1000, me, true)).toBe('live');
+    expect(judge({ pid: 1, host: me }, 91000, me, true)).toBe('stale-heartbeat');
+    expect(judge({ pid: 1, host: 'other' }, 1000, me, false)).toBe('live');
+    expect(judge({ pid: 1, host: 'other' }, 91000, me, true)).toBe('stale-heartbeat');
+    expect(judge({ pid: 1 }, 1000, me, false)).toBe('live');
+    expect(judge({ pid: 1 }, 91000, me, false)).toBe('stale-heartbeat');
+    expect(judge(null, 1000, me, false)).toBe('live');
+    expect(judge(null, 6000, me, false)).toBe('stale-heartbeat');
+  });
+
+  it('takes a heartbeat-stale lease only after two consecutive polls that saw it unchanged', () => {
+    const file = tempFile();
+    writeFileSync(file, JSON.stringify({ pid: process.pid, host: hostname(), started_at: 't' }));
+    const old = new Date(Date.now() - 120000);
+    utimesSync(file, old, old);
+    const first = lease.tryAcquire(file, {});
+    expect(first.acquired).toBe(false);
+    expect(first.suspect).toBeTruthy();
+    const second = lease.tryAcquire(file, {}, { suspect: first.suspect });
+    expect(second.acquired).toBe(true);
+    rmSync(file, { force: true });
+  });
+
+  it('does not take the lease when the holder refreshed it between polls', () => {
+    const file = tempFile();
+    writeFileSync(file, JSON.stringify({ pid: process.pid, host: hostname(), started_at: 't' }));
+    const old = new Date(Date.now() - 120000);
+    utimesSync(file, old, old);
+    const first = lease.tryAcquire(file, {});
+    const now = new Date();
+    utimesSync(file, now, now);
+    expect(lease.tryAcquire(file, {}, { suspect: first.suspect }).acquired).toBe(false);
+    rmSync(file, { force: true });
+  });
+
+  it('keeps a lease held by another host alive while its heartbeat is fresh', () => {
+    const file = tempFile();
+    writeFileSync(file, JSON.stringify({ pid: 999999, host: 'some-other-host' }));
+    expect(lease.tryAcquire(file, {}).acquired).toBe(false);
+    rmSync(file, { force: true });
+  });
+
+  it('refreshes the file mtime while the heartbeat runs and stops afterwards', async () => {
+    const file = tempFile();
+    writeFileSync(file, '{}');
+    const old = new Date(Date.now() - 60000);
+    utimesSync(file, old, old);
+    const stop = lease.startHeartbeat(file, 20);
+    await new Promise((r) => setTimeout(r, 120));
+    stop();
+    const refreshed = statSync(file).mtimeMs;
+    expect(Date.now() - refreshed).toBeLessThan(5000);
+    utimesSync(file, old, old);
+    await new Promise((r) => setTimeout(r, 80));
+    expect(Date.now() - statSync(file).mtimeMs).toBeGreaterThan(50000);
     rmSync(file, { force: true });
   });
 });

@@ -88,8 +88,32 @@
       "depends_on": [
         "TASK-001"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/cli/src/generators/__tests__/sdd-task.integration.spec.ts",
+        "apps/cli/src/generators/__tests__/sdd-verify.integration.spec.ts",
+        "apps/cli/src/generators/__tests__/validate-optional-fields.integration.spec.ts",
+        "apps/cli/src/utils/__tests__/verify.spec.ts",
+        "apps/cli/templates/sdd/schemas/cycle-tasks.schema.json",
+        "apps/cli/templates/sdd/scripts/lib/verify-lease.mjs",
+        "apps/cli/templates/sdd/scripts/lib/verify.mjs",
+        "apps/cli/templates/sdd/scripts/rebuild-tasks-index.mjs",
+        "apps/cli/templates/sdd/scripts/sdd-task.mjs",
+        "apps/cli/templates/sdd/scripts/sdd-verify.mjs",
+        "apps/cli/templates/sdd/scripts/validate-sdd.mjs",
+        "apps/cli/templates/sdd/skills/sdd-data-schemas/SKILL.md"
+      ],
+      "usage": {
+        "tokens_in": 44437,
+        "tokens_out": 7842,
+        "tokens_total": 52279,
+        "approx": false,
+        "recorded_at": "2026-11-17",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "source": "agent-usage-notification"
+      }
     },
     {
       "id": "TASK-004",

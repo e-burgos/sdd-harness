@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { resolve, join } from 'node:path';
 import { mkdtempSync, rmSync, existsSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { execFileSync, spawn, spawnSync } from 'node:child_process';
-import { tmpdir } from 'node:os';
+import { hostname, tmpdir } from 'node:os';
 import fs from 'fs-extra';
 
 import { generateSDD } from '../sdd.generator.js';
@@ -185,7 +185,7 @@ describe.skipIf(process.platform === 'win32')('sdd-verify.mjs (integration)', ()
     await writeConfig({ full: ['node -e "0"'], full_exclusive: true });
     await fs.ensureDir(lockDir);
     const dead = spawnSync(process.execPath, ['-e', '0']).pid;
-    writeFileSync(join(lockDir, 'verify-full.lock'), JSON.stringify({ pid: dead, repo: '/gone' }));
+    writeFileSync(join(lockDir, 'verify-full.lock'), JSON.stringify({ pid: dead, host: hostname(), repo: '/gone' }));
     expect(runVerify(['demo-api', 'full']).status).toBe(0);
     expect(existsSync(join(lockDir, 'verify-full.lock'))).toBe(false);
   });
@@ -209,6 +209,34 @@ describe.skipIf(process.platform === 'win32')('sdd-verify.mjs (integration)', ()
     child.kill('SIGTERM');
     await closed;
     expect(existsSync(lockFile)).toBe(false);
+  });
+
+  it('SIGTERM kills the whole tree of the running command and releases the lease', async () => {
+    const pidFile = join(parent, 'grandchild.pid');
+    const grandchild = `node -e "require('fs').writeFileSync(process.argv[1],String(process.pid));setInterval(()=>{},1000)" '${pidFile}'`;
+    await writeConfig({ full: [`sh -c "${grandchild.replace(/"/g, '\\"')} & wait"`], full_exclusive: true });
+    const child = spawn('node', [resolve(ws, 'sdd/scripts/sdd-verify.mjs'), 'demo-api', 'full'], {
+      cwd: ws,
+      env: { ...process.env, SDD_VERIFY_LOCK_DIR: lockDir },
+      stdio: 'ignore',
+    });
+    const closed = new Promise((done) => child.on('close', done));
+    for (let attempts = 0; attempts < 200 && !existsSync(pidFile); attempts++) await new Promise((r) => setTimeout(r, 50));
+    expect(existsSync(pidFile)).toBe(true);
+    const grandchildPid = Number(readFileSync(pidFile, 'utf-8'));
+    expect(() => process.kill(grandchildPid, 0)).not.toThrow();
+    child.kill('SIGTERM');
+    await closed;
+    for (let attempts = 0; attempts < 100; attempts++) {
+      try {
+        process.kill(grandchildPid, 0);
+      } catch {
+        break;
+      }
+      await new Promise((r) => setTimeout(r, 50));
+    }
+    expect(() => process.kill(grandchildPid, 0)).toThrow();
+    expect(existsSync(join(lockDir, 'verify-full.lock'))).toBe(false);
   });
 
   it('works outside a git repo: no commit, never reuses, no crash', async () => {

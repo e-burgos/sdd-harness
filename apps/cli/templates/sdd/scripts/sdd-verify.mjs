@@ -13,6 +13,7 @@ import {
   buildResult,
   canReuse,
   commandLine,
+  descendantsOf,
   expandFiles,
   formatDuration,
   inferEntry,
@@ -166,6 +167,33 @@ function ensureLogDir(verifyDir) {
 
 let activeChild = null;
 
+function childPidsOf(pid) {
+  const run = spawnSync('pgrep', ['-P', String(pid)], { encoding: 'utf8' });
+  return run.status === 0 ? run.stdout.split('\n').filter(Boolean).map(Number) : [];
+}
+
+function signalQuietly(pid, signal) {
+  try {
+    process.kill(pid, signal);
+  } catch {
+    return;
+  }
+}
+
+function killActiveTree() {
+  const pid = activeChild?.pid;
+  if (!pid) return;
+  try {
+    if (process.platform === 'win32') {
+      spawnSync('taskkill', ['/PID', String(pid), '/T', '/F'], { stdio: 'ignore' });
+      return;
+    }
+    for (const target of [...descendantsOf(pid, childPidsOf), pid]) signalQuietly(target, 'SIGTERM');
+  } catch {
+    activeChild?.kill();
+  }
+}
+
 function runCommand(command, logPath) {
   return new Promise((resolveRun) => {
     const started = Date.now();
@@ -236,7 +264,7 @@ async function takeLease(appId) {
   if (!outcome.acquired) {
     fail(LEASE_EXIT_CODE, `lease still held by ${describeOwner(outcome.owner)} after ${waitS}s — report it instead of forcing`);
   }
-  installReleaseHandlers(file, () => activeChild?.kill());
+  installReleaseHandlers(file, killActiveTree);
 }
 
 function initEntries() {

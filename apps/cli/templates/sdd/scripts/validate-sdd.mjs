@@ -46,7 +46,7 @@ const warnings = [];
 const warn = (file, msg) => warnings.push(`${file}: ${msg}`);
 
 function loadJson(path) {
-  return JSON.parse(readFileSync(path, 'utf8'));
+  return JSON.parse(readFileSync(path, 'utf8').replace(/^﻿/, ''));
 }
 
 const sample = (files) =>
@@ -766,6 +766,78 @@ if (existsSync(join(SDD, 'tools.json'))) {
         '.claude/settings.json',
         'SessionStart hook for rule zero is missing — run `pnpm setup:agents` (installs sdd/scripts/rule-zero-hook.mjs so the model/effort rule is re-injected on every session start)',
       );
+  }
+}
+
+// ---- 12c. Execution blocks, verify.json and core size — all optional, warnings only ----
+{
+  const DEFAULT_BLOCK_CAPS = { tasks: 4, points: 12 };
+  let blockCaps = DEFAULT_BLOCK_CAPS;
+  try {
+    const execution = loadJson(join(SDD, 'packs.json'))?.execution;
+    const tasks = execution?.max_tasks_per_batch;
+    const points = execution?.max_points_per_batch;
+    blockCaps = {
+      tasks: Number.isInteger(tasks) && tasks > 0 ? tasks : DEFAULT_BLOCK_CAPS.tasks,
+      points: Number.isInteger(points) && points > 0 ? points : DEFAULT_BLOCK_CAPS.points,
+    };
+  } catch {
+    blockCaps = DEFAULT_BLOCK_CAPS;
+  }
+
+  for (const [file, ct] of cycleTasks) {
+    if (!ct) continue;
+    const tasksById = new Map((ct.tasks ?? []).map((t) => [t.id, t]));
+    const blocks = ct.batches ?? [];
+    const blockIds = new Set(blocks.map((b) => b.id));
+    const owner = new Map();
+    for (const block of blocks) {
+      const where = `${file} ${block.id}`;
+      for (const id of block.tasks) {
+        if (!tasksById.has(id)) warn(where, `lists unknown task ${id} — fix batches[] in tasks.json`);
+        else if (owner.has(id)) warn(where, `${id} is already in ${owner.get(id)} — a task belongs to one block`);
+        else owner.set(id, block.id);
+      }
+      if (!(ct.apps ?? []).includes(block.app))
+        warn(where, `app ${block.app} is not in the cycle's apps — fix batches[].app in tasks.json`);
+      for (const dep of block.depends_on ?? []) {
+        if (!blockIds.has(dep)) warn(where, `depends_on unknown block ${dep} — fix batches[] in tasks.json`);
+      }
+      const points = block.tasks.reduce((sum, id) => sum + (tasksById.get(id)?.story_points ?? 0), 0);
+      if (block.tasks.length > blockCaps.tasks || points > blockCaps.points)
+        warn(where, `${block.tasks.length} tasks / ${points} SP exceeds the cap of ${blockCaps.tasks} tasks / ${blockCaps.points} SP — split the block`);
+    }
+    for (const t of ct.tasks ?? []) {
+      if (t.usage?.allocation && t.usage.approx !== true)
+        warn(`${file} ${t.id}`, 'usage.allocation without approx: true — a split batch total is an estimate; set approx: true');
+    }
+  }
+
+  const verifyPath = join(SDD, 'verify.json');
+  const missingVerifyHint = 'run pnpm sdd:verify --init';
+  if (!existsSync(verifyPath)) {
+    warn('verify.json', `missing — ${missingVerifyHint} to declare each subproject's quick/full verification`);
+  } else {
+    const verifyDoc = validate('verify.json', 'verify.schema.json');
+    if (verifyDoc && globalJson) {
+      const monorepo = globalJson.monorepo ?? {};
+      const declared = ['apps', 'libs', 'tools'].flatMap((bucket) => Object.keys(monorepo[bucket] ?? {}).map((name) => `${bucket}/${name}`));
+      const unconfigured = declared.filter((id) => !(id in verifyDoc));
+      if (unconfigured.length)
+        warn('verify.json', `no entry for ${unconfigured.join(', ')} — ${missingVerifyHint}`);
+    }
+  }
+
+  const CORE_BYTE_CAP = 6000;
+  const ABSORBED_HEADING = 'Instrucciones previas del proyecto (absorbidas al instalar SDD)';
+  for (const name of ['CLAUDE.md', 'AGENTS.md', 'GEMINI.md']) {
+    const path = join(SDD, 'dual-harness', name);
+    if (!existsSync(path)) continue;
+    const text = readFileSync(path, 'utf8');
+    const headingAt = text.indexOf(ABSORBED_HEADING);
+    const coreBytes = Buffer.byteLength(headingAt < 0 ? text : text.slice(0, headingAt));
+    if (coreBytes > CORE_BYTE_CAP)
+      warn(`dual-harness/${name}`, `core is ${coreBytes} bytes (> ${CORE_BYTE_CAP}) — run harness update sdd --split-project`);
   }
 }
 

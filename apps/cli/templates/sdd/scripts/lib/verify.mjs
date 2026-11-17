@@ -156,3 +156,9 @@ export function inferEntry({ name, nx, projectTargets, packageJson, rootPackageJ
   if (full.length) entry.full = full;
   return entry.quick || entry.full ? entry : null;
 }
+
+export function descendantsOf(pid, listChildren) {
+  const found = [];
+  for (const child of listChildren(pid)) found.push(...descendantsOf(child, listChildren), child);
+  return found;
+}

@@ -148,6 +148,23 @@ describe.skipIf(process.platform === 'win32')('sdd-task.mjs (integration)', () =
     expect(task('TASK-003').files).toEqual(['src/z.ts', 'src/a.ts', 'src/b.ts']);
   });
 
+  it('done with a merge commit lists the files relative to its first parent', () => {
+    const main = git('rev-parse', '--abbrev-ref', 'HEAD').trim();
+    git('checkout', '-q', '-b', 'feature');
+    writeFileSync(join(ws, 'feature.ts'), 'f');
+    git('add', '-A');
+    git('commit', '-q', '-m', 'feature');
+    git('checkout', '-q', main);
+    writeFileSync(join(ws, 'main-side.ts'), 'm');
+    git('add', '-A');
+    git('commit', '-q', '-m', 'main side');
+    git('merge', '-q', '--no-ff', 'feature', '-m', 'merge');
+    const sha = git('rev-parse', 'HEAD').trim();
+    const run = runTask([specId, 'cycle-01', 'TASK-002', 'done', '--commit', sha, '--tokens', '10', ...identity]);
+    expect(run.status).toBe(0);
+    expect(task('TASK-002').files).toEqual(['feature.ts']);
+  });
+
   it('rejects bad input with exit 2 and leaves the file untouched', () => {
     const before = readText();
     const ok = [specId, 'cycle-01', 'TASK-001', 'done', '--files', 'a', '--tokens', '10'];
