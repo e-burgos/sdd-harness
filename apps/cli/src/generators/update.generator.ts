@@ -4,7 +4,12 @@ import { getTemplatesDir } from '../utils/fs.js';
 import { exec } from '../utils/exec.js';
 import { logger } from '../utils/logger.js';
 import {
+  BASELINE_TRUSTED_SINCE,
+  HARNESS_FILES,
+  compareKitVersions,
   computeManifest,
+  harnessIsHybrid,
+  hashContent,
   hashFile,
   isGenerated,
   isHybrid,
@@ -13,7 +18,10 @@ import {
   listKitFiles,
   readManifest,
   writeManifest,
+  type KitManifest,
 } from './kit-manifest.js';
+import { isPublishedHarnessContent } from './harness-history.js';
+import { fold, mergeIntoProjectMd, readProjectMd, splitAbsorbed } from './project-md.js';
 import { ensureHarnessPackageJson } from './sdd.generator.js';
 import {
   collectMigrationNotices,
@@ -31,7 +39,23 @@ export type UpdateReport = {
   validateOk: boolean | null;
   /** Vocabulario que el kit renombró y quedó viejo en archivos que el update no toca. */
   migrations: MigrationNotice[];
+  /** El repo viene de un kit anterior al núcleo delgado: los archivos del arnés eran híbridos. */
+  harnessCoreNotice: boolean;
+  /** Archivos del arnés que todavía llevan texto absorbido (aviso cuando no se pidió --split-project). */
+  absorbedInHarness: string[];
+  /** Resultado por archivo de `--split-project`; null si no se pidió. */
+  splitProject: SplitProjectResult[] | null;
 };
+
+export type SplitProjectOutcome = 'moved' | 'replaced' | 'kept-new' | 'kept' | 'nothing';
+
+export type SplitProjectResult = {
+  file: string;
+  movedBytes: number;
+  outcome: SplitProjectOutcome;
+};
+
+export type UpdateOptions = { splitProject?: boolean };
 
 /**
  * Actualiza el kit SDD instalado al que trae esta versión de la CLI,
@@ -44,7 +68,10 @@ export type UpdateReport = {
  * - Sin manifest previo (instalación legacy) → modo conservador: los híbridos
  *   (dual-harness, constitution/context_prompt globales) nunca se pisan.
  */
-export async function updateSDD(root: string): Promise<UpdateReport> {
+export async function updateSDD(
+  root: string,
+  options: UpdateOptions = {},
+): Promise<UpdateReport> {
   const sddDir = resolve(root, 'sdd');
   if (!(await fs.pathExists(resolve(sddDir, 'global.json')))) {
     throw new Error(
@@ -65,7 +92,17 @@ export async function updateSDD(root: string): Promise<UpdateReport> {
     keptCustom: [],
     validateOk: null,
     migrations: [],
+    harnessCoreNotice: harnessIsHybrid(oldManifest?.kit_version),
+    absorbedInHarness: [],
+    splitProject: null,
   };
+
+  const installedKitVersion = oldManifest?.kit_version ?? null;
+  if (options.splitProject) {
+    report.splitProject = await splitProjectInstructions(root, kitDir, oldManifest, newManifest);
+  } else {
+    report.absorbedInHarness = await harnessFilesWithAbsorbedText(sddDir);
+  }
 
   for (const rel of await listKitFiles(kitDir)) {
     const src = resolve(kitDir, rel);
@@ -88,7 +125,7 @@ export async function updateSDD(root: string): Promise<UpdateReport> {
     // baseline no alcanza — los manifests escritos antes de v0.9.3 anotaron el hash del
     // archivo instalado, así que un híbrido customizado se lee como "sin modificar".
     const userModified =
-      isHybrid(rel) || (oldManifest !== null && currentHash !== baseHash);
+      isHybrid(rel, installedKitVersion) || (oldManifest !== null && currentHash !== baseHash);
 
     if (!userModified) {
       await fs.copy(src, dest);
@@ -138,12 +175,18 @@ export async function updateSDD(root: string): Promise<UpdateReport> {
   // on older kits); `memory/lessons.md` is the project's distilled memory — the kit only
   // provides its starting point, and a release touching that seed must never land a
   // `.new` next to real accumulated lessons.
-  for (const rel of ['tools.json', 'memory/lessons.md']) {
+  for (const rel of ['tools.json', 'verify.json', 'memory/lessons.md']) {
     const dest = resolve(sddDir, rel);
     if (await fs.pathExists(dest)) continue;
     await fs.ensureDir(dirname(dest));
     await fs.copy(resolve(kitDir, rel), dest);
     report.added.push(rel);
+  }
+
+  for (const entry of report.splitProject ?? []) {
+    if (entry.outcome === 'kept' && report.conflicts.includes(entry.file)) {
+      entry.outcome = 'kept-new';
+    }
   }
 
   await fs.copy(resolve(kitDir, 'catalog.json'), resolve(sddDir, 'catalog.json'));
@@ -179,6 +222,79 @@ export async function updateSDD(root: string): Promise<UpdateReport> {
   }
 
   return report;
+}
+
+async function harnessFilesWithAbsorbedText(sddDir: string): Promise<string[]> {
+  const found: string[] = [];
+  for (const rel of HARNESS_FILES) {
+    const path = resolve(sddDir, rel);
+    if (!(await fs.pathExists(path))) continue;
+    if (splitAbsorbed(await fs.readFile(path, 'utf-8'))) found.push(rel);
+  }
+  return found;
+}
+
+async function splitProjectInstructions(
+  root: string,
+  kitDir: string,
+  oldManifest: KitManifest | null,
+  newManifest: KitManifest,
+): Promise<SplitProjectResult[]> {
+  const sddDir = resolve(root, 'sdd');
+  const entries: { rel: string; dest: string; content: string; absorbed: string | null; head: string }[] = [];
+  const results = new Map<string, SplitProjectResult>();
+
+  for (const rel of HARNESS_FILES) {
+    results.set(rel, { file: rel, movedBytes: 0, outcome: 'nothing' });
+    const dest = resolve(sddDir, rel);
+    if (!(await fs.pathExists(dest))) continue;
+    const content = await fs.readFile(dest, 'utf-8');
+    const parts = splitAbsorbed(content);
+    entries.push({
+      rel,
+      dest,
+      content,
+      absorbed: parts ? parts.absorbed : null,
+      head: parts ? parts.head : content,
+    });
+  }
+
+  const contributions = new Map<string, string>();
+  for (const e of entries) {
+    if (e.absorbed) contributions.set(e.rel.split('/').pop() as string, e.absorbed);
+  }
+  await mergeIntoProjectMd(root, contributions);
+  const projectNow = fold((await readProjectMd(root)) ?? '');
+  for (const e of entries) {
+    if (e.absorbed && !projectNow.includes(fold(e.absorbed))) {
+      throw new Error(
+        `Could not move the instructions of sdd/${e.rel} to sdd/dual-harness/project.md; nothing was removed.`,
+      );
+    }
+  }
+
+  for (const e of entries) {
+    const result = results.get(e.rel) as SplitProjectResult;
+    const hadText = e.absorbed !== null;
+    result.movedBytes = e.absorbed ? Buffer.byteLength(e.absorbed) : 0;
+    const headHash = hashContent(Buffer.from(e.head, 'utf-8'));
+    const baselineTrusted =
+      oldManifest !== null && compareKitVersions(oldManifest.kit_version, BASELINE_TRUSTED_SINCE) >= 0;
+    const pristineBaseline =
+      (baselineTrusted && oldManifest?.files[e.rel] === headHash) ||
+      isPublishedHarnessContent(e.rel, headHash);
+    const isNewKit = newManifest.files[e.rel] === headHash;
+
+    if (isNewKit && !hadText) continue;
+    if (pristineBaseline || isNewKit) {
+      await fs.copy(resolve(kitDir, e.rel), e.dest);
+      result.outcome = hadText ? 'moved' : 'replaced';
+      continue;
+    }
+    if (hadText) await fs.writeFile(e.dest, e.head.replace(/\s+$/, '') + '\n', 'utf-8');
+    result.outcome = 'kept';
+  }
+  return [...results.values()];
 }
 
 function runQuiet(root: string, command: string): void {

@@ -138,8 +138,37 @@
       "depends_on": [
         "TASK-004"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/cli/src/commands/configure/sdd.ts",
+        "apps/cli/src/commands/update/sdd.ts",
+        "apps/cli/src/generators/__tests__/harness-history.spec.ts",
+        "apps/cli/src/generators/__tests__/sdd.generator.absorb-edge.spec.ts",
+        "apps/cli/src/generators/__tests__/sdd.generator.absorb.spec.ts",
+        "apps/cli/src/generators/__tests__/sdd.generator.integration.spec.ts",
+        "apps/cli/src/generators/__tests__/sdd.generator.project-md.spec.ts",
+        "apps/cli/src/generators/__tests__/sdd.generator.root-files.spec.ts",
+        "apps/cli/src/generators/__tests__/sdd.generator.windows.spec.ts",
+        "apps/cli/src/generators/__tests__/update.split-project.spec.ts",
+        "apps/cli/src/generators/harness-history.ts",
+        "apps/cli/src/generators/kit-manifest.ts",
+        "apps/cli/src/generators/project-md.ts",
+        "apps/cli/src/generators/sdd.generator.ts",
+        "apps/cli/src/generators/update.generator.ts",
+        "apps/cli/templates/sdd/scripts/setup-agents.ps1",
+        "apps/cli/templates/sdd/scripts/setup-agents.sh"
+      ],
+      "usage": {
+        "tokens_in": 67875,
+        "tokens_out": 11978,
+        "tokens_total": 79853,
+        "approx": false,
+        "recorded_at": "2026-11-17",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "source": "agent-usage-notification"
+      }
     },
     {
       "id": "TASK-006",

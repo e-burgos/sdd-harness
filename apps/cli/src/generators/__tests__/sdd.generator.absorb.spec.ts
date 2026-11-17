@@ -84,12 +84,11 @@ describe('configure sdd — la absorción no anida el kit dentro de sí mismo', 
     await generateSDD(root, OPTS, INSTALL);
 
     const dual = await fs.readFile(resolve(root, 'sdd/dual-harness/AGENTS.md'), 'utf-8');
-    expect(dual.split(ABSORBED).length - 1, 'un solo encabezado de absorción').toBe(1);
-    expect(dual.split('nunca tocar prod').length - 1, 'el texto original una sola vez').toBe(1);
-    expect(dual).toContain('usar pnpm');
-    // el cuerpo del kit no entró como "instrucciones previas"
-    const absorbed = dual.slice(dual.indexOf(ABSORBED));
-    expect(absorbed).not.toContain('Spec-Driven Development');
+    expect(dual).not.toContain(ABSORBED);
+    const project = await fs.readFile(resolve(root, 'sdd/dual-harness/project.md'), 'utf-8');
+    expect(project.split('nunca tocar prod').length - 1, 'el texto original una sola vez').toBe(1);
+    expect(project).toContain('usar pnpm');
+    expect(project).not.toContain('Spec-Driven Development');
   });
 
   it('un symlink degradado en la raíz no se absorbe como instrucciones del equipo', async () => {
@@ -100,6 +99,7 @@ describe('configure sdd — la absorción no anida el kit dentro de sí mismo', 
 
     const dual = await fs.readFile(resolve(root, 'sdd/dual-harness/CLAUDE.md'), 'utf-8');
     expect(dual).not.toContain(ABSORBED);
+    expect(await fs.pathExists(resolve(root, 'sdd/dual-harness/project.md'))).toBe(false);
     expect(dual.trimStart().startsWith(String.fromCharCode(115,100,100)), "el dual-harness no empieza con la ruta del link").toBe(false);
   });
 });

@@ -362,18 +362,21 @@ describe.skipIf(process.platform === 'win32')(
       expect(fs.existsSync(resolve(root, 'GEMINI.md'))).toBe(true);
 
       // El contenido previo quedó absorbido, no perdido
-      const agents = fs.readFileSync(
-        resolve(root, 'sdd/dual-harness/AGENTS.md'),
+      const project = fs.readFileSync(
+        resolve(root, 'sdd/dual-harness/project.md'),
         'utf-8',
       );
-      expect(agents).toContain('Instrucciones previas del proyecto');
-      expect(agents).toContain('Usar siempre pnpm.');
-
-      const claude = fs.readFileSync(
-        resolve(root, 'sdd/dual-harness/CLAUDE.md'),
-        'utf-8',
-      );
-      expect(claude).toContain('No tocar la carpeta legacy/.');
+      expect(project).toContain('## De AGENTS.md');
+      expect(project).toContain('Usar siempre pnpm.');
+      expect(project).toContain('## De CLAUDE.md');
+      expect(project).toContain('No tocar la carpeta legacy/.');
+      for (const file of ['AGENTS.md', 'CLAUDE.md', 'GEMINI.md']) {
+        const kit = fs.readFileSync(resolve(root, 'sdd/dual-harness', file), 'utf-8');
+        expect(kit).not.toContain('Instrucciones previas del proyecto');
+        expect(kit).toBe(
+          fs.readFileSync(resolve(__dirname, '../../../templates/sdd/dual-harness', file), 'utf-8'),
+        );
+      }
 
       // package.json creado desde cero con el arnés
       const pkg = fs.readJSONSync(resolve(root, 'package.json'));
@@ -471,10 +474,10 @@ describe.skipIf(process.platform === 'win32')(
 
       // Raíz: absorbidos y symlinkeados (configure sdd los lee antes de enlazar)
       expect(fs.lstatSync(resolve(root, 'AGENTS.md')).isSymbolicLink()).toBe(true);
-      const dual = fs.readFileSync(resolve(root, 'sdd/dual-harness/AGENTS.md'), 'utf-8');
-      expect(dual).toContain('Instrucciones previas del proyecto');
-      expect(dual).toContain('never touch prod');
-      expect(fs.readFileSync(resolve(root, 'sdd/dual-harness/CLAUDE.md'), 'utf-8')).toContain('Use pnpm');
+      const project = fs.readFileSync(resolve(root, 'sdd/dual-harness/project.md'), 'utf-8');
+      expect(project).toContain('never touch prod');
+      expect(project).toContain('Use pnpm');
+      expect(fs.readFileSync(resolve(root, 'sdd/dual-harness/AGENTS.md'), 'utf-8')).not.toContain('never touch prod');
     });
 
     it('un segundo configure sdd (reset) conserva lo absorbido sin duplicarlo', async () => {
@@ -484,10 +487,9 @@ describe.skipIf(process.platform === 'win32')(
         mergePackageJson: true,
         absorbExistingHarness: true,
       });
-      const dual = fs.readFileSync(resolve(root, 'sdd/dual-harness/AGENTS.md'), 'utf-8');
-      expect(dual).toContain('never touch prod');
-      expect(dual.split('Instrucciones previas del proyecto').length - 1).toBe(1);
-      expect(dual.split('never touch prod').length - 1).toBe(1);
+      const project = fs.readFileSync(resolve(root, 'sdd/dual-harness/project.md'), 'utf-8');
+      expect(project.split('never touch prod').length - 1).toBe(1);
+      expect(project.split('Use pnpm').length - 1).toBe(1);
       // y los archivos propios siguen ahí después del reset
       expect(fs.readFileSync(resolve(root, '.claude/agents/team-agent.md'), 'utf-8')).toContain('Team agent');
     });

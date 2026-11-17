@@ -4,6 +4,14 @@ import { getTemplatesDir } from '../utils/fs.js';
 import { exec } from '../utils/exec.js';
 import { logger } from '../utils/logger.js';
 import { writeManifest } from './kit-manifest.js';
+import {
+  ABSORBED_HEADING,
+  PROJECT_MD_REL,
+  fold,
+  mergeIntoProjectMd,
+  projectMdPath,
+  readProjectMd,
+} from './project-md.js';
 import type { WorkspaceOptions } from './workspace.generator.js';
 import type { AppSpec } from './app.generator.js';
 import { describeAppStack, resolveMfeShell } from './app-types.js';
@@ -63,6 +71,7 @@ export async function generateSDD(
   const previousHarness = install.absorbExistingHarness
     ? await readExistingHarnessFiles(root)
     : new Map<string, string>();
+  const previousProjectMd = await readProjectMd(root);
 
   if (await fs.pathExists(destDir)) {
     await fs.remove(destDir);
@@ -92,8 +101,14 @@ export async function generateSDD(
     await ensureHarnessPackageJson(root, opts.projectName);
   }
 
-  for (const [file, content] of previousHarness) {
-    await absorbIntoDualHarness(root, file, content);
+  if (previousProjectMd !== null) {
+    await fs.writeFile(projectMdPath(root), previousProjectMd, 'utf-8');
+  }
+  if (previousHarness.size) {
+    await mergeIntoProjectMd(root, previousHarness);
+    logger.info(
+      `Existing ${[...previousHarness.keys()].join(', ')} content preserved inside ${PROJECT_MD_REL}`,
+    );
   }
   await writeRootHarnessCopies(root);
 
@@ -203,9 +218,6 @@ export async function ensureHarnessPackageJson(
 const KIT_TITLE = '# Proyecto SDD';
 const KIT_SIGNATURE = '## ⛔ SPEC GATE — REGLA GLOBAL INVIOLABLE';
 
-const ABSORBED_HEADING =
-  '## Instrucciones previas del proyecto (absorbidas al instalar SDD)';
-
 /**
  * Qué instrucciones previas del repo hay que conservar dentro de sdd/dual-harness/:
  * - un AGENTS.md/CLAUDE.md/GEMINI.md REAL en la raíz (repo sin SDD) → se lee y se deja donde
@@ -257,9 +269,6 @@ async function readExistingHarnessFiles(
   }
   return found;
 }
-
-/** Mismo contenido salvo fines de línea: la copia que dejó un link fallido, no texto del equipo. */
-const fold = (s: string) => s.replace(/\r\n/g, '\n').trim();
 
 /**
  * Qué parte de un archivo de instrucciones de la raíz es realmente del equipo.
@@ -343,22 +352,6 @@ async function writeRootHarnessCopies(root: string): Promise<void> {
     if (!(await fs.pathExists(source))) continue;
     await fs.copy(source, target, { overwrite: true });
   }
-}
-
-async function absorbIntoDualHarness(
-  root: string,
-  file: string,
-  content: string,
-): Promise<void> {
-  const target = resolve(root, 'sdd/dual-harness', file);
-  await fs.appendFile(
-    target,
-    `\n\n---\n\n${ABSORBED_HEADING}\n\n${content.trim()}\n`,
-    'utf-8',
-  );
-  logger.info(
-    `Existing ${file} content preserved inside sdd/dual-harness/${file}`,
-  );
 }
 
 async function writeGlobalJson(

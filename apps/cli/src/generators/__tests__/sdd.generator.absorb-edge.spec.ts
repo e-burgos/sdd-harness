@@ -101,8 +101,14 @@ describe('generateSDD — re-ejecuciones no duplican el texto del equipo', () =>
       resolve(root, 'sdd/dual-harness/AGENTS.md'),
       'utf-8',
     );
-    expect(dual.split('unico-marcador-equipo').length - 1).toBe(1);
-    expect(dual.split(ABSORBED).length - 1).toBe(1);
+    expect(dual).not.toContain('unico-marcador-equipo');
+    expect(dual).not.toContain(ABSORBED);
+    const project = await fs.readFile(
+      resolve(root, 'sdd/dual-harness/project.md'),
+      'utf-8',
+    );
+    expect(project.split('unico-marcador-equipo').length - 1).toBe(1);
+    expect(project.split('# Instrucciones propias del proyecto').length - 1).toBe(1);
   });
 });
 

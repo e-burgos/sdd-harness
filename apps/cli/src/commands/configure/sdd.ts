@@ -213,7 +213,7 @@ export const configureSddCommand = defineCommand({
         `${pc.bold('Layout:')} ${isMonorepo ? (usesNx ? 'Nx monorepo' : 'monorepo sin Nx') : 'standalone (repo = una app lógica)'}`,
         `${pc.bold('Apps registradas:')} ${apps.map(describeApp).join(', ') || 'none'}`,
         `${pc.bold('package.json:')} ${pkg ? 'merge de scripts sdd:* + ajv' : 'se crea uno mínimo para el arnés'}`,
-        `${pc.bold('AGENTS.md/CLAUDE.md previos:')} se absorben en sdd/dual-harness`,
+        `${pc.bold('AGENTS.md/CLAUDE.md previos:')} se absorben en sdd/dual-harness/project.md`,
         `${pc.bold('.claude/.github/.agents propios:')} se conservan; el kit se enlaza al lado y toda colisión queda como *.new`,
       ].join('\n'),
       'Install plan',

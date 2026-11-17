@@ -168,7 +168,7 @@ link_dir "$ROOT/.claude/commands" "../sdd/prompts" "../../sdd/prompts" "$ROOT/sd
 link_items "$ROOT/.github/prompts" "../../sdd/prompts" "$ROOT/sdd/prompts" ".github/prompts"
 
 # ─── 4. dual-harness: root AGENTS.md, CLAUDE.md and GEMINI.md ────────────────
-# A real root file is kept (+ .new). `harness configure sdd` absorbs it into sdd/dual-harness/
+# A real root file is kept (+ .new). `harness configure sdd` absorbs it into sdd/dual-harness/project.md
 # before calling this script, so on a fresh install these become symlinks right away.
 for name in AGENTS.md CLAUDE.md GEMINI.md; do
   link_item "$ROOT/$name" "sdd/dual-harness/$name" "$ROOT/sdd/dual-harness/$name" "$name"
@@ -265,6 +265,6 @@ if [ "${#CONFLICTS[@]}" -gt 0 ]; then
   echo "⚠ ${#CONFLICTS[@]} item(s) kept as yours — the kit version is next to each as *.new:"
   for c in "${CONFLICTS[@]}"; do echo "    ~ $c  →  $c.new"; done
   echo "  Merge what you need, delete the .new (or delete yours and re-run pnpm setup:agents)."
-  echo "  Root AGENTS.md/CLAUDE.md/GEMINI.md: \`harness configure sdd\` absorbs them into sdd/dual-harness/ for you."
+  echo "  Root AGENTS.md/CLAUDE.md/GEMINI.md: \`harness configure sdd\` absorbs them into sdd/dual-harness/project.md for you."
 fi
 echo "done."

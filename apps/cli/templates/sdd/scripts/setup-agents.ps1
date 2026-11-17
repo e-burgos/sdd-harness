@@ -268,7 +268,7 @@ Link-Dir (Join-Path $root ".claude\commands") $promptsSource ".claude/commands -
 Link-Items (Join-Path $root ".github\prompts") $promptsSource ".github/prompts" "*.prompt.md"
 
 # ─── 4. dual-harness: root AGENTS.md, CLAUDE.md and GEMINI.md ────────────────
-# A real root file is kept (+ .new). `harness configure sdd` absorbs it into sdd/dual-harness/
+# A real root file is kept (+ .new). `harness configure sdd` absorbs it into sdd/dual-harness/project.md
 # before calling this script, so on a fresh install these become links right away.
 $dualHarnessDir = Join-Path $root "sdd\dual-harness"
 foreach ($name in @("AGENTS.md", "CLAUDE.md", "GEMINI.md")) {
@@ -408,6 +408,6 @@ if ($script:Conflicts.Count -gt 0) {
     Write-Host "! $($script:Conflicts.Count) item(s) kept as yours - the kit version is next to each as *.new:"
     foreach ($c in $script:Conflicts) { Write-Host "    ~ $c  ->  $c.new" }
     Write-Host "  Merge what you need, delete the .new (or delete yours and re-run pnpm setup:agents)."
-    Write-Host "  Root AGENTS.md/CLAUDE.md/GEMINI.md: 'harness configure sdd' absorbs them into sdd/dual-harness/ for you."
+    Write-Host "  Root AGENTS.md/CLAUDE.md/GEMINI.md: 'harness configure sdd' absorbs them into sdd/dual-harness/project.md for you."
 }
 Write-Host "done."

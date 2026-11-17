@@ -5,10 +5,22 @@ import { existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { logger } from '../../utils/logger.js';
 import { warnIfNxRootMismatch } from '../../utils/env.js';
-import { updateSDD } from '../../generators/update.generator.js';
-import { readManifest } from '../../generators/kit-manifest.js';
+import { updateSDD, type SplitProjectResult } from '../../generators/update.generator.js';
+import { HARNESS_CORE_SINCE, readManifest } from '../../generators/kit-manifest.js';
 import { MIGRATION_MAX_LISTED } from '../../generators/kit-migrations.js';
 import { version } from '../../version.js';
+
+function describeSplit(entry: SplitProjectResult): string {
+  const moved = entry.movedBytes ? `moved ${entry.movedBytes} bytes to project.md` : '';
+  const outcome = {
+    moved: 'replaced by the kit core',
+    replaced: 'replaced by the kit core',
+    'kept-new': 'kept as is, the kit core is next to it as .new',
+    kept: 'kept as is',
+    nothing: 'nothing to do',
+  }[entry.outcome];
+  return moved ? `${moved}; ${outcome}` : outcome;
+}
 
 export const updateSddCommand = defineCommand({
   meta: {
@@ -21,6 +33,12 @@ export const updateSddCommand = defineCommand({
       type: 'boolean',
       alias: 'y',
       description: 'Skip confirmation prompts',
+      default: false,
+    },
+    'split-project': {
+      type: 'boolean',
+      description:
+        'Move your own instructions out of sdd/dual-harness/{CLAUDE,AGENTS,GEMINI}.md into sdd/dual-harness/project.md and adopt the kit core',
       default: false,
     },
   },
@@ -62,7 +80,7 @@ export const updateSddCommand = defineCommand({
     logger.step('Updating SDD kit...');
 
     try {
-      const report = await updateSDD(cwd);
+      const report = await updateSDD(cwd, { splitProject: args['split-project'] });
 
       if (report.updated.length) {
         logger.success(`Updated ${report.updated.length} kit file(s)`);
@@ -97,6 +115,21 @@ export const updateSddCommand = defineCommand({
         !report.removedStale.length
       ) {
         logger.success('Kit already up to date — nothing to change.');
+      }
+
+      if (report.splitProject) {
+        for (const entry of report.splitProject) {
+          p.log.message(`  ${entry.file}: ${describeSplit(entry)}`);
+        }
+      } else if (report.absorbedInHarness.length) {
+        logger.warn(
+          `Your own instructions are still inside ${report.absorbedInHarness.map((f) => `sdd/${f}`).join(', ')}: run \`harness update sdd --split-project\` to move them to sdd/dual-harness/project.md.`,
+        );
+      }
+      if (report.harnessCoreNotice) {
+        logger.warn(
+          `v${HARNESS_CORE_SINCE} — sdd/dual-harness/{CLAUDE,AGENTS,GEMINI}.md are now a core under 6 KB with on-demand rules. \`harness update sdd --split-project\` moves your own instructions to sdd/dual-harness/project.md and adopts the new core; \`pnpm sdd:verify --init\` seeds sdd/verify.json.`,
+        );
       }
 
       // Va al final, después del resumen de archivos: es lo único del reporte que le

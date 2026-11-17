@@ -30,6 +30,7 @@ const DATA_FILES = new Set([
   'fixes.json',
   'tools.json',
   'verify.json',
+  'dual-harness/project.md',
   // La memoria destilada del proyecto. El kit aporta su contenido inicial (se sirve
   // en la instalación, que copia el kit entero) pero a partir de ahí es del usuario:
   // como híbrido, cualquier release que tocara el seed dejaba un lessons.md.new con
@@ -48,11 +49,31 @@ const GENERATED_FILES = new Set(['catalog.json']);
 const HYBRID_FILES = new Set([
   'context/constitution.md',
   'context/context_prompt.md',
+  'pricing.json',
+]);
+
+export const HARNESS_CORE_SINCE = '0.23.0';
+
+export const BASELINE_TRUSTED_SINCE = '0.9.3';
+
+export const HARNESS_FILES = [
   'dual-harness/AGENTS.md',
   'dual-harness/CLAUDE.md',
   'dual-harness/GEMINI.md',
-  'pricing.json',
-]);
+] as const;
+
+export function compareKitVersions(a: string, b: string): number {
+  const parse = (v: string) => v.split('.').map((n) => Number.parseInt(n, 10) || 0);
+  const [x, y] = [parse(a), parse(b)];
+  for (let i = 0; i < 3; i++) {
+    if ((x[i] ?? 0) !== (y[i] ?? 0)) return (x[i] ?? 0) - (y[i] ?? 0);
+  }
+  return 0;
+}
+
+export function harnessIsHybrid(installedKitVersion: string | null | undefined): boolean {
+  return !installedKitVersion || compareKitVersions(installedKitVersion, HARNESS_CORE_SINCE) < 0;
+}
 
 export type KitManifest = {
   kit_version: string;
@@ -82,7 +103,10 @@ export function isGenerated(relPath: string): boolean {
   return GENERATED_FILES.has(relPath);
 }
 
-export function isHybrid(relPath: string): boolean {
+export function isHybrid(relPath: string, installedKitVersion?: string | null): boolean {
+  if ((HARNESS_FILES as readonly string[]).includes(relPath)) {
+    return installedKitVersion === undefined ? true : harnessIsHybrid(installedKitVersion);
+  }
   return HYBRID_FILES.has(relPath);
 }
 
