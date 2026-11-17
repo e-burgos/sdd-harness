@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { resolve } from 'node:path';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, realpathSync, rmSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import fs from 'fs-extra';
@@ -19,6 +19,8 @@ describe.skipIf(process.platform === 'win32')('sdd-use.mjs (integration)', () =>
     const json = args.includes('--json') ? (JSON.parse(run.stdout) as UseJson) : undefined;
     return { status: run.status, stdout: run.stdout ?? '', output: `${run.stdout ?? ''}${run.stderr ?? ''}`, json };
   };
+
+  const where = () => ` worktree=${encodeURIComponent(realpathSync(ws))}`;
 
   const writeCycleStatus = (cycle: string, status: string) =>
     fs.outputJSON(resolve(ws, 'sdd/specs', specId, 'cycles', cycle, 'cycle.json'), { status });
@@ -75,14 +77,14 @@ describe.skipIf(process.platform === 'win32')('sdd-use.mjs (integration)', () =>
     expect(asJson.json).toEqual({
       ok: true,
       unit: { kind: 'cycle', spec: specId, cycle: 'cycle-01' },
-      marker: `SDD-BIND spec=${specId} cycle=cycle-01`,
+      marker: `SDD-BIND spec=${specId} cycle=cycle-01${where()}`,
     });
   });
 
   it('ata un fix abierto', () => {
     const run = runUse('FIX-eburgos-001', '--json');
     expect(run.status).toBe(0);
-    expect(run.json?.marker).toBe('SDD-BIND fix=FIX-eburgos-001');
+    expect(run.json?.marker).toBe(`SDD-BIND fix=FIX-eburgos-001${where()}`);
   });
 
   it('rechaza un ciclo cerrado y lista las unidades abiertas', () => {
@@ -98,8 +100,18 @@ describe.skipIf(process.platform === 'win32')('sdd-use.mjs (integration)', () =>
     expect(runUse('FIX-eburgos-999').status).toBe(1);
   });
 
-  it('una spec sin ciclo o desconocida es un error de uso', () => {
-    expect(runUse('orders').status).toBe(2);
+  it('la spec sola ata a su ciclo abierto, o a la spec en preparación si no tiene uno', async () => {
+    expect(runUse('orders', '--json').json?.unit).toEqual({ kind: 'cycle', spec: specId, cycle: 'cycle-01' });
+    await writeCycleStatus('cycle-01', 'completed');
+    const preparing = runUse('orders', '--json');
+    expect(preparing.status).toBe(0);
+    expect(preparing.json?.marker).toBe(`SDD-BIND spec=${specId}${where()}`);
+    expect(runUse('orders').stdout).toContain('spec in preparation');
+    await writeCycleStatus('cycle-01', 'in-progress');
+  });
+
+  it('una spec desconocida es un error de uso', () => {
     expect(runUse('nope', 'cycle-01').status).toBe(2);
+    expect(runUse('nope').status).toBe(2);
   });
 });

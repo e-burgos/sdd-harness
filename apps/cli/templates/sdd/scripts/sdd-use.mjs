@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Binds the current session to an open unit of work: pnpm sdd:use <spec-id|slug> <cycle-XX> | <FIX-id> [--json]
+// Binds the current session to a unit of work: pnpm sdd:use <spec-id|slug> [cycle-XX] | <FIX-id> [--json]
 // It does not write the session registry (a script has no session id): it validates the unit and
 // prints the SDD-BIND marker line, which the Claude Code mod and the Studio bridge pick up.
 // Exits 0 when the unit is open, 1 when it is not, 2 on usage errors.
@@ -18,10 +18,12 @@ const json = args.includes('--json');
 const positional = args.filter((a) => !a.startsWith('--'));
 
 if (args.includes('--help') || args.includes('-h') || positional.length === 0) {
-  console.log(`Usage: pnpm sdd:use <spec-id|slug> <cycle-XX> [--json]
+  console.log(`Usage: pnpm sdd:use <spec-id|slug> [cycle-XX] [--json]
        pnpm sdd:use <FIX-id> [--json]
 
-  Binds this session to an open cycle (status in-progress) or an open fix (pending | in-progress).
+  Binds this session to an open cycle (status in-progress), an open fix (pending | in-progress) or,
+  with no cycle given, to the spec: its open cycle if it has one, otherwise the spec in preparation.
+  Run it from the worktree where the unit lives: the marker carries that worktree.
   Prints the SDD-BIND marker line that the Claude Code mod and the Studio bridge read.
   --json      → structured output for agents
 
@@ -71,6 +73,10 @@ function fail(reason, code = 1) {
   process.exit(code);
 }
 
+function specStatusOf(id) {
+  return (loadJson(join(SDD, 'specs', 'index.json'))?.specs ?? []).find((s) => s.id === id)?.status ?? null;
+}
+
 function resolveSpecId(query) {
   if (specIds.includes(query)) return query;
   const matches = specIds.filter((id) => id.endsWith(`-${query}`) || id.includes(query));
@@ -94,13 +100,19 @@ if (/^FIX-/i.test(positional[0])) {
   }
   unit = { kind: 'fix', fix: found.id };
 } else {
-  if (positional.length < 2) fail('a spec needs its cycle: pnpm sdd:use <spec> <cycle-XX>', 2);
   const spec = resolveSpecId(positional[0]);
-  const cycle = normalizeCycle(positional[1]);
-  if (!cycles.some((c) => c.spec === spec && c.cycle === cycle)) fail(`${spec} ${cycle} is not an open cycle (status in-progress)`);
-  unit = { kind: 'cycle', spec, cycle };
+  if (positional.length < 2) {
+    const status = specStatusOf(spec);
+    if (status === 'completed' || status === 'cancelled') fail(`${spec} is ${status}`);
+    const own = cycles.filter((c) => c.spec === spec);
+    unit = own.length === 1 ? { kind: 'cycle', spec, cycle: own[0].cycle } : { kind: 'spec', spec };
+  } else {
+    const cycle = normalizeCycle(positional[1]);
+    if (!cycles.some((c) => c.spec === spec && c.cycle === cycle)) fail(`${spec} ${cycle} is not an open cycle (status in-progress)`);
+    unit = { kind: 'cycle', spec, cycle };
+  }
 }
 
-const marker = formatBindMarker(unit);
+const marker = formatBindMarker(unit, REPO);
 if (json) console.log(JSON.stringify({ ok: true, unit, marker }, null, 2));
-else console.log(`Session bound to ${unitKey(unit)}\n${marker}`);
+else console.log(`Session bound to ${unitKey(unit)}${unit.kind === 'spec' ? ' (spec in preparation: no code until its cycle is open)' : ''} · worktree ${REPO}\n${marker}`);

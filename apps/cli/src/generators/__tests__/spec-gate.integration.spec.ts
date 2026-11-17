@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { resolve } from 'node:path';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdtempSync, rmSync, realpathSync } from 'node:fs';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import fs from 'fs-extra';
@@ -100,6 +100,7 @@ describe.skipIf(process.platform === 'win32')('spec-gate.mjs (integration)', () 
     expect(run.output).toContain('APPROVED');
     expect(run.output).toContain('cycle-01');
     expect(run.output).toContain('suggested flow: lite');
+    expect(run.output).toContain(`SDD-BIND spec=${specId} worktree=${encodeURIComponent(realpathSync(ws))}`);
 
     const asJson = runGate(specId, '--json');
     expect(asJson.json?.passed).toBe(true);
@@ -208,7 +209,9 @@ describe.skipIf(process.platform === 'win32')('spec-gate.mjs (integration)', () 
     expect(approved.output).toContain('APPROVED');
     expect(approved.output).toContain(`SDD-BIND spec=${specId} cycle=cycle-01`);
     const approvedJson = runGate('orders', 'cycle-01', '--json');
-    expect((approvedJson.json as { marker?: string }).marker).toBe(`SDD-BIND spec=${specId} cycle=cycle-01`);
+    expect((approvedJson.json as { marker?: string }).marker).toBe(
+      `SDD-BIND spec=${specId} cycle=cycle-01 worktree=${encodeURIComponent(realpathSync(ws))}`,
+    );
     expect(blocked.output).not.toContain('SDD-BIND');
     expect(runGate('orders').output).not.toContain('SDD-BIND');
 

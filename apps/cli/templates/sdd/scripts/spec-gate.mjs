@@ -219,10 +219,8 @@ const cycleId = positional[1] ? normalizeCycle(positional[1]) : null;
 const result = cycleId ? gateB(spec, cycleId) : gateA(spec);
 const passed = result.checks.every((c) => c.ok);
 
-const bindMarker =
-  passed && result.gate === 'B'
-    ? formatBindMarker({ kind: 'cycle', spec: spec.id, cycle: result.cycle })
-    : null;
+const bindUnit = result.gate === 'B' ? { kind: 'cycle', spec: spec.id, cycle: result.cycle } : { kind: 'spec', spec: spec.id };
+const bindMarker = passed ? formatBindMarker(bindUnit, REPO) : null;
 
 if (json) {
   console.log(JSON.stringify({ spec: spec.id, passed, ...result, ...(bindMarker ? { marker: bindMarker } : {}) }, null, 2));
