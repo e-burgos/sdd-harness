@@ -85,10 +85,14 @@ export type SplitHarnessContent = {
   absorbed: string;
 };
 
+function headWithoutSeparator(raw: string, eol: string): string {
+  const head = raw.replace(/\s+$/, '').replace(/(^|\r?\n)[ \t]*-{3,}[ \t]*$/, '').replace(/\s+$/, '');
+  return head === '' ? '' : head + eol;
+}
+
 export function splitAbsorbed(content: string): SplitHarnessContent | null {
   const idx = content.indexOf(ABSORBED_HEADING);
   if (idx === -1) return null;
   const absorbed = content.slice(idx + ABSORBED_HEADING.length).trim();
-  const head = content.slice(0, idx).replace(/(\r?\n){2}---(\r?\n){2}$/, '');
-  return { head, absorbed };
+  return { head: headWithoutSeparator(content.slice(0, idx), content.includes('\r\n') ? '\r\n' : '\n'), absorbed };
 }

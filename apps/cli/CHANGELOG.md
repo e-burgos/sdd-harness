@@ -5,6 +5,14 @@ All notable changes to `@e-burgos/sdd-harness` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.23.1] - 2026-11-18
+
+### Fixed
+- `harness update sdd --split-project` adopts the new core in repos whose harness files carry
+  absorbed instructions: 0.23.0 only recognised the exact separator `\n\n---\n\n` before
+  «Instrucciones previas del proyecto», so real absorptions (`-->\n---\n\n` or blank lines) left
+  `.new` next to all three harness files instead of replacing them (FIX-e-burgos-025-001).
+
 ## [0.23.0] - 2026-11-18
 
 ### Added
