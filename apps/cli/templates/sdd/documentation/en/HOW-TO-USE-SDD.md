@@ -115,7 +115,7 @@ rule one, invariants and a trigger table ("if X happens, read that rule"). The d
 
 **Your repo's own instructions do not go in those files**: they live in
 `sdd/dual-harness/project.md`, which the kit does not ship, is not in the manifest and `update sdd`
-never touches; the core imports it (`@project.md` and `@sdd/dual-harness/project.md`) and
+never touches; the core imports it (`@../dual-harness/project.md` and `@sdd/dual-harness/project.md`) and
 `AGENTS.md`/`GEMINI.md`/`copilot-instructions.md` point to it. If your repo already had instructions
 inside the harness files, see `harness update sdd --split-project` in [INSTALL.md](INSTALL.md).
 

@@ -3,7 +3,8 @@ import fs from 'fs-extra';
 import { getTemplatesDir } from '../utils/fs.js';
 import { exec } from '../utils/exec.js';
 import { logger } from '../utils/logger.js';
-import { writeManifest } from './kit-manifest.js';
+import { hashContent, writeManifest } from './kit-manifest.js';
+import { PUBLISHED_HARNESS_HASHES } from './harness-history.js';
 import {
   ABSORBED_HEADING,
   PROJECT_MD_REL,
@@ -230,6 +231,31 @@ export async function ensureHarnessPackageJson(
 // las versiones desde v0.3.0.
 const KIT_TITLE = '# Proyecto SDD';
 const KIT_SIGNATURE = '## ⛔ SPEC GATE — REGLA GLOBAL INVIOLABLE';
+const RULE_ZERO_MARKER = '<!-- regla-cero:start -->';
+const PROJECT_IMPORT_LINE = '@sdd/dual-harness/project.md';
+
+function currentKitHarnessHashes(): Set<string> {
+  const hashes = new Set<string>();
+  for (const file of ROOT_HARNESS_FILES) {
+    const path = resolve(getTemplatesDir(), 'sdd/dual-harness', file);
+    if (fs.pathExistsSync(path)) hashes.add(hashContent(fs.readFileSync(path)));
+  }
+  return hashes;
+}
+
+function looksLikeKitCopy(content: string): boolean {
+  if (content.includes(RULE_ZERO_MARKER)) return true;
+  if (content.includes(KIT_TITLE) && content.includes(KIT_SIGNATURE)) return true;
+  const hash = hashContent(Buffer.from(content, 'utf-8'));
+  if (currentKitHarnessHashes().has(hash)) return true;
+  return Object.values(PUBLISHED_HARNESS_HASHES).some((list) => list.includes(hash));
+}
+
+function textAfterProjectImport(own: string): string | null {
+  const idx = own.lastIndexOf(PROJECT_IMPORT_LINE);
+  if (idx === -1) return null;
+  return own.slice(idx + PROJECT_IMPORT_LINE.length).trim();
+}
 
 /**
  * Qué instrucciones previas del repo hay que conservar dentro de sdd/dual-harness/:
@@ -318,7 +344,7 @@ export function teamContribution(
   // Texto que ya está absorbido en el dual-harness anterior (la raíz es una copia del kit que
   // incluye ese mismo tramo): no se agrega dos veces.
   const idx = own.indexOf(ABSORBED_HEADING);
-  const isKit = own.includes(KIT_TITLE) && own.includes(KIT_SIGNATURE);
+  const isKit = looksLikeKitCopy(content);
   if (idx !== -1) {
     const tail = own.slice(idx + ABSORBED_HEADING.length).trim();
     if (isKit) {
@@ -333,9 +359,9 @@ export function teamContribution(
   // del kit nunca es texto del equipo.
   if (isKit) {
     logger.warn(
-      'Se encontró en la raíz una copia de una versión anterior del kit: su cuerpo no se absorbe.',
+      'Se encontró en la raíz una copia de una versión distinta del kit: su cuerpo no se absorbe.',
     );
-    return null;
+    return textAfterProjectImport(own) || null;
   }
   return own;
 }

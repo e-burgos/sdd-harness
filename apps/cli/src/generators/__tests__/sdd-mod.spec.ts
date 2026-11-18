@@ -223,6 +223,31 @@ describe('sdd-mod: paths', () => {
     expect(sdd.isCodePath('apps\\docs\\pages\\a.mdx', exempt)).toBe(false);
   });
 
+  it('CODE_ROOTS no distingue mayúsculas: Apps/ y APPS/ siguen siendo código', () => {
+    expect(sdd.isCodePath('Apps/web/README.md')).toBe(true);
+    expect(sdd.isCodePath('APPS/x.mdx')).toBe(true);
+    expect(sdd.isCodePath('Libs/a/b.md')).toBe(true);
+    expect(sdd.isCodePath('Docs/a.md')).toBe(false);
+  });
+
+  it('** pegado a otros caracteres no cruza /', () => {
+    expect(sdd.isCodePath('apps/docs-api/src/server.ts', ['apps/docs**'])).toBe(true);
+    expect(sdd.matchesGlob('apps/docs-api', 'apps/docs**')).toBe(true);
+    expect(sdd.matchesGlob('apps/docs-api/x', 'apps/docs**')).toBe(false);
+    expect(sdd.matchesGlob('a/b/c.md', 'a/**.md')).toBe(false);
+    expect(sdd.matchesGlob('a/b.md', 'a/**.md')).toBe(true);
+    expect(sdd.matchesGlob('a/b/c.md', '**/**/c.md')).toBe(true);
+  });
+
+  it('muchos ** no explotan: 12 segmentos ** contra un path de 200 caracteres en menos de 50 ms', () => {
+    const glob = Array.from({ length: 12 }, () => '**/a').join('/') + '/zzz';
+    const path = Array.from({ length: 66 }, () => 'a').join('/') + '/b';
+    const start = performance.now();
+    expect(sdd.matchesGlob(path, glob)).toBe(false);
+    expect(sdd.matchesGlob(path, '**/**/**/**/**/**/**/**/**/**/**/**/b')).toBe(true);
+    expect(performance.now() - start).toBeLessThan(50);
+  });
+
   it('globs: **, *, ? y metacaracteres literales', () => {
     const m = sdd.matchesGlob;
     expect(m('a/b/c.md', '**/c.md')).toBe(true);

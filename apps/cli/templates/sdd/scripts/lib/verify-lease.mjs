@@ -157,7 +157,7 @@ export function tryAcquire(file, info, { suspect } = {}) {
 
 export function releaseLease(file) {
   const owner = readOwner(file);
-  if (owner && owner.pid !== process.pid) return false;
+  if (!owner || owner.pid !== process.pid || owner.host !== hostname()) return false;
   removeQuietly(file);
   return true;
 }
@@ -181,6 +181,7 @@ export async function acquireWithWait(file, info, { waitMs, pollMs = LEASE_POLL_
   const deadline = Date.now() + waitMs;
   let informed = false;
   let suspect;
+  let confirmed = false;
   for (;;) {
     const attempt = tryAcquire(file, info, { suspect });
     if (attempt.acquired) return { acquired: true };
@@ -190,12 +191,17 @@ export async function acquireWithWait(file, info, { waitMs, pollMs = LEASE_POLL_
       onBusy?.(attempt.owner);
     }
     const remaining = deadline - Date.now();
-    if (remaining <= 0) return { acquired: false, owner: attempt.owner };
+    if (remaining <= 0) {
+      if (suspect === undefined || confirmed) return { acquired: false, owner: attempt.owner };
+      confirmed = true;
+      await sleep(pollMs);
+      continue;
+    }
     await sleep(Math.min(pollMs, remaining));
   }
 }
 
-export function installReleaseHandlers(file, onSignal) {
+export function holdLease(file) {
   let released = false;
   const stopHeartbeat = startHeartbeat(file);
   const release = () => {
@@ -205,12 +211,5 @@ export function installReleaseHandlers(file, onSignal) {
     releaseLease(file);
   };
   process.on('exit', release);
-  for (const [signal, code] of [['SIGINT', 130], ['SIGTERM', 143]]) {
-    process.on(signal, () => {
-      onSignal?.();
-      release();
-      process.exit(code);
-    });
-  }
   return release;
 }

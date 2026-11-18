@@ -9,6 +9,8 @@ import { fileURLToPath } from 'node:url';
 import {
   LEVELS,
   UNIT_RE,
+  allSkipped,
+  appDirName,
   appIdsOf,
   buildResult,
   canReuse,
@@ -16,6 +18,7 @@ import {
   descendantsOf,
   expandFiles,
   formatDuration,
+  hasFilesPlaceholder,
   inferEntry,
   isStandaloneTool,
   logicalIdsOf,
@@ -28,13 +31,15 @@ import {
   resultFileName,
   selectCycle,
   tailOf,
+  unsafeFileName,
   whyNoEntry,
 } from './lib/verify.mjs';
 import {
   LEASE_DEFAULT_WAIT_S,
   LEASE_EXIT_CODE,
   acquireWithWait,
-  installReleaseHandlers,
+  holdLease,
+  isPidAlive,
   resolveLockFile,
 } from './lib/verify-lease.mjs';
 
@@ -69,8 +74,11 @@ function parseArgs(argv) {
     }
     const [name, inline] = token.slice(2).split(/=(.*)/s);
     if (BOOLEAN_FLAGS.has(name)) options[name] = true;
-    else if (VALUE_FLAGS.has(name)) options[name] = inline ?? argv[++index];
-    else return { error: `unknown option --${name}` };
+    else if (VALUE_FLAGS.has(name)) {
+      const value = inline ?? (argv[index + 1]?.startsWith('--') ? undefined : argv[++index]);
+      if (value === undefined) return { error: `--${name} needs a value` };
+      options[name] = value;
+    } else return { error: `unknown option --${name}` };
   }
   return { options, positional };
 }
@@ -89,20 +97,30 @@ function fail(code, message) {
   process.exit(code);
 }
 
-function readJson(path) {
+function readJsonState(path) {
+  if (!existsSync(path)) return { state: 'missing' };
   try {
-    return JSON.parse(readFileSync(path, 'utf8'));
+    return { state: 'ok', value: JSON.parse(readFileSync(path, 'utf8').replace(/^\uFEFF/, '')) };
   } catch {
-    return null;
+    return { state: 'invalid' };
   }
 }
+
+function readJson(path) {
+  const read = readJsonState(path);
+  return read.state === 'ok' ? read.value : null;
+}
+
+const isPlainObject = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
+
+const INVALID_VERIFY_JSON = 'sdd/verify.json is not valid JSON — fix it first';
 
 function writeJson(path, value) {
   writeFileSync(path, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
 }
 
 function git(args) {
-  const run = spawnSync('git', ['-C', REPO, ...args], { encoding: 'utf8' });
+  const run = spawnSync('git', ['-C', REPO, '-c', 'core.quotePath=false', ...args], { encoding: 'utf8' });
   return run.status === 0 ? run.stdout : null;
 }
 
@@ -144,30 +162,35 @@ function resolveCycle(appId) {
   return selectCycle(cycleCandidates(), { app: appId, spec: options.spec, cycle });
 }
 
-function loadResults(verifyDir) {
-  if (!existsSync(verifyDir)) return [];
-  return readdirSync(verifyDir)
+function loadResults(appDir) {
+  if (!existsSync(appDir)) return [];
+  return readdirSync(appDir)
     .filter((name) => name.endsWith('-full.json'))
-    .map((name) => ({ ...readJson(join(verifyDir, name)), file: join(verifyDir, name) }));
+    .map((name) => ({ ...readJson(join(appDir, name)), file: join(appDir, name) }));
 }
 
-function findReusable(verifyDir, appId, state) {
+function findReusable(appDir, appId, state, commands) {
   const dirtyNow = dirtyPaths();
-  for (const previous of pickReusableCandidates(loadResults(verifyDir), appId)) {
+  for (const previous of pickReusableCandidates(loadResults(appDir), appId)) {
     const changedSincePrevious = previous.commit ? changedBetween(previous.commit) : null;
-    if (state.commit && canReuse(previous, { app: appId, changedSincePrevious, dirtyNow, prefix: state.prefix })) return previous;
+    if (state.commit && canReuse(previous, { app: appId, changedSincePrevious, dirtyNow, prefix: state.prefix, commands })) return previous;
   }
   return null;
 }
 
-function ensureLogDir(verifyDir) {
+function ensureLogDir(verifyDir, appId) {
   const logs = join(verifyDir, 'logs');
   mkdirSync(logs, { recursive: true });
   writeFileSync(join(logs, '.gitignore'), '*\n', 'utf8');
-  return logs;
+  const appLogs = join(logs, appDirName(appId));
+  mkdirSync(appLogs, { recursive: true });
+  return appLogs;
 }
 
 let activeChild = null;
+let shuttingDown = false;
+let releaseLease = null;
+const TERM_GRACE_MS = 5000;
 
 function childPidsOf(pid) {
   const run = spawnSync('pgrep', ['-P', String(pid)], { encoding: 'utf8' });
@@ -182,17 +205,39 @@ function signalQuietly(pid, signal) {
   }
 }
 
-function killActiveTree() {
+const pause = (ms) => new Promise((resolvePause) => setTimeout(resolvePause, ms));
+
+async function terminateActiveTree() {
   const pid = activeChild?.pid;
   if (!pid) return;
+  if (process.platform === 'win32') {
+    spawnSync('taskkill', ['/PID', String(pid), '/T', '/F'], { stdio: 'ignore' });
+    return;
+  }
+  const tree = [...descendantsOf(pid, childPidsOf), pid];
+  for (const target of tree) signalQuietly(target, 'SIGTERM');
+  const deadline = Date.now() + TERM_GRACE_MS;
+  while (Date.now() < deadline && !(activeChild === null && !tree.some(isPidAlive))) await pause(50);
+  const survivors = [...new Set([...tree, ...(activeChild ? descendantsOf(pid, childPidsOf) : [])])].filter(isPidAlive);
+  for (const target of survivors) signalQuietly(target, 'SIGKILL');
+}
+
+async function shutdown(code) {
+  if (shuttingDown) return;
+  shuttingDown = true;
   try {
-    if (process.platform === 'win32') {
-      spawnSync('taskkill', ['/PID', String(pid), '/T', '/F'], { stdio: 'ignore' });
-      return;
-    }
-    for (const target of [...descendantsOf(pid, childPidsOf), pid]) signalQuietly(target, 'SIGTERM');
-  } catch {
-    activeChild?.kill();
+    await terminateActiveTree();
+  } finally {
+    releaseLease?.();
+    process.exit(code);
+  }
+}
+
+function installSignalHandlers() {
+  for (const [signal, code] of [['SIGINT', 130], ['SIGTERM', 143], ['SIGHUP', 129]]) {
+    process.on(signal, () => {
+      void shutdown(code);
+    });
   }
 }
 
@@ -212,6 +257,10 @@ function runCommand(command, logPath) {
     child.stderr.on('data', collect(process.stderr));
     const finish = (exitCode) => {
       activeChild = null;
+      if (shuttingDown) {
+        log.end();
+        return;
+      }
       log.end(() => resolveRun({ exit_code: exitCode, duration_ms: Date.now() - started, tail }));
     };
     child.on('error', (error) => {
@@ -266,12 +315,14 @@ async function takeLease(appId) {
   if (!outcome.acquired) {
     fail(LEASE_EXIT_CODE, `lease still held by ${describeOwner(outcome.owner)} after ${waitS}s — report it instead of forcing`);
   }
-  installReleaseHandlers(file, killActiveTree);
+  releaseLease = holdLease(file);
 }
 
 function initEntries() {
   const globalJson = readJson(join(SDD, 'global.json'));
-  const config = readJson(VERIFY_FILE) ?? { $schema: './schemas/verify.schema.json' };
+  const existing = readJsonState(VERIFY_FILE);
+  if (existing.state === 'invalid' || (existing.state === 'ok' && !isPlainObject(existing.value))) fail(2, INVALID_VERIFY_JSON);
+  const config = existing.state === 'ok' ? existing.value : { $schema: './schemas/verify.schema.json' };
   const nx = existsSync(join(REPO, 'nx.json'));
   const rootPackageJson = readJson(join(REPO, 'package.json'));
   const added = [];
@@ -317,6 +368,7 @@ async function main() {
     console.log(USAGE);
     process.exit(0);
   }
+  installSignalHandlers();
   if (options.init) {
     initEntries();
     return;
@@ -326,8 +378,10 @@ async function main() {
   if (options.reuse && level !== 'full') fail(2, '--reuse applies to the full level only');
   if (options.unit && !UNIT_RE.test(options.unit)) fail(2, `invalid --unit "${options.unit}" — use TASK-NNN or B-NN`);
 
-  const config = readJson(VERIFY_FILE);
-  if (!config) fail(3, 'sdd/verify.json is missing or invalid — run: pnpm sdd:verify --init');
+  const loaded = readJsonState(VERIFY_FILE);
+  if (loaded.state === 'missing') fail(3, 'sdd/verify.json is missing — run: pnpm sdd:verify --init');
+  if (loaded.state === 'invalid' || !isPlainObject(loaded.value)) fail(2, INVALID_VERIFY_JSON);
+  const config = loaded.value;
   const entryRef = resolveEntryId(config, appQuery);
   if (entryRef.error === 'ambiguous') fail(2, `"${appQuery}" is ambiguous: ${entryRef.candidates.join(', ')}`);
   if (entryRef.error === 'missing') {
@@ -336,14 +390,22 @@ async function main() {
   const appId = entryRef.id;
   const commands = resolveLevelCommands(config, appId, level);
 
-  const { cycle, reason } = resolveCycle(appId);
-  if (!cycle && (options.spec || options.cycle)) fail(2, `no cycle matches --spec/--cycle (${reason})`);
+  const files = parseFilesOption(options.files);
+  const unsafe = commands.some(hasFilesPlaceholder) ? unsafeFileName(files) : null;
+  if (unsafe) fail(2, `file name "${unsafe}" has characters cmd.exe cannot quote safely — run the command by hand or rename the file`);
+
+  const { cycle, reason, candidates } = resolveCycle(appId);
+  if (!cycle && (options.spec || options.cycle)) {
+    if (reason === 'ambiguous') fail(2, `--spec/--cycle is ambiguous: ${candidates.join(', ')} — narrow it with --spec <spec-id> --cycle cycle-XX`);
+    fail(2, `no cycle matches --spec/--cycle (${reason})`);
+  }
   if (!cycle) say(`⚠ no cycle resolved (${reason}) — result will not be persisted`);
-  const verifyDir = cycle ? join(cycle.dir, 'artifacts', 'verify') : null;
+  const verifyRoot = cycle ? join(cycle.dir, 'artifacts', 'verify') : null;
+  const verifyDir = verifyRoot ? join(verifyRoot, appDirName(appId)) : null;
   const state = gitState();
 
   if (options.reuse && verifyDir) {
-    const reusable = findReusable(verifyDir, appId, state);
+    const reusable = findReusable(verifyDir, appId, state, commands);
     if (reusable) {
       const rel = relative(REPO, reusable.file).split('\\').join('/');
       if (json) process.stdout.write(`${JSON.stringify({ ...reusable, file: undefined, reused: rel }, null, 2)}\n`);
@@ -354,7 +416,7 @@ async function main() {
 
   if (level === 'full' && config[appId].full_exclusive === true) await takeLease(appId);
 
-  const logDir = verifyDir ? ensureLogDir(verifyDir) : join(tmpdir(), 'sdd-harness', 'verify-logs');
+  const logDir = verifyRoot ? ensureLogDir(verifyRoot, appId) : join(tmpdir(), 'sdd-harness', 'verify-logs');
   mkdirSync(logDir, { recursive: true });
   const unit = options.unit;
   const dirty = nonSddPaths(dirtyPaths(), state.prefix);
@@ -362,7 +424,7 @@ async function main() {
   const started = Date.now();
   const results = await runLevel({
     commands,
-    files: parseFilesOption(options.files),
+    files,
     logDir,
     label: `${unit ?? 'cycle'}-${level}`,
   });
@@ -378,13 +440,15 @@ async function main() {
   });
   let persistedAt = null;
   if (verifyDir) {
+    mkdirSync(verifyDir, { recursive: true });
     persistedAt = join(verifyDir, resultFileName(unit, level));
     writeJson(persistedAt, result);
   }
   if (json) process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
   else {
     const where = persistedAt ? ` → ${relative(REPO, persistedAt).split('\\').join('/')}` : '';
-    say(`verify ${appId} ${level} ${result.ok ? 'OK' : 'FAILED'} ${formatDuration(result.duration_ms)}${where}`);
+    if (allSkipped(results)) say(`verify ${appId} ${level} SKIPPED — no command ran (all need --files)${where}`);
+    else say(`verify ${appId} ${level} ${result.ok ? 'OK' : 'FAILED'} ${formatDuration(result.duration_ms)}${where}`);
   }
   process.exitCode = result.ok ? 0 : 1;
 }

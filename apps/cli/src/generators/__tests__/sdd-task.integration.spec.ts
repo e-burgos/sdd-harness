@@ -1,8 +1,9 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { resolve, join } from 'node:path';
-import { mkdtempSync, rmSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
-import { execFileSync, spawnSync } from 'node:child_process';
-import { tmpdir } from 'node:os';
+import { mkdtempSync, rmSync, readFileSync, writeFileSync, mkdirSync, existsSync, realpathSync } from 'node:fs';
+import { execFileSync, spawn, spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { hostname, tmpdir } from 'node:os';
 import fs from 'fs-extra';
 
 import { generateSDD } from '../sdd.generator.js';
@@ -19,6 +20,8 @@ describe.skipIf(process.platform === 'win32')('sdd-task.mjs (integration)', () =
   let tasksFile: string;
 
   const git = (...args: string[]) => execFileSync('git', ['-C', ws, ...args], { encoding: 'utf-8' });
+  const lockDir = () => join(tmpdir(), 'sdd-harness', 'task-locks');
+  const lockFileOf = () => join(lockDir(), `${createHash('sha1').update(realpathSync(tasksFile)).digest('hex').slice(0, 16)}.lock`);
   const readText = () => readFileSync(tasksFile, 'utf-8');
   const readDoc = () => JSON.parse(readText());
   const task = (id: string) => readDoc().tasks.find((t: { id: string }) => t.id === id);
@@ -212,15 +215,64 @@ describe.skipIf(process.platform === 'win32')('sdd-task.mjs (integration)', () =
     expect(task('TASK-001').status).toBe('in-progress');
   });
 
-  it('handles CRLF and BOM, writing back LF without BOM', () => {
+  it('handles CRLF and BOM, writing back CRLF without BOM', () => {
     const crlf = `﻿${JSON.stringify(fixture(), null, 2).replace(/\n/g, '\r\n')}\r\n`;
     writeFileSync(tasksFile, crlf);
     const run = runTask([specId, 'cycle-01', 'TASK-001', 'start']);
     expect(run.status).toBe(0);
     const text = readText();
     expect(text.startsWith('{')).toBe(true);
-    expect(text).not.toContain('\r');
-    expect(text.endsWith('}\n')).toBe(true);
+    expect(text.replace(/\r\n/g, '')).not.toContain('\n');
+    expect(text.endsWith('}\r\n')).toBe(true);
+  });
+
+  it('keeps a 4-space or tab indented file in its own indentation', () => {
+    for (const indent of [4, '\t']) {
+      reset(`${JSON.stringify(fixture(), null, indent)}\n`);
+      expect(runTask([specId, 'cycle-01', 'TASK-002', 'start']).status).toBe(0);
+      const expected = readDoc();
+      expect(readText()).toBe(`${JSON.stringify(expected, null, indent)}\n`);
+    }
+  });
+
+  it('serialises 8 concurrent done runs without losing an update', async () => {
+    const doc = fixture();
+    doc.tasks = Array.from({ length: 8 }, (_, i) => ({
+      id: `TASK-00${i + 1}`, title: `t${i}`, user_stories: [], estimation_hours: 1, story_points: 1, depends_on: [], status: 'pending', files: [],
+    }));
+    reset(`${JSON.stringify(doc, null, 2)}\n`);
+    const runs = doc.tasks.map(
+      ({ id }) =>
+        new Promise<number | null>((done) => {
+          const child = spawn('node', [resolve(ws, 'sdd/scripts/sdd-task.mjs'), specId, 'cycle-01', id, 'done', '--files', `${id}.ts`, '--tokens', '10', ...identity], { cwd: ws, stdio: 'ignore' });
+          child.on('close', done);
+        }),
+    );
+    const codes = await Promise.all(runs);
+    expect(codes).toEqual(Array(8).fill(0));
+    expect(readDoc().tasks.map((t: { status: string }) => t.status)).toEqual(Array(8).fill('done'));
+    expect(existsSync(lockFileOf())).toBe(false);
+  }, 120000);
+
+  it('takes a lock left behind by a dead process', () => {
+    const dead = spawnSync(process.execPath, ['-e', '0']).pid;
+    mkdirSync(lockDir(), { recursive: true });
+    const lockFile = lockFileOf();
+    writeFileSync(lockFile, JSON.stringify({ pid: dead, host: hostname() }));
+    expect(runTask([specId, 'cycle-01', 'TASK-001', 'start']).status).toBe(0);
+    expect(existsSync(lockFile)).toBe(false);
+  });
+
+  it('lists non-ASCII commit files unquoted and still filters sdd/ paths with them', () => {
+    mkdirSync(join(ws, 'src'), { recursive: true });
+    mkdirSync(join(ws, 'sdd/diseño'), { recursive: true });
+    writeFileSync(join(ws, 'src/diseño.ts'), 'd');
+    writeFileSync(join(ws, 'sdd/diseño/notas.md'), 'n');
+    git('add', '-A');
+    git('commit', '-q', '-m', 'unicode');
+    const sha = git('rev-parse', 'HEAD').trim();
+    expect(runTask([specId, 'cycle-01', 'TASK-001', 'done', '--commit', sha, '--tokens', '10', ...identity]).status).toBe(0);
+    expect(task('TASK-001').files).toEqual(['src/diseño.ts']);
   });
 
   it('exits 1 with the validator message when validation is red after the write', () => {
@@ -230,6 +282,8 @@ describe.skipIf(process.platform === 'win32')('sdd-task.mjs (integration)', () =
     const run = runTask([specId, 'cycle-01', 'TASK-001', 'start']);
     expect(run.status).toBe(1);
     expect(run.stderr).toContain('validate-sdd');
+    expect(run.stderr).toContain('TASK-001 start written to');
+    expect(run.stderr).toContain('validation is red');
     expect(run.stdout).toBe('');
   });
 });

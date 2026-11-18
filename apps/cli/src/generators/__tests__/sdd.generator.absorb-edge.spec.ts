@@ -12,6 +12,7 @@ vi.mock('../../utils/exec.js', () => ({
 }));
 
 import { generateSDD, teamContribution, toPackageName } from '../sdd.generator.js';
+import { novelContributions } from '../project-md.js';
 
 const ABSORBED =
   '## Instrucciones previas del proyecto (absorbidas al instalar SDD)';
@@ -109,6 +110,53 @@ describe('generateSDD — re-ejecuciones no duplican el texto del equipo', () =>
     );
     expect(project.split('unico-marcador-equipo').length - 1).toBe(1);
     expect(project.split('# Instrucciones propias del proyecto').length - 1).toBe(1);
+  });
+});
+
+describe('teamContribution — copias del núcleo nuevo', () => {
+  const oldKit = `# Proyecto SDD\n\ncuerpo viejo\n\n${SIG}\n\nreglas viejas\n`;
+  const newCore = fs.readFileSync(
+    resolve(__dirname, '../../../templates/sdd/dual-harness/CLAUDE.md'),
+    'utf-8',
+  );
+
+  it('copia de un kit viejo distinto del instalado: no aporta nada', () => {
+    expect(teamContribution(oldKit, newCore)).toBeNull();
+  });
+
+  it('copia idéntica del núcleo nuevo con otro núcleo instalado: no aporta nada', () => {
+    expect(teamContribution(newCore, oldKit)).toBeNull();
+    expect(teamContribution(newCore, null)).toBeNull();
+  });
+
+  it('copia del núcleo nuevo con una línea cambiada: no aporta el núcleo', () => {
+    const touched = newCore.replace('REGLA UNO', 'REGLA UNA');
+    expect(touched).not.toBe(newCore);
+    expect(teamContribution(touched, oldKit)).toBeNull();
+  });
+
+  it('copia del núcleo nuevo con un párrafo del dev al final: se absorbe sólo el párrafo, sin los imports', () => {
+    const own = teamContribution(`${newCore.trimEnd()}\n\nNunca hagas deploy los viernes.\n`, oldKit);
+    expect(own).toBe('Nunca hagas deploy los viernes.');
+    const sameInstalled = teamContribution(`${newCore.trimEnd()}\n\nNunca hagas deploy los viernes.\n`, newCore);
+    expect(sameInstalled).toBe('Nunca hagas deploy los viernes.');
+    expect(own).not.toContain('@');
+  });
+
+  it('la copia vieja del kit con cola del dev sigue aportando sólo la cola', () => {
+    expect(teamContribution(`${oldKit}\n---\n\n${ABSORBED}\n\nmio\n`, newCore)).toBe('mio');
+  });
+});
+
+describe('novelContributions — presencia por bloques', () => {
+  it('un fragmento de otra frase no es presente; el bloque entero sí', () => {
+    const existing = '# p\n\n- Nunca hagas deploy los viernes sin aprobación.\n\nNo usar pnpm.\n';
+    const contributions = new Map([
+      ['a', 'Nunca hagas deploy los viernes'],
+      ['b', 'pnpm'],
+      ['c', 'No usar pnpm.'],
+    ]);
+    expect(novelContributions(existing, contributions).map(([f]) => f)).toEqual(['a', 'b']);
   });
 });
 

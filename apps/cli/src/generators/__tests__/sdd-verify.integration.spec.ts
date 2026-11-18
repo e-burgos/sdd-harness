@@ -40,7 +40,7 @@ describe.skipIf(process.platform === 'win32')('sdd-verify.mjs (integration)', ()
     await fs.writeJSON(resolve(ws, 'sdd/verify.json'), { $schema: './schemas/verify.schema.json', 'apps/demo-api': entry });
   };
 
-  const resultPath = (name: string) => join(cycleDir, 'artifacts/verify', name);
+  const resultPath = (name: string, app = 'apps-demo-api') => join(cycleDir, 'artifacts/verify', app, name);
   const readResult = (name: string) => JSON.parse(readFileSync(resultPath(name), 'utf-8')) as VerifyResult;
 
   beforeAll(async () => {
@@ -99,7 +99,7 @@ describe.skipIf(process.platform === 'win32')('sdd-verify.mjs (integration)', ()
     expect(result.commands).toHaveLength(2);
     const logs = join(cycleDir, 'artifacts/verify/logs');
     expect(readFileSync(join(logs, '.gitignore'), 'utf-8')).toBe('*\n');
-    expect(readdirSync(logs).filter((name) => name.endsWith('.log'))).toHaveLength(2);
+    expect(readdirSync(join(logs, 'apps-demo-api')).filter((name) => name.endsWith('.log'))).toHaveLength(2);
   });
 
   it('stops at the first failing command with exit 1 and prints the tail and the log path', async () => {
@@ -237,6 +237,157 @@ describe.skipIf(process.platform === 'win32')('sdd-verify.mjs (integration)', ()
     }
     expect(() => process.kill(grandchildPid, 0)).toThrow();
     expect(existsSync(join(lockDir, 'verify-full.lock'))).toBe(false);
+  });
+
+  const sigtermAndMeasure = async (args: string[], pidFile: string) => {
+    const child = spawn('node', [resolve(ws, 'sdd/scripts/sdd-verify.mjs'), ...args], {
+      cwd: ws,
+      env: { ...process.env, SDD_VERIFY_LOCK_DIR: lockDir },
+      stdio: 'ignore',
+    });
+    const closed = new Promise((done) => child.on('close', done));
+    for (let attempts = 0; attempts < 200 && !existsSync(pidFile); attempts++) await new Promise((r) => setTimeout(r, 50));
+    expect(existsSync(pidFile)).toBe(true);
+    const pid = Number(readFileSync(pidFile, 'utf-8'));
+    const signalledAt = Date.now();
+    child.kill('SIGTERM');
+    await closed;
+    return { pid, elapsed: Date.now() - signalledAt };
+  };
+
+  const alive = (pid: number) => {
+    try {
+      process.kill(pid, 0);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  it('keeps the lease until a command that traps SIGTERM is dead, then SIGKILLs it within the grace period', async () => {
+    const pidFile = join(parent, 'trapper.pid');
+    const trapper = `node -e "process.on('SIGTERM',()=>{});require('fs').writeFileSync(process.argv[1],String(process.pid));setInterval(()=>{},1000)" '${pidFile}'`;
+    await writeConfig({ full: [trapper], full_exclusive: true });
+    const lockFile = join(lockDir, 'verify-full.lock');
+    const { pid, elapsed } = await sigtermAndMeasure(['demo-api', 'full'], pidFile);
+    expect(alive(pid)).toBe(false);
+    expect(elapsed).toBeGreaterThanOrEqual(4000);
+    expect(elapsed).toBeLessThan(9000);
+    expect(existsSync(lockFile)).toBe(false);
+  }, 30000);
+
+  it('kills the command tree on SIGTERM even without the lease (quick run)', async () => {
+    const pidFile = join(parent, 'quick.pid');
+    const grandchild = `node -e "require('fs').writeFileSync(process.argv[1],String(process.pid));setInterval(()=>{},1000)" '${pidFile}'`;
+    await writeConfig({ quick: [`sh -c "${grandchild.replace(/"/g, '\\"')} & wait"`] });
+    const { pid } = await sigtermAndMeasure(['demo-api', 'quick'], pidFile);
+    for (let attempts = 0; attempts < 100 && alive(pid); attempts++) await new Promise((r) => setTimeout(r, 50));
+    expect(alive(pid)).toBe(false);
+  });
+
+  it('never rewrites an unparsable verify.json on --init, and strips a BOM', async () => {
+    const file = resolve(ws, 'sdd/verify.json');
+    const broken = '{ "apps/demo-api": { "quick": ["keep me"] ,, }';
+    writeFileSync(file, broken);
+    const init = runVerify(['--init']);
+    expect(init.status).toBe(2);
+    expect(init.output).toContain('sdd/verify.json is not valid JSON — fix it first');
+    expect(readFileSync(file, 'utf-8')).toBe(broken);
+    expect(runVerify(['demo-api', 'quick']).status).toBe(2);
+    writeFileSync(file, `﻿${JSON.stringify({ 'apps/demo-api': { quick: ['node -e "0"'] } })}`);
+    expect(runVerify(['demo-api', 'quick']).status).toBe(0);
+  });
+
+  it('--reuse does not reuse a green result produced by another command list', async () => {
+    await writeConfig({ full: ['node -e "0"'] });
+    expect(runVerify(['demo-api', 'full', '--unit', 'B-01']).status).toBe(0);
+    expect(runVerify(['demo-api', 'full', '--reuse']).output).toContain('reused');
+    await writeConfig({ full: ['node -e "0"', 'node -e "process.exit(1)"'] });
+    const changed = runVerify(['demo-api', 'full', '--reuse']);
+    expect(changed.output).not.toContain('reused');
+    expect(changed.status).toBe(1);
+  });
+
+  it('keeps the results of two subprojects of one cycle apart', async () => {
+    const globalFile = resolve(ws, 'sdd/global.json');
+    await fs.writeJSON(resolve(ws, 'sdd/verify.json'), {
+      'apps/demo-api': { quick: ['node -e "0"'] },
+      'libs/shared': { quick: ['node -e "process.exit(4)"'] },
+    });
+    const cycleFile = join(cycleDir, 'cycle.json');
+    const original = readFileSync(cycleFile, 'utf-8');
+    const cycle = JSON.parse(original);
+    cycle.apps = ['apps/demo-api', 'libs/shared'];
+    writeFileSync(cycleFile, JSON.stringify(cycle));
+    try {
+      const flags = ['--spec', specId, '--cycle', 'cycle-01'];
+      expect(runVerify(['apps/demo-api', 'quick', ...flags]).status).toBe(0);
+      expect(runVerify(['libs/shared', 'quick', ...flags]).status).toBe(1);
+      expect(readResult('cycle-quick.json').ok).toBe(true);
+      expect((JSON.parse(readFileSync(resultPath('cycle-quick.json', 'libs-shared'), 'utf-8')) as VerifyResult).ok).toBe(false);
+    } finally {
+      writeFileSync(cycleFile, original);
+    }
+    expect(existsSync(globalFile)).toBe(true);
+  });
+
+  it('says SKIPPED instead of OK when a quick run skipped every command', async () => {
+    await writeConfig({ quick: ['node -e "0" {files}'] });
+    const run = runVerify(['demo-api', 'quick']);
+    expect(run.status).toBe(0);
+    expect(run.output).toContain('verify apps/demo-api quick SKIPPED — no command ran (all need --files)');
+    expect(run.output).not.toContain('quick OK');
+    const result = readResult('cycle-quick.json');
+    expect(result.ok).toBe(true);
+    expect(result.commands.every((command) => command.skipped)).toBe(true);
+  });
+
+  it('reports an ambiguous --spec with its candidates and a missing flag value as usage errors', async () => {
+    await writeConfig({ quick: ['node -e "0"'] });
+    const specs = await fs.readJSON(resolve(ws, 'sdd/specs/index.json'));
+    const extra = { ...specs.specs[0], id: `${specId}-bis`, folder: `${specs.specs[0].folder}-bis` };
+    await fs.writeJSON(resolve(ws, 'sdd/specs/index.json'), { ...specs, specs: [...specs.specs, extra] });
+    await fs.copy(resolve(ws, specs.specs[0].folder), resolve(ws, extra.folder));
+    try {
+      const ambiguous = runVerify(['demo-api', 'quick', '--spec', 'orders']);
+      expect(ambiguous.status).toBe(2);
+      expect(ambiguous.output).toContain('ambiguous');
+      expect(ambiguous.output).toContain(`${specId}/cycle-01`);
+      expect(ambiguous.output).toContain(`${specId}-bis/cycle-01`);
+    } finally {
+      await fs.writeJSON(resolve(ws, 'sdd/specs/index.json'), specs);
+      await fs.remove(resolve(ws, extra.folder));
+    }
+    const missing = runVerify(['demo-api', 'full', '--wait']);
+    expect(missing.status).toBe(2);
+    expect(missing.output).toContain('--wait needs a value');
+    expect(runVerify(['demo-api', 'quick', '--files']).output).toContain('--files needs a value');
+  });
+
+  it('passes a file name that starts with a dash as ./name', async () => {
+    await writeConfig({ quick: ['node -e "0" {files}'] });
+    const run = runVerify(['demo-api', 'quick', '--files', '-rf', '--json']);
+    expect(JSON.parse(run.stdout).commands[0].command).toContain(`'./-rf'`);
+  });
+
+  it('lists non-ASCII dirty files unquoted', async () => {
+    await writeConfig({ quick: ['node -e "0"'] });
+    writeFileSync(join(ws, 'diseño.ts'), 'x');
+    try {
+      expect(JSON.parse(runVerify(['demo-api', 'quick', '--json']).stdout).dirty).toEqual(['diseño.ts']);
+    } finally {
+      rmSync(join(ws, 'diseño.ts'));
+    }
+  });
+
+  it('leaves a lease held by someone else untouched when --wait gives up', async () => {
+    await writeConfig({ full: ['node -e "0"'], full_exclusive: true });
+    const lockFile = join(lockDir, 'verify-full.lock');
+    await fs.ensureDir(lockDir);
+    writeFileSync(lockFile, JSON.stringify({ pid: process.pid, host: hostname(), repo: '/other' }));
+    const run = runVerify(['demo-api', 'full', '--wait', '0']);
+    expect(run.status).toBe(75);
+    expect(existsSync(lockFile)).toBe(true);
   });
 
   it('works outside a git repo: no commit, never reuses, no crash', async () => {

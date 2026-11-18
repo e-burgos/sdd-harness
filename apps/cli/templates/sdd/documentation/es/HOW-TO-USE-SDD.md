@@ -114,7 +114,7 @@ detalle vive en `sdd/dual-harness/rules/` y se lee **solo cuando toca**:
 
 **Las instrucciones propias de tu repo no van en esos archivos**: viven en
 `sdd/dual-harness/project.md`, que el kit no shippea, no entra al manifiesto y `update sdd` no toca;
-el núcleo lo importa (`@project.md` y `@sdd/dual-harness/project.md`) y `AGENTS.md`/`GEMINI.md`/
+el núcleo lo importa (`@../dual-harness/project.md` y `@sdd/dual-harness/project.md`) y `AGENTS.md`/`GEMINI.md`/
 `copilot-instructions.md` lo mencionan. Si tu repo ya traía instrucciones dentro del arnés, ver
 `harness update sdd --split-project` en [INSTALL.md](INSTALL.md).
 

@@ -11,7 +11,21 @@ import { MIGRATION_MAX_LISTED } from '../../generators/kit-migrations.js';
 import { version } from '../../version.js';
 
 function describeSplit(entry: SplitProjectResult): string {
-  const moved = entry.movedBytes ? `moved ${entry.movedBytes} bytes to project.md` : '';
+  if (entry.hadAbsorbed && (entry.outcome === 'kept' || entry.outcome === 'kept-new')) {
+    const moved = entry.movedBytes
+      ? `moved ${entry.movedBytes} bytes to project.md`
+      : 'already in project.md';
+    const merge =
+      entry.outcome === 'kept-new'
+        ? 'merging the .new is what makes agents read project.md again'
+        : 'adopting the kit core is what makes agents read project.md again';
+    return `your edited core was kept and the absorbed text is out of it (${moved}); ${merge}`;
+  }
+  const moved = entry.movedBytes
+    ? `moved ${entry.movedBytes} bytes to project.md`
+    : entry.hadAbsorbed
+      ? 'already in project.md'
+      : '';
   const outcome = {
     moved: 'replaced by the kit core',
     replaced: 'replaced by the kit core',

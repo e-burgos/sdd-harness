@@ -36,15 +36,30 @@ function renderContributions(novel: [string, string][]): string {
     .join('\n\n');
 }
 
+function toBlocks(text: string): string[] {
+  return fold(text)
+    .split(/\n[ \t]*\n/)
+    .map((block) => block.trim())
+    .filter(Boolean);
+}
+
+export function containsBlocks(existing: string | null, text: string): boolean {
+  const wanted = toBlocks(text);
+  if (!wanted.length) return true;
+  const have = existing ? toBlocks(existing) : [];
+  for (let start = 0; start + wanted.length <= have.length; start++) {
+    if (wanted.every((block, offset) => have[start + offset] === block)) return true;
+  }
+  return false;
+}
+
 export function novelContributions(
   existing: string | null,
   contributions: Map<string, string>,
 ): [string, string][] {
-  const present = existing ? fold(existing) : '';
-  return [...contributions].filter(([, text]) => {
-    const folded = fold(text);
-    return folded !== '' && !present.includes(folded);
-  });
+  return [...contributions].filter(
+    ([, text]) => fold(text) !== '' && !containsBlocks(existing, text),
+  );
 }
 
 export async function mergeIntoProjectMd(

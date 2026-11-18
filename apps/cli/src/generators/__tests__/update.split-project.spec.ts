@@ -343,4 +343,112 @@ describe('update sdd — núcleo del arnés, project.md y --split-project', () =
       expect(await fs.readFile(dual('CLAUDE.md'), 'utf-8')).toContain('se queda');
     });
   });
+  describe('auditoría — correcciones', () => {
+    const splitEntry = (report: Awaited<ReturnType<typeof updateSDD>>) =>
+      report.splitProject?.find((e) => e.file === 'dual-harness/CLAUDE.md');
+
+    it('un fragmento de otra frase no cuenta como presente: la regla se mueve y no se pierde', async () => {
+      await setManifest('0.22.0', { 'dual-harness/CLAUDE.md': '# kit viejo\n' });
+      await fs.writeFile(
+        dual('project.md'),
+        '# mío\n\n- Nunca hagas deploy los viernes sin aprobación del líder técnico.\n\nNo usar pnpm.\n',
+      );
+      await fs.writeFile(dual('CLAUDE.md'), absorb('# kit viejo\n', 'Nunca hagas deploy los viernes'));
+      await updateSDD(ws, { splitProject: true });
+      const project = await projectMd();
+      expect(project.split('Nunca hagas deploy los viernes').length - 1).toBe(2);
+      expect(project.trimEnd().endsWith('Nunca hagas deploy los viernes')).toBe(true);
+      expect(await fs.readFile(dual('CLAUDE.md'), 'utf-8')).not.toContain('Nunca hagas deploy los viernes');
+    });
+
+    it('«pnpm» no queda cubierto por «No usar pnpm.»', async () => {
+      await setManifest('0.22.0', { 'dual-harness/CLAUDE.md': '# kit viejo\n' });
+      await fs.writeFile(dual('project.md'), '# mío\n\nNo usar pnpm.\n');
+      await fs.writeFile(dual('CLAUDE.md'), absorb('# kit viejo\n', 'pnpm'));
+      await updateSDD(ws, { splitProject: true });
+      expect((await projectMd()).trimEnd().endsWith('\n\npnpm')).toBe(true);
+    });
+
+    it('un bloque ya presente entero no se repite y se informa como ya presente (0 bytes)', async () => {
+      await setManifest('0.22.0', { 'dual-harness/CLAUDE.md': '# kit viejo\n' });
+      await fs.writeFile(dual('project.md'), '# mío\n\nregla A\n\nregla B\n\nregla C\n');
+      await fs.writeFile(dual('CLAUDE.md'), absorb('# kit viejo\n', 'regla A\n\nregla B'));
+      const report = await updateSDD(ws, { splitProject: true });
+      expect(await projectMd()).toBe('# mío\n\nregla A\n\nregla B\n\nregla C\n');
+      expect(splitEntry(report)?.movedBytes).toBe(0);
+      expect(splitEntry(report)?.hadAbsorbed).toBe(true);
+      expect(splitEntry(report)?.outcome).toBe('moved');
+    });
+
+    it('bloques presentes pero no contiguos o en otro orden se agregan', async () => {
+      await setManifest('0.22.0', { 'dual-harness/CLAUDE.md': '# kit viejo\n' });
+      await fs.writeFile(dual('project.md'), '# mío\n\nregla A\n\nintermedio\n\nregla B\n');
+      await fs.writeFile(dual('CLAUDE.md'), absorb('# kit viejo\n', 'regla A\n\nregla B'));
+      await updateSDD(ws, { splitProject: true });
+      expect((await projectMd()).split('regla A').length - 1).toBe(2);
+    });
+
+    it('cabeza vacía (el dev borró el cuerpo del kit): se instala el núcleo, no un archivo vacío', async () => {
+      await setManifest('0.22.0');
+      await fs.writeFile(dual('CLAUDE.md'), `${ABSORBED_HEADING}\n\nregla del dev\n`);
+      const report = await updateSDD(ws, { splitProject: true });
+      expect(splitEntry(report)?.outcome).toBe('moved');
+      expect(await fs.readFile(dual('CLAUDE.md'), 'utf-8')).toBe(kitFile('CLAUDE.md'));
+      expect(await projectMd()).toContain('regla del dev');
+    });
+
+    it.skipIf(process.platform === 'win32')('un hardlink a sdd/dual-harness/CLAUDE.md sobrevive al reemplazo y ve el contenido nuevo', async () => {
+      await setManifest('0.23.0', { 'dual-harness/CLAUDE.md': '# núcleo viejo\n' });
+      await fs.writeFile(dual('CLAUDE.md'), '# núcleo viejo\n');
+      const linked = resolve(ws, 'CLAUDE.md');
+      await fs.remove(linked);
+      await fs.link(dual('CLAUDE.md'), linked);
+
+      await updateSDD(ws);
+
+      expect(fs.statSync(linked).ino).toBe(fs.statSync(dual('CLAUDE.md')).ino);
+      expect(await fs.readFile(linked, 'utf-8')).toBe(kitFile('CLAUDE.md'));
+      expect(await fs.pathExists(`${linked}.new`)).toBe(false);
+    });
+
+    it.skipIf(process.platform === 'win32')('--split-project también reemplaza en el lugar', async () => {
+      await setManifest('0.22.0', { 'dual-harness/CLAUDE.md': '# kit viejo\n' });
+      await fs.writeFile(dual('CLAUDE.md'), absorb('# kit viejo\n', 'regla'));
+      const linked = resolve(ws, 'CLAUDE.md');
+      await fs.remove(linked);
+      await fs.link(dual('CLAUDE.md'), linked);
+      await updateSDD(ws, { splitProject: true });
+      expect(fs.statSync(linked).ino).toBe(fs.statSync(dual('CLAUDE.md')).ino);
+      expect(await fs.readFile(linked, 'utf-8')).toBe(kitFile('CLAUDE.md'));
+    });
+
+    it('un .new viejo idéntico al kit se borra cuando el archivo ya es el kit; uno distinto se conserva', async () => {
+      await setManifest('0.23.0');
+      await fs.writeFile(dual('CLAUDE.md'), kitFile('CLAUDE.md'));
+      await fs.writeFile(`${dual('CLAUDE.md')}.new`, kitFile('CLAUDE.md'));
+      await fs.writeFile(dual('AGENTS.md'), kitFile('AGENTS.md'));
+      await fs.writeFile(`${dual('AGENTS.md')}.new`, '# otra cosa\n');
+      await updateSDD(ws);
+      expect(await fs.pathExists(`${dual('CLAUDE.md')}.new`)).toBe(false);
+      expect(await fs.pathExists(`${dual('AGENTS.md')}.new`)).toBe(true);
+    });
+
+    it('--split-project deja sin .new viejo al archivo que quedó igual al kit', async () => {
+      await setManifest('0.22.0', { 'dual-harness/CLAUDE.md': '# kit viejo\n' });
+      await fs.writeFile(dual('CLAUDE.md'), absorb('# kit viejo\n', 'regla'));
+      await fs.writeFile(`${dual('CLAUDE.md')}.new`, kitFile('CLAUDE.md'));
+      await updateSDD(ws, { splitProject: true });
+      expect(await fs.pathExists(`${dual('CLAUDE.md')}.new`)).toBe(false);
+    });
+
+    it('un kit_version numérico en kit.json no rompe el update y se trata como instalación legacy', async () => {
+      const path = resolve(ws, 'sdd/kit.json');
+      const manifest = await fs.readJSON(path);
+      manifest.kit_version = 0.23;
+      await fs.writeJSON(path, manifest);
+      const report = await updateSDD(ws);
+      expect(report.legacyMode).toBe(true);
+      expect(report.harnessCoreNotice).toBe(true);
+    });
+  });
 });

@@ -195,13 +195,32 @@ describe.skipIf(process.platform === 'win32')('validate-sdd.mjs optional fields 
   it('measures the core before the absorbed heading and never fires at or under 6,000 bytes', async () => {
     const heading = '## Instrucciones previas del proyecto (absorbidas al instalar SDD)\n';
     const file = resolve(ws, 'sdd/dual-harness/CLAUDE.md');
-    const warningsOfCore = () => validate().warnings.filter((w) => w.includes('dual-harness/CLAUDE.md: core is'));
+    const warningsOfCore = () => validate().warnings.filter((w) => w.includes('core over 6,000 bytes'));
     await fs.writeFile(file, 'x'.repeat(6000));
     expect(warningsOfCore()).toEqual([]);
     await fs.writeFile(file, `${'x'.repeat(5990)}\n${heading}${'y'.repeat(20000)}`);
     expect(warningsOfCore()).toEqual([]);
     await fs.writeFile(file, `${'x'.repeat(6001)}\n${heading}`);
-    expect(warningsOfCore()).toEqual([expect.stringContaining('run harness update sdd --split-project')]);
+    expect(warningsOfCore()).toEqual([expect.stringContaining('CLAUDE.md (6,005 bytes) — run harness update sdd --split-project')]);
+  });
+
+  it('prints one core-size line listing every harness file over the cap', async () => {
+    for (const name of ['CLAUDE.md', 'AGENTS.md']) await fs.writeFile(resolve(ws, 'sdd/dual-harness', name), 'x'.repeat(6500));
+    const lines = validate().warnings.filter((w) => w.includes('core over'));
+    expect(lines).toHaveLength(1);
+    expect(lines[0]).toContain('CLAUDE.md (6,500 bytes), AGENTS.md (6,500 bytes)');
+  });
+
+  it('reports schema-invalid batches as a schema error without crashing the block section', () => {
+    const shapes: unknown[] = [{}, [{ id: 'B-01', app: 'apps/demo-api', role: 'x' }], [{ id: 'B-01', app: 'apps/demo-api', role: 'x', tasks: 'TASK-001' }], [null], [{ id: 'B-01', app: 'apps/demo-api', role: 'x', tasks: ['TASK-001'], depends_on: 'B-02' }]];
+    for (const batches of shapes) {
+      write(document([task('TASK-001')], { batches }));
+      rebuild();
+      const run = validate();
+      expect(run.status, JSON.stringify(batches)).toBe(1);
+      expect(run.output, JSON.stringify(batches)).not.toMatch(/TypeError|at .*validate-sdd\.mjs/);
+      expect(run.output).toMatch(/batches/);
+    }
   });
 
   it('parses records that start with a BOM in the validator and in the index rebuild', () => {

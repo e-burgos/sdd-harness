@@ -21,7 +21,13 @@ import {
   type KitManifest,
 } from './kit-manifest.js';
 import { isPublishedHarnessContent } from './harness-history.js';
-import { fold, mergeIntoProjectMd, readProjectMd, splitAbsorbed } from './project-md.js';
+import {
+  containsBlocks,
+  mergeIntoProjectMd,
+  novelContributions,
+  readProjectMd,
+  splitAbsorbed,
+} from './project-md.js';
 import { ensureHarnessPackageJson } from './sdd.generator.js';
 import {
   collectMigrationNotices,
@@ -52,6 +58,7 @@ export type SplitProjectOutcome = 'moved' | 'replaced' | 'kept-new' | 'kept' | '
 export type SplitProjectResult = {
   file: string;
   movedBytes: number;
+  hadAbsorbed: boolean;
   outcome: SplitProjectOutcome;
 };
 
@@ -117,7 +124,10 @@ export async function updateSDD(
     }
 
     const currentHash = hashFile(dest);
-    if (currentHash === newHash) continue;
+    if (currentHash === newHash) {
+      await dropStaleNew(dest, newHash);
+      continue;
+    }
 
     const baseHash = oldManifest?.files[rel];
     // Los híbridos nunca se reemplazan en silencio: si llegaron hasta acá es porque
@@ -128,7 +138,8 @@ export async function updateSDD(
       isHybrid(rel, installedKitVersion) || (oldManifest !== null && currentHash !== baseHash);
 
     if (!userModified) {
-      await fs.copy(src, dest);
+      await replaceInPlace(src, dest);
+      await dropStaleNew(dest, newHash);
       report.updated.push(rel);
       continue;
     }
@@ -224,6 +235,16 @@ export async function updateSDD(
   return report;
 }
 
+async function replaceInPlace(src: string, dest: string): Promise<void> {
+  await fs.writeFile(dest, await fs.readFile(src));
+}
+
+async function dropStaleNew(dest: string, newHash: string): Promise<void> {
+  const stale = `${dest}.new`;
+  if (!(await fs.pathExists(stale))) return;
+  if (hashFile(stale) === newHash) await fs.remove(stale);
+}
+
 async function harnessFilesWithAbsorbedText(sddDir: string): Promise<string[]> {
   const found: string[] = [];
   for (const rel of HARNESS_FILES) {
@@ -245,7 +266,7 @@ async function splitProjectInstructions(
   const results = new Map<string, SplitProjectResult>();
 
   for (const rel of HARNESS_FILES) {
-    results.set(rel, { file: rel, movedBytes: 0, outcome: 'nothing' });
+    results.set(rel, { file: rel, movedBytes: 0, hadAbsorbed: false, outcome: 'nothing' });
     const dest = resolve(sddDir, rel);
     if (!(await fs.pathExists(dest))) continue;
     const content = await fs.readFile(dest, 'utf-8');
@@ -263,10 +284,24 @@ async function splitProjectInstructions(
   for (const e of entries) {
     if (e.absorbed) contributions.set(e.rel.split('/').pop() as string, e.absorbed);
   }
-  await mergeIntoProjectMd(root, contributions);
-  const projectNow = fold((await readProjectMd(root)) ?? '');
+  const before = await readProjectMd(root);
+  const written = new Set<string>();
+  const novelFiles = new Set(
+    novelContributions(before, contributions).map(([file]) => file),
+  );
+  const writtenBytes = new Map<string, number>();
   for (const e of entries) {
-    if (e.absorbed && !projectNow.includes(fold(e.absorbed))) {
+    if (!e.absorbed) continue;
+    const name = e.rel.split('/').pop() as string;
+    const key = e.absorbed.replace(/\r\n/g, '\n').trim();
+    if (!novelFiles.has(name) || written.has(key)) continue;
+    written.add(key);
+    writtenBytes.set(e.rel, Buffer.byteLength(e.absorbed));
+  }
+  await mergeIntoProjectMd(root, contributions);
+  const projectNow = await readProjectMd(root);
+  for (const e of entries) {
+    if (e.absorbed && !containsBlocks(projectNow, e.absorbed)) {
       throw new Error(
         `Could not move the instructions of sdd/${e.rel} to sdd/dual-harness/project.md; nothing was removed.`,
       );
@@ -276,7 +311,8 @@ async function splitProjectInstructions(
   for (const e of entries) {
     const result = results.get(e.rel) as SplitProjectResult;
     const hadText = e.absorbed !== null;
-    result.movedBytes = e.absorbed ? Buffer.byteLength(e.absorbed) : 0;
+    result.hadAbsorbed = hadText;
+    result.movedBytes = writtenBytes.get(e.rel) ?? 0;
     const headHash = hashContent(Buffer.from(e.head, 'utf-8'));
     const baselineTrusted =
       oldManifest !== null && compareKitVersions(oldManifest.kit_version, BASELINE_TRUSTED_SINCE) >= 0;
@@ -286,8 +322,9 @@ async function splitProjectInstructions(
     const isNewKit = newManifest.files[e.rel] === headHash;
 
     if (isNewKit && !hadText) continue;
-    if (pristineBaseline || isNewKit) {
-      await fs.copy(resolve(kitDir, e.rel), e.dest);
+    if (pristineBaseline || isNewKit || (hadText && e.head.trim() === '')) {
+      await replaceInPlace(resolve(kitDir, e.rel), e.dest);
+      await dropStaleNew(e.dest, newManifest.files[e.rel]);
       result.outcome = hadText ? 'moved' : 'replaced';
       continue;
     }

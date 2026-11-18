@@ -13,7 +13,9 @@ type Lib = {
   applyStart(doc: Json, id: string, options?: Json): Json;
   applyDone(doc: Json, id: string, input: Json): Json;
   parseTasksText(text: string): Json;
-  serializeTasks(doc: Json): string;
+  serializeTasks(doc: Json, format?: Json): string;
+  detectFormat(text: string): Json;
+  localDate(date: Date): string;
   resolveSpecRef(specs: Json[], query: string): Json;
   normalizeCycleRef(raw: string): string | null;
 };
@@ -112,9 +114,36 @@ describe('document helpers', () => {
     expect(lib.applyDone(d, 'TASK-009', { files: [], usage: {} }).ok).toBe(false);
   });
 
-  it('tolerates BOM and CRLF and serializes LF with trailing newline', () => {
+  it('tolerates BOM and CRLF and serializes LF with trailing newline by default', () => {
     const parsed = lib.parseTasksText('﻿{\r\n  "a": 1\r\n}\r\n');
     expect(lib.serializeTasks(parsed)).toBe('{\n  "a": 1\n}\n');
+  });
+
+  it('detects indent, line ending and final newline and writes them back', () => {
+    const cases = [
+      ['{\n    "a": 1\n}\n', { indent: 4, eol: '\n', finalNewline: true }],
+      ['{\n\t"a": 1\n}\n', { indent: '\t', eol: '\n', finalNewline: true }],
+      ['\uFEFF{\r\n  "a": 1\r\n}\r\n', { indent: 2, eol: '\r\n', finalNewline: true }],
+      ['{"a":1}', { indent: 2, eol: '\n', finalNewline: false }],
+    ] as const;
+    for (const [text, format] of cases) {
+      expect(lib.detectFormat(text)).toEqual(format);
+      expect(lib.serializeTasks(lib.parseTasksText(text), lib.detectFormat(text))).toBe(text.replace(/^\uFEFF/, '').replace('{"a":1}', '{\n  "a": 1\n}'));
+    }
+  });
+
+  it('stamps recorded_at with the local date, not the UTC one', () => {
+    const previous = process.env['TZ'];
+    process.env['TZ'] = 'America/Argentina/Buenos_Aires';
+    try {
+      const evening = new Date('2026-09-11T01:30:00Z');
+      expect(lib.localDate(evening)).toBe('2026-09-10');
+      const usage = lib.buildUsage(lib.parseTaskRequest(doneArgs()).request!, evening);
+      expect(usage.recorded_at).toBe('2026-09-10');
+    } finally {
+      if (previous === undefined) delete process.env['TZ'];
+      else process.env['TZ'] = previous;
+    }
   });
 
   it('resolves specs by id, slug and normalizes cycles', () => {

@@ -85,5 +85,5 @@ Reglas en `sdd/dual-harness/rules/`.
 | Rechazo del mod, graphify, rtk, tucu-ui, video-maker | `sdd-tools.md` |
 | Elegís modelo de un subagente o registrás `usage` | `sdd-model-budget.md` |
 
-@project.md
+@../dual-harness/project.md
 @sdd/dual-harness/project.md

@@ -788,24 +788,26 @@ if (existsSync(join(SDD, 'tools.json'))) {
   for (const [file, ct] of cycleTasks) {
     if (!ct) continue;
     const tasksById = new Map((ct.tasks ?? []).map((t) => [t.id, t]));
-    const blocks = ct.batches ?? [];
+    const blocks = Array.isArray(ct.batches) ? ct.batches.filter((b) => b && typeof b === 'object' && !Array.isArray(b)) : [];
+    const listOf = (value) => (Array.isArray(value) ? value : []);
     const blockIds = new Set(blocks.map((b) => b.id));
     const owner = new Map();
     for (const block of blocks) {
       const where = `${file} ${block.id}`;
-      for (const id of block.tasks) {
+      const blockTasks = listOf(block.tasks);
+      for (const id of blockTasks) {
         if (!tasksById.has(id)) warn(where, `lists unknown task ${id} — fix batches[] in tasks.json`);
         else if (owner.has(id)) warn(where, `${id} is already in ${owner.get(id)} — a task belongs to one block`);
         else owner.set(id, block.id);
       }
       if (!(ct.apps ?? []).includes(block.app))
         warn(where, `app ${block.app} is not in the cycle's apps — fix batches[].app in tasks.json`);
-      for (const dep of block.depends_on ?? []) {
+      for (const dep of listOf(block.depends_on)) {
         if (!blockIds.has(dep)) warn(where, `depends_on unknown block ${dep} — fix batches[] in tasks.json`);
       }
-      const points = block.tasks.reduce((sum, id) => sum + (tasksById.get(id)?.story_points ?? 0), 0);
-      if (block.tasks.length > blockCaps.tasks || points > blockCaps.points)
-        warn(where, `${block.tasks.length} tasks / ${points} SP exceeds the cap of ${blockCaps.tasks} tasks / ${blockCaps.points} SP — split the block`);
+      const points = blockTasks.reduce((sum, id) => sum + (tasksById.get(id)?.story_points ?? 0), 0);
+      if (blockTasks.length > blockCaps.tasks || points > blockCaps.points)
+        warn(where, `${blockTasks.length} tasks / ${points} SP exceeds the cap of ${blockCaps.tasks} tasks / ${blockCaps.points} SP — split the block`);
     }
     for (const t of ct.tasks ?? []) {
       if (t.usage?.allocation && t.usage.approx !== true)
@@ -830,15 +832,17 @@ if (existsSync(join(SDD, 'tools.json'))) {
 
   const CORE_BYTE_CAP = 6000;
   const ABSORBED_HEADING = 'Instrucciones previas del proyecto (absorbidas al instalar SDD)';
+  const oversizedCores = [];
   for (const name of ['CLAUDE.md', 'AGENTS.md', 'GEMINI.md']) {
     const path = join(SDD, 'dual-harness', name);
     if (!existsSync(path)) continue;
     const text = readFileSync(path, 'utf8');
     const headingAt = text.indexOf(ABSORBED_HEADING);
     const coreBytes = Buffer.byteLength(headingAt < 0 ? text : text.slice(0, headingAt));
-    if (coreBytes > CORE_BYTE_CAP)
-      warn(`dual-harness/${name}`, `core is ${coreBytes} bytes (> ${CORE_BYTE_CAP}) — run harness update sdd --split-project`);
+    if (coreBytes > CORE_BYTE_CAP) oversizedCores.push(`${name} (${coreBytes.toLocaleString('en-US')} bytes)`);
   }
+  if (oversizedCores.length)
+    warn('dual-harness', `core over ${CORE_BYTE_CAP.toLocaleString('en-US')} bytes: ${oversizedCores.join(', ')} — run harness update sdd --split-project`);
 }
 
 // ---- 13. Workspace invariant promised by init-nx-workspace (TS solution setup only) ----

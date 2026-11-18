@@ -74,9 +74,9 @@ pnpm sdd:verify --init
   **`full`** (fin de bloque o ciclo): lint, tests y build completos del subproyecto.
 - La salida es compacta: una línea por comando y, si falla, las últimas 40 líneas más la ruta del
   log completo. `--verbose` transmite todo; `--json` imprime solo el resultado.
-- Con un ciclo resoluble persiste `artifacts/verify/<unidad>-<nivel>.json` (incluye `commit` y
-  `dirty`). `--reuse` salta el `full` si hay un resultado `ok` del mismo subproyecto sin cambios
-  fuera de `sdd/` desde ese commit.
+- Con un ciclo resoluble persiste `artifacts/verify/<kind>-<name>/<unidad>-<nivel>.json` (incluye
+  `commit` y `dirty`). `--reuse` salta el `full` si hay un resultado `ok` del mismo subproyecto,
+  con los mismos comandos, sin cambios fuera de `sdd/` desde ese commit.
 - Un `full` marcado `full_exclusive` toma un lease global: si está ocupado espera hasta `--wait`
   (default 600 s) y sale con código 75; no lo evites corriendo el build a mano.
 - Códigos: `0` ok o reused · `1` falló un comando · `2` uso inválido · `3` el subproyecto no tiene

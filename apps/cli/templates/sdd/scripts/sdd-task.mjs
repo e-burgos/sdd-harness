@@ -10,7 +10,9 @@ import {
   applyDone,
   applyStart,
   buildUsage,
+  detectFormat,
   filesFromShow,
+  lockFileFor,
   mergeFiles,
   normalizeCycleRef,
   parseTasksText,
@@ -18,6 +20,7 @@ import {
   resolveSpecRef,
   serializeTasks,
   summaryLine,
+  withFileLock,
 } from './lib/task-registry.mjs';
 
 const SCRIPTS = fileURLToPath(new URL('.', import.meta.url));
@@ -38,7 +41,7 @@ function usageError(message) {
 }
 
 function git(args) {
-  const run = spawnSync('git', ['-C', REPO, ...args], { encoding: 'utf8' });
+  const run = spawnSync('git', ['-C', REPO, '-c', 'core.quotePath=false', ...args], { encoding: 'utf8' });
   return run.status === 0 ? run.stdout : null;
 }
 
@@ -78,7 +81,40 @@ function runKitScript(name, args = []) {
   return { status: run.status, output: `${run.stdout ?? ''}${run.stderr ?? ''}`.trim() };
 }
 
-function main() {
+function applyRequest(file, request, commitFiles) {
+  let text;
+  try {
+    text = readFileSync(file, 'utf8');
+  } catch (error) {
+    usageError(`${file} cannot be read: ${error.message}`);
+  }
+  let doc;
+  try {
+    doc = parseTasksText(text);
+  } catch (error) {
+    usageError(`${file} is not valid JSON: ${error.message}`);
+  }
+  const outcome =
+    request.action === 'start'
+      ? applyStart(doc, request.task, { force: request.force })
+      : applyDone(doc, request.task, {
+          files: mergeFiles(request.files, commitFiles),
+          usage: buildUsage(request),
+          force: request.force,
+        });
+  if (!outcome.ok) usageError(outcome.message);
+  writeFileSync(file, serializeTasks(doc, detectFormat(text)), 'utf8');
+  return { task: outcome.task, rebuilt: runKitScript('rebuild-tasks-index.mjs') };
+}
+
+function reportWrittenButRed(request, file, output) {
+  const where = relative(REPO, file).split('\\').join('/');
+  process.stderr.write(`${request.task} ${request.action} written to ${where}; validation is red (errors below may be unrelated to this task)\n`);
+  process.stderr.write(`${output}\n`);
+  process.exit(1);
+}
+
+async function main() {
   const argv = process.argv.slice(2);
   if (argv.includes('--help') || argv.includes('-h')) {
     console.log(USAGE);
@@ -88,33 +124,23 @@ function main() {
   if (!parsed.ok) usageError(`${parsed.message}\n${USAGE}`);
   const { request } = parsed;
   const file = tasksFileOf(request);
-  let doc;
+  const commitFiles = request.action === 'done' ? filesOfCommits(request.commits) : [];
+  const lockFile = lockFileFor(file);
+  let applied;
   try {
-    doc = parseTasksText(readFileSync(file, 'utf8'));
+    applied = await withFileLock(lockFile, () => applyRequest(file, request, commitFiles));
   } catch (error) {
-    usageError(`${file} is not valid JSON: ${error.message}`);
-  }
-  const outcome =
-    request.action === 'start'
-      ? applyStart(doc, request.task, { force: request.force })
-      : applyDone(doc, request.task, {
-          files: mergeFiles(request.files, filesOfCommits(request.commits)),
-          usage: buildUsage(request),
-          force: request.force,
-        });
-  if (!outcome.ok) usageError(outcome.message);
-  writeFileSync(file, serializeTasks(doc), 'utf8');
-  const rebuilt = runKitScript('rebuild-tasks-index.mjs');
-  if (rebuilt.status !== 0) {
-    process.stderr.write(`${rebuilt.output}\n`);
+    process.stderr.write(`[sdd-task] ✗ ${error.message}\n`);
     process.exit(1);
   }
-  const validation = runKitScript('validate-sdd.mjs');
-  if (validation.status !== 0) {
-    process.stderr.write(`${validation.output}\n`);
-    process.exit(1);
-  }
-  console.log(`${summaryLine(request, outcome.task)} · validate OK`);
+  if (applied.rebuilt.status !== 0) reportWrittenButRed(request, file, applied.rebuilt.output);
+  let validation = runKitScript('validate-sdd.mjs');
+  if (validation.status !== 0) validation = await withFileLock(lockFile, () => runKitScript('validate-sdd.mjs')).catch(() => validation);
+  if (validation.status !== 0) reportWrittenButRed(request, file, validation.output);
+  console.log(`${summaryLine(request, applied.task)} · validate OK`);
 }
 
-main();
+main().catch((error) => {
+  process.stderr.write(`[sdd-task] ✗ ${error.message}\n`);
+  process.exit(1);
+});

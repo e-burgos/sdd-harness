@@ -1,3 +1,9 @@
+import { closeSync, mkdirSync, openSync, readFileSync, statSync, unlinkSync, writeSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { hostname, tmpdir } from 'node:os';
+import { dirname, join } from 'node:path';
+import { isPidAlive } from './verify-lease.mjs';
+
 export const ACTIONS = ['start', 'done'];
 export const TASK_ID_RE = /^TASK(-[A-Z]+)?(-\d+)+$/;
 export const MODEL_RE = /^(haiku|sonnet|opus|fable|(claude|gemini|copilot)\/[a-z0-9][a-z0-9.-]*)$/;
@@ -171,6 +177,11 @@ export function splitTokens(total) {
   return { tokens_in: tokensIn, tokens_out: total - tokensIn };
 }
 
+export function localDate(date) {
+  const pad = (value) => String(value).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
 export function buildUsage(request, now = new Date()) {
   const counts =
     request.tokens !== undefined
@@ -184,7 +195,7 @@ export function buildUsage(request, now = new Date()) {
     ...(request.duration !== undefined ? { duration_minutes: request.duration } : {}),
     approx: request.approx,
     source: request.source,
-    recorded_at: now.toISOString().slice(0, 10),
+    recorded_at: localDate(now),
   };
   if (request.batch !== undefined) usage.allocation = { batch: request.batch, batch_tokens: request.batchTokens };
   if (request.packMisses.length > 0) usage.pack_misses = [...request.packMisses];
@@ -206,7 +217,23 @@ export function parseTasksText(text) {
   return JSON.parse(text.replace(/^﻿/, ''));
 }
 
-export const serializeTasks = (doc) => `${JSON.stringify(doc, null, 2)}\n`;
+export const DEFAULT_FORMAT = { indent: 2, eol: '\n', finalNewline: true };
+
+export function detectFormat(text) {
+  const body = text.replace(/^\uFEFF/, '');
+  const indented = /^([ \t]+)\S/m.exec(body);
+  let indent = DEFAULT_FORMAT.indent;
+  if (indented) {
+    if (indented[1].startsWith('\t')) indent = '\t';
+    else if (indented[1].length === 4) indent = 4;
+  }
+  return { indent, eol: body.includes('\r\n') ? '\r\n' : '\n', finalNewline: /\n$/.test(body) };
+}
+
+export function serializeTasks(doc, format = DEFAULT_FORMAT) {
+  const text = `${JSON.stringify(doc, null, format.indent)}${format.finalNewline === false ? '' : '\n'}`;
+  return format.eol === '\r\n' ? text.replace(/\n/g, '\r\n') : text;
+}
 
 export const findTask = (doc, id) => (doc.tasks ?? []).find((task) => task.id === id);
 
@@ -261,4 +288,109 @@ export function resolveSpecRef(specs, query) {
 export function normalizeCycleRef(raw) {
   const match = /^(?:cycle-)?(\d{1,2})$/.exec(String(raw ?? ''));
   return match ? `cycle-${match[1].padStart(2, '0')}` : null;
+}
+
+export const lockFileFor = (tasksFile) =>
+  join(tmpdir(), 'sdd-harness', 'task-locks', `${createHash('sha1').update(tasksFile).digest('hex').slice(0, 16)}.lock`);
+
+export const LOCK_POLL_MS = 100;
+export const LOCK_TIMEOUT_MS = 30000;
+export const LOCK_STALE_MS = 60000;
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function readLockOwner(file) {
+  try {
+    const owner = JSON.parse(readFileSync(file, 'utf8'));
+    return owner && typeof owner === 'object' ? owner : null;
+  } catch {
+    return null;
+  }
+}
+
+function lockSignature(file) {
+  try {
+    return `${statSync(file).mtimeMs}:${JSON.stringify(readLockOwner(file))}`;
+  } catch {
+    return null;
+  }
+}
+
+function lockIsStale(file, staleMs) {
+  let age;
+  try {
+    age = Date.now() - statSync(file).mtimeMs;
+  } catch {
+    return false;
+  }
+  if (age > staleMs) return true;
+  const owner = readLockOwner(file);
+  return Boolean(owner && owner.host === hostname() && !isPidAlive(owner.pid));
+}
+
+function createLock(file) {
+  let fd;
+  try {
+    fd = openSync(file, 'wx');
+  } catch (error) {
+    if (error.code === 'EEXIST') return false;
+    throw error;
+  }
+  try {
+    writeSync(fd, `${JSON.stringify({ pid: process.pid, host: hostname() })}\n`);
+  } finally {
+    closeSync(fd);
+  }
+  return true;
+}
+
+function removeOwnLock(file) {
+  const owner = readLockOwner(file);
+  if (!owner || owner.pid !== process.pid || owner.host !== hostname()) return;
+  try {
+    unlinkSync(file);
+  } catch {
+    return;
+  }
+}
+
+function takeStaleLock(file, staleMs) {
+  if (!lockIsStale(file, staleMs)) return;
+  const judged = lockSignature(file);
+  if (judged === null || lockSignature(file) !== judged) return;
+  try {
+    unlinkSync(file);
+  } catch {
+    return;
+  }
+}
+
+export async function withFileLock(file, work, { pollMs = LOCK_POLL_MS, timeoutMs = LOCK_TIMEOUT_MS, staleMs = LOCK_STALE_MS } = {}) {
+  mkdirSync(dirname(file), { recursive: true });
+  const deadline = Date.now() + timeoutMs;
+  while (!createLock(file)) {
+    if (Date.now() >= deadline) {
+      throw new Error(`could not take the lock ${file} within ${Math.round(timeoutMs / 1000)}s — another sdd:task is running or left it behind; remove it if no sdd:task is running`);
+    }
+    takeStaleLock(file, staleMs);
+    await sleep(pollMs);
+  }
+  const release = () => removeOwnLock(file);
+  const onSignal = (code) => () => {
+    release();
+    process.exit(code);
+  };
+  const onInt = onSignal(130);
+  const onTerm = onSignal(143);
+  process.on('exit', release);
+  process.on('SIGINT', onInt);
+  process.on('SIGTERM', onTerm);
+  try {
+    return await work();
+  } finally {
+    release();
+    process.off('exit', release);
+    process.off('SIGINT', onInt);
+    process.off('SIGTERM', onTerm);
+  }
 }

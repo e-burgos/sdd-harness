@@ -29,10 +29,17 @@ export function shellQuote(value, platform = process.platform) {
 
 export const hasFilesPlaceholder = (command) => command.includes('{files}');
 
+const WINDOWS_UNSAFE_FILE_CHARS = /["%^&|<>!]/;
+
+export const fileArgument = (file) => (file.startsWith('-') ? `./${file}` : file);
+
+export const unsafeFileName = (files, platform = process.platform) =>
+  platform === 'win32' ? (files ?? []).find((file) => WINDOWS_UNSAFE_FILE_CHARS.test(file)) ?? null : null;
+
 export function expandFiles(command, files, platform = process.platform) {
   if (!hasFilesPlaceholder(command)) return command;
   if (!files || files.length === 0) return null;
-  const joined = files.map((file) => shellQuote(file, platform)).join(' ');
+  const joined = files.map((file) => shellQuote(fileArgument(file), platform)).join(' ');
   return command.split('{files}').join(joined);
 }
 
@@ -62,7 +69,11 @@ export function selectCycle(candidates, { app, spec, cycle }) {
     return candidate.status === 'in-progress' && (candidate.apps ?? []).includes(app);
   });
   if (matching.length === 1) return { cycle: matching[0] };
-  return { cycle: null, reason: matching.length === 0 ? 'none' : 'ambiguous' };
+  return {
+    cycle: null,
+    reason: matching.length === 0 ? 'none' : 'ambiguous',
+    candidates: matching.map((candidate) => `${candidate.spec}/${candidate.cycle}`),
+  };
 }
 
 export const isSddPath = (path, prefix = 'sdd/') => path.replace(/\\/g, '/').startsWith(prefix);
@@ -83,6 +94,10 @@ export const nonSddPaths = (paths, prefix) => paths.filter((path) => !isSddPath(
 
 export const resultFileName = (unit, level) => `${unit ?? 'cycle'}-${level}.json`;
 
+export const appDirName = (app) => app.replace(/\//g, '-');
+
+export const allSkipped = (commands) => commands.length > 0 && commands.every((command) => command.skipped);
+
 export function buildResult({ app, level, unit, commit, dirty, startedAt, durationMs, commands }) {
   return {
     app,
@@ -97,9 +112,15 @@ export function buildResult({ app, level, unit, commit, dirty, startedAt, durati
   };
 }
 
-export function canReuse(previous, { app, changedSincePrevious, dirtyNow, prefix }) {
+const sameCommands = (stored, expected) =>
+  Array.isArray(stored) &&
+  stored.length === expected.length &&
+  stored.every((entry, index) => entry && entry.skipped !== true && entry.command === expected[index]);
+
+export function canReuse(previous, { app, changedSincePrevious, dirtyNow, prefix, commands }) {
   if (!previous || previous.ok !== true || previous.level !== 'full') return false;
   if (previous.app !== app || !previous.commit) return false;
+  if (!sameCommands(previous.commands, commands ?? [])) return false;
   if ((previous.dirty ?? []).length > 0) return false;
   if (changedSincePrevious === null || changedSincePrevious === undefined) return false;
   return nonSddPaths(changedSincePrevious, prefix).length === 0 && nonSddPaths(dirtyNow, prefix).length === 0;

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll } from 'vitest';
-import { mkdtempSync, rmSync, utimesSync, writeFileSync, statSync } from 'node:fs';
+import { existsSync, mkdtempSync, rmSync, utimesSync, writeFileSync, statSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { hostname, tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
@@ -10,14 +10,17 @@ type Lib = {
   resolveEntryId(config: object, query: string): { id?: string; error?: string; candidates?: string[] };
   shellQuote(value: string, platform: string): string;
   expandFiles(command: string, files: string[], platform: string): string | null;
+  unsafeFileName(files: string[], platform: string): string | null;
+  appDirName(app: string): string;
+  allSkipped(commands: { skipped?: boolean }[]): boolean;
   selectCycle(
     candidates: { spec: string; cycle: string; status: string; apps: string[] }[],
     query: { app: string; spec?: string; cycle?: string },
-  ): { cycle: { cycle: string } | null; reason?: string };
+  ): { cycle: { cycle: string } | null; reason?: string; candidates?: string[] };
   parseStatusZ(output: string): string[];
   canReuse(
     previous: object,
-    input: { app: string; changedSincePrevious: string[] | null; dirtyNow: string[]; prefix: string },
+    input: { app: string; changedSincePrevious: string[] | null; dirtyNow: string[]; prefix: string; commands?: string[] },
   ): boolean;
   inferEntry(input: object): Entry | null;
   whyNoEntry(input: object): string;
@@ -80,8 +83,8 @@ describe('verify.mjs', () => {
   });
 
   it('allows reuse only for a green clean full result with just sdd/ changes since', () => {
-    const previous = { app: 'apps/api', level: 'full', ok: true, commit: 'abc', dirty: [] };
-    const base = { app: 'apps/api', changedSincePrevious: ['sdd/x.md'], dirtyNow: [], prefix: 'sdd/' };
+    const previous = { app: 'apps/api', level: 'full', ok: true, commit: 'abc', dirty: [], commands: [{ command: 'pnpm test', skipped: false }] };
+    const base = { app: 'apps/api', changedSincePrevious: ['sdd/x.md'], dirtyNow: [], prefix: 'sdd/', commands: ['pnpm test'] };
     expect(lib.canReuse(previous, base)).toBe(true);
     expect(lib.canReuse(previous, { ...base, changedSincePrevious: ['src/a.ts'] })).toBe(false);
     expect(lib.canReuse(previous, { ...base, dirtyNow: ['src/a.ts'] })).toBe(false);
@@ -89,6 +92,38 @@ describe('verify.mjs', () => {
     expect(lib.canReuse({ ...previous, dirty: ['x'] }, base)).toBe(false);
     expect(lib.canReuse({ ...previous, commit: null }, base)).toBe(false);
     expect(lib.canReuse({ ...previous, ok: false }, base)).toBe(false);
+  });
+
+  it('refuses reuse when the stored commands differ from the ones the level would run now', () => {
+    const previous = { app: 'apps/api', level: 'full', ok: true, commit: 'abc', dirty: [], commands: [{ command: 'a' }, { command: 'b' }] };
+    const base = { app: 'apps/api', changedSincePrevious: [], dirtyNow: [], prefix: 'sdd/', commands: ['a', 'b'] };
+    expect(lib.canReuse(previous, base)).toBe(true);
+    expect(lib.canReuse(previous, { ...base, commands: ['b', 'a'] })).toBe(false);
+    expect(lib.canReuse(previous, { ...base, commands: ['a'] })).toBe(false);
+    expect(lib.canReuse(previous, { ...base, commands: ['a', 'b', 'c'] })).toBe(false);
+    expect(lib.canReuse({ ...previous, commands: [{ command: 'a' }, { command: 'b', skipped: true }] }, base)).toBe(false);
+    expect(lib.canReuse({ ...previous, commands: undefined }, base)).toBe(false);
+  });
+
+  it('names the per-subproject result folder and detects an all-skipped run', () => {
+    expect(lib.appDirName('apps/billing-api')).toBe('apps-billing-api');
+    expect(lib.allSkipped([{ skipped: true }, { skipped: true }])).toBe(true);
+    expect(lib.allSkipped([{ skipped: true }, { skipped: false }])).toBe(false);
+    expect(lib.allSkipped([])).toBe(false);
+  });
+
+  it('prefixes dash-leading file names with ./ and rejects cmd.exe-hostile names on win32 only', () => {
+    expect(lib.expandFiles('t {files}', ['-rf', 'a.ts'], 'linux')).toBe("t './-rf' 'a.ts'");
+    expect(lib.unsafeFileName(['ok.ts', 'a&b.ts'], 'win32')).toBe('a&b.ts');
+    for (const bad of ['a"b', 'a%b', 'a^b', 'a|b', 'a<b', 'a>b', 'a!b']) expect(lib.unsafeFileName([bad], 'win32')).toBe(bad);
+    expect(lib.unsafeFileName(['a&b.ts'], 'linux')).toBeNull();
+  });
+
+  it('lists the candidates of an ambiguous spec match', () => {
+    const cycle = { spec: 'spec-a-001-orders', cycle: 'cycle-01', status: 'in-progress', apps: ['apps/api'] };
+    const found = lib.selectCycle([cycle, { ...cycle, spec: 'spec-a-002-orders-v2' }], { app: 'apps/api', spec: 'orders' });
+    expect(found.reason).toBe('ambiguous');
+    expect(found.candidates).toEqual(['spec-a-001-orders/cycle-01', 'spec-a-002-orders-v2/cycle-01']);
   });
 
   it('writes the full nx command for every nx project that has project.json or package.json', () => {
@@ -167,6 +202,32 @@ describe('verify-lease.mjs', () => {
     lease.tryAcquire(file, {});
     const outcome = await lease.acquireWithWait(file, {}, { waitMs: 150, pollMs: 50 });
     expect(outcome.acquired).toBe(false);
+    rmSync(file, { force: true });
+  });
+
+  it('releases only a lease whose readable owner is this process on this host', () => {
+    const file = tempFile();
+    writeFileSync(file, '');
+    expect(lease.releaseLease(file)).toBe(false);
+    expect(existsSync(file)).toBe(true);
+    writeFileSync(file, '{not json');
+    expect(lease.releaseLease(file)).toBe(false);
+    expect(existsSync(file)).toBe(true);
+    writeFileSync(file, JSON.stringify({ pid: process.pid, host: 'another-host' }));
+    expect(lease.releaseLease(file)).toBe(false);
+    expect(existsSync(file)).toBe(true);
+    writeFileSync(file, JSON.stringify({ pid: process.pid, host: hostname() }));
+    expect(lease.releaseLease(file)).toBe(true);
+    expect(existsSync(file)).toBe(false);
+  });
+
+  it('takes a heartbeat-stale lease even with a zero --wait by confirming once past the deadline', async () => {
+    const file = tempFile();
+    writeFileSync(file, JSON.stringify({ pid: 999999, host: 'some-other-host', started_at: 't' }));
+    const old = new Date(Date.now() - 120000);
+    utimesSync(file, old, old);
+    const outcome = await lease.acquireWithWait(file, {}, { waitMs: 0, pollMs: 40 });
+    expect(outcome.acquired).toBe(true);
     rmSync(file, { force: true });
   });
 

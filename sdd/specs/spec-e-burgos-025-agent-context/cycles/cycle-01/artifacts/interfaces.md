@@ -47,9 +47,11 @@ pnpm sdd:verify --init                      # siembra entradas para los subproye
   `--verbose` transmite la salida entera. `--json` imprime solo el objeto resultado.
 - **Persistencia**: si se resuelve un ciclo (por `--spec`/`--cycle`, o porque hay exactamente un
   ciclo `in-progress` cuyo `apps` incluye `<app>`), escribe
-  `sdd/specs/<spec>/cycles/cycle-XX/artifacts/verify/<unidad>-<nivel>.json`, con `<unidad>` =
-  `--unit` o `cycle`. Sin ciclo resoluble corre igual y avisa que no persistió. Los logs completos
-  van a `artifacts/verify/logs/`, directorio que el script crea con un `.gitignore` propio (`*`).
+  `sdd/specs/<spec>/cycles/cycle-XX/artifacts/verify/<kind>-<name>/<unidad>-<nivel>.json` (para
+  `apps/billing-api`: `artifacts/verify/apps-billing-api/B-01-full.json`; así dos subproyectos del
+  mismo ciclo no se pisan), con `<unidad>` = `--unit` o `cycle`. Sin ciclo resoluble corre igual y
+  avisa que no persistió. Los logs completos van a `artifacts/verify/logs/<kind>-<name>/`, y
+  `logs/` lo crea el script con un `.gitignore` propio (`*`).
 - Resultado:
   ```json
   { "app": "apps/billing-api", "level": "full", "unit": "B-01", "ok": true,
@@ -60,8 +62,10 @@ pnpm sdd:verify --init                      # siembra entradas para los subproye
   `dirty` lista los archivos con cambios sin commitear al arrancar, **excluyendo todo `sdd/`**.
 - **`--reuse`** (solo `full`): si existe un resultado `full` del mismo `<app>` en ese ciclo con
   `ok: true`, `dirty` vacío, y tanto `git diff --name-only <commit> HEAD` como el working tree
-  actual solo tocan rutas bajo `sdd/`, imprime `reused <ruta>` y sale 0 sin correr nada. Si no,
-  corre normalmente.
+  actual solo tocan rutas bajo `sdd/`, **y los comandos guardados en ese resultado son los mismos
+  (mismas cadenas, mismo orden, ninguno saltado) que el nivel correría ahora**, imprime
+  `reused <ruta>` y sale 0 sin correr nada. Si no, corre normalmente. Un `quick` donde todos los
+  comandos se saltearon imprime `SKIPPED — no command ran` (sale 0, `ok: true`, todos `skipped`).
 - **Lease** (`scripts/lib/verify-lease.mjs`): solo para `full` con `full_exclusive: true`.
   Archivo `verify-full.lock` en `SDD_VERIFY_LOCK_DIR`, o `~/.sdd-harness/locks/`, o (si el home no
   es escribible) `os.tmpdir()/sdd-harness/`. Se crea con `wx` (atómico) y guarda
@@ -107,7 +111,15 @@ pnpm sdd:task <spec-id|slug> cycle-XX TASK-NNN done \
 - Después de escribir: regenera el índice (`rebuild-tasks-index.mjs`) y corre `validate-sdd.mjs`.
   Salida: una línea (`TASK-003 done · 4 files · 41,200 tokens · validate OK`). Código `1` si el
   validador quedó en rojo (imprime sus errores), `2` uso inválido o task/ciclo inexistente.
-- Escribe el JSON con `JSON.stringify(x, null, 2) + "\n"`.
+- Toma un lock exclusivo (`<os.tmpdir()>/sdd-harness/task-locks/<hash de la ruta>.lock`, fuera del
+  ciclo para no ensuciar su raíz; `wx`, reintento cada 100 ms, 30 s de tope ⇒ código 1) alrededor
+  de leer→modificar→escribir→reindexar; un lock de pid muerto o de más de 60 s se toma. El
+  validador corre con el lock liberado y, si da rojo, se repite una vez bajo el lock (otro
+  `sdd:task` pudo estar a mitad de escritura). Si sigue en rojo imprime antes `TASK-NNN <acción> written to <archivo>; validation
+  is red …`: la escritura ya ocurrió.
+- Escribe el JSON conservando la sangría (2, 4 o tab; default 2) y el fin de línea (CRLF o LF) del
+  archivo existente, y su salto final; un BOM se descarta. Un archivo nuevo o ilegible en formato
+  usa `JSON.stringify(x, null, 2) + "\n"`.
 
 ## 4. Schemas (todo opcional)
 
@@ -143,8 +155,10 @@ pnpm sdd:task <spec-id|slug> cycle-XX TASK-NNN done \
 - **Verificado con Claude Code 2.1.325**: un `@import` dentro de un `CLAUDE.md` symlinkeado se
   resuelve desde la ruta **real** del archivo, no desde el symlink; un import que no existe se
   ignora en silencio. Por eso `CLAUDE.md` termina con dos líneas, cada una en su propia línea:
-  `@project.md` (caso symlink, el normal) y `@sdd/dual-harness/project.md` (caso copia en la raíz,
-  Windows sin symlinks).
+  `@../dual-harness/project.md` (caso symlink, el normal: se resuelve desde `sdd/dual-harness/`;
+  en una copia o hardlink de la raíz apunta fuera del repo y no existe, así que nunca importa un
+  `project.md` ajeno de la raíz) y `@sdd/dual-harness/project.md` (caso copia en la raíz, Windows
+  sin symlinks).
 - `AGENTS.md`, `GEMINI.md` y `copilot-instructions.md` llevan un puntero en prosa: «Si existe
   `sdd/dual-harness/project.md`, leelo antes de trabajar: son las instrucciones propias de este repo».
 - Reglas bajo demanda nuevas en `dual-harness/rules/` (< 8.000 caracteres cada una, frontmatter

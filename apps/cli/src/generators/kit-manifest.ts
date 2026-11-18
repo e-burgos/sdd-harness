@@ -63,7 +63,7 @@ export const HARNESS_FILES = [
 ] as const;
 
 export function compareKitVersions(a: string, b: string): number {
-  const parse = (v: string) => v.split('.').map((n) => Number.parseInt(n, 10) || 0);
+  const parse = (v: string) => String(v).split('.').map((n) => Number.parseInt(n, 10) || 0);
   const [x, y] = [parse(a), parse(b)];
   for (let i = 0; i < 3; i++) {
     if ((x[i] ?? 0) !== (y[i] ?? 0)) return (x[i] ?? 0) - (y[i] ?? 0);
@@ -195,7 +195,7 @@ export async function readManifest(sddDir: string): Promise<KitManifest | null> 
   if (!(await fs.pathExists(path))) return null;
   try {
     const manifest = await fs.readJSON(path);
-    if (!manifest?.files) return null;
+    if (!manifest?.files || typeof manifest.kit_version !== 'string') return null;
     // A kit.json written on Windows by <= v0.14.1 has backslash keys
     // (`agents\\sdd-planner.agent.md`). The keys computed from the kit are posix, so without
     // this every lookup missed: the update marked each changed file as a conflict, and the
