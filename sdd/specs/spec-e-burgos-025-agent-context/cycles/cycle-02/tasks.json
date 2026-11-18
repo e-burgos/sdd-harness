@@ -54,17 +54,5 @@
       "status": "pending",
       "files": []
     }
-  ],
-  "batches": [
-    {
-      "id": "B-01",
-      "app": "apps/cli",
-      "role": "implementor-back",
-      "tasks": [
-        "TASK-001",
-        "TASK-002"
-      ],
-      "depends_on": []
-    }
   ]
 }
