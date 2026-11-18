@@ -48,7 +48,7 @@ export function frontendVersionFor(
 }
 
 export const FRONTEND_VERSIONS = {
-  next: "^16.4.4",
+  next: "^16.4.6",
   react: "^19.3.1",
   "react-dom": "^19.3.1",
   "react-router-dom": "^7.18.5",
