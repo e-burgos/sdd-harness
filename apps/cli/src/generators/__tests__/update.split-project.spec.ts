@@ -193,6 +193,22 @@ describe('update sdd — núcleo del arnés, project.md y --split-project', () =
       expect(project).not.toContain('---');
     });
 
+    it.skipIf(OLD_CLAUDE === null).each([
+      ['separador pegado al comentario', '---\n\n'],
+      ['solo líneas en blanco', '\n'],
+      ['separador con CRLF y espacios', '\r\n---  \r\n\r\n\r\n'],
+    ])('separador real de una absorción (%s): la cabeza publicada se reconoce y se reemplaza', async (_label, separator) => {
+      await setManifest('0.22.0', { 'dual-harness/CLAUDE.md': 'un kit más nuevo\n' });
+      await fs.writeFile(dual('CLAUDE.md'), `${OLD_CLAUDE as string}${separator}${ABSORBED_HEADING}\n\nregla propia\n`);
+
+      const report = await updateSDD(ws, { splitProject: true });
+
+      expect(report.splitProject?.find((e) => e.file === 'dual-harness/CLAUDE.md')?.outcome).toBe('moved');
+      expect(await fs.readFile(dual('CLAUDE.md'), 'utf-8')).toBe(kitFile('CLAUDE.md'));
+      expect(await fs.pathExists(`${dual('CLAUDE.md')}.new`)).toBe(false);
+      expect(await projectMd()).toContain('regla propia');
+    });
+
     it.skipIf(OLD_CLAUDE === null)('una cabeza publicada con un carácter cambiado se queda y recibe .new', async () => {
       await setManifest('0.22.0', { 'dual-harness/CLAUDE.md': 'un kit más nuevo\n' });
       const touched = (OLD_CLAUDE as string).replace('SDD', 'SDX');
