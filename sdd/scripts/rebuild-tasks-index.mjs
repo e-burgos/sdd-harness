@@ -29,6 +29,8 @@ const CHECK_ONLY = process.argv.includes('--check');
   }
 }
 
+const readJson = (path) => JSON.parse(readFileSync(path, 'utf8').replace(/^﻿/, ''));
+
 const specs = {};
 const specIds = readdirSync(SPECS_DIR, { withFileTypes: true })
   .filter((e) => e.isDirectory() && e.name.startsWith('spec-'))
@@ -46,12 +48,12 @@ for (const specId of specIds) {
   for (const cycleKey of cycleKeys) {
     const tasksPath = join(cyclesDir, cycleKey, 'tasks.json');
     if (!existsSync(tasksPath)) continue;
-    const cycleTasks = JSON.parse(readFileSync(tasksPath, 'utf8'));
+    const cycleTasks = readJson(tasksPath);
 
     let status = 'in-progress';
     const cycleJsonPath = join(cyclesDir, cycleKey, 'cycle.json');
     if (existsSync(cycleJsonPath)) {
-      status = JSON.parse(readFileSync(cycleJsonPath, 'utf8')).status ?? status;
+      status = readJson(cycleJsonPath).status ?? status;
     }
 
     specs[specId] ??= { cycles: {} };

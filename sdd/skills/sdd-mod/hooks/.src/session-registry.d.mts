@@ -1,8 +1,20 @@
 export type UnitRef =
   | { kind: 'cycle'; spec: string; cycle: string }
-  | { kind: 'fix'; fix: string };
+  | { kind: 'fix'; fix: string }
+  | { kind: 'spec'; spec: string };
 
-export type BindSource = 'gate-b' | 'sdd-use' | 'single-unit' | 'branch' | 'studio';
+export type BindSource =
+  | 'gate-a'
+  | 'gate-b'
+  | 'sdd-use'
+  | 'single-unit'
+  | 'branch'
+  | 'studio'
+  | 'document'
+  | 'worktree'
+  | 'spec-cycle';
+
+export type BindTarget = { unit: UnitRef; worktree: string | null };
 
 export type SessionBinding = {
   session_id: string;
@@ -27,10 +39,18 @@ export type EditVerdict =
 
 export function resolveRegistryDir(fs: Pick<RegistryFs, 'read'>, repoRoot: string): Promise<string>;
 export function readBranch(fs: Pick<RegistryFs, 'read'>, repoRoot: string): Promise<string | null>;
+export function listWorktrees(fs: Pick<RegistryFs, 'read' | 'list'>, repoRoot: string): Promise<string[]>;
+export function worktreeOf(worktrees: string[], filePath: string): string | null;
+export function toPosix(path: string): string;
 export function unitKey(unit: UnitRef): string;
 export function sameUnit(a: UnitRef | null | undefined, b: UnitRef | null | undefined): boolean;
-export function formatBindMarker(unit: UnitRef): string;
+export function formatBindMarker(unit: UnitRef, worktree?: string | null): string;
+export function parseBindTarget(text: unknown): BindTarget | null;
 export function parseBindMarker(text: unknown): UnitRef | null;
+export function specSlugOf(specId: string): string;
+export function unitFromBranch(branch: string | null, openUnits: UnitRef[]): UnitRef | null;
+export function unitFromSpecPath(rel: string, openUnits: UnitRef[]): UnitRef | null;
+export function cycleOfSpec(spec: string, openUnits: UnitRef[]): UnitRef | null;
 export function openUnitsOf(
   cycles: { spec: string; cycle: string }[],
   fixes: { id: string }[],
@@ -44,7 +64,12 @@ export function writeBinding(
 ): Promise<SessionBinding>;
 export function touchBinding(fs: RegistryFs, dir: string, sessionId: string, now: number): Promise<SessionBinding | null>;
 export function endBinding(fs: RegistryFs, dir: string, sessionId: string, now: number): Promise<SessionBinding | null>;
-export function listLiveBindings(fs: Pick<RegistryFs, 'read' | 'list'>, dir: string, now: number): Promise<SessionBinding[]>;
+export function listLiveBindings(
+  fs: Pick<RegistryFs, 'read' | 'list'>,
+  dir: string,
+  now: number,
+  options?: { includeSpec?: boolean },
+): Promise<SessionBinding[]>;
 export function autoBindUnit(input: {
   binding: SessionBinding | null;
   openUnits: UnitRef[];

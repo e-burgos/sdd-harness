@@ -60,8 +60,8 @@ npm/yarn — el workspace no está montado. Pedirle a un agente que use la skill
 **`init-nx-workspace`**: monta Nx 23 + pnpm, los globs `apps/* libs/* tools/*`, el `.nxignore`, el
 CI con pnpm y el arnés dual, y termina en un checklist verificable comando por comando.
 
-El arnés dual (`AGENTS.md`/`CLAUDE.md`/`GEMINI.md`) instruye a los agentes a chequear esto **al
-iniciar cualquier sesión**, así que normalmente lo detectan solos antes de la primera acción.
+El arnés dual (`AGENTS.md`/`CLAUDE.md`/`GEMINI.md`, con la regla `sdd-workspace.md`) instruye a los
+agentes a chequear esto **al iniciar la sesión principal**, así que normalmente lo detectan solos antes de la primera acción.
 
 > Crear apps o libs **no** es parte de esta skill: eso es `scaffold-nx`, y siempre dentro de un
 > ciclo SDD.
@@ -95,6 +95,33 @@ Este script genera (o regenera) todos los symlinks necesarios:
 > `.github/copilot-instructions.md` es un archivo real (no symlink) para los lectores server-side de GitHub.
 > `.gemini/commands/*.toml` se generan en cada corrida (TOML no tiene mecanismo de include), y
 > `.gemini/settings.json` se fusiona en vez de sobreescribirse — ambos dejan intactos los archivos del usuario.
+
+### 2.d Núcleo, reglas bajo demanda y `project.md`
+
+Desde el kit 0.23.0, `sdd/dual-harness/{CLAUDE,AGENTS,GEMINI}.md` son un **núcleo de menos de 6 KB**:
+regla cero, regla uno, invariantes y una tabla de disparadores («si pasa X, leé tal regla»). El
+detalle vive en `sdd/dual-harness/rules/` y se lee **solo cuando toca**:
+
+| Regla | Cuándo |
+| --- | --- |
+| `sdd-gates.md` | Gates, flows, FIX GATE |
+| `sdd-execution.md` | Abrir o ejecutar un ciclo: bloques, `sdd:task`, `sdd:verify` |
+| `sdd-context.md` | Cerrar un ciclo o fix: fragmentos de contexto, CONTEXTO y MEMORIA GATE |
+| `sdd-workspace.md` | Chequeo del workspace, invariantes pnpm/Nx |
+| `sdd-tools.md` | graphify, rtk, sdd-mod, tucu-ui, video-maker |
+| `sdd-model-budget.md` | Tiers de modelo y contrato de telemetría |
+| `sdd-code-style.md` | Código sin comentarios |
+
+**Las instrucciones propias de tu repo no van en esos archivos**: viven en
+`sdd/dual-harness/project.md`, que el kit no shippea, no entra al manifiesto y `update sdd` no toca;
+el núcleo lo importa (`@../dual-harness/project.md` y `@sdd/dual-harness/project.md`) y `AGENTS.md`/`GEMINI.md`/
+`copilot-instructions.md` lo mencionan. Si tu repo ya traía instrucciones dentro del arnés, ver
+`harness update sdd --split-project` en [INSTALL.md](INSTALL.md).
+
+**Regla cero: máximo no es el default.** Antes de elegir el tier máximo, el agente decide
+explícitamente «máximo o alto» y escribe por qué el alto no alcanza (diseño crítico sin precedente,
+trade-offs entre muchos subsistemas, verify/judge adversarial); ningún subagente va en máximo sin esa
+justificación.
 
 ### Visor SDD (opcional, recomendado)
 
@@ -142,8 +169,9 @@ desde `.claude/skills/` (cuando la carpeta del proyecto es de confianza). Prendi
 franja sobre el prompt con el ciclo en curso (spec · ciclo · flow · tareas hechas), suma `/sdd`
 con el detalle de tareas y fixes abiertos, y aplica el SPEC GATE a las ediciones de código: sin
 un ciclo `in-progress` ni un fix abierto, `Edit`/`Write` sobre código se rechazan (o solo
-avisan, con `--gate=warn`). `sdd/`, las carpetas de los arneses y el markdown de la raíz quedan
-libres.
+avisan, con `--gate=warn`). `sdd/`, las carpetas de los arneses y todo `.md`/`.mdx` fuera de `apps/`, `libs/` y `tools/` no
+cuentan como código; para eximir más rutas, `claude_mod.exempt` en `sdd/tools.json` acepta globs
+(`**`, `*`, `?`) y rige también dentro de `apps/`, `libs/` y `tools/`.
 
 ```bash
 pnpm sdd:mod -- --status       # prendido/apagado, modo del gate, link en .claude/skills
@@ -157,9 +185,13 @@ Copilot, Gemini y el resto de los agentes no lo ven y no cambian: siguen las mis
 seguridad común en CI. El gate del mod no cubre comandos de shell.
 
 **Sesiones paralelas.** Podés tener varias specs en curso, una por sesión de Claude Code. La franja
-muestra «esta sesión: <spec> · <cycle> …» y «otras: …». La sesión se ata sola al correr el GATE B
-(`pnpm sdd:gate <spec> cycle-XX`, que imprime `SDD-BIND`), cuando hay una sola unidad abierta o cuando
-la rama nombra la spec; a mano: `pnpm sdd:use <spec> cycle-XX` o `pnpm sdd:use <FIX-id>`. Sin
+muestra «esta sesión: <spec> · <cycle> …» (o la spec en preparación, o el fix y su tipo), el worktree
+si no es el de la sesión, y «otras: …». El mod lee las unidades de todos los worktrees del repo. La
+sesión se ata sola al correr el GATE A (a la spec) o el GATE B (al ciclo; los dos imprimen `SDD-BIND`
+con el worktree), al escribir un documento de la spec o del ciclo, al editar código en un worktree
+con una sola unidad abierta, cuando hay una sola unidad abierta o cuando la rama nombra la spec (id o
+slug); a mano: `pnpm sdd:use <spec> [cycle-XX]` o `pnpm sdd:use <FIX-id>`, desde el worktree de la
+unidad. La regla ① de los arneses pide además la línea `Unidad SDD → …`. Sin
 atadura y con varias unidades abiertas, el gate rechaza la edición y las lista. Las ataduras
 viven en `<git-common-dir>/sdd-sessions/` (local, fuera de git) y vencen a los 30 min sin actividad.
 Si dos sesiones van por el mismo archivo, la primera que lo edita lo reserva y la otra, en la misma
@@ -264,9 +296,12 @@ Generar planner.md para el Ciclo 01 — spec-<gh-user>-<NNN>-<slug>.
 El Planner lee `functional.md` y `brief.yaml`, y genera **dos archivos**:
 
 - `cycle-01/planner.md` — sprint plan legible con tasks `TASK-001`, `TASK-002`… (scope: el ciclo),
-  cada una con estimación de horas, story points y dependencias.
+  cada una con estimación de horas, story points, dependencias, su historia y las decisiones del
+  architect que implementa (`Decisiones D-NN`). Techo: 1 día (5 SP) por task; piso: una task de
+  menos de 1 hora se fusiona con su vecina (salvo tests o la única de su zona).
 - `cycle-01/tasks.json` — las mismas tasks en formato canónico (schema `cycle-tasks.schema.json`),
-  y regenera el índice con `pnpm sdd:rebuild-tasks-index`.
+  con `batches` opcionales (bloques de hasta 4 tasks y 12 SP de la misma app y rol), y regenera el
+  índice con `pnpm sdd:rebuild-tasks-index`.
 
 **Prompt al agente `sdd-architect`:**
 
@@ -297,29 +332,69 @@ el **SPEC GATE B**:
 pnpm sdd:gate <spec-id|slug> cycle-01   # lee el flow del ciclo y exige los documentos de ESE flow
 ```
 
-`BLOCKED` → cero código hasta completar lo que falta. Con `APPROVED` (pegar la salida) se
-invocan los implementadores **task por task**. Una task por conversación, sin agrupar. El stack lo
-define la `constitution.md` del subproyecto.
+`BLOCKED` → cero código hasta completar lo que falta. Con `APPROVED` (pegar la salida) el
+orquestador despacha la implementación **por bloques**. El `tasks.json` del ciclo puede traer
+`batches` (opcional): tasks de la misma app y rol, contiguas en orden topológico, hasta 4 tasks y
+12 SP, que arma el planner. **Un agente ejecuta cada bloque** y recibe las tasks de a una, en la
+misma conversación (en Claude Code, `SendMessage` al mismo subagente), sin releer el paquete en
+cada una. Un ciclo sin `batches` se ejecuta task por task, como siempre. El stack lo define la
+`constitution.md` del subproyecto.
 
-**Prompt al agente `sdd-implementor-back` (una task a la vez):**
-
-```
-Implementar TASK-001 del Ciclo 01 — spec-<gh-user>-<NNN>-<slug>.
-```
-
-El agente lee la task en `cycle-01/tasks.json`, el contrato en `architect.md` y la `constitution.md`
-del subproyecto; escribe el código y los tests. Al cerrar cada task: marca `"done"` + `files[]` en
-`tasks.json` y corre `pnpm sdd:rebuild-tasks-index && pnpm sdd:validate`.
-
-**Prompt al agente `sdd-implementor-front` (solo si hay tasks FE, después del backend):**
+**Prompt al agente `sdd-implementor-back` (arranque del bloque):**
 
 ```
-Implementar TASK-00X del Ciclo 01 — spec-<gh-user>-<NNN>-<slug>.
+Implementar el bloque B-01 del Ciclo 01 — spec-<gh-user>-<NNN>-<slug>. Primera task: TASK-001.
+```
+
+Por cada task el agente implementa → `pnpm sdd:verify <app> quick --files … --unit TASK-NNN` →
+commit → responde **una línea** (task, sha, resultado del verify). El orquestador la cierra con
+`pnpm sdd:task <spec> cycle-01 TASK-NNN done --commit <sha> --tokens <consumo> --model … --effort … --agent …`
+(estado, `files` y `usage` en un paso: el consumo es la diferencia de `subagent_tokens` entre dos
+notificaciones) y recién entonces avanza. En la última task del bloque el agente corre además
+`pnpm sdd:verify <app> full --unit B-NN`. Si una task falla dos veces o el agente avisa que su
+contexto se compactó, el orquestador sigue el bloque con un agente nuevo. Dos bloques corren en
+paralelo solo si son de apps distintas y ninguno depende del otro. Sin continuación de subagentes
+(Copilot, Gemini), una sesión hace el bloque en secuencia y cierra cada task con
+`sdd:task … done … --approx`. **Nadie edita `tasks.json` a mano.**
+
+**El paquete de contexto y `pnpm sdd:pack`.** Antes de despachar un agente, el orquestador corre
+`pnpm sdd:pack <spec> cycle-01 <rol> B-NN` (functional, planner, architect y reviewer no llevan
+unidad). Arma, desde las fuentes y según lo declarado en `sdd/packs.json`, solo lo que ese rol
+necesita (las tasks y secciones del plan del bloque, las decisiones e historias que citan, el
+contexto del subproyecto, los comandos de verify) en `artifacts/packs/<unidad>.<rol>.md`, un
+archivo derivado e ignorado por git. El agente lee el paquete en vez de los documentos enteros y
+reporta como pack-miss cualquier lectura extra, que el orquestador registra con
+`sdd:task … --pack-miss`. El código de salida 3 (sin `packs.json` o sin entrada para el rol)
+significa que el agente trabaja como antes; `--stats` muestra el tamaño de cada paquete.
+
+**`sdd/verify.json` y `pnpm sdd:verify`.** `verify.json` (dato del proyecto: `update sdd` no lo
+pisa) dice cómo se verifica cada subproyecto: `quick` y `full` son listas de comandos, y
+`full_exclusive` marca un `full` pesado.
+
+```bash
+pnpm sdd:verify <app> quick [--files a,b] [--unit TASK-NNN]   # por task; {files} en el comando = --files
+pnpm sdd:verify <app> full  [--unit B-NN] [--reuse]           # fin de bloque o de ciclo
+pnpm sdd:verify --init                                        # siembra las entradas que faltan
+```
+
+La salida es compacta (una línea por comando; si falla, las últimas 40 líneas y la ruta del log;
+`--verbose` y `--json` para el resto) y, con un ciclo resoluble, queda en
+`cycle-XX/artifacts/verify/<unidad>-<nivel>.json`. `--reuse` saltea el `full` si hay uno verde del
+mismo subproyecto sin cambios fuera de `sdd/` desde ese commit: es lo que usa el reviewer. Un `full`
+con `full_exclusive: true` toma un **lease de máquina** (un solo build pesado a la vez entre todos
+tus repos y sesiones): si está ocupado espera hasta `--wait` (600 s) y sale con **código 75**.
+Códigos: `0` ok · `1` falló un comando · `2` uso inválido · `3` el subproyecto no tiene entrada
+(corré `--init`) · `75` lease no obtenido.
+
+**Prompt al agente `sdd-implementor-front` (solo si hay bloques FE, después del backend):**
+
+```
+Implementar el bloque B-02 del Ciclo 01 — spec-<gh-user>-<NNN>-<slug>. Primera task: TASK-00X.
 ```
 
 El agente frontend verifica primero que los endpoints consumidos estén `"implemented"` en `sdd/api.json`.
 
-**El dev revisa** el código generado tarea a tarea. Si algo no cumple la spec, se le indica al agente qué corregir antes de pasar a la siguiente task.
+**El dev revisa** el código generado task a task. Si algo no cumple la spec, se le indica al agente qué corregir antes de que el orquestador pase a la siguiente.
 
 ---
 
@@ -684,7 +759,7 @@ Y si el punto 4 es NO, hay un error: los base solo los toca la consolidación (v
   (económico/estándar/alto/máximo) que cumpla — la regla aplica a los tres proveedores (Claude,
   Copilot, Gemini). Implementores → estándar (`sonnet`/`medium` en Claude); orquestador,
   arquitecto y reviewer → alto (`opus`/`high` en Claude). Nunca un fan-out entero en el tier más
-  caro. Tabla canónica: `sdd/dual-harness/{CLAUDE,AGENTS,GEMINI}.md` → ⚙️.
+  caro. Tabla canónica: `sdd/dual-harness/rules/sdd-model-budget.md`. El tier máximo no es el default: se justifica «máximo o alto» por escrito.
 - **graphify es opcional** — si `graphify-out/graph.json` existe, consultalo antes de `grep`/`Read`
   a ciegas; si no, trabajá normal. Para habilitarlo: skill `setup-graphify`.
 - **rtk viene activo** y comprime la salida de los comandos: no lo prefijes a mano, usá
@@ -737,6 +812,12 @@ pnpm sdd:docs                            # → http://127.0.0.1:4310/sdd/docs/
 
 # Fragmentos de contexto sin consolidar (≥5 dispara consolidación)
 ls sdd/context/*/*/updates/*.md 2>/dev/null | wc -l
+
+# Verificar un subproyecto y cerrar tasks (ver Paso 4)
+pnpm sdd:verify <app> quick|full
+pnpm sdd:verify --init
+pnpm sdd:task <spec> cycle-01 TASK-001 start|done …
+pnpm sdd:pack <spec> cycle-01 <rol> [B-NN]
 ```
 
 ### Prompts de invocación por agente
@@ -753,8 +834,8 @@ ls sdd/context/*/*/updates/*.md 2>/dev/null | wc -l
 "Generar planner.md para el Ciclo 01 — <spec-id>."
 "Generar architect.md para el Ciclo 01 — <spec-id>."
 
-# Implementar una task
-"Implementar TASK-001 del Ciclo 01 — <spec-id>."
+# Implementar un bloque (o una task, si el ciclo no tiene batches)
+"Implementar el bloque B-01 del Ciclo 01 — <spec-id>. Primera task: TASK-001."
 
 # Revisar y cerrar
 "Revisar el Ciclo 01 — <spec-id>."
@@ -829,7 +910,7 @@ spec con `status: "draft"` y registra su módulo en `pending_modules` de
 pegarle al agente `sdd/prompts/hermes-resume.prompt.md` — diagnostica la posición
 (ciclo abierto → continuar; pendientes → orquestador; backlog vacío → reportar) y sigue.
 
-### 10.2 Memoria (regla 🧠 del dual-harness)
+### 10.2 Memoria (`sdd/dual-harness/rules/sdd-context.md`)
 
 Dos capas de archivos versionados, sin dependencias:
 
@@ -861,10 +942,9 @@ Contrato v0.11.0: **todo agente que consuma tokens en un flujo SDD o un fix regi
 al cerrar su unidad de trabajo** (task, documento, ciclo, fix), `provider_model`
 (`claude/sonnet`, `gemini/pro`, `copilot/claude-sonnet`), `effort`, `tokens_in`,
 `tokens_out`, `source` y `approx`. Modelo/effort se declaran ANTES de ejecutar (regla
-⚙️); los tokens se registran AL CERRAR. La tabla completa de fuentes por arnés
+`rules/sdd-model-budget.md`); los tokens se registran AL CERRAR. La tabla completa de fuentes por arnés
 (`session-report`, `stats-command`, `agent-usage-notification`, `declared-estimate`) y
-el detalle campo por campo viven en `sdd/dual-harness/AGENTS.md` (sección ⚙️ →
-Telemetría de uso) — acá solo el resumen:
+el detalle campo por campo viven en `sdd/dual-harness/rules/sdd-model-budget.md` — acá solo el resumen:
 
 - **Task** → `tasks.json → tasks[].usage`, la escribe quien la ejecuta al cerrarla.
 - **Documento** (functional/planner/architect) → una entrada en
@@ -951,8 +1031,8 @@ refresh manual.
 │  (paralelo)    ├──→                                            │
 │  sdd-architect─┘    architect.md + schema.json + api.json      │
 │         ↓                                                       │
-│  sdd-implementor-back  (task por task → done + validate)       │
-│  sdd-implementor-front (task por task, si hay FE)              │
+│  sdd-implementor-back  (por bloque; sdd:task cierra cada task) │
+│  sdd-implementor-front (por bloque, si hay FE)                 │
 │         ↓                                                       │
 │  sdd-reviewer → VALIDATION GATE + cycle.json (completed)       │
 │               + CONTEXTO GATE + pnpm sdd:validate en verde     │

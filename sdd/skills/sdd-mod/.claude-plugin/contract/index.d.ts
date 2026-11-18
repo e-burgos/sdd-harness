@@ -1,10 +1,11 @@
 export type GateMode = 'block' | 'warn';
 
-export type ModSettings = { enabled: boolean; gate: GateMode };
+export type ModSettings = { enabled: boolean; gate: GateMode; exempt?: string[] };
 
 export type CycleTask = { id: string; title: string; status: string };
 
 export type ActiveCycle = {
+  worktree: string;
   spec: string;
   title: string;
   cycle: string;
@@ -12,18 +13,30 @@ export type ActiveCycle = {
   tasks: CycleTask[];
 };
 
-export type OpenFix = { id: string; title: string; status: string };
+export type OpenFix = { id: string; title: string; status: string; type: string | null; worktree: string };
+
+export type OpenSpec = { spec: string; title: string; worktree: string };
 
 export type UnitRef =
   | { kind: 'cycle'; spec: string; cycle: string }
-  | { kind: 'fix'; fix: string };
+  | { kind: 'fix'; fix: string }
+  | { kind: 'spec'; spec: string };
 
 export type SessionBinding = {
   session_id: string;
   unit: UnitRef;
   worktree: string;
   harness: 'claude-code' | 'studio' | 'manual';
-  source: 'gate-b' | 'sdd-use' | 'single-unit' | 'branch' | 'studio';
+  source:
+    | 'gate-a'
+    | 'gate-b'
+    | 'sdd-use'
+    | 'single-unit'
+    | 'branch'
+    | 'studio'
+    | 'document'
+    | 'worktree'
+    | 'spec-cycle';
   bound_at: string;
   updated_at: string;
   ended_at: string | null;
@@ -45,6 +58,9 @@ export type Snapshot = {
   cycles: ActiveCycle[];
   fixes: OpenFix[];
   openUnits: UnitRef[];
+  specs: OpenSpec[];
+  root: string;
+  worktrees: string[];
   mine: SessionBinding | null;
   others: SessionBinding[];
   sessionId?: string;

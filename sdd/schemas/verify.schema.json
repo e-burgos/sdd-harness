@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "sdd/schemas/verify.schema.json",
+  "title": "SDD verify commands (sdd/verify.json)",
+  "description": "Comandos de verificación por subproyecto que ejecuta `pnpm sdd:verify`. Es un archivo de DATOS del proyecto: `harness update sdd` jamás lo pisa. La clave es el id lógico del subproyecto (el mismo de global.json y cycle.json → apps). `quick` corre al cerrar cada task y `full` al cerrar cada bloque; `{files}` dentro de un comando se reemplaza por los archivos de --files.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": { "type": "string" },
+    "_description": { "type": "string" }
+  },
+  "patternProperties": {
+    "^(apps|libs|tools)/[a-z][a-z0-9-]*$": { "$ref": "#/definitions/VerifyEntry" }
+  },
+  "definitions": {
+    "CommandList": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "VerifyEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "quick": {
+          "$ref": "#/definitions/CommandList",
+          "description": "Comandos de shell, desde la raíz del repo, para el cierre de cada task. Un comando con {files} y sin --files se saltea."
+        },
+        "full": {
+          "$ref": "#/definitions/CommandList",
+          "description": "Comandos de shell, desde la raíz del repo, para el cierre de cada bloque."
+        },
+        "full_exclusive": {
+          "type": "boolean",
+          "default": false,
+          "description": "true → `full` toma el lease de máquina (una verificación full pesada a la vez entre todas las sesiones)."
+        }
+      }
+    }
+  }
+}

@@ -16,11 +16,37 @@ What it does, governed by the hashes in `sdd/kit.json`:
 | **Your data** — `global.json`, specs, cycles, fixes, contexts, `memory/journal/` | **Never touched** |
 | Kit files **unmodified** locally (skills, agents, prompts, schemas, scripts, viewer) | Replaced by the new version |
 | Kit files **new** in this version | Added on their own |
-| Kit files **you edited** (typically `dual-harness/AGENTS.md`/`CLAUDE.md`/`GEMINI.md`) | Your version stays intact; the new one lands next to it as `*.new` so you merge by hand what you care about |
+| Kit files **you edited** | Your version stays intact; the new one lands next to it as `*.new` so you merge by hand what you care about |
+| `sdd/verify.json`, `sdd/dual-harness/project.md`, `sdd/tools.json` | Your data: **never touched** |
 
 At the end it regenerates the catalog, refreshes the symlinks and runs `sdd:validate`. If
 the update lists `*.new` conflicts, merge them (or ask your agent to) and delete the `.new`
 files.
+
+### The repo's own instructions: `project.md` and `--split-project`
+
+Since kit 0.23.0 the harness files (`dual-harness/{CLAUDE,AGENTS,GEMINI}.md`) are a core under 6 KB
+governed by hash like any other kit file. Your own instructions live in
+`sdd/dual-harness/project.md`. A repo installed with an earlier kit, where those instructions ended
+up inside the three files (under "Instrucciones previas del proyecto (absorbidas al instalar SDD)"),
+is migrated with a command that **never runs on its own**:
+
+```bash
+npx @e-burgos/sdd-harness@latest update sdd --split-project
+```
+
+For each of the three installed files, the command reports which of these three outcomes applied:
+
+1. **It has the absorbed heading**: moves the absorbed content to `sdd/dual-harness/project.md`
+   (without duplicating identical text across the three) and keeps the rest.
+2. **The rest is identical** to the file the kit had installed (old manifest hash) or to the new kit:
+   it is replaced with the new kit's file.
+3. **The rest differs**: it is kept and the new kit's file lands as `.new` for you to merge by hand.
+
+Up to 0.22.x those three files were hybrids and got `.new` on every update if they differed; since
+0.23.0 they are hybrids only if the installed manifest comes from an earlier kit (or there is no
+manifest). `harness configure sdd` and `init` write the absorbed content to `project.md` and leave
+the three kit files intact.
 
 ---
 
@@ -60,6 +86,8 @@ available.
        "sdd:docs": "node sdd/docs/serve.mjs",
        "sdd:validate": "node sdd/scripts/validate-sdd.mjs",
        "sdd:gate": "node sdd/scripts/spec-gate.mjs",
+       "sdd:verify": "node sdd/scripts/sdd-verify.mjs",
+       "sdd:task": "node sdd/scripts/sdd-task.mjs",
        "sdd:rebuild-tasks-index": "node sdd/scripts/rebuild-tasks-index.mjs",
        "sdd:rebuild-catalog": "node sdd/scripts/rebuild-catalog.mjs"
      }
@@ -138,9 +166,11 @@ The key is only written to `sdd/global.json` when you pass it; without it the re
 | `tools.json`       | Switches for rtk (`enabled`, `auto_install`), the Claude Code mod (`claude_mod`) and tucu-ui (`tucu_ui`) — project data: `update sdd` never overwrites it |
 | `integrations/`    | Developer-installed integrations (`integrations/skills/tucu-ui-design/`): project data, `update sdd` does not touch it |
 | `schemas/`         | Strict JSON Schemas for every registry                                                          |
-| `scripts/`         | validate, spec-gate (`sdd:gate`), rebuild-tasks-index, rebuild-catalog, setup-agents (bash + PowerShell) the three rtk ones: `setup-rtk.mjs`, `rtk-hook.mjs`, `rtk-common.mjs`, `rule-zero-hook.mjs` (SessionStart hook that re-injects rule zero: model/effort/context, installed by `setup-rtk.mjs` even with rtk off), `sdd-mod.mjs` (Claude Code mod switch) and `sdd-tucu.mjs` + `tucu-ui-common.mjs` + `mcp-config.mjs` (tucu-ui switch and MCP merge) |
+| `scripts/`         | validate, spec-gate (`sdd:gate`), `sdd-verify` (`sdd:verify`), `sdd-task` (`sdd:task`), `sdd-pack` (`sdd:pack`), rebuild-tasks-index, rebuild-catalog, setup-agents (bash + PowerShell) the three rtk ones: `setup-rtk.mjs`, `rtk-hook.mjs`, `rtk-common.mjs`, `rule-zero-hook.mjs` (SessionStart hook that re-injects rule zero: model/effort/context, installed by `setup-rtk.mjs` even with rtk off), `sdd-mod.mjs` (Claude Code mod switch) and `sdd-tucu.mjs` + `tucu-ui-common.mjs` + `mcp-config.mjs` (tucu-ui switch and MCP merge) |
 | `docs/`            | Portable, bilingual documentation viewer (vanilla JS, zero deps)                                |
-| `dual-harness/`    | CLAUDE.md / AGENTS.md / GEMINI.md to link at the repo root, `copilot-instructions.md` (seed for `.github/`) plus `rules/` (canonical gates and telemetry) |
+| `dual-harness/`    | Core (< 6 KB) of CLAUDE.md / AGENTS.md / GEMINI.md to link at the root, `copilot-instructions.md` (seed for `.github/`) and `rules/` (gates, execution, context, workspace, tools, tiers and telemetry: read on demand). `project.md` (yours) is created by the dev |
+| `verify.json`      | Per-subproject verification commands (`quick`/`full`) for `pnpm sdd:verify`; project data: `update sdd` never overwrites it. `pnpm sdd:verify --init` seeds it |
+| `packs.json`       | What goes into each role's context pack for `pnpm sdd:pack` (and the block caps `sdd:validate` reads); a kit file: `update sdd` replaces it if unmodified, leaves a `.new` if you edited it |
 | `context/`         | Constitution and context prompt templates (global + example)                                    |
 | `specs/`, `fixes/` | Empty, ready for the first specs and fixes                                                      |
 | `*.json`           | Empty, valid state registries (`sdd:validate` OK)                                               |

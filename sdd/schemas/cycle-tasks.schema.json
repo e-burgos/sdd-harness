@@ -67,6 +67,13 @@
       "items": {
         "$ref": "#/definitions/TaskEntry"
       }
+    },
+    "batches": {
+      "type": "array",
+      "description": "Optional execution blocks: groups of tasks one agent runs in sequence. Written by the orchestrator when it opens the cycle; sdd:validate warns on inconsistencies (unknown task, task in two blocks, app outside the cycle, unknown dependency, block over the cap).",
+      "items": {
+        "$ref": "#/definitions/Batch"
+      }
     }
   },
   "definitions": {
@@ -214,7 +221,79 @@
               "type": "string",
               "pattern": "^\\d{4}-\\d{2}-\\d{2}(T[0-9:.]+Z?)?$",
               "description": "When the unit closed (date or ISO datetime)."
+            },
+            "allocation": {
+              "type": "object",
+              "required": [
+                "batch",
+                "batch_tokens"
+              ],
+              "additionalProperties": false,
+              "description": "Set when one agent did several tasks without cuts and the batch total was split across them; requires approx: true. The cycle total is exact, only the split is approximate.",
+              "properties": {
+                "batch": {
+                  "type": "string",
+                  "pattern": "^B-\\d{2}$"
+                },
+                "batch_tokens": {
+                  "type": "integer",
+                  "minimum": 0
+                }
+              }
+            },
+            "pack_misses": {
+              "type": "array",
+              "maxItems": 5,
+              "items": {
+                "type": "string"
+              },
+              "description": "Up to 5 paths the agent had to read outside its context pack. Self-declared signal, no narrative."
             }
+          }
+        },
+        "refs": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]*#.+$"
+          },
+          "description": "Optional pointers to the exact sections the task needs, as <document>#<id> (architect#D-04), so the implementer reads those instead of whole documents."
+        }
+      }
+    },
+    "Batch": {
+      "type": "object",
+      "required": [
+        "id",
+        "app",
+        "role",
+        "tasks"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^B-\\d{2}$"
+        },
+        "app": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        },
+        "tasks": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "string",
+            "pattern": "^TASK(-[A-Z]+)?(-\\d+)+$"
+          }
+        },
+        "depends_on": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^B-\\d{2}$"
           }
         }
       }

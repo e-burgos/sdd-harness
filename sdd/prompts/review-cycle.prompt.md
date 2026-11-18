@@ -1,6 +1,6 @@
 # Prompt: Revisar y Cerrar Ciclo
 
-> **Regla cero (⓪ del dual-harness):** antes de actuar escribí `Regla cero → tier · modelo · esfuerzo`
+> **Regla cero (bloque `regla-cero` de los arneses):** antes de actuar escribí `Regla cero → tier · modelo · esfuerzo`
 > y mantené el contexto mínimo.
 
 > Para uso en cualquier monorepo que implemente SDD
@@ -48,12 +48,15 @@ Si el reviewer aprueba — realizar EN ESTE ORDEN:
    → El ciclo NO se cierra ("completed") sin metrics.usage con by_agent completo y la
      suma consistente (sum(by_agent) == by_tier == top-level).
    → Además: usage en cada fix validado/absorbido este ciclo (ver hotfix-bypass-gate.prompt.md)
+4a. Verificación de código: por cada app del ciclo, pnpm sdd:verify <app> full --reuse
+   (resultados en cycle-[XX]/artifacts/verify/*.json; código 3 = sin entrada en sdd/verify.json:
+   verificar con los comandos del subproyecto)
 4b. ⛔ VALIDATION GATE (post-cierre): pnpm sdd:validate DEBE quedar en verde
    → registrar el resultado en reviewer_report.tests["sdd:validate"]
    → el mismo check corre en CI (sdd-validate.yml): un cierre en rojo rompe el PR
 5. ⛔ CONTEXTO GATE — OBLIGATORIO — no cerrar el ciclo sin completar:
    a. Escribir el fragmento aditivo del subproyecto (NO editar constitution.md ni
-      context_prompt.md del subproyecto durante el ciclo — regla 🧩 del dual-harness):
+      context_prompt.md del subproyecto durante el ciclo — `sdd/dual-harness/rules/sdd-context.md`):
       sdd/context/[apps|libs|tools]/[nombre]/updates/YYYY-MM-DD-[spec-id]-cycle-[XX].md
       → solo el delta: Estado / Estructura / Dependencias / Qué sigue
       → si algo "pendiente" del base quedó implementado, anotarlo como "resuelve: ..."

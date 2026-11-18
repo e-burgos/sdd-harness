@@ -30,7 +30,10 @@
     "sdd:tucu": "node sdd/scripts/sdd-tucu.mjs",
     "sdd:video": "node sdd/scripts/sdd-video.mjs",
     "sdd:nx-migrate": "node sdd/scripts/sdd-nx-migrate.mjs",
-    "postinstall": "node -e \"const f='sdd/scripts/setup-rtk.mjs';if(require('fs').existsSync(f)){require('child_process').execFileSync(process.execPath,[f],{stdio:'inherit'})}\""
+    "postinstall": "node -e \"const f='sdd/scripts/setup-rtk.mjs';if(require('fs').existsSync(f)){require('child_process').execFileSync(process.execPath,[f],{stdio:'inherit'})}\"",
+    "sdd:verify": "node sdd/scripts/sdd-verify.mjs",
+    "sdd:task": "node sdd/scripts/sdd-task.mjs",
+    "sdd:pack": "node sdd/scripts/sdd-pack.mjs"
   },
   "devDependencies": {
     "ajv": "^8.20.0",
