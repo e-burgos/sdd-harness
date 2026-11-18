@@ -5,6 +5,41 @@ All notable changes to `@e-burgos/sdd-harness` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.23.0] - 2026-11-18
+
+### Added
+- **Context pack per agent.** `sdd/packs.json` declares, per role, what an agent needs (cycle,
+  the unit's tasks and plan, the `architect.md`/`functional.md` sections its tasks cite, the
+  subproject context, registries, verify) and `pnpm sdd:pack <spec> cycle-XX <role> [B-NN|TASK-…]`
+  builds a deterministic, gitignored pack. The orchestrator builds it before each dispatch and the
+  role agents read it instead of whole documents (one-line fallback when there is no pack).
+  `--stats` compares pack and source bytes: on real cycles a pack is 25–51 % of its sources.
+- **Blocks of tasks continued by one agent.** Optional `batches` in `tasks.json`; the orchestrator
+  dispatches a block to one agent and continues it with each task. `pnpm sdd:task <spec> cycle-XX
+  TASK-NNN start|done` opens and closes a task (usage, files from `--commit`, `--pack-miss`)
+  without hand-editing `tasks.json`.
+- **Two-level verification.** `sdd/verify.json` and `pnpm sdd:verify <app> quick|full [--reuse]`:
+  compact output, results under the cycle's `artifacts/verify/`, and a machine-wide lease that
+  serializes full runs across sessions. `init`, `configure` and `add` seed the entries.
+- **Rule one: the session says where it works.** The Claude Code mod sees the units of every
+  worktree, shows the session's unit, flow and worktree, and binds the session from the GATE A, the
+  first spec or cycle document it writes, the branch, or `sdd:use`.
+
+### Changed
+- **The harness files shrink to a ~5 KB core** (rules zero and one, always-on rules, a trigger
+  table); the rest moves to on-demand rules (`sdd-execution`, `sdd-context`, `sdd-tools`,
+  `sdd-workspace`). The repo's own instructions live in `sdd/dual-harness/project.md`, imported by
+  the harness files. Existing repos migrate explicitly with
+  `harness update sdd --split-project`, which moves the absorbed text block by block, keeps
+  hardlinks and leaves `.new` only when a file was edited by hand.
+- The SPEC GATE no longer treats `.md`/`.mdx` outside `apps|libs|tools` as code;
+  `claude_mod.exempt` adds more globs.
+- Generated Next apps ask for `next` `^16.4.6` (FIX-e-burgos-005).
+
+### Fixed
+- Studio builds with `next` 16.4.6: 16.4.3 is affected by a known vulnerability and `next build`
+  stopped with `SecurityFatalError` (FIX-e-burgos-005).
+
 ## [0.22.0] - 2026-11-13
 
 ### Added
