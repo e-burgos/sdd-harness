@@ -12,6 +12,13 @@ type Lib = {
   headingId(text: string): string | null;
   resolveToken(headings: Heading[], token: string): { heading?: Heading; reason?: string };
   expandRanges(text: string): string[];
+  rangeProblems(text: string): string[];
+  resolveWithParents(headings: Heading[], token: string): { heading?: Heading; reason?: string };
+  parentIds(id: string): string[];
+  mentionsPath(text: string, path: string): boolean;
+  isInsideSdd(path: string): boolean;
+  isSafeApp(app: unknown): boolean;
+  maskedLines(lines: string[]): Set<number>;
   mentionedIds(text: string, known: Set<string>): Set<string>;
   parseSelector(raw: string): { kind: string };
   parseUnitArg(raw: string): { kind?: string; id?: string; ids?: string[]; error?: string };
@@ -100,7 +107,7 @@ describe('pack.mjs token resolution', () => {
 
 describe('pack.mjs derived refs', () => {
   it('expands ranges with the width of the first id and ignores inverted ones', () => {
-    expect(lib.expandRanges('ver D-01..D-03 y RN-9..11 y X-5..2')).toEqual(['D-01', 'D-02', 'D-03', 'RN-9', 'RN-10', 'RN-11']);
+    expect(lib.expandRanges('ver D-01..D-03 y RN-9..11 y X-5..2')).toEqual(['D-01', 'D-02', 'D-03', 'RN-09', 'RN-10', 'RN-11']);
   });
 
   it('finds whole-token mentions of known ids, never prefixes of longer ids', () => {
@@ -430,5 +437,110 @@ describe('pack.mjs stats and validator helpers', () => {
   it('reports each explicit ref that does not resolve', () => {
     expect(lib.unresolvedExplicitRefs(fakeIo(baseFiles()), CYCLE_DIR)).toEqual([{ task: 'TASK-001', ref: 'architect#D-99' }]);
     expect(lib.unresolvedExplicitRefs(fakeIo({}), CYCLE_DIR)).toEqual([]);
+  });
+});
+
+describe('pack.mjs audit regressions', () => {
+  it('derived and explicit refs fall back to the parent heading, stripping trailing -NNN segments', () => {
+    expect(lib.parentIds('US-1-020')).toEqual(['US-1']);
+    expect(lib.parentIds('US-2-001-003')).toEqual(['US-2-001', 'US-2']);
+    expect(lib.parentIds('D-04')).toEqual([]);
+    expect([...lib.mentionedIds('user_stories: ["US-1-020"]', new Set(['US-1']))]).toEqual(['US-1']);
+    const found = headings('# F\n\n### US-1: Parent\ntext\n\n### US-2-001: Child\n');
+    expect(lib.resolveWithParents(found, 'US-1-020').heading?.text).toBe('US-1: Parent');
+    expect(lib.resolveWithParents(found, 'US-2-001').heading?.text).toBe('US-2-001: Child');
+    expect(lib.resolveWithParents(found, 'US-9-020').heading).toBeUndefined();
+  });
+
+  it('the pack resolves a task citing a child id to the parent story, and the validator helper agrees', () => {
+    const files = baseFiles();
+    files[`${CYCLE_DIR}/functional.md`] = '# Func\n\n### US-1: Parent story\nbody\n';
+    files[`${CYCLE_DIR}/tasks.json`] = JSON.stringify({ ...tasks, tasks: [{ ...tasks.tasks[0], user_stories: ['US-1-020'], refs: ['functional#US-1-021'] }, tasks.tasks[1]] });
+    const { result } = pack(files, ['refs:@unit']);
+    expect(result.text).toContain('### US-1: Parent story');
+    expect(result.unresolved).toEqual([]);
+    expect(lib.unresolvedExplicitRefs(fakeIo(files), CYCLE_DIR)).toEqual([]);
+  });
+
+  it('resolveToken step 3 matches whole words, never substrings', () => {
+    expect(lib.resolveToken(headings('## D-041. Otro\nx\n'), 'D-04')).toMatchObject({ reason: 'not found' });
+    expect(lib.resolveToken(headings('## `D-04` uno\n## D-040 dos\n'), 'D-04').heading?.text).toBe('`D-04` uno');
+    expect(lib.resolveToken(headings('## Gate global\n## Otro gate extra\n'), 'gate')).toMatchObject({ reason: 'ambiguous' });
+    expect(lib.headingId('`D-04` a')).toBe('D-04');
+    expect(lib.headingId('**D-04** a')).toBe('D-04');
+  });
+
+  it('section: refuses paths that leave sdd/ and --app style ids that are not apps|libs|tools/<name>', () => {
+    const files = { ...baseFiles(), 'sdd/../package.json': '# pkg\nsecret\n' };
+    const { result } = pack(files, ['section:../package.json#pkg', 'section:a/../../package.json#pkg', 'section:/etc/passwd#x']);
+    expect(result.text.match(/\(sin fuente: ruta fuera de sdd\//g)).toHaveLength(3);
+    expect(result.text).not.toContain('secret');
+    expect(lib.isInsideSdd('dual-harness/rules/a.md')).toBe(true);
+    for (const bad of ['../x', 'a/../b', '/abs', 'C:/x', 'a\\..\\b']) expect(lib.isInsideSdd(bad)).toBe(false);
+    for (const bad of ['../x', 'apps/..', 'apps/../libs/x', 'apps', '/apps/x', 'apps/a/b', 'other/x', '']) expect(lib.isSafeApp(bad)).toBe(false);
+    expect(lib.isSafeApp('apps/demo-api')).toBe(true);
+    expect(lib.resolveApp({ requested: '../etc' }).error).toContain('apps|libs|tools');
+    expect(lib.resolveApp({ unitApp: 'apps/../x', cycleApps: [] }).error).toContain('apps|libs|tools');
+    expect(pack(baseFiles(), ['context:@app'], { app: '../x' }).result.text).toContain('(sin fuente: sin subproyecto resuelto)');
+  });
+
+  it('ranges: multi-group, one-sided, ellipsis, mixed padding; reversed and over-cap are reported', () => {
+    expect(lib.expandRanges('US-2-001..US-2-003')).toEqual(['US-2-001', 'US-2-002', 'US-2-003']);
+    expect(lib.expandRanges('US-2-001..003')).toEqual(['US-2-001', 'US-2-002', 'US-2-003']);
+    expect(lib.expandRanges('D-1..D-03')).toEqual(['D-01', 'D-02', 'D-03']);
+    expect(lib.expandRanges('D-01…D-02')).toEqual(['D-01', 'D-02']);
+    expect(lib.rangeProblems('D-03..D-01 y D-1..D-999 y D-1..D-2')).toEqual(['D-03..D-01 (rango invertido)', 'D-1..D-999 (rango de más de 200)']);
+    const known = new Set(['RN-9', 'RN-10']);
+    expect([...lib.mentionedIds('RN-9..10', known)].sort()).toEqual(['RN-10', 'RN-9']);
+    const files = baseFiles();
+    files[`${CYCLE_DIR}/planner.md`] = '### TASK-001: One\nVer D-03..D-01.\n\n### TASK-002: Two\n';
+    const { result } = pack(files, ['refs:@unit']);
+    expect(result.unresolved).toContain('D-03..D-01 (rango invertido)');
+  });
+
+  it('registry:api@unit matches whole paths only', () => {
+    expect(lib.mentionsPath('see /users/admin', '/users')).toBe(false);
+    expect(lib.mentionsPath('see /users/admin', '/users/admin')).toBe(true);
+    expect(lib.mentionsPath('GET /users.', '/users')).toBe(true);
+    expect(lib.mentionsPath('GET /users/:id', '/users')).toBe(true);
+    expect(lib.mentionsPath('GET /users_all x /users', '/users')).toBe(true);
+    expect(lib.mentionsPath('/', '/')).toBe(false);
+  });
+
+  it('registry:api@unit leaves Fuentes, trailers and unresolved untouched when refs/plan/tasks are not included', () => {
+    const files = baseFiles();
+    files[`${CYCLE_DIR}/tasks.json`] = JSON.stringify({ ...tasks, tasks: [{ ...tasks.tasks[0], refs: ['architect#D-99'] }, tasks.tasks[1]] });
+    const { result } = pack(files, ['cycle', 'registry:api@unit']);
+    const fuentes = result.text.split('\n').find((line) => line.startsWith('> Fuentes:'))!;
+    expect(fuentes).not.toMatch(/planner|architect|functional|tasks\.json/);
+    expect(fuentes).toContain('sdd/api.json');
+    expect(result.unresolved).toEqual([]);
+    expect(result.text).not.toContain('refs sin resolver)');
+    expect(result.text).toContain('"path": "/orders/{id}"');
+    const withRefs = pack(files, ['cycle', 'tasks:@unit', 'refs:@unit', 'registry:api@unit']).result;
+    expect(withRefs.unresolved).toEqual(['architect#D-99']);
+  });
+
+  it('headings inside YAML front matter and HTML comments are ignored; sections are not split by comments', () => {
+    expect(headings('---\n# comment\nname: x\n---\n# Real\n').map((h) => h.text)).toEqual(['Real']);
+    const found = headings('## D-04\na\n<!--\n## old\n-->\nb\n## Next\n');
+    expect(found.map((h) => h.text)).toEqual(['D-04', 'Next']);
+    expect(found[0]).toMatchObject({ line: 1, end: 6 });
+    expect(headings('## A\n<!-- ## inline -->\n## B\n').map((h) => h.text)).toEqual(['A', 'B']);
+    expect([...lib.maskedLines(['---', 'a', '---', 'x'])]).toEqual([0, 1, 2]);
+    expect(headings('not front\n---\n# H\n').map((h) => h.text)).toEqual(['H']);
+  });
+
+  it('pack misses sort by code unit and tolerate junk; null or invalid task entries are skipped', () => {
+    const list = [{ usage: { pack_misses: ['b.ts', 'B.ts'] } }, { usage: { pack_misses: ['b.ts', 'B.ts', 7] } }, null, 'x', { usage: { pack_misses: 'abc' } }];
+    expect(lib.topPackMisses(list as object[])).toEqual([{ path: 'B.ts', count: 2 }, { path: 'b.ts', count: 2 }]);
+    const messy = { tasks: [null, 5, { id: 7 }, { id: 'TASK-001', title: 't', status: 'pending', files: [] }], batches: [null, 'B', { id: 'B-01', app: 'apps/x', role: 'r', tasks: 'oops' }] };
+    expect(lib.resolveUnit(messy, { kind: 'tasks', ids: ['TASK-001'] }).unit?.taskIds).toEqual(['TASK-001']);
+    expect(lib.resolveUnit(messy, { kind: 'batch', id: 'B-01' }).unit?.taskIds).toEqual([]);
+    expect(lib.statsUnits({ tasksJson: messy, roleDef: { unit: 'batch' }, role: 'r' }).map((u) => u.id)).toEqual(['B-01']);
+    const files = baseFiles();
+    files[`${CYCLE_DIR}/tasks.json`] = JSON.stringify({ ...tasks, tasks: [null, ...tasks.tasks, 3] });
+    expect(() => pack(files, ['tasks:@unit', 'tasks:@all:summary', 'plan:@unit', 'refs:@unit'])).not.toThrow();
+    expect(lib.unresolvedExplicitRefs(fakeIo(files), CYCLE_DIR)).toEqual([{ task: 'TASK-001', ref: 'architect#D-99' }]);
   });
 });

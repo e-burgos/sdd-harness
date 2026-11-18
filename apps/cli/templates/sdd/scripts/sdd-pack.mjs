@@ -15,6 +15,7 @@ import {
   resolveApp,
   resolveUnit,
   statsUnits,
+  taskEntries,
   summaryLine,
   topPackMisses,
 } from './lib/pack.mjs';
@@ -96,7 +97,15 @@ function loadPacks() {
   return packs;
 }
 
+function checkPositionals() {
+  const limit = options.stats ? 2 : 4;
+  if (parsed.positional.length <= limit) return;
+  const extra = parsed.positional.slice(limit).join(' ');
+  fail(2, `unexpected extra argument(s): ${extra} — join tasks with a comma and no spaces (TASK-001,TASK-002)\n${USAGE}`);
+}
+
 function locateCycle() {
+  checkPositionals();
   const [specQuery, cycleQuery] = parsed.positional;
   const cycleId = normalizeCycleRef(cycleQuery);
   if (!specQuery || !cycleId) fail(2, `<spec> and cycle-XX are required\n${USAGE}`);
@@ -176,7 +185,8 @@ function statsRows(location, packs) {
     const units = statsUnits({ tasksJson, roleDef, role });
     for (const unit of units) {
       const decided = resolveApp({ requested: options.app, unitApp: unit.app, cycleApps: cycleJson?.apps });
-      if (decided.error || (!decided.app && packNeedsApp(include))) {
+      if (decided.error) appFailure(decided, cycleJson?.apps);
+      if (!decided.app && packNeedsApp(include)) {
         roleRows.push({ role, unit: unit.id, pack_bytes: 0, source_bytes: 0, reason: 'needs --app' });
         continue;
       }
@@ -196,7 +206,8 @@ function statsRows(location, packs) {
       rows.push({ ...heaviest, reason: `heaviest of ${units.length} tasks; ${heaviest.reason}` });
     } else rows.push(...roleRows);
   }
-  return { rows, tasks: tasksJson?.tasks ?? [] };
+  if (rows.some((row) => row.reason === 'needs --app')) appFailure({}, cycleJson?.apps);
+  return { rows, tasks: taskEntries(tasksJson) };
 }
 
 function runStats(location, packs) {
@@ -233,5 +244,5 @@ function main() {
 try {
   main();
 } catch (error) {
-  fail(1, error.message);
+  fail(2, `unexpected error: ${String(error?.message ?? error).split('\n')[0]}`);
 }

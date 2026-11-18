@@ -16,7 +16,10 @@ const ENTRY_LISTS = ['endpoints', 'components', 'tables', 'models', 'entities'];
 const INDEX_HINT = 'leé solo lo que necesites con offset/limit';
 const HEADING_ID_RE = /^([A-Z]+(?:-\d+)+)(?![A-Za-z0-9-])/;
 const MENTION_RE = /(?<![A-Za-z0-9-])([A-Z]+(?:-\d+)+)(?![A-Za-z0-9-])/g;
-const RANGE_RE = /(?<![A-Za-z0-9-])([A-Z]+)-(\d+)\.\.(?:\1-)?(\d+)(?![A-Za-z0-9-])/g;
+const RANGE_RE = /(?<![A-Za-z0-9-])([A-Z]+(?:-\d+)*-)(\d+)(?:\.{2,3}|…)(?:\1)?(\d+)(?![A-Za-z0-9-])/g;
+const RANGE_CAP = 200;
+const APP_ID_RE = /^(apps|libs|tools)\/(?!\.\.?$)[A-Za-z0-9._-]+$/;
+const LEADING_MARKUP_RE = /^[*_`\[(\s]+/;
 const CRITERION_RE = /^\s*- \[[ xX]\] CA-/;
 
 export function normalizeText(raw) {
@@ -39,19 +42,52 @@ export function normalizeHeading(value) {
     .trim();
 }
 
-export function parseHeadings(lines) {
-  const found = [];
+const FENCE_RE = /^ {0,3}(`{3,}|~{3,})(.*)$/;
+
+export function maskedLines(lines) {
+  const masked = new Set();
+  let index = 0;
+  if (lines[0] !== undefined && lines[0].trim() === '---') {
+    const close = lines.findIndex((line, at) => at > 0 && (line.trim() === '---' || line.trim() === '...'));
+    if (close > 0) {
+      for (let at = 0; at <= close; at++) masked.add(at);
+      index = close + 1;
+    }
+  }
   let fence = null;
-  lines.forEach((line, index) => {
-    const marker = /^ {0,3}(`{3,}|~{3,})(.*)$/.exec(line);
+  let comment = false;
+  for (; index < lines.length; index++) {
+    const line = lines[index];
+    if (comment) {
+      masked.add(index);
+      if (line.includes('-->')) comment = false;
+      continue;
+    }
+    const marker = FENCE_RE.exec(line);
     if (fence) {
+      masked.add(index);
       if (marker && marker[1][0] === fence.char && marker[1].length >= fence.length && marker[2].trim() === '') fence = null;
-      return;
+      continue;
     }
     if (marker) {
+      masked.add(index);
       fence = { char: marker[1][0], length: marker[1].length };
-      return;
+      continue;
     }
+    const open = line.indexOf('<!--');
+    if (open >= 0 && !line.includes('-->', open + 4)) {
+      comment = true;
+      if (open === 0) masked.add(index);
+    }
+  }
+  return masked;
+}
+
+export function parseHeadings(lines) {
+  const masked = maskedLines(lines);
+  const found = [];
+  lines.forEach((line, index) => {
+    if (masked.has(index)) return;
     const match = /^ {0,3}(#{1,6})[ \t]+(.*?)[ \t]*$/.exec(line);
     if (!match) return;
     const text = match[2].replace(/[ \t]+#+$/, '').trim();
@@ -67,11 +103,14 @@ export function parseHeadings(lines) {
 }
 
 export function headingId(text) {
-  const match = HEADING_ID_RE.exec(String(text ?? ''));
+  const match = HEADING_ID_RE.exec(stripLeadingMarkup(text));
   return match ? match[1] : null;
 }
 
-function startsWithToken(text, token) {
+const stripLeadingMarkup = (text) => String(text ?? '').replace(LEADING_MARKUP_RE, '');
+
+function startsWithToken(rawText, token) {
+  const text = stripLeadingMarkup(rawText);
   if (!token || !text.startsWith(token)) return false;
   const next = text[token.length];
   return next === undefined || !/[\p{L}\p{N}-]/u.test(next);
@@ -86,7 +125,7 @@ export function resolveToken(headings, rawToken) {
   if (!wanted) return { reason: 'empty token' };
   const equal = headings.find((heading) => normalizeHeading(heading.text) === wanted);
   if (equal) return { heading: equal };
-  const containing = headings.filter((heading) => normalizeHeading(heading.text).includes(wanted));
+  const containing = headings.filter((heading) => ` ${normalizeHeading(heading.text)} `.includes(` ${wanted} `));
   if (containing.length === 1) return { heading: containing[0] };
   return { reason: containing.length > 1 ? 'ambiguous' : 'not found' };
 }
@@ -95,22 +134,70 @@ export function resolveTaskHeading(headings, taskId) {
   return headings.find((heading) => startsWithToken(heading.text, taskId)) ?? null;
 }
 
+export function parentIds(id) {
+  const out = [];
+  let current = String(id ?? '');
+  for (;;) {
+    const match = /^([A-Z]+(?:-\d+)+)-\d+$/.exec(current);
+    if (!match) return out;
+    current = match[1];
+    out.push(current);
+  }
+}
+
+export function resolveWithParents(headings, token) {
+  const direct = resolveToken(headings, token);
+  if (direct.heading) return direct;
+  for (const parent of parentIds(String(token ?? '').trim())) {
+    const found = headings.find((heading) => startsWithToken(heading.text, parent));
+    if (found) return { heading: found };
+  }
+  return direct;
+}
+
+function eachRange(text, visit) {
+  for (const match of String(text ?? '').matchAll(RANGE_RE)) {
+    const [raw, prefix, from, to] = match;
+    visit({ raw, prefix, from, to, start: Number(from), stop: Number(to), width: Math.max(from.length, to.length) });
+  }
+}
+
 export function expandRanges(text) {
   const ids = [];
-  for (const match of String(text ?? '').matchAll(RANGE_RE)) {
-    const [, prefix, from, to] = match;
-    const start = Number(from);
-    const stop = Number(to);
-    if (stop < start || stop - start > 200) continue;
-    for (let n = start; n <= stop; n++) ids.push(`${prefix}-${String(n).padStart(from.length, '0')}`);
-  }
+  eachRange(text, ({ prefix, start, stop, width }) => {
+    if (stop < start || stop - start > RANGE_CAP) return;
+    for (let n = start; n <= stop; n++) ids.push(`${prefix}${String(n).padStart(width, '0')}`);
+  });
   return ids;
+}
+
+export function rangeProblems(text) {
+  const problems = [];
+  eachRange(text, ({ raw, start, stop }) => {
+    if (stop < start) problems.push(`${raw} (rango invertido)`);
+    else if (stop - start > RANGE_CAP) problems.push(`${raw} (rango de más de ${RANGE_CAP})`);
+  });
+  return problems;
 }
 
 export function mentionedIds(text, knownIds) {
   const wanted = new Set();
-  for (const match of String(text ?? '').matchAll(MENTION_RE)) if (knownIds.has(match[1])) wanted.add(match[1]);
-  for (const id of expandRanges(text)) if (knownIds.has(id)) wanted.add(id);
+  const note = (id) => {
+    if (knownIds.has(id)) {
+      wanted.add(id);
+      return;
+    }
+    const parent = parentIds(id).find((candidate) => knownIds.has(candidate));
+    if (parent) wanted.add(parent);
+  };
+  for (const match of String(text ?? '').matchAll(MENTION_RE)) note(match[1]);
+  eachRange(text, ({ prefix, start, stop, width }) => {
+    if (stop < start || stop - start > RANGE_CAP) return;
+    for (let n = start; n <= stop; n++) {
+      const padded = `${prefix}${String(n).padStart(width, '0')}`;
+      note(knownIds.has(padded) ? padded : `${prefix}${n}`);
+    }
+  });
   return wanted;
 }
 
@@ -157,16 +244,25 @@ export function parseUnitArg(raw) {
   return { error: `invalid unit "${text}" — use B-NN or TASK-NNN[,TASK-NNN…]` };
 }
 
+const isEntry = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
+export const taskEntries = (tasksJson) =>
+  (Array.isArray(tasksJson?.tasks) ? tasksJson.tasks : []).filter((task) => isEntry(task) && typeof task.id === 'string');
+const batchEntries = (tasksJson) =>
+  (Array.isArray(tasksJson?.batches) ? tasksJson.batches : []).filter((batch) => isEntry(batch) && typeof batch.id === 'string');
+const idList = (value) => (Array.isArray(value) ? value.filter((id) => typeof id === 'string') : []);
+
+export const isSafeApp = (app) => typeof app === 'string' && APP_ID_RE.test(app);
+
 export function resolveUnit(tasksJson, request) {
-  const tasks = Array.isArray(tasksJson?.tasks) ? tasksJson.tasks : [];
+  const tasks = taskEntries(tasksJson);
   const order = new Map(tasks.map((task, index) => [task.id, index]));
   if (request.kind === 'batch') {
-    const batch = (Array.isArray(tasksJson?.batches) ? tasksJson.batches : []).find((item) => item?.id === request.id);
+    const batch = batchEntries(tasksJson).find((item) => item.id === request.id);
     if (!batch) return { error: `unknown block ${request.id} in tasks.json` };
-    const missing = (batch.tasks ?? []).filter((id) => !order.has(id));
+    const missing = idList(batch.tasks).filter((id) => !order.has(id));
     if (missing.length) return { error: `block ${request.id} lists unknown task ${missing.join(', ')}` };
-    const taskIds = [...new Set(batch.tasks ?? [])].sort((a, b) => order.get(a) - order.get(b));
-    return { unit: { id: request.id, kind: 'batch', taskIds, app: batch.app ?? null } };
+    const taskIds = [...new Set(idList(batch.tasks))].sort((a, b) => order.get(a) - order.get(b));
+    return { unit: { id: request.id, kind: 'batch', taskIds, app: typeof batch.app === 'string' ? batch.app : null } };
   }
   const missing = request.ids.filter((id) => !order.has(id));
   if (missing.length) return { error: `unknown task ${missing.join(', ')} in tasks.json` };
@@ -175,13 +271,17 @@ export function resolveUnit(tasksJson, request) {
 }
 
 export function resolveApp({ requested, unitApp, cycleApps }) {
-  const apps = Array.isArray(cycleApps) ? cycleApps : [];
-  if (requested) {
+  const apps = (Array.isArray(cycleApps) ? cycleApps : []).filter((app) => typeof app === 'string');
+  if (requested !== undefined && requested !== null) {
+    if (!isSafeApp(requested)) return { error: `--app "${requested}" must be a relative apps|libs|tools/<name> path without ".."` };
     if (apps.length && !apps.includes(requested)) return { error: `--app ${requested} is not in the cycle's apps: ${apps.join(', ')}` };
     return { app: requested };
   }
-  if (unitApp) return { app: unitApp };
-  if (apps.length === 1) return { app: apps[0] };
+  if (unitApp) {
+    if (!isSafeApp(unitApp)) return { error: `block app "${unitApp}" must be a relative apps|libs|tools/<name> path without ".."` };
+    return { app: unitApp };
+  }
+  if (apps.length === 1) return isSafeApp(apps[0]) ? { app: apps[0] } : { error: `cycle app "${apps[0]}" is not a valid apps|libs|tools/<name> path` };
   return { app: null, candidates: apps };
 }
 
@@ -231,7 +331,7 @@ export function createContext({ io, specId, specFolder, cycleId, cycleDir, unit,
     cycleId,
     cycleDir,
     unit,
-    app,
+    app: isSafeApp(app) ? app : null,
     now,
     limits: { ...DEFAULT_LIMITS, ...(limits ?? {}) },
     contextAlways: Array.isArray(contextAlways) && contextAlways.length ? contextAlways : DEFAULT_CONTEXT_ALWAYS,
@@ -267,7 +367,7 @@ export function createContext({ io, specId, specFolder, cycleId, cycleDir, unit,
   ctx.tasksJson = () => ctx.json(ctx.cyclePath('tasks.json'));
   ctx.cycleJson = () => ctx.json(ctx.cyclePath('cycle.json'));
   ctx.unitTasks = () => {
-    const entries = ctx.tasksJson()?.value?.tasks ?? [];
+    const entries = taskEntries(ctx.tasksJson()?.value);
     return ctx.unit.taskIds.map((id) => entries.find((task) => task.id === id)).filter(Boolean);
   };
   ctx.get = (rawSelector) => {
@@ -323,7 +423,7 @@ function refsSelector(ctx) {
     for (const ref of Array.isArray(entry.refs) ? entry.refs : []) {
       const parsed = parseExplicitRef(ref);
       const doc = parsed ? docs[parsed.doc] : null;
-      const resolved = doc ? resolveToken(doc.headings, parsed.token) : null;
+      const resolved = doc ? resolveWithParents(doc.headings, parsed.token) : null;
       if (resolved?.heading) add(parsed.doc, resolved.heading);
       else failed.push({ ref, doc: parsed && docs[parsed.doc] ? parsed.doc : null });
     }
@@ -338,6 +438,7 @@ function refsSelector(ctx) {
     }
     for (const id of mentionedIds(unitText, new Set(ids.keys()))) add(name, ids.get(id));
   }
+  for (const problem of rangeProblems(unitText)) if (!ctx.unresolved.includes(problem)) ctx.unresolved.push(problem);
   const parts = [];
   for (const name of ['architect', 'functional', 'planner', 'plan']) {
     const doc = docs[name];
@@ -434,12 +535,35 @@ function registrySelector(ctx, selector) {
   return `<!-- src: ${found.path} -->\n${fenceJson(found.value)}`;
 }
 
+function quietly(ctx, compute) {
+  const marks = { used: ctx.used.length, trailers: ctx.trailers.length, unresolved: ctx.unresolved.length };
+  try {
+    return compute();
+  } finally {
+    ctx.used.length = marks.used;
+    ctx.trailers.length = marks.trailers;
+    ctx.unresolved.length = marks.unresolved;
+  }
+}
+
+export function mentionsPath(text, path) {
+  if (typeof path !== 'string' || path.length < 2) return false;
+  let from = 0;
+  for (;;) {
+    const at = text.indexOf(path, from);
+    if (at < 0) return false;
+    const next = text[at + path.length];
+    if (next === undefined || !/[A-Za-z0-9_/-]/.test(next) || text.startsWith('/:', at + path.length)) return true;
+    from = at + 1;
+  }
+}
+
 function registryUnitSelector(ctx) {
   const found = registryValue(ctx, 'api');
   if (found.error) return noSource(found.error);
-  const emitted = ['tasks:@unit', 'plan:@unit', 'refs:@unit'].map((raw) => ctx.get(raw)).join('\n');
+  const sourceText = quietly(ctx, () => ['tasks-unit', 'plan-unit', 'refs-unit'].map((kind) => runSelector(ctx, { kind, raw: kind })).join('\n'));
   const entries = registryEntries(found.value);
-  const matching = entries.filter((entry) => typeof entry?.path === 'string' && entry.path.length > 1 && emitted.includes(entry.path));
+  const matching = entries.filter((entry) => mentionsPath(sourceText, entry?.path));
   if (!matching.length) return `<!-- src: ${found.path} -->\n${entries.map((entry) => `- ${entryLabel(entry)}`).join('\n') || '(sin entradas)'}`;
   return `<!-- src: ${found.path} -->\n${fenceJson(matching)}`;
 }
@@ -484,19 +608,11 @@ function acceptanceSelector(ctx) {
   const doc = ctx.load(ctx.cyclePath(CYCLE_DOCS.functional));
   if (!doc) return noSource('functional.md no existe');
   const headingByLine = new Map(doc.headings.map((heading) => [heading.line, heading]));
+  const masked = maskedLines(doc.lines);
   const groups = [];
   let current = null;
-  let fence = null;
   doc.lines.forEach((line, index) => {
-    const marker = /^ {0,3}(`{3,}|~{3,})(.*)$/.exec(line);
-    if (fence) {
-      if (marker && marker[1][0] === fence.char && marker[1].length >= fence.length && marker[2].trim() === '') fence = null;
-      return;
-    }
-    if (marker) {
-      fence = { char: marker[1][0], length: marker[1].length };
-      return;
-    }
+    if (masked.has(index)) return;
     if (headingByLine.has(index + 1)) {
       current = { heading: headingByLine.get(index + 1), lines: [], last: index + 1 };
       return;
@@ -552,7 +668,14 @@ export function yamlBlock(lines, key) {
   return { from: start + 1, to: end + 1 };
 }
 
+export function isInsideSdd(relativePath) {
+  const text = String(relativePath ?? '');
+  if (!text || text.startsWith('/') || text.startsWith('\\') || /^[A-Za-z]:/.test(text) || text.includes('\0')) return false;
+  return text.split(/[\\/]+/).every((segment) => segment !== '..');
+}
+
 function sectionSelector(ctx, selector) {
+  if (!isInsideSdd(selector.path)) return noSource(`ruta fuera de ${SDD_DIR}/: ${selector.path}`);
   const path = `${SDD_DIR}/${selector.path}`;
   const doc = ctx.load(path);
   if (!doc) return noSource(`${path} no existe`);
@@ -588,7 +711,7 @@ function runSelector(ctx, selector) {
       const loaded = ctx.tasksJson();
       if (!loaded) return noSource(`${ctx.cyclePath('tasks.json')} no existe o no es JSON`);
       ctx.touch(loaded.doc);
-      const lines = (loaded.value.tasks ?? []).map(
+      const lines = taskEntries(loaded.value).map(
         (task) => `- ${task.id} · ${task.status} · ${task.story_points ?? '?'} SP · ${task.title} · ${(task.files ?? []).length} files`,
       );
       return `<!-- src: ${loaded.doc.path} -->\n${lines.join('\n') || '(sin tasks)'}`;
@@ -688,22 +811,23 @@ export function packFileName(unitId, role) {
 }
 
 export function statsUnits({ tasksJson, roleDef, role }) {
-  const tasks = Array.isArray(tasksJson?.tasks) ? tasksJson.tasks : [];
   if (roleDef.unit === 'cycle') return [{ kind: 'cycle', id: 'cycle', taskIds: [], app: null }];
-  const batches = Array.isArray(tasksJson?.batches) ? tasksJson.batches : [];
+  const batches = batchEntries(tasksJson);
   if (batches.length)
     return batches
-      .filter((batch) => batch?.role === role)
-      .map((batch) => ({ kind: 'batch', id: batch.id, taskIds: batch.tasks ?? [], app: batch.app ?? null }));
-  return tasks.map((task) => ({ kind: 'tasks', id: task.id, taskIds: [task.id], app: null }));
+      .filter((batch) => batch.role === role)
+      .map((batch) => ({ kind: 'batch', id: batch.id, taskIds: idList(batch.tasks), app: typeof batch.app === 'string' ? batch.app : null }));
+  return taskEntries(tasksJson).map((task) => ({ kind: 'tasks', id: task.id, taskIds: [task.id], app: null }));
 }
 
 export function topPackMisses(tasks, limit = 5) {
   const counts = new Map();
-  for (const task of tasks ?? []) for (const path of task?.usage?.pack_misses ?? []) counts.set(path, (counts.get(path) ?? 0) + 1);
+  for (const task of Array.isArray(tasks) ? tasks : [])
+    for (const path of Array.isArray(task?.usage?.pack_misses) ? task.usage.pack_misses : [])
+      if (typeof path === 'string') counts.set(path, (counts.get(path) ?? 0) + 1);
   return [...counts.entries()]
     .filter(([, count]) => count >= 2)
-    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .sort((a, b) => b[1] - a[1] || (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0))
     .slice(0, limit)
     .map(([path, count]) => ({ path, count }));
 }
@@ -724,12 +848,12 @@ export function unresolvedExplicitRefs(io, cycleDir) {
   }
   const docs = {};
   const missing = [];
-  for (const task of Array.isArray(tasksJson?.tasks) ? tasksJson.tasks : []) {
-    for (const ref of Array.isArray(task?.refs) ? task.refs : []) {
+  for (const task of taskEntries(tasksJson)) {
+    for (const ref of Array.isArray(task.refs) ? task.refs : []) {
       const parsed = parseExplicitRef(ref);
       if (parsed && !(parsed.doc in docs)) docs[parsed.doc] = CYCLE_DOCS[parsed.doc] ? read(CYCLE_DOCS[parsed.doc]) : null;
       const doc = parsed ? docs[parsed.doc] : null;
-      if (!doc || !resolveToken(doc.headings, parsed.token).heading) missing.push({ task: task.id, ref });
+      if (!doc || !resolveWithParents(doc.headings, parsed.token).heading) missing.push({ task: task.id, ref });
     }
   }
   return missing;

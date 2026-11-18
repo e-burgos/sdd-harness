@@ -108,8 +108,24 @@
         "TASK-001",
         "TASK-002"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/cli/src/generators/__tests__/sdd-pack.integration.spec.ts",
+        "apps/cli/src/utils/__tests__/pack.spec.ts",
+        "apps/cli/templates/sdd/scripts/lib/pack.mjs",
+        "apps/cli/templates/sdd/scripts/sdd-pack.mjs"
+      ],
+      "usage": {
+        "tokens_in": 30687,
+        "tokens_out": 5415,
+        "tokens_total": 36102,
+        "approx": false,
+        "recorded_at": "2026-11-18",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "source": "agent-usage-notification"
+      }
     }
   ]
 }

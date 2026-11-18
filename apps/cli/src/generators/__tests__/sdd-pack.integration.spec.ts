@@ -148,6 +148,60 @@ describe.skipIf(process.platform === 'win32')('sdd-pack.mjs (integration)', () =
     expect(run([specId, 'cycle-01']).status).toBe(2);
   });
 
+  it('rejects extra positionals with a hint (tasks written with a space), also for --stats', () => {
+    const spaced = run([specId, 'cycle-01', 'implementor-back', 'TASK-001,', 'TASK-002']);
+    expect(spaced.status).toBe(2);
+    expect(spaced.stderr).toContain('join tasks with a comma and no spaces');
+    expect(spaced.stderr).toContain('TASK-002');
+    const stats = run([specId, 'cycle-01', 'implementor-back', '--stats']);
+    expect(stats.status).toBe(2);
+    expect(stats.stderr).toContain('extra argument');
+  });
+
+  it('refuses an --app that is not a relative apps|libs|tools path, and a section selector escaping sdd/', async () => {
+    for (const bad of ['../x', 'apps/..', '/etc', 'other/x']) {
+      const result = run([specId, 'cycle-01', 'implementor-back', 'B-01', '--app', bad]);
+      expect(result.status, bad).toBe(2);
+    }
+    const original = readFileSync(resolve(ws, 'sdd/packs.json'), 'utf-8');
+    await fs.writeJSON(resolve(ws, 'sdd/packs.json'), { roles: { leaky: { unit: 'cycle', include: ['section:../package.json#name', 'section:dual-harness/rules/sdd-execution.md#Protocolo del implementador'] } } });
+    const text = run([specId, 'cycle-01', 'leaky', '--stdout']).stdout;
+    expect(text).toContain('(sin fuente: ruta fuera de sdd/: ../package.json)');
+    expect(text).toContain('## Protocolo del implementador');
+    writeFileSync(resolve(ws, 'sdd/packs.json'), original);
+  });
+
+  it('--stats in a multi-app cycle without --app exits 2 listing the candidates instead of zero rows', async () => {
+    await fs.writeJSON(join(cycleDir, 'cycle.json'), {
+      cycle: 1, module: 'orders', spec: specId, apps: ['apps/demo-api', 'apps/demo-web'], flow: 'full', status: 'in-progress', started_at: '2026-09-08',
+    });
+    await fs.writeJSON(join(cycleDir, 'tasks.json'), { ...tasks, batches: undefined });
+    const result = run([specId, 'cycle-01', '--stats']);
+    expect(result.status).toBe(2);
+    expect(result.stderr).toContain('apps/demo-api, apps/demo-web');
+    expect(result.stdout).toBe('');
+    expect(run([specId, 'cycle-01', '--stats', '--app', 'apps/demo-api']).status).toBe(0);
+    await fs.writeJSON(join(cycleDir, 'cycle.json'), {
+      cycle: 1, module: 'orders', spec: specId, apps: ['apps/demo-api'], flow: 'full', status: 'in-progress', started_at: '2026-09-08', objectives: ['Ship orders'],
+    });
+    await fs.writeJSON(join(cycleDir, 'tasks.json'), tasks);
+  });
+
+  it('tolerates null task entries and exits 2, never 1, on an uncaught error', async () => {
+    await fs.writeJSON(join(cycleDir, 'tasks.json'), { ...tasks, tasks: [null, ...(tasks['tasks'] as unknown[])] });
+    expect(run([specId, 'cycle-01', 'implementor-back', 'B-01']).status).toBe(0);
+    expect(run([specId, 'cycle-01', '--stats']).status).toBe(0);
+    await fs.writeJSON(join(cycleDir, 'tasks.json'), tasks);
+    const packsDir = join(cycleDir, 'artifacts/packs');
+    await fs.remove(packsDir);
+    await fs.writeFile(packsDir, 'not a directory');
+    const broken = run([specId, 'cycle-01', 'reviewer']);
+    expect(broken.status).toBe(2);
+    expect(broken.stderr.trim().split('\n')).toHaveLength(1);
+    expect(broken.stderr).toContain('unexpected error');
+    await fs.remove(packsDir);
+  });
+
   it('exits 3 when the role has no entry or packs.json is missing, and the agent works as before', async () => {
     const unknown = run([specId, 'cycle-01', 'janitor']);
     expect(unknown.status).toBe(3);
