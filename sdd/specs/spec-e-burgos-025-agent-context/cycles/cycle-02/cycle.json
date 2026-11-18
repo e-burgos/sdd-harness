@@ -1,0 +1,38 @@
+{
+  "$schema": "../../../../schemas/cycle.schema.json",
+  "spec": "spec-e-burgos-025-agent-context",
+  "cycle": 2,
+  "module": "agent-context",
+  "apps": [
+    "apps/cli"
+  ],
+  "flow": "lite",
+  "phase": "agent-context-packs",
+  "objectives": [
+    "Paquete determinista de contexto por unidad y medición antes/después (US-5, US-6)"
+  ],
+  "status": "in-progress",
+  "started_at": "2026-11-17",
+  "completed_at": null,
+  "documents": {
+    "plan": "sdd/specs/spec-e-burgos-025-agent-context/cycles/cycle-02/plan.md",
+    "tasks": "sdd/specs/spec-e-burgos-025-agent-context/cycles/cycle-02/tasks.json"
+  },
+  "artifacts": [
+    "sdd/specs/spec-e-burgos-025-agent-context/cycles/cycle-02/artifacts/interfaces.md"
+  ],
+  "metrics": {
+    "tasks_total": 3,
+    "tasks_completed": 0,
+    "tasks_skipped": 0,
+    "story_points": 16,
+    "files_created": [],
+    "files_modified": [],
+    "files_deleted": []
+  },
+  "tables_created": [],
+  "endpoints_implemented": [],
+  "components_created": [],
+  "issues_found": [],
+  "reviewer_report": null
+}

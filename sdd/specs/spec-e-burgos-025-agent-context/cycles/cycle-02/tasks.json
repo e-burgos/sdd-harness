@@ -1,0 +1,70 @@
+{
+  "$schema": "../../../../schemas/cycle-tasks.schema.json",
+  "spec": "spec-e-burgos-025-agent-context",
+  "cycle": 2,
+  "module": "agent-context",
+  "apps": [
+    "apps/cli"
+  ],
+  "flow": "lite",
+  "user_stories_generated": true,
+  "prerequisites": {
+    "tasks_generated": true
+  },
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "packs.json, schema, sdd:pack con --stats y validador",
+      "user_stories": [
+        "US-5"
+      ],
+      "estimation_hours": 5,
+      "story_points": 8,
+      "depends_on": [],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-002",
+      "title": "Orquestador y agent.md consumen el paquete; protocolo del implementador y docs",
+      "user_stories": [
+        "US-5"
+      ],
+      "estimation_hours": 3,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-003",
+      "title": "Verificación, auditoría de la extracción, medición antes/después y cierre",
+      "user_stories": [
+        "US-5",
+        "US-6"
+      ],
+      "estimation_hours": 2,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002"
+      ],
+      "status": "pending",
+      "files": []
+    }
+  ],
+  "batches": [
+    {
+      "id": "B-01",
+      "app": "apps/cli",
+      "role": "implementor-back",
+      "tasks": [
+        "TASK-001",
+        "TASK-002"
+      ],
+      "depends_on": []
+    }
+  ]
+}

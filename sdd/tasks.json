@@ -469,6 +469,16 @@
           "status": "completed",
           "tasks_total": 9,
           "tasks_done": 9
+        },
+        "cycle-02": {
+          "file": "sdd/specs/spec-e-burgos-025-agent-context/cycles/cycle-02/tasks.json",
+          "module": "agent-context",
+          "apps": [
+            "apps/cli"
+          ],
+          "status": "in-progress",
+          "tasks_total": 3,
+          "tasks_done": 0
         }
       }
     }
