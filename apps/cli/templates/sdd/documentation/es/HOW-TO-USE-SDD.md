@@ -357,6 +357,16 @@ paralelo solo si son de apps distintas y ninguno depende del otro. Sin continuac
 (Copilot, Gemini), una sesión hace el bloque en secuencia y cierra cada task con
 `sdd:task … done … --approx`. **Nadie edita `tasks.json` a mano.**
 
+**El paquete de contexto y `pnpm sdd:pack`.** Antes de despachar un agente, el orquestador corre
+`pnpm sdd:pack <spec> cycle-01 <rol> B-NN` (functional, planner, architect y reviewer no llevan
+unidad). Arma, desde las fuentes y según lo declarado en `sdd/packs.json`, solo lo que ese rol
+necesita (las tasks y secciones del plan del bloque, las decisiones e historias que citan, el
+contexto del subproyecto, los comandos de verify) en `artifacts/packs/<unidad>.<rol>.md`, un
+archivo derivado e ignorado por git. El agente lee el paquete en vez de los documentos enteros y
+reporta como pack-miss cualquier lectura extra, que el orquestador registra con
+`sdd:task … --pack-miss`. El código de salida 3 (sin `packs.json` o sin entrada para el rol)
+significa que el agente trabaja como antes; `--stats` muestra el tamaño de cada paquete.
+
 **`sdd/verify.json` y `pnpm sdd:verify`.** `verify.json` (dato del proyecto: `update sdd` no lo
 pisa) dice cómo se verifica cada subproyecto: `quick` y `full` son listas de comandos, y
 `full_exclusive` marca un `full` pesado.
@@ -807,6 +817,7 @@ ls sdd/context/*/*/updates/*.md 2>/dev/null | wc -l
 pnpm sdd:verify <app> quick|full
 pnpm sdd:verify --init
 pnpm sdd:task <spec> cycle-01 TASK-001 start|done …
+pnpm sdd:pack <spec> cycle-01 <rol> [B-NN]
 ```
 
 ### Prompts de invocación por agente

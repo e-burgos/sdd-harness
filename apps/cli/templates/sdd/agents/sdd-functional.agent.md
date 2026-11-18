@@ -27,9 +27,7 @@ NO generás código.
 
 ## Input que recibís
 
-- `sdd/specs/{spec-id}/cycles/cycle-[XX]/brief.yaml` — el brief del ciclo generado por el Orquestador
-- El contexto del subproyecto: `sdd/context/[apps|libs|tools]/[nombre]/context_prompt.md`
-- La sección relevante de la especificación técnica en `sdd/specs/`
+Tu contexto es el paquete que te indica el orquestador: leelo entero antes de empezar y no leas documentos del ciclo fuera de él salvo que te falte algo; lo que leas afuera, decilo en tu respuesta. Sin paquete: `brief.yaml`, su contexto y la spec.
 
 ## Output que generás
 

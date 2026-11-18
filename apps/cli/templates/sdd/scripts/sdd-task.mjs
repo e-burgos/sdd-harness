@@ -31,7 +31,7 @@ const USAGE = `Usage: pnpm sdd:task <spec-id|slug> cycle-XX TASK-NNN start
        pnpm sdd:task <spec-id|slug> cycle-XX TASK-NNN done (--files a,b | --commit <sha>[,<sha>]) \\
          (--tokens <total> | --tokens-in N --tokens-out M) --model <provider/model> --effort <level> --agent <role> \\
          [--source <usageSource>] [--approx] [--duration <minutes>] [--batch B-NN --batch-tokens N] \\
-         [--pack-miss <path> ...] [--force]
+         [--pack-miss <path>[,<path>…] ...] [--force]
 
 Exits 0 ok, 1 validation red after the write, 2 usage or unknown task/cycle (file untouched).`;
 

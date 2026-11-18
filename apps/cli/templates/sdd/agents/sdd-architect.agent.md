@@ -29,11 +29,7 @@ NO generás historias de usuario.
 
 ## Input que recibís
 
-- `sdd/specs/{spec-id}/cycles/cycle-[XX]/functional.md` — output del Agente Funcional
-- `sdd/specs/{spec-id}/cycles/cycle-[XX]/brief.yaml` — brief del ciclo
-- `sdd/schema.json` — tablas ya definidas (para mantener consistencia)
-- `sdd/api.json` — endpoints ya definidos (para evitar conflictos)
-- Contexto del subproyecto: `sdd/context/[apps|libs|tools]/[nombre]/constitution.md`
+Tu contexto es el paquete que te indica el orquestador: leelo entero antes de empezar y no leas documentos del ciclo fuera de él salvo que te falte algo; lo que leas afuera, decilo en tu respuesta. Sin paquete: `functional.md`, `brief.yaml`, `schema.json`, `api.json` y `constitution.md` del subproyecto.
 
 ## Output que generás
 

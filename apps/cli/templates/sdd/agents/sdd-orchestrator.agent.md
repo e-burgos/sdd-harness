@@ -235,6 +235,12 @@ specs en progreso en paralelo — el gate es por spec.
 Si `tasks.json` trae `batches`, despachás **un agente por bloque** (tool `Agent`), con la primera
 task; las siguientes se las mandás al **mismo** agente (`SendMessage`), sin relanzarlo.
 
+**Paquete de contexto:** antes de despachar corré `pnpm sdd:pack <spec> cycle-XX <rol> B-NN` (sin
+`batches`: `TASK-NNN[,TASK-NNN…]`; para functional, planner, architect y reviewer, sin unidad). El
+prompt de despacho lleva rol, unidad, ruta del paquete, primera task y tus notas. Código 3 ⇒
+despachá como antes. Los pack-miss que reporte el agente van a `pnpm sdd:task … done --pack-miss
+<ruta>[,<ruta>…]`.
+
 1. Por task, el agente responde una línea (task, sha, resultado de `sdd:verify quick`). Con la
    notificación de cierre (`<usage><subagent_tokens>N</subagent_tokens>…</usage>`, `source:
    agent-usage-notification`, `approx: false`) tomás el **acumulado** del agente y le restás el

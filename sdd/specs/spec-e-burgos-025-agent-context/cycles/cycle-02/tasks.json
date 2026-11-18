@@ -58,8 +58,42 @@
       "depends_on": [
         "TASK-001"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/cli/src/generators/__tests__/sdd-pack.integration.spec.ts",
+        "apps/cli/src/utils/__tests__/task-registry.spec.ts",
+        "apps/cli/templates/sdd/README.md",
+        "apps/cli/templates/sdd/agents/sdd-architect.agent.md",
+        "apps/cli/templates/sdd/agents/sdd-functional.agent.md",
+        "apps/cli/templates/sdd/agents/sdd-implementor-back.agent.md",
+        "apps/cli/templates/sdd/agents/sdd-implementor-front.agent.md",
+        "apps/cli/templates/sdd/agents/sdd-orchestrator.agent.md",
+        "apps/cli/templates/sdd/agents/sdd-planner.agent.md",
+        "apps/cli/templates/sdd/agents/sdd-reviewer.agent.md",
+        "apps/cli/templates/sdd/documentation/en/HOW-TO-USE-SDD.md",
+        "apps/cli/templates/sdd/documentation/en/INSTALL.md",
+        "apps/cli/templates/sdd/documentation/en/README.md",
+        "apps/cli/templates/sdd/documentation/es/HOW-TO-USE-SDD.md",
+        "apps/cli/templates/sdd/documentation/es/INSTALL.md",
+        "apps/cli/templates/sdd/documentation/es/README.md",
+        "apps/cli/templates/sdd/dual-harness/rules/sdd-execution.md",
+        "apps/cli/templates/sdd/prompts/start-sdd-cycle.prompt.md",
+        "apps/cli/templates/sdd/scripts/lib/task-registry.mjs",
+        "apps/cli/templates/sdd/scripts/sdd-pack.mjs",
+        "apps/cli/templates/sdd/scripts/sdd-task.mjs",
+        "apps/cli/templates/sdd/skills/sdd-orchestrator/SKILL.md"
+      ],
+      "usage": {
+        "tokens_in": 27526,
+        "tokens_out": 4857,
+        "tokens_total": 32383,
+        "approx": false,
+        "recorded_at": "2026-11-18",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "source": "agent-usage-notification"
+      }
     },
     {
       "id": "TASK-003",

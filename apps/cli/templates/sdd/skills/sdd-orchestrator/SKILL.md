@@ -101,6 +101,9 @@ Protocolo completo: `sdd/dual-harness/rules/sdd-execution.md`; el detalle operat
   (`SendMessage` al mismo agente). Consumo de la task = `subagent_tokens` de la notificación menos
   el acumulado anterior, registrado con `pnpm sdd:task <spec> cycle-XX TASK-NNN done --commit <sha>
   --tokens <diferencia> --model … --effort … --agent …`.
+- Antes de despachar: `pnpm sdd:pack <spec> cycle-XX <rol> B-NN` (functional, planner, architect y
+  reviewer, sin unidad); el prompt lleva rol, unidad, ruta del paquete, primera task y tus notas.
+  Código 3 ⇒ despachá como antes. Los pack-miss del agente van a `sdd:task … --pack-miss`.
 - No avanzás mientras la task no esté `done` con `usage`. Corte: dos fallas o contexto compactado
   ⇒ agente nuevo para el resto del bloque.
 - Dos bloques en paralelo solo si son de apps distintas y ninguno depende del otro; por defecto,

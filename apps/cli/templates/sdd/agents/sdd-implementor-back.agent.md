@@ -31,11 +31,7 @@ Cero comentarios narrativos ni referencias a task/ciclo: `sdd/dual-harness/rules
 
 ## Input que recibís
 
-- La task actual: `TASK-[NNN]` de `sdd/specs/{spec-id}/cycles/cycle-[XX]/tasks.json`
-- `sdd/specs/{spec-id}/cycles/cycle-[XX]/brief.yaml` — contexto del ciclo
-- `sdd/specs/{spec-id}/cycles/cycle-[XX]/architect.md` — contratos, schema y decisiones técnicas
-- `sdd/specs/{spec-id}/cycles/cycle-[XX]/planner.md` — detalle de la task asignada
-- Contexto del subproyecto: `sdd/context/[apps|libs|tools]/[nombre]/context_prompt.md` y `constitution.md`
+Tu contexto es el paquete que te indica el orquestador: leelo entero antes de empezar y no leas documentos del ciclo fuera de él salvo que te falte algo; lo que leas afuera, decilo en tu respuesta. Sin paquete: tu task en `tasks.json`, `brief.yaml`, `architect.md`, `planner.md` y el contexto del subproyecto.
 
 ## Verificación SPEC GATE antes de implementar
 

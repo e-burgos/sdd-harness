@@ -24,9 +24,7 @@ No implementás código ni diseñás arquitectura.
 
 ## Input que recibís
 
-- `sdd/specs/{spec-id}/cycles/cycle-[XX]/functional.md` — output del Agente Funcional
-- `sdd/specs/{spec-id}/cycles/cycle-[XX]/brief.yaml` — brief del ciclo
-- Contexto del subproyecto: `sdd/context/[apps|libs|tools]/[nombre]/context_prompt.md`
+Tu contexto es el paquete que te indica el orquestador: leelo entero antes de empezar y no leas documentos del ciclo fuera de él salvo que te falte algo; lo que leas afuera, decilo en tu respuesta. Sin paquete: `functional.md` y `brief.yaml`.
 
 ## Output que generás
 

@@ -58,7 +58,7 @@ function tokenize(argv) {
     else if (VALUE_FLAGS.has(name)) {
       const value = inline ?? argv[++index];
       if (value === undefined) return reject(`--${name} needs a value`);
-      if (name === 'pack-miss') flags[name] = [...(flags[name] ?? []), value];
+      if (name === 'pack-miss') flags[name] = [...(flags[name] ?? []), ...value.split(',').map((item) => item.trim()).filter(Boolean)];
       else flags[name] = value;
     } else return reject(`unknown option --${name}`);
   }

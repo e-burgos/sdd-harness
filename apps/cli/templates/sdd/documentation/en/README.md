@@ -127,6 +127,7 @@ sdd/
 │   ├── spec-gate.mjs                  ← Answers SPEC GATE A and B (pnpm sdd:gate)
 │   ├── sdd-use.mjs                    ← Binds this session to a cycle or fix (pnpm sdd:use)
 │   ├── sdd-task.mjs                   ← Opens/closes a task with its usage, no hand-editing of tasks.json (pnpm sdd:task)
+│   ├── sdd-pack.mjs                   ← Builds the context pack of an agent role (pnpm sdd:pack)
 │   ├── sdd-verify.mjs                 ← Verifies a subproject, quick or full, with a machine-wide lease (pnpm sdd:verify)
 │   ├── sdd-release.mjs                ← Releases file leases and notifies (pnpm sdd:release)
 │   ├── sdd-branch.mjs                 ← Cycle branch per profile (pnpm sdd:branch)
@@ -1202,7 +1203,8 @@ Details, end-to-end flow and traps: [VIDEO-MAKER.md](VIDEO-MAKER.md).
 | `sdd/dual-harness/project.md`   | The repo's own instructions (project data; imported by the core) |
 | `sdd/verify.json`               | `quick`/`full` commands per subproject for `pnpm sdd:verify` (project data) |
 | `sdd/scripts/spec-gate.mjs`     | SPEC GATE as a command (`pnpm sdd:gate`)             |
-| `sdd/scripts/sdd-verify.mjs`, `sdd-task.mjs` | `pnpm sdd:verify` and `pnpm sdd:task`   |
+| `sdd/scripts/sdd-verify.mjs`, `sdd-task.mjs`, `sdd-pack.mjs` | `pnpm sdd:verify`, `pnpm sdd:task` and `pnpm sdd:pack` |
+| `sdd/packs.json`                | What goes into each role's context pack (`pnpm sdd:pack`; kit file) |
 | `sdd/context/**/updates/`       | Additive context fragments (anti merge-conflict)     |
 | `sdd/docs/`                     | SDD viewer in vanilla JS (`pnpm sdd:docs`)           |
 | `sdd/tools.json`                | rtk switch (user data)                               |
@@ -1278,6 +1280,9 @@ pnpm sdd:verify --init
 
 # Open/close a task with its usage (no hand-editing of tasks.json)
 pnpm sdd:task <spec-id|slug> cycle-01 TASK-001 start|done …
+
+# Context pack of a role (see HOW-TO-USE-SDD)
+pnpm sdd:pack <spec-id|slug> cycle-01 <role> [B-NN]
 
 # rtk state (switch, binary and hooks)
 pnpm sdd:rtk -- --status

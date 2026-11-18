@@ -118,6 +118,15 @@ describe.skipIf(process.platform === 'win32')('sdd-pack.mjs (integration)', () =
     expect(json.total.pack_bytes).toBeGreaterThan(0);
   });
 
+  it('--stats collapses a cycle without blocks to the heaviest task per role', async () => {
+    await fs.writeJSON(join(cycleDir, 'tasks.json'), { ...tasks, batches: undefined });
+    const json = JSON.parse(run([specId, 'cycle-01', '--stats', '--json']).stdout);
+    const back = json.rows.filter((row: { role: string }) => row.role === 'implementor-back');
+    expect(back).toHaveLength(1);
+    expect(back[0].reason).toContain('heaviest of 2 tasks');
+    await fs.writeJSON(join(cycleDir, 'tasks.json'), tasks);
+  });
+
   it('--stats ranks repeated pack misses', async () => {
     const usage = (miss: string[]) => ({ tokens_in: 1, tokens_out: 1, provider_model: 'claude/sonnet', effort: 'low', agent: 'implementor-back', approx: true, source: 'declared-estimate', pack_misses: miss });
     const withMisses = { ...tasks, tasks: [task('TASK-001', { status: 'done', usage: usage(['a.ts']) }), task('TASK-002', { status: 'done', usage: usage(['a.ts', 'b.ts']) })] };

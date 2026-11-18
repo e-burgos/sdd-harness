@@ -172,15 +172,17 @@ function statsRows(location, packs) {
   const rows = [];
   for (const [role, roleDef] of Object.entries(packs.roles)) {
     const include = Array.isArray(roleDef?.include) ? roleDef.include : [];
-    for (const unit of statsUnits({ tasksJson, roleDef, role })) {
+    const roleRows = [];
+    const units = statsUnits({ tasksJson, roleDef, role });
+    for (const unit of units) {
       const decided = resolveApp({ requested: options.app, unitApp: unit.app, cycleApps: cycleJson?.apps });
       if (decided.error || (!decided.app && packNeedsApp(include))) {
-        rows.push({ role, unit: unit.id, pack_bytes: 0, source_bytes: 0, reason: 'needs --app' });
+        roleRows.push({ role, unit: unit.id, pack_bytes: 0, source_bytes: 0, reason: 'needs --app' });
         continue;
       }
       const ctx = newContext(location, unit, decided.app, packs);
       const result = buildPack({ ctx, role, include });
-      rows.push({
+      roleRows.push({
         role,
         unit: unit.id,
         pack_bytes: result.packBytes,
@@ -188,6 +190,11 @@ function statsRows(location, packs) {
         reason: result.oversize ? `over max_pack_bytes (${ctx.limits.max_pack_bytes})` : 'ok',
       });
     }
+    const perTask = units.length > 1 && units.every((unit) => unit.kind === 'tasks');
+    if (perTask) {
+      const heaviest = roleRows.reduce((best, row) => (row.pack_bytes > best.pack_bytes ? row : best), roleRows[0]);
+      rows.push({ ...heaviest, reason: `heaviest of ${units.length} tasks; ${heaviest.reason}` });
+    } else rows.push(...roleRows);
   }
   return { rows, tasks: tasksJson?.tasks ?? [] };
 }

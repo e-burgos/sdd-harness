@@ -72,6 +72,7 @@ Pasos en orden (solo con el GATE A en APPROVED):
 6. sdd-implementor-back → un agente por bloque (`batches`; sin `batches`, task por task), las
         tasks de a una en la misma conversación. El orquestador cierra cada task con
         `pnpm sdd:task … done` (con su `usage`) — sin `usage` la task NO está cerrada.
+        Antes de cada despacho: `pnpm sdd:pack <spec> cycle-[XX] <rol> B-NN` y pasá la ruta del paquete.
 7. sdd-implementor-front → igual (solo si hay frontend). Misma condición.
 8. sdd-reviewer → review-cycle.prompt.md: validate, telemetría consolidada (by_agent +
         by_tier derivado + suma), cycle.json "completed" con reviewer_report, JSONs de estado.

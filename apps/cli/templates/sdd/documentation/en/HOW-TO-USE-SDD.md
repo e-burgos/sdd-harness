@@ -362,6 +362,15 @@ if they are in different apps and neither depends on the other. Without subagent
 (Copilot, Gemini), one session runs the block in sequence and closes each task with
 `sdd:task … done … --approx`. **Nobody edits `tasks.json` by hand.**
 
+**The context pack and `pnpm sdd:pack`.** Before dispatching an agent, the orchestrator runs
+`pnpm sdd:pack <spec> cycle-01 <role> B-NN` (functional, planner, architect and reviewer take no
+unit). It assembles, from the sources and as declared in `sdd/packs.json`, only what that role
+needs (the block's tasks and plan sections, the decisions and stories they cite, the subproject
+context, the verify commands) into `artifacts/packs/<unit>.<role>.md`, a derived, git-ignored file.
+The agent reads the pack instead of the whole documents and reports any extra read as a pack-miss,
+which the orchestrator records with `sdd:task … --pack-miss`. Exit code 3 (no `packs.json` or no
+entry for the role) means the agent works as before; `--stats` shows the size of every pack.
+
 **`sdd/verify.json` and `pnpm sdd:verify`.** `verify.json` (project data: `update sdd` never
 overwrites it) says how each subproject is verified: `quick` and `full` are lists of commands, and
 `full_exclusive` marks a heavy `full`.
@@ -812,6 +821,7 @@ ls sdd/context/*/*/updates/*.md 2>/dev/null | wc -l
 pnpm sdd:verify <app> quick|full
 pnpm sdd:verify --init
 pnpm sdd:task <spec> cycle-01 TASK-001 start|done …
+pnpm sdd:pack <spec> cycle-01 <role> [B-NN]
 ```
 
 ### Invocation prompts per agent

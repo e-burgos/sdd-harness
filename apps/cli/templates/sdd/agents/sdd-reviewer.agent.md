@@ -25,9 +25,8 @@ Sos el último paso antes de que el ciclo se marque como completado.
 
 ## Input que recibís
 
-- Documentos del ciclo según `cycle.json → flow`: en `full`, `brief.yaml` + `functional.md`
-  (historias) + `planner.md` (sprint plan) + `architect.md` (contratos); en `reduced`,
-  `brief.yaml`; en `lite`, `plan.md` (objetivo · historias · tasks · decisiones, un solo actor)
+Tu contexto es el paquete que te indica el orquestador: leelo entero antes de empezar y no leas documentos del ciclo fuera de él salvo que te falte algo; lo que leas afuera, decilo en tu respuesta. Sin paquete: los documentos del ciclo según `cycle.json → flow`.
+
 - Código backend y frontend generado en este ciclo
 - Estado actual de `sdd/global.json` y del resto del arnés
 

@@ -92,6 +92,13 @@ describe('buildUsage', () => {
     expect(usage.allocation).toEqual({ batch: 'B-02', batch_tokens: 99 });
     expect(usage.pack_misses).toEqual(['x.ts', 'y.ts']);
   });
+
+  it('accepts a comma list and repeated --pack-miss together, trimmed and without empties', () => {
+    const request = lib.parseTaskRequest([
+      ...base, '--files', 'a', '--tokens', '10', ...identity, '--pack-miss', 'a.ts, b.ts,', '--pack-miss', 'c.ts',
+    ]).request!;
+    expect(lib.buildUsage(request, now).pack_misses).toEqual(['a.ts', 'b.ts', 'c.ts']);
+  });
 });
 
 describe('document helpers', () => {

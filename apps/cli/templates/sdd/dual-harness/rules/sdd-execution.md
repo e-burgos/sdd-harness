@@ -28,7 +28,9 @@ en rojo es inválido: el mismo check corre en CI y es paso obligatorio del sdd-r
 Los `batches` de `tasks.json` agrupan tasks de un mismo subproyecto y rol (tope: 4 tasks o 12 SP).
 Un bloque lo ejecuta **un** agente, task por task, sin recargar contexto entre una y otra.
 
-1. **Orquestador:** lanza un agente por bloque con la primera task.
+1. **Orquestador:** corre `pnpm sdd:pack <spec> cycle-XX <rol> B-NN` y lanza un agente por bloque
+   con la primera task; el prompt lleva rol, unidad, ruta del paquete y notas (código 3: sin
+   paquete, como antes). Los pack-miss que reporte el agente van a `sdd:task … --pack-miss`.
 2. **Agente, por task:** implementa → `pnpm sdd:verify <app> quick --files … --unit TASK-NNN` →
    commit → responde **una línea**: task, sha, resultado del verify.
 3. **Orquestador:** toma `subagent_tokens` de la notificación, resta el acumulado anterior y corre
@@ -53,6 +55,18 @@ Pasos por task del bloque; tu contexto es el paquete que te indicó el orquestad
    `pnpm sdd:task`.
 6. Si tuviste que leer una ruta fuera del paquete, decilo en tu respuesta (pack-miss) para que el
    orquestador lo registre y el paquete se ajuste.
+
+## `pnpm sdd:pack` — paquete de contexto de un rol
+
+```bash
+pnpm sdd:pack <spec-id|slug> cycle-XX <rol> [B-NN | TASK-NNN[,TASK-NNN…]] [--app <id>] [--stdout]
+pnpm sdd:pack <spec-id|slug> cycle-XX --stats
+```
+
+- Arma desde las fuentes (qué entra lo dicta `sdd/packs.json`) el contexto mínimo del rol y lo
+  escribe en `artifacts/packs/<unidad>.<rol>.md` (derivado, git-ignorado). Una línea de salida.
+- Códigos: `0` ok · `2` uso inválido o unidad inexistente · `3` sin `packs.json` o sin entrada para
+  el rol (despachá como antes).
 
 ## `pnpm sdd:task` — estado y telemetría de una task
 

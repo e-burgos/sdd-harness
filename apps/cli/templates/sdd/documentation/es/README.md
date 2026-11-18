@@ -127,6 +127,7 @@ sdd/
 │   ├── spec-gate.mjs                  ← Responde el SPEC GATE A y B (pnpm sdd:gate)
 │   ├── sdd-use.mjs                    ← Ata esta sesión a un ciclo o fix (pnpm sdd:use)
 │   ├── sdd-task.mjs                   ← Abre/cierra una task con su usage, sin editar tasks.json (pnpm sdd:task)
+│   ├── sdd-pack.mjs                   ← Arma el paquete de contexto de un rol (pnpm sdd:pack)
 │   ├── sdd-verify.mjs                 ← Verifica un subproyecto, quick o full, con lease de máquina (pnpm sdd:verify)
 │   ├── sdd-release.mjs                ← Libera reservas de archivo y avisa (pnpm sdd:release)
 │   ├── sdd-branch.mjs                 ← Rama del ciclo según perfil (pnpm sdd:branch)
@@ -1202,7 +1203,8 @@ Detalle, flujo de punta a punta y trampas: [VIDEO-MAKER.md](VIDEO-MAKER.md).
 | `sdd/dual-harness/project.md`   | Instrucciones propias del repo (dato del proyecto; lo importa el núcleo) |
 | `sdd/verify.json`               | Comandos `quick`/`full` por subproyecto para `pnpm sdd:verify` (dato del proyecto) |
 | `sdd/scripts/spec-gate.mjs`     | SPEC GATE como comando (`pnpm sdd:gate`)              |
-| `sdd/scripts/sdd-verify.mjs`, `sdd-task.mjs` | `pnpm sdd:verify` y `pnpm sdd:task`   |
+| `sdd/scripts/sdd-verify.mjs`, `sdd-task.mjs`, `sdd-pack.mjs` | `pnpm sdd:verify`, `pnpm sdd:task` y `pnpm sdd:pack` |
+| `sdd/packs.json`                | Qué entra en el paquete de contexto de cada rol (`pnpm sdd:pack`; archivo del kit) |
 | `sdd/context/**/updates/`       | Fragmentos aditivos de contexto (anti merge-conflict) |
 | `sdd/docs/`                     | Visor SDD en vanilla JS (`pnpm sdd:docs`)             |
 | `sdd/tools.json`                | Interruptor de rtk (dato del usuario)                 |
@@ -1278,6 +1280,9 @@ pnpm sdd:verify --init
 
 # Abrir/cerrar una task con su usage (sin editar tasks.json a mano)
 pnpm sdd:task <spec-id|slug> cycle-01 TASK-001 start|done …
+
+# Paquete de contexto de un rol (ver HOW-TO-USE-SDD)
+pnpm sdd:pack <spec-id|slug> cycle-01 <rol> [B-NN]
 
 # Estado de rtk (interruptor, binario y hooks)
 pnpm sdd:rtk -- --status
