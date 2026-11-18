@@ -185,5 +185,9 @@
       "file": "tools.schema.json"
     }
   ],
-  "memory": []
+  "memory": [
+    {
+      "file": "2026-11-17-spec-e-burgos-025-cycle-01.md"
+    }
+  ]
 }

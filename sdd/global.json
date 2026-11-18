@@ -272,7 +272,7 @@
       "apps": [
         "apps/cli"
       ],
-      "cycles_completed": 0,
+      "cycles_completed": 1,
       "description": "Contexto por agente y ejecución de ciclos: núcleo mínimo, paquete determinista por unidad, bloques continuados y verificación en dos niveles."
     }
   ],

@@ -347,8 +347,26 @@
         "TASK-007",
         "TASK-008"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/cli/src/generators/project-md.ts",
+        "apps/cli/src/generators/update.generator.ts",
+        "apps/cli/templates/sdd/scripts/sdd-verify.mjs",
+        "apps/cli/templates/sdd/scripts/sdd-task.mjs",
+        "apps/cli/templates/sdd/scripts/lib/verify-lease.mjs",
+        "apps/cli/templates/sdd/skills/sdd-mod/hooks/.src/sdd.ts"
+      ],
+      "usage": {
+        "tokens_in": 621694,
+        "tokens_out": 109711,
+        "tokens_total": 731405,
+        "approx": false,
+        "recorded_at": "2026-11-17",
+        "provider_model": "claude/opus",
+        "effort": "high",
+        "agent": "reviewer",
+        "source": "agent-usage-notification"
+      }
     }
   ]
 }
