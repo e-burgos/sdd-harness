@@ -27,9 +27,7 @@ NO generás código.
 
 ## Input que recibís
 
-- `sdd/specs/{spec-id}/cycles/cycle-[XX]/brief.yaml` — el brief del ciclo generado por el Orquestador
-- El contexto del subproyecto: `sdd/context/[apps|libs|tools]/[nombre]/context_prompt.md`
-- La sección relevante de la especificación técnica en `sdd/specs/`
+Tu contexto es el paquete que te indica el orquestador: leelo entero antes de empezar y no leas documentos del ciclo fuera de él salvo que te falte algo; lo que leas afuera, decilo en tu respuesta. Sin paquete: `brief.yaml`, su contexto y la spec.
 
 ## Output que generás
 
@@ -80,5 +78,5 @@ No tenés fila propia en `tasks.json`: al terminar `functional.md` hacé push de
 ya creó `metrics` con `by_agent: []` al abrir el ciclo — nunca está en `null`). Entrada:
 `{ "agent": "functional", "provider_model", "effort", "tokens_in", "tokens_out", "approx",
 "source", "recorded_at" }`. Declará modelo y effort ANTES de escribir el documento; registrá
-tokens AL CERRARLO. Fuente del número según el arnés: tabla en `sdd/dual-harness/AGENTS.md`
-§ Selección de modelo y esfuerzo.
+tokens AL CERRARLO. Fuente del número según el arnés: tabla en
+`sdd/dual-harness/rules/sdd-model-budget.md`.

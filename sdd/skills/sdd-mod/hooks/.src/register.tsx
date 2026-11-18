@@ -10,6 +10,7 @@ import type { Snapshot } from '../../.claude-plugin/contract';
 import {
   bandLine,
   bindFromCommand,
+  bindFromEdit,
   endSession,
   holderOf,
   inboxSection,
@@ -54,8 +55,11 @@ async function touch($: EngineInterface) {
 // A gate that cannot read sdd/ lets the edit through: sdd:validate and CI stay the safety net.
 async function gate($: EngineInterface, filePath: string) {
   try {
-    const current = await refresh($);
     const root = await $.session.root();
+    const session0 = await sessionOf($);
+    const before = await refresh($);
+    const rebound = await bindFromEdit(storeOf($), before, filePath, session0).catch(() => null);
+    const current = rebound ? await refresh($) : before;
     const verdict = judgeEdit(current, root, filePath);
     if (verdict.kind === 'deny') return verdict;
     const session = await sessionOf($);
@@ -123,14 +127,15 @@ export const register: Register = (on) => {
   on('tool.call', { tool: 'Bash' }, async ($, e, next) => {
     const result = await next(e);
     try {
-      const bound = await bindFromCommand(
+      const outcome = await bindFromCommand(
         storeOf($),
         await $.session.root(),
         await sessionOf($),
         e.command,
         result,
       );
-      if (bound) await refresh($);
+      if (outcome && 'rejected' in outcome) $.ui.toast(outcome.rejected);
+      if (outcome && 'bound' in outcome) await refresh($);
     } catch {
       await Promise.resolve();
     }

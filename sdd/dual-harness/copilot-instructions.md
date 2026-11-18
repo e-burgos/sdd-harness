@@ -10,12 +10,16 @@
 Este repo usa **Spec-Driven Development (SDD)**. Nombre y descripción del proyecto:
 `sdd/global.json`. Las reglas completas están en [AGENTS.md](../AGENTS.md) (fuente:
 `sdd/dual-harness/AGENTS.md`) y el contexto en `sdd/context/context_prompt.md`. Leerlos antes
-de cualquier cambio; al iniciar sesión leer también `sdd/memory/lessons.md`.
+de cualquier cambio; al iniciar sesión leer también `sdd/memory/lessons.md`. Si existe
+`sdd/dual-harness/project.md`, leelo antes de trabajar: son las instrucciones propias de este repo.
 
 Reglas mínimas no negociables:
 
 0. **REGLA CERO** (⓪ de AGENTS.md): antes de cualquier acción de una tarea nueva, una línea
-   visible `Regla cero → tier · modelo · esfuerzo`; el tier más barato que cumpla.
+   visible `Regla cero → tier · modelo · esfuerzo`; el tier más barato que cumpla. Máximo no es
+   el default del trabajo difícil: decidí «máximo o alto» y escribí por qué alto no alcanza.
+   **REGLA UNO** (① de AGENTS.md): antes de trabajar una spec, un ciclo o un fix, una línea
+   visible `Unidad SDD → <unidad> · worktree: <ruta>` y `pnpm sdd:use …` desde ese worktree.
 
 1. **SPEC GATE** (fuente: `sdd/dual-harness/rules/sdd-gates.md`): ninguna línea de código de
    implementación sin spec registrada, `cycle.json` in-progress y `tasks.json`. Lo responde un
@@ -29,7 +33,7 @@ Reglas mínimas no negociables:
 4. **Tipado estricto**: todo `sdd/**/*.json` valida contra `sdd/schemas/*.schema.json`.
    Después de escribir cualquier registro: `pnpm sdd:validate` debe quedar en verde (también
    corre en CI).
-5. **Modelo y esfuerzo antes de empezar** (regla ⚙️ de AGENTS.md): el tier más barato que
+5. **Modelo y esfuerzo antes de empezar** (`sdd/dual-harness/rules/sdd-model-budget.md`): el tier más barato que
    cumpla; los agentes de `.github/agents/*.agent.md` llevan `model:` pinneado por rol. Al
    cerrar cada unidad de trabajo registrar `usage` (proveedor/modelo + tokens; en Copilot,
    estimación declarada con `approx: true`) — contrato en
@@ -39,3 +43,5 @@ Reglas mínimas no negociables:
 7. **Código sin comentarios**: la documentación vive en los documentos SDD, no en el código.
 8. Código, commits y nombres en inglés; documentos SDD en el idioma del kit.
 9. **tucu-ui (opcional)**: si `sdd/integrations/skills/tucu-ui-design/` está enlazada en `.github/skills`, usala para UI React/Next. Prender o apagar la integración (`pnpm sdd:tucu -- --status | --enable | --disable`) es decisión del dev: no la cambies por tu cuenta.
+10. Según la situación, leer `sdd/dual-harness/rules/sdd-execution.md` (ejecutar un ciclo),
+    `sdd-context.md` (cerrar), `sdd-tools.md` (graphify, rtk, mod) o `sdd-workspace.md` (workspace/Nx).

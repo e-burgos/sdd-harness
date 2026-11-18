@@ -20,7 +20,7 @@ description: Skill del Agente Planner SDD. Convierte historias de usuario en tas
 
 ## Reglas de descomposición (expertise del rol)
 
-1. **Una task = una acción técnica verificable de ≤ 1 día** (máx 5 SP). Si supera 8h → dividirla.
+1. **Una task = una acción técnica verificable de ≤ 1 día** (máx 5 SP). Si supera 8h → dividirla. **Piso:** una task de menos de 1 hora se fusiona con su vecina, salvo que sea la única de su zona o una task de tests.
 2. **IDs:** `TASK-[NNN]` (`TASK-001`, `TASK-002`…) — el scope es el archivo del ciclo, sin prefijo de spec/ciclo.
 3. **Toda task cubre al menos una HU** (`user_stories`); `[]` solo si el ciclo es `flow: "reduced"` o `"lite"`.
 4. **`estimation_hours` y `story_points` obligatorios.** Escala: ≤1h→1SP · 2h→2SP · 3h→3SP · 4h→5SP · >5h→8SP.
@@ -29,7 +29,12 @@ description: Skill del Agente Planner SDD. Convierte historias de usuario en tas
 6. **Frontend después de backend:** una task de UI que consume un endpoint depende de la task que lo implementa.
 7. **Tests son tasks de primera clase:** toda HU con criterios de aceptación produce al menos una task de tests.
 8. **Status inicial:** todas las tasks nacen `"pending"` con `files: []` — los implementadores las completan.
-9. No inventar campos fuera del schema (`additionalProperties: false`).
+9. **Bloques (`batches`, opcional, raíz de `tasks.json`):** tasks de la misma app y rol, contiguas en orden
+   topológico, hasta 4 tasks y 12 SP. Un agente ejecuta el bloque entero, task por task.
+   `{ "id": "B-01", "app": "apps/billing-api", "role": "implementor-back", "tasks": ["TASK-001", "TASK-002"], "depends_on": [] }`
+10. **Trazabilidad:** cada task de `planner.md` lleva `Decisiones D-NN` (decisiones del architect que
+    implementa) además de su historia; en `tasks.json`, `refs: ["architect#D-04"]` si ya existe `architect.md`.
+11. No inventar campos fuera del schema (`additionalProperties: false`).
 
 ## Registro de consumo (obligatorio)
 

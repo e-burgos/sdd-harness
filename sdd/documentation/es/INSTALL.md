@@ -16,10 +16,36 @@ Qué hace, gobernado por los hashes de `sdd/kit.json`:
 | **Tus datos** — `global.json`, specs, ciclos, fixes, contextos, `memory/journal/` | **Jamás se tocan** |
 | Archivos del kit **sin modificar** localmente (skills, agentes, prompts, schemas, scripts, visor) | Se reemplazan por la versión nueva |
 | Archivos del kit **nuevos** en esta versión | Se agregan solos |
-| Archivos del kit que **vos editaste** (típico: `dual-harness/AGENTS.md`/`CLAUDE.md`/`GEMINI.md`) | Tu versión queda intacta; la nueva aterriza al lado como `*.new` para que fundas a mano lo que te interese |
+| Archivos del kit que **vos editaste** | Tu versión queda intacta; la nueva aterriza al lado como `*.new` para que fundas a mano lo que te interese |
+| `sdd/verify.json`, `sdd/dual-harness/project.md`, `sdd/tools.json` | Dato tuyo: **jamás se tocan** |
 
 Al cierre regenera el catálogo, refresca los symlinks y corre `sdd:validate`. Si el
 update lista conflictos `*.new`, fundilos (o pedíselo a tu agente) y borrá los `.new`.
+
+### Instrucciones propias del repo: `project.md` y `--split-project`
+
+Los archivos del arnés (`dual-harness/{CLAUDE,AGENTS,GEMINI}.md`) son, desde el kit 0.23.0, un
+núcleo de menos de 6 KB que se gobierna por hash como cualquier archivo del kit. Tus instrucciones
+propias viven en `sdd/dual-harness/project.md`. Un repo instalado con un kit anterior, donde esas
+instrucciones quedaron dentro de los tres archivos (bajo «Instrucciones previas del proyecto
+(absorbidas al instalar SDD)»), se migra con un comando que **nunca corre solo**:
+
+```bash
+npx @e-burgos/sdd-harness@latest update sdd --split-project
+```
+
+Para cada uno de los tres archivos instalados, el comando informa cuál de estos tres resultados tuvo:
+
+1. **Tiene el encabezado absorbido**: mueve lo absorbido a `sdd/dual-harness/project.md` (sin duplicar
+   texto idéntico entre los tres) y deja el resto.
+2. **El resto es idéntico** al archivo que el kit había instalado (hash del manifiesto viejo) o al kit
+   nuevo: lo reemplaza por el del kit nuevo.
+3. **El resto difiere**: lo conserva y deja el del kit nuevo como `.new` para que lo fundas a mano.
+
+Hasta 0.22.x esos tres archivos eran híbridos y recibían `.new` en cada update si diferían; desde
+0.23.0 solo lo son si el manifiesto instalado es de un kit anterior (o no hay manifiesto).
+`harness configure sdd` y `init` escriben lo absorbido en `project.md` y dejan los tres archivos del
+kit intactos.
 
 ---
 
@@ -60,6 +86,8 @@ disponibles.
        "sdd:docs": "node sdd/docs/serve.mjs",
        "sdd:validate": "node sdd/scripts/validate-sdd.mjs",
        "sdd:gate": "node sdd/scripts/spec-gate.mjs",
+       "sdd:verify": "node sdd/scripts/sdd-verify.mjs",
+       "sdd:task": "node sdd/scripts/sdd-task.mjs",
        "sdd:rebuild-tasks-index": "node sdd/scripts/rebuild-tasks-index.mjs",
        "sdd:rebuild-catalog": "node sdd/scripts/rebuild-catalog.mjs"
      }
@@ -137,9 +165,11 @@ SPEC GATE.
 | `tools.json`       | Interruptores de rtk (`enabled`, `auto_install`), del mod de Claude Code (`claude_mod`) y de tucu-ui (`tucu_ui`) — dato del proyecto: `update sdd` no lo pisa |
 | `integrations/`    | Integraciones instaladas por el dev (`integrations/skills/tucu-ui-design/`): dato del proyecto, `update sdd` no lo toca |
 | `schemas/`         | JSON Schemas estrictos de todos los registros                                                   |
-| `scripts/`         | validate, spec-gate (`sdd:gate`), rebuild-tasks-index, rebuild-catalog, setup-agents (bash + PowerShell) los tres de rtk: `setup-rtk.mjs`, `rtk-hook.mjs`, `rtk-common.mjs`, `rule-zero-hook.mjs` (hook SessionStart que reinyecta la regla cero: modelo/esfuerzo/contexto; lo instala `setup-rtk.mjs` aunque rtk esté apagado), `sdd-mod.mjs` (interruptor del mod de Claude Code) y `sdd-tucu.mjs` + `tucu-ui-common.mjs` + `mcp-config.mjs` (interruptor de tucu-ui y merge MCP) |
+| `scripts/`         | validate, spec-gate (`sdd:gate`), `sdd-verify` (`sdd:verify`), `sdd-task` (`sdd:task`), `sdd-pack` (`sdd:pack`), rebuild-tasks-index, rebuild-catalog, setup-agents (bash + PowerShell) los tres de rtk: `setup-rtk.mjs`, `rtk-hook.mjs`, `rtk-common.mjs`, `rule-zero-hook.mjs` (hook SessionStart que reinyecta la regla cero: modelo/esfuerzo/contexto; lo instala `setup-rtk.mjs` aunque rtk esté apagado), `sdd-mod.mjs` (interruptor del mod de Claude Code) y `sdd-tucu.mjs` + `tucu-ui-common.mjs` + `mcp-config.mjs` (interruptor de tucu-ui y merge MCP) |
 | `docs/`            | Visor portable y bilingüe de documentación (JS vanilla, cero deps)                               |
-| `dual-harness/`    | CLAUDE.md / AGENTS.md / GEMINI.md para linkear en la raíz del repo, `copilot-instructions.md` (semilla de `.github/`) y `rules/` (gates y telemetría canónicos) |
+| `dual-harness/`    | Núcleo (< 6 KB) de CLAUDE.md / AGENTS.md / GEMINI.md para linkear en la raíz, `copilot-instructions.md` (semilla de `.github/`) y `rules/` (gates, ejecución, contexto, workspace, herramientas, tiers y telemetría: se leen bajo demanda). `project.md` (tuyo) lo crea el dev |
+| `verify.json`      | Comandos de verificación por subproyecto (`quick`/`full`) para `pnpm sdd:verify`; dato del proyecto: `update sdd` no lo pisa. `pnpm sdd:verify --init` lo siembra |
+| `packs.json`       | Qué entra en el paquete de contexto de cada rol para `pnpm sdd:pack` (y los topes de bloque que lee `sdd:validate`); archivo del kit: `update sdd` lo reemplaza si no lo modificaste y deja un `.new` si lo editaste |
 | `context/`         | Plantillas de constitución y context prompt (global + example)                                  |
 | `specs/`, `fixes/` | Vacíos, listos para las primeras specs y fixes                                                  |
 | `*.json`           | Registros de estado vacíos y válidos (`sdd:validate` OK)                                        |

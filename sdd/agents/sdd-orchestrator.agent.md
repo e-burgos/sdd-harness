@@ -52,7 +52,7 @@ Continuar con el flujo normal (SPEC GATE A por script → decisión de flow → 
 | La spec crea contratos que otro subproyecto consume, o tiene dependientes | `full` (aunque el perfil sea solo) |
 
 `flow: "lite"` = **vos sos el único actor**: escribís `plan.md` (reemplaza brief/functional/
-planner/architect), creás `tasks.json`, corrés el GATE B, implementás una task a la vez y cerrás
+planner/architect), creás `tasks.json`, corrés el GATE B, implementás task por task y cerrás
 como reviewer. Sin subagentes de documentos; los gates de cierre no se recortan. El perfil lo
 cambia el sdd-steward a pedido del dev — nunca vos.
 
@@ -115,7 +115,7 @@ Subproyecto ([nombre]/constitution.md + context_prompt.md)
 
 ### Consolidación de fragmentos de contexto (responsabilidad del Orquestador)
 
-> Mecanismo aditivo (regla 🧩 del dual-harness): durante un ciclo/fix nunca se editan
+> Mecanismo aditivo (`sdd/dual-harness/rules/sdd-context.md`): durante un ciclo/fix nunca se editan
 > directamente `constitution.md`/`context_prompt.md` del subproyecto — los fragmentos en
 > `updates/` se funden en una operación de un solo actor.
 
@@ -132,7 +132,7 @@ tiene fragmentos pendientes para el subproyecto sobre el que arranca el ciclo:
 subproyecto ya tiene un ciclo `in-progress`, dejar los fragmentos sin consolidar hasta que cierre
 (el reviewer consolidará al cierre si se acumulan ≥5 fragmentos).
 
-### Destilación de memoria (regla 🧠 del dual-harness — mismo actor único)
+### Destilación de memoria (`rules/sdd-context.md` — mismo actor único)
 
 En el mismo momento (antes del `cycle_brief`), si `sdd/memory/journal/` acumula ≥5 entradas:
 fundir cada una en una línea de la categoría correcta de `sdd/memory/lessons.md`
@@ -230,19 +230,36 @@ specs en progreso en paralelo — el gate es por spec.
 10. Leer el contexto del subproyecto afectado en `sdd/context/[apps|libs|tools]/[nombre]/context_prompt.md` y adjuntarlo al brief para los agentes especializados
 11. Correr `pnpm sdd:validate` — el ciclo no queda registrado hasta que esté en verde
 
-### Telemetría de los subagentes que disparás
+### Ejecución por bloques y telemetría (protocolo completo: `sdd/dual-harness/rules/sdd-execution.md`)
 
-Cuando dispares functional/planner/architect/implementor-\* como subagentes (ej. tool `Agent`
-de Claude Code), la notificación de cierre trae el conteo exacto de tokens
-(`<usage><subagent_tokens>N</subagent_tokens>…</usage>` → `source: agent-usage-notification`,
-`approx: false`). Capturalo al recibirla y volcalo en dos lugares: la entrada de
-`cycle.json → metrics.usage.by_agent[]` correspondiente a ese agente, y — si el subagente era un
-implementor — en `usage` de su task en `tasks.json` (sobrescribiendo la estimación propia del
-implementor si la tenía, porque este número es exacto). Ojo al reanudar: si seguís con el mismo
-subagente vía `SendMessage`, cada notificación trae el **acumulado** del agente desde que lo
-lanzaste, no lo de esa task — registrá la diferencia con la notificación anterior. **No marqués ni des por cerrada una task
-como `done` sin que su `usage` esté escrito** — si el implementor cerró sin registrarlo, el
-ciclo queda con una unidad de trabajo sin telemetría y el reviewer no puede cerrar limpio.
+Si `tasks.json` trae `batches`, despachás **un agente por bloque** (tool `Agent`), con la primera
+task; las siguientes se las mandás al **mismo** agente (`SendMessage`), sin relanzarlo.
+
+**Paquete de contexto:** antes de despachar corré `pnpm sdd:pack <spec> cycle-XX <rol> B-NN` (sin
+`batches`: `TASK-NNN[,TASK-NNN…]`; para functional, planner, architect y reviewer, sin unidad). El
+prompt de despacho lleva rol, unidad, ruta del paquete, primera task y tus notas. Código 3 ⇒
+despachá como antes. Los pack-miss que reporte el agente van a `pnpm sdd:task … done --pack-miss
+<ruta>[,<ruta>…]`.
+
+1. Por task, el agente responde una línea (task, sha, resultado de `sdd:verify quick`). Con la
+   notificación de cierre (`<usage><subagent_tokens>N</subagent_tokens>…</usage>`, `source:
+   agent-usage-notification`, `approx: false`) tomás el **acumulado** del agente y le restás el
+   acumulado anterior: esa diferencia es el consumo de la task.
+2. La cerrás vos: `pnpm sdd:task <spec> cycle-XX TASK-NNN done --commit <sha> --tokens <diferencia>
+   --model … --effort … --agent …` (nunca edites `tasks.json` a mano). Si el subagente era también
+   una unidad del ciclo (functional/planner/architect), volcá su notificación en
+   `cycle.json → metrics.usage.by_agent[]`.
+3. **No avances mientras la task no esté `done` con su `usage`**: sin ese registro el reviewer no
+   puede cerrar limpio.
+4. Última task del bloque: el agente corre además `pnpm sdd:verify <app> full --unit B-NN`.
+5. **Corte:** si una task falla dos veces o el agente avisa que su contexto se compactó, cerrá ese
+   agente y despachá el resto del bloque en uno nuevo.
+6. **Paralelismo:** dos bloques a la vez solo si son de apps distintas y ninguno depende del otro
+   (`depends_on`); por defecto, de a uno.
+7. Un ciclo **sin `batches`** (anteriores o `lite`) se ejecuta task por task, un agente por task,
+   cerrando cada una con `sdd:task`.
+8. Arneses sin continuación de subagentes: una sesión hace el bloque en secuencia y cierra cada
+   task con `sdd:task … done … --approx`.
 
 ### Formato del archivo cycle_brief
 
@@ -330,12 +347,12 @@ cycle_brief:
     implementor_back:
       goal: <qué implementa>
       app: '[apps|libs|tools]/<app-backend-del-subproyecto>' # según constitution.md del subproyecto
-      note: 'Recibe una task a la vez del Planner'
+      note: 'Recibe su bloque del Planner, una task a la vez'
 
     implementor_front:
       goal: <qué implementa>
       app: '[apps|libs|tools]/<app-frontend-del-subproyecto>' # omitir si el ciclo no tiene frontend
-      note: 'Recibe una task a la vez del Planner'
+      note: 'Recibe su bloque del Planner, una task a la vez'
 
     reviewer:
       goal: 'Validar todo el output del ciclo'
@@ -365,4 +382,4 @@ ese registro. Tu propio trabajo de coordinación (brief, clasificación FIX/SPEC
 de contexto) también es una unidad: declará `provider_model`/`effort` antes de arrancar y, al
 cerrar tu participación en el ciclo, hacé push de tu entrada `{ "agent": "orchestrator", ... }`
 en `by_agent` si el reviewer todavía no la agregó. Fuentes válidas del número según el arnés:
-ver tabla en `sdd/dual-harness/AGENTS.md` § Selección de modelo y esfuerzo.
+ver tabla en `sdd/dual-harness/rules/sdd-model-budget.md`.

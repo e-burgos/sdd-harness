@@ -94,14 +94,16 @@ template de ese artefacto (`sdd-file-structure` §3) — no antes.
 
 ### Sesiones paralelas — atadura y gate por sesión
 
-Varias specs pueden tener un ciclo `in-progress` a la vez, cada una en su sesión (A3 no cambia:
-un ciclo abierto por spec). Cada sesión se ata a **una unidad** (un ciclo o un fix) y el gate del
-mod de Claude Code (y el del puente de Studio) parte de esa atadura, no de «el primer ciclo abierto».
+Varias specs pueden tener un ciclo `in-progress` a la vez, cada una en su sesión (A3: uno por spec).
+Cada sesión se ata a **una unidad** (ciclo, fix o spec en preparación) y la declara (regla ①); el gate
+del mod de Claude Code y el del puente de Studio parten de esa atadura.
 
-- **Cómo se ata**, en este orden: la línea `SDD-BIND …` que imprime `pnpm sdd:gate <spec> cycle-XX`
-  al dar `APPROVED` en B (por eso el GATE B se corre **en la sesión que va a implementar**);
-  `pnpm sdd:use <spec> cycle-XX` o `pnpm sdd:use <FIX-id>` a mano; una única unidad abierta; o la
-  rama, si nombra una spec con un ciclo abierto.
+- **Cómo se ata** (la marca `SDD-BIND` lleva el worktree del comando): GATE A APPROVED → la spec
+  (sube sola al ciclo cuando éste se abre); GATE B APPROVED → el ciclo; `pnpm sdd:use <spec>
+  [cycle-XX]` o `<FIX-id>` a mano; con el mod, escribir un documento de `sdd/specs/<spec>/…` o
+  editar código en un worktree con una sola unidad; una única unidad abierta; o la rama (id o slug).
+- **Worktrees:** el mod lee todos los worktrees del repo y juzga cada archivo contra el suyo. Una
+  spec en preparación no autoriza código.
 - **Sin atadura y más de una unidad abierta**, la edición de código se rechaza (`block`) o avisa
   (`warn`) listando las unidades y `pnpm sdd:use`. Lo mismo si la atadura apunta a una unidad ya
   cerrada. No se rodea con comandos de shell: se elige la unidad.

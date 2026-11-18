@@ -1,0 +1,52 @@
+{
+  "$schema": "./schemas/verify.schema.json",
+  "_description": "Comandos de verificación quick (por task) y full (por bloque) de cada subproyecto, que corre pnpm sdd:verify; es dato del proyecto y el update del kit nunca lo pisa.",
+  "apps/cli": {
+    "quick": [
+      "pnpm --filter @e-burgos/sdd-harness run typecheck",
+      "pnpm --filter @e-burgos/sdd-harness run test"
+    ],
+    "full": [
+      "pnpm --filter @e-burgos/sdd-harness run typecheck",
+      "pnpm --filter @e-burgos/sdd-harness run test",
+      "pnpm --filter @e-burgos/sdd-harness run build"
+    ]
+  },
+  "apps/documentation": {
+    "full": [
+      "pnpm --filter sdd-harness-documentation run build"
+    ]
+  },
+  "apps/studio": {
+    "quick": [
+      "pnpm --filter sdd-studio-web run typecheck",
+      "pnpm --filter sdd-studio-web run test"
+    ],
+    "full": [
+      "pnpm --filter sdd-studio-web run typecheck",
+      "pnpm --filter sdd-studio-web run test",
+      "pnpm --filter sdd-studio-web run build"
+    ]
+  },
+  "apps/studio-bridge": {
+    "quick": [
+      "pnpm --filter @e-burgos/sdd-studio run typecheck",
+      "pnpm --filter @e-burgos/sdd-studio run test"
+    ],
+    "full": [
+      "pnpm --filter @e-burgos/sdd-studio run typecheck",
+      "pnpm --filter @e-burgos/sdd-studio run test",
+      "pnpm --filter @e-burgos/sdd-studio run build"
+    ]
+  },
+  "libs/studio-protocol": {
+    "quick": [
+      "pnpm --filter @sdd-studio/protocol run typecheck",
+      "pnpm --filter @sdd-studio/protocol run test"
+    ],
+    "full": [
+      "pnpm --filter @sdd-studio/protocol run typecheck",
+      "pnpm --filter @sdd-studio/protocol run test"
+    ]
+  }
+}

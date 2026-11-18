@@ -359,6 +359,9 @@ pending_modules → in_progress_modules → completed_modules
 - `flow: "reduced"` = ciclo de refactor estructural sin HUs; `flow: "lite"` = ciclo de un solo actor
   conducido por `plan.md`. En ambos las tasks pueden tener `user_stories: []`.
 - Cada developer/implementador **solo escribe en el archivo de SU ciclo** → sin merge conflicts entre specs.
+- `batches` (opcional, raíz): bloques de ejecución `{ id: "B-NN", app, role, tasks: [TASK-…], depends_on: [B-NN] }`
+  que escribe el orquestador al abrir el ciclo. `sdd:validate` avisa (nunca falla) por task inexistente o
+  repetida, `app` fuera de `apps`, dependencia inexistente y bloque sobre el tope (4 tasks / 12 SP).
 
 ### 6b. `sdd/tasks.json` — índice (generado)
 
@@ -413,6 +416,8 @@ pending_modules → in_progress_modules → completed_modules
   }
 }
 ```
+
+Opcional en TaskEntry: `refs` — lista de `<documento>#<id>` (`architect#D-04`) con las secciones exactas que la task necesita.
 
 > ⛔ **TODOS los campos de TaskEntry son obligatorios excepto `usage`** (`additionalProperties: false`
 > en el schema). Una task sin `estimation_hours` o `story_points` no pasa `pnpm sdd:validate`.
@@ -686,9 +691,11 @@ El bloque `usage` vive en tres lugares:
 | `tokens_total`    | Total exacto cuando la fuente reporta un único número (`agent-usage-notification`). `tokens_in`/`tokens_out` llevan igual el split documentado 85/15 para que la fórmula de costo funcione; el visor muestra `tokens_total`. |
 | `duration_minutes`| Opcional.                                                                                                    |
 | `provider_model` / `model_tier` | **Proveedor y modelo son obligatorios.** Claves `proveedor/modelo`: `claude/opus`, `gemini/pro`, `copilot/claude-sonnet`. Antigravity registra bajo `gemini/*` (corre modelos Gemini). Claves legacy sueltas (`haiku`, `sonnet`, `opus`, `fable`) se leen como `claude/*`. `model_tier` es el alias legacy pre-0.11: se sigue leyendo, ya no se escribe. |
-| `effort`          | Nivel de esfuerzo/razonamiento **declarado antes de ejecutar** (regla ⚙️): `low\|medium\|high\|xhigh\|max` en Claude, `minimal\|low\|medium\|high` en Gemini. |
+| `effort`          | Nivel de esfuerzo/razonamiento **declarado antes de ejecutar** (regla cero; tabla en `sdd/dual-harness/rules/sdd-model-budget.md`): `low\|medium\|high\|xhigh\|max` en Claude, `minimal\|low\|medium\|high` en Gemini. |
 | `agent`           | Rol SDD que hizo el trabajo (`functional\|planner\|architect\|implementor-back\|implementor-front\|reviewer\|orchestrator\|steward\|hermes\|custom`). Obligatorio en `by_agent[]`; `custom` lleva `label`. |
 | `recorded_at`     | Fecha (o datetime ISO) en que se cerró la unidad. |
+| `allocation`      | Opcional: `{ batch: "B-NN", batch_tokens: N }` cuando un agente hizo varias tasks sin cortes y el total del bloque se repartió entre ellas. Exige `approx: true`. |
+| `pack_misses`     | Opcional: hasta 5 rutas que el agente tuvo que leer fuera de su paquete de contexto. Sin narrativa. |
 | `approx`          | `true` = estimación declarada; `false`/ausente = leído de un contador. El visor muestra **estimado** en la columna Origen. |
 | `source`          | `session-report` (Claude Code) · `stats-command` (`/stats` de Gemini CLI) · `api-usage` · `agent-usage-notification` (Claude Code: conteo exacto que el harness reporta al padre al terminar un subagente — `<usage><subagent_tokens>N</subagent_tokens>…</usage>`, `approx: false`) · `declared-estimate` (Copilot, Antigravity, o cualquier caso sin contador — `approx: true` obligatorio). |
 

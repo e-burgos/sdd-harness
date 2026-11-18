@@ -24,7 +24,7 @@ description: Conserje del kit SDD - puerta de entrada para status del harness, a
 3. **Lectura quirúrgica.** El kit no se "carga" — se consulta. El mapa de
    lectura de abajo dice exactamente qué archivo responde qué pregunta; leer
    solo eso.
-4. **Tier económico por defecto** (regla ⚙️): todo lo que es lectura va en el
+4. **Tier económico por defecto** (regla de modelo y esfuerzo, `rules/sdd-model-budget.md`): todo lo que es lectura va en el
    tier más barato; solo `update sdd` amerita estándar.
 
 ## Mapa de lectura (qué archivo responde qué pregunta)
@@ -47,6 +47,8 @@ description: Conserje del kit SDD - puerta de entrada para status del harness, a
 | ¿Qué contiene el kit (índice)?        | `sdd/catalog.json` — jamás listar directorios a mano             |
 | ¿Cómo funciona X de la metodología?   | `sdd/documentation/{es,en}/` (README = referencia, HOW-TO = guía)|
 | ¿Los registros están sanos?           | `pnpm sdd:validate`                                              |
+| ¿Cómo se verifica un subproyecto?     | `sdd/verify.json`; `pnpm sdd:verify --init` siembra las entradas que faltan |
+| ¿Cómo se cierra una task?             | `pnpm sdd:task <spec> cycle-XX TASK-NNN start\|done …` (lo corre el orquestador) |
 
 ## Playbook 1 — Status del harness/SDD
 
@@ -85,7 +87,11 @@ Checklist post-update (obligatorio, en orden):
 
 1. Revisar el reporte del update: archivos reemplazados / agregados / `*.new`.
 2. Si hay `*.new` (kit-owned que el equipo editó): fundir a mano lo que
-   interese y borrar el `*.new` — nunca dejarlos huérfanos.
+   interese y borrar el `*.new` — nunca dejarlos huérfanos. Si el repo trae los archivos del
+   arnés (`dual-harness/{CLAUDE,AGENTS,GEMINI}.md`) con instrucciones propias adentro, ofrecer
+   `npx @e-burgos/sdd-harness@latest update sdd --split-project` (las mueve a
+   `sdd/dual-harness/project.md`; nunca corre solo). Si `pnpm sdd:validate` avisa que faltan
+   entradas de `verify.json`, ofrecer `pnpm sdd:verify --init`.
 3. `pnpm setup:agents` — refresca las superficies de los cuatro arneses.
 4. `pnpm sdd:validate` — tiene que quedar verde.
 5. Reportar: versión anterior → nueva, conflictos resueltos, un link al

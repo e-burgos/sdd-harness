@@ -25,9 +25,8 @@ Sos el último paso antes de que el ciclo se marque como completado.
 
 ## Input que recibís
 
-- Documentos del ciclo según `cycle.json → flow`: en `full`, `brief.yaml` + `functional.md`
-  (historias) + `planner.md` (sprint plan) + `architect.md` (contratos); en `reduced`,
-  `brief.yaml`; en `lite`, `plan.md` (objetivo · historias · tasks · decisiones, un solo actor)
+Tu contexto es el paquete que te indica el orquestador: leelo entero antes de empezar y no leas documentos del ciclo fuera de él salvo que te falte algo; lo que leas afuera, decilo en tu respuesta. Sin paquete: los documentos del ciclo según `cycle.json → flow`.
+
 - Código backend y frontend generado en este ciclo
 - Estado actual de `sdd/global.json` y del resto del arnés
 
@@ -36,12 +35,14 @@ Sos el último paso antes de que el ciclo se marque como completado.
 **El Reviewer NO puede aprobar un ciclo ni escribir `status: "completed"` con `pnpm sdd:validate` en rojo.**
 
 1. Correr `pnpm sdd:validate` como PRIMER paso de la revisión (si falla, los registros del ciclo
-   están mal estructurados → devolver al implementador antes de revisar funcionalidad)
+   están mal estructurados → devolver al implementador)
 2. Correrlo de nuevo como ÚLTIMO paso, después de todas las actualizaciones de cierre
 3. Registrar el resultado en `reviewer_report.tests` con la clave `"sdd:validate"` (ej: `"OK — 23 files valid"`)
+4. **Verificación de código:** por cada app del ciclo, `pnpm sdd:verify <app> full --reuse`; los
+   resultados viven en `cycle-[XX]/artifacts/verify/*.json`. Código 3 (sin entrada en
+   `sdd/verify.json`) ⇒ verificá con los comandos del subproyecto, como antes
 
-> El mismo comando corre en CI (`.github/workflows/sdd-validate.yml`): un cierre con validación
-> en rojo va a romper el pipeline del PR. No existe ciclo cerrado con registros fuera de schema.
+> El mismo comando corre en CI (`.github/workflows/sdd-validate.yml`): un cierre en rojo rompe el pipeline del PR.
 
 ## Reglas
 
@@ -51,10 +52,8 @@ Sos el último paso antes de que el ciclo se marque como completado.
   `{ "agent": "orchestrator", "label": "solo", … }` que cubre plan + revisión, además de las
   entradas de cada task. Si el ciclo creó tablas o endpoints nuevos, `pnpm sdd:validate` lo
   avisa: anotar en `reviewer_report.notes` que el próximo ciclo de la spec se abre `full`
-- **Código sin comentarios** (regla ✍️ del dual-harness): si el código del ciclo tiene
-  comentarios narrativos, código muerto comentado o `// TODO` fuera de las excepciones
-  permitidas (workaround con issue, regla de negocio con referencia a spec, anotaciones
-  de framework/Javadoc exigido por linter) → requiere cambios
+- **Código sin comentarios** (`sdd/dual-harness/rules/sdd-code-style.md`): comentarios
+  narrativos, código muerto comentado o `// TODO` fuera de sus excepciones → requiere cambios
 - Al aprobar → realizar TODAS las actualizaciones de cierre en este orden:
   1. Actualizar `sdd/specs/{spec-id}/cycles/cycle-[XX]/cycle.json` (creado por el Orquestador al iniciar)
      con el resumen completo: `completed_at`, `documents`, `metrics`, arrays de trazabilidad y `reviewer_report`
@@ -76,7 +75,7 @@ Sos el último paso antes de que el ciclo se marque como completado.
   10. **PR del ciclo** (si el repo está en GitHub y trabaja con rama por ciclo): `pnpm sdd:pr <spec-id> cycle-[XX]`
      muestra el plan (rama, base, título y cuerpo desde `cycle.json`); **mostráselo al dev y pedí su
      confirmación** antes de `pnpm sdd:pr <spec-id> cycle-[XX] --yes`, que pushea la rama y abre el PR.
-  10. **MEMORIA GATE (regla 🧠 del dual-harness):** si el ciclo dejó una lección real (supuesto
+  10. **MEMORIA GATE (`rules/sdd-context.md`):** si el ciclo dejó una lección real (supuesto
       que falló, descubrimiento costoso, gasto de tokens evitable), escribir la entrada episódica
       `sdd/memory/journal/YYYY-MM-DD-[spec-id]-cycle-[XX].md` (qué pasó / lección / costo evitable).
       Sin lección real no se escribe nada — el filtro anti-ruido es parte del gate. `lessons.md`
@@ -179,7 +178,7 @@ completar el registro.
 
 ## ⛔ Actualización de contexto del subproyecto (CONTEXTO GATE — bloquea el cierre)
 
-> **Mecanismo aditivo (regla 🧩 del dual-harness):** durante el ciclo NUNCA se editan
+> **Mecanismo aditivo (`rules/sdd-context.md`):** durante el ciclo NUNCA se editan
 > `constitution.md` ni `context_prompt.md` del subproyecto — varios devs trabajando specs
 > sobre la misma app chocarían en cada merge. El gate se cumple escribiendo un fragmento
 > delta append-only, de nombre único por construcción.
@@ -262,4 +261,4 @@ revisión— entra como `{ "agent": "reviewer", "provider_model", "effort", "tok
 "tokens_out", "approx", "source", "recorded_at" }`; declará modelo y effort antes de arrancar la
 revisión y registrala al cerrar. Tu estimación libre cubre solo lo que ninguna task, fix o
 documento ya registró. Fuentes válidas del número según el arnés: tabla arriba y
-`sdd/dual-harness/AGENTS.md` § Selección de modelo y esfuerzo.
+`sdd/dual-harness/rules/sdd-model-budget.md`.

@@ -73,40 +73,92 @@ export async function readBranch(fs, repoRoot) {
   return ref ? ref[1].trim() : null;
 }
 
+export async function listWorktrees(fs, repoRoot) {
+  const root = toPosix(repoRoot);
+  const git = await gitDirOf(fs, root);
+  if (!git) return [root];
+  const found = [root];
+  if (/\/\.git$/.test(git.commonDir)) found.push(parentOf(git.commonDir));
+  let entries = [];
+  try {
+    entries = await fs.list(joinPath(git.commonDir, 'worktrees'));
+  } catch {
+    entries = [];
+  }
+  for (const entry of entries) {
+    const pointer = await readOptional(fs, joinPath(git.commonDir, 'worktrees', entry.name, 'gitdir'));
+    if (pointer === null) continue;
+    const dotGit = resolveFrom(joinPath(git.commonDir, 'worktrees', entry.name), pointer.trim());
+    if (/\/\.git$/.test(dotGit)) found.push(parentOf(dotGit));
+  }
+  return [...new Set(found)];
+}
+
+export function worktreeOf(worktrees, filePath) {
+  const target = toPosix(filePath);
+  return (
+    [...worktrees]
+      .map(toPosix)
+      .sort((a, b) => b.length - a.length)
+      .find((tree) => target === tree || target.startsWith(`${tree}/`)) ?? null
+  );
+}
+
 export function unitKey(unit) {
-  return unit.kind === 'fix' ? unit.fix : `${unit.spec}/${unit.cycle}`;
+  if (unit.kind === 'fix') return unit.fix;
+  return unit.kind === 'spec' ? unit.spec : `${unit.spec}/${unit.cycle}`;
 }
 
 export function sameUnit(a, b) {
   return Boolean(a && b) && unitKey(a) === unitKey(b);
 }
 
-export function formatBindMarker(unit) {
-  return unit.kind === 'fix'
-    ? `${BIND_MARKER} fix=${unit.fix}`
-    : `${BIND_MARKER} spec=${unit.spec} cycle=${unit.cycle}`;
+export function formatBindMarker(unit, worktree) {
+  const where = worktree ? ` worktree=${encodeURIComponent(toPosix(worktree))}` : '';
+  if (unit.kind === 'fix') return `${BIND_MARKER} fix=${unit.fix}${where}`;
+  if (unit.kind === 'spec') return `${BIND_MARKER} spec=${unit.spec}${where}`;
+  return `${BIND_MARKER} spec=${unit.spec} cycle=${unit.cycle}${where}`;
 }
 
-function unitFromMarkerFields(fields) {
-  const values = Object.fromEntries(
+function markerValues(fields) {
+  return Object.fromEntries(
     fields
       .split(/\s+/)
       .map((pair) => pair.split('='))
       .filter((pair) => pair.length === 2 && pair[0] && pair[1]),
   );
+}
+
+function unitFromMarkerValues(values) {
   if (values.fix) return { kind: 'fix', fix: values.fix };
   if (values.spec && /^cycle-\d{2}$/.test(values.cycle ?? '')) {
     return { kind: 'cycle', spec: values.spec, cycle: values.cycle };
   }
+  if (values.spec && values.cycle === undefined) return { kind: 'spec', spec: values.spec };
   return null;
 }
 
-export function parseBindMarker(text) {
+function decodedWorktree(raw) {
+  if (!raw) return null;
+  try {
+    return toPosix(decodeURIComponent(raw));
+  } catch {
+    return null;
+  }
+}
+
+export function parseBindTarget(text) {
   let last = null;
   for (const match of String(text ?? '').matchAll(MARKER_LINE)) {
-    last = unitFromMarkerFields(match[1].trim()) ?? last;
+    const values = markerValues(match[1].trim());
+    const unit = unitFromMarkerValues(values);
+    if (unit) last = { unit, worktree: decodedWorktree(values.worktree) };
   }
   return last;
+}
+
+export function parseBindMarker(text) {
+  return parseBindTarget(text)?.unit ?? null;
 }
 
 export function openUnitsOf(cycles, fixes) {
@@ -116,11 +168,44 @@ export function openUnitsOf(cycles, fixes) {
   ];
 }
 
+export function specSlugOf(specId) {
+  return String(specId).replace(/^spec-[A-Za-z0-9]+-\d{3}-?/, '');
+}
+
+const MIN_SLUG_IN_BRANCH = 4;
+
 export function unitFromBranch(branch, openUnits) {
-  const spec = branch ? SPEC_IN_BRANCH.exec(branch)?.[0] : null;
-  if (!spec) return null;
-  const matches = openUnits.filter((unit) => unit.kind === 'cycle' && unit.spec.startsWith(spec));
-  return matches.length === 1 ? matches[0] : null;
+  if (!branch) return null;
+  const cycles = openUnits.filter((unit) => unit.kind === 'cycle');
+  const spec = SPEC_IN_BRANCH.exec(branch)?.[0];
+  const byId = spec ? cycles.filter((unit) => unit.spec.startsWith(spec)) : [];
+  if (byId.length === 1) return byId[0];
+  if (spec) return null;
+  const lower = branch.toLowerCase();
+  const bySlug = cycles.filter((unit) => {
+    const slug = specSlugOf(unit.spec).toLowerCase();
+    return slug.length >= MIN_SLUG_IN_BRANCH && lower.includes(slug);
+  });
+  return bySlug.length === 1 ? bySlug[0] : null;
+}
+
+const SPEC_DOC_PATH = /(?:^|\/)sdd\/specs\/(spec-[A-Za-z0-9]+-\d{3}[^/]*)\/(?:cycles\/(cycle-\d{2})(?:\/|$))?/;
+
+export function unitFromSpecPath(rel, openUnits) {
+  const match = SPEC_DOC_PATH.exec(toPosix(rel));
+  if (!match) return null;
+  const [, spec, cycle] = match;
+  const open = openUnits.filter((unit) => unit.kind === 'cycle' && unit.spec === spec);
+  if (cycle) {
+    const exact = open.find((unit) => unit.cycle === cycle);
+    if (exact) return exact;
+  }
+  return open.length === 1 ? open[0] : { kind: 'spec', spec };
+}
+
+export function cycleOfSpec(spec, openUnits) {
+  const open = openUnits.filter((unit) => unit.kind === 'cycle' && unit.spec === spec);
+  return open.length === 1 ? open[0] : null;
 }
 
 export function isBindingLive(binding, now) {
@@ -177,7 +262,7 @@ export async function endBinding(fs, dir, sessionId, now) {
   return next;
 }
 
-export async function listLiveBindings(fs, dir, now) {
+export async function listLiveBindings(fs, dir, now, { includeSpec = false } = {}) {
   let entries;
   try {
     entries = await fs.list(joinPath(dir, 'sessions'));
@@ -188,13 +273,20 @@ export async function listLiveBindings(fs, dir, now) {
   for (const entry of entries) {
     if (!entry.name.endsWith('.json')) continue;
     const binding = await readBinding(fs, dir, entry.name.slice(0, -'.json'.length));
-    if (isBindingLive(binding, now)) bindings.push(binding);
+    if (!isBindingLive(binding, now)) continue;
+    if (binding.unit?.kind === 'spec' && !includeSpec) continue;
+    bindings.push(binding);
   }
   return bindings.sort((a, b) => a.session_id.localeCompare(b.session_id));
 }
 
 export function autoBindUnit({ binding, openUnits, branch, now }) {
-  if (isBindingLive(binding, now) && openUnits.some((unit) => sameUnit(unit, binding.unit))) return null;
+  const live = isBindingLive(binding, now);
+  if (live && binding.unit?.kind === 'spec') {
+    const cycle = cycleOfSpec(binding.unit.spec, openUnits);
+    return cycle ? { unit: cycle, source: 'spec-cycle' } : null;
+  }
+  if (live && openUnits.some((unit) => sameUnit(unit, binding.unit))) return null;
   if (openUnits.length === 1) return { unit: openUnits[0], source: 'single-unit' };
   const fromBranch = unitFromBranch(branch, openUnits);
   return fromBranch ? { unit: fromBranch, source: 'branch' } : null;
@@ -207,6 +299,14 @@ function useCommandsFor(openUnits) {
 }
 
 export function judgeSessionEdit({ gate, binding, openUnits, rel, now }) {
+  const live = isBindingLive(binding, now);
+  if (live && binding.unit?.kind === 'spec') {
+    return verdictFor(
+      gate,
+      'spec-only',
+      `SPEC GATE: esta sesión está preparando ${binding.unit.spec}, que todavía no tiene un ciclo in-progress, así que no escribe código (${rel}). Abrí el ciclo (pnpm sdd:gate ${binding.unit.spec} → sdd-orchestrator) y corré el GATE B.`,
+    );
+  }
   if (openUnits.length === 0) {
     return verdictFor(
       gate,
@@ -214,7 +314,6 @@ export function judgeSessionEdit({ gate, binding, openUnits, rel, now }) {
       `SPEC GATE: no hay ningún ciclo in-progress ni un fix abierto, así que todavía no se escribe código (${rel}). Abrí un ciclo (pnpm sdd:gate <spec> → sdd-orchestrator) o registrá el cambio con [FIX]/[BUGFIX]/[HOTFIX]. Reglas: sdd/dual-harness/rules/sdd-gates.md.`,
     );
   }
-  const live = isBindingLive(binding, now);
   if (live && openUnits.some((unit) => sameUnit(unit, binding.unit))) return { kind: 'allow' };
   if (live) {
     return verdictFor(

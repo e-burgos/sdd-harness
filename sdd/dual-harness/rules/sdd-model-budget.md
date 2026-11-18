@@ -5,30 +5,48 @@ description: Presupuesto de modelo y esfuerzo por tarea (regla obligatoria de op
 
 # ⚙️ Presupuesto de modelo/esfuerzo (OBLIGATORIO)
 
-Antes de encarar CUALQUIER tarea: decidir explícitamente qué tier de modelo y qué
-nivel de razonamiento conviene, para el trabajo propio y para cada subagente que se
-dispare. Regla base: **el tier más barato que aún cumple con calidad**; escalar solo
-con justificación. Tabla canónica de equivalencias por proveedor: `AGENTS.md`/`CLAUDE.md`/
-`GEMINI.md` raíz, sección ⚙️.
+Antes de encarar CUALQUIER tarea nueva —con cualquier proveedor o modelo— decidí explícitamente
+qué tier de modelo y qué nivel de razonamiento conviene, para el trabajo propio y para CADA
+subagente/workflow que dispares. Objetivo: el mínimo de tokens y contexto sin bajar la calidad.
 
-| Tier          | Tarea típica                                             | Gemini (modelo/thinking)             |
-| ------------- | -------------------------------------------------------- | ------------------------------------ |
-| **económico** | lectura, formateo, edición mecánica, grep, fan-out       | Flash-Lite o Flash / `minimal`–`low` |
-| **estándar**  | implementación de una task, tests, edición multi-archivo | Flash / `medium`                     |
-| **alto**      | arquitectura, debugging complejo, orquestación, review   | Pro / `low`–`high`                   |
-| **máximo**    | solo el paso más difícil (verify adversarial, judge)     | Pro / `high`                         |
+**Regla base:** el tier más barato que aún cumple la tarea con calidad. Escalá solo cuando la
+tarea lo justifique (ambigüedad, razonamiento cross-cutting, riesgo de error alto). Ante la duda
+entre dos tiers, probá el más barato primero y escalá si el resultado no alcanza.
 
-Agentes del ciclo SDD: implementores → estándar; orquestador/arquitecto/reviewer →
-alto; funcional/planner → estándar salvo spec compleja. En un ciclo `flow: lite` el único
-actor trabaja en **alto** para `plan.md` y baja a **estándar** para las tasks.
+**Tabla canónica de tiers por proveedor** (única fuente de equivalencias — skills y agentes SDD
+referencian estos tiers abstractos, no modelos concretos):
 
-**En Antigravity el modelo lo elige el usuario en el dropdown.** ANTES de ejecutar,
-comparar el modelo activo con el tier requerido: si no coinciden (tarea económica por
-correr en Pro/high, o tarea de tier alto en Flash), **avisar y pedir el cambio de
-modelo o thinking level** — nunca ejecutar en silencio con el tier equivocado.
+| Tier          | Tipo de tarea                                                                                     | Claude (`model`/`effort`) | Gemini (modelo/`thinking`)          | Copilot (picker/agents)               |
+| ------------- | ------------------------------------------------------------------------------------------------- | ------------------------- | ---------------------------------- | ------------------------------------- |
+| **económico** | Lectura de estado, formateo, edición mecánica, respuestas cortas, grep dirigido, fan-out de lectores | `haiku` / `low`–`medium`  | Flash-Lite o Flash / `minimal`–`low` | modelo económico (ej. `gpt-5-mini`)   |
+| **estándar**  | Implementación de una task acotada, tests, edición multi-archivo simple, la mayoría de subagentes ejecutores | `sonnet` / `medium`       | Flash / `medium`                   | modelo estándar (ej. `claude-sonnet`) |
+| **alto**      | Arquitectura, decisiones cross-cutting, debugging complejo, orquestación SDD, revisión final del ciclo, síntesis | `opus` / `high`–`xhigh`   | Pro / `low`–`high`                 | modelo alto (ej. `claude-opus`)       |
+| **máximo**    | Solo con justificación escrita de por qué «alto» no alcanza (diseño crítico sin precedente, trade-offs entre muchos subsistemas, verify/judge adversarial) | `fable` / `xhigh`–`max`   | Pro / `high`                       | el tier más alto habilitado           |
 
-**En Gemini CLI:** modelo por sesión/flag acorde al tier; fan-out de lectores en
-subagentes económicos, síntesis en Pro; `/stats` da el consumo real del main loop.
+**Máximo no es el default del trabajo difícil:** antes de elegirlo, escribí «máximo o alto» y el
+motivo por el que alto no alcanza. Ningún subagente va en máximo sin esa justificación.
+
+**Agentes del ciclo SDD (cualquier proveedor):** implementores → estándar; orquestador,
+arquitecto y reviewer → alto (razonamiento y visión global); funcional/planner → estándar salvo
+spec compleja. En un ciclo `flow: lite` el único actor trabaja en **alto** para `plan.md` y baja a
+**estándar** para las tasks. Trabajo propio trivial: bajá el esfuerzo.
+
+**Enforcement por proveedor:**
+
+- **Claude Code:** `model` y `effort` explícitos en cada `Agent` y `Workflow`, acordes a la tabla;
+  fan-out de lectores/mecánicos en económico, verificación o síntesis en alto. Nunca un fleet
+  entero en el tier caro por defecto.
+- **GitHub Copilot:** los agentes (`.github/agents/*.agent.md`) llevan `model:` pinneado por rol.
+  El kit lo shippea con alias Claude (`opus`/`sonnet`); si tu equipo trabaja en Copilot, mapealo UNA
+  vez al modelo del MISMO tier disponible en tu org editando `sdd/agents/*.agent.md` (nunca el
+  symlink) y no lo cambies ad-hoc. Copilot CLI: `--model` / `/model` y `--reasoning-effort`; en
+  chat/coding agent, verificá el modelo del picker antes de ejecutar.
+- **Antigravity (dropdown del usuario):** el agente no puede cambiar el modelo. ANTES de ejecutar,
+  comparar el activo con el tier requerido: si una tarea económica va a correr en Pro/`high`, o una
+  de tier alto en Flash, **avisar y pedir el cambio de modelo o de thinking level** — nunca ejecutar
+  en silencio con el tier equivocado.
+- **Gemini CLI:** modelo por sesión/flag acorde al tier; fan-out de lectores en subagentes
+  económicos, síntesis en Pro; `/stats` da el consumo real del main loop.
 
 # Telemetría de uso (dashboard de Costos) — CONTRATO CANÓNICO, OBLIGATORIO
 
@@ -39,7 +57,7 @@ Todo agente que participe de un flujo SDD o de un fix y consuma tokens registra,
 su unidad de trabajo** (task, documento, ciclo, fix), `provider_model` (`claude/sonnet`,
 `gemini/pro`, `copilot/claude-sonnet`), `effort`/thinking, `tokens_in`, `tokens_out`, `source`
 y `approx`. Sin ese registro la unidad no está cerrada. Modelo y effort se declaran ANTES de
-ejecutar (regla ⚙️); los tokens se registran AL CERRAR. No es una estimación reconstruida al
+ejecutar (regla cero); los tokens se registran AL CERRAR. No es una estimación reconstruida al
 final: es un registro por unidad.
 
 **Quién escribe qué, y cuándo:**

@@ -9,9 +9,9 @@
 
 Sos el conductor del loop SDD de este repo. Retomá el trabajo exactamente donde quedó:
 
-1. **Presupuesto y entorno primero** (regla ⚙️ del dual-harness): decidí el tier de
+1. **Presupuesto y entorno primero** (`sdd/dual-harness/rules/sdd-model-budget.md`): decidí el tier de
    modelo/esfuerzo propio y de cada subagente antes de ejecutar nada — la equivalencia
-   por proveedor (Claude/Gemini/Copilot) está en la tabla canónica ⚙️; en Antigravity,
+   por proveedor (Claude/Gemini/Copilot) está en esa tabla canónica; en Antigravity,
    verificá el dropdown y pedí el cambio si no coincide con el tier. Si
    `NX_WORKSPACE_ROOT_PATH` está definida y no apunta al cwd, cualquier comando de la
    CLI (`init`, `add`, `update`, los scripts `sdd:*`) puede ejecutar contra el repo

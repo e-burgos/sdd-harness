@@ -9,6 +9,7 @@ import { fileURLToPath } from 'url';
 import { execFileSync } from 'child_process';
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
+import { unresolvedExplicitRefs } from './lib/pack.mjs';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
@@ -46,7 +47,7 @@ const warnings = [];
 const warn = (file, msg) => warnings.push(`${file}: ${msg}`);
 
 function loadJson(path) {
-  return JSON.parse(readFileSync(path, 'utf8'));
+  return JSON.parse(readFileSync(path, 'utf8').replace(/^﻿/, ''));
 }
 
 const sample = (files) =>
@@ -742,6 +743,11 @@ if (existsSync(join(SDD, 'tools.json'))) {
         name,
         'rule-zero block (<!-- regla-cero:start/end -->) is missing — run `harness update sdd` (a hybrid file keeps your copy; the kit version lands next to it as *.new)',
       );
+    else if (!text.slice(text.indexOf(START), text.indexOf(END)).includes('REGLA UNO'))
+      warn(
+        name,
+        'rule one (the session declares and binds its SDD unit: `Unidad SDD → …` + `pnpm sdd:use`) is missing from the rule-zero block — run `harness update sdd` and merge the *.new',
+      );
   }
   const claudeSettings = join(REPO, '.claude', 'settings.json');
   if (existsSync(join(REPO, '.claude'))) {
@@ -762,6 +768,99 @@ if (existsSync(join(SDD, 'tools.json'))) {
         'SessionStart hook for rule zero is missing — run `pnpm setup:agents` (installs sdd/scripts/rule-zero-hook.mjs so the model/effort rule is re-injected on every session start)',
       );
   }
+}
+
+// ---- 12c. Execution blocks, verify.json and core size — all optional, warnings only ----
+{
+  const DEFAULT_BLOCK_CAPS = { tasks: 4, points: 12 };
+  let blockCaps = DEFAULT_BLOCK_CAPS;
+  try {
+    const execution = loadJson(join(SDD, 'packs.json'))?.execution;
+    const tasks = execution?.max_tasks_per_batch;
+    const points = execution?.max_points_per_batch;
+    blockCaps = {
+      tasks: Number.isInteger(tasks) && tasks > 0 ? tasks : DEFAULT_BLOCK_CAPS.tasks,
+      points: Number.isInteger(points) && points > 0 ? points : DEFAULT_BLOCK_CAPS.points,
+    };
+  } catch {
+    blockCaps = DEFAULT_BLOCK_CAPS;
+  }
+
+  for (const [file, ct] of cycleTasks) {
+    if (!ct) continue;
+    const tasksById = new Map((ct.tasks ?? []).map((t) => [t.id, t]));
+    const blocks = Array.isArray(ct.batches) ? ct.batches.filter((b) => b && typeof b === 'object' && !Array.isArray(b)) : [];
+    const listOf = (value) => (Array.isArray(value) ? value : []);
+    const blockIds = new Set(blocks.map((b) => b.id));
+    const owner = new Map();
+    for (const block of blocks) {
+      const where = `${file} ${block.id}`;
+      const blockTasks = listOf(block.tasks);
+      for (const id of blockTasks) {
+        if (!tasksById.has(id)) warn(where, `lists unknown task ${id} — fix batches[] in tasks.json`);
+        else if (owner.has(id)) warn(where, `${id} is already in ${owner.get(id)} — a task belongs to one block`);
+        else owner.set(id, block.id);
+      }
+      if (!(ct.apps ?? []).includes(block.app))
+        warn(where, `app ${block.app} is not in the cycle's apps — fix batches[].app in tasks.json`);
+      for (const dep of listOf(block.depends_on)) {
+        if (!blockIds.has(dep)) warn(where, `depends_on unknown block ${dep} — fix batches[] in tasks.json`);
+      }
+      const points = blockTasks.reduce((sum, id) => sum + (tasksById.get(id)?.story_points ?? 0), 0);
+      if (blockTasks.length > blockCaps.tasks || points > blockCaps.points)
+        warn(where, `${blockTasks.length} tasks / ${points} SP exceeds the cap of ${blockCaps.tasks} tasks / ${blockCaps.points} SP — split the block`);
+    }
+    for (const t of ct.tasks ?? []) {
+      if (t.usage?.allocation && t.usage.approx !== true)
+        warn(`${file} ${t.id}`, 'usage.allocation without approx: true — a split batch total is an estimate; set approx: true');
+    }
+  }
+
+  if (existsSync(join(SDD, 'packs.json'))) validate('packs.json', 'packs.schema.json');
+  const packIo = {
+    read: (path) => {
+      try {
+        return readFileSync(join(REPO, path));
+      } catch {
+        return null;
+      }
+    },
+  };
+  for (const [file, ct] of cycleTasks) {
+    if (!ct) continue;
+    const cycleDir = `sdd/${file.replace(/\/tasks\.json$/, '')}`;
+    for (const { task, ref } of unresolvedExplicitRefs(packIo, cycleDir))
+      warn(`${file} ${task}`, `ref "${ref}" does not resolve to a heading — fix refs[] in tasks.json or the document`);
+  }
+
+  const verifyPath = join(SDD, 'verify.json');
+  const missingVerifyHint = 'run pnpm sdd:verify --init';
+  if (!existsSync(verifyPath)) {
+    warn('verify.json', `missing — ${missingVerifyHint} to declare each subproject's quick/full verification`);
+  } else {
+    const verifyDoc = validate('verify.json', 'verify.schema.json');
+    if (verifyDoc && globalJson) {
+      const monorepo = globalJson.monorepo ?? {};
+      const declared = ['apps', 'libs', 'tools'].flatMap((bucket) => Object.keys(monorepo[bucket] ?? {}).map((name) => `${bucket}/${name}`));
+      const unconfigured = declared.filter((id) => !(id in verifyDoc));
+      if (unconfigured.length)
+        warn('verify.json', `no entry for ${unconfigured.join(', ')} — ${missingVerifyHint}`);
+    }
+  }
+
+  const CORE_BYTE_CAP = 6000;
+  const ABSORBED_HEADING = 'Instrucciones previas del proyecto (absorbidas al instalar SDD)';
+  const oversizedCores = [];
+  for (const name of ['CLAUDE.md', 'AGENTS.md', 'GEMINI.md']) {
+    const path = join(SDD, 'dual-harness', name);
+    if (!existsSync(path)) continue;
+    const text = readFileSync(path, 'utf8');
+    const headingAt = text.indexOf(ABSORBED_HEADING);
+    const coreBytes = Buffer.byteLength(headingAt < 0 ? text : text.slice(0, headingAt));
+    if (coreBytes > CORE_BYTE_CAP) oversizedCores.push(`${name} (${coreBytes.toLocaleString('en-US')} bytes)`);
+  }
+  if (oversizedCores.length)
+    warn('dual-harness', `core over ${CORE_BYTE_CAP.toLocaleString('en-US')} bytes: ${oversizedCores.join(', ')} — run harness update sdd --split-project`);
 }
 
 // ---- 13. Workspace invariant promised by init-nx-workspace (TS solution setup only) ----

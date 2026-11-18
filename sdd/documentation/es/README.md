@@ -126,6 +126,9 @@ sdd/
 │   ├── validate-sdd.mjs               ← Validador de registros (pnpm sdd:validate)
 │   ├── spec-gate.mjs                  ← Responde el SPEC GATE A y B (pnpm sdd:gate)
 │   ├── sdd-use.mjs                    ← Ata esta sesión a un ciclo o fix (pnpm sdd:use)
+│   ├── sdd-task.mjs                   ← Abre/cierra una task con su usage, sin editar tasks.json (pnpm sdd:task)
+│   ├── sdd-pack.mjs                   ← Arma el paquete de contexto de un rol (pnpm sdd:pack)
+│   ├── sdd-verify.mjs                 ← Verifica un subproyecto, quick o full, con lease de máquina (pnpm sdd:verify)
 │   ├── sdd-release.mjs                ← Libera reservas de archivo y avisa (pnpm sdd:release)
 │   ├── sdd-branch.mjs                 ← Rama del ciclo según perfil (pnpm sdd:branch)
 │   ├── sdd-pr.mjs                     ← PR del ciclo con el resumen del reviewer (pnpm sdd:pr)
@@ -145,14 +148,19 @@ sdd/
 │   ├── apps/java-api/                 ← App Spring Boot bajo Nx (Nx no la genera)
 │   └── libs/ts-lib/                   ← Lib TypeScript compartida
 │
-├── dual-harness/                      ← CAPA 1 — fuente de verdad de AGENTS.md, CLAUDE.md y GEMINI.md de la raíz
-│   ├── AGENTS.md                      ← Instrucciones para GitHub Copilot Agents
-│   ├── CLAUDE.md                      ← Instrucciones para Claude Code
-│   ├── GEMINI.md                      ← Instrucciones para Antigravity IDE y Gemini CLI
+├── dual-harness/                      ← CAPA 1 — núcleo (< 6 KB) de AGENTS.md, CLAUDE.md y GEMINI.md de la raíz
+│   ├── AGENTS.md                      ← Núcleo para GitHub Copilot Agents
+│   ├── CLAUDE.md                      ← Núcleo para Claude Code
+│   ├── GEMINI.md                      ← Núcleo para Antigravity IDE y Gemini CLI
+│   │                                    (las instrucciones propias del repo van en project.md, que el kit no shippea)
 │   ├── copilot-instructions.md        ← Semilla de .github/copilot-instructions.md (la copia setup:agents)
 │   └── rules/                         ← CAPA 2 — se lee cuando hace falta; también rules siempre activas de Antigravity
 │       ├── sdd-gates.md               ← FUENTE CANÓNICA de los gates (SPEC GATE A/B, flows, FIX GATE)
-│       ├── sdd-model-budget.md        ← FUENTE CANÓNICA del contrato de telemetría
+│       ├── sdd-model-budget.md        ← FUENTE CANÓNICA de tiers de modelo y del contrato de telemetría
+│       ├── sdd-execution.md           ← Ejecutar un ciclo: bloques, sdd:task, sdd:verify
+│       ├── sdd-context.md             ← Cierre: fragmentos de contexto, CONTEXTO y MEMORIA GATE
+│       ├── sdd-tools.md               ← graphify, rtk, sdd-mod, tucu-ui, video-maker
+│       ├── sdd-workspace.md           ← Chequeo del workspace, invariantes pnpm/Nx
 │       └── sdd-code-style.md          ← Código sin comentarios
 │
 ├── prompts/                           ← Prompts de entrada para agentes
@@ -255,7 +263,9 @@ GEMINI.md  (raíz)        → symlink a sdd/dual-harness/GEMINI.md
 ```
 
 > `.github/skills/` y `.github/prompts/` usan symlinks individuales para **no pisar** los archivos Nx y Copilot existentes.  
-> `AGENTS.md`, `CLAUDE.md` y `GEMINI.md` en la raíz son symlinks: editar **siempre** en `sdd/dual-harness/`.
+> `AGENTS.md`, `CLAUDE.md` y `GEMINI.md` en la raíz son symlinks al núcleo del kit: no los edites.
+> Las instrucciones propias de tu repo van en `sdd/dual-harness/project.md` (dato del proyecto: el kit no lo
+> shippea y `update sdd` no lo toca); el núcleo lo importa.
 > `.github/copilot-instructions.md` es un archivo real a propósito: los lectores server-side de
 > GitHub (Copilot code review) no siguen symlinks. `pnpm setup:agents` lo **siembra** desde
 > `sdd/dual-harness/copilot-instructions.md` **solo si no existe**; si ya está, no se pisa nunca
@@ -355,9 +365,10 @@ de `draft` a `in-progress`. Solo el reviewer lo pasa después a `status: "comple
 **`BLOCKED` → cero líneas de código** hasta completar lo que el script señala.
 
 **Sesiones paralelas.** Varias specs pueden tener un ciclo `in-progress` a la vez (A3: uno por
-spec). Cada sesión se ata a una unidad —ciclo o fix— con la línea `SDD-BIND` que imprime el GATE B
-`APPROVED` (corrélo en la sesión que implementa), con `pnpm sdd:use <spec> cycle-XX` /
-`pnpm sdd:use <FIX-id>`, o sola si hay una única unidad abierta o la rama nombra la spec. Con el
+spec). Cada sesión se ata a una unidad —ciclo, fix o spec en preparación— con la línea `SDD-BIND`
+(con el worktree) que imprimen el GATE A y el GATE B `APPROVED`, con `pnpm sdd:use <spec> [cycle-XX]` /
+`pnpm sdd:use <FIX-id>` desde el worktree de la unidad, o sola al escribir un documento de la spec,
+si hay una única unidad abierta o si la rama nombra la spec (regla ①: línea `Unidad SDD → …`). Con el
 mod de Claude Code prendido, la franja muestra «esta sesión / otras» y, sin atadura y con varias
 unidades abiertas, la edición de código se rechaza listando las unidades. El registro es local
 (`<git-common-dir>/sdd-sessions/`, fuera de git); con el mod apagado nada cambia. Studio muestra
@@ -525,7 +536,7 @@ mismo descubrimiento. Dos capas con costo de lectura asimétrico por diseño:
   línea de `lessons.md` (Proceso / Técnica / Costo) y borra lo destilado.
   `pnpm sdd:validate` avisa cuando está pendiente.
 - Naming del journal idéntico a los fragmentos de contexto → único por construcción,
-  sin merge conflicts. Regla completa: sección 🧠 del dual-harness.
+  sin merge conflicts. Regla completa: `sdd/dual-harness/rules/sdd-context.md`.
 
 Relacionado: al cerrar cada ciclo el reviewer registra la **telemetría de uso**
 (`cycle.json → metrics.usage`: tokens por proveedor/tier vía `by_tier`, minutos) que
@@ -689,20 +700,20 @@ Cada ciclo genera estos archivos en `sdd/specs/spec-[author]-[NNN]-[slug]/cycles
                         │ SI
                         ▼
 [4] IMPLEMENTADOR BACKEND
-    Lee cycle-XX/tasks.json + architect.md → implementa una task por vez
-    Escribe código + tests → marca la task "done" en cycle-XX/tasks.json
-    Actualiza api.json (status: "implemented") + rebuild-index + sdd:validate
+    Lee cycle-XX/tasks.json + architect.md → implementa su bloque, una task por vez
+    Escribe código + tests + sdd:verify quick → commit; el orquestador cierra la task con sdd:task
+    Actualiza api.json (status: "implemented")
                         │ (todas las tasks backend done)
                         ▼
 [5] IMPLEMENTADOR FRONTEND
-    Lee cycle-XX/tasks.json + api.json → implementa una task por vez
-    Escribe componentes UI + tests → marca la task "done"
-    Actualiza components.json + rebuild-index + sdd:validate
+    Lee cycle-XX/tasks.json + api.json → implementa su bloque, una task por vez
+    Escribe componentes UI + tests + sdd:verify quick → commit; el orquestador cierra la task con sdd:task
+    Actualiza components.json
                         │ (todas las tasks frontend done)
                         ▼
 [6] REVIEWER
     ⛔ VALIDATION GATE: pnpm sdd:validate ANTES y DESPUÉS del cierre
-    Verifica artifacts + corre build/tests/lint
+    Verifica artifacts + sdd:verify <app> full --reuse
     Valida cumplimiento de RF y RNF (ca_results por CA-[NNN])
     Actualiza cycle.json (status: "completed" + reviewer_report)
     Mueve el módulo a completed_modules + cierra la spec en index.json
@@ -1010,10 +1021,10 @@ FUNCIONAL ──── (paralelo) ──── PLANNER ──── (paralelo) �
     ↓
 [GATE CHECK: brief + functional + planner + architect + tasks.json + cycle.json listos]
     ↓
-IMPLEMENTADOR BACKEND (task por task)
-    ↓ (todas las tasks backend done)
-IMPLEMENTADOR FRONTEND (task por task)
-    ↓ (todas las tasks frontend done)
+IMPLEMENTADOR BACKEND (un agente por bloque; el orquestador cierra cada task con sdd:task)
+    ↓ (todos los bloques backend done)
+IMPLEMENTADOR FRONTEND (por bloque)
+    ↓ (todos los bloques frontend done)
 REVIEWER (VALIDATION GATE + cierre ciclo)
 ```
 
@@ -1100,7 +1111,8 @@ modelo de Copilot/Gemini no son estables — se editan en el `model:` de cada ag
 (`sdd/agents/*.agent.md`) y en `sdd/pricing.json`. El enforcement difiere por proveedor (Claude
 Code fija `model`/`effort` programáticamente, Copilot pinnea `model:` en los agentes SDD,
 Antigravity le pide al usuario cambiar el dropdown, Gemini CLI elige el modelo por sesión) —
-detalle completo en `sdd/dual-harness/{CLAUDE,AGENTS,GEMINI}.md` → sección ⚙️.
+detalle completo en `sdd/dual-harness/rules/sdd-model-budget.md`. **Máximo no es el default del trabajo difícil**:
+antes de elegir ese tier, la regla cero exige decidir «máximo o alto» y escribir por qué el alto no alcanza.
 
 ### 6. graphify — opcional
 
@@ -1187,8 +1199,12 @@ Detalle, flujo de punta a punta y trampas: [VIDEO-MAKER.md](VIDEO-MAKER.md).
 | `sdd/components.json`           | Componentes frontend                                  |
 | `sdd/fixes.json`                | Registry de fixes (FIX GATE)                          |
 | `sdd/agents/`                   | **Definiciones centralizadas de agentes (v2.0)**      |
-| `sdd/dual-harness/rules/`       | Capa 2: gates (`sdd-gates.md`) y telemetría (`sdd-model-budget.md`) canónicos |
+| `sdd/dual-harness/rules/`       | Capa 2, bajo demanda: gates, ejecución, contexto, workspace, herramientas, tiers y telemetría, estilo |
+| `sdd/dual-harness/project.md`   | Instrucciones propias del repo (dato del proyecto; lo importa el núcleo) |
+| `sdd/verify.json`               | Comandos `quick`/`full` por subproyecto para `pnpm sdd:verify` (dato del proyecto) |
 | `sdd/scripts/spec-gate.mjs`     | SPEC GATE como comando (`pnpm sdd:gate`)              |
+| `sdd/scripts/sdd-verify.mjs`, `sdd-task.mjs`, `sdd-pack.mjs` | `pnpm sdd:verify`, `pnpm sdd:task` y `pnpm sdd:pack` |
+| `sdd/packs.json`                | Qué entra en el paquete de contexto de cada rol (`pnpm sdd:pack`; archivo del kit) |
 | `sdd/context/**/updates/`       | Fragmentos aditivos de contexto (anti merge-conflict) |
 | `sdd/docs/`                     | Visor SDD en vanilla JS (`pnpm sdd:docs`)             |
 | `sdd/tools.json`                | Interruptor de rtk (dato del usuario)                 |
@@ -1258,6 +1274,16 @@ pnpm sdd:gate <spec-id|slug> cycle-01
 # Validar TODOS los registros SDD contra sus schemas
 pnpm sdd:validate
 
+# Verificar un subproyecto (quick por task, full por bloque; --init siembra sdd/verify.json)
+pnpm sdd:verify <app> quick|full
+pnpm sdd:verify --init
+
+# Abrir/cerrar una task con su usage (sin editar tasks.json a mano)
+pnpm sdd:task <spec-id|slug> cycle-01 TASK-001 start|done …
+
+# Paquete de contexto de un rol (ver HOW-TO-USE-SDD)
+pnpm sdd:pack <spec-id|slug> cycle-01 <rol> [B-NN]
+
 # Estado de rtk (interruptor, binario y hooks)
 pnpm sdd:rtk -- --status
 
@@ -1280,6 +1306,25 @@ ls sdd/context/*/*/updates/*.md 2>/dev/null | wc -l
 ---
 
 ## Changelog
+
+### v5.7 (2026-11-17) — Arneses de 6 KB, bloques, `sdd:verify` y `sdd:task`
+
+- ✅ **Núcleo + reglas bajo demanda** (kit v0.23.0): `dual-harness/{CLAUDE,AGENTS,GEMINI}.md` bajan
+  a menos de 6 KB (regla cero, regla uno, invariantes, tabla de disparadores); el detalle pasa a
+  `rules/sdd-execution.md`, `sdd-context.md`, `sdd-tools.md` y `sdd-workspace.md`, que se leen solo
+  cuando toca. Las instrucciones propias del repo viven en `sdd/dual-harness/project.md` (no lo
+  shippea el kit, `update sdd` no lo toca). `harness update sdd --split-project` migra un repo
+  existente (nunca corre solo).
+- ✅ **`sdd/verify.json` + `pnpm sdd:verify <app> quick|full`**: salida compacta, resultado en
+  `cycle-XX/artifacts/verify/`, `--reuse` para el reviewer, lease de máquina para los `full`
+  pesados (código 75 si está ocupado) y `--init` para sembrar las entradas.
+- ✅ **`pnpm sdd:task … start|done`**: estado, `files` y `usage` de una task en un paso, sin editar
+  `tasks.json` a mano.
+- ✅ **Bloques (`batches`, opcional en `tasks.json`)**: un agente por bloque, continuado task por
+  task; el planner suma un piso de tamaño (una task < 1 h se fusiona) y las decisiones del
+  architect pasan a ser `### D-NN` referenciadas desde cada task.
+- ✅ **Gate de edición**: `.md`/`.mdx` fuera de `apps|libs|tools` ya no cuentan como código y
+  `tools.json → claude_mod.exempt` acepta globs. **Regla cero**: el tier máximo no es el default.
 
 ### v5.6 (2026-10-07) — sdd-mod: el SDD dentro de Claude Code (opcional)
 

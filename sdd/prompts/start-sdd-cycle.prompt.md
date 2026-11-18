@@ -69,9 +69,11 @@ Pasos en orden (solo con el GATE A en APPROVED):
         Si el orquestador lanzó subagentes vía la tool Agent, capturar la notificación
         `agent-usage-notification` de cada uno (exacta, approx: false, split 85/15) y volcarla
         en by_agent si el propio subagente no la registró.
-6. sdd-implementor-back → TASK-BE una a la vez. Una task pasa a "done" solo con su `usage`
-        completo — sin `usage` la task NO está cerrada.
-7. sdd-implementor-front → TASK-FE una a la vez (solo si hay frontend). Misma condición.
+6. sdd-implementor-back → un agente por bloque (`batches`; sin `batches`, task por task), las
+        tasks de a una en la misma conversación. El orquestador cierra cada task con
+        `pnpm sdd:task … done` (con su `usage`) — sin `usage` la task NO está cerrada.
+        Antes de cada despacho: `pnpm sdd:pack <spec> cycle-[XX] <rol> B-NN` y pasá la ruta del paquete.
+7. sdd-implementor-front → igual (solo si hay frontend). Misma condición.
 8. sdd-reviewer → review-cycle.prompt.md: validate, telemetría consolidada (by_agent +
         by_tier derivado + suma), cycle.json "completed" con reviewer_report, JSONs de estado.
 9. ⛔ CONTEXTO GATE (parte del reviewer): fragmento aditivo en
@@ -95,8 +97,8 @@ Spec: sdd/specs/spec-[gh-user]-[NNN]-[slug]/…spec.md
    y en ese caso actualizar esos registros bajo el app-key correcto).
 4. Crear tasks.json (flow "lite"; user_stories puede ir [] si plan.md no numera historias) y
    correr pnpm sdd:rebuild-tasks-index.
-5. pnpm sdd:gate <spec-id> cycle-[XX] → GATE B APPROVED. Recién ahí implementar, una task a la
-   vez; cada task pasa a "done" con su `usage` (tier estándar para implementar).
+5. pnpm sdd:gate <spec-id> cycle-[XX] → GATE B APPROVED. Recién ahí implementar, task por task;
+   cada una pasa a "done" con `pnpm sdd:task … done` y su `usage` (tier estándar para implementar).
 6. Cerrar como reviewer: pnpm sdd:validate en verde, tasks resueltas (done/skipped),
    cycle.json "completed" con reviewer_report y metrics.usage consolidado — una sola entrada
    { agent: "orchestrator", label: "solo" } cubre plan + revisión, más las de cada task —,
