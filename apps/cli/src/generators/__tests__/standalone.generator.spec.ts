@@ -4,6 +4,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import fs from 'fs-extra';
 
+import { exec } from '../../utils/exec.js';
 import { generateStandalone } from '../standalone.generator.js';
 import { FRONTEND_VERSIONS } from '../versions.js';
 
@@ -71,6 +72,18 @@ describe('standalone.generator', () => {
     expect(pkg.scripts['setup:agents']).toBeDefined();
     expect(pkg.devDependencies['ajv']).toBeDefined();
     expect(pkg.devDependencies['ajv-formats']).toBeDefined();
+  });
+
+  it('standalone corre el script de verify del kit', async () => {
+    vi.mocked(exec).mockClear();
+    await generateStandalone({
+      projectName: 'verify-standalone',
+      description: 'Standalone react test',
+      appType: 'react',
+      services: [],
+    });
+    const verifyCall = vi.mocked(exec).mock.calls.find(([command]) => command === 'node sdd/scripts/sdd-verify.mjs --init');
+    expect(verifyCall?.[1]?.cwd).toContain('verify-standalone');
   });
 
   it('react standalone: tucu-ui por defecto con pins de versions.ts', async () => {

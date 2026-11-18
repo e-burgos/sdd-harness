@@ -15,7 +15,7 @@ import {
   hasConflictingTucuUiFlags,
 } from '../../utils/tucu-ui-offer.js';
 import { readTucuUiState, runTucuUiOffer } from '../../utils/tucu-ui-run.js';
-import { pinMfeShellsInRegistry, registerSubprojectInSDD } from '../../generators/sdd.generator.js';
+import { pinMfeShellsInRegistry, registerSubprojectInSDD, seedVerifyEntries } from '../../generators/sdd.generator.js';
 import { appendAppToEnvExample } from '../../generators/docker.generator.js';
 import {
   addAppScriptsToRootPkg,
@@ -282,6 +282,7 @@ export const addAppCommand = defineCommand({
       await refreshOwningShell(cwd, newApp, allApps);
 
       registerAppInRootPackageJson(cwd, appName as string, appType as string, tucuUi);
+      seedVerifyEntries(cwd);
       logger.success(
         `Root package.json updated: nx scripts + ${appType} dependencies — run your package manager install`,
       );

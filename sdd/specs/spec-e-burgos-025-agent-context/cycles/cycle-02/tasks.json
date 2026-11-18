@@ -1,0 +1,131 @@
+{
+  "$schema": "../../../../schemas/cycle-tasks.schema.json",
+  "spec": "spec-e-burgos-025-agent-context",
+  "cycle": 2,
+  "module": "agent-context",
+  "apps": [
+    "apps/cli"
+  ],
+  "flow": "lite",
+  "user_stories_generated": true,
+  "prerequisites": {
+    "tasks_generated": true
+  },
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "packs.json, schema, sdd:pack con --stats y validador",
+      "user_stories": [
+        "US-5"
+      ],
+      "estimation_hours": 5,
+      "story_points": 8,
+      "depends_on": [],
+      "status": "done",
+      "files": [
+        "apps/cli/src/generators/__tests__/sdd-pack.integration.spec.ts",
+        "apps/cli/src/generators/__tests__/validate-optional-fields.integration.spec.ts",
+        "apps/cli/src/utils/__tests__/pack.spec.ts",
+        "apps/cli/templates/sdd/catalog.json",
+        "apps/cli/templates/sdd/dual-harness/rules/sdd-execution.md",
+        "apps/cli/templates/sdd/packs.json",
+        "apps/cli/templates/sdd/schemas/packs.schema.json",
+        "apps/cli/templates/sdd/scripts/lib/pack.mjs",
+        "apps/cli/templates/sdd/scripts/sdd-pack.mjs",
+        "apps/cli/templates/sdd/scripts/validate-sdd.mjs",
+        "apps/cli/templates/sdd/templates/nx-workspace/package.json"
+      ],
+      "usage": {
+        "tokens_in": 185569,
+        "tokens_out": 32747,
+        "tokens_total": 218316,
+        "approx": false,
+        "recorded_at": "2026-11-18",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "source": "agent-usage-notification"
+      }
+    },
+    {
+      "id": "TASK-002",
+      "title": "Orquestador y agent.md consumen el paquete; protocolo del implementador y docs",
+      "user_stories": [
+        "US-5"
+      ],
+      "estimation_hours": 3,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "status": "done",
+      "files": [
+        "apps/cli/src/generators/__tests__/sdd-pack.integration.spec.ts",
+        "apps/cli/src/utils/__tests__/task-registry.spec.ts",
+        "apps/cli/templates/sdd/README.md",
+        "apps/cli/templates/sdd/agents/sdd-architect.agent.md",
+        "apps/cli/templates/sdd/agents/sdd-functional.agent.md",
+        "apps/cli/templates/sdd/agents/sdd-implementor-back.agent.md",
+        "apps/cli/templates/sdd/agents/sdd-implementor-front.agent.md",
+        "apps/cli/templates/sdd/agents/sdd-orchestrator.agent.md",
+        "apps/cli/templates/sdd/agents/sdd-planner.agent.md",
+        "apps/cli/templates/sdd/agents/sdd-reviewer.agent.md",
+        "apps/cli/templates/sdd/documentation/en/HOW-TO-USE-SDD.md",
+        "apps/cli/templates/sdd/documentation/en/INSTALL.md",
+        "apps/cli/templates/sdd/documentation/en/README.md",
+        "apps/cli/templates/sdd/documentation/es/HOW-TO-USE-SDD.md",
+        "apps/cli/templates/sdd/documentation/es/INSTALL.md",
+        "apps/cli/templates/sdd/documentation/es/README.md",
+        "apps/cli/templates/sdd/dual-harness/rules/sdd-execution.md",
+        "apps/cli/templates/sdd/prompts/start-sdd-cycle.prompt.md",
+        "apps/cli/templates/sdd/scripts/lib/task-registry.mjs",
+        "apps/cli/templates/sdd/scripts/sdd-pack.mjs",
+        "apps/cli/templates/sdd/scripts/sdd-task.mjs",
+        "apps/cli/templates/sdd/skills/sdd-orchestrator/SKILL.md"
+      ],
+      "usage": {
+        "tokens_in": 27526,
+        "tokens_out": 4857,
+        "tokens_total": 32383,
+        "approx": false,
+        "recorded_at": "2026-11-18",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "source": "agent-usage-notification"
+      }
+    },
+    {
+      "id": "TASK-003",
+      "title": "Verificación, auditoría de la extracción, medición antes/después y cierre",
+      "user_stories": [
+        "US-5",
+        "US-6"
+      ],
+      "estimation_hours": 2,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-001",
+        "TASK-002"
+      ],
+      "status": "done",
+      "files": [
+        "apps/cli/src/generators/__tests__/sdd-pack.integration.spec.ts",
+        "apps/cli/src/utils/__tests__/pack.spec.ts",
+        "apps/cli/templates/sdd/scripts/lib/pack.mjs",
+        "apps/cli/templates/sdd/scripts/sdd-pack.mjs"
+      ],
+      "usage": {
+        "tokens_in": 30687,
+        "tokens_out": 5415,
+        "tokens_total": 36102,
+        "approx": false,
+        "recorded_at": "2026-11-18",
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "source": "agent-usage-notification"
+      }
+    }
+  ]
+}

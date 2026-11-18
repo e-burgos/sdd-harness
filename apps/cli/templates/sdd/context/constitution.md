@@ -207,7 +207,7 @@ sdd/context/
 1. `sdd/context/context_prompt.md` — para entender el monorepo global
 2. `sdd/context/[apps|libs|tools]/[nombre]/context_prompt.md` + `constitution.md` + `updates/*.md` (en orden de nombre) — para entender el subproyecto con su contexto vigente
 
-**Regla de frescura — mecanismo aditivo (ver sección 🧩 de `sdd/dual-harness/CLAUDE.md`):**
+**Regla de frescura — mecanismo aditivo (ver `sdd/dual-harness/rules/sdd-context.md`):**
 
 - Al cerrar un ciclo/fix, el delta se escribe como fragmento en
   `sdd/context/[apps|libs|tools]/[nombre]/updates/YYYY-MM-DD-[spec-id]-cycle-[XX].md`

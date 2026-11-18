@@ -61,8 +61,8 @@ lockfile shows up — the workspace is not assembled. Ask an agent to use the
 `.nxignore`, pnpm-based CI and the dual harness, and ends with a verifiable command-by-command
 checklist.
 
-The dual harness (`AGENTS.md`/`CLAUDE.md`/`GEMINI.md`) instructs agents to check this **at the
-start of every session**, so they normally detect it on their own before their first action.
+The dual harness (`AGENTS.md`/`CLAUDE.md`/`GEMINI.md`, with the `sdd-workspace.md` rule) instructs
+agents to check this **at the start of the main session**, so they normally detect it on their own before their first action.
 
 > Creating apps or libs is **not** part of that skill: that is `scaffold-nx`, and always inside
 > an SDD cycle.
@@ -96,6 +96,33 @@ This script generates (or regenerates) every required symlink:
 > `.github/copilot-instructions.md` is a real file (not a symlink) for GitHub's server-side readers.
 > `.gemini/commands/*.toml` are generated on every run (TOML has no include mechanism), and
 > `.gemini/settings.json` is merged rather than overwritten — both leave user files untouched.
+
+### 2.d Core, on-demand rules and `project.md`
+
+Since kit 0.23.0, `sdd/dual-harness/{CLAUDE,AGENTS,GEMINI}.md` are a **core under 6 KB**: rule zero,
+rule one, invariants and a trigger table ("if X happens, read that rule"). The detail lives in
+`sdd/dual-harness/rules/` and is read **only when needed**:
+
+| Rule | When |
+| --- | --- |
+| `sdd-gates.md` | Gates, flows, FIX GATE |
+| `sdd-execution.md` | Opening or running a cycle: blocks, `sdd:task`, `sdd:verify` |
+| `sdd-context.md` | Closing a cycle or fix: context fragments, CONTEXT and MEMORY GATE |
+| `sdd-workspace.md` | Workspace check, pnpm/Nx invariants |
+| `sdd-tools.md` | graphify, rtk, sdd-mod, tucu-ui, video-maker |
+| `sdd-model-budget.md` | Model tiers and the telemetry contract |
+| `sdd-code-style.md` | Comment-free code |
+
+**Your repo's own instructions do not go in those files**: they live in
+`sdd/dual-harness/project.md`, which the kit does not ship, is not in the manifest and `update sdd`
+never touches; the core imports it (`@../dual-harness/project.md` and `@sdd/dual-harness/project.md`) and
+`AGENTS.md`/`GEMINI.md`/`copilot-instructions.md` point to it. If your repo already had instructions
+inside the harness files, see `harness update sdd --split-project` in [INSTALL.md](INSTALL.md).
+
+**Rule zero: maximum is not the default.** Before choosing the maximum tier, the agent explicitly
+decides "maximum or high" and writes why high is not enough (critical design with no precedent in
+the repo, trade-offs across many subsystems, adversarial verify/judge); no subagent runs on maximum
+without that justification.
 
 ### SDD viewer (optional, recommended)
 
@@ -143,7 +170,9 @@ Claude Code only. `sdd/skills/sdd-mod/` is a mod Claude Code loads on its own fr
 prompt with the cycle in progress (spec · cycle · flow · tasks done), adds `/sdd` with the task
 and open-fix detail, and applies the SPEC GATE to code edits: with no `in-progress` cycle and no
 open fix, `Edit`/`Write` on code are rejected (or only warned about, with `--gate=warn`). `sdd/`,
-the harness folders and root markdown stay free.
+the harness folders and every `.md`/`.mdx` outside `apps/`, `libs/` and `tools/` do not count
+as code; to exempt more paths, `claude_mod.exempt` in `sdd/tools.json` accepts globs (`**`, `*`,
+`?`) and also applies inside `apps/`, `libs/` and `tools/`.
 
 ```bash
 pnpm sdd:mod -- --status       # on/off, gate mode, link in .claude/skills
@@ -157,10 +186,13 @@ rules from `AGENTS.md`/`GEMINI.md`/`copilot-instructions.md`, and `pnpm sdd:vali
 shared safety net in CI. The mod's gate does not cover shell commands.
 
 **Parallel sessions.** You can run several specs at once, one per Claude Code session. The band
-shows "this session: <spec> · <cycle> …" and "others: …". A session binds itself when it runs
-GATE B (`pnpm sdd:gate <spec> cycle-XX`, which prints `SDD-BIND`), when there is a single open
-unit, or when the branch names the spec; by hand: `pnpm sdd:use <spec> cycle-XX` or
-`pnpm sdd:use <FIX-id>`. Unbound with several open units, the gate rejects the edit and lists them.
+shows "this session: <spec> · <cycle> …" (or the spec in preparation, or the fix and its type), the
+worktree when it is not the session's, and "others: …". The mod reads the units of every worktree
+of the repo. A session binds itself when it runs GATE A (to the spec) or GATE B (to the cycle; both
+print `SDD-BIND` with the worktree), when it writes a document of the spec or cycle, when it edits
+code in a worktree with a single open unit, when there is a single open unit, or when the branch
+names the spec (id or slug); by hand: `pnpm sdd:use <spec> [cycle-XX]` or `pnpm sdd:use <FIX-id>`,
+from the unit's worktree. Rule ① of the harnesses also asks for the `Unidad SDD → …` line. Unbound with several open units, the gate rejects the edit and lists them.
 Bindings live in `<git-common-dir>/sdd-sessions/` (local, outside git) and expire after 30 min idle.
 If two sessions go for the same file, the first one to edit it reserves it and the other, in the same
 folder, gets `SDD reserva: …` naming the holder (from another worktree, only a warning); the holder
@@ -269,9 +301,12 @@ Generate planner.md for Cycle 01 — spec-<gh-user>-<NNN>-<slug>.
 The Planner reads `functional.md` and `brief.yaml`, and generates **two files**:
 
 - `cycle-01/planner.md` — readable sprint plan with `TASK-001`, `TASK-002`… tasks (scope: the cycle),
-  each with hour estimation, story points and dependencies.
+  each with hour estimation, story points, dependencies, its story and the architect decisions it
+  implements (`Decisiones D-NN`). Ceiling: 1 day (5 SP) per task; floor: a task under 1 hour is
+  merged with its neighbour (except tests or the only one in its area).
 - `cycle-01/tasks.json` — the same tasks in canonical format (schema `cycle-tasks.schema.json`),
-  regenerating the index with `pnpm sdd:rebuild-tasks-index`.
+  with optional `batches` (blocks of up to 4 tasks and 12 SP, same app and role), regenerating the
+  index with `pnpm sdd:rebuild-tasks-index`.
 
 **Prompt to the `sdd-architect` agent:**
 
@@ -303,29 +338,68 @@ pnpm sdd:gate <spec-id|slug> cycle-01   # reads the cycle's flow and requires TH
 ```
 
 `BLOCKED` → zero code until what is missing is completed. On `APPROVED` (paste the output) the
-implementors are invoked **task by task**. One task per conversation, no batching. The stack is
-defined by the subproject's `constitution.md`.
+orchestrator dispatches implementation **in blocks**. The cycle's `tasks.json` may carry `batches`
+(optional): tasks of the same app and role, contiguous in topological order, up to 4 tasks and
+12 SP, built by the planner. **One agent runs each block** and receives its tasks one at a time, in
+the same conversation (in Claude Code, `SendMessage` to the same subagent), without re-reading the
+package on every task. A cycle without `batches` runs task by task, as always. The stack is defined
+by the subproject's `constitution.md`.
 
-**Prompt to the `sdd-implementor-back` agent (one task at a time):**
-
-```
-Implement TASK-001 of Cycle 01 — spec-<gh-user>-<NNN>-<slug>.
-```
-
-The agent reads the task in `cycle-01/tasks.json`, the contract in `architect.md` and the
-subproject's `constitution.md`; writes the code and the tests. On closing each task: it marks
-`"done"` + `files[]` in `tasks.json` and runs `pnpm sdd:rebuild-tasks-index && pnpm sdd:validate`.
-
-**Prompt to the `sdd-implementor-front` agent (only if there are FE tasks, after the backend):**
+**Prompt to the `sdd-implementor-back` agent (block kickoff):**
 
 ```
-Implement TASK-00X of Cycle 01 — spec-<gh-user>-<NNN>-<slug>.
+Implement block B-01 of Cycle 01 — spec-<gh-user>-<NNN>-<slug>. First task: TASK-001.
+```
+
+For each task the agent implements → `pnpm sdd:verify <app> quick --files … --unit TASK-NNN` →
+commit → replies with **one line** (task, sha, verify result). The orchestrator closes it with
+`pnpm sdd:task <spec> cycle-01 TASK-NNN done --commit <sha> --tokens <usage> --model … --effort … --agent …`
+(status, `files` and `usage` in one step: the usage is the difference in `subagent_tokens` between
+two notifications) and only then moves on. On the block's last task the agent also runs
+`pnpm sdd:verify <app> full --unit B-NN`. If a task fails twice or the agent warns its context was
+compacted, the orchestrator continues the block with a fresh agent. Two blocks run in parallel only
+if they are in different apps and neither depends on the other. Without subagent continuation
+(Copilot, Gemini), one session runs the block in sequence and closes each task with
+`sdd:task … done … --approx`. **Nobody edits `tasks.json` by hand.**
+
+**The context pack and `pnpm sdd:pack`.** Before dispatching an agent, the orchestrator runs
+`pnpm sdd:pack <spec> cycle-01 <role> B-NN` (functional, planner, architect and reviewer take no
+unit). It assembles, from the sources and as declared in `sdd/packs.json`, only what that role
+needs (the block's tasks and plan sections, the decisions and stories they cite, the subproject
+context, the verify commands) into `artifacts/packs/<unit>.<role>.md`, a derived, git-ignored file.
+The agent reads the pack instead of the whole documents and reports any extra read as a pack-miss,
+which the orchestrator records with `sdd:task … --pack-miss`. Exit code 3 (no `packs.json` or no
+entry for the role) means the agent works as before; `--stats` shows the size of every pack.
+
+**`sdd/verify.json` and `pnpm sdd:verify`.** `verify.json` (project data: `update sdd` never
+overwrites it) says how each subproject is verified: `quick` and `full` are lists of commands, and
+`full_exclusive` marks a heavy `full`.
+
+```bash
+pnpm sdd:verify <app> quick [--files a,b] [--unit TASK-NNN]   # per task; {files} in a command = --files
+pnpm sdd:verify <app> full  [--unit B-NN] [--reuse]           # end of block or cycle
+pnpm sdd:verify --init                                        # seeds the missing entries
+```
+
+Output is compact (one line per command; on failure, the last 40 lines and the log path; `--verbose`
+and `--json` for the rest) and, when a cycle can be resolved, lands in
+`cycle-XX/artifacts/verify/<unit>-<level>.json`. `--reuse` skips the `full` if a green one exists for
+the same subproject with no changes outside `sdd/` since that commit: it is what the reviewer uses.
+A `full` with `full_exclusive: true` takes a **machine-wide lease** (one heavy build at a time across
+all your repos and sessions): if busy it waits up to `--wait` (600 s) and exits with **code 75**.
+Exit codes: `0` ok · `1` a command failed · `2` invalid usage · `3` the subproject has no entry (run
+`--init`) · `75` lease not obtained.
+
+**Prompt to the `sdd-implementor-front` agent (only if there are FE blocks, after the backend):**
+
+```
+Implement block B-02 of Cycle 01 — spec-<gh-user>-<NNN>-<slug>. First task: TASK-00X.
 ```
 
 The frontend agent first verifies the consumed endpoints are `"implemented"` in `sdd/api.json`.
 
 **The dev reviews** the generated code task by task. If something does not meet the spec, tell
-the agent what to fix before moving to the next task.
+the agent what to fix before the orchestrator moves to the next one.
 
 ---
 
@@ -689,7 +763,7 @@ And if point 4 is NO, something is wrong: only consolidation touches the bases (
   (economical/standard/high/maximum) that does the job — the rule applies to all three
   providers (Claude, Copilot, Gemini). Implementors → standard (`sonnet`/`medium` in Claude);
   orchestrator, architect and reviewer → high (`opus`/`high` in Claude). Never a whole fan-out
-  on the most expensive tier. Canonical table: `sdd/dual-harness/{CLAUDE,AGENTS,GEMINI}.md` → ⚙️.
+  on the most expensive tier. Canonical table: `sdd/dual-harness/rules/sdd-model-budget.md`. The maximum tier is not the default: "maximum or high" is justified in writing.
 - **graphify is optional** — if `graphify-out/graph.json` exists, query it before blind
   `grep`/`Read`; otherwise work normally. To enable it: `setup-graphify` skill.
 - **rtk is on** and compresses command output: never prefix commands with `rtk` by hand, use
@@ -742,6 +816,12 @@ pnpm sdd:docs                            # → http://127.0.0.1:4310/sdd/docs/
 
 # Unconsolidated context fragments (≥5 triggers consolidation)
 ls sdd/context/*/*/updates/*.md 2>/dev/null | wc -l
+
+# Verify a subproject and close tasks (see Step 4)
+pnpm sdd:verify <app> quick|full
+pnpm sdd:verify --init
+pnpm sdd:task <spec> cycle-01 TASK-001 start|done …
+pnpm sdd:pack <spec> cycle-01 <role> [B-NN]
 ```
 
 ### Invocation prompts per agent
@@ -758,8 +838,8 @@ ls sdd/context/*/*/updates/*.md 2>/dev/null | wc -l
 "Generate planner.md for Cycle 01 — <spec-id>."
 "Generate architect.md for Cycle 01 — <spec-id>."
 
-# Implement a task
-"Implement TASK-001 of Cycle 01 — <spec-id>."
+# Implement a block (or a task, if the cycle has no batches)
+"Implement block B-01 of Cycle 01 — <spec-id>. First task: TASK-001."
 
 # Review and close
 "Review Cycle 01 — <spec-id>."
@@ -834,7 +914,7 @@ included) only when it opens `cycle-01` — see Step 1 above.
 `sdd/prompts/hermes-resume.prompt.md` — it diagnoses the position (open cycle → continue;
 pendings → orchestrator; empty backlog → report) and carries on.
 
-### 10.2 Memory (the dual-harness 🧠 rule)
+### 10.2 Memory (`sdd/dual-harness/rules/sdd-context.md`)
 
 Two layers of versioned files, zero dependencies:
 
@@ -866,10 +946,9 @@ v0.11.0 contract: **every agent that consumes tokens in an SDD flow or a fix rec
 closing its unit of work** (task, document, cycle, fix), `provider_model`
 (`claude/sonnet`, `gemini/pro`, `copilot/claude-sonnet`), `effort`, `tokens_in`,
 `tokens_out`, `source` and `approx`. Model/effort are declared BEFORE executing (rule
-⚙️); tokens are recorded ON CLOSE. The full table of sources per harness
+`rules/sdd-model-budget.md`); tokens are recorded ON CLOSE. The full table of sources per harness
 (`session-report`, `stats-command`, `agent-usage-notification`, `declared-estimate`) and
-the field-by-field detail live in `sdd/dual-harness/AGENTS.md` (section ⚙️ → Usage
-telemetry) — here's just the summary:
+the field-by-field detail live in `sdd/dual-harness/rules/sdd-model-budget.md` — here's just the summary:
 
 - **Task** → `tasks.json → tasks[].usage`, written by whoever executes it on closing.
 - **Document** (functional/planner/architect) → one entry in
@@ -953,8 +1032,8 @@ without losing what you had expanded. On static hosting it falls back to manual 
 │  (parallel)    ├──→                                            │
 │  sdd-architect─┘    architect.md + schema.json + api.json      │
 │         ↓                                                       │
-│  sdd-implementor-back  (task by task → done + validate)        │
-│  sdd-implementor-front (task by task, if FE exists)            │
+│  sdd-implementor-back  (per block; sdd:task closes each task)  │
+│  sdd-implementor-front (per block, if FE exists)               │
 │         ↓                                                       │
 │  sdd-reviewer → VALIDATION GATE + cycle.json (completed)       │
 │               + CONTEXTO GATE + pnpm sdd:validate green        │

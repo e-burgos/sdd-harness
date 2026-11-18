@@ -47,8 +47,10 @@ describe('sdd.generator — root instruction files survive a failed setup-agents
     }
     // The absorbed content travelled into the copy, so nothing the team wrote is lost.
     const claude = await fs.readFile(resolve(root, 'CLAUDE.md'), 'utf-8');
-    expect(claude).toContain('No tocar legacy/.');
-    expect(claude).toContain('Instrucciones previas del proyecto');
+    expect(claude).toBe(await fs.readFile(resolve(root, 'sdd/dual-harness/CLAUDE.md'), 'utf-8'));
+    expect(claude).not.toContain('Instrucciones previas del proyecto');
+    const project = await fs.readFile(resolve(root, 'sdd/dual-harness/project.md'), 'utf-8');
+    expect(project).toContain('No tocar legacy/.');
   });
 
   it('a second configure sdd does not nest the kit inside itself', async () => {
@@ -70,10 +72,10 @@ describe('sdd.generator — root instruction files survive a failed setup-agents
 
     await generateSDD(root, opts, install);
     const dual = await fs.readFile(resolve(root, 'sdd/dual-harness/AGENTS.md'), 'utf-8');
-    expect(dual.split('Instrucciones previas del proyecto').length - 1).toBe(1);
-    expect(dual.split('never touch prod').length - 1).toBe(1);
-    // the kit's own header appears once: the copy was not absorbed as if it were the team's text
-    expect(dual.split('# AGENTS.md').length - 1).toBeLessThanOrEqual(1);
+    expect(dual).not.toContain('Instrucciones previas del proyecto');
+    const project = await fs.readFile(resolve(root, 'sdd/dual-harness/project.md'), 'utf-8');
+    expect(project.split('never touch prod').length - 1).toBe(1);
+    expect(project).not.toContain('Spec-Driven Development')
   });
 
   it('a failure before linking leaves the original root file untouched', async () => {

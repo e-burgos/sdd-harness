@@ -167,6 +167,9 @@
       "file": "global.schema.json"
     },
     {
+      "file": "packs.schema.json"
+    },
+    {
       "file": "pricing.schema.json"
     },
     {
@@ -183,6 +186,9 @@
     },
     {
       "file": "tools.schema.json"
+    },
+    {
+      "file": "verify.schema.json"
     }
   ],
   "memory": []

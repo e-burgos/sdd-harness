@@ -4,7 +4,7 @@ import pc from 'picocolors';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve, basename } from 'node:path';
 import { logger } from '../../utils/logger.js';
-import { generateSDD } from '../../generators/sdd.generator.js';
+import { generateSDD, seedVerifyEntries } from '../../generators/sdd.generator.js';
 import type { WorkspaceOptions } from '../../generators/workspace.generator.js';
 import type { AppSpec } from '../../generators/app.generator.js';
 import { parseProfile } from '../../generators/sdd.generator.js';
@@ -213,7 +213,7 @@ export const configureSddCommand = defineCommand({
         `${pc.bold('Layout:')} ${isMonorepo ? (usesNx ? 'Nx monorepo' : 'monorepo sin Nx') : 'standalone (repo = una app lógica)'}`,
         `${pc.bold('Apps registradas:')} ${apps.map(describeApp).join(', ') || 'none'}`,
         `${pc.bold('package.json:')} ${pkg ? 'merge de scripts sdd:* + ajv' : 'se crea uno mínimo para el arnés'}`,
-        `${pc.bold('AGENTS.md/CLAUDE.md previos:')} se absorben en sdd/dual-harness`,
+        `${pc.bold('AGENTS.md/CLAUDE.md previos:')} se absorben en sdd/dual-harness/project.md`,
         `${pc.bold('.claude/.github/.agents propios:')} se conservan; el kit se enlaza al lado y toda colisión queda como *.new`,
       ].join('\n'),
       'Install plan',
@@ -247,6 +247,8 @@ export const configureSddCommand = defineCommand({
         mergePackageJson: true,
         absorbExistingHarness: true,
       });
+
+      seedVerifyEntries(cwd);
 
       logger.success(
         'sdd/ installed (agents, skills, prompts, schemas, docs viewer, templates)',

@@ -360,6 +360,8 @@ agent_contexts:
 ### 3.3b Template: `tasks.json` per-cycle (sdd-planner)
 
 > ⛔ Debe validar contra `sdd/schemas/cycle-tasks.schema.json`. IDs: `TASK-[NNN]` (scope: este archivo).
+> `batches` es opcional: tasks de la misma app y rol, contiguas en orden topológico, hasta 4 tasks y
+> 12 SP; un agente ejecuta el bloque. Sin `batches`, el ciclo se ejecuta task por task.
 
 ```json
 {
@@ -371,6 +373,15 @@ agent_contexts:
   "flow": "full",
   "user_stories_generated": true,
   "prerequisites": { "tasks_generated": true },
+  "batches": [
+    {
+      "id": "B-01",
+      "app": "apps/<nombre-app>",
+      "role": "implementor-back",
+      "tasks": ["TASK-001"],
+      "depends_on": []
+    }
+  ],
   "tasks": [
     {
       "id": "TASK-001",
@@ -457,6 +468,8 @@ agent_contexts:
 
 ### TASK-001: [Título]
 
+- **Historia:** HU-[NN]
+- **Decisiones:** D-[NN] (las del architect que implementa)
 - **Descripción:** <qué se implementa>
 - **Archivos a crear/modificar:**
   - `apps/<app>/src/.../<Archivo según el stack del subproyecto>`
@@ -500,7 +513,9 @@ TASK-001 → TASK-002 → ... (las tasks frontend dependen de las backend cuyo e
 
 ## Decisiones técnicas
 
-1. **[Decisión]:** <descripción y justificación>
+### D-01. [Título de la decisión]
+
+<descripción y justificación>
 
 ## Cambios en schema (sdd/schema.json)
 

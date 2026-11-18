@@ -1,0 +1,72 @@
+{
+  "$schema": "./schemas/packs.schema.json",
+  "execution": { "max_tasks_per_batch": 4, "max_points_per_batch": 12, "max_parallel_batches": 1 },
+  "limits": { "context_inline_max_bytes": 12000, "max_pack_bytes": 60000 },
+  "context_always": ["regla", "gotcha", "restric", "stack", "comando", "rule", "constraint", "command"],
+  "roles": {
+    "implementor-back": {
+      "unit": "batch",
+      "include": [
+        "cycle",
+        "tasks:@unit",
+        "plan:@unit",
+        "refs:@unit",
+        "context:@app",
+        "registry:api@unit",
+        "verify:@app",
+        "section:dual-harness/rules/sdd-execution.md#Protocolo del implementador"
+      ]
+    },
+    "implementor-front": {
+      "unit": "batch",
+      "include": [
+        "cycle",
+        "tasks:@unit",
+        "plan:@unit",
+        "refs:@unit",
+        "context:@app",
+        "registry:api@unit",
+        "registry:components@app:index",
+        "verify:@app",
+        "section:dual-harness/rules/sdd-execution.md#Protocolo del implementador"
+      ]
+    },
+    "reviewer": {
+      "unit": "cycle",
+      "include": [
+        "cycle",
+        "tasks:@all:summary",
+        "acceptance",
+        "verify-results",
+        "context:@app:index",
+        "section:dual-harness/rules/sdd-context.md#CONTEXTO GATE"
+      ]
+    },
+    "functional": {
+      "unit": "cycle",
+      "include": ["cycle", "spec", "context:@app:index", "section:skills/sdd-file-structure/SKILL.md#3.4"]
+    },
+    "planner": {
+      "unit": "cycle",
+      "include": [
+        "cycle",
+        "doc:functional",
+        "index:architect",
+        "context:@app:index",
+        "section:skills/sdd-file-structure/SKILL.md#3.5",
+        "section:skills/sdd-file-structure/SKILL.md#3.3b"
+      ]
+    },
+    "architect": {
+      "unit": "cycle",
+      "include": [
+        "cycle",
+        "doc:functional",
+        "registry:api@app",
+        "registry:schema@app",
+        "context:@app",
+        "section:skills/sdd-file-structure/SKILL.md#3.6"
+      ]
+    }
+  }
+}

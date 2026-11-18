@@ -1,0 +1,124 @@
+{
+  "$schema": "../../../../schemas/cycle.schema.json",
+  "spec": "spec-e-burgos-024-session-where",
+  "cycle": 1,
+  "module": "session-where",
+  "apps": [
+    "apps/cli"
+  ],
+  "flow": "lite",
+  "phase": "session-where",
+  "objectives": [
+    "La sesión muestra y ata su unidad SDD y su worktree desde el primer documento (US-1..US-4)"
+  ],
+  "status": "completed",
+  "started_at": "2026-11-17",
+  "completed_at": "2026-11-17",
+  "documents": {
+    "plan": "sdd/specs/spec-e-burgos-024-session-where/cycles/cycle-01/plan.md",
+    "tasks": "sdd/specs/spec-e-burgos-024-session-where/cycles/cycle-01/tasks.json"
+  },
+  "artifacts": [],
+  "metrics": {
+    "tasks_total": 5,
+    "tasks_completed": 5,
+    "tasks_skipped": 0,
+    "story_points": 21,
+    "files_created": [],
+    "files_modified": [
+      "apps/cli/templates/sdd/scripts/lib/session-registry.mjs",
+      "apps/cli/templates/sdd/skills/sdd-mod/hooks/.src/session-registry.mjs",
+      "apps/cli/templates/sdd/skills/sdd-mod/hooks/.src/session-registry.d.mts",
+      "apps/cli/src/utils/__tests__/session-registry.spec.ts",
+      "apps/cli/templates/sdd/skills/sdd-mod/hooks/.src/sdd.ts",
+      "apps/cli/templates/sdd/skills/sdd-mod/hooks/.src/register.tsx",
+      "apps/cli/templates/sdd/skills/sdd-mod/.claude-plugin/contract/index.d.ts",
+      "apps/cli/src/generators/__tests__/sdd-mod.spec.ts",
+      "apps/cli/templates/sdd/scripts/sdd-use.mjs",
+      "apps/cli/templates/sdd/scripts/spec-gate.mjs",
+      "apps/cli/src/generators/__tests__/sdd-use.integration.spec.ts",
+      "apps/cli/src/generators/__tests__/spec-gate.integration.spec.ts",
+      "apps/cli/templates/sdd/dual-harness/CLAUDE.md",
+      "apps/cli/templates/sdd/dual-harness/AGENTS.md",
+      "apps/cli/templates/sdd/dual-harness/GEMINI.md",
+      "apps/cli/templates/sdd/dual-harness/copilot-instructions.md",
+      "apps/cli/templates/sdd/dual-harness/rules/sdd-gates.md",
+      "apps/cli/templates/sdd/prompts/hotfix-bypass-gate.prompt.md",
+      "apps/cli/templates/sdd/skills/sdd-orchestrator/SKILL.md",
+      "apps/cli/templates/sdd/scripts/validate-sdd.mjs",
+      "apps/cli/templates/sdd/documentation/es/README.md",
+      "apps/cli/templates/sdd/documentation/en/README.md",
+      "apps/cli/templates/sdd/documentation/es/HOW-TO-USE-SDD.md",
+      "apps/cli/templates/sdd/documentation/en/HOW-TO-USE-SDD.md",
+      "apps/cli/src/generators/__tests__/rule-zero.integration.spec.ts"
+    ],
+    "files_deleted": [],
+    "usage": {
+      "tokens_in": 520000,
+      "tokens_out": 65000,
+      "approx": true,
+      "source": "declared-estimate",
+      "by_tier": {
+        "claude/opus": {
+          "tokens_in": 520000,
+          "tokens_out": 65000,
+          "approx": true,
+          "source": "declared-estimate"
+        }
+      },
+      "by_agent": [
+        {
+          "agent": "orchestrator",
+          "label": "diagnóstico en opticagestion, spec, apertura, verificación real y cierre",
+          "provider_model": "claude/opus",
+          "effort": "medium",
+          "tokens_in": 70000,
+          "tokens_out": 9000,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-17"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-001..005 (lite, mismo actor)",
+          "provider_model": "claude/opus",
+          "effort": "medium",
+          "tokens_in": 450000,
+          "tokens_out": 56000,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-17"
+        }
+      ]
+    }
+  },
+  "tables_created": [],
+  "endpoints_implemented": [],
+  "components_created": [],
+  "issues_found": [
+    "El mod leía solo $.session.root(), que no sigue un cd de shell: unidades de otros worktrees invisibles y sdd:use descartado en silencio",
+    "Código editado en otro worktree quedaba fuera de la raíz y el gate lo dejaba pasar",
+    "sdd-gates.md superó el cap de 12k de las rules de Antigravity; se condensó"
+  ],
+  "reviewer_report": {
+    "approved": true,
+    "date": "2026-11-17",
+    "ca_results": {
+      "US-1": "PASS - snapshot multi-worktree probado contra opticagestion en lectura (9 worktrees, 4 ciclos con su worktree, ~200 ms) y en una generación real con worktree; gate y reservas contra el worktree del archivo",
+      "US-2": "PASS - GATE A ata a la spec, sube sola al ciclo al abrirse (spec-cycle), documento de la spec/ciclo y código en worktree de una unidad atan; rama por slug; sdd:use <spec> sin ciclo",
+      "US-3": "PASS - franja: unidad, flow/progreso o tipo de fix y «en <worktree>»; atadura rechazada deja toast con el motivo",
+      "US-4": "PASS - ① REGLA UNO en el bloque regla-cero de CLAUDE/AGENTS/GEMINI.md (inyectada por el hook SessionStart), copilot-instructions, FIX GATE, orquestador y sdd-gates; validador avisa si falta"
+    },
+    "tests": {
+      "protocol": "OK - 192",
+      "cli": "OK - 769",
+      "bridge": "OK - 1012",
+      "studio": "OK - 1317",
+      "typecheck": "OK",
+      "build": "OK",
+      "sdd-validate": "OK",
+      "real-generation": "OK - standalone solo + git worktree"
+    },
+    "notes": "Studio filtra las ataduras a spec en preparación (listLiveBindings sin includeSpec); mostrarlas queda para un ciclo de studio-bridge."
+  }
+}

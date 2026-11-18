@@ -54,7 +54,9 @@ Continuar con el flujo SDD normal (SPEC GATE A → flow → ciclo → agentes).
 7. **Crea `sdd/specs/{spec-id}/cycles/cycle-[XX]/cycle.json` con `status: "in-progress"` y `flow`** —
    obligatorio antes de que cualquier agente implementador escriba código (GATE B:
    `pnpm sdd:gate <spec-id> cycle-[XX]`), corrido en la sesión que va a implementar: esa corrida
-   ata la sesión al ciclo (`SDD-BIND`; fix: `pnpm sdd:use FIX-…`).
+   ata la sesión al ciclo (`SDD-BIND`; fix: `pnpm sdd:use FIX-…`). Desde el GATE A la sesión que
+   prepara la spec ya queda atada a ella (regla ①: línea `Unidad SDD → …` y `pnpm sdd:use <spec>`
+   desde el worktree de la spec); al abrirse el ciclo, la atadura pasa sola al ciclo.
    Si el repo usa ramas por ciclo (perfil `team` o `global.json → github.branch_per_cycle: "on"`),
    `pnpm sdd:branch <spec-id> cycle-[XX]` crea la rama `feat/<slug>-cycle-XX` antes de implementar.
 
@@ -75,7 +77,7 @@ responsable de fundir sus fragmentos aditivos pendientes:
 > Si no hay fragmentos pendientes, no hay nada que hacer — los archivos base no se
 > tocan sin fragmentos que fundir.
 
-## Destilación de memoria (MEMORIA GATE del dual-harness)
+## Destilación de memoria (`sdd/dual-harness/rules/sdd-context.md`)
 
 Mismo patrón y mismo actor único que la consolidación de contexto, aplicado a
 `sdd/memory/`:
@@ -89,6 +91,23 @@ Mismo patrón y mismo actor único que la consolidación de contexto, aplicado a
    lecciones obsoletas o ya absorbidas por una skill/constitution.
 4. Borrar las entradas destiladas y commitear como cambio dedicado:
    `chore(sdd): distill memory journal into lessons`.
+
+## Ejecución por bloques
+
+Protocolo completo: `sdd/dual-harness/rules/sdd-execution.md`; el detalle operativo está en
+`sdd/agents/sdd-orchestrator.agent.md` § Ejecución por bloques y telemetría. En corto:
+
+- Con `batches` en `tasks.json`: **un agente por bloque**, continuado task por task
+  (`SendMessage` al mismo agente). Consumo de la task = `subagent_tokens` de la notificación menos
+  el acumulado anterior, registrado con `pnpm sdd:task <spec> cycle-XX TASK-NNN done --commit <sha>
+  --tokens <diferencia> --model … --effort … --agent …`.
+- Antes de despachar: `pnpm sdd:pack <spec> cycle-XX <rol> B-NN` (functional, planner, architect y
+  reviewer, sin unidad); el prompt lleva rol, unidad, ruta del paquete, primera task y tus notas.
+  Código 3 ⇒ despachá como antes. Los pack-miss del agente van a `sdd:task … --pack-miss`.
+- No avanzás mientras la task no esté `done` con `usage`. Corte: dos fallas o contexto compactado
+  ⇒ agente nuevo para el resto del bloque.
+- Dos bloques en paralelo solo si son de apps distintas y ninguno depende del otro; por defecto,
+  de a uno. Sin `batches`, se ejecuta task por task como siempre.
 
 ## Archivos que modifica
 
@@ -127,6 +146,6 @@ campo.
 
 Ver `sdd/agents/sdd-orchestrator.agent.md` § Registro de consumo — creás `metrics` con
 `by_agent: []` al abrir el ciclo, capturás la notificación exacta (`agent-usage-notification`)
-de cada subagente que dispares (acumulada por agente si lo reanudás con `SendMessage`: anotá
-la diferencia) y la volcás en `by_agent` + `usage` de su task, y registrás tu
+de cada subagente que dispares y la volcás en `by_agent`; la de cada task la cerrás con
+`pnpm sdd:task … done` (ver "Ejecución por bloques"), y registrás tu
 propia entrada `{ "agent": "orchestrator", ... }` si el reviewer todavía no la agregó.

@@ -3,7 +3,16 @@ import fs from 'fs-extra';
 import { getTemplatesDir } from '../utils/fs.js';
 import { exec } from '../utils/exec.js';
 import { logger } from '../utils/logger.js';
-import { writeManifest } from './kit-manifest.js';
+import { hashContent, writeManifest } from './kit-manifest.js';
+import { PUBLISHED_HARNESS_HASHES } from './harness-history.js';
+import {
+  ABSORBED_HEADING,
+  PROJECT_MD_REL,
+  fold,
+  mergeIntoProjectMd,
+  projectMdPath,
+  readProjectMd,
+} from './project-md.js';
 import type { WorkspaceOptions } from './workspace.generator.js';
 import type { AppSpec } from './app.generator.js';
 import { describeAppStack, resolveMfeShell } from './app-types.js';
@@ -63,6 +72,7 @@ export async function generateSDD(
   const previousHarness = install.absorbExistingHarness
     ? await readExistingHarnessFiles(root)
     : new Map<string, string>();
+  const previousProjectMd = await readProjectMd(root);
 
   if (await fs.pathExists(destDir)) {
     await fs.remove(destDir);
@@ -92,13 +102,32 @@ export async function generateSDD(
     await ensureHarnessPackageJson(root, opts.projectName);
   }
 
-  for (const [file, content] of previousHarness) {
-    await absorbIntoDualHarness(root, file, content);
+  if (previousProjectMd !== null) {
+    await fs.writeFile(projectMdPath(root), previousProjectMd, 'utf-8');
+  }
+  if (previousHarness.size) {
+    await mergeIntoProjectMd(root, previousHarness);
+    logger.info(
+      `Existing ${[...previousHarness.keys()].join(', ')} content preserved inside ${PROJECT_MD_REL}`,
+    );
   }
   await writeRootHarnessCopies(root);
 
   const linked = runSetupAgents(root);
   await ensureRootHarnessFiles(root, linked);
+}
+
+export const VERIFY_INIT_COMMAND = 'node sdd/scripts/sdd-verify.mjs --init';
+
+export function seedVerifyEntries(root: string): void {
+  try {
+    const output = exec(VERIFY_INIT_COMMAND, { cwd: root, silent: true });
+    for (const line of output.split('\n').filter(Boolean)) logger.info(`verify: ${line}`);
+  } catch {
+    logger.warn(
+      'Could not seed sdd/verify.json automatically. Run `pnpm sdd:verify --init` in the workspace.',
+    );
+  }
 }
 
 /**
@@ -202,9 +231,31 @@ export async function ensureHarnessPackageJson(
 // las versiones desde v0.3.0.
 const KIT_TITLE = '# Proyecto SDD';
 const KIT_SIGNATURE = '## ⛔ SPEC GATE — REGLA GLOBAL INVIOLABLE';
+const RULE_ZERO_MARKER = '<!-- regla-cero:start -->';
+const PROJECT_IMPORT_LINE = '@sdd/dual-harness/project.md';
 
-const ABSORBED_HEADING =
-  '## Instrucciones previas del proyecto (absorbidas al instalar SDD)';
+function currentKitHarnessHashes(): Set<string> {
+  const hashes = new Set<string>();
+  for (const file of ROOT_HARNESS_FILES) {
+    const path = resolve(getTemplatesDir(), 'sdd/dual-harness', file);
+    if (fs.pathExistsSync(path)) hashes.add(hashContent(fs.readFileSync(path)));
+  }
+  return hashes;
+}
+
+function looksLikeKitCopy(content: string): boolean {
+  if (content.includes(RULE_ZERO_MARKER)) return true;
+  if (content.includes(KIT_TITLE) && content.includes(KIT_SIGNATURE)) return true;
+  const hash = hashContent(Buffer.from(content, 'utf-8'));
+  if (currentKitHarnessHashes().has(hash)) return true;
+  return Object.values(PUBLISHED_HARNESS_HASHES).some((list) => list.includes(hash));
+}
+
+function textAfterProjectImport(own: string): string | null {
+  const idx = own.lastIndexOf(PROJECT_IMPORT_LINE);
+  if (idx === -1) return null;
+  return own.slice(idx + PROJECT_IMPORT_LINE.length).trim();
+}
 
 /**
  * Qué instrucciones previas del repo hay que conservar dentro de sdd/dual-harness/:
@@ -258,9 +309,6 @@ async function readExistingHarnessFiles(
   return found;
 }
 
-/** Mismo contenido salvo fines de línea: la copia que dejó un link fallido, no texto del equipo. */
-const fold = (s: string) => s.replace(/\r\n/g, '\n').trim();
-
 /**
  * Qué parte de un archivo de instrucciones de la raíz es realmente del equipo.
  *
@@ -296,7 +344,7 @@ export function teamContribution(
   // Texto que ya está absorbido en el dual-harness anterior (la raíz es una copia del kit que
   // incluye ese mismo tramo): no se agrega dos veces.
   const idx = own.indexOf(ABSORBED_HEADING);
-  const isKit = own.includes(KIT_TITLE) && own.includes(KIT_SIGNATURE);
+  const isKit = looksLikeKitCopy(content);
   if (idx !== -1) {
     const tail = own.slice(idx + ABSORBED_HEADING.length).trim();
     if (isKit) {
@@ -311,9 +359,9 @@ export function teamContribution(
   // del kit nunca es texto del equipo.
   if (isKit) {
     logger.warn(
-      'Se encontró en la raíz una copia de una versión anterior del kit: su cuerpo no se absorbe.',
+      'Se encontró en la raíz una copia de una versión distinta del kit: su cuerpo no se absorbe.',
     );
-    return null;
+    return textAfterProjectImport(own) || null;
   }
   return own;
 }
@@ -343,22 +391,6 @@ async function writeRootHarnessCopies(root: string): Promise<void> {
     if (!(await fs.pathExists(source))) continue;
     await fs.copy(source, target, { overwrite: true });
   }
-}
-
-async function absorbIntoDualHarness(
-  root: string,
-  file: string,
-  content: string,
-): Promise<void> {
-  const target = resolve(root, 'sdd/dual-harness', file);
-  await fs.appendFile(
-    target,
-    `\n\n---\n\n${ABSORBED_HEADING}\n\n${content.trim()}\n`,
-    'utf-8',
-  );
-  logger.info(
-    `Existing ${file} content preserved inside sdd/dual-harness/${file}`,
-  );
 }
 
 async function writeGlobalJson(

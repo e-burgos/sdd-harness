@@ -6,7 +6,7 @@ import { exec } from "../utils/exec.js";
 import { initGitRepo } from "../utils/git.js";
 import { logger } from "../utils/logger.js";
 import { generateDockerCompose, writeEnvExample } from "./docker.generator.js";
-import { generateSDD, ensureHarnessPackageJson } from "./sdd.generator.js";
+import { generateSDD, ensureHarnessPackageJson, seedVerifyEntries } from "./sdd.generator.js";
 import type { SddProfile } from "./sdd.generator.js";
 import { seedModules } from "./spec.generator.js";
 import {
@@ -126,6 +126,8 @@ export async function generateStandalone(
     });
     for (const s of seeded) logger.success(`  ${s.specId} → draft, pending_modules`);
   }
+
+  seedVerifyEntries(root);
 
   await opts.beforeGate?.(root);
 

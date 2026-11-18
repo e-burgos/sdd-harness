@@ -1,0 +1,55 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "sdd/schemas/packs.schema.json",
+  "title": "SDD context packs (sdd/packs.json)",
+  "description": "Qué entra en el paquete de contexto de cada rol (`pnpm sdd:pack`) y los topes de ejecución por bloque que lee `sdd:validate`. Archivo del kit: `harness update sdd` lo reemplaza si no lo modificaste y deja un .new si sí. `roles` admite cualquier nombre de rol.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["roles"],
+  "properties": {
+    "$schema": { "type": "string" },
+    "_description": { "type": "string" },
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "max_tasks_per_batch": { "type": "integer", "minimum": 1, "description": "Tope de tasks por bloque de ejecución." },
+        "max_points_per_batch": { "type": "integer", "minimum": 1, "description": "Tope de story points por bloque." },
+        "max_parallel_batches": { "type": "integer", "minimum": 1, "description": "Bloques que el orquestador despacha a la vez." }
+      }
+    },
+    "limits": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "context_inline_max_bytes": { "type": "integer", "minimum": 1, "description": "Si constitution.md supera este tamaño, context:@app trae su índice y solo las secciones siempre-vigentes." },
+        "max_pack_bytes": { "type": "integer", "minimum": 1, "description": "Tamaño que un paquete no debería superar; se avisa en la cabecera y en --stats, nunca se trunca." }
+      }
+    },
+    "context_always": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "description": "Palabras (sin distinguir mayúsculas ni acentos) cuyas secciones de constitution.md entran siempre completas cuando se usa el índice."
+    },
+    "roles": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/definitions/Role" }
+    }
+  },
+  "definitions": {
+    "Role": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["unit", "include"],
+      "properties": {
+        "unit": { "type": "string", "enum": ["batch", "cycle"], "description": "batch: el paquete se arma para un bloque (B-NN) o una lista de tasks; cycle: para el ciclo entero." },
+        "include": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Selectores en orden: cycle, spec, tasks:@unit, tasks:@all:summary, plan:@unit, refs:@unit, index:<doc>, doc:<doc>, context:@app[:index], registry:<api|schema|components>@app[:index], registry:api@unit, verify:@app, verify-results, acceptance, section:<ruta>#<token>."
+        }
+      }
+    }
+  }
+}

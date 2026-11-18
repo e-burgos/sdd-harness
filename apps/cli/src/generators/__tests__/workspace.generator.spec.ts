@@ -6,6 +6,7 @@ import fs from 'fs-extra';
 
 import { generateWorkspace } from '../workspace.generator.js';
 import { FRONTEND_VERSIONS } from '../versions.js';
+import { exec } from '../../utils/exec.js';
 
 // Mock exec para evitar ejecutar git init y pnpm install en tests
 vi.mock('../../utils/exec.js', () => ({
@@ -44,6 +45,23 @@ describe('workspace.generator', () => {
     expect(fs.existsSync(resolve(root, 'tools'))).toBe(true);
     expect(fs.existsSync(resolve(root, 'package.json'))).toBe(true);
     expect(fs.existsSync(resolve(root, 'nx.json'))).toBe(true);
+  });
+
+  it('al final de init corre el script de verify del kit después de generar todas las apps', async () => {
+    vi.mocked(exec).mockClear();
+    await generateWorkspace({
+      projectName: 'verify-project',
+      description: 'Test project',
+      packageScope: '@test',
+      apps: [{ name: 'api', type: 'nestjs' }, { name: 'web', type: 'react' }],
+      libs: [],
+      services: [],
+    });
+    const calls = vi.mocked(exec).mock.calls.map(([command]) => command);
+    expect(calls).toContain('node sdd/scripts/sdd-verify.mjs --init');
+    const verifyCall = vi.mocked(exec).mock.calls.find(([command]) => command === 'node sdd/scripts/sdd-verify.mjs --init');
+    expect(verifyCall?.[1]?.cwd).toContain('verify-project');
+    expect(calls.indexOf('node sdd/scripts/sdd-verify.mjs --init')).toBeGreaterThan(calls.indexOf('pnpm install'));
   });
 
   it('genera app NestJS correctamente', async () => {

@@ -4,7 +4,8 @@ import { pathToFileURL } from 'node:url';
 
 type CycleUnit = { kind: 'cycle'; spec: string; cycle: string };
 type FixUnit = { kind: 'fix'; fix: string };
-type Unit = CycleUnit | FixUnit;
+type SpecUnit = { kind: 'spec'; spec: string };
+type Unit = CycleUnit | FixUnit | SpecUnit;
 type Binding = {
   session_id: string;
   unit: Unit;
@@ -25,7 +26,7 @@ type Registry = {
   SESSION_TTL_MS: number;
   resolveRegistryDir: (fs: MemoryFs, root: string) => Promise<string>;
   readBranch: (fs: MemoryFs, root: string) => Promise<string | null>;
-  formatBindMarker: (unit: Unit) => string;
+  formatBindMarker: (unit: Unit, worktree?: string | null) => string;
   parseBindMarker: (text: string) => Unit | null;
   openUnitsOf: (cycles: { spec: string; cycle: string }[], fixes: { id: string }[]) => Unit[];
   unitFromBranch: (branch: string | null, units: Unit[]) => Unit | null;
@@ -37,7 +38,11 @@ type Registry = {
   readBinding: (fs: MemoryFs, dir: string, sessionId: string) => Promise<Binding | null>;
   touchBinding: (fs: MemoryFs, dir: string, sessionId: string, now: number) => Promise<Binding | null>;
   endBinding: (fs: MemoryFs, dir: string, sessionId: string, now: number) => Promise<Binding | null>;
-  listLiveBindings: (fs: MemoryFs, dir: string, now: number) => Promise<Binding[]>;
+  listLiveBindings: (fs: MemoryFs, dir: string, now: number, options?: { includeSpec?: boolean }) => Promise<Binding[]>;
+  parseBindTarget: (text: string) => { unit: Unit; worktree: string | null } | null;
+  unitFromSpecPath: (rel: string, units: Unit[]) => Unit | null;
+  worktreeOf: (worktrees: string[], filePath: string) => string | null;
+  specSlugOf: (id: string) => string;
   autoBindUnit: (args: {
     binding: Binding | null;
     openUnits: Unit[];
@@ -422,5 +427,60 @@ describe('inbox', () => {
     const [notice] = await lib().listInbox(fs, DIR, 'me');
     expect(notice).toMatchObject({ kind: 'lease-released', path: 'src/a.ts' });
     expect(lib().inboxText([notice])).toContain('lo liberó');
+  });
+});
+
+describe('session-where: marca, rama, documentos y worktrees', () => {
+  const SPEC_ONLY: SpecUnit = { kind: 'spec', spec: 'spec-dev-003-portal' };
+
+  it('la marca lleva el worktree codificado y admite la spec sin ciclo; las viejas siguen leyéndose', () => {
+    const where = '/Users/dev/my repo-arca';
+    const marker = registry.formatBindMarker(SPEC_A, where);
+    expect(marker).toBe(`SDD-BIND spec=spec-dev-001-auth cycle=cycle-02 worktree=${encodeURIComponent(where)}`);
+    expect(registry.parseBindTarget(marker)).toEqual({ unit: SPEC_A, worktree: where });
+    expect(registry.parseBindTarget(registry.formatBindMarker(SPEC_ONLY))).toEqual({ unit: SPEC_ONLY, worktree: null });
+    expect(registry.parseBindMarker('SDD-BIND fix=FIX-dev-001-001')).toEqual(FIX);
+    expect(registry.parseBindMarker('SDD-BIND spec=spec-dev-001-auth cycle=nope')).toBeNull();
+  });
+
+  it('la rama ata por id o por el slug de la spec, solo si hay una coincidencia', () => {
+    expect(registry.specSlugOf('spec-dev-002-billing')).toBe('billing');
+    expect(registry.unitFromBranch('feat/billing-v2', [SPEC_A, SPEC_B, FIX])).toEqual(SPEC_B);
+    expect(registry.unitFromBranch('feat/spec-dev-002', [SPEC_A, SPEC_B])).toEqual(SPEC_B);
+    expect(registry.unitFromBranch('feat/auth-billing', [SPEC_A, SPEC_B])).toBeNull();
+    expect(registry.unitFromBranch('main', [SPEC_A, SPEC_B])).toBeNull();
+  });
+
+  it('un documento de la spec ata a su ciclo abierto o a la spec en preparación', () => {
+    const open = [SPEC_A, SPEC_B];
+    expect(registry.unitFromSpecPath('sdd/specs/spec-dev-001-auth/cycles/cycle-02/plan.md', open)).toEqual(SPEC_A);
+    expect(registry.unitFromSpecPath('sdd/specs/spec-dev-001-auth/spec-dev-001-auth.spec.md', open)).toEqual(SPEC_A);
+    expect(registry.unitFromSpecPath('sdd/specs/spec-dev-003-portal/brief.md', open)).toEqual(SPEC_ONLY);
+    expect(registry.unitFromSpecPath('sdd/specs/index.json', open)).toBeNull();
+    expect(registry.unitFromSpecPath('src/app.ts', open)).toBeNull();
+  });
+
+  it('worktreeOf elige el worktree más específico que contiene el archivo', () => {
+    const trees = ['/repo', '/repo/.claude/worktrees/x', '/other'];
+    expect(registry.worktreeOf(trees, '/repo/.claude/worktrees/x/src/a.ts')).toBe('/repo/.claude/worktrees/x');
+    expect(registry.worktreeOf(trees, '/repo/src/a.ts')).toBe('/repo');
+    expect(registry.worktreeOf(trees, '/repo-b/a.ts')).toBeNull();
+  });
+
+  it('la atadura a una spec sola no autoriza código y sube al ciclo cuando se abre', () => {
+    const binding = { session_id: 's', unit: SPEC_ONLY, worktree: '/repo', harness: 'claude-code', source: 'gate-a', bound_at: '', updated_at: new Date(NOW).toISOString(), ended_at: null } as Binding;
+    const verdict = registry.judgeSessionEdit({ gate: 'block', binding, openUnits: [SPEC_A], rel: 'src/a.ts', now: NOW });
+    expect(verdict.code).toBe('spec-only');
+    expect(registry.autoBindUnit({ binding, openUnits: [SPEC_A, FIX], branch: null, now: NOW })).toBeNull();
+    const cycle = { kind: 'cycle', spec: 'spec-dev-003-portal', cycle: 'cycle-01' } as CycleUnit;
+    expect(registry.autoBindUnit({ binding, openUnits: [SPEC_A, cycle], branch: null, now: NOW })).toEqual({ unit: cycle, source: 'spec-cycle' });
+  });
+
+  it('las ataduras a una spec sola no se listan salvo que se pidan (Studio no las conoce)', async () => {
+    const fs = memoryFs();
+    await registry.writeBinding(fs, DIR, { sessionId: 'a', unit: SPEC_ONLY, worktree: '/repo', harness: 'claude-code', source: 'gate-a', now: NOW });
+    await registry.writeBinding(fs, DIR, { sessionId: 'b', unit: FIX, worktree: '/repo', harness: 'claude-code', source: 'sdd-use', now: NOW });
+    expect((await registry.listLiveBindings(fs, DIR, NOW)).map((b) => b.session_id)).toEqual(['b']);
+    expect((await registry.listLiveBindings(fs, DIR, NOW, { includeSpec: true })).map((b) => b.session_id)).toEqual(['a', 'b']);
   });
 });

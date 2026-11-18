@@ -5,7 +5,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { logger } from '../../utils/logger.js';
 import { warnIfNxRootMismatch } from '../../utils/env.js';
-import { registerSubprojectInSDD } from '../../generators/sdd.generator.js';
+import { registerSubprojectInSDD, seedVerifyEntries } from '../../generators/sdd.generator.js';
 
 /**
  * Alta de una tool como subproyecto SDD. A diferencia de `add app`, NO genera
@@ -100,6 +100,7 @@ export const addToolCommand = defineCommand({
         name,
         String(toolType) || 'tool',
       );
+      seedVerifyEntries(cwd);
       logger.success(
         `Registered in sdd/global.json → monorepo.tools and sdd/context/tools/${name}/`,
       );

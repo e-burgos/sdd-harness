@@ -22,5 +22,5 @@ Protocolo:
 4. Cerrá siempre con un resumen de una línea: qué se hizo o a quién se delegó
    y por qué.
 
-Regla ⚙️ del arnés: tier económico para lecturas; estándar solo para conducir
+Regla de modelo y esfuerzo (`rules/sdd-model-budget.md`): tier económico para lecturas; estándar solo para conducir
 `update sdd`. No escales de tier para una consulta.

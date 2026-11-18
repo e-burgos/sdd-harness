@@ -167,8 +167,9 @@ describe.skipIf(process.platform !== 'win32')('setup-agents.ps1 (integration, Wi
     await generateSDD(root, OPTS, INSTALL);
     await generateSDD(root, OPTS, INSTALL);
     const dual = await fs.readFile(resolve(root, 'sdd/dual-harness/AGENTS.md'), 'utf-8');
-    expect(dual.split('Instrucciones previas del proyecto').length - 1).toBe(1);
-    expect(dual.split('never touch prod').length - 1).toBe(1);
+    expect(dual).not.toContain('Instrucciones previas del proyecto');
+    const project = await fs.readFile(resolve(root, 'sdd/dual-harness/project.md'), 'utf-8');
+    expect(project.split('never touch prod').length - 1).toBe(1);
   });
 
   it('a repo path with # and a space still gets links that resolve', async () => {

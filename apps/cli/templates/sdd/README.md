@@ -18,6 +18,9 @@
 pnpm sdd:docs        # visor interactivo con los tres documentos en la vista Ayuda
 pnpm sdd:validate    # valida todos los registros contra sus schemas
 pnpm sdd:gate <spec> [cycle-XX]   # SPEC GATE como comando: A (abrir ciclo) / B (implementar)
+pnpm sdd:verify <app> quick|full  # verificación por subproyecto (sdd/verify.json); --init la siembra
+pnpm sdd:task <spec> cycle-XX TASK-NNN start|done …   # abre/cierra una task con su usage
+pnpm sdd:pack <spec> cycle-XX <rol> [B-NN]            # paquete de contexto del rol (sdd/packs.json)
 ```
 
 - La única fuente del nombre y descripción del proyecto es [`global.json`](global.json) —

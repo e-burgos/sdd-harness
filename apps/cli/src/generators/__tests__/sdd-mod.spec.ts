@@ -7,7 +7,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 // not follow the import. The local types below mirror what the tests touch.
 const SDD_TS = resolve(__dirname, '../../../templates/sdd/skills/sdd-mod/hooks/.src/sdd.ts');
 
-type Unit = { kind: 'cycle'; spec: string; cycle: string } | { kind: 'fix'; fix: string };
+type Unit = { kind: 'cycle'; spec: string; cycle: string } | { kind: 'fix'; fix: string } | { kind: 'spec'; spec: string };
 type Binding = {
   session_id: string;
   unit: Unit;
@@ -19,10 +19,13 @@ type Binding = {
   ended_at: string | null;
 };
 type Snapshot = {
-  settings: { enabled: boolean; gate: 'block' | 'warn' };
+  settings: { enabled: boolean; gate: 'block' | 'warn'; exempt?: string[] };
   cycles: { spec: string; cycle: string; flow: string; tasks: { status: string }[] }[];
   fixes: { id: string; status: string }[];
   openUnits: Unit[];
+  specs?: { spec: string; worktree: string }[];
+  root?: string;
+  worktrees?: string[];
   mine: Binding | null;
   others: Binding[];
   sessionId?: string;
@@ -39,12 +42,20 @@ type Session = { id: string; now: number };
 type SddModule = {
   readSettings: (tools: unknown) => Snapshot['settings'];
   relativeToRoot: (root: string, filePath: string) => string | null;
-  isCodePath: (rel: string) => boolean;
+  isCodePath: (rel: string, exempt?: readonly string[]) => boolean;
+  matchesGlob: (rel: string, glob: string) => boolean;
   judgeEdit: (s: Snapshot, root: string, filePath: string, now?: number) => { kind: string; reason?: string };
   loadSnapshot: (reader: Reader | Store, root: string, session?: Session) => Promise<Snapshot>;
   bandLine: (s: Snapshot) => string | null;
   outputText: (result: unknown) => string;
-  bindFromCommand: (store: Store, root: string, session: Session, command: string, output: unknown) => Promise<Unit | null>;
+  bindFromCommand: (
+    store: Store,
+    root: string,
+    session: Session,
+    command: string,
+    output: unknown,
+  ) => Promise<{ bound: Unit; worktree: string } | { rejected: string } | null>;
+  bindFromEdit: (store: Store, s: Snapshot, filePath: string, session: Session) => Promise<Unit | null>;
   touchSession: (store: Store, root: string, session: Session) => Promise<Binding | null>;
   endSession: (store: Store, root: string, session: Session) => Promise<Binding | null>;
   holderOf: (s: Snapshot, unit: Unit) => 'mine' | 'other' | null;
@@ -112,13 +123,26 @@ function memoryReader(files: Record<string, unknown>): Reader {
 
 describe('sdd-mod: settings', () => {
   it('apagado por defecto; gate block salvo "warn" explícito', () => {
-    expect(sdd.readSettings(null)).toEqual({ enabled: false, gate: 'block' });
-    expect(sdd.readSettings({ rtk: { enabled: true } })).toEqual({ enabled: false, gate: 'block' });
-    expect(sdd.readSettings({ claude_mod: { enabled: true } })).toEqual({ enabled: true, gate: 'block' });
+    expect(sdd.readSettings(null)).toEqual({ enabled: false, gate: 'block', exempt: [] });
+    expect(sdd.readSettings({ rtk: { enabled: true } })).toEqual({ enabled: false, gate: 'block', exempt: [] });
+    expect(sdd.readSettings({ claude_mod: { enabled: true } })).toEqual({ enabled: true, gate: 'block', exempt: [] });
     expect(sdd.readSettings({ claude_mod: { enabled: 'yes', gate: 'warn' } })).toEqual({
       enabled: false,
       gate: 'warn',
+      exempt: [],
     });
+  });
+
+  it('exempt: solo strings no vacíos; cualquier otra forma es lista vacía y nunca lanza', () => {
+    const exemptOf = (exempt: unknown) =>
+      sdd.readSettings({ claude_mod: { enabled: true, exempt } }).exempt;
+    expect(exemptOf(['apps/docs/**/*.mdx', 'x/*.md'])).toEqual(['apps/docs/**/*.mdx', 'x/*.md']);
+    expect(exemptOf(['a', 1, null, {}, '', 'b'])).toEqual(['a', 'b']);
+    for (const bad of [undefined, null, 'apps/**', 5, true, { 0: 'a' }]) {
+      expect(exemptOf(bad)).toEqual([]);
+    }
+    expect(sdd.readSettings('garbage').exempt).toEqual([]);
+    expect(sdd.readSettings({ claude_mod: null }).exempt).toEqual([]);
   });
 });
 
@@ -139,6 +163,119 @@ describe('sdd-mod: paths', () => {
     for (const rel of ['src/a.ts', 'apps/web/README.md', 'package.json', 'Dockerfile']) {
       expect(sdd.isCodePath(rel), rel).toBe(true);
     }
+  });
+
+  it('markdown fuera de apps|libs|tools no es código; el resto sí', () => {
+    for (const rel of ['docs/prompts/x.md', 'docs/guide/a.mdx', 'README.mdx', 'sdd/anything', 'sdd/a/b.ts']) {
+      expect(sdd.isCodePath(rel), rel).toBe(false);
+    }
+    for (const rel of ['docs/script.ts', 'apps/web/README.md', 'libs/a/doc.mdx', 'tools/x/y.md']) {
+      expect(sdd.isCodePath(rel), rel).toBe(true);
+    }
+    expect(sdd.isCodePath('src/notes.md')).toBe(false);
+    expect(sdd.isCodePath('docs\\prompts\\x.md')).toBe(false);
+    expect(sdd.isCodePath('docs\\script.ts')).toBe(true);
+    expect(sdd.isCodePath('apps\\web\\README.md')).toBe(true);
+    expect(sdd.isCodePath('sdd\\anything')).toBe(false);
+  });
+
+  it('sin exempt, los veredictos de hoy no cambian', () => {
+    const table: [string, boolean][] = [
+      ['apps/a/src/x.ts', true],
+      ['apps/a/README.md', true],
+      ['apps/a/pages/p.mdx', true],
+      ['libs/l/index.ts', true],
+      ['libs/l/CHANGELOG.md', true],
+      ['tools/t/run.mjs', true],
+      ['tools/t/NOTES.md', true],
+      ['src/a.ts', true],
+      ['package.json', true],
+      ['Dockerfile', true],
+      ['scripts/build.sh', true],
+      ['docs/script.ts', true],
+      ['sdd/fixes.json', false],
+      ['sdd/specs/x/brief.yaml', false],
+      ['.claude/settings.json', false],
+      ['.github/workflows/ci.yml', false],
+      ['.gemini/settings.json', false],
+      ['.agents/skills/a.md', false],
+      ['.agent/x', false],
+      ['.vscode/mcp.json', false],
+      ['.idea/x.xml', false],
+      ['README.md', false],
+      ['CHANGELOG.MD', false],
+    ];
+    for (const [rel, code] of table) {
+      expect(sdd.isCodePath(rel), rel).toBe(code);
+      expect(sdd.isCodePath(rel, []), rel).toBe(code);
+    }
+  });
+
+  it('exempt saca de código lo que matchea y nada más', () => {
+    const exempt = ['apps/docs/**/*.mdx'];
+    expect(sdd.isCodePath('apps/docs/pages/a.mdx')).toBe(true);
+    expect(sdd.isCodePath('apps/docs/pages/a.mdx', exempt)).toBe(false);
+    expect(sdd.isCodePath('apps/docs/a.mdx', exempt)).toBe(false);
+    expect(sdd.isCodePath('apps/docs/pages/a.tsx', exempt)).toBe(true);
+    expect(sdd.isCodePath('apps/web/pages/a.mdx', exempt)).toBe(true);
+    expect(sdd.isCodePath('src/a.ts', ['docs/**'])).toBe(true);
+    expect(sdd.isCodePath('src/a.ts', ['src/*.ts'])).toBe(false);
+    expect(sdd.isCodePath('apps\\docs\\pages\\a.mdx', exempt)).toBe(false);
+  });
+
+  it('CODE_ROOTS no distingue mayúsculas: Apps/ y APPS/ siguen siendo código', () => {
+    expect(sdd.isCodePath('Apps/web/README.md')).toBe(true);
+    expect(sdd.isCodePath('APPS/x.mdx')).toBe(true);
+    expect(sdd.isCodePath('Libs/a/b.md')).toBe(true);
+    expect(sdd.isCodePath('Docs/a.md')).toBe(false);
+  });
+
+  it('** pegado a otros caracteres no cruza /', () => {
+    expect(sdd.isCodePath('apps/docs-api/src/server.ts', ['apps/docs**'])).toBe(true);
+    expect(sdd.matchesGlob('apps/docs-api', 'apps/docs**')).toBe(true);
+    expect(sdd.matchesGlob('apps/docs-api/x', 'apps/docs**')).toBe(false);
+    expect(sdd.matchesGlob('a/b/c.md', 'a/**.md')).toBe(false);
+    expect(sdd.matchesGlob('a/b.md', 'a/**.md')).toBe(true);
+    expect(sdd.matchesGlob('a/b/c.md', '**/**/c.md')).toBe(true);
+  });
+
+  it('muchos ** no explotan: 12 segmentos ** contra un path de 200 caracteres en menos de 50 ms', () => {
+    const glob = Array.from({ length: 12 }, () => '**/a').join('/') + '/zzz';
+    const path = Array.from({ length: 66 }, () => 'a').join('/') + '/b';
+    const start = performance.now();
+    expect(sdd.matchesGlob(path, glob)).toBe(false);
+    expect(sdd.matchesGlob(path, '**/**/**/**/**/**/**/**/**/**/**/**/b')).toBe(true);
+    expect(performance.now() - start).toBeLessThan(50);
+  });
+
+  it('globs: **, *, ? y metacaracteres literales', () => {
+    const m = sdd.matchesGlob;
+    expect(m('a/b/c.md', '**/c.md')).toBe(true);
+    expect(m('c.md', '**/c.md')).toBe(true);
+    expect(m('a/b/c.md', '**/*.md')).toBe(true);
+    expect(m('a/x/y/b', 'a/**/b')).toBe(true);
+    expect(m('a/b', 'a/**/b')).toBe(true);
+    expect(m('a/xb', 'a/**/b')).toBe(false);
+    expect(m('a/b/c/d', 'a/**')).toBe(true);
+    expect(m('a/b', 'a/**')).toBe(true);
+    expect(m('b/a', 'a/**')).toBe(false);
+    expect(m('a/b.md', 'a/*.md')).toBe(true);
+    expect(m('a/b/c.md', 'a/*.md')).toBe(false);
+    expect(m('a/b/c.md', '*.md')).toBe(false);
+    expect(m('a/bc', 'a/b?')).toBe(true);
+    expect(m('a/b', 'a/b?')).toBe(false);
+    expect(m('a/b/', 'a/b?')).toBe(false);
+    expect(m('a/b.c', 'a/b.c')).toBe(true);
+    expect(m('a/bxc', 'a/b.c')).toBe(false);
+    expect(m('a/b+c', 'a/b+c')).toBe(true);
+    expect(m('a/bbc', 'a/b+c')).toBe(false);
+    expect(m('a/(x)', 'a/(x)')).toBe(true);
+    expect(m('a/x', 'a/(x)')).toBe(false);
+    expect(m('a/[x]', 'a/[x]')).toBe(true);
+    expect(m('a/x', 'a/[x]')).toBe(false);
+    expect(m('a/b', 'a/b|c')).toBe(false);
+    expect(m('a/$b^', 'a/$b^')).toBe(true);
+    expect(m('a/b/c.md', 'a\\**\\*.md')).toBe(true);
   });
 });
 
@@ -237,7 +374,7 @@ describe('sdd-mod: lectura de sdd/', () => {
     });
 
     const result = await sdd.loadSnapshot(reader, ROOT);
-    expect(result.settings).toEqual({ enabled: true, gate: 'warn' });
+    expect(result.settings).toEqual({ enabled: true, gate: 'warn', exempt: [] });
     expect(result.cycles.map((c) => `${c.spec}/${c.cycle}/${c.flow}`)).toEqual([
       'spec-x-001-a/cycle-02/lite',
     ]);
@@ -354,12 +491,14 @@ describe('sdd-mod: atadura de la sesión', () => {
   it('el marcador del Bash ata la sesión: gate-b si corrió sdd:gate, sdd-use si no; solo unidades abiertas', async () => {
     const store = memoryStore(twoCycles());
     const marker = 'SDD-BIND spec=spec-x-001-a cycle=cycle-01';
-    expect(await sdd.bindFromCommand(store, ROOT, session, 'pnpm sdd:gate x cycle-01', `APPROVED\n${marker}\n`)).toEqual(unit);
+    expect(await sdd.bindFromCommand(store, ROOT, session, 'pnpm sdd:gate x cycle-01', `APPROVED\n${marker}\n`)).toEqual({ bound: unit, worktree: ROOT });
     expect((await sdd.loadSnapshot(store, ROOT, session)).mine?.source).toBe('gate-b');
-    expect(await sdd.bindFromCommand(store, ROOT, session, 'pnpm sdd:use x cycle-01', { stdout: `hi\n${marker}\n`, stderr: '' })).toEqual(unit);
+    expect(await sdd.bindFromCommand(store, ROOT, session, 'pnpm sdd:use x cycle-01', { stdout: `hi\n${marker}\n`, stderr: '' })).toEqual({ bound: unit, worktree: ROOT });
     expect((await sdd.loadSnapshot(store, ROOT, session)).mine?.source).toBe('sdd-use');
 
-    expect(await sdd.bindFromCommand(store, ROOT, session, 'pnpm sdd:use x cycle-09', 'SDD-BIND spec=spec-x-001-a cycle=cycle-09')).toBeNull();
+    expect(await sdd.bindFromCommand(store, ROOT, session, 'pnpm sdd:use x cycle-09', 'SDD-BIND spec=spec-x-001-a cycle=cycle-09')).toEqual({
+      rejected: expect.stringContaining('spec-x-001-a/cycle-09'),
+    });
     expect(await sdd.bindFromCommand(store, ROOT, session, 'cat docs.md', marker)).toBeNull();
     expect(await sdd.bindFromCommand(store, ROOT, session, 'pnpm sdd:use x', 'sin marcador')).toBeNull();
   });
@@ -486,5 +625,114 @@ describe('sdd-mod: reservas de archivo y buzón', () => {
     await sdd.leaseEdit(store, await snapOf(a), ROOT, 'src/x.ts', a);
     const warnSnap = { ...(await snapOf(b)), settings: { enabled: true, gate: 'warn' as const } };
     expect((await sdd.leaseEdit(store, warnSnap, ROOT, 'src/x.ts', b)).verdict.kind).toBe('warn');
+  });
+});
+
+describe('sdd-mod: worktrees y unidad de la sesión', () => {
+  const NOW = Date.parse('2026-11-17T12:00:00.000Z');
+  const session: Session = { id: 'sess-w', now: NOW };
+  const ARCA = '/wt/arca';
+  const TOOLS = { claude_mod: { enabled: true, gate: 'block' } };
+  const spec = (id: string, status: string) => ({ id, title: id, status, folder: `sdd/specs/${id}` });
+  const cycle48 = { kind: 'cycle', spec: 'spec-x-048-facturacion-arca', cycle: 'cycle-01' } as const;
+
+  const repo = (extra: Record<string, unknown> = {}): Record<string, unknown> => ({
+    '/repo/.git/HEAD': 'ref: refs/heads/main\n',
+    '/repo/.git/worktrees/arca/gitdir': `${ARCA}/.git\n`,
+    '/repo/.git/worktrees/arca/commondir': '../..\n',
+    '/repo/.git/worktrees/arca/HEAD': 'ref: refs/heads/feat/facturacion-arca\n',
+    [`${ARCA}/.git`]: 'gitdir: /repo/.git/worktrees/arca\n',
+    '/repo/sdd/tools.json': TOOLS,
+    '/repo/sdd/specs/index.json': { specs: [spec('spec-x-047-cotizaciones', 'completed')] },
+    [`${ARCA}/sdd/tools.json`]: TOOLS,
+    [`${ARCA}/sdd/specs/index.json`]: {
+      specs: [spec('spec-x-048-facturacion-arca', 'in-progress'), spec('spec-x-049-portal', 'draft')],
+    },
+    [`${ARCA}/sdd/specs/spec-x-048-facturacion-arca/cycles/cycle-01/cycle.json`]: { status: 'in-progress', flow: 'full' },
+    [`${ARCA}/sdd/specs/spec-x-048-facturacion-arca/cycles/cycle-01/tasks.json`]: { tasks: [] },
+    [`${ARCA}/sdd/specs/spec-x-049-portal/spec-x-049-portal.spec.md`]: '# 049',
+    ...extra,
+  });
+
+  it('ve las unidades de otro worktree, ata la única y la franja dice dónde trabaja', async () => {
+    const store = memoryStore(repo());
+    const snap = await sdd.loadSnapshot(store, ROOT, session);
+    expect(snap.worktrees).toEqual(['/repo', ARCA]);
+    expect(snap.openUnits).toEqual([cycle48]);
+    expect(snap.mine?.unit).toEqual(cycle48);
+    expect(snap.mine?.worktree).toBe(ARCA);
+    expect(snap.specs?.map((s) => s.spec)).toEqual(['spec-x-049-portal']);
+    expect(sdd.bandLine(snap)).toContain('esta sesión: spec-x-048-facturacion-arca · cycle-01 · full · 0/0 · en arca');
+  });
+
+  it('el gate juzga el archivo contra su worktree: código en otro worktree sin unidad no pasa', () => {
+    const empty = snapshot({ root: ROOT, worktrees: ['/repo', ARCA], openUnits: [] });
+    expect(sdd.judgeEdit(empty, ROOT, `${ARCA}/src/a.ts`, NOW).kind).toBe('deny');
+    expect(sdd.judgeEdit(empty, ROOT, '/elsewhere/a.ts', NOW).kind).toBe('allow');
+  });
+
+  it('la marca con worktree ata contra ese worktree; sin worktree se rechaza con el motivo', async () => {
+    const store = memoryStore(repo({ '/repo/sdd/fixes.json': { fixes: [{ id: 'FIX-x-001', status: 'pending', title: 'f', type: 'improvement' }] } }));
+    const plain = 'SDD-BIND spec=spec-x-048-facturacion-arca cycle=cycle-01';
+    expect(await sdd.bindFromCommand(store, ROOT, session, 'pnpm sdd:use 048 cycle-01', plain)).toEqual({
+      rejected: expect.stringContaining('/repo'),
+    });
+    const marker = `${plain} worktree=${encodeURIComponent(ARCA)}`;
+    expect(await sdd.bindFromCommand(store, ROOT, session, 'cd /wt/arca && pnpm sdd:use 048 cycle-01', marker)).toEqual({
+      bound: cycle48,
+      worktree: ARCA,
+    });
+    const snap = await sdd.loadSnapshot(store, ROOT, session);
+    expect(snap.mine?.source).toBe('sdd-use');
+    expect(sdd.bandLine(snap)).toContain('· en arca');
+    await sdd.bindFromCommand(store, ROOT, session, 'pnpm sdd:use FIX-x-001', 'SDD-BIND fix=FIX-x-001');
+    expect(sdd.bandLine(await sdd.loadSnapshot(store, ROOT, session))).toContain('esta sesión: FIX-x-001 · improvement ·');
+  });
+
+  it('una spec sin ciclo se puede atar, no autoriza código y sube sola al ciclo cuando se abre', async () => {
+    const files = repo();
+    const store = memoryStore(files);
+    const marker = `SDD-BIND spec=spec-x-049-portal worktree=${encodeURIComponent(ARCA)}`;
+    expect(await sdd.bindFromCommand(store, ROOT, session, 'pnpm sdd:gate 049', marker)).toEqual({
+      bound: { kind: 'spec', spec: 'spec-x-049-portal' },
+      worktree: ARCA,
+    });
+    const preparing = await sdd.loadSnapshot(store, ROOT, session);
+    expect(preparing.mine?.source).toBe('gate-a');
+    expect(sdd.bandLine(preparing)).toContain('esta sesión: spec-x-049-portal · preparando la spec · en arca');
+    const verdict = sdd.judgeEdit(preparing, ROOT, `${ARCA}/src/a.ts`, NOW);
+    expect(verdict.kind).toBe('deny');
+    expect(verdict.reason).toContain('preparando spec-x-049-portal');
+
+    files[`${ARCA}/sdd/specs/spec-x-049-portal/cycles/cycle-01/cycle.json`] = { status: 'in-progress', flow: 'lite' };
+    const opened = await sdd.loadSnapshot(store, ROOT, session);
+    expect(opened.mine?.unit).toEqual({ kind: 'cycle', spec: 'spec-x-049-portal', cycle: 'cycle-01' });
+    expect(opened.mine?.source).toBe('spec-cycle');
+  });
+
+  it('escribir un documento de la spec o del ciclo ata la sesión aunque haya varias unidades', async () => {
+    const files = repo({
+      [`${ARCA}/sdd/specs/spec-x-049-portal/cycles/cycle-01/cycle.json`]: { status: 'in-progress', flow: 'lite' },
+    });
+    const store = memoryStore(files);
+    const before = await sdd.loadSnapshot(store, ROOT, session);
+    expect(before.openUnits).toHaveLength(2);
+    expect(before.mine).toBeNull();
+    const doc = `${ARCA}/sdd/specs/spec-x-048-facturacion-arca/cycles/cycle-01/functional.md`;
+    expect(await sdd.bindFromEdit(store, before, doc, session)).toEqual(cycle48);
+    const after = await sdd.loadSnapshot(store, ROOT, session);
+    expect(after.mine?.source).toBe('document');
+    expect(sdd.judgeEdit(after, ROOT, `${ARCA}/src/a.ts`, NOW).kind).toBe('allow');
+  });
+
+  it('código en un worktree con una sola unidad ata a esa unidad', async () => {
+    const files = repo({
+      '/repo/sdd/fixes.json': { fixes: [{ id: 'FIX-x-002', status: 'in-progress', title: 'f', type: 'bugfix' }] },
+    });
+    const store = memoryStore(files);
+    const before = await sdd.loadSnapshot(store, ROOT, session);
+    expect(before.mine).toBeNull();
+    expect(await sdd.bindFromEdit(store, before, `${ARCA}/src/a.ts`, session)).toEqual(cycle48);
+    expect(await sdd.bindFromEdit(store, before, '/repo/src/a.ts', session)).toEqual({ kind: 'fix', fix: 'FIX-x-002' });
   });
 });
