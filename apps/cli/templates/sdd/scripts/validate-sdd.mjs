@@ -9,6 +9,7 @@ import { fileURLToPath } from 'url';
 import { execFileSync } from 'child_process';
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
+import { unresolvedExplicitRefs } from './lib/pack.mjs';
 
 const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
@@ -813,6 +814,23 @@ if (existsSync(join(SDD, 'tools.json'))) {
       if (t.usage?.allocation && t.usage.approx !== true)
         warn(`${file} ${t.id}`, 'usage.allocation without approx: true — a split batch total is an estimate; set approx: true');
     }
+  }
+
+  if (existsSync(join(SDD, 'packs.json'))) validate('packs.json', 'packs.schema.json');
+  const packIo = {
+    read: (path) => {
+      try {
+        return readFileSync(join(REPO, path));
+      } catch {
+        return null;
+      }
+    },
+  };
+  for (const [file, ct] of cycleTasks) {
+    if (!ct) continue;
+    const cycleDir = `sdd/${file.replace(/\/tasks\.json$/, '')}`;
+    for (const { task, ref } of unresolvedExplicitRefs(packIo, cycleDir))
+      warn(`${file} ${task}`, `ref "${ref}" does not resolve to a heading — fix refs[] in tasks.json or the document`);
   }
 
   const verifyPath = join(SDD, 'verify.json');

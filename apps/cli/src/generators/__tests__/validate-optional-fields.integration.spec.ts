@@ -147,10 +147,34 @@ describe.skipIf(process.platform === 'win32')('validate-sdd.mjs optional fields 
     write(document(tasks, { batches }));
     rebuild();
     expect(validate().output).toContain('exceeds the cap of 4 tasks / 12 SP');
-    writeFileSync(resolve(ws, 'sdd/packs.json'), JSON.stringify({ execution: { max_tasks_per_batch: 6, max_points_per_batch: 20 } }));
+    writeFileSync(resolve(ws, 'sdd/packs.json'), JSON.stringify({ roles: {}, execution: { max_tasks_per_batch: 6, max_points_per_batch: 20 } }));
     expect(validate().output).not.toContain('exceeds the cap');
     writeFileSync(resolve(ws, 'sdd/packs.json'), '{ not json');
     expect(validate().output).toContain('exceeds the cap of 4 tasks / 12 SP');
+  });
+
+  it('a packs.json that violates its schema is an error, a valid one is silent', () => {
+    writeFileSync(resolve(ws, 'sdd/packs.json'), JSON.stringify({ roles: { x: { unit: 'weird', include: [] } } }));
+    const bad = validate();
+    expect(bad.status).toBe(1);
+    expect(bad.output).toContain('packs.json');
+    writeFileSync(resolve(ws, 'sdd/packs.json'), JSON.stringify({ roles: { x: { unit: 'cycle', include: ['cycle'] } } }));
+    const good = validate();
+    expect(good.status).toBe(0);
+    expect(good.output).not.toContain('packs.json');
+  });
+
+  it('warns once per explicit ref that does not resolve and never fails', async () => {
+    await fs.writeFile(join(resolve(tasksFile, '..'), 'architect.md'), '# Arch\n\n### D-01. First\ntext\n');
+    write(document([task('TASK-001', { refs: ['architect#D-01', 'architect#D-99', 'functional#US-1-001'] }), task('TASK-002')]));
+    rebuild();
+    const run = validate();
+    expect(run.status).toBe(0);
+    const text = run.warnings.join('\n');
+    expect(text).toContain('TASK-001: ref "architect#D-99" does not resolve');
+    expect(text).toContain('ref "functional#US-1-001" does not resolve');
+    expect(text).not.toContain('architect#D-01"');
+    await fs.remove(join(resolve(tasksFile, '..'), 'architect.md'));
   });
 
   it('a block within the caps and consistent produces no warning', () => {

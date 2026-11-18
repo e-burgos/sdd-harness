@@ -41,6 +41,19 @@ Un bloque lo ejecuta **un** agente, task por task, sin recargar contexto entre u
    secuencia y cierra cada task con `sdd:task done … --approx`.
 7. **Reviewer:** `pnpm sdd:verify <app> full --reuse` en vez de repetir la verificación completa.
 
+## Protocolo del implementador
+
+Pasos por task del bloque; tu contexto es el paquete que te indicó el orquestador.
+
+1. Implementá solo la task en curso, con los archivos y criterios de su sección del plan.
+2. Corré `pnpm sdd:verify <app> quick --files <los archivos que tocaste> --unit TASK-NNN`.
+3. Commiteá la task (un commit por task) y respondé **una línea**: task, sha, resultado del verify.
+4. Si fue la última task del bloque, corré además `pnpm sdd:verify <app> full --unit B-NN`.
+5. Nunca edites `tasks.json` a mano: el estado y el `usage` los registra el orquestador con
+   `pnpm sdd:task`.
+6. Si tuviste que leer una ruta fuera del paquete, decilo en tu respuesta (pack-miss) para que el
+   orquestador lo registre y el paquete se ajuste.
+
 ## `pnpm sdd:task` — estado y telemetría de una task
 
 ```bash

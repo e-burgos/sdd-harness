@@ -167,6 +167,9 @@
       "file": "global.schema.json"
     },
     {
+      "file": "packs.schema.json"
+    },
+    {
       "file": "pricing.schema.json"
     },
     {
