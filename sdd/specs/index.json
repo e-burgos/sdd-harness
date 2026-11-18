@@ -386,10 +386,10 @@
       "file": "sdd/specs/spec-e-burgos-025-agent-context/spec-e-burgos-025-agent-context.spec.md",
       "module": "agent-context",
       "app": "apps/cli",
-      "status": "in-progress",
+      "status": "completed",
       "title": "Contexto por agente y ejecución de ciclos: núcleo mínimo, paquete por unidad, bloques y verify en dos niveles",
       "created_at": "2026-11-17",
-      "completed_at": null,
+      "completed_at": "2026-11-18",
       "depends_on": [
         "spec-e-burgos-024-session-where"
       ]

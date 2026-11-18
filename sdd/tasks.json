@@ -476,7 +476,7 @@
           "apps": [
             "apps/cli"
           ],
-          "status": "in-progress",
+          "status": "completed",
           "tasks_total": 3,
           "tasks_done": 3
         }

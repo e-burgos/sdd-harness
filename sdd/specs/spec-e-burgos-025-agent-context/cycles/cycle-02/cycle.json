@@ -11,9 +11,9 @@
   "objectives": [
     "Paquete determinista de contexto por unidad y medición antes/después (US-5, US-6)"
   ],
-  "status": "in-progress",
+  "status": "completed",
   "started_at": "2026-11-17",
-  "completed_at": null,
+  "completed_at": "2026-11-18",
   "documents": {
     "plan": "sdd/specs/spec-e-burgos-025-agent-context/cycles/cycle-02/plan.md",
     "tasks": "sdd/specs/spec-e-burgos-025-agent-context/cycles/cycle-02/tasks.json"
@@ -23,16 +23,110 @@
   ],
   "metrics": {
     "tasks_total": 3,
-    "tasks_completed": 0,
+    "tasks_completed": 3,
     "tasks_skipped": 0,
     "story_points": 16,
-    "files_created": [],
-    "files_modified": [],
-    "files_deleted": []
+    "files_created": [
+      "apps/cli/src/generators/__tests__/sdd-pack.integration.spec.ts",
+      "apps/cli/src/utils/__tests__/pack.spec.ts",
+      "apps/cli/templates/sdd/packs.json",
+      "apps/cli/templates/sdd/schemas/packs.schema.json",
+      "apps/cli/templates/sdd/scripts/lib/pack.mjs",
+      "apps/cli/templates/sdd/scripts/sdd-pack.mjs"
+    ],
+    "files_modified": [
+      "apps/cli/src/generators/__tests__/validate-optional-fields.integration.spec.ts",
+      "apps/cli/src/utils/__tests__/task-registry.spec.ts",
+      "apps/cli/templates/sdd/README.md",
+      "apps/cli/templates/sdd/agents/sdd-architect.agent.md",
+      "apps/cli/templates/sdd/agents/sdd-functional.agent.md",
+      "apps/cli/templates/sdd/agents/sdd-implementor-back.agent.md",
+      "apps/cli/templates/sdd/agents/sdd-implementor-front.agent.md",
+      "apps/cli/templates/sdd/agents/sdd-orchestrator.agent.md",
+      "apps/cli/templates/sdd/agents/sdd-planner.agent.md",
+      "apps/cli/templates/sdd/agents/sdd-reviewer.agent.md",
+      "apps/cli/templates/sdd/catalog.json",
+      "apps/cli/templates/sdd/documentation/en/HOW-TO-USE-SDD.md",
+      "apps/cli/templates/sdd/documentation/en/INSTALL.md",
+      "apps/cli/templates/sdd/documentation/en/README.md",
+      "apps/cli/templates/sdd/documentation/es/HOW-TO-USE-SDD.md",
+      "apps/cli/templates/sdd/documentation/es/INSTALL.md",
+      "apps/cli/templates/sdd/documentation/es/README.md",
+      "apps/cli/templates/sdd/dual-harness/rules/sdd-execution.md",
+      "apps/cli/templates/sdd/prompts/start-sdd-cycle.prompt.md",
+      "apps/cli/templates/sdd/scripts/lib/task-registry.mjs",
+      "apps/cli/templates/sdd/scripts/sdd-task.mjs",
+      "apps/cli/templates/sdd/scripts/validate-sdd.mjs",
+      "apps/cli/templates/sdd/skills/sdd-orchestrator/SKILL.md",
+      "apps/cli/templates/sdd/templates/nx-workspace/package.json"
+    ],
+    "files_deleted": [],
+    "usage": {
+      "tokens_in": 532923,
+      "tokens_out": 94045,
+      "approx": true,
+      "source": "declared-estimate",
+      "by_agent": [
+        {
+          "agent": "implementor-back",
+          "label": "TASK-001..003, un bloque continuado",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 243781,
+          "tokens_out": 43020,
+          "source": "agent-usage-notification",
+          "approx": false,
+          "recorded_at": "2026-11-18"
+        },
+        {
+          "agent": "reviewer",
+          "label": "auditoría adversarial dirigida de sdd:pack",
+          "provider_model": "claude/opus",
+          "effort": "high",
+          "tokens_in": 136142,
+          "tokens_out": 24025,
+          "source": "agent-usage-notification",
+          "approx": false,
+          "recorded_at": "2026-11-18"
+        },
+        {
+          "agent": "orchestrator",
+          "label": "contrato, despacho, medición en ciclos reales y cierre (main loop)",
+          "provider_model": "claude/opus",
+          "effort": "low",
+          "tokens_in": 153000,
+          "tokens_out": 27000,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-18"
+        }
+      ]
+    }
   },
   "tables_created": [],
   "endpoints_implemented": [],
   "components_created": [],
-  "issues_found": [],
-  "reviewer_report": null
+  "issues_found": [
+    "7 defectos confirmados por la auditoría de sdd:pack y uno de UX encontrado al medir (--stats multi-app), todos corregidos con test de regresión (commit 00d2603)",
+    "next build de Studio se detiene una vez con el aviso de seguridad de Next.js; reintentado pasa"
+  ],
+  "reviewer_report": {
+    "approved": true,
+    "date": "2026-11-18",
+    "ca_results": {
+      "US-5": "PASS - packs.json + sdd:pack deterministas; orquestador despacha con paquete y cae al flujo anterior con exit 3; agent.md de rol leen el paquete con una línea de fallback; --pack-miss registra lecturas fuera del paquete",
+      "US-6": "PASS - medición en ciclos reales: unidad más pesada 25-51 % de sus fuentes; total de los 6 paquetes 29 % (spec-011, 230 KB vs 799 KB) y 28 % (spec-023, 86 KB vs 307 KB); spec-013 TASK-002 trae US-1, US-2, US-5 y D-04 sin refs sin resolver"
+    },
+    "tests": {
+      "protocol": "OK - 192",
+      "cli": "OK - 992",
+      "bridge": "OK - 1012",
+      "studio": "OK - 1317",
+      "typecheck": "OK",
+      "build": "OK",
+      "sdd-validate": "OK",
+      "real-data": "OK - sdd:pack sobre ciclos 011, 013, 023, 024 y 025 del repo"
+    },
+    "notes": "Sin prueba A/B con agentes (descartada en modo lite): el ahorro se mide en bytes del paquete y en el consumo real del próximo ciclo. Windows solo por tests unitarios. Pendiente no bloqueante: encabezados setext y fences indentados dentro de listas no se reconocen como CommonMark."
+  }
 }
