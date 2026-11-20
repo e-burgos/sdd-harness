@@ -10,7 +10,7 @@ import type { AttachmentStore } from '../sessions/attachment-store';
 import { SessionError, type SessionManager } from '../sessions/session-manager';
 import type { ThreadStore } from '../sessions/store';
 import { createClaudeInventory, type ClaudeInventoryService } from '../workspace/claude-inventory';
-import { readClaudeTools, setClaudeTools } from '../workspace/claude-tools';
+import { type ClaudeToolsState, readClaudeTools, setClaudeTools, useGlobalClaudeTools } from '../workspace/claude-tools';
 import type { FileIndex } from '../workspace/file-index';
 import type { KitIndexer } from '../workspace/kit-index';
 import { createKitIntegrations, type KitIntegrations } from '../workspace/kit-integrations';
@@ -51,6 +51,24 @@ export function createHandlers(d: {
 }): BridgeHandlers {
   const integrations = d.integrations ?? createKitIntegrations();
   const claudeInventory = d.claudeInventory ?? createClaudeInventory({ root: d.root });
+  const claudeToolsResult = (state: ClaudeToolsState): ClaudeToolsGetResult => ({
+    config: state.config,
+    revision: state.revision,
+    inventory: claudeInventory.current(),
+    browserMcpVersion: CHROME_DEVTOOLS_MCP_VERSION,
+    scope: state.scope,
+    hasProjectOverride: state.hasProjectOverride,
+  });
+  const announceClaudeTools = (before: ClaudeToolsConfig, after: ClaudeToolsState) => {
+    const event: BotEvent = {
+      channelId: 'general',
+      botKind: 'claude-tools.changed',
+      payload: { changed: changedClaudeAreas(before, after.config), revision: after.revision, scope: after.scope },
+      at: (d.now?.() ?? new Date()).toISOString(),
+    };
+    d.store.appendBot(event);
+    d.broadcast({ kind: 'bot.event', ...event });
+  };
   return {
     welcome: () => {
       const snapshot = d.watcher.current();
@@ -135,30 +153,19 @@ export function createHandlers(d: {
           }
           return result;
         }
-        case 'claude.tools.get': {
-          const { config, revision } = await readClaudeTools(d.root);
-          const result: ClaudeToolsGetResult = {
-            config,
-            revision,
-            inventory: claudeInventory.current(),
-            browserMcpVersion: CHROME_DEVTOOLS_MCP_VERSION,
-          };
-          return result;
-        }
+        case 'claude.tools.get':
+          return claudeToolsResult(await readClaudeTools(d.root));
         case 'claude.tools.set': {
           const before = (await readClaudeTools(d.root)).config;
-          const result = await setClaudeTools(d.root, command.config, command.expectedRevision);
-          if (result.changed) {
-            const event: BotEvent = {
-              channelId: 'general',
-              botKind: 'claude-tools.changed',
-              payload: { changed: changedClaudeAreas(before, result.config), revision: result.revision },
-              at: (d.now?.() ?? new Date()).toISOString(),
-            };
-            d.store.appendBot(event);
-            d.broadcast({ kind: 'bot.event', ...event });
-          }
-          return result;
+          const result = await setClaudeTools(d.root, command.config, command.expectedRevision, command.scope);
+          if (result.changed) announceClaudeTools(before, result);
+          return { config: result.config, revision: result.revision, changed: result.changed, scope: result.scope, hasProjectOverride: result.hasProjectOverride };
+        }
+        case 'claude.tools.useGlobal': {
+          const before = (await readClaudeTools(d.root)).config;
+          const result = await useGlobalClaudeTools(d.root, command.expectedRevision);
+          if (result.changed) announceClaudeTools(before, result);
+          return claudeToolsResult(result);
         }
         case 'claude.inventory.refresh':
           return { inventory: await claudeInventory.refresh() };

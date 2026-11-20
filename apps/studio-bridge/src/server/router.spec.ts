@@ -1,6 +1,7 @@
 import { AuthState } from '../auth-mode';
 import { BRIDGE_FEATURES, decodeClientMessage, defaultThreadOptions, type ClientCommand, type RtkGain, type ServerEvent } from '@sdd-studio/protocol';
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { CommandRunner } from '../commands/runner';
@@ -19,8 +20,16 @@ import { createHandlers } from './router';
 
 let root: string;
 let cleanup: () => Promise<void>;
-beforeEach(async () => ({ root, cleanup } = await copyFixture()));
-afterEach(() => cleanup());
+let home: string;
+beforeEach(async () => {
+  ({ root, cleanup } = await copyFixture());
+  home = await mkdtemp(path.join(tmpdir(), 'router-home-'));
+  process.env.SDD_STUDIO_HOME = home;
+});
+afterEach(async () => {
+  await cleanup();
+  await rm(home, { recursive: true, force: true });
+});
 
 async function handlers(
   broadcast: (e: ServerEvent) => void = () => {},
@@ -94,6 +103,39 @@ describe('claude tools commands', () => {
     expect(bot[0]).toMatchObject({ channelId: 'general', botKind: 'claude-tools.changed', payload: { changed: ['sources', 'mcp'] } });
     await h.handle(cmd({ cmd: 'claude.tools.set', config: customConfig, expectedRevision: result.revision }));
     expect(events.filter((e) => e.kind === 'bot.event')).toHaveLength(1);
+  });
+
+  it('get reports the effective scope', async () => {
+    const h = await handlers(undefined, undefined, { claudeInventory: fakeInventory() });
+    const result = (await h.handle(cmd({ cmd: 'claude.tools.get' }))) as { scope: string; hasProjectOverride: boolean };
+    expect(result).toMatchObject({ scope: 'global', hasProjectOverride: false });
+  });
+
+  it('set with scope project creates the override and useGlobal drops it, announcing both', async () => {
+    const events: ServerEvent[] = [];
+    const h = await handlers((e) => events.push(e), undefined, { claudeInventory: fakeInventory() });
+    const { revision } = (await h.handle(cmd({ cmd: 'claude.tools.get' }))) as { revision: string };
+    const set = (await h.handle(cmd({ cmd: 'claude.tools.set', config: customConfig, expectedRevision: revision, scope: 'project' }))) as { scope: string; hasProjectOverride: boolean; revision: string };
+    expect(set).toMatchObject({ scope: 'project', hasProjectOverride: true });
+    const back = (await h.handle(cmd({ cmd: 'claude.tools.useGlobal', expectedRevision: set.revision }))) as { scope: string; hasProjectOverride: boolean; config: unknown; inventory: unknown };
+    expect(back).toMatchObject({ scope: 'global', hasProjectOverride: false });
+    const bot = events.filter((e) => e.kind === 'bot.event');
+    expect(bot).toHaveLength(2);
+    expect(bot[0]).toMatchObject({ botKind: 'claude-tools.changed', payload: { scope: 'project' } });
+    expect(bot[1]).toMatchObject({ botKind: 'claude-tools.changed', payload: { scope: 'global', changed: ['sources', 'mcp'] } });
+  });
+
+  it('useGlobal without an override changes nothing and announces nothing', async () => {
+    const events: ServerEvent[] = [];
+    const h = await handlers((e) => events.push(e), undefined, { claudeInventory: fakeInventory() });
+    const { revision } = (await h.handle(cmd({ cmd: 'claude.tools.get' }))) as { revision: string };
+    await h.handle(cmd({ cmd: 'claude.tools.useGlobal', expectedRevision: revision }));
+    expect(events.filter((e) => e.kind === 'bot.event')).toHaveLength(0);
+  });
+
+  it('useGlobal reports conflict on a stale revision', async () => {
+    const h = await handlers(undefined, undefined, { claudeInventory: fakeInventory() });
+    await expect(h.handle(cmd({ cmd: 'claude.tools.useGlobal', expectedRevision: 'ffffffffffffffff' }))).rejects.toMatchObject({ code: 'conflict' });
   });
 
   it('set reports conflict on a stale revision', async () => {
