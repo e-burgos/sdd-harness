@@ -1902,6 +1902,43 @@
         "source": "declared-estimate",
         "recorded_at": "2026-11-20"
       }
+    },
+    {
+      "id": "FIX-e-burgos-012",
+      "author": "e-burgos",
+      "spec_id": null,
+      "fix_document": "sdd/fixes/fix-e-burgos-012.md",
+      "type": "BUGFIX",
+      "severity": "high",
+      "created_at": "2026-11-20",
+      "resolved_at": "2026-11-20",
+      "title": "El puente y el mod no se bloquean entre sí por la misma conversación",
+      "estimation_hours": 1.5,
+      "description": "Con el mod prendido dentro de Studio, el mod reserva con el session_id del SDK y el puente juzga con su id studio-…: la conversación se bloquea a sí misma en cada edición.",
+      "justification": "Error confirmado en uso real (bloqueó FIX-e-burgos-011); perfil solo; sin contratos ni entidades nuevas.",
+      "related_modules": [
+        "studio-parallel-sessions"
+      ],
+      "affected_files": [
+        "apps/studio-bridge/src/sessions/session-bindings.ts",
+        "apps/studio-bridge/src/sessions/session-manager.ts",
+        "apps/studio-bridge/src/sessions/session-bindings.spec.ts",
+        "sdd/fixes/fix-e-burgos-012.md"
+      ],
+      "test_reference": "sdd:verify apps/studio-bridge full OK (5ffaa13); 4 specs nuevos de alias. Pendiente: edición real con el mod prendido.",
+      "status": "implemented",
+      "cycle": null,
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "tokens_in": 61135,
+        "tokens_out": 10789,
+        "tokens_total": 71924,
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-20"
+      }
     }
   ]
 }
