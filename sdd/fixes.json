@@ -2022,9 +2022,22 @@
       "author": "e-burgos",
       "spec_id": null,
       "created_at": "2026-11-20",
-      "resolved_at": null,
-      "affected_files": [],
-      "test_reference": "",
+      "resolved_at": "2026-11-20",
+      "affected_files": [
+        "apps/cli/src/generators/__tests__/tucu-ui.integration.spec.ts",
+        "apps/cli/templates/sdd/scripts/rebuild-catalog.mjs",
+        "apps/cli/templates/sdd/scripts/sdd-tucu.mjs",
+        "apps/cli/templates/sdd/scripts/setup-agents.ps1",
+        "apps/cli/templates/sdd/scripts/setup-agents.sh",
+        "apps/cli/templates/sdd/scripts/tucu-ui-common.mjs",
+        "sdd/fixes/fix-e-burgos-015.md",
+        "sdd/scripts/rebuild-catalog.mjs",
+        "sdd/scripts/sdd-tucu.mjs",
+        "sdd/scripts/setup-agents.ps1",
+        "sdd/scripts/setup-agents.sh",
+        "sdd/scripts/tucu-ui-common.mjs"
+      ],
+      "test_reference": "pnpm --filter @e-burgos/sdd-harness test (998 OK, 55 de tucu con 4 casos nuevos) + typecheck + build; prueba real en examples/test-fix-015 con la CLI construida y tucu instalado de verdad: restaurar el symlink y re-correr setup-agents conserva el enlace, rebuild-catalog sin diff, validate sin aviso, update sdd lo mantiene. En este repo: sdd-tucu --status ⇒ claude complete y la skill tucu-ui-design aparece en la sesión.",
       "cycle": null,
       "id": "FIX-e-burgos-015",
       "fix_document": "sdd/fixes/fix-e-burgos-015.md",
@@ -2037,7 +2050,19 @@
       "related_modules": [
         "kit-tucu-ui"
       ],
-      "status": "in-progress"
+      "status": "validated",
+      "validated_at": "2026-11-20",
+      "usage": {
+        "provider_model": "claude/opus",
+        "effort": "high",
+        "agent": "implementor-back",
+        "tokens_in": 114919,
+        "tokens_out": 20280,
+        "tokens_total": 135199,
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-20"
+      }
     },
     {
       "author": "e-burgos",
