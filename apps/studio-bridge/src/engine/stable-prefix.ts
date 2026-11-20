@@ -34,11 +34,13 @@ const readSource = (root: string, source: string): string | null => {
   }
 };
 
-export function createStablePrefixLoader(root: string, warn: (message: string) => void = defaultWarn): () => string {
+export const LESSONS_SOURCE = 'sdd/memory/lessons.md';
+
+function createSourcesLoader(root: string, sources: readonly string[], warn: (message: string) => void): () => string {
   const warned = new Set<string>();
   return () =>
     composeStablePrefix(
-      STABLE_PREFIX_SOURCES.flatMap((source) => {
+      sources.flatMap((source) => {
         const content = readSource(root, source);
         if (content !== null) return [{ source, content }];
         if (!warned.has(source)) {
@@ -49,3 +51,9 @@ export function createStablePrefixLoader(root: string, warn: (message: string) =
       }),
     );
 }
+
+export const createStablePrefixLoader = (root: string, warn: (message: string) => void = defaultWarn): (() => string) =>
+  createSourcesLoader(root, STABLE_PREFIX_SOURCES, warn);
+
+export const createLessonsLoader = (root: string, warn: (message: string) => void = defaultWarn): (() => string) =>
+  createSourcesLoader(root, [LESSONS_SOURCE], warn);

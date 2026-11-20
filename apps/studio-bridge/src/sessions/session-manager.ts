@@ -23,7 +23,7 @@ import type {
   ThreadOptions,
   WorkspaceSnapshot,
 } from '@sdd-studio/protocol';
-import { createStablePrefixLoader } from '../engine/stable-prefix';
+import { createLessonsLoader, createStablePrefixLoader } from '../engine/stable-prefix';
 import { buildTurnPrompt, type AcceptedMessage } from '../engine/prompt-content';
 import { diffFor, summarizeTool } from '../engine/tool-summary';
 import {
@@ -39,6 +39,7 @@ import {
   type ToolVerdict,
 } from '../engine/types';
 import { editTargetOf, judgeEdit, openUnitsOfSnapshot, type SessionJudge } from '../gate/judge';
+import { createPackContext, type PackContext, type PackTarget, type ThreadContext } from './pack-context';
 import { alwaysOfferOf, matchesRule, ruleOf } from './always-rule';
 import type { AttachmentStore } from './attachment-store';
 import { DocumentChangeTracker, type AttributedTouch } from './document-tracker';
@@ -80,6 +81,7 @@ export interface SessionManagerDeps {
   engine: AgentEngine;
   store: ThreadStore;
   stablePrefix?: () => string;
+  packContext?: PackContext;
   snapshot: () => WorkspaceSnapshot;
   broadcast: (message: ServerEvent) => void;
   newId?: () => string;
@@ -194,6 +196,7 @@ export class SessionManager {
   private readonly newId: () => string;
   private readonly now: () => string;
   private readonly stablePrefix: () => string;
+  private readonly packContext: PackContext;
   private lastPresence = '';
   private queueCounter = 0;
 
@@ -201,6 +204,7 @@ export class SessionManager {
     this.newId = deps.newId ?? randomUUID;
     this.now = deps.now ?? (() => new Date().toISOString());
     this.stablePrefix = deps.stablePrefix ?? createStablePrefixLoader(deps.root);
+    this.packContext = deps.packContext ?? createPackContext({ root: deps.root, readLessons: createLessonsLoader(deps.root) });
     this.documents = deps.tracker ?? new DocumentChangeTracker(deps.root);
     this.tracker = new PresenceTracker(() => deps.snapshot().agents.map((a) => a.id));
     for (const thread of deps.store.list()) this.tracker.onThread(toInfo(thread));
@@ -279,6 +283,7 @@ export class SessionManager {
     this.persist(thread);
     this.tracker.onThread(toInfo(thread));
     this.deps.broadcast({ kind: 'thread.updated', thread: toInfo(thread) });
+    await this.warmContext(thread).catch(reportError);
     this.decide(thread, accepted);
     return toInfo(this.require(thread.id));
   }
@@ -288,7 +293,11 @@ export class SessionManager {
     const live = this.liveOf(threadId);
     const prepared = this.accept(message);
     prepared.catch(() => undefined);
-    const decision = live.acceptTail.then(async () => this.decide(this.require(threadId), await prepared));
+    const decision = live.acceptTail.then(async () => {
+      const accepted = await prepared;
+      await this.warmContext(this.require(threadId)).catch(reportError);
+      return this.decide(this.require(threadId), accepted);
+    });
     live.acceptTail = decision.then(
       () => undefined,
       () => undefined,
@@ -354,6 +363,7 @@ export class SessionManager {
     } else {
       this.replaceLinkEntries(thread, addManual(entries, target), 'manual');
     }
+    void this.warmContext(thread).catch(reportError);
     return toInfo(thread);
   }
 
@@ -363,6 +373,7 @@ export class SessionManager {
     if (!change.add.every((ref) => linkTargetExists(snapshot, ref))) throw new SessionError('not-found', 'a link target does not exist');
     const removed = change.remove.reduce(removeRef, thread.link.targets);
     this.replaceLinkEntries(thread, change.add.reduce(addManual, removed), thread.link.source);
+    void this.warmContext(thread).catch(reportError);
     return toInfo(thread);
   }
 
@@ -579,9 +590,35 @@ export class SessionManager {
     this.publishThread(thread);
   }
 
-  private systemPrefixInput(): { systemPrefix?: string } {
-    const systemPrefix = this.stablePrefix();
-    return systemPrefix.length > 0 ? { systemPrefix } : {};
+  private packTargetOf(thread: StoredThread): PackTarget | null {
+    const unit = this.unitOf(thread);
+    if (unit?.kind !== 'cycle') return null;
+    const cycle = this.deps.snapshot().cycles.find((candidate) => candidate.specId === unit.spec && candidate.cycle === unit.cycle);
+    return this.packContext.targetOf(thread.options.agent, unit, cycle);
+  }
+
+  private contextOf(thread: StoredThread): ThreadContext {
+    const target = this.packTargetOf(thread);
+    const packed = target ? this.packContext.peek(target) : null;
+    if (packed) return packed;
+    const prefix = this.stablePrefix();
+    return { prefix, source: { kind: 'base', bytes: Buffer.byteLength(prefix) } };
+  }
+
+  private syncContextSource(thread: StoredThread, context: ThreadContext): void {
+    if (JSON.stringify(thread.contextSource) === JSON.stringify(context.source)) return;
+    thread.contextSource = context.source;
+    this.publishThread(thread);
+  }
+
+  private async warmContext(thread: StoredThread): Promise<void> {
+    const target = this.packTargetOf(thread);
+    if (target) await this.packContext.load(target);
+    this.syncContextSource(thread, this.contextOf(thread));
+  }
+
+  private systemPrefixInput(context: ThreadContext): { systemPrefix?: string } {
+    return context.prefix.length > 0 ? { systemPrefix: context.prefix } : {};
   }
 
   private sessionOwnedByAnotherThread(threadId: string, sessionId: string): boolean {
@@ -735,6 +772,8 @@ export class SessionManager {
     live.interrupted = false;
     const gen = ++live.gen;
     this.setStatus(thread, 'running');
+    const context = this.contextOf(thread);
+    this.syncContextSource(thread, context);
     let turn: EngineTurn;
     try {
       turn = this.deps.engine.startTurn(
@@ -744,7 +783,7 @@ export class SessionManager {
           options: thread.options,
           resumeSessionId: thread.engineSessionId,
           cwd: this.deps.root,
-          ...this.systemPrefixInput(),
+          ...this.systemPrefixInput(context),
         },
         {
           emit: (event) => this.emit(thread, event, true),

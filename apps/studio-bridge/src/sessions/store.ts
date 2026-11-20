@@ -3,6 +3,7 @@ import path from 'node:path';
 import {
   ChannelId,
   ContextUsage,
+  ThreadContextSource,
   DEFAULT_PROVIDER,
   MAX_PENDING_PER_THREAD,
   ProviderId,
@@ -175,6 +176,9 @@ export class ThreadStore {
       t.link = migrateStoredLink(t.link);
       t.sessionTitle = typeof t.sessionTitle === 'string' && t.sessionTitle.length > 0 ? t.sessionTitle : null;
       t.engineSessionId = typeof t.engineSessionId === 'string' && t.engineSessionId.length > 0 ? t.engineSessionId : null;
+      const source = ThreadContextSource.safeParse(t.contextSource);
+      if (source.success) t.contextSource = source.data;
+      else delete t.contextSource;
       const context = ContextUsage.safeParse(t.contextUsage);
       if (context.success) t.contextUsage = context.data;
       else delete t.contextUsage;

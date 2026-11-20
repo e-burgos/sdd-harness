@@ -1,6 +1,6 @@
 import { constants } from 'node:fs';
 import { open } from 'node:fs/promises';
-import { BRIDGE_FEATURES, type ClaudeToolsConfig, type ClaudeToolsGetResult, MAX_READ_FILE_BYTES, type BotEvent, type ClientCommand, type RtkGain, type ServerMessage } from '@sdd-studio/protocol';
+import { BRIDGE_FEATURES, type ClaudeToolsConfig, type ClaudeToolsGetResult, MAX_READ_FILE_BYTES, type BotEvent, type ClientCommand, type KitPackStats, type RtkGain, type ServerMessage } from '@sdd-studio/protocol';
 import type { AuthState } from '../auth-mode';
 import type { ClaudeLogin } from '../auth/claude-login';
 import { CHROME_DEVTOOLS_MCP_VERSION } from '../engine/chrome-devtools';
@@ -18,6 +18,7 @@ import type { FileIndex } from '../workspace/file-index';
 import type { KitIndexer } from '../workspace/kit-index';
 import { createKitIntegrations, type KitIntegrations } from '../workspace/kit-integrations';
 import { setKitTool } from '../workspace/kit-tools';
+import { PackStatsError, readPackStats } from '../workspace/pack-runner';
 import { readRtkGain } from '../workspace/rtk-gain';
 import { resolveSddPath } from '../workspace/paths';
 import { ProfileError, writeProfile } from '../workspace/profile';
@@ -48,6 +49,7 @@ export function createHandlers(d: {
   kitIndexer: Pick<KitIndexer, 'index'>;
   broadcast: (message: ServerMessage) => void;
   rtkGain?: (root: string) => Promise<RtkGain>;
+  packStats?: (root: string, spec: string, cycle: string) => Promise<KitPackStats>;
   integrations?: KitIntegrations;
   claudeInventory?: ClaudeInventoryService;
   chromeStatus?: ChromeStatusService;
@@ -160,6 +162,11 @@ export function createHandlers(d: {
           return d.kitIndexer.index();
         case 'kit.rtkGain':
           return (d.rtkGain ?? readRtkGain)(d.root);
+        case 'kit.pack.stats':
+          return (d.packStats ?? readPackStats)(d.root, command.spec, command.cycle).catch((error: unknown) => {
+            if (error instanceof PackStatsError) throw new SessionError(error.code, error.message);
+            throw error;
+          });
         case 'kit.tools.set': {
           const result = await setKitTool(d.root, command.change, command.expectedRevision);
           if (result.changed) {

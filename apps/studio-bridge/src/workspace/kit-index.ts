@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { readdir, stat } from 'node:fs/promises';
+import { readdir, readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 import { KIT_SECTIONS, MAX_KIT_ENTRIES, type KitEntry, type KitIndex } from '@sdd-studio/protocol';
 
@@ -12,9 +12,14 @@ const CONTEXT_FILES = ['constitution.md', 'context_prompt.md'];
 const CONTEXT_SUBPROJECT_KINDS = ['apps', 'libs', 'tools'];
 const REGISTRY_FILES = ['schema.json', 'api.json', 'components.json'];
 const DOC_LANGUAGES = ['es', 'en'];
+const HARNESS_CORE_FILES = ['CLAUDE.md', 'AGENTS.md'];
+const FRONTMATTER = /^---\r?\n([\s\S]*?)\r?\n---/;
+const MAX_TRIGGER_LENGTH = 32;
+const MAX_DESCRIPTION_LENGTH = 512;
 
 export const KIT_WATCH_ROOTS = [
   'documentation',
+  'dual-harness',
   'schemas',
   'context',
   'memory',
@@ -23,7 +28,60 @@ export const KIT_WATCH_ROOTS = [
   'components.json',
 ];
 
-type Candidate = Pick<KitEntry, 'section' | 'role' | 'group'> & { absolute: string; relative: string };
+type Candidate = Pick<KitEntry, 'section' | 'role' | 'group'> & {
+  absolute: string;
+  relative: string;
+  measured?: string;
+  frontmatter?: boolean;
+};
+
+export const KIT_ROOT_HARNESS_FILES: readonly string[] = HARNESS_CORE_FILES;
+
+function frontmatterOf(text: string): { trigger?: string; description?: string } {
+  const block = FRONTMATTER.exec(text)?.[1];
+  if (!block) return {};
+  const fields: Record<string, string> = {};
+  for (const line of block.split(/\r?\n/)) {
+    const separator = line.indexOf(':');
+    if (separator <= 0) continue;
+    fields[line.slice(0, separator).trim()] = line.slice(separator + 1).trim().replace(/^(["'])(.*)\1$/, '$2');
+  }
+  return {
+    ...(fields.trigger ? { trigger: fields.trigger.slice(0, MAX_TRIGGER_LENGTH) } : {}),
+    ...(fields.description ? { description: fields.description.slice(0, MAX_DESCRIPTION_LENGTH) } : {}),
+  };
+}
+
+async function collectHarness(root: string, sddDir: string, out: Candidate[]): Promise<void> {
+  const harnessDir = path.join(sddDir, 'dual-harness');
+  for (const name of HARNESS_CORE_FILES) {
+    const absolute = path.join(harnessDir, name);
+    if (!(await isRegularFile(absolute))) continue;
+    const rootCopy = path.join(root, name);
+    out.push({
+      section: 'harness',
+      role: 'harness-core',
+      group: null,
+      absolute,
+      relative: `sdd/dual-harness/${name}`,
+      ...((await isRegularFile(rootCopy)) ? { measured: rootCopy } : {}),
+    });
+  }
+  const project = path.join(harnessDir, 'project.md');
+  if (await isRegularFile(project)) {
+    out.push({ section: 'harness', role: 'harness-project', group: null, absolute: project, relative: 'sdd/dual-harness/project.md' });
+  }
+  for (const name of await listFiles(path.join(harnessDir, 'rules'), '.md')) {
+    out.push({
+      section: 'harness',
+      role: 'harness-rule',
+      group: null,
+      absolute: path.join(harnessDir, 'rules', name),
+      relative: `sdd/dual-harness/rules/${name}`,
+      frontmatter: true,
+    });
+  }
+}
 
 const toPosix = (value: string): string => value.split(path.sep).join('/');
 
@@ -122,6 +180,8 @@ async function collectCandidates(root: string): Promise<Candidate[]> {
     }
   }
 
+  await collectHarness(root, sddDir, out);
+
   const lessons = path.join(sddDir, 'memory', 'lessons.md');
   if (await isRegularFile(lessons)) {
     out.push({
@@ -181,9 +241,10 @@ export async function buildKitIndex(root: string): Promise<KitSnapshot> {
   for (const candidate of candidates) {
     if (candidate.relative.length > MAX_KIT_PATH_LENGTH || (candidate.group?.length ?? 0) > MAX_KIT_GROUP_LENGTH) continue;
     try {
-      const info = await stat(candidate.absolute);
+      const info = await stat(candidate.measured ?? candidate.absolute);
       if (!info.isFile()) continue;
       mtimesMs.set(candidate.relative, info.mtimeMs);
+      const meta = candidate.frontmatter ? frontmatterOf(await readFile(candidate.absolute, 'utf8')) : {};
       entries.push({
         section: candidate.section,
         role: candidate.role,
@@ -191,6 +252,8 @@ export async function buildKitIndex(root: string): Promise<KitSnapshot> {
         path: candidate.relative,
         size: info.size,
         mtime: info.mtime.toISOString(),
+        ...(candidate.section === 'harness' ? { bytes: info.size } : {}),
+        ...meta,
       });
     } catch {
       continue;
@@ -213,6 +276,7 @@ export function changedKitSections(
 }
 
 export function isKitPath(root: string, candidate: string): boolean {
+  if (HARNESS_CORE_FILES.some((name) => candidate === path.join(root, name))) return true;
   const relative = path.relative(path.join(root, 'sdd'), candidate);
   if (relative.startsWith('..') || path.isAbsolute(relative)) return false;
   const first = relative.split(path.sep)[0] ?? '';

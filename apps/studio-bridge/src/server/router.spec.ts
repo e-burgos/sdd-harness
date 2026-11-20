@@ -1,5 +1,5 @@
 import { AuthState } from '../auth-mode';
-import { BRIDGE_FEATURES, decodeClientMessage, defaultThreadOptions, type ClientCommand, type RtkGain, type ServerEvent } from '@sdd-studio/protocol';
+import { BRIDGE_FEATURES, decodeClientMessage, defaultThreadOptions, type ClientCommand, type KitPackStats, type RtkGain, type ServerEvent } from '@sdd-studio/protocol';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -11,6 +11,7 @@ import { KitIndexer } from '../workspace/kit-index';
 import { computeToolsRevision } from '../workspace/kit-tools';
 import { createAttachmentStore } from '../sessions/attachment-store';
 import { SessionManager } from '../sessions/session-manager';
+import { PackStatsError } from '../workspace/pack-runner';
 import { ThreadStore } from '../sessions/store';
 import { copyFixture, waitFor } from '../test-utils/fixture';
 import { loadWorkspaceSnapshot } from '../workspace/snapshot';
@@ -37,7 +38,7 @@ afterEach(async () => {
 async function handlers(
   broadcast: (e: ServerEvent) => void = () => {},
   refresh: () => Promise<unknown> = async () => null,
-  extra: { claudeInventory?: ClaudeInventoryService; rtkGain?: (root: string) => Promise<RtkGain>; now?: () => Date; integrations?: KitIntegrations; chromeStatus?: ChromeStatusService; claudeMcp?: ClaudeMcpService; openSettings?: OpenStudioChromeDeps } = {},
+  extra: { claudeInventory?: ClaudeInventoryService; rtkGain?: (root: string) => Promise<RtkGain>; packStats?: (root: string, spec: string, cycle: string) => Promise<KitPackStats>; now?: () => Date; integrations?: KitIntegrations; chromeStatus?: ChromeStatusService; claudeMcp?: ClaudeMcpService; openSettings?: OpenStudioChromeDeps } = {},
   runner: CommandRunner = new CommandRunner(root, broadcast, () => 'run-1'),
 ) {
   const snapshot = (await loadWorkspaceSnapshot(root)).snapshot;
@@ -214,6 +215,16 @@ describe('createHandlers', () => {
     const index = (await (await handlers()).handle(cmd({ cmd: 'kit.index' }))) as { entries: { path: string; section: string }[]; truncated: boolean };
     expect(index.truncated).toBe(false);
     expect(index.entries).toContainEqual(expect.objectContaining({ path: 'sdd/memory/lessons.md', section: 'memory' }));
+  });
+
+  it('kit.pack.stats delegates to the reader and maps typed failures to session errors', async () => {
+    const stats: KitPackStats = { rows: [{ unit: 'B-01', role: 'implementor-back', packBytes: 1, sourceBytes: 2 }], total: { packBytes: 1, sourceBytes: 2 }, packMisses: 0 };
+    const calls: string[][] = [];
+    const h = await handlers(undefined, undefined, { packStats: async (r, spec, cycle) => { calls.push([r, spec, cycle]); return stats; } });
+    expect(await h.handle(cmd({ cmd: 'kit.pack.stats', spec: 'spec-a-001-b', cycle: 'cycle-01' }))).toEqual(stats);
+    expect(calls).toEqual([[root, 'spec-a-001-b', 'cycle-01']]);
+    const failing = await handlers(undefined, undefined, { packStats: async () => { throw new PackStatsError('not-found', 'nope'); } });
+    await expect(failing.handle(cmd({ cmd: 'kit.pack.stats', spec: 'spec-a-001-b', cycle: 'cycle-01' }))).rejects.toMatchObject({ code: 'not-found' });
   });
 
   it('kit.rtkGain delegates to the reader with the workspace root', async () => {
