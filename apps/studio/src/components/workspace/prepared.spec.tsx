@@ -91,4 +91,21 @@ describe('PreparedConversations', () => {
     expect(sent).not.toHaveProperty('link');
     expect(store.getState().prepared).toHaveLength(1);
   });
+
+  it('hides the notice by itself after 20 seconds', () => {
+    vi.useFakeTimers();
+    try {
+      const { store, ui } = setup();
+      render(ui('general'));
+      act(() => store.getState().receive(botEvent('fix.created', { fixId: 'FIX-a-001', specId: null })));
+      expect(screen.getByTestId('prepared-conversations')).toBeInTheDocument();
+      act(() => vi.advanceTimersByTime(19_999));
+      expect(screen.getByTestId('prepared-conversations')).toBeInTheDocument();
+      act(() => vi.advanceTimersByTime(1));
+      expect(screen.queryByTestId('prepared-conversations')).toBeNull();
+      expect(store.getState().prepared).toEqual([]);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });

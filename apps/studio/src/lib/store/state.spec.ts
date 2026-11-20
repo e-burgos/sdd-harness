@@ -113,4 +113,15 @@ describe('state reducers', () => {
     const s = setThreads(initialState(), [info(), info({ id: 't2' })]);
     expect(Object.keys(s.threads).sort()).toEqual(['t1', 't2']);
   });
+
+  it('prunes a prepared conversation when the association of a thread arrives afterwards', () => {
+    let s = initialState();
+    s = applyServerEvent(s, { kind: 'bot.event', channelId: 'spec:a', botKind: 'cycle.opened', payload: { specId: 'a', cycle: 'cycle-01', status: 'in-progress' } } as never);
+    s = { ...s, openedPreparedId: 'cycle:a:cycle-01' };
+    s = applyServerEvent(s, { kind: 'thread.updated', thread: info() });
+    expect(s.prepared).toHaveLength(1);
+    s = applyServerEvent(s, { kind: 'thread.updated', thread: info({ link: { target: { kind: 'cycle', specId: 'a', cycle: 'cycle-01' }, source: 'auto' } }) });
+    expect(s.prepared).toEqual([]);
+    expect(s.openedPreparedId).toBeNull();
+  });
 });

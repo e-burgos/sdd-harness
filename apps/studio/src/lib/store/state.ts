@@ -1,6 +1,6 @@
 import type { BotEvent, Presence, ServerEvent, ThreadEvent, ThreadInfo, WorkspaceSnapshot } from '@sdd-studio/protocol';
 import type { DraftAttachment } from '../attachments/draft-attachment';
-import { prepareFromBotEvent, type PreparedConversation } from '../auto-conversation';
+import { prepareFromBotEvent, pruneAnswered, type PreparedConversation } from '../auto-conversation';
 import { applyThreadEvent, emptyThread, type ThreadState } from './timeline';
 
 export interface CommandRun {
@@ -64,9 +64,18 @@ function sameInfo(a: ThreadInfo | null, b: ThreadInfo): boolean {
   );
 }
 
+const infosOf = (s: StudioState): ThreadInfo[] => Object.values(s.threads).flatMap((t) => (t.info ? [t.info] : []));
+
+function pruneState(s: StudioState): StudioState {
+  const prepared = pruneAnswered(s.prepared, infosOf(s));
+  if (prepared === s.prepared) return s;
+  const opened = prepared.some((p) => p.id === s.openedPreparedId) ? s.openedPreparedId : null;
+  return { ...s, prepared, openedPreparedId: opened };
+}
+
 function withInfo(s: StudioState, info: ThreadInfo): StudioState {
   const current = threadOf(s, info.id);
-  return sameInfo(current.info, info) ? s : withThread(s, info.id, { ...current, info });
+  return sameInfo(current.info, info) ? s : pruneState(withThread(s, info.id, { ...current, info }));
 }
 
 export function setThreads(s: StudioState, list: ThreadInfo[]): StudioState {
@@ -149,8 +158,7 @@ export function applyServerEvent(s: StudioState, e: ServerEvent): StudioState {
     case 'bot.event': {
       const { kind: _kind, ...event } = e;
       const list = [...(s.bot[e.channelId] ?? []), event].slice(-MAX_BOT_EVENTS);
-      const threads = Object.values(s.threads).flatMap((t) => (t.info ? [t.info] : []));
-      return { ...s, bot: { ...s.bot, [e.channelId]: list }, prepared: prepareFromBotEvent(event, threads, s.prepared, s.snapshot) };
+      return { ...s, bot: { ...s.bot, [e.channelId]: list }, prepared: prepareFromBotEvent(event, infosOf(s), s.prepared, s.snapshot) };
     }
     case 'command.output': {
       const run = s.runs[e.runId] ?? { runId: e.runId, name: '?', args: [], output: '', exitCode: null };
