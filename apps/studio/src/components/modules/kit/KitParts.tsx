@@ -97,7 +97,7 @@ export function FileViewer({ path, mode, revision }: { path: string; mode: FileM
   }
   if (file.status === 'error') return <ErrorState size="sm" title={t('module.kit.doc.loadError', { path })} description={file.reason ? t(`module.kit.doc.reason.${file.reason}`) : undefined} />;
   return (
-    <article data-testid="kit-file" data-path={path} className={`min-w-0 text-ink-100 ${mode === 'markdown' ? 'mx-auto max-w-[72ch]' : ''}`}>
+    <article data-testid="kit-file" data-path={path} className={`min-w-0 text-ink-100 ${mode === 'markdown' ? 'mx-auto max-w-[72ch] text-copy' : ''}`}>
       <p className="mb-2 truncate font-mono text-meta text-ink-400" title={path}>
         {path}
       </p>
