@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { KIT_SECTIONS, KitIntegrationSetResult, KitIntegrationStatus, KitEntry, KitIndex, MAX_KIT_ENTRIES, KIT_HARNESS_ROLES, KitPackStats, RtkGain, ToolsChange, ToolsSetResult } from './index';
+import { KIT_SECTIONS, KitIntegrationSetResult, KitIntegrationStatus, KitEntry, KitIndex, MAX_KIT_ENTRIES, KIT_HARNESS_ROLES, KitPackStats, KitGateResult, RtkGain, ToolsChange, ToolsSetResult } from './index';
 
 const entry = { section: 'docs', role: 'doc', group: 'es', path: 'sdd/documentation/es/a.md', size: 10, mtime: '2026-10-27T00:00:00.000Z' };
 const tools = { status: 'ok', rtkEnabled: true, modEnabled: false, gate: 'block', modLinked: false, revision: 'a1b2c3d4e5f60718' };
@@ -114,5 +114,34 @@ describe('KitPackStats', () => {
     expect(KitPackStats.parse(stats)).toEqual(stats);
     expect(KitPackStats.safeParse({ ...stats, packMisses: -1 }).success).toBe(false);
     expect(KitPackStats.safeParse({ ...stats, rows: [{ ...stats.rows[0], packBytes: -1 }] }).success).toBe(false);
+  });
+});
+
+describe('KitGateResult', () => {
+  const result = {
+    spec: 'spec-e-burgos-032-studio-gate-parity',
+    gate: 'B',
+    passed: false,
+    checks: [
+      { id: 'spec-registered', label: 'Spec registered', ok: true, detail: '' },
+      { id: 'cycle-in-progress', label: 'Cycle in progress', ok: false, detail: 'cycle-01 is pending' },
+    ],
+    flow: 'lite',
+    cycle: 'cycle-01',
+  };
+  it('parses checks, flow and cycle', () => {
+    expect(KitGateResult.parse(result)).toEqual(result);
+  });
+  it('parses the next cycle hint of gate A', () => {
+    const next = { cycle: 'cycle-02', flow: 'full', profile: 'team' };
+    expect(KitGateResult.parse({ ...result, gate: 'A', next }).next).toEqual(next);
+  });
+  it('drops a malformed detail and keeps the check', () => {
+    const parsed = KitGateResult.parse({ ...result, checks: [{ id: 'x', label: 'X', ok: true, detail: 7 }] });
+    expect(parsed.checks[0]?.detail).toBe('');
+  });
+  it('rejects an unknown gate and a non-boolean passed', () => {
+    expect(KitGateResult.safeParse({ ...result, gate: 'C' }).success).toBe(false);
+    expect(KitGateResult.safeParse({ ...result, passed: 'yes' }).success).toBe(false);
   });
 });

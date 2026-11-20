@@ -287,3 +287,19 @@ describe('kit.pack.stats', () => {
     expect(ClientCommand.safeParse({ ...cmd, cycle: undefined }).success).toBe(false);
   });
 });
+
+describe('kit.gate.check', () => {
+  const cmd = { ...base, cmd: 'kit.gate.check', spec: 'spec-e-burgos-032-studio-gate-parity' };
+  it('parses spec with and without cycle', () => {
+    expect(ClientCommand.parse(cmd)).toEqual(cmd);
+    expect(ClientCommand.parse({ ...cmd, cycle: 'cycle-01' })).toEqual({ ...cmd, cycle: 'cycle-01' });
+    expect(ClientCommand.parse({ ...cmd, spec: 'studio-gate-parity' }).cmd).toBe('kit.gate.check');
+  });
+  it('rejects bad spec and cycle', () => {
+    expect(ClientCommand.safeParse({ ...cmd, spec: '../x' }).success).toBe(false);
+    expect(ClientCommand.safeParse({ ...cmd, spec: 'Spec_A' }).success).toBe(false);
+    expect(ClientCommand.safeParse({ ...cmd, spec: '' }).success).toBe(false);
+    expect(ClientCommand.safeParse({ ...cmd, spec: 'a'.repeat(161) }).success).toBe(false);
+    expect(ClientCommand.safeParse({ ...cmd, cycle: 'cycle-1' }).success).toBe(false);
+  });
+});

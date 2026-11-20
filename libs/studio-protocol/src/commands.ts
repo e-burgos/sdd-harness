@@ -79,6 +79,7 @@ export const ClientCommand = z.discriminatedUnion('cmd', [
     unit: z.string().regex(/^(TASK-\d{3,}|B-\d{2})$/).optional(),
   }),
   z.object({ ...cmd('kit.pack.stats'), spec: z.string().regex(/^spec-[a-z0-9-]{1,120}$/), cycle: z.string().regex(/^cycle-\d{2}$/) }),
+  z.object({ ...cmd('kit.gate.check'), spec: z.string().min(1).max(160).regex(/^[a-z0-9-]+$/), cycle: z.string().regex(/^cycle-\d{2}$/).optional() }),
   z.object({ ...cmd('claude.tools.get') }),
   z.object({
     ...cmd('claude.tools.set'),

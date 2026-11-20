@@ -106,3 +106,28 @@ export const KitPackStats = z.object({
   packMisses: z.number().int().nonnegative(),
 });
 export type KitPackStats = z.infer<typeof KitPackStats>;
+
+export const KitGateCheck = z.object({
+  id: z.string().max(64),
+  label: z.string().max(256),
+  ok: z.boolean(),
+  detail: z.string().max(1024).catch(''),
+});
+export type KitGateCheck = z.infer<typeof KitGateCheck>;
+
+export const MAX_GATE_CHECKS = 64;
+
+export const KitGateResult = z.object({
+  spec: z.string().max(160),
+  gate: z.enum(['A', 'B']),
+  passed: z.boolean(),
+  checks: z.array(KitGateCheck).max(MAX_GATE_CHECKS),
+  next: z
+    .object({ cycle: z.string().max(32), flow: z.string().max(16), profile: z.string().max(16) })
+    .partial()
+    .optional()
+    .catch(undefined),
+  flow: z.string().max(16).optional().catch(undefined),
+  cycle: z.string().max(32).optional().catch(undefined),
+});
+export type KitGateResult = z.infer<typeof KitGateResult>;
