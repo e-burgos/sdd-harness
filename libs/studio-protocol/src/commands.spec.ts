@@ -245,6 +245,11 @@ describe('claude connect commands', () => {
       expect(ClientCommand.parse(cmd)).toEqual(cmd);
     }
   });
+  it('parses browser check with an optional force flag', () => {
+    const cmd = { ...base, cmd: 'claude.browser.check', force: true };
+    expect(ClientCommand.parse(cmd)).toEqual(cmd);
+    expect(ClientCommand.safeParse({ ...cmd, force: 'yes' }).success).toBe(false);
+  });
   it('parses mcp login and reconnect with a bounded name', () => {
     for (const name of ['claude.mcp.login', 'claude.mcp.reconnect']) {
       const cmd = { ...base, cmd: name, name: 'plugin:p:s' };

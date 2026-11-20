@@ -566,6 +566,17 @@ describe('claude connect commands', () => {
     expect(bot[0]).toMatchObject({ botKind: 'claude-browser.changed', payload: { state: 'connected' } });
   });
 
+  it('browser.check serves the cached status unless force is set', async () => {
+    const chrome = fakeChrome('connected');
+    const h = await handlers(undefined, undefined, { chromeStatus: chrome.service });
+    await h.handle(cmd({ cmd: 'claude.browser.check' }));
+    expect(chrome.calls).toBe(1);
+    await h.handle(cmd({ cmd: 'claude.browser.check' }));
+    expect(chrome.calls).toBe(1);
+    await h.handle(cmd({ cmd: 'claude.browser.check', force: true }));
+    expect(chrome.calls).toBe(2);
+  });
+
   it('openSettings launches Studio Chrome or opens a tab when it was already running', async () => {
     let launched = true;
     let tabs = 0;

@@ -10,7 +10,7 @@ export interface ChromeStatusValue {
   supported: boolean;
   status: ClaudeBrowserStatus | null;
   checking: boolean;
-  check: () => Promise<void>;
+  check: (force?: boolean) => Promise<void>;
   openSettings: () => Promise<void>;
 }
 
@@ -21,10 +21,10 @@ export function useChromeStatus(): ChromeStatusValue {
   const [checking, setChecking] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-  const check = useCallback(async () => {
+  const check = useCallback(async (force = true) => {
     setChecking(true);
     try {
-      const parsed = ClaudeBrowserStatus.safeParse(await client.request({ cmd: 'claude.browser.check' }));
+      const parsed = ClaudeBrowserStatus.safeParse(await client.request({ cmd: 'claude.browser.check', force }));
       if (parsed.success) setStatus(parsed.data);
     } catch {
       return;
@@ -38,7 +38,7 @@ export function useChromeStatus(): ChromeStatusValue {
       setStatus(null);
       return;
     }
-    void check();
+    void check(false);
     const stop =
       typeof client.onEvent === 'function'
         ? client.onEvent((event) => {

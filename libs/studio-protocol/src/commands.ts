@@ -89,7 +89,7 @@ export const ClientCommand = z.discriminatedUnion('cmd', [
   }),
   z.object({ ...cmd('claude.tools.useGlobal'), expectedRevision: ClaudeToolsRevision }),
   z.object({ ...cmd('claude.inventory.refresh') }),
-  z.object({ ...cmd('claude.browser.check') }),
+  z.object({ ...cmd('claude.browser.check'), force: z.boolean().optional() }),
   z.object({ ...cmd('claude.browser.openSettings') }),
   z.object({ ...cmd('claude.mcp.login'), name: z.string().min(1).max(200) }),
   z.object({ ...cmd('claude.mcp.reconnect'), name: z.string().min(1).max(200) }),

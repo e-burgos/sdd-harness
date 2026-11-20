@@ -296,6 +296,9 @@ describe('Claude module', () => {
       const before = requests.filter((r) => r.cmd === 'claude.browser.check').length;
       fireEvent.click(within(banner).getByRole('button', { name: 'Reintentar' }));
       await waitFor(() => expect(requests.filter((r) => r.cmd === 'claude.browser.check').length).toBeGreaterThan(before));
+      const checks = requests.filter((r) => r.cmd === 'claude.browser.check');
+      expect(checks[0]).toMatchObject({ force: false });
+      expect(checks[checks.length - 1]).toMatchObject({ force: true });
       fireEvent.click(within(banner).getByRole('button', { name: /cerrar|dismiss/i }));
       expect(screen.queryByTestId('chrome-banner')).not.toBeInTheDocument();
     });

@@ -210,7 +210,7 @@ export function createHandlers(d: {
           return claudeToolsResult(result);
         }
         case 'claude.browser.check':
-          return chromeStatus.check();
+          return (!command.force && chromeStatus.current()) || chromeStatus.check();
         case 'claude.browser.openSettings':
           return openStudioChrome(openSettings);
         case 'claude.mcp.login':
