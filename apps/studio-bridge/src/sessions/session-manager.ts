@@ -42,7 +42,19 @@ import { editTargetOf, judgeEdit, openUnitsOfSnapshot, type SessionJudge } from 
 import { alwaysOfferOf, matchesRule, ruleOf } from './always-rule';
 import type { AttachmentStore } from './attachment-store';
 import { DocumentChangeTracker, type AttributedTouch } from './document-tracker';
-import { addManual, assignLink, detectRef, detectRefs, legacyTargetOf, linkTargetExists, removeRef, type StoredLinkEntry } from './thread-link';
+import {
+  addManual,
+  assignLink,
+  bindRef,
+  detectRef,
+  detectRefs,
+  legacyTargetOf,
+  linkTargetExists,
+  parseBindMarker,
+  removeRef,
+  resolveThreadUnit,
+  type StoredLinkEntry,
+} from './thread-link';
 import { PresenceTracker } from './presence';
 import type { RegistryUnit, ThreadBindings } from './session-bindings';
 import { storedLinkOf, toThreadInfo as toInfo, type HistoryEntry, type PendingMessage, type StoredThread, type ThreadStore } from './store';
@@ -84,7 +96,6 @@ export interface SessionManagerDeps {
 }
 
 const BASH_TOOL = 'Bash';
-const unitKeyOf = (unit: RegistryUnit): string => (unit.kind === 'fix' ? unit.fix : `${unit.spec}/${unit.cycle}`);
 const EXACT_PATH_KEYS: Record<string, string> = { Write: 'file_path', Edit: 'file_path', MultiEdit: 'file_path', NotebookEdit: 'notebook_path' };
 const SDD_PATH_PREFIXES = ['sdd/specs/', 'sdd/fixes/'];
 
@@ -200,24 +211,21 @@ export class SessionManager {
   }
 
   private unitOf(thread: StoredThread): RegistryUnit | null {
-    const { target } = legacyTargetOf(thread.link.targets);
-    if (target.kind === 'cycle') return { kind: 'cycle', spec: target.specId, cycle: target.cycle };
-    return target.kind === 'fix' ? { kind: 'fix', fix: target.fixId } : null;
+    return resolveThreadUnit(thread.link.targets, openUnitsOfSnapshot(this.deps.snapshot()))?.unit ?? null;
   }
 
   private syncBinding(thread: StoredThread): void {
     const bindings = this.deps.bindings;
     if (!bindings) return;
     const unit = this.unitOf(thread);
-    const open = unit !== null && openUnitsOfSnapshot(this.deps.snapshot()).some((candidate) => unitKeyOf(candidate) === unitKeyOf(unit));
-    bindings.sync(thread.id, open ? unit : null);
+    bindings.sync(thread.id, unit);
   }
 
   private sessionJudgeFor(thread: StoredThread): SessionJudge | undefined {
     const bindings = this.deps.bindings;
     if (!bindings) return undefined;
-    const unit = this.unitOf(thread);
-    return ({ rel, openUnits, gate }) => bindings.judge({ threadId: thread.id, unit, gate, openUnits, rel });
+    return ({ rel, openUnits, gate }) =>
+      bindings.judge({ threadId: thread.id, unit: resolveThreadUnit(thread.link.targets, openUnits)?.unit ?? null, gate, openUnits, rel });
   }
 
   list(channelId?: string): ThreadInfo[] {
@@ -341,8 +349,8 @@ export class SessionManager {
     if (!linkTargetExists(this.deps.snapshot(), target)) throw new SessionError('not-found', 'the link target does not exist');
     const entries = thread.link.targets;
     if (target.kind === 'none') {
-      const primary = legacyTargetOf(entries).target;
-      this.replaceLinkEntries(thread, primary.kind === 'none' ? entries : removeRef(entries, primary), 'manual');
+      const entry = resolveThreadUnit(entries, openUnitsOfSnapshot(this.deps.snapshot()))?.entry;
+      this.replaceLinkEntries(thread, entry ? removeRef(entries, entry) : entries, 'manual');
     } else {
       this.replaceLinkEntries(thread, addManual(entries, target), 'manual');
     }
@@ -616,6 +624,7 @@ export class SessionManager {
   private async afterTool(thread: StoredThread, ctx: ToolRunContext, outcome: ToolOutcome): Promise<void> {
     if (ctx.toolName === BASH_TOOL) {
       this.recordTouches(thread, await this.documents.close(ctx.toolUseId));
+      if (outcome === 'ok' && ctx.output) this.bindFromOutput(thread, ctx.output);
       return;
     }
     const live = this.liveOf(thread.id);
@@ -625,6 +634,13 @@ export class SessionManager {
     this.documents.recordExactTouch(run.file);
     const op = ctx.toolName === 'Write' && !run.existedBefore ? 'created' : 'modified';
     this.recordTouches(thread, [{ path: run.file, op, author: ctx.author }]);
+  }
+
+  private bindFromOutput(thread: StoredThread, output: string): void {
+    const ref = parseBindMarker(output);
+    if (!ref) return;
+    const entries = bindRef(thread.link.targets, ref, this.deps.snapshot());
+    if (entries !== thread.link.targets) this.replaceLinkEntries(thread, entries, 'manual');
   }
 
   private async closeOpenWindows(thread: StoredThread): Promise<void> {
@@ -643,7 +659,7 @@ export class SessionManager {
 
   private replaceLinkEntries(thread: StoredThread, entries: StoredLinkEntry[], fallbackSource: ThreadLink['source']): void {
     if (JSON.stringify(entries) === JSON.stringify(thread.link.targets)) return;
-    thread.link = { ...thread.link, ...legacyTargetOf(entries, fallbackSource), targets: entries };
+    thread.link = { ...thread.link, ...legacyTargetOf(entries, fallbackSource, openUnitsOfSnapshot(this.deps.snapshot())), targets: entries };
     if (this.deps.bindings?.has(thread.id) || this.liveOf(thread.id).turn !== null) this.syncBinding(thread);
     this.publishThread(thread);
   }

@@ -194,6 +194,14 @@ export function applyClaudeTools(options: Options, config: ClaudeToolsConfig): v
   }
 }
 
+function outputTextOf(response: unknown): string | undefined {
+  if (typeof response === 'string') return response;
+  if (!response || typeof response !== 'object') return undefined;
+  const { stdout, stderr } = response as { stdout?: unknown; stderr?: unknown };
+  const parts = [stdout, stderr].filter((part): part is string => typeof part === 'string' && part.length > 0);
+  return parts.length > 0 ? parts.join('\n') : undefined;
+}
+
 function toolRunContext(
   hookInput: PreToolUseHookInput | PostToolUseHookInput | PostToolUseFailureHookInput,
   mapper: SdkEventMapper,
@@ -203,6 +211,7 @@ function toolRunContext(
     input: hookInput.tool_input && typeof hookInput.tool_input === 'object' ? (hookInput.tool_input as Record<string, unknown>) : {},
     toolUseId: hookInput.tool_use_id,
     author: mapper.authorForAgentId(hookInput.agent_id),
+    ...('tool_response' in hookInput ? { output: outputTextOf(hookInput.tool_response) } : {}),
   };
 }
 

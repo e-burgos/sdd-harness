@@ -1278,6 +1278,15 @@ describe('SessionManager', () => {
         expect(targetsOf(m, id)).toEqual([]);
       });
 
+      it('an SDD-BIND line in a Bash output binds the thread to that unit as a manual association', async () => {
+        const { m, id } = await idleThread();
+        m.updateLinks(id, { add: [CYCLE], remove: [] });
+        await m.send(id, { text: '#bash-bind' });
+        await waitFor(() => m.list().find((t) => t.id === id)?.link.target.kind === 'fix');
+        await idleOf(m, id);
+        expect(targetsOf(m, id)?.at(-1)).toEqual({ ...FIX, origin: 'manual' });
+      });
+
       it('legacy setLink adds only the primary association and keeps the others', async () => {
         const { m, id } = await idleThread();
         m.updateLinks(id, { add: [SPEC, FIX], remove: [] });
@@ -1292,8 +1301,10 @@ describe('SessionManager', () => {
         const info = m.setLink(id, { kind: 'none' });
         expect(info.link.targets).toEqual([{ ...SPEC, origin: 'manual' }, { ...FIX, origin: 'manual' }]);
         expect(info.link.target).toEqual(FIX);
-        expect(m.setLink(id, { kind: 'none' }).link.targets).toEqual([{ ...SPEC, origin: 'manual' }]);
-        expect(m.setLink(id, { kind: 'none' }).link).toMatchObject({ target: { kind: 'none' }, targets: [{ ...SPEC, origin: 'manual' }] });
+        const afterFix = m.setLink(id, { kind: 'none' });
+        expect(afterFix.link.targets).toEqual([{ ...SPEC, origin: 'manual' }]);
+        expect(afterFix.link.target).toEqual(CYCLE);
+        expect(m.setLink(id, { kind: 'none' }).link).toMatchObject({ target: { kind: 'none' }, targets: [] });
       });
 
       it('persists the associations across a restart', async () => {

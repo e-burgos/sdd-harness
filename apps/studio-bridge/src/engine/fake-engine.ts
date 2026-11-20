@@ -24,7 +24,7 @@ const stepsOf = (text: string): number => Number(/#steps:(\d+)/.exec(text)?.[1] 
  * #sub, #tool (Bash approval), #edit (Write approval; skipped in acceptEdits), #slow (waits for interrupt), #fail,
  * #steps:N (N Read rounds with a cut point after each), #revert (interrupt reports the last cut-point batch as undelivered),
  * #mcp, #edit-tool, #bash-git, #bash-git2, #bash-chain (approvals that exercise Always rules),
- * #write-doc (Write that creates or rewrites sdd/specs/spec-dev-001-pagos/cycles/cycle-01/fake-write-doc.md), #bash-doc (Bash that writes fake-bash-doc.md there),
+ * #write-doc (Write that creates or rewrites sdd/specs/spec-dev-001-pagos/cycles/cycle-01/fake-write-doc.md), #bash-doc (Bash that writes fake-bash-doc.md there), #bash-bind (Bash whose output carries SDD-BIND fix=FIX-dev-001-001),
  * #bad-attachment (fails like #fail with 'attachment rejected'),
  * #ctx:N (reports N percent of a 200000-token context window at the end of every turn),
  * #ask (AskUserQuestion with one single-select question; echoes the answers it gets back),
@@ -98,6 +98,15 @@ export class FakeEngine implements AgentEngine {
       cb.emit({ type: 'tool.end', toolUseId, isError: false, summary: 'ok' });
       await cb.afterTool?.(ctx, 'ok');
     };
+    const runBindTool = async () => {
+      const toolInput: Record<string, unknown> = { command: 'pnpm sdd:use FIX-dev-001-001' };
+      const toolUseId = `fake-tool-${++this.counter}`;
+      const ctx = { toolName: 'Bash', input: toolInput, toolUseId, author: main, output: 'SDD-BIND fix=FIX-dev-001-001 worktree=%2Ftmp' };
+      await cb.beforeTool?.(ctx);
+      cb.emit({ type: 'tool.start', toolUseId, author: main, tool: 'Bash', summary: `$ ${String(toolInput.command)}` });
+      cb.emit({ type: 'tool.end', toolUseId, isError: false, summary: 'ok' });
+      await cb.afterTool?.(ctx, 'ok');
+    };
     const describeAttachments = async (prompt: TurnPrompt): Promise<string> => {
       const names = await Promise.all(
         prompt.blocks.map(async (block) => {
@@ -160,6 +169,7 @@ export class FakeEngine implements AgentEngine {
       }
       if (marker(firstText, 'write-doc')) await runDocTool('Write', 'fake-write-doc.md');
       if (marker(firstText, 'bash-doc')) await runDocTool('Bash', 'fake-bash-doc.md');
+      if (marker(firstText, 'bash-bind')) await runBindTool();
       if (marker(firstText, 'mcp')) await askAndRun('mcp__fake__ping', {}, 'mcp__fake__ping');
       for (const [name, command] of [
         ['bash-git', 'git status --short'],

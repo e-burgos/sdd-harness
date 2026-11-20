@@ -5,11 +5,14 @@ import {
   activeEntries,
   addManual,
   assignLink,
+  bindRef,
   detectRef,
   detectRefs,
   legacyTargetOf,
   linkTargetExists,
+  parseBindMarker,
   removeRef,
+  resolveThreadUnit,
   type StoredLinkEntry,
 } from './thread-link';
 
@@ -239,5 +242,69 @@ describe('legacyTargetOf', () => {
   it('never returns a spec: only specs or nothing active gives none with the fallback source', () => {
     expect(legacyTargetOf(detectRef([], specRef('spec-a'), rich), 'legacy')).toEqual({ target: { kind: 'none' }, source: 'legacy' });
     expect(legacyTargetOf([])).toEqual({ target: { kind: 'none' }, source: 'auto' });
+  });
+});
+
+describe('resolveThreadUnit', () => {
+  const cycleUnit = (spec: string, cycle = 'cycle-01') => ({ kind: 'cycle' as const, spec, cycle });
+  const fixUnit = (id: string) => ({ kind: 'fix' as const, fix: id });
+  const stored = (...refs: Array<[ThreadLinkRef, 'detected' | 'manual']>): StoredLinkEntry[] => refs.map(([ref, origin]) => ({ ...ref, origin }));
+
+  it('skips closed fixes and resolves the real case to the open cycle', () => {
+    const entries = stored(
+      [cycleRef('spec-029'), 'detected'],
+      [fixRef('FIX-010'), 'detected'],
+      [fixRef('FIX-013'), 'detected'],
+      [specRef('spec-029'), 'manual'],
+    );
+    expect(resolveThreadUnit(entries, [cycleUnit('spec-029'), cycleUnit('spec-030')])?.unit).toEqual(cycleUnit('spec-029'));
+  });
+
+  it('counts a spec entry only when the spec has exactly one open cycle', () => {
+    const entries = stored([specRef('spec-a'), 'manual']);
+    expect(resolveThreadUnit(entries, [cycleUnit('spec-a'), cycleUnit('spec-b')])?.unit).toEqual(cycleUnit('spec-a'));
+    expect(resolveThreadUnit(entries, [cycleUnit('spec-a'), cycleUnit('spec-a', 'cycle-02')])).toBeNull();
+  });
+
+  it('falls back to the only open unit and gives null with none', () => {
+    expect(resolveThreadUnit(stored([fixRef('FIX-001'), 'detected']), [fixUnit('FIX-002')])).toEqual({ unit: fixUnit('FIX-002'), entry: null });
+    expect(resolveThreadUnit([], [])).toBeNull();
+    expect(resolveThreadUnit(stored([fixRef('FIX-001'), 'detected']), [fixUnit('FIX-002'), fixUnit('FIX-003')])).toBeNull();
+  });
+
+  it('feeds legacyTargetOf when open units are given', () => {
+    const entries = stored([cycleRef('spec-a'), 'manual'], [fixRef('FIX-013'), 'detected']);
+    expect(legacyTargetOf(entries, 'auto', [cycleUnit('spec-a'), fixUnit('FIX-020')])).toEqual({
+      target: { kind: 'cycle', specId: 'spec-a', cycle: 'cycle-01' }, source: 'manual',
+    });
+  });
+});
+
+describe('parseBindMarker and bindRef', () => {
+  it('reads the last SDD-BIND line for a cycle or a fix', () => {
+    expect(parseBindMarker('ok\nSDD-BIND spec=spec-a cycle=cycle-02 worktree=%2Ftmp\nSDD-BIND fix=FIX-014 worktree=%2Ftmp\n')).toEqual(fixRef('FIX-014'));
+    expect(parseBindMarker('SDD-BIND spec=spec-a cycle=cycle-02 worktree=x')).toEqual(cycleRef('spec-a', 'cycle-02'));
+    expect(parseBindMarker('nothing here')).toBeNull();
+  });
+
+  it('moves a bound unit to the end as a manual entry', () => {
+    const entries = detectRef(addManual([], fixRef('FIX-007')), cycleRef('spec-a'), rich);
+    const bound = bindRef(entries, fixRef('FIX-007'), rich);
+    expect(bound.at(-1)).toMatchObject({ kind: 'fix', fixId: 'FIX-007', origin: 'manual' });
+    expect(bound).toHaveLength(2);
+    expect(bindRef(bound, fixRef('FIX-007'), rich)).toBe(bound);
+  });
+
+  it('ignores units that do not exist', () => {
+    expect(bindRef([], fixRef('FIX-999'), rich)).toEqual([]);
+  });
+});
+
+describe('detectRef re-detection', () => {
+  it('moves an already associated active unit to the end', () => {
+    let entries = detectRef([], cycleRef('spec-a'), rich);
+    entries = detectRef(entries, fixRef('FIX-007'), rich);
+    entries = detectRef(entries, cycleRef('spec-a'), rich);
+    expect(entries.map((e) => e.kind)).toEqual(['fix', 'cycle']);
   });
 });

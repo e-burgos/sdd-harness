@@ -45,6 +45,7 @@ export interface ToolRunContext {
   input: Record<string, unknown>;
   toolUseId: string;
   author: Author;
+  output?: string;
 }
 
 export type ToolOutcome = 'ok' | 'failed' | 'interrupted';
