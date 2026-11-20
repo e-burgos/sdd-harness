@@ -33,3 +33,8 @@ un `chrome-devtools-mcp` nuevo) y el aviso no tiene «permitir siempre». Decisi
   `unknown` con detalle. `permission-pending`/`debugging-disabled` quedan en el enum por compatibilidad y dejan de emitirse.
   `claude.browser.openSettings` pasa a «abrir el Chrome de Studio» (lanzar o traer al frente).
 - TASK-006 (puente) y TASK-007 (Studio) implementan D-05/D-06; TASK-005 (verificación) pasa al final.
+
+## Hallazgo de la verificación (TASK-005)
+- «Iniciar sesión» en Notion falló con «the Claude engine binary was not found»: `resolveSdkBinary` resolvía
+  `@anthropic-ai/claude-agent-sdk-<plataforma>` desde el puente, pero es dependencia del SDK (con pnpm no se ve
+  desde el puente). Se resuelve desde el paquete del SDK (corrección dentro de TASK-005).

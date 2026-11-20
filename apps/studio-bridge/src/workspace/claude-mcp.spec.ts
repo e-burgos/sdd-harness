@@ -1,5 +1,12 @@
+import { existsSync } from 'node:fs';
 import { describe, expect, it, vi } from 'vitest';
-import { classifyLogin, createClaudeMcp, trimOutput, type McpLoginRun } from './claude-mcp';
+import { classifyLogin, createClaudeMcp, resolveSdkBinary, trimOutput, type McpLoginRun } from './claude-mcp';
+
+describe('resolveSdkBinary', () => {
+  it('finds the engine binary of the installed SDK for this platform', () => {
+    expect(existsSync(resolveSdkBinary())).toBe(true);
+  });
+});
 
 const inventory = {
   capturedAt: '2026-11-20T10:00:00.000Z',

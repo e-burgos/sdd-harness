@@ -24,9 +24,10 @@ export interface ClaudeMcpService {
 }
 
 export const resolveSdkBinary = (platform: NodeJS.Platform = process.platform, arch: string = process.arch): string => {
-  const require = createRequire(import.meta.url);
+  // The platform package is a dependency of the SDK, not of the bridge: strict installs (pnpm) only expose it from the SDK.
+  const sdkRequire = createRequire(createRequire(import.meta.url).resolve('@anthropic-ai/claude-agent-sdk'));
   const file = platform === 'win32' ? 'claude.exe' : 'claude';
-  return require.resolve(`@anthropic-ai/claude-agent-sdk-${platform}-${arch}/${file}`);
+  return sdkRequire.resolve(`@anthropic-ai/claude-agent-sdk-${platform}-${arch}/${file}`);
 };
 
 export const trimOutput = (raw: string): string => {
