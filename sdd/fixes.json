@@ -2138,6 +2138,64 @@
         "source": "declared-estimate",
         "recorded_at": "2026-11-20"
       }
+    },
+    {
+      "author": "e-burgos",
+      "spec_id": null,
+      "created_at": "2026-11-20",
+      "resolved_at": "2026-11-20",
+      "affected_files": [
+        "apps/studio-bridge/src/engine/claude-sdk-engine.ts",
+        "apps/studio-bridge/src/engine/claude-sdk-engine.spec.ts",
+        "sdd/fixes/fix-e-burgos-018.md"
+      ],
+      "test_reference": "specs: el prompt inicial espera al Chrome de Studio (2c3803f); suite del puente verde",
+      "cycle": null,
+      "id": "FIX-e-burgos-018",
+      "fix_document": "sdd/fixes/fix-e-burgos-018.md",
+      "type": "IMPROVEMENT",
+      "severity": "low",
+      "title": "Chrome de Studio listo antes del primer turno",
+      "estimation_hours": 1,
+      "description": "startTurn dispara ensureStudioChrome sin esperarlo: el primer uso del navegador del turno puede fallar si Chrome estaba cerrado.",
+      "justification": "Follow-up de spec-e-burgos-029; perfil solo; sin contratos nuevos.",
+      "related_modules": [
+        "studio-claude-connect"
+      ],
+      "status": "validated",
+      "validated_at": "2026-11-20",
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "low",
+        "agent": "implementor-back",
+        "tokens_in": 25000,
+        "tokens_out": 4000,
+        "tokens_total": 29000,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-11-20"
+      }
+    },
+    {
+      "author": "e-burgos",
+      "spec_id": null,
+      "created_at": "2026-11-20",
+      "resolved_at": null,
+      "affected_files": [],
+      "test_reference": "",
+      "cycle": null,
+      "id": "FIX-e-burgos-019",
+      "fix_document": "sdd/fixes/fix-e-burgos-019.md",
+      "type": "IMPROVEMENT",
+      "severity": "low",
+      "title": "Un solo chequeo de Chrome al abrir Studio",
+      "estimation_hours": 1,
+      "description": "El puente chequea Chrome al arrancar y la web vuelve a pedir claude.browser.check al montar.",
+      "justification": "Follow-up de spec-e-burgos-029; perfil solo; parámetro opcional force en claude.browser.check.",
+      "related_modules": [
+        "studio-claude-connect"
+      ],
+      "status": "in-progress"
     }
   ]
 }
