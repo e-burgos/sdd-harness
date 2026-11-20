@@ -38,12 +38,26 @@ describe('relativeToRoot', () => {
   });
 });
 
-describe('isCodePath', () => {
+describe('isCodePath parity with the mod', () => {
   it.each([
     ['apps/a.ts', true], ['README.md', false], ['package.json', true],
     ['sdd/specs/x.md', false], ['.claude/agents/x.md', false], ['libs/x/README.md', true],
+    ['sdd/x.md', false], ['.claude/a.ts', false], ['notes.mdx', false],
+    ['docs/guide.md', false], ['docs/page.mdx', false],
+    ['apps/web/README.md', true], ['libs/x/notes.mdx', true],
+    ['Apps/web/a.ts', true], ['src/index.ts', true],
   ])('%s → %s', (rel, expected) => {
     expect(isCodePath(rel)).toBe(expected);
+  });
+
+  it.each([
+    ['examples/a/b.ts', ['examples/**'], false],
+    ['apps/x/y.generated.ts', ['**/*.generated.ts'], false],
+    ['apps/docs/src/a.ts', ['apps/docs/**/*.mdx'], true],
+    ['apps/docs/src/a.mdx', ['apps/docs/**/*.mdx'], false],
+    ['apps/x/y.ts', ['examples/**'], true],
+  ])('%s with exempt %j → %s', (rel, exempt, expected) => {
+    expect(isCodePath(rel, exempt)).toBe(expected);
   });
 });
 
@@ -71,6 +85,15 @@ describe('judgeEdit', () => {
   });
   it('warns in warn mode', () => {
     expect(judgeEdit({ ...idle, gateMode: 'warn' }, ROOT, `${ROOT}/apps/a.ts`).kind).toBe('warn');
+  });
+  it('allows edits matching the exempt globs of the snapshot tools', () => {
+    const tools = { status: 'ok' as const, rtkEnabled: true, modEnabled: true, gate: 'block' as const, modLinked: true, revision: null, exempt: ['examples/**'] };
+    expect(judgeEdit({ ...idle, tools }, ROOT, `${ROOT}/examples/a/b.ts`)).toEqual({ kind: 'allow' });
+    expect(judgeEdit({ ...idle, tools }, ROOT, `${ROOT}/apps/a.ts`).kind).toBe('deny');
+  });
+  it('allows docs outside the code roots and denies markdown inside them', () => {
+    expect(judgeEdit(idle, ROOT, `${ROOT}/docs/guide.md`)).toEqual({ kind: 'allow' });
+    expect(judgeEdit(idle, ROOT, `${ROOT}/apps/web/README.md`).kind).toBe('deny');
   });
   it('allows sdd/ and docs at the root', () => {
     expect(judgeEdit(idle, ROOT, `${ROOT}/sdd/specs/x.md`)).toEqual({ kind: 'allow' });

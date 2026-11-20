@@ -131,6 +131,12 @@ async function specDocument(root: string, spec: SpecSummary): Promise<string | u
   return info?.isFile() ? relative : undefined;
 }
 
+function exemptGlobsOf(doc: Record<string, unknown>): string[] {
+  const mod = doc.claude_mod as { exempt?: unknown } | undefined;
+  if (!Array.isArray(mod?.exempt)) return [];
+  return mod.exempt.filter((glob): glob is string => typeof glob === 'string' && glob.length > 0 && glob.length <= 256).slice(0, 64);
+}
+
 export async function readToolsState(root: string): Promise<KitToolsState> {
   const unknown = (status: 'missing' | 'invalid'): KitToolsState => ({
     status,
@@ -155,11 +161,13 @@ export async function readToolsState(root: string): Promise<KitToolsState> {
   if (!doc || typeof doc !== 'object' || Array.isArray(doc)) return unknown('invalid');
   const problem = (await loadValidator(root))(doc);
   if (problem) return unknown('invalid');
+  const exempt = exemptGlobsOf(doc as Record<string, unknown>);
   return {
     status: 'ok',
     ...effectiveToolsValues(doc as Record<string, unknown>),
     modLinked: await isModLinked(root),
     revision: computeToolsRevision(raw),
+    ...(exempt.length > 0 ? { exempt } : {}),
   };
 }
 

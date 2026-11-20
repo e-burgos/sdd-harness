@@ -1,5 +1,5 @@
 import { AuthState } from '../auth-mode';
-import { BRIDGE_FEATURES, decodeClientMessage, defaultThreadOptions, type ClientCommand, type KitPackStats, type RtkGain, type ServerEvent } from '@sdd-studio/protocol';
+import { BRIDGE_FEATURES, decodeClientMessage, defaultThreadOptions, type ClientCommand, type KitGateResult, type KitPackStats, type RtkGain, type ServerEvent } from '@sdd-studio/protocol';
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -12,6 +12,7 @@ import { computeToolsRevision } from '../workspace/kit-tools';
 import { createAttachmentStore } from '../sessions/attachment-store';
 import { SessionManager } from '../sessions/session-manager';
 import { PackStatsError } from '../workspace/pack-runner';
+import { GateCheckError } from '../workspace/gate-runner';
 import { ThreadStore } from '../sessions/store';
 import { copyFixture, waitFor } from '../test-utils/fixture';
 import { loadWorkspaceSnapshot } from '../workspace/snapshot';
@@ -38,7 +39,7 @@ afterEach(async () => {
 async function handlers(
   broadcast: (e: ServerEvent) => void = () => {},
   refresh: () => Promise<unknown> = async () => null,
-  extra: { claudeInventory?: ClaudeInventoryService; rtkGain?: (root: string) => Promise<RtkGain>; packStats?: (root: string, spec: string, cycle: string) => Promise<KitPackStats>; now?: () => Date; integrations?: KitIntegrations; chromeStatus?: ChromeStatusService; claudeMcp?: ClaudeMcpService; openSettings?: OpenStudioChromeDeps } = {},
+  extra: { claudeInventory?: ClaudeInventoryService; rtkGain?: (root: string) => Promise<RtkGain>; packStats?: (root: string, spec: string, cycle: string) => Promise<KitPackStats>; gateCheck?: (root: string, spec: string, cycle: string | undefined) => Promise<KitGateResult>; now?: () => Date; integrations?: KitIntegrations; chromeStatus?: ChromeStatusService; claudeMcp?: ClaudeMcpService; openSettings?: OpenStudioChromeDeps } = {},
   runner: CommandRunner = new CommandRunner(root, broadcast, () => 'run-1'),
 ) {
   const snapshot = (await loadWorkspaceSnapshot(root)).snapshot;
@@ -225,6 +226,16 @@ describe('createHandlers', () => {
     expect(calls).toEqual([[root, 'spec-a-001-b', 'cycle-01']]);
     const failing = await handlers(undefined, undefined, { packStats: async () => { throw new PackStatsError('not-found', 'nope'); } });
     await expect(failing.handle(cmd({ cmd: 'kit.pack.stats', spec: 'spec-a-001-b', cycle: 'cycle-01' }))).rejects.toMatchObject({ code: 'not-found' });
+  });
+
+  it('kit.gate.check delegates to the runner and maps typed failures to session errors', async () => {
+    const result: KitGateResult = { spec: 's-a', gate: 'B', passed: true, checks: [], flow: 'lite', cycle: 'cycle-01' };
+    const calls: unknown[][] = [];
+    const h = await handlers(undefined, undefined, { gateCheck: async (r, spec, cycle) => { calls.push([r, spec, cycle]); return result; } });
+    expect(await h.handle(cmd({ cmd: 'kit.gate.check', spec: 's-a', cycle: 'cycle-01' }))).toEqual(result);
+    expect(calls).toEqual([[root, 's-a', 'cycle-01']]);
+    const failing = await handlers(undefined, undefined, { gateCheck: async () => { throw new GateCheckError('bad-request', 'unknown spec'); } });
+    await expect(failing.handle(cmd({ cmd: 'kit.gate.check', spec: 's-a' }))).rejects.toMatchObject({ code: 'bad-request', message: 'unknown spec' });
   });
 
   it('kit.rtkGain delegates to the reader with the workspace root', async () => {

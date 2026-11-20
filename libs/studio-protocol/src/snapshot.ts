@@ -133,6 +133,7 @@ export const KitToolsState = z.object({
   gate: GateMode.nullable(),
   modLinked: z.boolean(),
   revision: ToolsRevision.nullable(),
+  exempt: z.array(z.string().min(1).max(256)).max(64).optional().catch(undefined),
 });
 export type KitToolsState = z.infer<typeof KitToolsState>;
 
