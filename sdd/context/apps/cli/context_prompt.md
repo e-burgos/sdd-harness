@@ -1,6 +1,6 @@
 # Context prompt — apps/cli
 
-> Última actualización: consolida los fragmentos de spec-e-burgos-014, 017 (cycle-02), 018, 020, 021 y 023 | Fecha: 2026-11-14
+> Última actualización: consolida los fragmentos de fix-e-burgos-023-001, spec-e-burgos-024, spec-e-burgos-025 (cycle-01 y 02) y fix-e-burgos-015 | Fecha: 2026-11-20
 
 > Entry point para agentes y desarrolladores trabajando en `@e-burgos/sdd-harness`.
 > Leer este documento antes de modificar cualquier comando, generador o plantilla de la CLI.
@@ -20,6 +20,7 @@ La CLI `harness` es la herramienta central del repositorio. Permite inicializar 
   - Nuevas specs / apps: `commands/add/spec.ts`, `commands/add/app.ts`
   - Catálogo y validación de config (consumidos por Studio): `commands/config/index.ts`, `config/catalog.ts`, `config/validate.ts`
   - GitHub: `commands/github/` y `utils/github.ts`; arranque de Studio desde `init`: `utils/studio-launch.ts`
+  - Sesiones, verificación y paquetes de contexto (scripts del kit): `sdd-use.mjs`, `sdd-task.mjs`, `sdd-verify.mjs`, `sdd-pack.mjs` y `lib/{session-registry,task-registry,verify,verify-lease,pack}.mjs` en `templates/sdd/scripts/`; `generators/{project-md,harness-history}.ts`
   - Integraciones opcionales: `utils/tucu-ui-run.ts`, `utils/video-maker-run.ts` (los scripts del kit viven en `templates/sdd/scripts/`)
 - **Generadores del sistema:** `src/generators/`
   - Inyección de SDD y dual-harness: `generators/sdd.generator.ts`
@@ -43,5 +44,5 @@ Al modificar código en `apps/cli`:
 
 - **NO alterar `sdd/` para solucionar bugs del producto:** `sdd/` en la raíz es la instalación local. El producto vive en `apps/cli/templates/sdd/`. Cualquier cambio al kit debe hacerse en `apps/cli/templates/sdd/`.
 - **Invariante de portabilidad:** Ningún archivo dentro de `templates/sdd/` puede contener nombres fijos del proyecto o autores; todo debe abstraerse hacia `sdd/global.json`.
-- **Pendientes:** al salir Nx 25 entra en la matriz y sale Nx 22 (generación real por mayor antes de publicar); TypeScript 7 cuando typescript-eslint, @nestjs/cli, ts-jest y Nx abran el rango (lista en la skill `nx-migration`); `serve-static` inferido apunta a `@nx/web:file-server`, que no se instala; casos de Windows de tucu-ui en una máquina Windows; spawn real de `harness init --studio` y `harness github protect` contra GitHub real sin probar; la doc de video-maker puede recomendar la app de escritorio cuando publique `~/.video-maker/studio.json`. El CLI de terminal de Claude Code 2.1.123 no carga mods; el motor de escritorio 2.1.317 sí.
+- **Pendientes:** al salir Nx 25 entra en la matriz y sale Nx 22 (generación real por mayor antes de publicar); TypeScript 7 cuando typescript-eslint, @nestjs/cli, ts-jest y Nx abran el rango (lista en la skill `nx-migration`); Studio no muestra ataduras a una spec en preparación (las filtra el registro): sumarlas es un ciclo de studio-bridge/studio-protocol; medir el consumo real del primer ciclo despachado con paquetes; el bump a 0.23.0 es del release (hasta entonces `update sdd` imprime el aviso de migración); casos de Windows de tucu-ui en una máquina Windows; spawn real de `harness init --studio` y `harness github protect` contra GitHub real sin probar; la doc de video-maker puede recomendar la app de escritorio cuando publique `~/.video-maker/studio.json`. El CLI de terminal de Claude Code 2.1.123 no carga mods; el motor de escritorio 2.1.317 sí.
 - **Consistencia multiplataforma:** La CLI corre en Linux, macOS y Windows. El CI de cada PR corre solo en Ubuntu (FIX-e-burgos-004): la suite de Windows se corre en local antes de un release que toque symlinks, junctions, CRLF o `setup-agents.ps1` (`docs/ci.md`). Cuida paths con barras invertidas (`\\`), permisos de symlinks vs junctions y terminaciones de línea CRLF/LF (verificado en `update.generator.crlf.spec.ts` y `sdd.generator.windows.spec.ts`).
