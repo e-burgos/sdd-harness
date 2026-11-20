@@ -1787,6 +1787,45 @@
         "recorded_at": "2026-11-20"
       },
       "validated_at": "2026-11-20"
+    },
+    {
+      "id": "FIX-e-burgos-009",
+      "author": "e-burgos",
+      "spec_id": null,
+      "fix_document": "sdd/fixes/fix-e-burgos-009.md",
+      "type": "IMPROVEMENT",
+      "severity": "low",
+      "created_at": "2026-11-20",
+      "resolved_at": "2026-11-20",
+      "title": "Kit: lista y documento con scroll propio, el documento vuelve arriba y la ruta alineada",
+      "estimation_hours": 1,
+      "description": "La lista de tarjetas y el documento del módulo Kit comparten scroll; al elegir una tarjeta el documento no vuelve arriba y la ruta queda desalineada.",
+      "justification": "Mejora de UX pedida por el dev con captura; perfil solo; sin contratos ni entidades nuevas.",
+      "related_modules": [
+        "studio-kit"
+      ],
+      "affected_files": [
+        "apps/studio/src/components/modules/kit/KitParts.tsx",
+        "apps/studio/src/components/modules/kit/KitCenter.tsx",
+        "apps/studio/src/components/modules/kit/KitCapabilitiesView.tsx",
+        "apps/studio/src/components/modules/kit/kit-module.spec.tsx",
+        "sdd/fixes/fix-e-burgos-009.md"
+      ],
+      "test_reference": "sdd:verify apps/studio quick OK (c857a42 y 0062845); headless: lista y documento con scroll propio (lista conserva 600px, documento vuelve a 0 al elegir otra tarjeta), ruta y documento alineados en x=804",
+      "status": "validated",
+      "cycle": null,
+      "validated_at": "2026-11-20",
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "tokens_in": 15116,
+        "tokens_out": 2667,
+        "tokens_total": 17783,
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-20"
+      }
     }
   ]
 }
