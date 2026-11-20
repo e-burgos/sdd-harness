@@ -11,6 +11,7 @@ import { SessionManager } from '../sessions/session-manager';
 import { SessionBindings } from '../sessions/session-bindings';
 import { ThreadStore } from '../sessions/store';
 import { createGithubFeed, type GithubFeed } from '../github/pr-feed';
+import { createChromeStatus, defaultChromeCheckDeps } from '../workspace/chrome-status';
 import { createClaudeInventory } from '../workspace/claude-inventory';
 import { cachedClaudeTools, readClaudeTools } from '../workspace/claude-tools';
 import { createFileIndex } from '../workspace/file-index';
@@ -86,6 +87,7 @@ export async function openProjectRuntime(root: string, deps: ProjectRuntimeDeps)
 
   const runner = new CommandRunner(root, broadcast);
   const claudeInventory = createClaudeInventory({ root });
+  const chromeStatus = createChromeStatus(defaultChromeCheckDeps(() => cachedClaudeTools(root).browser.enabled));
   let sessions: SessionManager;
   let handlers: BridgeHandlers;
   try {
@@ -118,7 +120,9 @@ export async function openProjectRuntime(root: string, deps: ProjectRuntimeDeps)
       kitIndexer,
       broadcast,
       claudeInventory,
+      chromeStatus,
     });
+    if (deps.engine !== 'fake') void chromeStatus.check().catch(() => undefined);
   } catch (error) {
     kitIndexer.close();
     feed.close();

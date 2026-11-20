@@ -9,8 +9,10 @@ import type { ProjectRuntime } from '../project/runtime';
 import type { AttachmentStore } from '../sessions/attachment-store';
 import { SessionError, type SessionManager } from '../sessions/session-manager';
 import type { ThreadStore } from '../sessions/store';
+import { createClaudeMcp, type ClaudeMcpService } from '../workspace/claude-mcp';
+import { createChromeStatus, defaultChromeCheckDeps, defaultOpenSettingsDeps, openChromeSettings, type ChromeStatusService, type OpenSettingsDeps } from '../workspace/chrome-status';
 import { createClaudeInventory, type ClaudeInventoryService } from '../workspace/claude-inventory';
-import { type ClaudeToolsState, readClaudeTools, setClaudeTools, useGlobalClaudeTools } from '../workspace/claude-tools';
+import { cachedClaudeTools, type ClaudeToolsState, readClaudeTools, setClaudeTools, useGlobalClaudeTools } from '../workspace/claude-tools';
 import type { FileIndex } from '../workspace/file-index';
 import type { KitIndexer } from '../workspace/kit-index';
 import { createKitIntegrations, type KitIntegrations } from '../workspace/kit-integrations';
@@ -47,10 +49,29 @@ export function createHandlers(d: {
   rtkGain?: (root: string) => Promise<RtkGain>;
   integrations?: KitIntegrations;
   claudeInventory?: ClaudeInventoryService;
+  chromeStatus?: ChromeStatusService;
+  claudeMcp?: ClaudeMcpService;
+  openSettings?: OpenSettingsDeps;
   now?: () => Date;
 }): BridgeHandlers {
   const integrations = d.integrations ?? createKitIntegrations();
   const claudeInventory = d.claudeInventory ?? createClaudeInventory({ root: d.root });
+  const chromeStatus = d.chromeStatus ?? createChromeStatus(defaultChromeCheckDeps(() => cachedClaudeTools(d.root).browser.enabled));
+  const claudeMcp = d.claudeMcp ?? createClaudeMcp({ root: d.root, inventory: claudeInventory });
+  const openSettings = d.openSettings ?? defaultOpenSettingsDeps();
+  chromeStatus.subscribe((browser) => {
+    const event: BotEvent = {
+      channelId: 'general',
+      botKind: 'claude-browser.changed',
+      payload: { state: browser.state, checkedAt: browser.checkedAt, detail: browser.detail },
+      at: (d.now?.() ?? new Date()).toISOString(),
+    };
+    d.store.appendBot(event);
+    d.broadcast({ kind: 'bot.event', ...event });
+  });
+  const requestChromeOnEnable = (before: ClaudeToolsConfig, after: ClaudeToolsConfig) => {
+    if (!before.browser.enabled && after.browser.enabled) void chromeStatus.check().catch(() => undefined);
+  };
   const claudeToolsResult = (state: ClaudeToolsState): ClaudeToolsGetResult => ({
     config: state.config,
     revision: state.revision,
@@ -158,15 +179,29 @@ export function createHandlers(d: {
         case 'claude.tools.set': {
           const before = (await readClaudeTools(d.root)).config;
           const result = await setClaudeTools(d.root, command.config, command.expectedRevision, command.scope);
-          if (result.changed) announceClaudeTools(before, result);
+          if (result.changed) {
+            announceClaudeTools(before, result);
+            requestChromeOnEnable(before, result.config);
+          }
           return { config: result.config, revision: result.revision, changed: result.changed, scope: result.scope, hasProjectOverride: result.hasProjectOverride };
         }
         case 'claude.tools.useGlobal': {
           const before = (await readClaudeTools(d.root)).config;
           const result = await useGlobalClaudeTools(d.root, command.expectedRevision);
-          if (result.changed) announceClaudeTools(before, result);
+          if (result.changed) {
+            announceClaudeTools(before, result);
+            requestChromeOnEnable(before, result.config);
+          }
           return claudeToolsResult(result);
         }
+        case 'claude.browser.check':
+          return chromeStatus.check();
+        case 'claude.browser.openSettings':
+          return openChromeSettings(openSettings);
+        case 'claude.mcp.login':
+          return claudeMcp.login(command.name);
+        case 'claude.mcp.reconnect':
+          return claudeMcp.reconnect(command.name);
         case 'claude.inventory.refresh':
           return { inventory: await claudeInventory.refresh() };
         case 'kit.integration.status':

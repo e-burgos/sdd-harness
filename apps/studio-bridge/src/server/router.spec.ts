@@ -14,6 +14,9 @@ import { SessionManager } from '../sessions/session-manager';
 import { ThreadStore } from '../sessions/store';
 import { copyFixture, waitFor } from '../test-utils/fixture';
 import { loadWorkspaceSnapshot } from '../workspace/snapshot';
+import type { ClaudeBrowserStatus } from '@sdd-studio/protocol';
+import type { ChromeStatusService, OpenSettingsDeps } from '../workspace/chrome-status';
+import type { ClaudeMcpService } from '../workspace/claude-mcp';
 import type { ClaudeInventoryService } from '../workspace/claude-inventory';
 import type { KitIntegrations } from '../workspace/kit-integrations';
 import { createHandlers } from './router';
@@ -34,7 +37,7 @@ afterEach(async () => {
 async function handlers(
   broadcast: (e: ServerEvent) => void = () => {},
   refresh: () => Promise<unknown> = async () => null,
-  extra: { claudeInventory?: ClaudeInventoryService; rtkGain?: (root: string) => Promise<RtkGain>; now?: () => Date; integrations?: KitIntegrations } = {},
+  extra: { claudeInventory?: ClaudeInventoryService; rtkGain?: (root: string) => Promise<RtkGain>; now?: () => Date; integrations?: KitIntegrations; chromeStatus?: ChromeStatusService; claudeMcp?: ClaudeMcpService; openSettings?: OpenSettingsDeps } = {},
 ) {
   const snapshot = (await loadWorkspaceSnapshot(root)).snapshot;
   const store = new ThreadStore(root);
@@ -47,7 +50,8 @@ async function handlers(
   const login = { status: async () => account, login: async () => ({ ...account, state: 'pending' as const }), logout: async () => account };
   return createHandlers({
     root, auth, login, bridgeVersion: '0.1.0', sessions, store, attachments, fileIndex: createFileIndex(root),
-    kitIndexer: new KitIndexer({ root, onChanged: () => undefined }), broadcast: (m) => broadcast(m as ServerEvent), ...extra,
+    kitIndexer: new KitIndexer({ root, onChanged: () => undefined }), broadcast: (m) => broadcast(m as ServerEvent),
+    chromeStatus: fakeChrome().service, claudeMcp: fakeMcp(), openSettings: { platform: 'linux', exec: async () => true }, ...extra,
     watcher: { current: () => snapshot, refresh: async () => { await refresh(); return null; } }, runner: new CommandRunner(root, broadcast, () => 'run-1'),
   });
 }
@@ -56,6 +60,35 @@ const cmd = (c: Record<string, unknown>): ClientCommand => {
   if (!parsed.ok || parsed.value.kind !== 'command') throw new Error(`invalid command in test: ${JSON.stringify(c)}`);
   return parsed.value;
 };
+
+const fakeChrome = (state: ClaudeBrowserStatus['state'] = 'permission-pending') => {
+  const listeners = new Set<(status: ClaudeBrowserStatus) => void>();
+  let last: ClaudeBrowserStatus | null = null;
+  const fake = {
+    calls: 0,
+    service: {
+      current: () => last,
+      check: async () => {
+        fake.calls += 1;
+        const next = { state, checkedAt: '2026-11-20T10:00:00.000Z', detail: null };
+        const changed = last?.state !== next.state;
+        last = next;
+        if (changed) for (const listener of listeners) listener(next);
+        return next;
+      },
+      subscribe: (listener: (status: ClaudeBrowserStatus) => void) => {
+        listeners.add(listener);
+        return () => listeners.delete(listener);
+      },
+    } satisfies ChromeStatusService,
+  };
+  return fake;
+};
+
+const fakeMcp = (): ClaudeMcpService => ({
+  login: async (name) => ({ name, outcome: 'ok', output: 'done', inventory: null }),
+  reconnect: async (name) => ({ name, status: 'connected', inventory: fakeInventory().current() as never }),
+});
 
 const fakeInventory = (over: Partial<ClaudeInventoryService> = {}): ClaudeInventoryService & { calls: number } => {
   const inventory = {
@@ -492,5 +525,54 @@ describe('createHandlers', () => {
     expect(await types({})).not.toContain('document.touched');
     expect(await types({ includeDocumentTouched: false })).not.toContain('document.touched');
     expect(await types({ includeDocumentTouched: true })).toContain('document.touched');
+  });
+});
+
+describe('claude connect commands', () => {
+  const offConfig = { sources: { user: false, local: false }, disabledPlugins: [] as string[], disabledMcpServers: [] as string[], browser: { enabled: false, browserUrl: null } };
+  const onConfig = { ...offConfig, browser: { enabled: true, browserUrl: null } };
+
+  it('browser.check returns the status and announces claude-browser.changed once', async () => {
+    const events: ServerEvent[] = [];
+    const chrome = fakeChrome('connected');
+    const h = await handlers((e) => events.push(e), undefined, { chromeStatus: chrome.service });
+    expect(await h.handle(cmd({ cmd: 'claude.browser.check' }))).toMatchObject({ state: 'connected', detail: null });
+    await h.handle(cmd({ cmd: 'claude.browser.check' }));
+    const bot = events.filter((e) => e.kind === 'bot.event');
+    expect(bot).toHaveLength(1);
+    expect(bot[0]).toMatchObject({ botKind: 'claude-browser.changed', payload: { state: 'connected' } });
+  });
+
+  it('openSettings returns opened and runs the platform command', async () => {
+    const calls: string[][] = [];
+    const h = await handlers(undefined, undefined, { openSettings: { platform: 'darwin', exec: async (file, args) => { calls.push([file, ...args]); return true; } } });
+    expect(await h.handle(cmd({ cmd: 'claude.browser.openSettings' }))).toEqual({ opened: true });
+    expect(calls).toEqual([['open', '-a', 'Google Chrome', 'chrome://inspect/#remote-debugging']]);
+  });
+
+  it('mcp login and reconnect delegate to the service', async () => {
+    const h = await handlers(undefined, undefined, { claudeMcp: fakeMcp() });
+    expect(await h.handle(cmd({ cmd: 'claude.mcp.login', name: 'docs' }))).toMatchObject({ name: 'docs', outcome: 'ok' });
+    expect(await h.handle(cmd({ cmd: 'claude.mcp.reconnect', name: 'docs' }))).toMatchObject({ name: 'docs', status: 'connected' });
+  });
+
+  it('checks Chrome when tools.set turns the browser on, not when it stays on or turns off', async () => {
+    const chrome = fakeChrome();
+    const h = await handlers(undefined, undefined, { claudeInventory: fakeInventory(), chromeStatus: chrome.service });
+    let { revision } = (await h.handle(cmd({ cmd: 'claude.tools.get' }))) as { revision: string };
+    const set = async (config: typeof onConfig) => {
+      const result = (await h.handle(cmd({ cmd: 'claude.tools.set', config, expectedRevision: revision }))) as { revision: string };
+      revision = result.revision;
+    };
+    await set(offConfig);
+    await set(onConfig);
+    await waitFor(() => chrome.calls === 1);
+    await set({ ...onConfig, disabledMcpServers: ['x'] });
+    await set(offConfig);
+    expect(chrome.calls).toBe(1);
+  });
+
+  it('announces claude-connect in the welcome features', () => {
+    expect(BRIDGE_FEATURES).toContain('claude-connect');
   });
 });
