@@ -40,19 +40,20 @@ describe('spec rules', () => {
 describe('plan by flow (RN-11)', () => {
   it('maps flow to the expected documents', () => {
     expect(expectedPlanDocuments('lite').names).toEqual(['plan.md']);
-    expect(expectedPlanDocuments('full').names).toEqual(['functional.md', 'planner.md', 'architect.md']);
-    expect(expectedPlanDocuments('reduced')).toEqual({ names: ['planner.md', 'architect.md'], optional: true });
+    expect(expectedPlanDocuments('full').names).toEqual(['brief.yaml', 'functional.md', 'planner.md', 'architect.md']);
+    expect(expectedPlanDocuments('reduced')).toEqual({ names: ['brief.yaml'] });
   });
 
   it('marks absent documents as pending and old bridges as unknown', () => {
     const s = spec('a', 'in-progress');
     const withDocs = planItemsOf(s, cycle('a', 1, 'in-progress', { documents: ['functional.md', 'tasks.json'] }));
     expect(withDocs.items.map((i) => [i.name, i.state])).toEqual([
+      ['brief.yaml', 'pending'],
       ['functional.md', 'present'],
       ['planner.md', 'pending'],
       ['architect.md', 'pending'],
     ]);
-    expect(withDocs.items[0]?.path).toBe('sdd/specs/a/cycles/cycle-01/functional.md');
+    expect(withDocs.items[1]?.path).toBe('sdd/specs/a/cycles/cycle-01/functional.md');
     expect(planItemsOf(s, cycle('a', 1, 'in-progress')).items.every((i) => i.state === 'unknown')).toBe(true);
   });
 });

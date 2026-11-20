@@ -7,10 +7,11 @@ import { useT } from '@/lib/i18n/i18n';
 import { useNav } from '@/lib/nav/use-nav';
 import { useStudio } from '../../BridgeProvider';
 import { Chip } from '../../workspace/NavParts';
-import { CycleSelector, Item, Muted } from './SpecParts';
+import { CycleSelector, Item } from './SpecParts';
 import { effectiveCycle, planItemsOf } from './specs-model';
 import { currentCycleOf } from '@/lib/sdd-status';
 import { useDocumentViewer } from './use-document-viewer';
+import { SpecGatePanel } from './SpecGatePanel';
 
 export function SpecPlanTab({ spec }: { spec: SpecSummary }) {
   const { t } = useT();
@@ -23,15 +24,16 @@ export function SpecPlanTab({ spec }: { spec: SpecSummary }) {
   const shown = effectiveCycle(snapshot.cycles, spec.id, specCycle);
   if (!shown) return <EmptyState size="sm" title={t('specs.plan.noCycle')} />;
   const current = currentCycleOf(snapshot.cycles, spec.id);
-  const { items, optional } = planItemsOf(spec, shown);
+  const { items } = planItemsOf(spec, shown);
   const nonePresent = items.every((item) => item.state === 'pending');
   const paths = items.filter((item) => item.state !== 'pending').map((item) => item.path);
 
   return (
     <div className="flex flex-col">
       <CycleSelector cycles={snapshot.cycles} specId={spec.id} value={shown.cycle} current={current?.cycle ?? null} onChange={setSpecCycle} />
+      <SpecGatePanel spec={spec.id} cycle={snapshot.cycles.find((c) => c.specId === spec.id && c.status === 'in-progress')?.cycle ?? null} />
       {nonePresent ? (
-        <EmptyState size="sm" title={t('specs.plan.empty')} description={optional ? t('specs.plan.reducedHint') : undefined} />
+        <EmptyState size="sm" title={t('specs.plan.empty')} />
       ) : (
         <div className="flex flex-col gap-0.5">
           {items.map((item) =>
@@ -49,7 +51,6 @@ export function SpecPlanTab({ spec }: { spec: SpecSummary }) {
               />
             ),
           )}
-          {optional && <Muted>{t('specs.plan.reducedHint')}</Muted>}
         </div>
       )}
       {viewer}
