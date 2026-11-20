@@ -255,3 +255,22 @@ describe('claude connect commands', () => {
     }
   });
 });
+
+describe('kit.verify.run', () => {
+  const cmd = { ...base, cmd: 'kit.verify.run', app: 'apps/studio-bridge', level: 'quick' };
+  it('parses app and level with optional spec, cycle and unit', () => {
+    expect(ClientCommand.parse(cmd)).toEqual(cmd);
+    const full = { ...cmd, level: 'full', spec: 'spec-e-burgos-030-studio-kit-execution', cycle: 'cycle-01', unit: 'B-01' };
+    expect(ClientCommand.parse(full)).toEqual(full);
+    expect(ClientCommand.parse({ ...cmd, unit: 'TASK-001' })).toMatchObject({ unit: 'TASK-001' });
+  });
+  it('rejects bad level, app, cycle and unit', () => {
+    expect(ClientCommand.safeParse({ ...cmd, level: 'slow' }).success).toBe(false);
+    expect(ClientCommand.safeParse({ ...cmd, app: 'a b' }).success).toBe(false);
+    expect(ClientCommand.safeParse({ ...cmd, app: 'x'.repeat(121) }).success).toBe(false);
+    expect(ClientCommand.safeParse({ ...cmd, app: '' }).success).toBe(false);
+    expect(ClientCommand.safeParse({ ...cmd, cycle: 'cycle-1' }).success).toBe(false);
+    expect(ClientCommand.safeParse({ ...cmd, unit: 'cycle' }).success).toBe(false);
+    expect(ClientCommand.safeParse({ ...cmd, level: undefined }).success).toBe(false);
+  });
+});

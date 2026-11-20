@@ -9,6 +9,10 @@ export const MAX_LINK_TARGETS = 32;
 export const MAX_READ_FILE_BYTES = 2 * 1024 * 1024;
 export const MAX_KIT_ENTRIES = 2000;
 export const MAX_CYCLE_DOCUMENTS = 64;
+export const MAX_CYCLE_BATCHES = 32;
+export const MAX_VERIFY_RESULTS = 64;
+export const MAX_VERIFY_COMMANDS = 16;
+export const MAX_VERIFY_APPS = 64;
 export const MAX_CONFIG_BYTES = 65_536;
 export const GENERATION_CHUNK_MAX = 32_768;
 export const GENERATION_BUFFER_BYTES = 4 * 1024 * 1024;
@@ -39,6 +43,7 @@ export const BRIDGE_FEATURES = [
   'claude-tools',
   'claude-tools-scope',
   'claude-connect',
+  'kit-execution',
 ] as const;
 export const TEXT_ATTACHMENT_EXTENSIONS = [
   'txt', 'md', 'mdx', 'markdown', 'json', 'jsonc', 'yaml', 'yml', 'toml', 'ini', 'csv', 'log', 'diff', 'patch',

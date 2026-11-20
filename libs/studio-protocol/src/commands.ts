@@ -5,7 +5,7 @@ import { ClaudeToolsConfig, ClaudeToolsRevision, ClaudeToolsScope } from './clau
 import { GithubConnectRequest } from './github';
 import { KitIntegrationId, ToolsChange } from './kit';
 import { FILE_SEARCH_MAX, MAX_ATTACHMENTS } from './limits';
-import { ToolsRevision } from './snapshot';
+import { ToolsRevision, VerifyLevel } from './snapshot';
 import { AbsPathInput, ConfigDraft, GenerationId } from './wizard';
 
 const Id = z.string().min(1).max(64);
@@ -70,6 +70,14 @@ export const ClientCommand = z.discriminatedUnion('cmd', [
   z.object({ ...cmd('kit.tools.set'), change: ToolsChange, expectedRevision: ToolsRevision }),
   z.object({ ...cmd('kit.integration.status'), integration: KitIntegrationId }),
   z.object({ ...cmd('kit.integration.set'), integration: KitIntegrationId, enabled: z.boolean() }),
+  z.object({
+    ...cmd('kit.verify.run'),
+    app: z.string().regex(/^\S{1,120}$/),
+    level: VerifyLevel,
+    spec: SafeArg.optional(),
+    cycle: z.string().regex(/^cycle-\d{2}$/).optional(),
+    unit: z.string().regex(/^(TASK-\d{3,}|B-\d{2})$/).optional(),
+  }),
   z.object({ ...cmd('claude.tools.get') }),
   z.object({
     ...cmd('claude.tools.set'),
