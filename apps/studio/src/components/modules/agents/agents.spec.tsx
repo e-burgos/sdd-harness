@@ -1,4 +1,4 @@
-import { act, fireEvent, screen } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import type { Presence, ThreadInfo } from '@sdd-studio/protocol';
 import { bridgeValue, renderShell, shellSnapshot } from '../../shell/shell-test-utils';
 import { AgentCard } from './AgentCard';
@@ -92,35 +92,57 @@ describe('Agents module', () => {
     expect(screen.getByTestId('agent-current-task')).toHaveTextContent('Write');
   });
 
-  it('shows the direct chat composer on the dm channel and disables it without a connection', () => {
-    const { unmount } = renderShell(<AgentCard agentId="sdd-planner" />, { value: setup() });
-    expect(screen.getByTestId('agent-direct-chat')).toBeInTheDocument();
-    expect(screen.queryByTestId('agent-chat-disabled')).toBeNull();
-    expect(screen.getByRole('textbox')).toBeInTheDocument();
-    unmount();
-    renderShell(<AgentCard agentId="sdd-planner" />, { value: setup({ connection: 'closed' }) });
-    expect(screen.getByTestId('agent-chat-disabled')).toHaveTextContent('El chat directo no está disponible mientras no haya conexión con el puente.');
+  it('keeps the card free of chat: no composer, no direct chat section', () => {
+    renderShell(<AgentCard agentId="sdd-planner" />, { value: setup({ threads: [dm('t-1', 'sdd-planner')] }) });
+    expect(screen.queryByRole('textbox')).toBeNull();
+    expect(screen.queryByTestId('agent-direct-chat')).toBeNull();
+    expect(screen.queryByText('Chat directo')).toBeNull();
     expect(screen.getByTestId('agent-card')).toHaveTextContent('sdd-planner.agent.md');
   });
 
-  it('lists recent direct chats without embedding the thread and opens them in the center', () => {
-    const value = setup({ threads: [dm('t-1', 'sdd-planner')] });
-    renderShell(
-      <>
-        <AgentCard agentId="sdd-planner" />
-        <NavProbe />
-      </>,
-      { value },
-    );
-    expect(screen.queryByTestId('thread-scroller')).toBeNull();
+  it('shows no composer for an agent missing from the snapshot', () => {
+    renderShell(<AgentCard agentId="ghost" />, { value: setup() });
+    expect(screen.getByText('Agente no disponible')).toBeInTheDocument();
+    expect(screen.queryByRole('textbox')).toBeNull();
+  });
+
+  it('puts the composer at the bottom of the center, with and without conversations', () => {
+    const { unmount } = renderShell(<><Selector agent="sdd-planner" /><AgentsCenter /></>, { value: setup() });
+    act(() => fireEvent.click(screen.getByText('pick')));
+    expect(screen.getByTestId('agent-center-composer')).toContainElement(screen.getByRole('textbox'));
+    unmount();
+    renderShell(<><Selector agent="sdd-planner" /><AgentsCenter /></>, { value: setup({ threads: [dm('t-1', 'sdd-planner')] }) });
+    act(() => fireEvent.click(screen.getByText('pick')));
+    expect(screen.getByTestId('agent-center-composer')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Abrir conversación Charla t-1' })).toBeInTheDocument();
+  });
+
+  it('replaces the composer by a notice without a connection', () => {
+    renderShell(<><Selector agent="sdd-planner" /><AgentsCenter /></>, { value: setup({ connection: 'closed' }) });
+    act(() => fireEvent.click(screen.getByText('pick')));
+    expect(screen.queryByRole('textbox')).toBeNull();
+    expect(screen.getByTestId('agent-chat-disabled')).toHaveTextContent('El chat directo no está disponible mientras no haya conexión con el puente.');
+  });
+
+  it('opens a conversation of the list in the center', () => {
+    renderShell(<><Selector agent="sdd-planner" /><AgentsCenter /><NavProbe /></>, { value: setup({ threads: [dm('t-1', 'sdd-planner')] }) });
+    act(() => fireEvent.click(screen.getByText('pick')));
     fireEvent.click(screen.getByRole('button', { name: 'Abrir conversación Charla t-1' }));
     expect(screen.getByTestId('nav-home')).toHaveTextContent('thread:t-1');
   });
 
-  it('marks an agent missing from the snapshot as unavailable and disables chat', () => {
-    renderShell(<AgentCard agentId="ghost" />, { value: setup() });
-    expect(screen.getByText('Agente no disponible')).toBeInTheDocument();
-    expect(screen.getByTestId('agent-chat-disabled')).toHaveTextContent('El chat directo no está disponible para este agente.');
+  it('creates the thread on the dm channel and opens it in the center', async () => {
+    const value = setup();
+    const created = { ...dm('t-new', 'sdd-planner'), title: 'nuevo' };
+    const request = vi.fn(async () => created);
+    (value as unknown as { client: unknown }).client = { request, supports: () => false };
+    renderShell(<><Selector agent="sdd-planner" /><AgentsCenter /><NavProbe /></>, { value });
+    act(() => fireEvent.click(screen.getByText('pick')));
+    const box = screen.getByRole('textbox');
+    fireEvent.change(box, { target: { value: 'hola' } });
+    fireEvent.keyDown(box, { key: 'Enter' });
+    await waitFor(() => expect(screen.getByTestId('nav-home')).toHaveTextContent('thread:t-new'));
+    expect(request).toHaveBeenCalledWith(expect.objectContaining({ cmd: 'thread.create', channelId: 'dm:sdd-planner' }));
   });
 
   it('lists the conversations of the chosen agent in the center and invites to pick one otherwise', () => {

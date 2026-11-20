@@ -7,7 +7,10 @@ import { useMemo } from 'react';
 import { agentMeta } from '@/lib/agents';
 import { useT } from '@/lib/i18n/i18n';
 import { useNav } from '@/lib/nav/use-nav';
-import { useStudio } from '../../BridgeProvider';
+import { useBridge, useStudio } from '../../BridgeProvider';
+import { MAP_AGENT_IDS } from '../../mission-control/AgentMapCanvas';
+import { PanelNotice } from '../../shell/PanelNotice';
+import { Composer } from '../../workspace/Composer';
 import { PanelRow } from '../../shell/PanelRow';
 import { ThreadStatusChip } from '../../workspace/NavParts';
 
@@ -15,6 +18,8 @@ export function AgentsCenter() {
   const { t } = useT();
   const agentId = useNav((s) => s.selection.agents);
   const openHome = useNav((s) => s.openHome);
+  const { connection } = useBridge();
+  const known = useStudio((s) => s.snapshot?.agents.some((agent) => agent.id === agentId) ?? false);
   const threads = useStudio((s) => s.threads);
   const conversations = useMemo(
     () =>
@@ -33,8 +38,11 @@ export function AgentsCenter() {
   }
 
   const name = agentMeta(agentId).name;
+  const available = known || MAP_AGENT_IDS.includes(agentId);
+  const offline = connection.status !== 'open';
   return (
-    <section data-testid="agent-conversations" className="flex h-full min-h-0 flex-col px-4 pt-4">
+    <section data-testid="agent-conversations" className="flex h-full min-h-0 flex-col">
+      <div className="flex min-h-0 flex-1 flex-col px-4 pt-4">
       <h2 className="flex h-7 shrink-0 items-center text-title font-semibold text-ink-100">{t('module.agents.center.conversations', { name })}</h2>
       {conversations.length === 0 ? (
         <div className="flex flex-1 items-center justify-center p-6">
@@ -55,6 +63,17 @@ export function AgentsCenter() {
             </li>
           ))}
         </ul>
+      )}
+      </div>
+      {available && !offline && (
+        <div data-testid="agent-center-composer" data-studio-exempt="hosted-component" className="shrink-0">
+          <Composer channelId={channelForDm(agentId)} threadId={null} onThreadCreated={(id) => openHome({ kind: 'thread', threadId: id })} />
+        </div>
+      )}
+      {available && offline && (
+        <div data-testid="agent-chat-disabled" className="shrink-0 px-4 pb-3">
+          <PanelNotice role="status" message={t('module.agents.chat.offline')} />
+        </div>
       )}
     </section>
   );
