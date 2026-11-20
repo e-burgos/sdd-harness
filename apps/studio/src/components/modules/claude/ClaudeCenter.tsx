@@ -337,7 +337,7 @@ function BrowserUrlField({ config, disabled, save }: Omit<ViewProps, 'inventory'
           {t('module.claude.browser.invalid')}
         </p>
       )}
-      <p className="text-small text-ink-400">{t(stored === '' ? 'module.claude.browser.autoConnect' : 'module.claude.browser.remote')}</p>
+      <p className="text-small text-ink-400">{t(stored === '' ? 'module.claude.browser.urlHint' : 'module.claude.browser.remote')}</p>
     </div>
   );
 }
@@ -393,6 +393,7 @@ function BrowserView({ config, disabled, save, version }: Omit<ViewProps, 'inven
           <Switch checked={config.browser.enabled} disabled={disabled} aria-label={t('module.claude.browser.chrome')} onChange={(on) => void save(withBrowser(config, { enabled: on }))} />
         </ToggleRow>
         <BrowserStatusLine />
+        <p className="pb-3 text-small text-ink-400">{t('module.claude.browser.autoConnect')}</p>
         <BrowserUrlField config={config} disabled={disabled} save={save} />
       </Card>
       <NextTurn />

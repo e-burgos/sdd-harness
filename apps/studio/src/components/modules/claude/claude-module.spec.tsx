@@ -146,11 +146,14 @@ describe('Claude module', () => {
     const { requests } = setup('browser');
     const card = await screen.findByTestId('claude-browser', undefined, WAIT);
     expect(card).toHaveTextContent('1.13.0');
-    expect(card).toHaveTextContent('--autoConnect');
+    expect(card).toHaveTextContent('Studio usa su propio Chrome');
+    expect(card).toHaveTextContent('~/.sdd-studio/chrome-profile');
+    expect(card).not.toHaveTextContent('chrome://inspect');
+    expect(card).not.toHaveTextContent('--autoConnect');
     fireEvent.click(within(card).getByRole('switch', { name: 'Chrome (DevTools)' }));
     await waitFor(() => expect(sets(requests)).toHaveLength(1), WAIT);
     expect(sets(requests)[0]).toMatchObject({ config: { browser: { enabled: false, browserUrl: null } } });
-    const input = within(card).getByLabelText('URL de depuración (opcional)');
+    const input = within(card).getByLabelText('URL de depuración (avanzado)');
     fireEvent.change(input, { target: { value: 'ws://nope' } });
     expect(within(card).getByRole('alert')).toBeInTheDocument();
     expect(within(card).getByRole('button', { name: 'Guardar URL' })).toBeDisabled();
@@ -285,28 +288,37 @@ describe('Claude module', () => {
       expect(screen.queryByTestId('chrome-banner')).not.toBeInTheDocument();
     });
 
-    it('asks again from the permission-pending banner and can be dismissed', async () => {
-      const { requests } = setup('browser', { features: CONNECT, chrome: { state: 'permission-pending' } });
+    it('shows the detail with a retry for unknown and for legacy bridge states, and can be dismissed', async () => {
+      const { requests } = setup('browser', { features: CONNECT, chrome: { state: 'unknown', detail: 'No se encontró Google Chrome' } });
       const banner = await screen.findByTestId('chrome-banner', undefined, WAIT);
-      expect(banner).toHaveTextContent('Chrome está esperando que aceptes la conexión de Studio');
+      expect(banner).toHaveTextContent('No se encontró Google Chrome');
+      expect(banner).not.toHaveTextContent('chrome://inspect');
       const before = requests.filter((r) => r.cmd === 'claude.browser.check').length;
-      fireEvent.click(within(banner).getByRole('button', { name: 'Pedir de nuevo' }));
+      fireEvent.click(within(banner).getByRole('button', { name: 'Reintentar' }));
       await waitFor(() => expect(requests.filter((r) => r.cmd === 'claude.browser.check').length).toBeGreaterThan(before));
       fireEvent.click(within(banner).getByRole('button', { name: /cerrar|dismiss/i }));
       expect(screen.queryByTestId('chrome-banner')).not.toBeInTheDocument();
     });
 
-    it('opens the Chrome settings from the debugging-disabled banner', async () => {
-      const { requests } = setup('browser', { features: CONNECT, chrome: { state: 'debugging-disabled' } });
+    it('maps the legacy permission-pending state to a generic retry', async () => {
+      setup('browser', { features: CONNECT, chrome: { state: 'permission-pending' } });
       const banner = await screen.findByTestId('chrome-banner', undefined, WAIT);
-      fireEvent.click(within(banner).getByRole('button', { name: 'Abrir configuración de Chrome' }));
+      expect(banner).toHaveTextContent('No se pudo comprobar la conexión con Chrome');
+      expect(within(banner).getByRole('button', { name: 'Reintentar' })).toBeInTheDocument();
+    });
+
+    it('opens the Studio Chrome from the chrome-closed banner', async () => {
+      const { requests } = setup('browser', { features: CONNECT, chrome: { state: 'chrome-closed' } });
+      const banner = await screen.findByTestId('chrome-banner', undefined, WAIT);
+      expect(banner).toHaveTextContent('El Chrome de Studio está cerrado');
+      fireEvent.click(within(banner).getByRole('button', { name: 'Abrir Chrome de Studio' }));
       await waitFor(() => expect(requests).toContainEqual({ cmd: 'claude.browser.openSettings' }));
     });
 
-    it('offers to retry when Chrome is closed and follows claude-browser.changed', async () => {
+    it('follows claude-browser.changed and hides the banner once connected', async () => {
       const { emit } = setup('browser', { features: CONNECT, chrome: { state: 'chrome-closed' } });
       const banner = await screen.findByTestId('chrome-banner', undefined, WAIT);
-      expect(within(banner).getByRole('button', { name: 'Reintentar' })).toBeInTheDocument();
+      expect(within(banner).getByRole('button', { name: 'Abrir Chrome de Studio' })).toBeInTheDocument();
       emit({ kind: 'bot.event', channelId: 'general', botKind: 'claude-browser.changed', payload: { state: 'connected', checkedAt: '2026-11-20T10:01:00Z', detail: null } } as never);
       await waitFor(() => expect(screen.queryByTestId('chrome-banner')).not.toBeInTheDocument());
     });
@@ -318,7 +330,7 @@ describe('Claude module', () => {
       const before = requests.filter((r) => r.cmd === 'claude.browser.check').length;
       fireEvent.click(within(line).getByRole('button', { name: 'Comprobar' }));
       await waitFor(() => expect(requests.filter((r) => r.cmd === 'claude.browser.check').length).toBeGreaterThan(before));
-      fireEvent.click(within(line).getByRole('button', { name: 'Abrir configuración de Chrome' }));
+      fireEvent.click(within(line).getByRole('button', { name: 'Abrir Chrome de Studio' }));
       await waitFor(() => expect(requests).toContainEqual({ cmd: 'claude.browser.openSettings' }));
     });
 
