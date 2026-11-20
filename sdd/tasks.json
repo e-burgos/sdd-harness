@@ -575,6 +575,22 @@
           "tasks_done": 4
         }
       }
+    },
+    "spec-e-burgos-032-studio-gate-parity": {
+      "cycles": {
+        "cycle-01": {
+          "file": "sdd/specs/spec-e-burgos-032-studio-gate-parity/cycles/cycle-01/tasks.json",
+          "module": "studio-gate-parity",
+          "apps": [
+            "libs/studio-protocol",
+            "apps/studio-bridge",
+            "apps/studio"
+          ],
+          "status": "in-progress",
+          "tasks_total": 4,
+          "tasks_done": 0
+        }
+      }
     }
   }
 }

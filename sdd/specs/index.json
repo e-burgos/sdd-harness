@@ -485,6 +485,20 @@
       "depends_on": [
         "spec-e-burgos-030-studio-kit-execution"
       ]
+    },
+    {
+      "id": "spec-e-burgos-032-studio-gate-parity",
+      "author": "e-burgos",
+      "slug": "studio-gate-parity",
+      "folder": "sdd/specs/spec-e-burgos-032-studio-gate-parity",
+      "file": "sdd/specs/spec-e-burgos-032-studio-gate-parity/spec-e-burgos-032-studio-gate-parity.spec.md",
+      "module": "studio-gate-parity",
+      "app": "apps/studio",
+      "status": "in-progress",
+      "title": "Studio aplica y muestra los gates del kit sin copias desactualizadas",
+      "created_at": "2026-11-20",
+      "completed_at": null,
+      "depends_on": []
     }
   ]
 }
