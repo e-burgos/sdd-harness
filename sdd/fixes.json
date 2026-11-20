@@ -1709,13 +1709,23 @@
       "author": "e-burgos",
       "spec_id": null,
       "created_at": "2026-11-20",
-      "resolved_at": null,
+      "resolved_at": "2026-11-20",
       "related_modules": [
         "studio-agents"
       ],
-      "affected_files": [],
-      "test_reference": "",
-      "status": "pending",
+      "affected_files": [
+        "apps/studio/src/components/modules/agents/AgentChatList.tsx",
+        "apps/studio/src/components/modules/agents/AgentCard.tsx",
+        "apps/studio/src/components/modules/agents/AgentDirectChat.tsx",
+        "apps/studio/src/components/modules/map/MapAgentChat.tsx",
+        "apps/studio/src/components/workspace/ThreadLinkPicker.tsx",
+        "apps/studio/src/components/modules/agents/agents.spec.tsx",
+        "apps/studio/src/components/workspace/threadlink.spec.tsx",
+        "sdd/fixes/fix-e-burgos-007.md",
+        "sdd/components.json"
+      ],
+      "test_reference": "sdd:verify apps/studio quick + full OK (typecheck, 1350 tests, build); navegador: la ficha de Clara lista sus conversaciones, el clic abre la conversación en el centro y link-chips tiene max-h-20 overflow-y-auto",
+      "status": "validated",
       "cycle": null,
       "id": "FIX-e-burgos-007",
       "fix_document": "sdd/fixes/fix-e-burgos-007.md",
@@ -1724,7 +1734,19 @@
       "estimation_hours": 2,
       "title": "El chat con un agente se abre en el panel central y las asociaciones tienen scroll",
       "description": "La ficha del agente incrusta la conversación en una caja angosta donde las asociaciones se apilan sin scroll; toda conversación debe abrirse en el panel central.",
-      "justification": "Mejora de UX pedida por el dev; perfil solo; sin contratos ni entidades nuevas."
+      "justification": "Mejora de UX pedida por el dev; perfil solo; sin contratos ni entidades nuevas.",
+      "validated_at": "2026-11-20",
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "tokens_in": 18709,
+        "tokens_out": 3301,
+        "tokens_total": 22010,
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-20"
+      }
     }
   ]
 }

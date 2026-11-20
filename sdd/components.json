@@ -162,6 +162,11 @@
             "cycle": 1,
             "date": "2026-10-26",
             "change": "los dos selectores pasan a HelpSelect con ayuda"
+          },
+          {
+            "cycle": 1,
+            "date": "2026-11-20",
+            "change": "FIX-e-burgos-007: chips de asociación con altura máxima y scroll (max-h-20 overflow-y-auto)"
           }
         ]
       },
@@ -622,12 +627,18 @@
         "type": "component",
         "module": "studio-session-flow",
         "spec": "sdd/specs/spec-e-burgos-008-studio-session-flow",
-        "status": "implemented",
+        "status": "updated",
         "created_in_cycle": 1,
         "updated_in_cycle": null,
         "consumes": [],
         "created_at": "2026-10-26",
-        "changelog": [],
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-11-20",
+            "change": "FIX-e-burgos-006: el aviso se descarta solo a los 20 s y se poda cuando la unidad ya tiene conversación"
+          }
+        ],
         "path": "src/components/workspace/PreparedConversations.tsx",
         "description": "Aviso de conversación nueva preparada y asociada a una spec, ciclo o fix recién creado, con el briefing mínimo listo para abrir."
       },
@@ -922,12 +933,18 @@
         "type": "component",
         "module": "studio-dual-sidebar",
         "spec": "sdd/specs/spec-e-burgos-010-studio-dual-sidebar",
-        "status": "defined",
+        "status": "updated",
         "created_in_cycle": 1,
         "updated_in_cycle": null,
         "consumes": [],
         "created_at": "2026-10-27",
-        "changelog": [],
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-11-20",
+            "change": "FIX-e-burgos-007: la ficha lista las conversaciones del agente (AgentChatList) en vez de incrustar el chat"
+          }
+        ],
         "path": "src/components/modules/agents/AgentCard.tsx",
         "description": "Ficha única de agente para Agentes y Mapa: presencia, descripción, modelo, origen, definición, documentos y diálogos de la conversación seleccionada y chat directo."
       },
@@ -937,12 +954,18 @@
         "type": "component",
         "module": "studio-dual-sidebar",
         "spec": "sdd/specs/spec-e-burgos-010-studio-dual-sidebar",
-        "status": "defined",
+        "status": "updated",
         "created_in_cycle": 1,
         "updated_in_cycle": null,
         "consumes": [],
         "created_at": "2026-10-27",
-        "changelog": [],
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-11-20",
+            "change": "FIX-e-burgos-007: queda solo para el chat flotante del mapa; la ficha ya no lo usa"
+          }
+        ],
         "path": "src/components/modules/agents/AgentDirectChat.tsx",
         "description": "Chat directo con un agente sobre su canal dm:<agente> (ThreadView compacto + Composer), deshabilitado con motivo sin conexión."
       },
@@ -2518,6 +2541,27 @@
             "cycle": 1,
             "date": "2026-11-20",
             "change": "spec-e-burgos-027: alcance de la configuración (global/proyecto), personalizar, volver a la global y guardar como global"
+          }
+        ]
+      },
+      {
+        "id": "COMP-139",
+        "name": "AgentChatList",
+        "type": "component",
+        "module": "studio-dual-sidebar",
+        "spec": "sdd/specs/spec-e-burgos-010-studio-dual-sidebar",
+        "path": "src/components/modules/agents/AgentChatList.tsx",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "description": "Chat directo de la ficha del agente: 5 conversaciones recientes que se abren en el panel central y un Composer compacto que abre el hilo nuevo en el centro.",
+        "consumes": [],
+        "created_at": "2026-11-20",
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-11-20",
+            "change": "Creado en FIX-e-burgos-007"
           }
         ]
       }

@@ -8,4 +8,10 @@ En el módulo Agentes, la ficha del agente (panel derecho) incrusta la conversac
 - Las asociaciones (ficha y encabezado de la conversación) tienen altura máxima y scroll.
 
 ### Archivos modificados
-- (se completa al resolver)
+- `apps/studio/src/components/modules/agents/AgentChatList.tsx`
+- `apps/studio/src/components/modules/agents/AgentCard.tsx`
+- `apps/studio/src/components/modules/agents/AgentDirectChat.tsx`
+- `apps/studio/src/components/modules/map/MapAgentChat.tsx`
+- `apps/studio/src/components/workspace/ThreadLinkPicker.tsx`
+- `apps/studio/src/components/modules/agents/agents.spec.tsx`
+- `apps/studio/src/components/workspace/threadlink.spec.tsx`
