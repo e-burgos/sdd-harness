@@ -7,7 +7,7 @@ import { useT } from '@/lib/i18n/i18n';
 import { matchesQuery } from '@/lib/nav/search';
 import { useModuleQuery } from '@/lib/nav/use-module-query';
 import { useStudio } from '../../BridgeProvider';
-import { CenterFrame, FileViewer, IconButton, NoMatches } from './KitParts';
+import { CenterFrame, FileViewer, IconButton, NoMatches, SplitPane } from './KitParts';
 import { kitAgents, kitSkills, type CapabilityKind } from './kit-model';
 
 interface Capability {
@@ -80,26 +80,29 @@ export function KitCapabilitiesView({ which }: { which: CapabilityKind }) {
   const removed = chosen !== null && !items.some((item) => item.id === chosen);
   const current = removed ? undefined : (visible.find((item) => item.id === chosen) ?? visible[0]);
   return (
-    <CenterFrame title={title}>
+    <CenterFrame title={title} scroll={items.length === 0 || (!current && !removed)}>
       {items.length === 0 ? (
         <EmptyState size="sm" title={t('module.kit.cap.empty')} />
       ) : !current && !removed ? (
         <NoMatches />
       ) : (
-        <div className="flex min-h-0 flex-col gap-3 md:flex-row">
-          <ul className="flex shrink-0 flex-col gap-2 md:w-80">
-            {visible.map((item) => (
-              <CapabilityRow key={item.id} item={item} selected={item.id === current?.id} onSelect={() => setChosen(item.id)} />
-            ))}
-          </ul>
-          <div className="min-w-0 flex-1">
-            {current ? (
-              <FileViewer key={current.path} path={current.path} mode="markdown" revision={`${current.path}:${current.description}:${current.model ?? ''}`} />
-            ) : (
-              <EmptyState size="sm" title={t('module.kit.cap.removed')} />
-            )}
-          </div>
-        </div>
+        <SplitPane
+          listClassName="md:w-80"
+          resetKey={current?.path ?? ''}
+          list={
+            <ul className="flex flex-col gap-2">
+              {visible.map((item) => (
+                <CapabilityRow key={item.id} item={item} selected={item.id === current?.id} onSelect={() => setChosen(item.id)} />
+              ))}
+            </ul>
+          }
+        >
+          {current ? (
+            <FileViewer key={current.path} path={current.path} mode="markdown" revision={`${current.path}:${current.description}:${current.model ?? ''}`} />
+          ) : (
+            <EmptyState size="sm" title={t('module.kit.cap.removed')} />
+          )}
+        </SplitPane>
       )}
     </CenterFrame>
   );

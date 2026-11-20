@@ -2,7 +2,7 @@
 
 import { Button, EmptyState, ErrorState, Skeleton } from '@e-burgos/tucu-ui';
 import { Info, TriangleAlert, X, type LucideIcon } from 'lucide-react';
-import { Fragment, useState, type ReactNode } from 'react';
+import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react';
 import type { KitEntry } from '@sdd-studio/protocol';
 import { useT } from '@/lib/i18n/i18n';
 import { matchesQuery } from '@/lib/nav/search';
@@ -14,12 +14,33 @@ import { useKitIndex } from './KitProvider';
 import { fileNameOf, prettyJson } from './kit-model';
 import { useKitFile } from './use-kit-file';
 
-export function CenterFrame({ title, children }: { title: string; children: ReactNode }) {
+export function CenterFrame({ title, children, scroll = true }: { title: string; children: ReactNode; scroll?: boolean }) {
   return (
     <section className="flex h-full min-h-0 flex-col px-4 pt-4">
       <h2 className={`flex h-7 shrink-0 items-center ${PANEL_TYPE.title} text-ink-100`}>{title}</h2>
-      <div className="min-h-0 flex-1 overflow-y-auto pb-4 pt-2">{children}</div>
+      <div className={`min-h-0 flex-1 pb-4 pt-2 ${scroll ? 'overflow-y-auto' : 'flex flex-col gap-3 overflow-hidden'}`}>{children}</div>
     </section>
+  );
+}
+
+export function SplitPane({ list, listClassName, resetKey, children }: { list: ReactNode; listClassName: string; resetKey: string; children: ReactNode }) {
+  const documentRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const element = documentRef.current;
+    if (!element) return;
+    const reduced = typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (typeof element.scrollTo === 'function') element.scrollTo({ top: 0, behavior: reduced ? 'auto' : 'smooth' });
+    else element.scrollTop = 0;
+  }, [resetKey]);
+  return (
+    <div className="flex min-h-0 flex-1 flex-col gap-3 md:flex-row">
+      <div data-testid="kit-list-scroll" className={`min-h-0 shrink-0 overflow-y-auto ${listClassName}`}>
+        {list}
+      </div>
+      <div ref={documentRef} data-testid="kit-document-scroll" className="min-h-0 min-w-0 flex-1 overflow-y-auto">
+        {children}
+      </div>
+    </div>
   );
 }
 
@@ -76,7 +97,7 @@ export function FileViewer({ path, mode, revision }: { path: string; mode: FileM
   }
   if (file.status === 'error') return <ErrorState size="sm" title={t('module.kit.doc.loadError', { path })} description={file.reason ? t(`module.kit.doc.reason.${file.reason}`) : undefined} />;
   return (
-    <article data-testid="kit-file" data-path={path} className="min-w-0 text-ink-100">
+    <article data-testid="kit-file" data-path={path} className={`min-w-0 text-ink-100 ${mode === 'markdown' ? 'mx-auto max-w-[72ch]' : ''}`}>
       <p className="mb-2 truncate font-mono text-meta text-ink-400" title={path}>
         {path}
       </p>
@@ -136,8 +157,11 @@ export function EntryBrowser({ title, items, mode, emptyTitle }: { title: string
     return acc;
   }, []);
   return (
-    <div className="flex min-h-0 flex-col gap-3 md:flex-row">
-      <nav aria-label={t('module.kit.index.files', { title })} className="flex shrink-0 flex-col gap-px md:w-60">
+    <SplitPane
+      listClassName="md:w-60"
+      resetKey={current.entry.path}
+      list={
+      <nav aria-label={t('module.kit.index.files', { title })} className="flex flex-col gap-px">
         {groups.map((group) => (
           <Fragment key={group.name ?? ''}>
             {group.name !== null && <p className={`${PANEL_TYPE.group} px-2 pb-1 pt-2`}>{group.name}</p>}
@@ -147,10 +171,10 @@ export function EntryBrowser({ title, items, mode, emptyTitle }: { title: string
           </Fragment>
         ))}
       </nav>
-      <div className="min-w-0 flex-1">
-        <FileViewer key={current.entry.path} path={current.entry.path} mode={mode} />
-      </div>
-    </div>
+      }
+    >
+      <FileViewer key={current.entry.path} path={current.entry.path} mode={mode} />
+    </SplitPane>
   );
 }
 

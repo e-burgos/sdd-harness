@@ -289,6 +289,37 @@ describe('Kit center content', () => {
     expect(await screen.findByRole('heading', { name: 'Fragmento nuevo' })).toBeInTheDocument();
   });
 
+  it('scrolls the list and the document independently and keeps the path inside the document', async () => {
+    setup('context');
+    const list = await screen.findByTestId('kit-list-scroll');
+    const documentPane = screen.getByTestId('kit-document-scroll');
+    expect(list.className).toContain('overflow-y-auto');
+    expect(documentPane.className).toContain('overflow-y-auto');
+    expect(list).not.toContainElement(documentPane);
+    expect(documentPane).not.toContainElement(list);
+    const file = await screen.findByTestId('kit-file');
+    expect(documentPane).toContainElement(file);
+    expect(file.className).toContain('max-w-[72ch]');
+    expect(within(file).getByText('sdd/context/apps/studio/constitution.md')).toBeInTheDocument();
+  });
+
+  it('returns the document to the top when another card is chosen', async () => {
+    const scrollTo = vi.fn();
+    const original = Element.prototype.scrollTo;
+    Element.prototype.scrollTo = scrollTo as unknown as typeof Element.prototype.scrollTo;
+    try {
+      setup('context');
+      const nav = await screen.findByRole('navigation', { name: 'Archivos de Contexto' });
+      await screen.findByRole('heading', { name: 'Constitution base' });
+      scrollTo.mockClear();
+      fireEvent.click(within(nav).getByRole('button', { name: /2026-10-01-x/ }));
+      await screen.findByRole('heading', { name: 'Fragmento nuevo' });
+      expect(scrollTo).toHaveBeenCalledWith(expect.objectContaining({ top: 0 }));
+    } finally {
+      Element.prototype.scrollTo = original;
+    }
+  });
+
   it('shows lessons and the journal index', async () => {
     const { unmount } = setup('memory:lessons');
     expect(await screen.findByRole('heading', { name: 'Lecciones' , level: 1 })).toBeInTheDocument();
