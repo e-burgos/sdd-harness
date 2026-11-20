@@ -1,0 +1,130 @@
+{
+  "$schema": "../../../../schemas/cycle-tasks.schema.json",
+  "spec": "spec-e-burgos-029-studio-claude-connect",
+  "cycle": 1,
+  "module": "studio-claude-connect",
+  "apps": [
+    "libs/studio-protocol",
+    "apps/studio-bridge",
+    "apps/studio"
+  ],
+  "flow": "lite",
+  "user_stories_generated": true,
+  "prerequisites": {
+    "tasks_generated": true
+  },
+  "batches": [
+    {
+      "id": "B-01",
+      "app": "libs/studio-protocol",
+      "role": "implementor-back",
+      "tasks": [
+        "TASK-001",
+        "TASK-002"
+      ],
+      "depends_on": []
+    },
+    {
+      "id": "B-02",
+      "app": "apps/studio-bridge",
+      "role": "implementor-back",
+      "tasks": [
+        "TASK-003"
+      ],
+      "depends_on": [
+        "B-01"
+      ]
+    },
+    {
+      "id": "B-03",
+      "app": "apps/studio",
+      "role": "implementor-front",
+      "tasks": [
+        "TASK-004",
+        "TASK-005"
+      ],
+      "depends_on": [
+        "B-02"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "Prueba real: permiso de Chrome por WebSocket y claude mcp login del binario del SDK",
+      "user_stories": [
+        "US-1",
+        "US-2"
+      ],
+      "estimation_hours": 1,
+      "story_points": 2,
+      "depends_on": [],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-002",
+      "title": "Protocolo: ClaudeBrowserStatus, claude.browser.*, claude.mcp.login/reconnect, feature claude-connect y Chrome por defecto",
+      "user_stories": [
+        "US-1",
+        "US-2",
+        "US-3"
+      ],
+      "estimation_hours": 1,
+      "story_points": 2,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-003",
+      "title": "Puente: estado de Chrome, pedido al arrancar, abrir chrome://inspect, login y reconexión de MCP",
+      "user_stories": [
+        "US-1",
+        "US-2",
+        "US-3"
+      ],
+      "estimation_hours": 3,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-002"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-004",
+      "title": "Studio: aviso global de Chrome, sección Navegador con estado y acciones, Iniciar sesión y Reconectar en MCP",
+      "user_stories": [
+        "US-1",
+        "US-2",
+        "US-3"
+      ],
+      "estimation_hours": 2,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-003"
+      ],
+      "status": "pending",
+      "files": []
+    },
+    {
+      "id": "TASK-005",
+      "title": "Verificación real y cierre",
+      "user_stories": [
+        "US-1",
+        "US-2",
+        "US-3"
+      ],
+      "estimation_hours": 1,
+      "story_points": 1,
+      "depends_on": [
+        "TASK-004"
+      ],
+      "status": "pending",
+      "files": []
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "$schema": "../../../../schemas/cycle.schema.json",
+  "cycle": 1,
+  "module": "studio-claude-connect",
+  "spec": "spec-e-burgos-029-studio-claude-connect",
+  "apps": [
+    "libs/studio-protocol",
+    "apps/studio-bridge",
+    "apps/studio"
+  ],
+  "phase": "studio-claude-connect",
+  "flow": "lite",
+  "objectives": [
+    "Chrome conectado por defecto con pedido de permiso al instante (US-1)",
+    "Login y reconexión de MCP desde Studio (US-2, US-3)"
+  ],
+  "status": "in-progress",
+  "started_at": "2026-11-20",
+  "completed_at": null,
+  "documents": {
+    "plan": "sdd/specs/spec-e-burgos-029-studio-claude-connect/cycles/cycle-01/plan.md",
+    "tasks": "sdd/specs/spec-e-burgos-029-studio-claude-connect/cycles/cycle-01/tasks.json"
+  },
+  "artifacts": [],
+  "metrics": {
+    "tasks_total": 5,
+    "tasks_completed": 0,
+    "story_points": 13,
+    "files_created": [],
+    "files_modified": [],
+    "files_deleted": [],
+    "usage": {
+      "tokens_in": 0,
+      "tokens_out": 0,
+      "by_agent": []
+    }
+  },
+  "tables_created": [],
+  "endpoints_implemented": [],
+  "components_created": [],
+  "issues_found": [],
+  "reviewer_report": null
+}
