@@ -1826,6 +1826,46 @@
         "source": "agent-usage-notification",
         "recorded_at": "2026-11-20"
       }
+    },
+    {
+      "id": "FIX-e-burgos-010",
+      "author": "e-burgos",
+      "spec_id": null,
+      "fix_document": "sdd/fixes/fix-e-burgos-010.md",
+      "type": "IMPROVEMENT",
+      "severity": "low",
+      "created_at": "2026-11-20",
+      "resolved_at": "2026-11-20",
+      "title": "«Asociado a» se puede compactar en el encabezado de la conversación",
+      "estimation_hours": 1,
+      "description": "La fila de asociaciones del encabezado de la conversación muestra todos los chips y ocupa varias líneas.",
+      "justification": "Pedido del dev; perfil solo; sin contratos ni entidades nuevas.",
+      "related_modules": [
+        "studio-session-ux"
+      ],
+      "affected_files": [
+        "apps/studio/src/components/workspace/ThreadLinkPicker.tsx",
+        "apps/studio/src/components/workspace/threadlink.spec.tsx",
+        "apps/studio/src/lib/i18n/es.ts",
+        "apps/studio/src/lib/i18n/en.ts",
+        "sdd/fixes/fix-e-burgos-010.md",
+        "sdd/components.json"
+      ],
+      "test_reference": "sdd:verify apps/studio quick OK; headless sobre una conversación con 9 asociaciones: plegada = primer chip + «+8» en una línea, desplegada = 9 chips (aria-expanded)",
+      "status": "validated",
+      "cycle": null,
+      "validated_at": "2026-11-20",
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "tokens_in": 56060,
+        "tokens_out": 9893,
+        "tokens_total": 65953,
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-20"
+      }
     }
   ]
 }

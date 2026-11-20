@@ -167,6 +167,11 @@
             "cycle": 1,
             "date": "2026-11-20",
             "change": "FIX-e-burgos-007: chips de asociación con altura máxima y scroll (max-h-20 overflow-y-auto)"
+          },
+          {
+            "cycle": 1,
+            "date": "2026-11-20",
+            "change": "FIX-e-burgos-010: la fila «Asociado a» se pliega (primer chip + «+N») y se despliega con un toggle persistido"
           }
         ]
       },
