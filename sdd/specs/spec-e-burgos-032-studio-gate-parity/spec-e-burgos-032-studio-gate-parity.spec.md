@@ -1,6 +1,6 @@
 # SPEC-e-burgos-032: Studio aplica y muestra los gates del kit sin copias desactualizadas
 
-> Estado: **in-progress** (2026-11-20). cycle-01 abierto (flow lite). Auditoría kit ↔ Studio, brecha 5: paridad de gates.
+> Estado: **completed** (2026-11-20). cycle-01 cerrado (flow lite, 4/4 tasks). Auditoría kit ↔ Studio, brecha 5: paridad de gates.
 
 ## Resumen ejecutivo
 El juez del puente (`gate/judge.ts`) copia la regla de código del mod de Claude Code y ya se desvió de la

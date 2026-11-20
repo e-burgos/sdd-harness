@@ -2726,6 +2726,27 @@
             "change": "Creado"
           }
         ]
+      },
+      {
+        "id": "COMP-147",
+        "name": "SpecGatePanel",
+        "type": "component",
+        "module": "studio-gate-parity",
+        "spec": "sdd/specs/spec-e-burgos-032-studio-gate-parity",
+        "path": "src/components/modules/specs/SpecGatePanel.tsx",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "description": "SPEC GATE en vivo (A o B) en la pestaña Plan: kit.gate.check con condiciones y detalle",
+        "consumes": [],
+        "created_at": "2026-11-20",
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-11-20",
+            "change": "Creado"
+          }
+        ]
       }
     ]
   }
