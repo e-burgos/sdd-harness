@@ -20,3 +20,16 @@
 - D-02 Estado de Chrome: sin proceso ⇒ `chrome-closed`; sin `DevToolsActivePort` ⇒ `debugging-disabled`; WebSocket 403/timeout ⇒ `permission-pending`; 101 ⇒ `connected` (se cierra enseguida). Se ajusta según TASK-001.
 - D-03 Login: binario del SDK (`@anthropic-ai/claude-agent-sdk-<plataforma>/claude`) con `mcp login <name>`; nunca `--no-browser`; el puente no lee ni guarda tokens.
 - D-04 El cambio de default afecta a todos los usuarios del kit: quien no quiera navegador lo apaga desde el módulo Claude (la config global de spec-e-burgos-027 lo recuerda).
+
+## Cambio de diseño (dev, 2026-11-20) — Chrome propio de Studio
+Con `--autoConnect` Chrome muestra «Allow remote debugging?» en **cada conexión nueva** (cada turno levanta
+un `chrome-devtools-mcp` nuevo) y el aviso no tiene «permitir siempre». Decisión del dev: Chrome propio de Studio.
+- **D-05** El puente lanza (si no responde) un Chrome aparte: `--remote-debugging-port=9333
+  --user-data-dir=~/.sdd-studio/chrome-profile --no-first-run --no-default-browser-check`, desacoplado, perfil
+  persistente (los logins se hacen una vez ahí). Todos los turnos usan `chrome-devtools-mcp --browserUrl
+  http://127.0.0.1:9333`; se elimina `--autoConnect`. Con `browserUrl` propio del dev, se usa ese y no se lanza nada.
+- **D-06** Estado de Chrome = `GET http://127.0.0.1:9333/json/version` (sin WebSocket: nunca dispara avisos):
+  responde ⇒ `connected`; no responde ⇒ `chrome-closed` (el chequeo lo lanza y reintenta); sin binario de Chrome ⇒
+  `unknown` con detalle. `permission-pending`/`debugging-disabled` quedan en el enum por compatibilidad y dejan de emitirse.
+  `claude.browser.openSettings` pasa a «abrir el Chrome de Studio» (lanzar o traer al frente).
+- TASK-006 (puente) y TASK-007 (Studio) implementan D-05/D-06; TASK-005 (verificación) pasa al final.

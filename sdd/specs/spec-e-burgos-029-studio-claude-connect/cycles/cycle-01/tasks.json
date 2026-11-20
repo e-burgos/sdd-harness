@@ -40,11 +40,43 @@
       "app": "apps/studio",
       "role": "implementor-front",
       "tasks": [
-        "TASK-004",
-        "TASK-005"
+        "TASK-004"
       ],
       "depends_on": [
         "B-02"
+      ]
+    },
+    {
+      "id": "B-04",
+      "app": "apps/studio-bridge",
+      "role": "implementor-back",
+      "tasks": [
+        "TASK-006"
+      ],
+      "depends_on": [
+        "B-03"
+      ]
+    },
+    {
+      "id": "B-05",
+      "app": "apps/studio",
+      "role": "implementor-front",
+      "tasks": [
+        "TASK-007"
+      ],
+      "depends_on": [
+        "B-04"
+      ]
+    },
+    {
+      "id": "B-06",
+      "app": "apps/studio",
+      "role": "implementor-front",
+      "tasks": [
+        "TASK-005"
+      ],
+      "depends_on": [
+        "B-05"
       ]
     }
   ],
@@ -88,8 +120,31 @@
       "depends_on": [
         "TASK-001"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/studio-bridge/src/engine/claude-sdk-engine.spec.ts",
+        "apps/studio-bridge/src/server/router.spec.ts",
+        "apps/studio/src/components/modules/claude/claude-module.spec.tsx",
+        "libs/studio-protocol/src/claude-tools.spec.ts",
+        "libs/studio-protocol/src/claude-tools.ts",
+        "libs/studio-protocol/src/commands.spec.ts",
+        "libs/studio-protocol/src/commands.ts",
+        "libs/studio-protocol/src/events.spec.ts",
+        "libs/studio-protocol/src/events.ts",
+        "libs/studio-protocol/src/handshake.spec.ts",
+        "libs/studio-protocol/src/limits.ts"
+      ],
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "tokens_in": 68473,
+        "tokens_out": 12083,
+        "tokens_total": 80556,
+        "approx": false,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-20"
+      }
     },
     {
       "id": "TASK-003",
@@ -104,8 +159,27 @@
       "depends_on": [
         "TASK-002"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/studio-bridge/src/project/runtime.ts",
+        "apps/studio-bridge/src/server/router.spec.ts",
+        "apps/studio-bridge/src/server/router.ts",
+        "apps/studio-bridge/src/workspace/chrome-status.spec.ts",
+        "apps/studio-bridge/src/workspace/chrome-status.ts",
+        "apps/studio-bridge/src/workspace/claude-mcp.spec.ts",
+        "apps/studio-bridge/src/workspace/claude-mcp.ts"
+      ],
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "tokens_in": 26119,
+        "tokens_out": 4609,
+        "tokens_total": 30728,
+        "approx": false,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-20"
+      }
     },
     {
       "id": "TASK-004",
@@ -120,8 +194,32 @@
       "depends_on": [
         "TASK-003"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/ChromeBanner.tsx",
+        "apps/studio/src/components/WorkspaceApp.tsx",
+        "apps/studio/src/components/modules/claude/ClaudeCenter.tsx",
+        "apps/studio/src/components/modules/claude/claude-model.ts",
+        "apps/studio/src/components/modules/claude/claude-module.spec.tsx",
+        "apps/studio/src/components/modules/claude/use-chrome-status.ts",
+        "apps/studio/src/components/modules/claude/use-claude-tools.ts",
+        "apps/studio/src/lib/i18n/modules/claude.ts"
+      ],
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "tokens_in": 40638,
+        "tokens_out": 7171,
+        "tokens_total": 47809,
+        "approx": false,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-20",
+        "pack_misses": [
+          "apps/studio/src/components/WorkspaceApp.tsx",
+          "apps/studio/src/lib/use-bridge-features.ts"
+        ]
+      }
     },
     {
       "id": "TASK-005",
@@ -134,10 +232,75 @@
       "estimation_hours": 1,
       "story_points": 1,
       "depends_on": [
+        "TASK-007"
+      ],
+      "status": "in-progress",
+      "files": []
+    },
+    {
+      "id": "TASK-006",
+      "title": "Puente: Chrome propio de Studio (lanzador, perfil persistente, puerto 9333), browserUrl en el motor y estado por HTTP",
+      "user_stories": [
+        "US-1"
+      ],
+      "estimation_hours": 2,
+      "story_points": 3,
+      "depends_on": [
         "TASK-004"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/studio-bridge/src/engine/claude-sdk-engine.spec.ts",
+        "apps/studio-bridge/src/engine/claude-sdk-engine.ts",
+        "apps/studio-bridge/src/project/runtime.ts",
+        "apps/studio-bridge/src/server/router.spec.ts",
+        "apps/studio-bridge/src/server/router.ts",
+        "apps/studio-bridge/src/workspace/chrome-status.spec.ts",
+        "apps/studio-bridge/src/workspace/chrome-status.ts",
+        "apps/studio-bridge/src/workspace/studio-chrome.spec.ts",
+        "apps/studio-bridge/src/workspace/studio-chrome.ts"
+      ],
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "tokens_in": 18663,
+        "tokens_out": 3293,
+        "tokens_total": 21956,
+        "approx": false,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-20"
+      }
+    },
+    {
+      "id": "TASK-007",
+      "title": "Studio: aviso y sección Navegador para el Chrome propio (abrir, estado, perfil)",
+      "user_stories": [
+        "US-1"
+      ],
+      "estimation_hours": 1,
+      "story_points": 2,
+      "depends_on": [
+        "TASK-006"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/ChromeBanner.tsx",
+        "apps/studio/src/components/modules/claude/ClaudeCenter.tsx",
+        "apps/studio/src/components/modules/claude/claude-module.spec.tsx",
+        "apps/studio/src/lib/i18n/modules/claude.ts"
+      ],
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "tokens_in": 11153,
+        "tokens_out": 1968,
+        "tokens_total": 13121,
+        "approx": false,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-20"
+      }
     }
   ]
 }

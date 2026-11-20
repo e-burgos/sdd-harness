@@ -25,9 +25,9 @@
     "artifacts/spike.md"
   ],
   "metrics": {
-    "tasks_total": 5,
+    "tasks_total": 7,
     "tasks_completed": 0,
-    "story_points": 13,
+    "story_points": 18,
     "files_created": [],
     "files_modified": [],
     "files_deleted": [],
