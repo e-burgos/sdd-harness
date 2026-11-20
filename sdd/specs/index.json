@@ -455,6 +455,20 @@
       "depends_on": [
         "spec-e-burgos-027-studio-claude-tools-global"
       ]
+    },
+    {
+      "id": "spec-e-burgos-030-studio-kit-execution",
+      "author": "e-burgos",
+      "slug": "studio-kit-execution",
+      "folder": "sdd/specs/spec-e-burgos-030-studio-kit-execution",
+      "file": "sdd/specs/spec-e-burgos-030-studio-kit-execution/spec-e-burgos-030-studio-kit-execution.spec.md",
+      "module": "studio-kit-execution",
+      "app": "apps/studio",
+      "status": "in-progress",
+      "title": "Studio muestra y opera la ejecución por bloques y la verificación del kit",
+      "created_at": "2026-11-20",
+      "completed_at": null,
+      "depends_on": []
     }
   ]
 }

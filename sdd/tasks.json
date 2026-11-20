@@ -543,6 +543,22 @@
           "tasks_done": 7
         }
       }
+    },
+    "spec-e-burgos-030-studio-kit-execution": {
+      "cycles": {
+        "cycle-01": {
+          "file": "sdd/specs/spec-e-burgos-030-studio-kit-execution/cycles/cycle-01/tasks.json",
+          "module": "studio-kit-execution",
+          "apps": [
+            "libs/studio-protocol",
+            "apps/studio-bridge",
+            "apps/studio"
+          ],
+          "status": "in-progress",
+          "tasks_total": 4,
+          "tasks_done": 0
+        }
+      }
     }
   }
 }
