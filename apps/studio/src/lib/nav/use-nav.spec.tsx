@@ -12,7 +12,7 @@ describe('navigation store', () => {
     expect(state.module).toBe('home');
     expect(state.home).toEqual({ kind: 'channel', channelId: 'general' });
     expect(state.filters.activity).toEqual([]);
-    expect(state.selection).toEqual({ specs: null, fixes: null, agents: null, kit: null, architecture: null, metrics: null });
+    expect(state.selection).toEqual({ specs: null, fixes: null, agents: null, kit: null, claude: null, architecture: null, metrics: null });
   });
 
   it('persists the activity filter per project', () => {

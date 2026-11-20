@@ -7,6 +7,7 @@ import { agentsEn } from './modules/agents';
 import { activityEn } from './modules/activity';
 import { mapEn } from './modules/map';
 import { kitEn } from './modules/kit';
+import { claudeEn } from './modules/claude';
 import { architectureEn } from './modules/architecture';
 import { metricsEn } from './modules/metrics';
 import { wizardEn } from './modules/wizard';
@@ -24,6 +25,7 @@ export const en = {
   ...activityEn,
   ...mapEn,
   ...kitEn,
+  ...claudeEn,
   ...architectureEn,
   ...metricsEn,
   ...wizardEn,
@@ -220,6 +222,7 @@ export const en = {
   'bot.fix.status': '{fixId}: {from} → {to}',
   'bot.tools.changed': '{tool}: {from} → {to} (sdd/tools.json)',
   'bot.integration.changed': '{integration}: {state} (sdd/tools.json)',
+  'bot.claude-tools.changed': 'Claude: {sections} changed (Studio)',
   'mention.label': 'Suggestions',
   'mention.files': 'Files',
   'mention.agents': 'Agents',
@@ -302,6 +305,7 @@ export const en = {
   'caps.project-wizard': 'the new project wizard',
   'caps.workspace-switch': 'opening another project from Studio',
   'caps.document-touched': 'documents changed from the console',
+  'caps.claude-tools': 'choosing the Claude Code configuration',
   'link.add': 'Add association…',
   'link.max': 'Association limit reached',
   'link.specs': 'Specs',

@@ -13,6 +13,11 @@ export function botText(t: TFunction, e: BotEvent): string {
     const state = typeof e.payload['state'] === 'string' ? e.payload['state'] : 'unavailable';
     return t('bot.integration.changed', { integration, state: t(`module.kit.integrations.state.${state}` as Parameters<TFunction>[0]) });
   }
+  if (e.botKind === 'claude-tools.changed') {
+    const changed = Array.isArray(e.payload['changed']) ? e.payload['changed'].filter((item): item is string => typeof item === 'string') : [];
+    const sections = changed.map((section) => t(`module.claude.section.${section}` as Parameters<TFunction>[0])).join(', ');
+    return t('bot.claude-tools.changed', { sections });
+  }
   const vars = Object.fromEntries(
     Object.entries(e.payload).map(([k, v]) => [k, typeof v === 'string' || typeof v === 'number' ? v : String(v ?? '')]),
   );

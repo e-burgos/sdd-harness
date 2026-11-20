@@ -9,6 +9,7 @@ export const MODULE_LABEL_KEY: Record<ModuleId, keyof Dict> = {
   activity: 'module.activity.label',
   map: 'module.map.label',
   kit: 'module.kit.label',
+  claude: 'module.claude.label',
   architecture: 'module.architecture.label',
   metrics: 'module.metrics.label',
   'new-project': 'module.new-project.label',

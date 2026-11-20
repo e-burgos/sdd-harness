@@ -6,6 +6,7 @@ import { agentsEs } from './modules/agents';
 import { activityEs } from './modules/activity';
 import { mapEs } from './modules/map';
 import { kitEs } from './modules/kit';
+import { claudeEs } from './modules/claude';
 import { architectureEs } from './modules/architecture';
 import { metricsEs } from './modules/metrics';
 import { wizardEs } from './modules/wizard';
@@ -23,6 +24,7 @@ export const es = {
   ...activityEs,
   ...mapEs,
   ...kitEs,
+  ...claudeEs,
   ...architectureEs,
   ...metricsEs,
   ...wizardEs,
@@ -219,6 +221,7 @@ export const es = {
   'bot.fix.status': '{fixId}: {from} → {to}',
   'bot.tools.changed': '{tool}: {from} → {to} (sdd/tools.json)',
   'bot.integration.changed': '{integration}: {state} (sdd/tools.json)',
+  'bot.claude-tools.changed': 'Claude: cambió {sections} (Studio)',
   'mention.label': 'Sugerencias',
   'mention.files': 'Archivos',
   'mention.agents': 'Agentes',
@@ -301,6 +304,7 @@ export const es = {
   'caps.project-wizard': 'el asistente de nuevo proyecto',
   'caps.workspace-switch': 'abrir otro proyecto desde Studio',
   'caps.document-touched': 'documentos modificados desde la consola',
+  'caps.claude-tools': 'elegir la configuración de Claude Code',
   'link.add': 'Agregar asociación…',
   'link.max': 'Máximo de asociaciones',
   'link.specs': 'Specs',

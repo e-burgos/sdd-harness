@@ -4,8 +4,8 @@ import { es } from '@/lib/i18n/es';
 import { en } from '@/lib/i18n/en';
 
 describe('module registry', () => {
-  it('has the ten modules in the documented order', () => {
-    expect(MODULE_IDS).toEqual(['home', 'specs', 'fixes', 'agents', 'activity', 'map', 'kit', 'architecture', 'metrics', 'new-project']);
+  it('has the eleven modules in the documented order', () => {
+    expect(MODULE_IDS).toEqual(['home', 'specs', 'fixes', 'agents', 'activity', 'map', 'kit', 'claude', 'architecture', 'metrics', 'new-project']);
     expect(Object.keys(MODULES)).toEqual([...MODULE_IDS]);
   });
 
@@ -14,8 +14,8 @@ describe('module registry', () => {
     expect(isHideable('home')).toBe(false);
   });
 
-  it('has no right panel in Activity, Kit, Architecture and Metrics', () => {
-    expect(MODULE_IDS.filter((id) => MODULES[id].Right === null)).toEqual(['activity', 'kit', 'architecture', 'metrics']);
+  it('has no right panel in Activity, Kit, Claude, Architecture and Metrics', () => {
+    expect(MODULE_IDS.filter((id) => MODULES[id].Right === null)).toEqual(['activity', 'kit', 'claude', 'architecture', 'metrics']);
   });
 
   it('gives every module a panel, a center, an icon and a label in both languages', () => {
