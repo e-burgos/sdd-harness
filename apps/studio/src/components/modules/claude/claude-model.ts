@@ -46,9 +46,8 @@ export const addedCounts = (inventory: ClaudeInventory): ClaudeCounts => ({
 export const costWarning = (inventory: ClaudeInventory | null, config: ClaudeToolsConfig): CostWarning | null => {
   if (!inventory || !(config.sources.user || config.sources.local)) return null;
   const added = addedCounts(inventory);
-  const total = inventory.counts.all;
-  if (added.skills <= COST_THRESHOLDS.skills && total.mcpTools <= COST_THRESHOLDS.mcpTools) return null;
-  return { skills: added.skills, mcpTools: total.mcpTools };
+  if (added.skills <= COST_THRESHOLDS.skills && added.mcpTools <= COST_THRESHOLDS.mcpTools) return null;
+  return { skills: added.skills, mcpTools: added.mcpTools };
 };
 
 const ignoredBySource = (origin: string, config: ClaudeToolsConfig): boolean =>

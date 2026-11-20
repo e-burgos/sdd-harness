@@ -43,6 +43,8 @@ describe('claude model', () => {
   it('warns when MCP tools pass 50 with a source on', () => {
     expect(costWarning(inventory({}, { mcpTools: 51 }), userOn)).toEqual({ skills: 0, mcpTools: 51 });
     expect(costWarning(inventory({}, { mcpTools: 50 }), userOn)).toBeNull();
+    expect(costWarning(inventory({ mcpTools: 64 }, { mcpTools: 184 }), userOn)).toEqual({ skills: 0, mcpTools: 120 });
+    expect(costWarning(inventory({ mcpTools: 64 }, { mcpTools: 100 }), userOn)).toBeNull();
   });
 
   it('does not warn without an extra source or without inventory', () => {

@@ -1,6 +1,6 @@
 export const claudeEs = {
   'module.claude.label': 'Claude',
-  'module.claude.group': 'Configuración de Claude Code',
+  'module.claude.group': 'Claude Code',
   'module.claude.section.sources': 'Fuentes',
   'module.claude.section.plugins': 'Plugins',
   'module.claude.section.mcp': 'MCP',
@@ -49,7 +49,7 @@ export const claudeEs = {
   'module.claude.browser.url': 'URL de depuración (opcional)',
   'module.claude.browser.save': 'Guardar URL',
   'module.claude.browser.invalid': 'La URL tiene que empezar con http:// o https:// y no puede tener espacios.',
-  'module.claude.browser.autoConnect': 'Sin URL, Studio se conecta al Chrome que tenés abierto (--autoConnect). Chrome te pide permiso la primera vez.',
+  'module.claude.browser.autoConnect': 'Sin URL, Studio se conecta al Chrome que tenés abierto (--autoConnect). Antes, habilitá la depuración remota una vez en chrome://inspect/#remote-debugging y aceptá el permiso que pide Chrome.',
   'module.claude.browser.remote': 'Studio se conecta a esa URL de depuración (--browserUrl).',
   'module.claude.inChrome.label': 'Claude in Chrome',
   'module.claude.inChrome.badge': 'no disponible',
@@ -65,7 +65,7 @@ export const claudeEs = {
 
 export const claudeEn = {
   'module.claude.label': 'Claude',
-  'module.claude.group': 'Claude Code configuration',
+  'module.claude.group': 'Claude Code',
   'module.claude.section.sources': 'Sources',
   'module.claude.section.plugins': 'Plugins',
   'module.claude.section.mcp': 'MCP',
@@ -114,7 +114,7 @@ export const claudeEn = {
   'module.claude.browser.url': 'Debugging URL (optional)',
   'module.claude.browser.save': 'Save URL',
   'module.claude.browser.invalid': 'The URL must start with http:// or https:// and cannot contain spaces.',
-  'module.claude.browser.autoConnect': 'Without a URL, Studio connects to the Chrome you have open (--autoConnect). Chrome asks for permission the first time.',
+  'module.claude.browser.autoConnect': 'Without a URL, Studio connects to the Chrome you have open (--autoConnect). First, enable remote debugging once at chrome://inspect/#remote-debugging and accept the permission Chrome asks for.',
   'module.claude.browser.remote': 'Studio connects to that debugging URL (--browserUrl).',
   'module.claude.inChrome.label': 'Claude in Chrome',
   'module.claude.inChrome.badge': 'not available',
