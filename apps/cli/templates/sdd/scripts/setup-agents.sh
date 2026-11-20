@@ -103,6 +103,9 @@ link_items() {
   prune_stale_links "$dir"
   for item in "$src"/*; do
     [ -e "$item" ] || continue
+    # A link inside sdd/skills belongs to an integration (tucu-ui-design), which links
+    # every harness itself: re-linking it here would re-point or duplicate its links.
+    [ -L "$item" ] && continue
     local name
     name="$(basename "$item")"
     # `*.new` is a merge artifact of `update sdd`, not a surface: linking it would expose a
