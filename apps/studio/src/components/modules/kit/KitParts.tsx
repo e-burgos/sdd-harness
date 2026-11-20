@@ -83,7 +83,7 @@ export function FileViewer({ path, mode, revision }: { path: string; mode: FileM
       {mode === 'json' ? (
         <pre className="overflow-auto rounded-xl border border-foreground/10 bg-ink-950 p-4 font-mono text-ui leading-relaxed text-ink-100">{prettyJson(file.content)}</pre>
       ) : (
-        <Markdown text={file.content} />
+        <Markdown text={file.content} density="doc" />
       )}
     </article>
   );

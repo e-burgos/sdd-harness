@@ -42,7 +42,7 @@ const FILES: Record<string, string> = {
   'sdd/context/apps/studio/constitution.md': '# Constitution base',
   'sdd/context/apps/studio/updates/2026-10-01-x.md': '# Fragmento nuevo',
   'sdd/memory/lessons.md': '# Lecciones',
-  'sdd/skills/sdd-steward/SKILL.md': '# Steward definition',
+  'sdd/skills/sdd-steward/SKILL.md': '---\nname: sdd-steward\ndescription: Conserje del kit\n---\n# Steward definition',
   'sdd/prompts/start.md': '# Start prompt',
 };
 
@@ -159,6 +159,7 @@ describe('Kit center content', () => {
     const { requests } = setup('skills');
     expect(await screen.findByRole('heading', { name: 'Steward definition' })).toBeInTheDocument();
     expect(requests).toContainEqual({ cmd: 'workspace.readFile', path: 'sdd/skills/sdd-steward/SKILL.md' });
+    expect(within(screen.getByTestId('markdown-frontmatter')).getByText('name')).toBeInTheDocument();
   });
 
   describe('open skill refresh', () => {
