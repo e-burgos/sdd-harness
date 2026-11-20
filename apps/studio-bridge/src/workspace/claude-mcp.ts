@@ -9,6 +9,7 @@ export interface McpLoginRun {
   exitCode: number | null;
   output: string;
   timedOut: boolean;
+  terminal?: boolean;
 }
 
 export interface ClaudeMcpDeps {
@@ -30,14 +31,21 @@ export const resolveSdkBinary = (platform: NodeJS.Platform = process.platform, a
   return sdkRequire.resolve(`@anthropic-ai/claude-agent-sdk-${platform}-${arch}/${file}`);
 };
 
+const ANSI_PATTERN = /\x1b\[[0-9;?]*[ -/]*[@-~]|\x1b\][^\x07\x1b]*(?:\x07|\x1b\\)|\x1b[@-Z\\-_]/g;
+
+export const stripAnsi = (raw: string): string => raw.replace(ANSI_PATTERN, '').replace(/\r\n?/g, '\n');
+
 export const trimOutput = (raw: string): string => {
-  const cleaned = raw.replace(/(https?:\/\/[^\s?]+)\?\S*/g, '$1?…').trim();
+  const cleaned = stripAnsi(raw)
+    .replace(/(https?:\/\/[^\s?]+)\?\S*/g, '$1?…')
+    .trim();
   const bytes = Buffer.from(cleaned, 'utf8');
   if (bytes.length <= MAX_MCP_LOGIN_OUTPUT_BYTES) return cleaned;
   return bytes.subarray(bytes.length - MAX_MCP_LOGIN_OUTPUT_BYTES).toString('utf8').replace(/^�+/, '');
 };
 
 export const classifyLogin = (run: McpLoginRun): ClaudeMcpLoginOutcome => {
+  if (run.terminal) return 'terminal';
   if (run.timedOut) return 'timeout';
   if (run.exitCode === 0) return 'ok';
   if (/doesn't support OAuth login/i.test(run.output)) return 'not-oauth';
@@ -46,23 +54,80 @@ export const classifyLogin = (run: McpLoginRun): ClaudeMcpLoginOutcome => {
   return 'failed';
 };
 
-export const spawnLogin = (name: string, root: string, timeoutMs: number): Promise<McpLoginRun> =>
+export const PTY_WRAPPER_SCRIPT = 'import pty,sys; sys.exit(pty.spawn(sys.argv[1:]) >> 8)';
+
+export const MCP_NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_.:@/-]*$/;
+
+export interface Invocation {
+  command: string;
+  args: string[];
+}
+
+export const ptyInvocation = (binary: string, name: string): Invocation => ({
+  command: 'python3',
+  args: ['-c', PTY_WRAPPER_SCRIPT, binary, 'mcp', 'login', name],
+});
+
+const shellQuote = (value: string): string => `'${value.replace(/'/g, `'\\''`)}'`;
+
+export const terminalInvocation = (binary: string, name: string, platform: NodeJS.Platform): Invocation => {
+  if (platform === 'darwin') {
+    const command = `${shellQuote(binary)} mcp login ${shellQuote(name)}`.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+    return { command: 'osascript', args: ['-e', `tell application "Terminal" to do script "${command}"`] };
+  }
+  if (platform === 'win32') {
+    return { command: 'cmd', args: ['/c', 'start', '', 'cmd', '/k', `"${binary}"`, 'mcp', 'login', name] };
+  }
+  return { command: 'x-terminal-emulator', args: ['-e', binary, 'mcp', 'login', name] };
+};
+
+export interface SpawnLoginDeps {
+  platform: NodeJS.Platform;
+  resolveBinary: () => string;
+  hasPython: () => Promise<boolean>;
+  execFile: typeof execFile;
+}
+
+let pythonAvailable: Promise<boolean> | null = null;
+
+export const detectPython = (): Promise<boolean> => {
+  pythonAvailable ??= new Promise<boolean>((resolve) => {
+    execFile('python3', ['--version'], { windowsHide: true }, (error) => resolve(error === null));
+  });
+  return pythonAvailable;
+};
+
+const defaultSpawnDeps = (): SpawnLoginDeps => ({ platform: process.platform, resolveBinary: resolveSdkBinary, hasPython: detectPython, execFile });
+
+const openTerminal = (invocation: Invocation, deps: SpawnLoginDeps, root: string): Promise<McpLoginRun> =>
   new Promise((resolve) => {
-    let binary: string;
-    try {
-      binary = resolveSdkBinary();
-    } catch {
-      resolve({ exitCode: null, output: 'the Claude engine binary was not found', timedOut: false });
-      return;
-    }
-    const child = execFile(binary, ['mcp', 'login', name], { cwd: root, timeout: timeoutMs, maxBuffer: 1024 * 1024, windowsHide: true }, (error, stdout, stderr) => {
+    deps.execFile(invocation.command, invocation.args, { cwd: root, windowsHide: false }, (error, stdout, stderr) => {
+      resolve(error === null ? { exitCode: 0, output: '', timedOut: false, terminal: true } : { exitCode: null, output: `${stdout}${stderr}`, timedOut: false });
+    });
+  });
+
+const runUnderPty = (invocation: Invocation, deps: SpawnLoginDeps, root: string, timeoutMs: number): Promise<McpLoginRun> =>
+  new Promise((resolve) => {
+    deps.execFile(invocation.command, invocation.args, { cwd: root, timeout: timeoutMs, maxBuffer: 1024 * 1024, windowsHide: true }, (error, stdout, stderr) => {
       const failure = error as (NodeJS.ErrnoException & { killed?: boolean; code?: number | string }) | null;
       const timedOut = Boolean(failure?.killed);
       const exitCode = failure === null ? 0 : typeof failure.code === 'number' ? failure.code : null;
       resolve({ exitCode, output: `${stdout}${stderr}`, timedOut });
     });
-    child.stdin?.end();
   });
+
+export const spawnLogin = async (name: string, root: string, timeoutMs: number, overrides: Partial<SpawnLoginDeps> = {}): Promise<McpLoginRun> => {
+  const deps = { ...defaultSpawnDeps(), ...overrides };
+  let binary: string;
+  try {
+    binary = deps.resolveBinary();
+  } catch {
+    return { exitCode: null, output: 'the Claude engine binary was not found', timedOut: false };
+  }
+  if (deps.platform !== 'win32' && (await deps.hasPython())) return runUnderPty(ptyInvocation(binary, name), deps, root, timeoutMs);
+  if (!MCP_NAME_PATTERN.test(name)) return { exitCode: null, output: 'invalid MCP server name', timedOut: false };
+  return openTerminal(terminalInvocation(binary, name, deps.platform), deps, root);
+};
 
 export function createClaudeMcp(deps: ClaudeMcpDeps): ClaudeMcpService {
   const runLogin = deps.runLogin ?? spawnLogin;

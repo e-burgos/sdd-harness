@@ -98,8 +98,8 @@ export type ClaudeBrowserOpenSettingsResult = z.infer<typeof ClaudeBrowserOpenSe
 
 export const MAX_MCP_LOGIN_OUTPUT_BYTES = 4096;
 
-export const CLAUDE_MCP_LOGIN_OUTCOMES = ['ok', 'not-oauth', 'header-auth', 'unknown-server', 'failed', 'timeout'] as const;
-export const ClaudeMcpLoginOutcome = z.enum(CLAUDE_MCP_LOGIN_OUTCOMES);
+export const CLAUDE_MCP_LOGIN_OUTCOMES = ['ok', 'not-oauth', 'header-auth', 'unknown-server', 'failed', 'timeout', 'terminal'] as const;
+export const ClaudeMcpLoginOutcome = z.enum(CLAUDE_MCP_LOGIN_OUTCOMES).catch('failed');
 export type ClaudeMcpLoginOutcome = z.infer<typeof ClaudeMcpLoginOutcome>;
 
 export const ClaudeMcpLoginResult = z.object({

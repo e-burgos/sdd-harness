@@ -353,6 +353,7 @@ describe('Claude module', () => {
         ['timeout', 'Se agotó el tiempo'],
         ['failed', 'No se pudo iniciar sesión'],
         ['unknown-server', 'no conoce este servidor'],
+        ['terminal', 'Se abrió una terminal'],
       ] as const;
       for (const [outcome, text] of outcomes) {
         window.localStorage.clear();
@@ -364,7 +365,7 @@ describe('Claude module', () => {
         fireEvent.click(await screen.findByRole('button', { name: 'Iniciar sesión' }, WAIT));
         await waitFor(() => expect(screen.getByTestId('claude-mcp-op-docs')).toHaveTextContent(text), WAIT);
         const note = screen.getByTestId('claude-mcp-op-docs');
-        const informative = outcome === 'not-oauth' || outcome === 'header-auth';
+        const informative = outcome === 'not-oauth' || outcome === 'header-auth' || outcome === 'terminal';
         expect(Boolean(note.querySelector('details'))).toBe(!informative);
         unmount();
       }

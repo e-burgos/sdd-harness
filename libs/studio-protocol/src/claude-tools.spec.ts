@@ -116,7 +116,7 @@ describe('claude connect results', () => {
     const base = { name: 'm', outcome: 'ok', inventory };
     expect(ClaudeMcpLoginResult.parse({ ...base, output: '' }).inventory).toEqual(inventory);
     expect(ClaudeMcpLoginResult.safeParse({ ...base, output: 'x'.repeat(4097) }).success).toBe(false);
-    expect(ClaudeMcpLoginResult.safeParse({ ...base, output: '', outcome: 'otro' }).success).toBe(false);
+    expect(ClaudeMcpLoginResult.parse({ ...base, output: '', outcome: 'otro' }).outcome).toBe('failed');
   });
   it('parses a reconnect result with or without a status', () => {
     expect(ClaudeMcpReconnectResult.parse({ name: 'm', status: 'connected', inventory }).status).toBe('connected');

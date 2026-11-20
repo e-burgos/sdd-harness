@@ -235,7 +235,7 @@ function McpOpNote({ name, op, status }: { name: string; op: McpOp | undefined; 
       </p>
     );
   }
-  const informative = op.outcome === 'not-oauth' || op.outcome === 'header-auth';
+  const informative = op.outcome === 'not-oauth' || op.outcome === 'header-auth' || op.outcome === 'terminal';
   const showNote = (status === 'failed' || status === 'needs-auth') && connectorNote(name, op.output);
   return (
     <div data-testid={`claude-mcp-op-${name}`} className="flex flex-col gap-1">
