@@ -1,6 +1,6 @@
 # SPEC-e-burgos-030: Studio muestra y opera la ejecución por bloques y la verificación del kit
 
-> Estado: **in-progress** (2026-11-20). cycle-01 abierto (flow lite). Auditoría kit ↔ Studio (pedido del dev: «arrancá con la auditoría del kit de
+> Estado: **completed** (2026-11-20). cycle-01 cerrado (flow lite, 4/4 tasks). Auditoría kit ↔ Studio (pedido del dev: «arrancá con la auditoría del kit de
 > punta a punta»). Brecha 1 y 2: ejecución por bloques (`batches`, `sdd:task`, `usage`) y `sdd:verify`.
 
 ## Resumen ejecutivo

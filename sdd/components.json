@@ -2579,6 +2579,90 @@
             "change": "FIX-e-burgos-008: borrado; el compositor del agente pasó al panel central (AgentsCenter)"
           }
         ]
+      },
+      {
+        "id": "COMP-140",
+        "name": "SpecVerifyTab",
+        "type": "component",
+        "module": "studio-kit-execution",
+        "spec": "sdd/specs/spec-e-burgos-030-studio-kit-execution",
+        "path": "src/components/modules/specs/SpecVerifyTab.tsx",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "description": "Pestaña Verificación del ciclo: resultados de sdd:verify y correr quick/full con salida en vivo",
+        "consumes": [],
+        "created_at": "2026-11-20",
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-11-20",
+            "change": "Creado"
+          }
+        ]
+      },
+      {
+        "id": "COMP-141",
+        "name": "TaskBlockGroup",
+        "type": "component",
+        "module": "studio-kit-execution",
+        "spec": "sdd/specs/spec-e-burgos-030-studio-kit-execution",
+        "path": "src/components/modules/specs/TaskBlockGroup.tsx",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "description": "Bloque de tasks (batches) con app, rol, avance y tokens",
+        "consumes": [],
+        "created_at": "2026-11-20",
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-11-20",
+            "change": "Creado"
+          }
+        ]
+      },
+      {
+        "id": "COMP-142",
+        "name": "TaskRow",
+        "type": "component",
+        "module": "studio-kit-execution",
+        "spec": "sdd/specs/spec-e-burgos-030-studio-kit-execution",
+        "path": "src/components/modules/specs/TaskRow.tsx",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "description": "Fila de task con chip de consumo (usage)",
+        "consumes": [],
+        "created_at": "2026-11-20",
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-11-20",
+            "change": "Creado"
+          }
+        ]
+      },
+      {
+        "id": "COMP-143",
+        "name": "VerifyLeasePill",
+        "type": "component",
+        "module": "studio-kit-execution",
+        "spec": "sdd/specs/spec-e-burgos-030-studio-kit-execution",
+        "path": "src/components/VerifyLeasePill.tsx",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "description": "Pill del lease global de sdd:verify full en el encabezado",
+        "consumes": [],
+        "created_at": "2026-11-20",
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-11-20",
+            "change": "Creado"
+          }
+        ]
       }
     ]
   }

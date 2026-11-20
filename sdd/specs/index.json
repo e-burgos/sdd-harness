@@ -464,10 +464,10 @@
       "file": "sdd/specs/spec-e-burgos-030-studio-kit-execution/spec-e-burgos-030-studio-kit-execution.spec.md",
       "module": "studio-kit-execution",
       "app": "apps/studio",
-      "status": "in-progress",
+      "status": "completed",
       "title": "Studio muestra y opera la ejecución por bloques y la verificación del kit",
       "created_at": "2026-11-20",
-      "completed_at": null,
+      "completed_at": "2026-11-20",
       "depends_on": []
     }
   ]
