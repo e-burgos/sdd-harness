@@ -124,21 +124,6 @@ export function DocumentViewerModal({ document: doc, onClose, related = [], onNa
           },
         ]
       : []),
-    {
-      id: 'info',
-      items: [
-        {
-          id: 'path',
-          kind: 'info' as const,
-          label: t('ui.doc.path'),
-          value: (
-            <span data-testid="document-viewer-path" className="block max-w-full truncate font-mono text-meta" title={path}>
-              {path}
-            </span>
-          ),
-        },
-      ],
-    },
   ];
 
   const handleSelect = (id: string) => {
@@ -194,7 +179,16 @@ export function DocumentViewerModal({ document: doc, onClose, related = [], onNa
       activeItemId={`${DOCUMENT_PREFIX}${path}`}
       onActiveItemChange={handleSelect}
       sidebarActions={sidebarActions}
+      sidebarFooter={
+        <div className="flex min-w-0 flex-col gap-0.5 border-t border-foreground/10 px-3 pt-2">
+          <span className="text-micro uppercase text-ink-500">{t('ui.doc.path')}</span>
+          <span data-testid="document-viewer-path" className="block max-w-full truncate font-mono text-meta text-ink-100" title={path}>
+            {path}
+          </span>
+        </div>
+      }
       maxWidth="64rem"
+      maxHeight="min(82vh, 52rem)"
       overlayClassName="bg-ink-950/80 backdrop-blur-md"
       closeLabel={t('ui.doc.closeAria')}
       closeTooltip={t('ui.doc.closeHint')}
