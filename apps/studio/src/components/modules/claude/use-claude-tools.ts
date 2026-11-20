@@ -1,6 +1,6 @@
 'use client';
 
-import { ClaudeInventoryRefreshResult, ClaudeToolsGetResult, ClaudeToolsSetResult, type ClaudeInventory, type ClaudeToolsConfig } from '@sdd-studio/protocol';
+import { ClaudeInventoryRefreshResult, ClaudeToolsGetResult, ClaudeToolsSetResult, type ClaudeInventory, type ClaudeToolsConfig, type ClaudeToolsScope } from '@sdd-studio/protocol';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BridgeError } from '@/lib/bridge/client';
 import { useBridge } from '../../BridgeProvider';
@@ -18,7 +18,13 @@ export interface ClaudeToolsValue {
   busy: boolean;
   refreshing: boolean;
   notice: ClaudeNotice | null;
+  scopeSupported: boolean;
+  scope: ClaudeToolsScope | null;
+  hasProjectOverride: boolean;
   save: (next: ClaudeToolsConfig) => Promise<void>;
+  customizeProject: () => Promise<void>;
+  saveAsGlobal: () => Promise<void>;
+  useGlobal: () => Promise<void>;
   refresh: () => Promise<void>;
   dismissNotice: () => void;
 }
@@ -28,6 +34,8 @@ interface Loaded {
   revision: string;
   inventory: ClaudeInventory | null;
   browserMcpVersion: string;
+  scope?: ClaudeToolsScope;
+  hasProjectOverride?: boolean;
 }
 
 const KNOWN_ERRORS = ['conflict', 'not-found', 'bad-request'] as const;
@@ -42,6 +50,7 @@ export function useClaudeTools(): ClaudeToolsValue {
   const { client, connection } = useBridge();
   const open = connection.status === 'open';
   const supported = open && client.supports('claude-tools');
+  const scopeSupported = supported && client.supports('claude-tools-scope');
   const [data, setData] = useState<Loaded | null>(null);
   const [loadFailed, setLoadFailed] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -71,15 +80,37 @@ export function useClaudeTools(): ClaudeToolsValue {
     };
   }, [client, supported, load]);
 
-  const save = useCallback(
-    async (next: ClaudeToolsConfig) => {
+  const mutate = useCallback(
+    async (command: { cmd: 'claude.tools.set' | 'claude.tools.useGlobal'; [key: string]: unknown }) => {
       if (!data) return;
       setBusy(true);
       setNotice(null);
       try {
-        const parsed = ClaudeToolsSetResult.safeParse(await client.request({ cmd: 'claude.tools.set', config: next, expectedRevision: data.revision }));
+        const raw = await client.request({ ...command, expectedRevision: data.revision } as never);
+        if (command.cmd === 'claude.tools.useGlobal') {
+          const parsed = ClaudeToolsGetResult.safeParse(raw);
+          if (parsed.success) {
+            setData(parsed.data);
+            setNotice({ kind: 'saved' });
+          } else {
+            await load();
+          }
+          return;
+        }
+        const parsed = ClaudeToolsSetResult.safeParse(raw);
         if (parsed.success) {
-          setData((current) => (current ? { ...current, config: parsed.data.config, revision: parsed.data.revision } : current));
+          const result = parsed.data;
+          setData((current) =>
+            current
+              ? {
+                  ...current,
+                  config: result.config,
+                  revision: result.revision,
+                  scope: result.scope ?? current.scope,
+                  hasProjectOverride: result.hasProjectOverride ?? current.hasProjectOverride,
+                }
+              : current,
+          );
           setNotice({ kind: 'saved' });
         } else {
           await load();
@@ -94,6 +125,11 @@ export function useClaudeTools(): ClaudeToolsValue {
     },
     [client, data, load],
   );
+
+  const save = useCallback((next: ClaudeToolsConfig) => mutate({ cmd: 'claude.tools.set', config: next }), [mutate]);
+  const customizeProject = useCallback(() => (data ? mutate({ cmd: 'claude.tools.set', config: data.config, scope: 'project' }) : Promise.resolve()), [mutate, data]);
+  const saveAsGlobal = useCallback(() => (data ? mutate({ cmd: 'claude.tools.set', config: data.config, scope: 'global' }) : Promise.resolve()), [mutate, data]);
+  const useGlobal = useCallback(() => mutate({ cmd: 'claude.tools.useGlobal' }), [mutate]);
 
   const refresh = useCallback(async () => {
     setRefreshing(true);
@@ -121,10 +157,16 @@ export function useClaudeTools(): ClaudeToolsValue {
       busy,
       refreshing,
       notice,
+      scopeSupported,
+      scope: data?.scope ?? null,
+      hasProjectOverride: data?.hasProjectOverride ?? data?.scope === 'project',
       save,
+      customizeProject,
+      saveAsGlobal,
+      useGlobal,
       refresh,
       dismissNotice: () => setNotice(null),
     }),
-    [supported, open, data, loadFailed, busy, refreshing, notice, save, refresh],
+    [supported, scopeSupported, open, data, loadFailed, busy, refreshing, notice, save, customizeProject, saveAsGlobal, useGlobal, refresh],
   );
 }

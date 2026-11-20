@@ -32,6 +32,7 @@ interface Options {
   setHandler?: (cmd: Record<string, unknown>) => unknown;
   refreshed?: ClaudeInventory;
   connected?: boolean;
+  scope?: 'global' | 'project';
 }
 
 function setup(section: string | null, options: Options = {}) {
@@ -49,9 +50,11 @@ function setup(section: string | null, options: Options = {}) {
       requests.push(cmd);
       switch (cmd.cmd) {
         case 'claude.tools.get':
-          return Promise.resolve({ config: options.config ?? DEFAULT_CLAUDE_TOOLS_CONFIG, revision: REVISION, inventory: options.inventory === undefined ? INVENTORY : options.inventory, browserMcpVersion: '1.13.0' });
+          return Promise.resolve({ config: options.config ?? DEFAULT_CLAUDE_TOOLS_CONFIG, revision: REVISION, inventory: options.inventory === undefined ? INVENTORY : options.inventory, browserMcpVersion: '1.13.0', ...(options.scope ? { scope: options.scope, hasProjectOverride: options.scope === 'project' } : {}) });
         case 'claude.tools.set':
           return Promise.resolve(options.setHandler ? options.setHandler(cmd) : { config: cmd.config, revision: 'bbbbbbbbbbbbbbbb', changed: true });
+        case 'claude.tools.useGlobal':
+          return Promise.resolve({ config: options.config ?? DEFAULT_CLAUDE_TOOLS_CONFIG, revision: 'dddddddddddddddd', inventory: INVENTORY, browserMcpVersion: '1.13.0', scope: 'global', hasProjectOverride: false });
         case 'claude.inventory.refresh':
           return Promise.resolve({ inventory: options.refreshed ?? INVENTORY });
         default:
@@ -185,5 +188,71 @@ describe('Claude module', () => {
     const { requests } = setup('sources', { features: [] });
     expect(await screen.findAllByText(/no soporta esta función/, undefined, WAIT)).not.toHaveLength(0);
     expect(requests).toHaveLength(0);
+  });
+
+  describe('config scope', () => {
+    const scoped = ['claude-tools', 'claude-tools-scope'];
+
+    it('shows the global scope with a customize action on every section', async () => {
+      setup('plugins', { features: scoped, scope: 'global' });
+      const bar = await screen.findByTestId('claude-scope', undefined, WAIT);
+      expect(bar).toHaveTextContent('Configuración global');
+      expect(within(bar).getByRole('button', { name: 'Personalizar este proyecto' })).toBeInTheDocument();
+      expect(within(bar).queryByRole('button', { name: 'Volver a la global' })).toBeNull();
+    });
+
+    it('shows the project scope with back-to-global and save-as-global actions', async () => {
+      setup('browser', { features: scoped, scope: 'project' });
+      const bar = await screen.findByTestId('claude-scope', undefined, WAIT);
+      expect(bar).toHaveTextContent('propia de este proyecto');
+      expect(within(bar).getByRole('button', { name: 'Volver a la global' })).toBeInTheDocument();
+      expect(within(bar).getByRole('button', { name: 'Guardar como global' })).toBeInTheDocument();
+    });
+
+    it('customizes the project sending the current config with project scope and revision', async () => {
+      const { requests } = setup('sources', {
+        features: scoped,
+        scope: 'global',
+        setHandler: (cmd) => ({ config: cmd.config, revision: 'bbbbbbbbbbbbbbbb', changed: true, scope: 'project', hasProjectOverride: true }),
+      });
+      fireEvent.click(await screen.findByRole('button', { name: 'Personalizar este proyecto' }, WAIT));
+      await waitFor(() => expect(sets(requests)).toHaveLength(1), WAIT);
+      expect(sets(requests)[0]).toMatchObject({ scope: 'project', expectedRevision: REVISION, config: DEFAULT_CLAUDE_TOOLS_CONFIG });
+      expect(await screen.findByRole('button', { name: 'Volver a la global' }, WAIT)).toBeInTheDocument();
+    });
+
+    it('saves the project config as global', async () => {
+      const { requests } = setup('sources', { features: scoped, scope: 'project' });
+      fireEvent.click(await screen.findByRole('button', { name: 'Guardar como global' }, WAIT));
+      await waitFor(() => expect(sets(requests)).toHaveLength(1), WAIT);
+      expect(sets(requests)[0]).toMatchObject({ scope: 'global', expectedRevision: REVISION });
+    });
+
+    it('goes back to the global sending useGlobal with the revision', async () => {
+      const { requests } = setup('sources', { features: scoped, scope: 'project' });
+      fireEvent.click(await screen.findByRole('button', { name: 'Volver a la global' }, WAIT));
+      await waitFor(() => expect(requests.some((r) => r.cmd === 'claude.tools.useGlobal')).toBe(true), WAIT);
+      expect(requests.find((r) => r.cmd === 'claude.tools.useGlobal')).toMatchObject({ expectedRevision: REVISION });
+      expect(await screen.findByRole('button', { name: 'Personalizar este proyecto' }, WAIT)).toBeInTheDocument();
+    });
+
+    it('reloads on a conflict while changing scope', async () => {
+      const { requests } = setup('sources', {
+        features: scoped,
+        scope: 'global',
+        setHandler: () => {
+          throw new BridgeError('conflict', 'revision changed');
+        },
+      });
+      fireEvent.click(await screen.findByRole('button', { name: 'Personalizar este proyecto' }, WAIT));
+      expect(await screen.findByText(/cambió desde otro lado/, undefined, WAIT)).toBeInTheDocument();
+      await waitFor(() => expect(requests.filter((r) => r.cmd === 'claude.tools.get')).toHaveLength(2), WAIT);
+    });
+
+    it('shows nothing about scope without the feature', async () => {
+      setup('sources', { features: ['claude-tools'], scope: 'global' });
+      await screen.findByTestId('claude-sources', undefined, WAIT);
+      expect(screen.queryByTestId('claude-scope')).toBeNull();
+    });
   });
 });

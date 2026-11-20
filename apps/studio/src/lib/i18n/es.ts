@@ -305,6 +305,7 @@ export const es = {
   'caps.workspace-switch': 'abrir otro proyecto desde Studio',
   'caps.document-touched': 'documentos modificados desde la consola',
   'caps.claude-tools': 'elegir la configuración de Claude Code',
+  'caps.claude-tools-scope': 'compartir la configuración de Claude entre proyectos',
   'link.add': 'Agregar asociación…',
   'link.max': 'Máximo de asociaciones',
   'link.specs': 'Specs',

@@ -68,6 +68,40 @@ function noticeOf(notice: ClaudeNotice, t: TFunction): { tone: 'info' | 'warning
   return { tone: notice.kind === 'conflict' ? 'warning' : 'error', text };
 }
 
+function NextTurn() {
+  const { t } = useT();
+  const { scopeSupported } = useClaude();
+  return <p className="text-small text-ink-400">{t(scopeSupported ? 'module.claude.nextTurnScoped' : 'module.claude.nextTurn')}</p>;
+}
+
+function ScopeBar() {
+  const { t } = useT();
+  const { scope, hasProjectOverride, busy, open, customizeProject, useGlobal, saveAsGlobal } = useClaude();
+  const own = scope === 'project' || hasProjectOverride;
+  const disabled = busy || !open;
+  return (
+    <div data-testid="claude-scope" className="flex flex-wrap items-center justify-between gap-3">
+      <p className="text-small text-ink-300">{t(own ? 'module.claude.scope.project' : 'module.claude.scope.global')}</p>
+      <div className="flex items-center gap-2">
+        {own ? (
+          <>
+            <Button type="button" size="small" variant="outline" disabled={disabled} onClick={() => void useGlobal()}>
+              {t('module.claude.scope.useGlobal')}
+            </Button>
+            <Button type="button" size="small" variant="outline" disabled={disabled} onClick={() => void saveAsGlobal()}>
+              {t('module.claude.scope.saveGlobal')}
+            </Button>
+          </>
+        ) : (
+          <Button type="button" size="small" variant="outline" disabled={disabled} onClick={() => void customizeProject()}>
+            {t('module.claude.scope.customize')}
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function InventoryBar() {
   const { t, lang } = useT();
   const { inventory, refreshing, open, refresh } = useClaude();
@@ -146,7 +180,7 @@ function SourcesView({ config, inventory, disabled, save }: ViewProps) {
           <Switch checked={config.sources.local} disabled={disabled} aria-label={t('module.claude.sources.local')} onChange={(on) => void save(withSource(config, 'local', on))} />
         </ToggleRow>
       </Card>
-      <p className="text-small text-ink-400">{t('module.claude.nextTurn')}</p>
+      <NextTurn />
       {inventory ? <CountsTable inventory={inventory} /> : <EmptyInventory />}
     </>
   );
@@ -261,7 +295,7 @@ function BrowserView({ config, disabled, save, version }: Omit<ViewProps, 'inven
         </ToggleRow>
         <BrowserUrlField config={config} disabled={disabled} save={save} />
       </Card>
-      <p className="text-small text-ink-400">{t('module.claude.nextTurn')}</p>
+      <NextTurn />
       <Card testId="claude-in-chrome">
         <ToggleRow
           label={t('module.claude.inChrome.label')}
@@ -312,6 +346,7 @@ export function ClaudeCenter() {
           </p>
         ) : (
           <>
+            {claude.scopeSupported && claude.scope && <ScopeBar />}
             {section !== 'browser' && <InventoryBar />}
             {shown && (
               <Notice testId="claude-notice" tone={shown.tone} role={shown.tone === 'error' ? 'alert' : 'status'} onDismiss={claude.dismissNotice} dismissLabel={t('module.claude.notice.dismiss')}>

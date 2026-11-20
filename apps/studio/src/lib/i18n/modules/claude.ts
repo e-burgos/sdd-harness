@@ -61,6 +61,12 @@ export const claudeEs = {
   'module.claude.notice.error': 'No se pudo guardar el cambio. {message}',
   'module.claude.notice.refresh-failed': 'No se pudo actualizar el inventario. {message}',
   'module.claude.notice.dismiss': 'Cerrar aviso',
+  'module.claude.scope.global': 'Configuración global — la heredan todos tus proyectos.',
+  'module.claude.scope.project': 'Configuración propia de este proyecto.',
+  'module.claude.scope.customize': 'Personalizar este proyecto',
+  'module.claude.scope.useGlobal': 'Volver a la global',
+  'module.claude.scope.saveGlobal': 'Guardar como global',
+  'module.claude.nextTurnScoped': 'Los cambios se aplican desde el próximo turno de cada conversación, en el alcance que ves arriba. No modifican tu configuración de Claude Code.',
 };
 
 export const claudeEn = {
@@ -126,4 +132,10 @@ export const claudeEn = {
   'module.claude.notice.error': 'Could not save the change. {message}',
   'module.claude.notice.refresh-failed': 'Could not refresh the inventory. {message}',
   'module.claude.notice.dismiss': 'Dismiss notice',
+  'module.claude.scope.global': 'Global configuration — every project inherits it.',
+  'module.claude.scope.project': 'Configuration specific to this project.',
+  'module.claude.scope.customize': 'Customize this project',
+  'module.claude.scope.useGlobal': 'Back to global',
+  'module.claude.scope.saveGlobal': 'Save as global',
+  'module.claude.nextTurnScoped': 'Changes apply from the next turn of each conversation, in the scope shown above. They do not modify your Claude Code configuration.',
 } satisfies Record<keyof typeof claudeEs, string>;
