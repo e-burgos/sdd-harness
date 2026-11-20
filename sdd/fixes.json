@@ -2180,9 +2180,17 @@
       "author": "e-burgos",
       "spec_id": null,
       "created_at": "2026-11-20",
-      "resolved_at": null,
-      "affected_files": [],
-      "test_reference": "",
+      "resolved_at": "2026-11-20",
+      "affected_files": [
+        "libs/studio-protocol/src/commands.ts",
+        "libs/studio-protocol/src/commands.spec.ts",
+        "apps/studio-bridge/src/server/router.ts",
+        "apps/studio-bridge/src/server/router.spec.ts",
+        "apps/studio/src/components/modules/claude/use-chrome-status.ts",
+        "apps/studio/src/components/modules/claude/claude-module.spec.tsx",
+        "sdd/fixes/fix-e-burgos-019.md"
+      ],
+      "test_reference": "specs: router (cache vs force), protocolo (force), web (montaje force:false, reintento force:true) (3efac9b); suites protocol/bridge/web verdes",
       "cycle": null,
       "id": "FIX-e-burgos-019",
       "fix_document": "sdd/fixes/fix-e-burgos-019.md",
@@ -2195,7 +2203,19 @@
       "related_modules": [
         "studio-claude-connect"
       ],
-      "status": "in-progress"
+      "status": "validated",
+      "validated_at": "2026-11-20",
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "low",
+        "agent": "implementor-back",
+        "tokens_in": 25000,
+        "tokens_out": 4000,
+        "tokens_total": 29000,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-11-20"
+      }
     }
   ]
 }
