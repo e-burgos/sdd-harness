@@ -299,7 +299,17 @@
       "completed_at": "2026-11-20"
     }
   ],
-  "in_progress_modules": [],
+  "in_progress_modules": [
+    {
+      "module": "studio-ui-polish",
+      "spec": "spec-e-burgos-028-studio-ui-polish",
+      "apps": [
+        "apps/studio"
+      ],
+      "cycles_completed": 0,
+      "description": "Pulido visual de Studio: markdown único con formato, ciclos colapsables, modal de documentos y controles compactos del Mapa."
+    }
+  ],
   "pending_modules": [
     {
       "module": "studio-framework-vision",

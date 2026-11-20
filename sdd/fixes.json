@@ -1747,6 +1747,45 @@
         "source": "agent-usage-notification",
         "recorded_at": "2026-11-20"
       }
+    },
+    {
+      "id": "FIX-e-burgos-008",
+      "author": "e-burgos",
+      "spec_id": null,
+      "fix_document": "sdd/fixes/fix-e-burgos-008.md",
+      "type": "IMPROVEMENT",
+      "severity": "medium",
+      "created_at": "2026-11-20",
+      "resolved_at": "2026-11-20",
+      "title": "El compositor del chat con un agente va en el panel central, no en la ficha",
+      "estimation_hours": 1,
+      "description": "Completa FIX-e-burgos-007: el compositor y la lista «Chat directo» siguen en la ficha del agente (panel derecho); el chat entero debe vivir en el panel central.",
+      "justification": "Corrección pedida por el dev tras probar FIX-e-burgos-007 (captura); perfil solo; sin contratos ni entidades nuevas.",
+      "related_modules": [
+        "studio-agents"
+      ],
+      "affected_files": [
+        "apps/studio/src/components/modules/agents/AgentsCenter.tsx",
+        "apps/studio/src/components/modules/agents/AgentCard.tsx",
+        "apps/studio/src/components/modules/agents/AgentChatList.tsx",
+        "apps/studio/src/components/modules/agents/agents.spec.tsx",
+        "sdd/fixes/fix-e-burgos-008.md",
+        "sdd/components.json"
+      ],
+      "test_reference": "sdd:verify apps/studio quick + full OK (typecheck, 1353 tests, build)",
+      "status": "implemented",
+      "cycle": null,
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "tokens_in": 9198,
+        "tokens_out": 1623,
+        "tokens_total": 10821,
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-20"
+      }
     }
   ]
 }

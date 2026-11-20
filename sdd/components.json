@@ -943,6 +943,11 @@
             "cycle": 1,
             "date": "2026-11-20",
             "change": "FIX-e-burgos-007: la ficha lista las conversaciones del agente (AgentChatList) en vez de incrustar el chat"
+          },
+          {
+            "cycle": 1,
+            "date": "2026-11-20",
+            "change": "FIX-e-burgos-008: la ficha queda solo con los datos del agente (sin Chat directo ni compositor)"
           }
         ],
         "path": "src/components/modules/agents/AgentCard.tsx",
@@ -2551,7 +2556,7 @@
         "module": "studio-dual-sidebar",
         "spec": "sdd/specs/spec-e-burgos-010-studio-dual-sidebar",
         "path": "src/components/modules/agents/AgentChatList.tsx",
-        "status": "implemented",
+        "status": "deprecated",
         "created_in_cycle": 1,
         "updated_in_cycle": null,
         "description": "Chat directo de la ficha del agente: 5 conversaciones recientes que se abren en el panel central y un Composer compacto que abre el hilo nuevo en el centro.",
@@ -2562,6 +2567,11 @@
             "cycle": 1,
             "date": "2026-11-20",
             "change": "Creado en FIX-e-burgos-007"
+          },
+          {
+            "cycle": 1,
+            "date": "2026-11-20",
+            "change": "FIX-e-burgos-008: borrado; el compositor del agente pasó al panel central (AgentsCenter)"
           }
         ]
       }
