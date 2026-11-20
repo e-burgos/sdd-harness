@@ -26,3 +26,6 @@ export function botText(t: TFunction, e: BotEvent): string {
 
 export const formatBytes = (bytes: number): string =>
   bytes >= 1_048_576 ? `${(bytes / 1_048_576).toFixed(1)} MB` : bytes >= 1024 ? `${Math.round(bytes / 1024)} KB` : `${bytes} B`;
+
+export const formatKb = (bytes: number, lang: string): string =>
+  `${(bytes / 1024).toLocaleString(lang, { minimumFractionDigits: 1, maximumFractionDigits: 1 })} KB`;

@@ -9,6 +9,7 @@ import { useStickToBottom } from '@/lib/use-stick-to-bottom';
 import { useBridge, useStudio } from '../BridgeProvider';
 import { ActivityIndicator, INDICATED_STATUSES } from './ActivityIndicator';
 import { ContextMeter } from './ContextMeter';
+import { ContextSourceChip } from './ContextSourceChip';
 import { StatusBadge } from './StatusBadge';
 import { ThreadLinkPicker } from './ThreadLinkPicker';
 import { Timeline } from './Timeline';
@@ -63,6 +64,7 @@ export function ThreadView({ threadId, onBack, composer, onNewConversation }: { 
         {info && (
           <div data-testid="thread-header-status" className="flex min-w-0 flex-wrap items-center gap-3 pl-9">
             <ContextMeter usage={info.contextUsage} onNewConversation={onNewConversation} />
+            <ContextSourceChip source={info.contextSource} />
             <StatusBadge status={info.status} />
             {BUSY.has(info.status) && (
               <Button type="button" variant="ghost" color="danger" size="tiny" onClick={interrupt}>

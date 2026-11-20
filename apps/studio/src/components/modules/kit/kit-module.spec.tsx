@@ -558,3 +558,52 @@ describe('Kit integrations', () => {
     expect(screen.getByTestId('kit-integrations')).toHaveTextContent('Sin conexión');
   });
 });
+
+describe('Kit harness section', () => {
+  const harness = (path: string, role: string, bytes: number, extra: Record<string, unknown> = {}) => ({ ...entry('harness', role, null, path), bytes, ...extra });
+  const withHarness = (entries: ReturnType<typeof harness>[]) => {
+    INDEX.entries.push(...entries);
+    FILES['sdd/dual-harness/rules/sdd-gates.md'] = '# Gates rule';
+  };
+  afterEach(() => {
+    INDEX.entries = INDEX.entries.filter((e) => e.section !== 'harness');
+  });
+
+  it('does not list the group without harness entries', async () => {
+    const { container } = setup(null);
+    await waitFor(() => expect(container.querySelector('[data-panel-group="project"]')).toBeTruthy());
+    expect(container.querySelector('[data-panel-group="harness"]')).toBeNull();
+  });
+
+  it('warns and offers the split recipe when a core file exceeds 6 KB', async () => {
+    withHarness([
+      harness('sdd/dual-harness/CLAUDE.md', 'harness-core', 7000),
+      harness('sdd/dual-harness/AGENTS.md', 'harness-core', 3000),
+      harness('sdd/dual-harness/project.md', 'harness-project', 500),
+      harness('sdd/dual-harness/rules/sdd-gates.md', 'harness-rule', 2048, { trigger: 'always_on', description: 'Gates del ciclo' }),
+    ]);
+    setup('harness');
+    const advice = await screen.findByTestId('harness-split-advice');
+    expect(advice).toHaveTextContent('Conviene separar las instrucciones propias del núcleo');
+    expect(advice).toHaveTextContent('npx @e-burgos/sdd-harness update sdd --split-project');
+    const sizes = screen.getAllByTestId('harness-size');
+    expect(sizes.map((s) => s.getAttribute('data-over'))).toEqual(['false', 'true']);
+    const rule = document.querySelector('[data-harness-rule="sdd-gates.md"]') as HTMLElement;
+    expect(rule).toHaveTextContent('always_on');
+    expect(rule).toHaveTextContent('Gates del ciclo');
+    fireEvent.click(within(rule).getByRole('button'));
+    expect(await screen.findByText('Gates rule')).toBeTruthy();
+  });
+
+  it('flags a missing project.md and shows no advice when everything fits', async () => {
+    withHarness([harness('sdd/dual-harness/CLAUDE.md', 'harness-core', 1000)]);
+    const first = setup('harness');
+    expect(await screen.findByTestId('harness-split-advice')).toHaveTextContent('Falta project.md');
+    expect(screen.getByText('falta')).toBeTruthy();
+    first.unmount();
+    INDEX.entries.push(harness('sdd/dual-harness/project.md', 'harness-project', 500));
+    setup('harness');
+    await screen.findAllByTestId('harness-size');
+    expect(screen.queryByTestId('harness-split-advice')).toBeNull();
+  });
+});

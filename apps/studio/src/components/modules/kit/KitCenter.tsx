@@ -4,6 +4,7 @@ import { EmptyState } from '@e-burgos/tucu-ui';
 import { useT } from '@/lib/i18n/i18n';
 import { useNav } from '@/lib/nav/use-nav';
 import { KitCapabilitiesView } from './KitCapabilitiesView';
+import { KitHarnessView } from './KitHarnessView';
 import { KitToolsView } from './KitToolsView';
 import { CenterFrame, EntryBrowser, FileViewer, IndexGate, fileLabel } from './KitParts';
 import { useKitIndex } from './KitProvider';
@@ -115,6 +116,8 @@ export function KitCenter() {
       return <SchemasView />;
     case 'context':
       return <ContextView />;
+    case 'harness':
+      return <KitHarnessView />;
     case 'memory':
       return view.which === 'lessons' ? <LessonsView /> : <JournalView />;
   }

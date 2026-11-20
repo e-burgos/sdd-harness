@@ -17,6 +17,7 @@ import { useBridge, useStudio } from '../../BridgeProvider';
 import { CapabilityNotice } from '../../mission-control/CapabilityNotice';
 import { focusRing } from '../../shell/shell-context';
 import { CycleSelector, Muted, Section, StatusBadge } from './SpecParts';
+import { SpecPackStats } from './SpecPackStats';
 import { effectiveCycle } from './specs-model';
 
 const RunResult = z.object({ runId: z.string().min(1) });
@@ -168,6 +169,7 @@ export function SpecVerifyTab({ spec }: { spec: SpecSummary }) {
           {active && <VerifyOutput runId={active.runId} app={active.app} level={active.level} />}
         </Section>
       )}
+      {supports('session-context') && <SpecPackStats spec={spec.id} cycle={shown.cycle} />}
       <Section title={t('kitexec.verify.results')} count={results.length}>
         {results.length === 0 ? (
           <Muted>{t('kitexec.verify.noResults')}</Muted>

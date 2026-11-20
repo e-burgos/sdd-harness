@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from '@e-burgos/tucu-ui';
-import { BookOpen, Bot, Braces, Brain, FileText, FolderTree, ListChecks, ScrollText, Sparkles, TriangleAlert, Wrench, type LucideIcon } from 'lucide-react';
+import { BookOpen, Bot, Shield, Braces, Brain, FileText, FolderTree, ListChecks, ScrollText, Sparkles, TriangleAlert, Wrench, type LucideIcon } from 'lucide-react';
 import { useMemo, type ReactNode } from 'react';
 import { useT, type TFunction } from '@/lib/i18n/i18n';
 import { matchesQuery } from '@/lib/nav/search';
@@ -63,6 +63,11 @@ export function KitPanel() {
       },
       { id: 'tools', title: t('module.kit.group.tools'), rows: [{ view: { kind: 'tools' }, label: t('module.kit.row.tools'), icon: Wrench, meta: toolsMeta(snapshot?.tools, t) }] },
       { id: 'docs', title: t('module.kit.group.docs'), rows: docRows },
+      {
+        id: 'harness',
+        title: t('module.kit.group.harness'),
+        rows: entries && entriesOf(entries, 'harness').length > 0 ? [{ view: { kind: 'harness' }, label: t('module.kit.row.harness'), icon: Shield, meta: entriesOf(entries, 'harness', 'harness-rule').length }] : [],
+      },
       {
         id: 'project',
         title: t('module.kit.group.project'),

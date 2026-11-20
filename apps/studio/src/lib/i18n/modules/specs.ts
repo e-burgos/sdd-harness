@@ -124,6 +124,12 @@ export const specsEs = {
   'specs.right.dependencies': 'Dependencias',
   'specs.right.none': 'ninguna',
   'specs.right.unassigned': 'sin asignar',
+  'packstats.title': 'Contexto de los agentes',
+  'packstats.summary': 'Paquetes: {percent} % de las fuentes (pack {pack} / fuentes {source}) · {misses} pack-miss',
+  'packstats.loading': 'Calculando paquetes…',
+  'packstats.refresh': 'Recalcular',
+  'packstats.empty': 'Este ciclo no tiene bloques con paquete.',
+  'packstats.invalid': 'El puente devolvió estadísticas ilegibles.',
 };
 
 export const specsEn = {
@@ -252,4 +258,10 @@ export const specsEn = {
   'specs.right.dependencies': 'Dependencies',
   'specs.right.none': 'none',
   'specs.right.unassigned': 'unassigned',
+  'packstats.title': 'Agent context',
+  'packstats.summary': 'Packs: {percent} % of the sources (pack {pack} / sources {source}) · {misses} pack-miss',
+  'packstats.loading': 'Computing packs…',
+  'packstats.refresh': 'Recompute',
+  'packstats.empty': 'This cycle has no blocks with a pack.',
+  'packstats.invalid': 'The bridge returned unreadable stats.',
 } satisfies Record<keyof typeof specsEs, string>;

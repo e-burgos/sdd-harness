@@ -124,7 +124,7 @@ describe('Verificación', () => {
   });
 
   it('warns on busy', async () => {
-    setup({ request: async () => Promise.reject(new BridgeError('conflict', 'busy')) });
+    setup({ request: async (req) => ((req as { cmd: string }).cmd === 'kit.pack.stats' ? { rows: [], total: { packBytes: 0, sourceBytes: 0 }, packMisses: 0 } : Promise.reject(new BridgeError('conflict', 'busy'))) });
     openTab('Verificación');
     fireEvent.click(screen.getByRole('button', { name: 'Correr verify quick de apps/studio' }));
     expect((await screen.findByRole('alert')).textContent).toBe('Ya hay un verify corriendo en este puente. Esperá a que termine.');
@@ -158,5 +158,42 @@ describe('pill del lease', () => {
   it('is absent without lease', () => {
     renderShell(<StudioHeader />, { value: bridgeValue({}, snapshot({ verifyLease: null })) });
     expect(screen.queryByTestId('verify-lease-pill')).toBeNull();
+  });
+});
+
+describe('Contexto de los agentes', () => {
+  const stats = {
+    rows: [
+      { unit: 'B-01', role: 'implementor-back', packBytes: 18_800, sourceBytes: 60_000 },
+      { unit: 'B-02', role: 'implementor-front', packBytes: 10_240, sourceBytes: 40_000 },
+    ],
+    total: { packBytes: 29_040, sourceBytes: 100_000 },
+    packMisses: 2,
+  };
+  const request = async (req: unknown) => ((req as { cmd: string }).cmd === 'kit.pack.stats' ? stats : { runId: 'r1' });
+
+  it('loads the stats with session-context and shows summary and rows', async () => {
+    const { request: spy } = setup({ request });
+    openTab('Verificación');
+    const summary = await screen.findByTestId('pack-stats-summary');
+    expect(summary).toHaveTextContent('Paquetes: 29 % de las fuentes (pack 28,4 KB / fuentes 97,7 KB) · 2 pack-miss');
+    expect(spy).toHaveBeenCalledWith({ cmd: 'kit.pack.stats', spec: 'spec-dev-001-pagos', cycle: 'cycle-01' });
+    const rows = document.querySelectorAll('[data-pack-row]');
+    expect([...rows].map((r) => r.getAttribute('data-pack-row'))).toEqual(['B-01', 'B-02']);
+    expect(rows[0]).toHaveTextContent('implementor-back');
+    expect(rows[0]).toHaveTextContent('18,4 KB');
+  });
+
+  it('shows the error when the command fails', async () => {
+    setup({ request: async (req) => { if ((req as { cmd: string }).cmd === 'kit.pack.stats') throw new BridgeError('internal', 'boom'); return {}; } });
+    openTab('Verificación');
+    expect(await screen.findByRole('alert')).toBeTruthy();
+  });
+
+  it('shows nothing without the capability', () => {
+    const { request: spy } = setup({ request, supported: false });
+    openTab('Verificación');
+    expect(screen.queryByText('Contexto de los agentes')).toBeNull();
+    expect(spy).not.toHaveBeenCalledWith(expect.objectContaining({ cmd: 'kit.pack.stats' }));
   });
 });

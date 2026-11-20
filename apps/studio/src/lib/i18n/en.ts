@@ -308,6 +308,7 @@ export const en = {
   'caps.claude-tools': 'choosing the Claude Code configuration',
   'caps.claude-tools-scope': 'sharing the Claude configuration across projects',
   'caps.kit-execution': 'running verify from Studio',
+  'caps.session-context': 'seeing each agent context',
   'link.add': 'Add association…',
   'link.max': 'Association limit reached',
   'link.specs': 'Specs',
