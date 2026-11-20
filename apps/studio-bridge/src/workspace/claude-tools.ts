@@ -18,6 +18,10 @@ const studioDir = (root: string) => path.join(root, '.sdd-studio');
 const configFile = (root: string) => path.join(studioDir(root), 'claude-tools.json');
 const serialize = (config: ClaudeToolsConfig) => `${JSON.stringify(config, null, 2)}\n`;
 
+const cache = new Map<string, ClaudeToolsConfig>();
+
+export const cachedClaudeTools = (root: string): ClaudeToolsConfig => cache.get(root) ?? DEFAULT_CLAUDE_TOOLS_CONFIG;
+
 const DEFAULT_BYTES = serialize(DEFAULT_CLAUDE_TOOLS_CONFIG);
 
 async function readBytes(root: string): Promise<string> {
@@ -41,7 +45,9 @@ function parseConfig(raw: string): ClaudeToolsConfig {
 
 export async function readClaudeTools(root: string): Promise<ClaudeToolsState> {
   const raw = await readBytes(root);
-  return { config: parseConfig(raw), revision: computeToolsRevision(raw) };
+  const config = parseConfig(raw);
+  cache.set(root, config);
+  return { config, revision: computeToolsRevision(raw) };
 }
 
 async function writeAtomically(root: string, content: string): Promise<void> {
@@ -69,6 +75,7 @@ async function runSet(root: string, input: unknown, expectedRevision: string): P
   const content = serialize(parsed.data);
   if (content === raw) return { config: parsed.data, revision, changed: false };
   await writeAtomically(root, content);
+  cache.set(root, parsed.data);
   return { config: parsed.data, revision: computeToolsRevision(content), changed: true };
 }
 

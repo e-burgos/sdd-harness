@@ -49,6 +49,12 @@ export interface ToolRunContext {
 
 export type ToolOutcome = 'ok' | 'failed' | 'interrupted';
 
+export interface EngineInitInfo {
+  plugins: { id: string; name: string; scope: string }[];
+  mcpServers: { name: string; status: string; source: string }[];
+  counts: { skills: number; agents: number; plugins: number; mcpServers: number; mcpTools: number };
+}
+
 export interface EngineCallbacks {
   emit(event: ThreadEvent): void;
   /**
@@ -59,6 +65,7 @@ export interface EngineCallbacks {
   judgeTool(toolName: string, input: Record<string, unknown>, ctx?: JudgeContext): ToolVerdict;
   onSessionId(id: string): void;
   onContextUsage?(usage: ContextUsage): void;
+  onInit?(info: EngineInitInfo): void;
   requestApproval(request: ApprovalRequest, signal: AbortSignal): Promise<ApprovalDecision>;
   readAttachment(ref: AttachmentRef): Promise<Uint8Array | null>;
   collectPending(at: 'cut-point' | 'turn-end', opts?: { textOnly?: boolean }): OutgoingMessage[];

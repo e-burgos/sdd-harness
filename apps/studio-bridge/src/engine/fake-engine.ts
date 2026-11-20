@@ -178,6 +178,11 @@ export class FakeEngine implements AgentEngine {
       const title = titleOf(firstText);
       if (title) this.titles.set(sessionId, title);
       cb.onSessionId(sessionId);
+      cb.onInit?.({
+        plugins: [],
+        mcpServers: [],
+        counts: { skills: 0, agents: 0, plugins: 0, mcpServers: 0, mcpTools: 0 },
+      });
       await wait();
       if (marker(firstText, 'fail')) throw new Error('fake failure');
       if (marker(firstText, 'bad-attachment')) throw new Error('attachment rejected');

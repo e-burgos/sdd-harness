@@ -11,7 +11,9 @@ import {
   type SDKSessionInfo,
   type SDKUserMessage,
 } from '@anthropic-ai/claude-agent-sdk';
-import { DEFAULT_AGENT, type ThreadOptions } from '@sdd-studio/protocol';
+import { DEFAULT_AGENT, type ClaudeToolsConfig, type ThreadOptions } from '@sdd-studio/protocol';
+import { CHROME_DEVTOOLS_MCP_VERSION, CHROME_DEVTOOLS_SERVER_NAME } from './chrome-devtools';
+import { deriveInitInfo } from './claude-init';
 import { InputChannel } from './input-channel';
 import { toHookContext, toSdkUserMessage } from './prompt-content';
 import type { JudgeContext, ToolOutcome, ToolRunContext, ToolVerdict } from './types';
@@ -75,6 +77,7 @@ export function buildQueryOptions(
     beforeTool?: (hookInput: PreToolUseHookInput) => Promise<void>;
     afterTool?: (hookInput: PostToolUseHookInput | PostToolUseFailureHookInput, outcome: ToolOutcome) => Promise<void>;
     env?: Record<string, string | undefined>;
+    claudeTools?: ClaudeToolsConfig;
   },
 ): Options {
   const { agent, model, effort, permissionMode } = input.options;
@@ -154,6 +157,7 @@ export function buildQueryOptions(
     options.model = MODEL_IDS[model];
     if (effort) options.effort = effort;
   }
+  if (h.claudeTools) applyClaudeTools(options, h.claudeTools);
   if (input.resumeSessionId) options.resume = input.resumeSessionId;
   if (input.systemPrefix) {
     options.systemPrompt = {
@@ -165,6 +169,28 @@ export function buildQueryOptions(
     };
   }
   return options;
+}
+
+export function applyClaudeTools(options: Options, config: ClaudeToolsConfig): void {
+  options.settingSources = ['project', ...(config.sources.user ? (['user'] as const) : []), ...(config.sources.local ? (['local'] as const) : [])];
+  const settings: NonNullable<Exclude<Options['settings'], string>> = {};
+  if (config.disabledPlugins.length > 0) {
+    settings.enabledPlugins = Object.fromEntries(config.disabledPlugins.map((id) => [id, false]));
+  }
+  if (config.disabledMcpServers.length > 0) {
+    settings.deniedMcpServers = config.disabledMcpServers.map((serverName) => ({ serverName }));
+  }
+  if (Object.keys(settings).length > 0) options.settings = settings;
+  if (config.browser.enabled) {
+    const mode = config.browser.browserUrl ? ['--browserUrl', config.browser.browserUrl] : ['--autoConnect'];
+    options.mcpServers = {
+      [CHROME_DEVTOOLS_SERVER_NAME]: {
+        type: 'stdio',
+        command: 'npx',
+        args: ['-y', `chrome-devtools-mcp@${CHROME_DEVTOOLS_MCP_VERSION}`, ...mode],
+      },
+    };
+  }
 }
 
 function toolRunContext(
@@ -188,6 +214,7 @@ export class ClaudeAgentSdkEngine implements AgentEngine {
     private readonly getEnv?: () => Record<string, string | undefined>,
     private readonly deliveryMode: DeliveryMode = 'stream',
     private readonly sessionInfoFn: SessionInfoFn = sdkGetSessionInfo,
+    private readonly getClaudeTools?: () => ClaudeToolsConfig,
   ) {}
 
   async readSessionTitle(sessionId: string, cwd: string): Promise<string | null> {
@@ -210,6 +237,7 @@ export class ClaudeAgentSdkEngine implements AgentEngine {
       options: buildQueryOptions(input, {
         abort,
         env: this.getEnv?.(),
+        claudeTools: this.getClaudeTools?.(),
         judgeTool: (toolName, toolInput, hookInput) =>
           cb.judgeTool(toolName, toolInput, {
             author: mapper.authorForAgentId(hookInput.agent_id),
@@ -289,6 +317,13 @@ export class ClaudeAgentSdkEngine implements AgentEngine {
           const msg = message as unknown as SdkMessageLike;
           if (msg.type === 'system' && msg.subtype === 'init' && typeof msg.session_id === 'string') {
             cb.onSessionId(msg.session_id);
+          }
+          if (msg.type === 'system' && msg.subtype === 'init' && cb.onInit) {
+            try {
+              cb.onInit(deriveInitInfo(msg));
+            } catch {
+              // Inventory capture is best effort: it never fails the turn.
+            }
           }
           emitAll(mapper.mapMessage(msg));
           if (msg.type === 'result') {

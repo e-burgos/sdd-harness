@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import type { Options, Query } from '@anthropic-ai/claude-agent-sdk';
-import { defaultThreadOptions, type ThreadEvent } from '@sdd-studio/protocol';
+import { CHROME_DEVTOOLS_MCP_VERSION } from './chrome-devtools';
+import { DEFAULT_CLAUDE_TOOLS_CONFIG, defaultThreadOptions, type ClaudeToolsConfig, type ThreadEvent } from '@sdd-studio/protocol';
 import { describe, expect, it, vi } from 'vitest';
 import { buildQueryOptions, ClaudeAgentSdkEngine, cleanTitle, pickSessionTitle, SESSION_TITLE_MAX, type QueryFn, type SessionInfoFn } from './claude-sdk-engine';
 import { plainPrompt, type ApprovalRequest, type EngineCallbacks, type EngineTurnInput } from './types';
@@ -12,6 +13,77 @@ const input = (over: Partial<EngineTurnInput['options']> = {}, resume: string | 
   threadId: 't', prompts: [{ id: 'u-1', prompt: plainPrompt('hola') }], cwd: '/repo', resumeSessionId: resume, options: { ...defaultThreadOptions(), ...over },
 });
 const handlers = () => ({ abort: new AbortController(), canUseTool: vi.fn(), onHook: vi.fn(), judgeTool: vi.fn() });
+
+const claudeConfig = (over: Partial<ClaudeToolsConfig> = {}): ClaudeToolsConfig => ({ ...DEFAULT_CLAUDE_TOOLS_CONFIG, ...over });
+
+describe('claude tools config', () => {
+  it('matches the current options when no config is given and when the config is the default', () => {
+    const plain = buildQueryOptions(input(), handlers());
+    const withDefault = buildQueryOptions(input(), { ...handlers(), claudeTools: DEFAULT_CLAUDE_TOOLS_CONFIG });
+    expect(Object.keys(withDefault).sort()).toEqual(Object.keys(plain).sort());
+    expect(withDefault.settingSources).toEqual(['project']);
+    expect(withDefault.settings).toBeUndefined();
+    expect(withDefault.mcpServers).toBeUndefined();
+  });
+  it('adds the enabled sources after project', () => {
+    const both = buildQueryOptions(input(), { ...handlers(), claudeTools: claudeConfig({ sources: { user: true, local: true } }) });
+    expect(both.settingSources).toEqual(['project', 'user', 'local']);
+    const user = buildQueryOptions(input(), { ...handlers(), claudeTools: claudeConfig({ sources: { user: true, local: false } }) });
+    expect(user.settingSources).toEqual(['project', 'user']);
+  });
+  it('turns off plugins through enabledPlugins flag settings', () => {
+    const o = buildQueryOptions(input(), { ...handlers(), claudeTools: claudeConfig({ disabledPlugins: ['a@market', 'b@market'] }) });
+    expect(o.settings).toEqual({ enabledPlugins: { 'a@market': false, 'b@market': false } });
+  });
+  it('turns off MCP servers through deniedMcpServers flag settings', () => {
+    const o = buildQueryOptions(input(), { ...handlers(), claudeTools: claudeConfig({ disabledMcpServers: ['plugin:github:github'] }) });
+    expect(o.settings).toEqual({ deniedMcpServers: [{ serverName: 'plugin:github:github' }] });
+  });
+  it('combines plugin and MCP settings', () => {
+    const o = buildQueryOptions(input(), {
+      ...handlers(),
+      claudeTools: claudeConfig({ disabledPlugins: ['a@m'], disabledMcpServers: ['x'] }),
+    });
+    expect(o.settings).toEqual({ enabledPlugins: { 'a@m': false }, deniedMcpServers: [{ serverName: 'x' }] });
+  });
+  it('adds the chrome-devtools server with autoConnect by default', () => {
+    const o = buildQueryOptions(input(), { ...handlers(), claudeTools: claudeConfig({ browser: { enabled: true, browserUrl: null } }) });
+    expect(o.mcpServers).toEqual({
+      'chrome-devtools': { type: 'stdio', command: 'npx', args: ['-y', `chrome-devtools-mcp@${CHROME_DEVTOOLS_MCP_VERSION}`, '--autoConnect'] },
+    });
+  });
+  it('uses browserUrl when the dev set one', () => {
+    const o = buildQueryOptions(input(), {
+      ...handlers(),
+      claudeTools: claudeConfig({ browser: { enabled: true, browserUrl: 'http://127.0.0.1:9222' } }),
+    });
+    expect(o.mcpServers?.['chrome-devtools']).toMatchObject({ args: ['-y', `chrome-devtools-mcp@${CHROME_DEVTOOLS_MCP_VERSION}`, '--browserUrl', 'http://127.0.0.1:9222'] });
+  });
+  it('does not add the server when the browser is off', () => {
+    const o = buildQueryOptions(input(), { ...handlers(), claudeTools: claudeConfig({ browser: { enabled: false, browserUrl: 'http://x:1' } }) });
+    expect(o.mcpServers).toBeUndefined();
+  });
+  it('reads the config from the injected getter on every turn and reports the init', async () => {
+    let config = claudeConfig();
+    const seen: Options[] = [];
+    const fn: QueryFn = ({ options }) => {
+      seen.push(options ?? {});
+      async function* run() {
+        yield { type: 'system', subtype: 'init', session_id: 's', model: 'm', skills: ['a'], agents: [], tools: ['mcp__x__y', 'Read'], plugins: [{ name: 'p', source: 'p@m' }], mcp_servers: [{ name: 'x', status: 'connected' }] };
+        yield { type: 'result', subtype: 'success', is_error: false, result: '', total_cost_usd: 0, usage: {}, queued_turn_count: 0 };
+      }
+      return Object.assign(run(), { interrupt: async () => undefined, getContextUsage: async () => ({ totalTokens: 1, maxTokens: 2 }) }) as unknown as Query;
+    };
+    const engine = new ClaudeAgentSdkEngine(fn, undefined, 'stream', undefined, () => config);
+    const infos: unknown[] = [];
+    const cb = { emit: () => {}, judgeTool: () => ({ kind: 'allow' as const }), onSessionId: () => {}, requestApproval: async () => ({ behavior: 'allow' as const }), onInit: (i: unknown) => infos.push(i), ...noPending } as EngineCallbacks;
+    await engine.startTurn(input(), cb).done;
+    config = claudeConfig({ sources: { user: true, local: false } });
+    await engine.startTurn(input(), cb).done;
+    expect(seen.map((o) => o.settingSources)).toEqual([['project'], ['project', 'user']]);
+    expect(infos[0]).toMatchObject({ counts: { skills: 1, agents: 0, plugins: 1, mcpServers: 1, mcpTools: 1 } });
+  });
+});
 
 describe('buildQueryOptions', () => {
   it('leaves model, effort and agent to the kit by default', () => {

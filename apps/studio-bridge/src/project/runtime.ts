@@ -11,6 +11,7 @@ import { SessionManager } from '../sessions/session-manager';
 import { SessionBindings } from '../sessions/session-bindings';
 import { ThreadStore } from '../sessions/store';
 import { createGithubFeed, type GithubFeed } from '../github/pr-feed';
+import { cachedClaudeTools, readClaudeTools } from '../workspace/claude-tools';
 import { createFileIndex } from '../workspace/file-index';
 import { KitIndexer } from '../workspace/kit-index';
 import { createSessionsFeed, type SessionsFeed } from '../workspace/sessions-feed';
@@ -86,7 +87,8 @@ export async function openProjectRuntime(root: string, deps: ProjectRuntimeDeps)
   let sessions: SessionManager;
   let handlers: BridgeHandlers;
   try {
-    const engine = deps.engine === 'fake' ? new FakeEngine() : new ClaudeAgentSdkEngine(undefined, () => auth.env());
+    await readClaudeTools(root).catch(() => undefined);
+    const engine = deps.engine === 'fake' ? new FakeEngine() : new ClaudeAgentSdkEngine(undefined, () => auth.env(), 'stream', undefined, () => cachedClaudeTools(root));
     sessions = new SessionManager({
       root,
       attachments,
