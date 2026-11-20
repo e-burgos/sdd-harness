@@ -1,6 +1,6 @@
 # SPEC-e-burgos-031: Las sesiones de Studio usan el contexto del kit — paquete por unidad, núcleo y reglas
 
-> Estado: **in-progress** (2026-11-20). cycle-01 abierto (flow lite). Auditoría kit ↔ Studio, brechas 3 y 4:
+> Estado: **completed** (2026-11-20). cycle-01 cerrado (flow lite, 4/4 tasks). Auditoría kit ↔ Studio, brechas 3 y 4:
 > paquetes de contexto (`sdd:pack`) y núcleo de 5 KB con reglas bajo demanda y `project.md`.
 
 ## Resumen ejecutivo

@@ -60,8 +60,34 @@
       "estimation_hours": 1,
       "story_points": 2,
       "depends_on": [],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "libs/studio-protocol/src/commands.spec.ts",
+        "libs/studio-protocol/src/commands.ts",
+        "libs/studio-protocol/src/domain.spec.ts",
+        "libs/studio-protocol/src/domain.ts",
+        "libs/studio-protocol/src/handshake.spec.ts",
+        "libs/studio-protocol/src/kit.spec.ts",
+        "libs/studio-protocol/src/kit.ts",
+        "libs/studio-protocol/src/limits.ts"
+      ],
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "tokens_in": 64497,
+        "tokens_out": 11382,
+        "tokens_total": 75879,
+        "approx": false,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-20",
+        "pack_misses": [
+          "libs/studio-protocol/src/kit.ts",
+          "libs/studio-protocol/src/domain.ts",
+          "libs/studio-protocol/src/commands.ts",
+          "libs/studio-protocol/src/limits.ts"
+        ]
+      }
     },
     {
       "id": "TASK-002",
@@ -77,8 +103,38 @@
       "depends_on": [
         "TASK-001"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/studio-bridge/src/engine/stable-prefix.ts",
+        "apps/studio-bridge/src/server/router.spec.ts",
+        "apps/studio-bridge/src/server/router.ts",
+        "apps/studio-bridge/src/sessions/pack-context.spec.ts",
+        "apps/studio-bridge/src/sessions/pack-context.ts",
+        "apps/studio-bridge/src/sessions/session-manager.spec.ts",
+        "apps/studio-bridge/src/sessions/session-manager.ts",
+        "apps/studio-bridge/src/sessions/store.ts",
+        "apps/studio-bridge/src/workspace/kit-index.spec.ts",
+        "apps/studio-bridge/src/workspace/kit-index.ts",
+        "apps/studio-bridge/src/workspace/pack-runner.spec.ts",
+        "apps/studio-bridge/src/workspace/pack-runner.ts",
+        "apps/studio-bridge/src/workspace/watcher.ts"
+      ],
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "tokens_in": 74189,
+        "tokens_out": 13092,
+        "tokens_total": 87281,
+        "approx": false,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-20",
+        "pack_misses": [
+          "apps/studio-bridge/src/sessions/session-manager.ts",
+          "apps/studio-bridge/src/server/router.ts",
+          "apps/studio-bridge/src/workspace/watcher.ts"
+        ]
+      }
     },
     {
       "id": "TASK-003",
@@ -93,8 +149,39 @@
       "depends_on": [
         "TASK-002"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/modules/kit/CopyText.tsx",
+        "apps/studio/src/components/modules/kit/KitCenter.tsx",
+        "apps/studio/src/components/modules/kit/KitHarnessView.tsx",
+        "apps/studio/src/components/modules/kit/KitPanel.tsx",
+        "apps/studio/src/components/modules/kit/kit-model.ts",
+        "apps/studio/src/components/modules/kit/kit-module.spec.tsx",
+        "apps/studio/src/components/modules/specs/SpecPackStats.tsx",
+        "apps/studio/src/components/modules/specs/SpecVerifyTab.tsx",
+        "apps/studio/src/components/modules/specs/kit-execution.spec.tsx",
+        "apps/studio/src/components/workspace/ContextSourceChip.tsx",
+        "apps/studio/src/components/workspace/ThreadView.tsx",
+        "apps/studio/src/components/workspace/context-source.spec.tsx",
+        "apps/studio/src/lib/format.ts",
+        "apps/studio/src/lib/i18n/en.ts",
+        "apps/studio/src/lib/i18n/es.ts",
+        "apps/studio/src/lib/i18n/modules/kit.ts",
+        "apps/studio/src/lib/i18n/modules/specs.ts",
+        "apps/studio/src/lib/no-fabricated-data.spec.ts",
+        "apps/studio/src/lib/use-bridge-features.ts"
+      ],
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "tokens_in": 95948,
+        "tokens_out": 16932,
+        "tokens_total": 112880,
+        "approx": false,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-20"
+      }
     },
     {
       "id": "TASK-004",
@@ -110,8 +197,22 @@
       "depends_on": [
         "TASK-003"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/workspace/Markdown.tsx",
+        "apps/studio/src/components/workspace/markdown.spec.tsx"
+      ],
+      "usage": {
+        "provider_model": "claude/opus",
+        "effort": "high",
+        "agent": "orchestrator",
+        "tokens_in": 38250,
+        "tokens_out": 6750,
+        "tokens_total": 45000,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-11-20"
+      }
     }
   ]
 }

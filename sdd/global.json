@@ -331,9 +331,7 @@
       "cycles_completed": 1,
       "description": "Bloques, consumo por task, resultados y lease de sdd:verify visibles y operables en Studio.",
       "completed_at": "2026-11-20"
-    }
-  ],
-  "in_progress_modules": [
+    },
     {
       "module": "studio-session-context",
       "spec": "spec-e-burgos-031-studio-session-context",
@@ -342,10 +340,12 @@
         "apps/studio-bridge",
         "apps/studio"
       ],
-      "cycles_completed": 0,
-      "description": "Sesiones de Studio con el paquete de su unidad, y núcleo, reglas y paquetes del kit visibles."
+      "cycles_completed": 1,
+      "description": "Sesiones de Studio con el paquete de su unidad, y núcleo, reglas y paquetes del kit visibles.",
+      "completed_at": "2026-11-20"
     }
   ],
+  "in_progress_modules": [],
   "pending_modules": [
     {
       "module": "studio-framework-vision",
