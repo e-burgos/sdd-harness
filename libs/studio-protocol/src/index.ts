@@ -10,3 +10,4 @@ export * from './commands';
 export * from './codec';
 export * from './wizard';
 export * from './github';
+export * from './claude-tools';

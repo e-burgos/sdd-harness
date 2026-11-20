@@ -194,6 +194,22 @@ describe('kit integration commands', () => {
   });
 });
 
+describe('claude tools commands', () => {
+  const config = { sources: { user: true, local: false }, disabledPlugins: [], disabledMcpServers: [], browser: { enabled: false, browserUrl: null } };
+  it('parses get and refresh', () => {
+    for (const name of ['claude.tools.get', 'claude.inventory.refresh']) {
+      const cmd = { ...base, cmd: name };
+      expect(ClientCommand.parse(cmd)).toEqual(cmd);
+    }
+  });
+  it('set requires a config and a revision', () => {
+    const cmd = { ...base, cmd: 'claude.tools.set', config, expectedRevision: '0123456789abcdef' };
+    expect(ClientCommand.parse(cmd)).toEqual(cmd);
+    expect(ClientCommand.safeParse({ ...cmd, expectedRevision: 'bad' }).success).toBe(false);
+    expect(ClientCommand.safeParse({ ...cmd, config: { sources: config.sources } }).success).toBe(false);
+  });
+});
+
 describe('result schemas', () => {
   it('SendResult discriminates started and pending', () => {
     expect(SendResult.parse({ delivery: 'started' })).toEqual({ delivery: 'started' });
