@@ -492,9 +492,9 @@
             "apps/studio-bridge",
             "apps/studio"
           ],
-          "status": "in-progress",
+          "status": "completed",
           "tasks_total": 6,
-          "tasks_done": 0
+          "tasks_done": 6
         }
       }
     }

@@ -14,9 +14,9 @@
     "Studio elige qué configuración de Claude Code del dev usa el motor y muestra su estado real (US-1..US-3, US-5, US-6)",
     "Los agentes de Studio navegan con chrome-devtools-mcp sobre el Chrome del dev (US-4)"
   ],
-  "status": "in-progress",
+  "status": "completed",
   "started_at": "2026-11-20",
-  "completed_at": null,
+  "completed_at": "2026-11-20",
   "documents": {
     "plan": "sdd/specs/spec-e-burgos-026-studio-claude-tools/cycles/cycle-01/plan.md",
     "tasks": "sdd/specs/spec-e-burgos-026-studio-claude-tools/cycles/cycle-01/tasks.json"
@@ -24,20 +24,212 @@
   "artifacts": [],
   "metrics": {
     "tasks_total": 6,
-    "tasks_completed": 0,
+    "tasks_completed": 6,
     "story_points": 20,
-    "files_created": [],
-    "files_modified": [],
+    "files_created": [
+      "apps/studio-bridge/src/engine/chrome-devtools.ts",
+      "apps/studio-bridge/src/engine/claude-init.spec.ts",
+      "apps/studio-bridge/src/engine/claude-init.ts",
+      "apps/studio-bridge/src/workspace/claude-inventory.spec.ts",
+      "apps/studio-bridge/src/workspace/claude-inventory.ts",
+      "apps/studio-bridge/src/workspace/claude-tools.spec.ts",
+      "apps/studio-bridge/src/workspace/claude-tools.ts",
+      "apps/studio/src/components/modules/claude/ClaudeCenter.tsx",
+      "apps/studio/src/components/modules/claude/ClaudePanel.tsx",
+      "apps/studio/src/components/modules/claude/ClaudeProvider.tsx",
+      "apps/studio/src/components/modules/claude/claude-model.spec.ts",
+      "apps/studio/src/components/modules/claude/claude-model.ts",
+      "apps/studio/src/components/modules/claude/claude-module.spec.tsx",
+      "apps/studio/src/components/modules/claude/index.ts",
+      "apps/studio/src/components/modules/claude/use-claude-tools.ts",
+      "apps/studio/src/lib/i18n/modules/claude.ts",
+      "libs/studio-protocol/src/claude-tools.spec.ts",
+      "libs/studio-protocol/src/claude-tools.ts"
+    ],
+    "files_modified": [
+      "apps/studio-bridge/src/engine/claude-sdk-engine.spec.ts",
+      "apps/studio-bridge/src/engine/claude-sdk-engine.ts",
+      "apps/studio-bridge/src/engine/fake-engine.ts",
+      "apps/studio-bridge/src/engine/types.ts",
+      "apps/studio-bridge/src/project/runtime.ts",
+      "apps/studio-bridge/src/server/router.spec.ts",
+      "apps/studio-bridge/src/server/router.ts",
+      "apps/studio-bridge/src/sessions/session-manager.ts",
+      "apps/studio-bridge/src/sessions/store.ts",
+      "apps/studio/src/components/modules/activity/activity-model.ts",
+      "apps/studio/src/components/shell/modulerail.spec.tsx",
+      "apps/studio/src/lib/format.ts",
+      "apps/studio/src/lib/i18n/en.ts",
+      "apps/studio/src/lib/i18n/es.ts",
+      "apps/studio/src/lib/nav/module-ids.ts",
+      "apps/studio/src/lib/nav/module-labels.ts",
+      "apps/studio/src/lib/nav/modules.spec.ts",
+      "apps/studio/src/lib/nav/modules.ts",
+      "apps/studio/src/lib/nav/use-nav.spec.tsx",
+      "apps/studio/src/lib/nav/use-nav.ts",
+      "apps/studio/src/lib/use-bridge-features.ts",
+      "libs/studio-protocol/src/commands.spec.ts",
+      "libs/studio-protocol/src/commands.ts",
+      "libs/studio-protocol/src/events.spec.ts",
+      "libs/studio-protocol/src/events.ts",
+      "libs/studio-protocol/src/handshake.spec.ts",
+      "libs/studio-protocol/src/index.ts",
+      "libs/studio-protocol/src/limits.ts"
+    ],
     "files_deleted": [],
     "usage": {
-      "tokens_in": 0,
-      "tokens_out": 0,
-      "by_agent": []
-    }
+      "tokens_in": 455490,
+      "tokens_out": 80381,
+      "approx": true,
+      "source": "declared-estimate",
+      "by_tier": {
+        "claude/opus": {
+          "tokens_in": 204000,
+          "tokens_out": 36000,
+          "approx": true,
+          "source": "declared-estimate"
+        },
+        "claude/sonnet": {
+          "tokens_in": 251490,
+          "tokens_out": 44381,
+          "approx": true,
+          "source": "agent-usage-notification"
+        }
+      },
+      "by_agent": [
+        {
+          "agent": "orchestrator",
+          "label": "solo: spec, sondas del SDK, plan, apertura, revisión y cierre",
+          "provider_model": "claude/opus",
+          "effort": "high",
+          "tokens_in": 144500,
+          "tokens_out": 25500,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-20"
+        },
+        {
+          "agent": "custom",
+          "label": "Explore: mapa de la feature kit-tools de punta a punta",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 47229,
+          "tokens_out": 8335,
+          "tokens_total": 55564,
+          "source": "agent-usage-notification",
+          "approx": true,
+          "recorded_at": "2026-11-20"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-001 Protocolo: claude-tools.ts, comandos claude.tools.get/set y claude.inventory.refresh, bot kind y feature",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 49213,
+          "tokens_out": 8685,
+          "tokens_total": 57898,
+          "source": "agent-usage-notification",
+          "approx": false,
+          "recorded_at": "2026-11-20"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-002 Puente: config de Claude en .sdd-studio/claude-tools.json con revisión, escritura atómica y cola",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 6044,
+          "tokens_out": 1066,
+          "tokens_total": 7110,
+          "source": "agent-usage-notification",
+          "approx": false,
+          "recorded_at": "2026-11-20"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-003 Puente/motor: buildQueryOptions aplica fuentes, plugins y MCP apagados y navegador; captura de system/init; ver",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 26717,
+          "tokens_out": 4715,
+          "tokens_total": 31432,
+          "source": "agent-usage-notification",
+          "approx": false,
+          "recorded_at": "2026-11-20"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-004 Puente: sonda de inventario, handlers del router, bot event y wiring en ProjectRuntime",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 16164,
+          "tokens_out": 2852,
+          "tokens_total": 19016,
+          "source": "agent-usage-notification",
+          "approx": false,
+          "recorded_at": "2026-11-20"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-005 Studio: módulo Claude con fuentes, plugins, MCP, navegador, aviso de costo y Claude in Chrome no disponible",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 106123,
+          "tokens_out": 18728,
+          "tokens_total": 124851,
+          "source": "agent-usage-notification",
+          "approx": false,
+          "recorded_at": "2026-11-20"
+        },
+        {
+          "agent": "orchestrator",
+          "label": "TASK-006 Verificación real en Studio local sobre este repo y cierre",
+          "provider_model": "claude/opus",
+          "effort": "medium",
+          "tokens_in": 59500,
+          "tokens_out": 10500,
+          "tokens_total": 70000,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-20"
+        }
+      ]
+    },
+    "tasks_skipped": 0
   },
   "tables_created": [],
   "endpoints_implemented": [],
-  "components_created": [],
-  "issues_found": [],
-  "reviewer_report": null
+  "components_created": [
+    "COMP-135",
+    "COMP-136",
+    "COMP-137",
+    "COMP-138"
+  ],
+  "issues_found": [
+    "Claude in Chrome no funciona con API key (doc oficial y sonda): el navegador entra por chrome-devtools-mcp",
+    "--autoConnect exige habilitar la depuración remota en chrome://inspect/#remote-debugging: copy corregido en TASK-006",
+    "Aviso de costo mostraba el total de herramientas MCP en vez de las sumadas: corregido en TASK-006",
+    "apps/cli/dist viejo rompía config-cli.contract.spec del puente: se recompiló la CLI (no es del ciclo)"
+  ],
+  "reviewer_report": {
+    "approved": true,
+    "date": "2026-11-20",
+    "ca_results": {
+      "US-1": "PASS - módulo Claude en Studio (localhost:3100) lista 21 plugins y 67 MCP con estado vivo (conectado, falló, requiere autenticación) y la tabla de conteos solo proyecto / todas / suman",
+      "US-2": "PASS - con Usuario prendido desde Studio, esta misma sesión arrancó con skills, plugins y MCP del dev; e2e WebSocket: set/get, conflict con revisión vieja, changed:false sin cambios",
+      "US-3": "PASS - sonda real: deniedMcpServers saca plugin:github:github del init (60→59) y enabledPlugins:false saca superpowers (skills 492→477); ~/.claude* sin cambios",
+      "US-4": "PASS - chrome-devtools-mcp 1.13.0 con --autoConnect conectado (33 herramientas); esta sesión navegó Studio con él tras habilitar la depuración remota",
+      "US-5": "PASS - aviso con 446 skills y 120 herramientas MCP sumadas (corregido para contar las sumadas)",
+      "US-6": "PASS - fila Claude in Chrome «no disponible» con el motivo, sin interruptor"
+    },
+    "notes": "Verify full en verde: libs/studio-protocol (B-01), apps/studio-bridge (B-02), apps/studio (B-03). Modo claro y oscuro revisados; consola sin errores. Los cambios de tucu-ui/video-maker del árbol de trabajo son del dev y quedan fuera del ciclo.",
+    "tests": {
+      "libs/studio-protocol": "verify full OK (typecheck + test) — B-01",
+      "apps/studio-bridge": "verify full OK (typecheck + test + build) — B-02; e2e WebSocket real contra un puente nuevo (get, refresh, set, conflict, changed:false, bot event, restaurar)",
+      "apps/studio": "verify full OK (typecheck + test + build) — B-03, tras los ajustes de TASK-006"
+    },
+    "follow_ups": [
+      "Mostrar en la sección Navegador el motivo cuando chrome-devtools-mcp no encuentra DevToolsActivePort (hoy solo figura como estado del MCP)",
+      "Si alguien edita .sdd-studio/claude-tools.json a mano, el motor no lo ve hasta el próximo get/set desde Studio"
+    ]
+  }
 }

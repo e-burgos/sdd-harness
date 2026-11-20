@@ -2426,6 +2426,90 @@
             "change": "Creado en spec-e-burgos-022 cycle-01."
           }
         ]
+      },
+      {
+        "id": "COMP-135",
+        "name": "ClaudePanel",
+        "type": "component",
+        "module": "studio-claude-tools",
+        "spec": "sdd/specs/spec-e-burgos-026-studio-claude-tools",
+        "path": "src/components/modules/claude/ClaudePanel.tsx",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "description": "Panel del módulo Claude: secciones Fuentes, Plugins, MCP y Navegador con conteos.",
+        "consumes": [],
+        "created_at": "2026-11-20",
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-11-20",
+            "change": "Creado"
+          }
+        ]
+      },
+      {
+        "id": "COMP-136",
+        "name": "ClaudeCenter",
+        "type": "component",
+        "module": "studio-claude-tools",
+        "spec": "sdd/specs/spec-e-burgos-026-studio-claude-tools",
+        "path": "src/components/modules/claude/ClaudeCenter.tsx",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "description": "Vista de la sección elegida: interruptores de fuentes, plugins, MCP con estado, navegador chrome-devtools-mcp, aviso de costo y Claude in Chrome no disponible.",
+        "consumes": [],
+        "created_at": "2026-11-20",
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-11-20",
+            "change": "Creado"
+          }
+        ]
+      },
+      {
+        "id": "COMP-137",
+        "name": "ClaudeProvider",
+        "type": "component",
+        "module": "studio-claude-tools",
+        "spec": "sdd/specs/spec-e-burgos-026-studio-claude-tools",
+        "path": "src/components/modules/claude/ClaudeProvider.tsx",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "description": "Scope del módulo Claude: estado compartido de config, revisión e inventario.",
+        "consumes": [],
+        "created_at": "2026-11-20",
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-11-20",
+            "change": "Creado"
+          }
+        ]
+      },
+      {
+        "id": "COMP-138",
+        "name": "useClaudeTools",
+        "type": "hook",
+        "module": "studio-claude-tools",
+        "spec": "sdd/specs/spec-e-burgos-026-studio-claude-tools",
+        "path": "src/components/modules/claude/use-claude-tools.ts",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "description": "claude.tools.get/set con expectedRevision, re-pedido en conflicto y en el bot event claude-tools.changed, y claude.inventory.refresh.",
+        "consumes": [],
+        "created_at": "2026-11-20",
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-11-20",
+            "change": "Creado"
+          }
+        ]
       }
     ]
   }

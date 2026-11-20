@@ -1,6 +1,6 @@
 # SPEC-e-burgos-026: Studio usa las herramientas de Claude Code del dev — skills, plugins, MCP y navegador
 
-> Estado: **in-progress** (2026-11-20). cycle-01 abierto (flow lite). Pedido del dev: en Studio los agentes no tienen las herramientas que
+> Estado: **completed** (2026-11-20). cycle-01 cerrado (flow lite, 6/6 tasks). Pedido del dev: en Studio los agentes no tienen las herramientas que
 > sí tiene en Claude Code (skills propias, plugins, conectores MCP) ni la extensión de Chrome.
 
 ## Resumen ejecutivo
