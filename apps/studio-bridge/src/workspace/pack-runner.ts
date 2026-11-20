@@ -62,27 +62,57 @@ function mapStats(raw: unknown): KitPackStats {
   });
 }
 
-async function firstCycleApp(root: string, spec: string, cycle: string): Promise<string | null> {
+async function cycleApps(root: string, spec: string, cycle: string): Promise<string[]> {
   try {
     const raw = await readFile(path.join(root, 'sdd', 'specs', spec, 'cycles', cycle, 'cycle.json'), 'utf8');
     const apps = (JSON.parse(raw) as { apps?: unknown }).apps;
-    const first = Array.isArray(apps) ? apps[0] : null;
-    return typeof first === 'string' && first.length > 0 ? first : null;
+    return Array.isArray(apps) ? apps.filter((app): app is string => typeof app === 'string' && app.length > 0) : [];
   } catch {
-    return null;
+    return [];
   }
 }
 
-export async function readPackStats(root: string, spec: string, cycle: string, run: PackRunner = createPackRunner(root)): Promise<KitPackStats> {
-  const app = await firstCycleApp(root, spec, cycle);
-  const args = [spec, cycle, '--stats', '--json', ...(app ? ['--app', app] : [])];
-  const result = await run(args, PACK_STATS_TIMEOUT_MS);
-  if (result.code === PACK_NO_PACKS_EXIT) return EMPTY_STATS;
-  if (result.code === PACK_USAGE_EXIT) throw new PackStatsError('not-found', `no pack stats for ${spec} ${cycle}`);
-  if (result.code !== 0) throw new PackStatsError('conflict', `sdd-pack --stats failed (${result.code})`);
-  try {
-    return mapStats(JSON.parse(result.stdout));
-  } catch {
-    throw new PackStatsError('conflict', 'sdd-pack --stats returned an unreadable result');
+interface StatsRaw {
+  rows?: unknown;
+  total?: Record<string, unknown>;
+  pack_misses?: unknown;
+}
+
+function mergeRaw(parts: StatsRaw[]): StatsRaw {
+  const seen = new Set<string>();
+  const rows: unknown[] = [];
+  let pack = 0;
+  let source = 0;
+  const misses: unknown[] = [];
+  for (const part of parts) {
+    for (const row of Array.isArray(part.rows) ? (part.rows as Array<Record<string, unknown>>) : []) {
+      const key = `${String(row.role)}|${String(row.unit)}`;
+      if (row.unit !== 'cycle' && seen.has(key)) continue;
+      seen.add(key);
+      rows.push(row);
+      pack += bytesOf(row.pack_bytes);
+      source += bytesOf(row.source_bytes);
+    }
+    if (Array.isArray(part.pack_misses)) misses.push(...part.pack_misses);
   }
+  return { rows, total: { pack_bytes: pack, source_bytes: source }, pack_misses: misses };
+}
+
+export async function readPackStats(root: string, spec: string, cycle: string, run: PackRunner = createPackRunner(root)): Promise<KitPackStats> {
+  const apps = await cycleApps(root, spec, cycle);
+  const targets: Array<string | null> = apps.length > 0 ? apps : [null];
+  const parts: StatsRaw[] = [];
+  for (const app of targets) {
+    const args = [spec, cycle, '--stats', '--json', ...(app ? ['--app', app] : [])];
+    const result = await run(args, PACK_STATS_TIMEOUT_MS);
+    if (result.code === PACK_NO_PACKS_EXIT) return EMPTY_STATS;
+    if (result.code === PACK_USAGE_EXIT) throw new PackStatsError('not-found', `no pack stats for ${spec} ${cycle}`);
+    if (result.code !== 0) throw new PackStatsError('conflict', `sdd-pack --stats failed (${result.code})`);
+    try {
+      parts.push(JSON.parse(result.stdout) as StatsRaw);
+    } catch {
+      throw new PackStatsError('conflict', 'sdd-pack --stats returned an unreadable result');
+    }
+  }
+  return mapStats(parts.length === 1 ? parts[0] : mergeRaw(parts));
 }

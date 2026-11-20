@@ -84,6 +84,17 @@ describe('targetOf', () => {
     expect(ctx().targetOf('sdd-planner', unit, cycle)).toBeNull();
     expect(ctx().targetOf('sdd-reviewer', unit, undefined)).toBeNull();
   });
+  it('gives a cycle role in a multi-app cycle the app of the first pending block, else the first cycle app', () => {
+    const multi = (tasks: Array<[string, string]>) => ({
+      ...cycleOf(tasks, [
+        { ...batch('B-01', 'implementor-back', ['T1']), app: 'apps/b' },
+        { ...batch('B-02', 'implementor-back', ['T2']), app: 'apps/c' },
+      ]),
+      apps: ['apps/a', 'apps/b', 'apps/c'],
+    });
+    expect(ctx().targetOf('sdd-reviewer', unit, multi([['T1', 'done'], ['T2', 'pending']]))).toEqual({ ...unit, role: 'reviewer', unit: null, app: 'apps/c' });
+    expect(ctx().targetOf('sdd-reviewer', unit, multi([['T1', 'done'], ['T2', 'done']]))).toEqual({ ...unit, role: 'reviewer', unit: null, app: 'apps/a' });
+  });
   it('falls back to base when packs.json is missing', async () => {
     await rm(path.join(root, 'sdd/packs.json'));
     expect(ctx().targetOf('sdd-reviewer', unit, cycle)).toBeNull();
@@ -119,6 +130,12 @@ describe('load', () => {
     expect(calls[0]?.args).toEqual([SPEC, 'cycle-01', 'reviewer', '--stdout']);
     expect(context?.prefix).toContain('source="pack:cycle.reviewer"');
     expect(context?.source).toMatchObject({ unit: null });
+  });
+
+  it('passes --app for a cycle role target that carries one', async () => {
+    const { run, calls } = runner();
+    await createPackContext({ root, readLessons: () => '', run }).load({ ...unit, role: 'reviewer', unit: null, app: 'apps/b' });
+    expect(calls[0]?.args).toEqual([SPEC, 'cycle-01', 'reviewer', '--app', 'apps/b', '--stdout']);
   });
 
   it('falls back (null) on exit 2, exit 3, a timeout and a runner failure', async () => {

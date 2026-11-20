@@ -20,6 +20,7 @@ export interface PackTarget {
   cycle: string;
   role: string;
   unit: string | null;
+  app?: string;
 }
 
 export interface ThreadContext {
@@ -38,7 +39,17 @@ export function pendingBatchOf(cycle: Pick<CycleSummary, 'batches' | 'tasks'>, r
   );
 }
 
-export const packKeyOf = (target: PackTarget): string => `${target.spec}|${target.cycle}|${target.role}|${target.unit ?? ''}`;
+export function firstPendingBatch(cycle: Pick<CycleSummary, 'batches' | 'tasks'>): BatchSummary | null {
+  const statusOf = new Map(cycle.tasks.map((task) => [task.id, task.status]));
+  return (cycle.batches ?? []).find((batch) => batch.tasks.some((id) => !FINISHED_TASK.has(statusOf.get(id) ?? 'pending'))) ?? null;
+}
+
+export function cycleRoleApp(cycle: Pick<CycleSummary, 'apps' | 'batches' | 'tasks'>): string | undefined {
+  if (cycle.apps.length < 2) return undefined;
+  return firstPendingBatch(cycle)?.app ?? cycle.apps[0];
+}
+
+export const packKeyOf = (target: PackTarget): string => `${target.spec}|${target.cycle}|${target.role}|${target.unit ?? ''}|${target.app ?? ''}`;
 
 export const unitLineOf = (target: PackTarget, root: string): string =>
   `Unidad SDD → ${target.spec} · ${target.cycle} · ${target.role}${target.unit ? ` · ${target.unit}` : ''} · worktree: ${root}`;
@@ -90,7 +101,7 @@ export function createPackContext(deps: PackContextDeps): PackContext {
     `${mtimeOf(path.join(deps.root, 'sdd', 'specs', target.spec, 'cycles', target.cycle, 'tasks.json'))}|${mtimeOf(packsFile)}`;
 
   const build = async (target: PackTarget): Promise<ThreadContext | null> => {
-    const args = [target.spec, target.cycle, target.role, ...(target.unit ? [target.unit] : []), '--stdout'];
+    const args = [target.spec, target.cycle, target.role, ...(target.unit ? [target.unit] : []), ...(target.app ? ['--app', target.app] : []), '--stdout'];
     const result = await run(args, PACK_TIMEOUT_MS);
     if (result.code === 0 && result.stdout.trim().length > 0) {
       const wrapped = composeStablePrefix([{ source: `pack:${target.unit ?? 'cycle'}.${target.role}`, content: result.stdout.trim() }]);
@@ -110,7 +121,10 @@ export function createPackContext(deps: PackContextDeps): PackContext {
       if (!role || !cycle) return null;
       const kind = roleKindOf(role);
       if (kind === null) return null;
-      if (kind === 'cycle') return { spec: unit.spec, cycle: unit.cycle, role, unit: null };
+      if (kind === 'cycle') {
+        const app = cycleRoleApp(cycle);
+        return { spec: unit.spec, cycle: unit.cycle, role, unit: null, ...(app ? { app } : {}) };
+      }
       const batch = pendingBatchOf(cycle, role);
       return batch ? { spec: unit.spec, cycle: unit.cycle, role, unit: batch.id } : null;
     },

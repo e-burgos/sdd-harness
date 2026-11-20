@@ -32,7 +32,26 @@ const raw = {
 };
 
 describe('readPackStats', () => {
-  it('runs --stats --json with the first cycle app and maps snake_case to camelCase', async () => {
+  it('runs --stats --json for each cycle app, joins the rows without repeating batch rows and sums the totals', async () => {
+    const batchRow = { role: 'implementor-back', unit: 'B-01', pack_bytes: 100, source_bytes: 400, reason: 'ok' };
+    const outputs = [
+      { rows: [batchRow, { role: 'reviewer', unit: 'cycle', pack_bytes: 10, source_bytes: 40, reason: 'ok' }], total: {}, pack_misses: [{ path: 'a.md', count: 1 }] },
+      { rows: [batchRow, { role: 'reviewer', unit: 'cycle', pack_bytes: 20, source_bytes: 80, reason: 'ok' }], total: {}, pack_misses: [{ path: 'b.md', count: 1 }] },
+    ];
+    const calls: string[][] = [];
+    const run: PackRunner = async (args) => {
+      calls.push(args);
+      return { code: 0, stdout: JSON.stringify(outputs[calls.length - 1]) };
+    };
+    const stats = await readPackStats(root, 's-1', 'cycle-01', run);
+    expect(calls.map((args) => args.slice(-1)[0])).toEqual(['apps/a', 'apps/b']);
+    expect(stats.rows).toHaveLength(3);
+    expect(stats.total).toEqual({ packBytes: 130, sourceBytes: 520 });
+    expect(stats.packMisses).toBe(2);
+  });
+
+  it('runs --stats --json with the cycle app when there is one and maps snake_case to camelCase', async () => {
+    await writeFile(path.join(root, 'sdd/specs/s-1/cycles/cycle-01/cycle.json'), JSON.stringify({ apps: ['apps/a'] }));
     const { run, calls } = fake({ code: 0, stdout: JSON.stringify(raw) });
     const stats = await readPackStats(root, 's-1', 'cycle-01', run);
     expect(calls).toEqual([{ args: ['s-1', 'cycle-01', '--stats', '--json', '--app', 'apps/a'], timeoutMs: 30_000 }]);
