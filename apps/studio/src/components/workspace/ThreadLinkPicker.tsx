@@ -134,7 +134,7 @@ export function ThreadLinkPicker({ threadId }: { threadId: string }) {
   return (
     <div className="flex min-w-0 flex-wrap items-center gap-2 text-xs text-ink-300">
       <span aria-hidden>{t('link.label')}</span>
-      <ul data-testid="link-chips" className="flex min-w-0 flex-wrap items-center gap-1.5">
+      <ul data-testid="link-chips" className="flex max-h-20 min-w-0 flex-wrap items-center gap-1.5 overflow-y-auto">
         {entries.length === 0 && <li className="text-ink-400">{t('link.none')}</li>}
         {entries.map((entry) => {
           const ref = toLinkRef(entry);

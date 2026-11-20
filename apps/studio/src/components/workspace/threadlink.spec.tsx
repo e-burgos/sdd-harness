@@ -154,6 +154,11 @@ describe('ThreadLinkPicker with link-targets', () => {
     ],
   };
 
+  it('bounds the chip list height and lets it scroll', () => {
+    mountMulti(() => Promise.resolve(null), withTargets);
+    expect(screen.getByTestId('link-chips')).toHaveClass('max-h-20', 'overflow-y-auto');
+  });
+
   it('lists every association as a chip with origin and flags the unavailable ones', () => {
     mountMulti(() => Promise.resolve(null), withTargets);
     const live = screen.getByTestId('link-chip-cycle:s1/cycle-02');

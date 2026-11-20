@@ -42,6 +42,11 @@ function Selector({ agent }: { agent: string | null }) {
   return <button onClick={() => select('agents', agent)}>pick</button>;
 }
 
+function NavProbe() {
+  const home = useNav((s) => s.home);
+  return <span data-testid="nav-home">{home.kind === 'thread' ? `thread:${home.threadId}` : home.kind}</span>;
+}
+
 describe('Agents module', () => {
   beforeEach(() => {
     window.localStorage.clear();
@@ -98,10 +103,18 @@ describe('Agents module', () => {
     expect(screen.getByTestId('agent-card')).toHaveTextContent('sdd-planner.agent.md');
   });
 
-  it('continues the latest direct thread when one exists', () => {
+  it('lists recent direct chats without embedding the thread and opens them in the center', () => {
     const value = setup({ threads: [dm('t-1', 'sdd-planner')] });
-    renderShell(<AgentCard agentId="sdd-planner" />, { value });
-    expect(screen.getByRole('heading', { level: 1, name: 'Charla t-1' })).toBeInTheDocument();
+    renderShell(
+      <>
+        <AgentCard agentId="sdd-planner" />
+        <NavProbe />
+      </>,
+      { value },
+    );
+    expect(screen.queryByTestId('thread-scroller')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Abrir conversación Charla t-1' }));
+    expect(screen.getByTestId('nav-home')).toHaveTextContent('thread:t-1');
   });
 
   it('marks an agent missing from the snapshot as unavailable and disables chat', () => {

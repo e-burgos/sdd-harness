@@ -7,7 +7,7 @@ import { useT } from '@/lib/i18n/i18n';
 import { useStudio } from '../../BridgeProvider';
 import { MAP_AGENT_IDS } from '../../mission-control/AgentMapCanvas';
 import { AgentFaceChip } from './AgentFaceChip';
-import { AgentDirectChat } from './AgentDirectChat';
+import { AgentChatList } from './AgentChatList';
 import { presenceDotClass, presenceLabelKey, presenceOfAgent } from './agent-presence';
 
 const MAX_DOCUMENTS = 8;
@@ -36,7 +36,7 @@ export function AgentCard({ agentId, conversation = null, showChat = true }: { a
           <h3 className="text-copy font-semibold text-ink-100">{t('module.agents.card.unavailable')}</h3>
           <p className="text-ui text-ink-300">{t('module.agents.card.unavailableHint')}</p>
         </div>
-        {showChat && <AgentDirectChat agentId={agentId} disabledReason={t('module.agents.chat.unavailable')} />}
+        {showChat && <AgentChatList agentId={agentId} disabledReason={t('module.agents.chat.unavailable')} />}
       </article>
     );
   }
@@ -101,7 +101,7 @@ export function AgentCard({ agentId, conversation = null, showChat = true }: { a
         </section>
       )}
 
-      {showChat && <AgentDirectChat agentId={agentId} />}
+      {showChat && <AgentChatList agentId={agentId} />}
     </article>
   );
 }

@@ -11,7 +11,7 @@ import { PanelNotice } from '../../shell/PanelNotice';
 import { Composer } from '../../workspace/Composer';
 import { ThreadView } from '../../workspace/ThreadView';
 
-export function AgentDirectChat({ agentId, disabledReason, floating = false }: { agentId: string; disabledReason?: string; floating?: boolean }) {
+export function AgentDirectChat({ agentId, disabledReason }: { agentId: string; disabledReason?: string }) {
   const { t } = useT();
   const { connection } = useBridge();
   const channelId = channelForDm(agentId);
@@ -35,15 +35,14 @@ export function AgentDirectChat({ agentId, disabledReason, floating = false }: {
     <section
       data-testid="agent-direct-chat"
       aria-label={t('module.agents.chat.title')}
-      className={floating ? 'flex min-h-0 flex-1 flex-col' : 'flex min-h-0 flex-col border-t border-foreground/10 pt-2'}
+      className="flex min-h-0 flex-1 flex-col"
     >
-      {!floating && <h3 className="flex h-7 items-center text-small font-medium text-ink-400">{t('module.agents.chat.title')}</h3>}
       {reason ? (
         <div data-testid="agent-chat-disabled">
           <PanelNotice role="status" message={reason} />
         </div>
       ) : (
-        <div data-studio-exempt="hosted-component" className={`flex min-h-0 flex-col overflow-hidden ${floating ? 'flex-1' : 'h-[26rem] rounded-lg border border-foreground/10'}`}>
+        <div data-studio-exempt="hosted-component" className="flex min-h-0 flex-1 flex-col overflow-hidden">
           {threadId ? (
             <ThreadView key={threadId} threadId={threadId} onBack={() => setChoice(null)} onNewConversation={() => setChoice(null)} composer={composer} />
           ) : (
