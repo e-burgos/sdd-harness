@@ -59,8 +59,21 @@
       "estimation_hours": 1,
       "story_points": 2,
       "depends_on": [],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "sdd/specs/spec-e-burgos-029-studio-claude-connect/cycles/cycle-01/artifacts/spike.md"
+      ],
+      "usage": {
+        "provider_model": "claude/opus",
+        "effort": "high",
+        "agent": "orchestrator",
+        "tokens_in": 25500,
+        "tokens_out": 4500,
+        "tokens_total": 30000,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-11-20"
+      }
     },
     {
       "id": "TASK-002",

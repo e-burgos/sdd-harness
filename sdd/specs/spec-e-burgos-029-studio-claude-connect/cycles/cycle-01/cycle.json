@@ -21,7 +21,9 @@
     "plan": "sdd/specs/spec-e-burgos-029-studio-claude-connect/cycles/cycle-01/plan.md",
     "tasks": "sdd/specs/spec-e-burgos-029-studio-claude-connect/cycles/cycle-01/tasks.json"
   },
-  "artifacts": [],
+  "artifacts": [
+    "artifacts/spike.md"
+  ],
   "metrics": {
     "tasks_total": 5,
     "tasks_completed": 0,
