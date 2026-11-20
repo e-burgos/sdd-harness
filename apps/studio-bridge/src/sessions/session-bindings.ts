@@ -155,6 +155,7 @@ export interface ThreadBindings {
   touch(threadId: string): void;
   end(threadId: string): void;
   has(threadId: string): boolean;
+  setEngineSession?(threadId: string, engineSessionId: string): void;
   judge(input: {
     threadId: string;
     unit: RegistryUnit | null;
@@ -169,6 +170,7 @@ export interface ThreadBindings {
 
 export class SessionBindings implements ThreadBindings {
   private readonly active = new Map<string, { key: string; touchedAt: number }>();
+  private readonly engineSessions = new Map<string, string>();
   private chain: Promise<void> = Promise.resolve();
 
   private constructor(
@@ -209,6 +211,10 @@ export class SessionBindings implements ThreadBindings {
     return this.active.has(threadId);
   }
 
+  setEngineSession(threadId: string, engineSessionId: string): void {
+    this.engineSessions.set(threadId, engineSessionId);
+  }
+
   sync(threadId: string, unit: RegistryUnit | null): void {
     if (unit === null) return this.end(threadId);
     const key = this.lib.unitKey(unit);
@@ -238,9 +244,12 @@ export class SessionBindings implements ThreadBindings {
   }
 
   end(threadId: string): void {
+    const engineSessionId = this.engineSessions.get(threadId);
+    this.engineSessions.delete(threadId);
     if (!this.active.delete(threadId)) return;
     this.enqueue(async () => {
       await this.leases?.releaseSessionLeases(nodeFs, this.dir, sessionIdOfThread(threadId), this.now());
+      if (engineSessionId) await this.leases?.releaseSessionLeases(nodeFs, this.dir, engineSessionId, this.now());
       await this.lib.endBinding(nodeFs, this.dir, sessionIdOfThread(threadId), this.now());
       this.onChange();
     });
@@ -276,8 +285,9 @@ export class SessionBindings implements ThreadBindings {
   private judgeLease(threadId: string, unit: RegistryUnit | null, rel: string, gate: 'block' | 'warn', now: number): Verdict {
     const leases = this.leases;
     if (!leases) return { kind: 'allow' };
-    const sessionId = sessionIdOfThread(threadId);
     const lease = readLeaseSync(this.dir, rel, leases);
+    const engineSessionId = this.engineSessions.get(threadId);
+    const sessionId = lease && lease.session_id === engineSessionId ? lease.session_id : sessionIdOfThread(threadId);
     const verdict = leases.judgeFileLease({ gate, lease, sessionId, worktree: this.root, now });
     if (verdict.kind === 'allow') {
       this.enqueue(async () => {

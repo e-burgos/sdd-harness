@@ -733,6 +733,7 @@ export class SessionManager {
         {
           emit: (event) => this.emit(thread, event, true),
           onSessionId: (id) => {
+            this.deps.bindings?.setEngineSession?.(thread.id, id);
             if (thread.engineSessionId === id) return;
             if (this.sessionOwnedByAnotherThread(thread.id, id)) {
               reportError(new Error(`session ${id} already belongs to another thread`));
