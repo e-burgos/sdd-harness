@@ -1974,6 +1974,47 @@
         "source": "declared-estimate",
         "recorded_at": "2026-11-20"
       }
+    },
+    {
+      "id": "FIX-e-burgos-014",
+      "author": "e-burgos",
+      "spec_id": null,
+      "fix_document": "sdd/fixes/fix-e-burgos-014.md",
+      "type": "BUGFIX",
+      "severity": "high",
+      "created_at": "2026-11-20",
+      "resolved_at": "2026-11-20",
+      "title": "Studio ata la conversación a su unidad de forma automática y permisiva",
+      "estimation_hours": 2,
+      "description": "La unidad de un hilo es la última asociación de ciclo/fix en orden de lista: ignora specs, no descarta unidades cerradas, no reordena re-detecciones e ignora SDD-BIND; la conversación queda trabada en un fix cerrado.",
+      "justification": "Error confirmado en uso real (bloqueó la corrección de TASK-005 de spec-e-burgos-029); perfil solo; sin contratos ni entidades nuevas.",
+      "related_modules": [
+        "studio-parallel-sessions"
+      ],
+      "affected_files": [
+        "apps/studio-bridge/src/sessions/thread-link.ts",
+        "apps/studio-bridge/src/sessions/session-manager.ts",
+        "apps/studio-bridge/src/engine/types.ts",
+        "apps/studio-bridge/src/engine/claude-sdk-engine.ts",
+        "apps/studio-bridge/src/engine/fake-engine.ts",
+        "apps/studio-bridge/src/sessions/thread-link.spec.ts",
+        "apps/studio-bridge/src/sessions/session-manager.spec.ts",
+        "sdd/fixes/fix-e-burgos-014.md"
+      ],
+      "test_reference": "sdd:verify apps/studio-bridge full OK (ae08c39); specs con el caso real (spec-029·cycle-01 gana sobre FIX-013 cerrado). Pendiente: uso real tras reiniciar el puente.",
+      "status": "implemented",
+      "cycle": null,
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "tokens_in": 76122,
+        "tokens_out": 13433,
+        "tokens_total": 89555,
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-20"
+      }
     }
   ]
 }
