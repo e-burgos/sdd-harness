@@ -5,7 +5,12 @@ Cuando un agente crea una spec, un ciclo o un fix desde una conversación, Studi
 
 ## Solución aplicada
 - Las conversaciones preparadas se vuelven a evaluar cuando cambian las asociaciones de las conversaciones: se descartan las de unidades que ya tienen una.
-- El aviso se oculta solo a los 20 s (la conversación preparada sigue disponible donde ya se lista).
+- El aviso se descarta solo a los 20 s, igual que con la X (las preparadas solo se listaban en ese aviso).
 
 ### Archivos modificados
-- (se completa al resolver)
+- `apps/studio/src/lib/auto-conversation.ts`
+- `apps/studio/src/lib/store/state.ts`
+- `apps/studio/src/components/workspace/PreparedConversations.tsx`
+- `apps/studio/src/lib/auto-conversation.spec.ts`
+- `apps/studio/src/lib/store/state.spec.ts`
+- `apps/studio/src/components/workspace/prepared.spec.tsx`

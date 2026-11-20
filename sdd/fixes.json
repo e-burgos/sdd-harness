@@ -1668,13 +1668,21 @@
       "author": "e-burgos",
       "spec_id": null,
       "created_at": "2026-11-20",
-      "resolved_at": null,
+      "resolved_at": "2026-11-20",
       "related_modules": [
         "studio-auto-conversation"
       ],
-      "affected_files": [],
-      "test_reference": "",
-      "status": "in-progress",
+      "affected_files": [
+        "apps/studio/src/lib/auto-conversation.ts",
+        "apps/studio/src/lib/store/state.ts",
+        "apps/studio/src/components/workspace/PreparedConversations.tsx",
+        "apps/studio/src/lib/auto-conversation.spec.ts",
+        "apps/studio/src/lib/store/state.spec.ts",
+        "apps/studio/src/components/workspace/prepared.spec.tsx",
+        "sdd/fixes/fix-e-burgos-006.md"
+      ],
+      "test_reference": "pnpm sdd:verify apps/studio quick: typecheck y 1349 tests OK (pruneAnswered, poda en el reducer al llegar la asociación, autocierre a 20 s con fake timers)",
+      "status": "validated",
       "cycle": null,
       "id": "FIX-e-burgos-006",
       "fix_document": "sdd/fixes/fix-e-burgos-006.md",
@@ -1683,7 +1691,19 @@
       "estimation_hours": 1,
       "title": "El aviso «Conversación nueva lista» no aparece para unidades ya en curso y se cierra solo",
       "description": "Studio prepara una conversación y muestra el aviso aunque la conversación que creó la unidad ya la trabaja: el chequeo corre antes de la asociación y el aviso no se retira nunca.",
-      "justification": "Error confirmado en uso real (captura del dev); perfil solo; sin contratos ni entidades nuevas."
+      "justification": "Error confirmado en uso real (captura del dev); perfil solo; sin contratos ni entidades nuevas.",
+      "validated_at": "2026-11-20",
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "tokens_in": 60075,
+        "tokens_out": 10602,
+        "tokens_total": 70677,
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-20"
+      }
     },
     {
       "author": "e-burgos",
