@@ -87,7 +87,7 @@ async function readLines(file: string): Promise<string[]> {
 
 const serializeBotEvent = (event: BotEvent): string => JSON.stringify(event);
 
-const isKitBotKind = (kind: BotEvent['botKind']): boolean => kind === 'tools.changed' || kind === 'integration.changed';
+const isKitBotKind = (kind: BotEvent['botKind']): boolean => kind === 'tools.changed' || kind === 'integration.changed' || kind === 'claude-tools.changed';
 
 const botDedupeKey = (event: BotEvent): string =>
   isKitBotKind(event.botKind) ? serializeBotEvent(event) : JSON.stringify({ ...event, at: undefined });

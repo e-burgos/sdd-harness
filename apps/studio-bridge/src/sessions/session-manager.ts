@@ -30,6 +30,7 @@ import {
   type AgentEngine,
   type ApprovalDecision,
   type ApprovalRequest,
+  type EngineInitInfo,
   type EngineTurn,
   type JudgeContext,
   type OutgoingMessage,
@@ -79,6 +80,7 @@ export interface SessionManagerDeps {
   titleTimeoutMs?: number;
   tracker?: DocumentChangeTracker;
   bindings?: ThreadBindings;
+  onEngineInit?: (info: EngineInitInfo) => void;
 }
 
 const BASH_TOOL = 'Bash';
@@ -741,6 +743,7 @@ export class SessionManager {
             this.refreshSessionTitle(thread);
           },
           onContextUsage: (usage) => this.applyContextUsage(thread, usage),
+          ...(this.deps.onEngineInit ? { onInit: this.deps.onEngineInit } : {}),
           requestApproval: (request, signal) => this.requestApproval(thread, gen, request, signal),
           judgeTool: (toolName, input, ctx) => this.judgeTool(thread, gen, toolName, input, ctx),
           readAttachment: (ref: AttachmentRef) => this.deps.attachments.read(ref.sha256, ref.mime).catch(() => null),

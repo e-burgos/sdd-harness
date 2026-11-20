@@ -11,6 +11,7 @@ import { SessionManager } from '../sessions/session-manager';
 import { SessionBindings } from '../sessions/session-bindings';
 import { ThreadStore } from '../sessions/store';
 import { createGithubFeed, type GithubFeed } from '../github/pr-feed';
+import { createClaudeInventory } from '../workspace/claude-inventory';
 import { cachedClaudeTools, readClaudeTools } from '../workspace/claude-tools';
 import { createFileIndex } from '../workspace/file-index';
 import { KitIndexer } from '../workspace/kit-index';
@@ -84,10 +85,12 @@ export async function openProjectRuntime(root: string, deps: ProjectRuntimeDeps)
   void githubFeed.refresh().catch(() => undefined);
 
   const runner = new CommandRunner(root, broadcast);
+  const claudeInventory = createClaudeInventory({ root });
   let sessions: SessionManager;
   let handlers: BridgeHandlers;
   try {
     await readClaudeTools(root).catch(() => undefined);
+    await claudeInventory.load();
     const engine = deps.engine === 'fake' ? new FakeEngine() : new ClaudeAgentSdkEngine(undefined, () => auth.env(), 'stream', undefined, () => cachedClaudeTools(root));
     sessions = new SessionManager({
       root,
@@ -97,6 +100,7 @@ export async function openProjectRuntime(root: string, deps: ProjectRuntimeDeps)
       snapshot: () => watcher.current(),
       broadcast,
       refreshSnapshot: () => watcher.refresh().then(() => undefined),
+      onEngineInit: (info) => claudeInventory.applyInit(info),
       ...(bindings ? { bindings } : {}),
     });
     await sessions.recover();
@@ -113,6 +117,7 @@ export async function openProjectRuntime(root: string, deps: ProjectRuntimeDeps)
       fileIndex,
       kitIndexer,
       broadcast,
+      claudeInventory,
     });
   } catch (error) {
     kitIndexer.close();

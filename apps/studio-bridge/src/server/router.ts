@@ -1,13 +1,16 @@
 import { constants } from 'node:fs';
 import { open } from 'node:fs/promises';
-import { BRIDGE_FEATURES, MAX_READ_FILE_BYTES, type BotEvent, type ClientCommand, type RtkGain, type ServerMessage } from '@sdd-studio/protocol';
+import { BRIDGE_FEATURES, type ClaudeToolsConfig, type ClaudeToolsGetResult, MAX_READ_FILE_BYTES, type BotEvent, type ClientCommand, type RtkGain, type ServerMessage } from '@sdd-studio/protocol';
 import type { AuthState } from '../auth-mode';
 import type { ClaudeLogin } from '../auth/claude-login';
+import { CHROME_DEVTOOLS_MCP_VERSION } from '../engine/chrome-devtools';
 import type { CommandRunner } from '../commands/runner';
 import type { ProjectRuntime } from '../project/runtime';
 import type { AttachmentStore } from '../sessions/attachment-store';
 import { SessionError, type SessionManager } from '../sessions/session-manager';
 import type { ThreadStore } from '../sessions/store';
+import { createClaudeInventory, type ClaudeInventoryService } from '../workspace/claude-inventory';
+import { readClaudeTools, setClaudeTools } from '../workspace/claude-tools';
 import type { FileIndex } from '../workspace/file-index';
 import type { KitIndexer } from '../workspace/kit-index';
 import { createKitIntegrations, type KitIntegrations } from '../workspace/kit-integrations';
@@ -17,6 +20,16 @@ import { resolveSddPath } from '../workspace/paths';
 import { ProfileError, writeProfile } from '../workspace/profile';
 import type { WorkspaceWatcher } from '../workspace/watcher';
 import type { BridgeHandlers } from './ws-server';
+
+function changedClaudeAreas(before: ClaudeToolsConfig, after: ClaudeToolsConfig): string[] {
+  const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
+  const areas: string[] = [];
+  if (!same(before.sources, after.sources)) areas.push('sources');
+  if (!same(before.disabledPlugins, after.disabledPlugins)) areas.push('plugins');
+  if (!same(before.disabledMcpServers, after.disabledMcpServers)) areas.push('mcp');
+  if (!same(before.browser, after.browser)) areas.push('browser');
+  return areas;
+}
 
 export function createHandlers(d: {
   root: string;
@@ -33,9 +46,11 @@ export function createHandlers(d: {
   broadcast: (message: ServerMessage) => void;
   rtkGain?: (root: string) => Promise<RtkGain>;
   integrations?: KitIntegrations;
+  claudeInventory?: ClaudeInventoryService;
   now?: () => Date;
 }): BridgeHandlers {
   const integrations = d.integrations ?? createKitIntegrations();
+  const claudeInventory = d.claudeInventory ?? createClaudeInventory({ root: d.root });
   return {
     welcome: () => {
       const snapshot = d.watcher.current();
@@ -120,6 +135,33 @@ export function createHandlers(d: {
           }
           return result;
         }
+        case 'claude.tools.get': {
+          const { config, revision } = await readClaudeTools(d.root);
+          const result: ClaudeToolsGetResult = {
+            config,
+            revision,
+            inventory: claudeInventory.current(),
+            browserMcpVersion: CHROME_DEVTOOLS_MCP_VERSION,
+          };
+          return result;
+        }
+        case 'claude.tools.set': {
+          const before = (await readClaudeTools(d.root)).config;
+          const result = await setClaudeTools(d.root, command.config, command.expectedRevision);
+          if (result.changed) {
+            const event: BotEvent = {
+              channelId: 'general',
+              botKind: 'claude-tools.changed',
+              payload: { changed: changedClaudeAreas(before, result.config), revision: result.revision },
+              at: (d.now?.() ?? new Date()).toISOString(),
+            };
+            d.store.appendBot(event);
+            d.broadcast({ kind: 'bot.event', ...event });
+          }
+          return result;
+        }
+        case 'claude.inventory.refresh':
+          return { inventory: await claudeInventory.refresh() };
         case 'kit.integration.status':
           return integrations.status(d.root, command.integration);
         case 'kit.integration.set': {

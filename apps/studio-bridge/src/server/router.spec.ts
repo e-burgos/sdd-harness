@@ -13,6 +13,7 @@ import { SessionManager } from '../sessions/session-manager';
 import { ThreadStore } from '../sessions/store';
 import { copyFixture, waitFor } from '../test-utils/fixture';
 import { loadWorkspaceSnapshot } from '../workspace/snapshot';
+import type { ClaudeInventoryService } from '../workspace/claude-inventory';
 import type { KitIntegrations } from '../workspace/kit-integrations';
 import { createHandlers } from './router';
 
@@ -24,7 +25,7 @@ afterEach(() => cleanup());
 async function handlers(
   broadcast: (e: ServerEvent) => void = () => {},
   refresh: () => Promise<unknown> = async () => null,
-  extra: { rtkGain?: (root: string) => Promise<RtkGain>; now?: () => Date; integrations?: KitIntegrations } = {},
+  extra: { claudeInventory?: ClaudeInventoryService; rtkGain?: (root: string) => Promise<RtkGain>; now?: () => Date; integrations?: KitIntegrations } = {},
 ) {
   const snapshot = (await loadWorkspaceSnapshot(root)).snapshot;
   const store = new ThreadStore(root);
@@ -46,6 +47,68 @@ const cmd = (c: Record<string, unknown>): ClientCommand => {
   if (!parsed.ok || parsed.value.kind !== 'command') throw new Error(`invalid command in test: ${JSON.stringify(c)}`);
   return parsed.value;
 };
+
+const fakeInventory = (over: Partial<ClaudeInventoryService> = {}): ClaudeInventoryService & { calls: number } => {
+  const inventory = {
+    capturedAt: '2026-11-20T10:00:00.000Z',
+    plugins: [],
+    mcpServers: [],
+    counts: {
+      project: { skills: 1, agents: 1, plugins: 0, mcpServers: 0, mcpTools: 0 },
+      all: { skills: 5, agents: 2, plugins: 1, mcpServers: 1, mcpTools: 3 },
+    },
+  };
+  const service = {
+    calls: 0,
+    current: () => null,
+    load: async () => undefined,
+    refresh: async () => {
+      service.calls += 1;
+      return inventory;
+    },
+    applyInit: () => undefined,
+    ...over,
+  };
+  return service;
+};
+
+describe('claude tools commands', () => {
+  const customConfig = { sources: { user: true, local: false }, disabledPlugins: [], disabledMcpServers: ['x'], browser: { enabled: false, browserUrl: null } };
+
+  it('get returns defaults, a revision, no inventory and the browser mcp version', async () => {
+    const h = await handlers(undefined, undefined, { claudeInventory: fakeInventory() });
+    const result = (await h.handle(cmd({ cmd: 'claude.tools.get' }))) as { config: unknown; revision: string; inventory: unknown; browserMcpVersion: string };
+    expect(result.inventory).toBeNull();
+    expect(result.revision).toMatch(/^[a-f0-9]{16}$/);
+    expect(result.browserMcpVersion).toMatch(/^\d+\.\d+\.\d+$/);
+  });
+
+  it('set stores the config and announces claude-tools.changed once', async () => {
+    const events: ServerEvent[] = [];
+    const h = await handlers((e) => events.push(e), undefined, { claudeInventory: fakeInventory(), now: () => new Date('2026-11-20T10:00:00Z') });
+    const { revision } = (await h.handle(cmd({ cmd: 'claude.tools.get' }))) as { revision: string };
+    const result = (await h.handle(cmd({ cmd: 'claude.tools.set', config: customConfig, expectedRevision: revision }))) as { changed: boolean; revision: string };
+    expect(result.changed).toBe(true);
+    const bot = events.filter((e) => e.kind === 'bot.event');
+    expect(bot).toHaveLength(1);
+    expect(bot[0]).toMatchObject({ channelId: 'general', botKind: 'claude-tools.changed', payload: { changed: ['sources', 'mcp'] } });
+    await h.handle(cmd({ cmd: 'claude.tools.set', config: customConfig, expectedRevision: result.revision }));
+    expect(events.filter((e) => e.kind === 'bot.event')).toHaveLength(1);
+  });
+
+  it('set reports conflict on a stale revision', async () => {
+    const h = await handlers(undefined, undefined, { claudeInventory: fakeInventory() });
+    await expect(h.handle(cmd({ cmd: 'claude.tools.set', config: customConfig, expectedRevision: 'ffffffffffffffff' }))).rejects.toMatchObject({ code: 'conflict' });
+  });
+
+  it('refresh runs the probe and returns the inventory', async () => {
+    const inventory = fakeInventory();
+    const h = await handlers(undefined, undefined, { claudeInventory: inventory });
+    const result = (await h.handle(cmd({ cmd: 'claude.inventory.refresh' }))) as { inventory: { counts: { all: { skills: number } } } };
+    expect(result.inventory.counts.all.skills).toBe(5);
+    expect(inventory.calls).toBe(1);
+  });
+});
 
 describe('createHandlers', () => {
   it('question.answer rejects an unknown question as not-found', async () => {
