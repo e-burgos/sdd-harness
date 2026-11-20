@@ -106,7 +106,7 @@ export function AgentInspectorDrawer({
           semantics="tabs"
           data-studio-exempt="hosted-component"
           aria-label={t('segment.inspector')}
-          size="sm"
+          size="xs"
           className="font-mono"
           value={activeTab}
           onChange={(tab) => {
