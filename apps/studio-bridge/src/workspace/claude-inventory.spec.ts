@@ -9,7 +9,8 @@ let root: string;
 beforeEach(async () => {
   root = await mkdtemp(path.join(tmpdir(), 'claude-inventory-'));
 });
-afterEach(() => rm(root, { recursive: true, force: true }));
+// The probe persists with an atomic write that can still be settling when the test ends.
+afterEach(() => rm(root, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 }));
 
 const initMessage = (skills: number, withUser: boolean) => ({
   type: 'system',
