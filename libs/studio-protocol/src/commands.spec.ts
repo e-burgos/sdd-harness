@@ -208,6 +208,19 @@ describe('claude tools commands', () => {
     expect(ClientCommand.safeParse({ ...cmd, expectedRevision: 'bad' }).success).toBe(false);
     expect(ClientCommand.safeParse({ ...cmd, config: { sources: config.sources } }).success).toBe(false);
   });
+  it('set accepts an optional scope', () => {
+    const cmd = { ...base, cmd: 'claude.tools.set', config, expectedRevision: '0123456789abcdef' };
+    for (const scope of ['global', 'project']) {
+      expect(ClientCommand.parse({ ...cmd, scope })).toEqual({ ...cmd, scope });
+    }
+    expect(ClientCommand.safeParse({ ...cmd, scope: 'team' }).success).toBe(false);
+  });
+  it('useGlobal requires a revision', () => {
+    const cmd = { ...base, cmd: 'claude.tools.useGlobal', expectedRevision: '0123456789abcdef' };
+    expect(ClientCommand.parse(cmd)).toEqual(cmd);
+    expect(ClientCommand.safeParse({ ...base, cmd: 'claude.tools.useGlobal' }).success).toBe(false);
+    expect(ClientCommand.safeParse({ ...cmd, expectedRevision: 'bad' }).success).toBe(false);
+  });
 });
 
 describe('result schemas', () => {

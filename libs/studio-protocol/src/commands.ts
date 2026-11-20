@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { AttachmentMime, AttachmentUpload, PromptRefs, Sha256 } from './attachments';
 import { AuthPreference, ChannelId, DevProfile, MAX_QUESTIONS, QuestionAnswer, ThreadLinkRef, ThreadLinkTarget, ThreadOptions } from './domain';
-import { ClaudeToolsConfig, ClaudeToolsRevision } from './claude-tools';
+import { ClaudeToolsConfig, ClaudeToolsRevision, ClaudeToolsScope } from './claude-tools';
 import { GithubConnectRequest } from './github';
 import { KitIntegrationId, ToolsChange } from './kit';
 import { FILE_SEARCH_MAX, MAX_ATTACHMENTS } from './limits';
@@ -71,7 +71,13 @@ export const ClientCommand = z.discriminatedUnion('cmd', [
   z.object({ ...cmd('kit.integration.status'), integration: KitIntegrationId }),
   z.object({ ...cmd('kit.integration.set'), integration: KitIntegrationId, enabled: z.boolean() }),
   z.object({ ...cmd('claude.tools.get') }),
-  z.object({ ...cmd('claude.tools.set'), config: ClaudeToolsConfig, expectedRevision: ClaudeToolsRevision }),
+  z.object({
+    ...cmd('claude.tools.set'),
+    config: ClaudeToolsConfig,
+    expectedRevision: ClaudeToolsRevision,
+    scope: ClaudeToolsScope.optional(),
+  }),
+  z.object({ ...cmd('claude.tools.useGlobal'), expectedRevision: ClaudeToolsRevision }),
   z.object({ ...cmd('claude.inventory.refresh') }),
   z.object({
     ...cmd('approval.respond'),

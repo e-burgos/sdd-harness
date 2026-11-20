@@ -49,11 +49,17 @@ export const ClaudeInventory = z.object({
 });
 export type ClaudeInventory = z.infer<typeof ClaudeInventory>;
 
+export const CLAUDE_TOOLS_SCOPES = ['global', 'project'] as const;
+export const ClaudeToolsScope = z.enum(CLAUDE_TOOLS_SCOPES);
+export type ClaudeToolsScope = z.infer<typeof ClaudeToolsScope>;
+
 export const ClaudeToolsGetResult = z.object({
   config: ClaudeToolsConfig,
   revision: ClaudeToolsRevision,
   inventory: ClaudeInventory.nullable(),
   browserMcpVersion: z.string().max(40),
+  scope: ClaudeToolsScope.optional().catch(undefined),
+  hasProjectOverride: z.boolean().optional().catch(undefined),
 });
 export type ClaudeToolsGetResult = z.infer<typeof ClaudeToolsGetResult>;
 
@@ -61,6 +67,8 @@ export const ClaudeToolsSetResult = z.object({
   config: ClaudeToolsConfig,
   revision: ClaudeToolsRevision,
   changed: z.boolean(),
+  scope: ClaudeToolsScope.optional().catch(undefined),
+  hasProjectOverride: z.boolean().optional().catch(undefined),
 });
 export type ClaudeToolsSetResult = z.infer<typeof ClaudeToolsSetResult>;
 

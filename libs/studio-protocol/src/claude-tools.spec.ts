@@ -3,6 +3,7 @@ import {
   ClaudeInventory,
   ClaudeToolsConfig,
   ClaudeToolsGetResult,
+  ClaudeToolsScope,
   ClaudeToolsSetResult,
   DEFAULT_CLAUDE_TOOLS_CONFIG,
 } from './claude-tools';
@@ -66,5 +67,25 @@ describe('results', () => {
   it('set result carries changed', () => {
     const result = { config: DEFAULT_CLAUDE_TOOLS_CONFIG, revision: '0123456789abcdef', changed: true };
     expect(ClaudeToolsSetResult.parse(result)).toEqual(result);
+  });
+  it('carries scope and hasProjectOverride when present', () => {
+    const get = { config: DEFAULT_CLAUDE_TOOLS_CONFIG, revision: '0123456789abcdef', inventory: null, browserMcpVersion: '1.13.0' };
+    const scoped = { ...get, scope: 'project', hasProjectOverride: true };
+    expect(ClaudeToolsGetResult.parse(scoped)).toEqual(scoped);
+    const set = { config: DEFAULT_CLAUDE_TOOLS_CONFIG, revision: '0123456789abcdef', changed: false, scope: 'global', hasProjectOverride: false };
+    expect(ClaudeToolsSetResult.parse(set)).toEqual(set);
+  });
+  it('parses results from a bridge without scope and tolerates unknown scopes', () => {
+    const get = { config: DEFAULT_CLAUDE_TOOLS_CONFIG, revision: '0123456789abcdef', inventory: null, browserMcpVersion: '1.13.0' };
+    const parsed = ClaudeToolsGetResult.parse(get);
+    expect(parsed.scope).toBeUndefined();
+    expect(parsed.hasProjectOverride).toBeUndefined();
+    const tolerant = ClaudeToolsGetResult.parse({ ...get, scope: 'team', hasProjectOverride: 'x' });
+    expect(tolerant.scope).toBeUndefined();
+    expect(tolerant.hasProjectOverride).toBeUndefined();
+  });
+  it('scope enum accepts global and project only', () => {
+    expect(ClaudeToolsScope.parse('global')).toBe('global');
+    expect(ClaudeToolsScope.safeParse('team').success).toBe(false);
   });
 });

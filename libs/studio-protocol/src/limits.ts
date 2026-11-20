@@ -37,6 +37,7 @@ export const BRIDGE_FEATURES = [
   'github',
   'kit-integrations',
   'claude-tools',
+  'claude-tools-scope',
 ] as const;
 export const TEXT_ATTACHMENT_EXTENSIONS = [
   'txt', 'md', 'mdx', 'markdown', 'json', 'jsonc', 'yaml', 'yml', 'toml', 'ini', 'csv', 'log', 'diff', 'patch',
