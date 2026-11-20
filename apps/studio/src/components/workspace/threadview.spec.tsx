@@ -168,3 +168,14 @@ describe('ThreadView scrolling', () => {
     expect(screen.getByTestId('thread-activity')).toHaveClass('h-6');
   });
 });
+
+describe('ThreadView header', () => {
+  it('keeps the title and associations on the first row and the context and status on a second row', () => {
+    setup();
+    const main = screen.getByTestId('thread-header-main');
+    const status = screen.getByTestId('thread-header-status');
+    expect(main).toContainElement(screen.getByRole('heading', { level: 1 }));
+    expect(main).not.toContainElement(status);
+    expect(status.parentElement).toBe(main.parentElement);
+  });
+});
