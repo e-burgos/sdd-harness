@@ -307,6 +307,7 @@ export const en = {
   'caps.document-touched': 'documents changed from the console',
   'caps.claude-tools': 'choosing the Claude Code configuration',
   'caps.claude-tools-scope': 'sharing the Claude configuration across projects',
+  'caps.kit-execution': 'running verify from Studio',
   'link.add': 'Add association…',
   'link.max': 'Association limit reached',
   'link.specs': 'Specs',
