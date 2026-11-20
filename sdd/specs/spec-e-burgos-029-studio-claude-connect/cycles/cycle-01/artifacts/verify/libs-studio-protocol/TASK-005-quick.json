@@ -1,0 +1,38 @@
+{
+  "app": "libs/studio-protocol",
+  "level": "quick",
+  "unit": "TASK-005",
+  "ok": true,
+  "commit": "c618265f0fd213cfa36a5ffb11c5cad748f7be94",
+  "dirty": [
+    ".claude/settings.json",
+    ".gemini/settings.json",
+    "apps/studio-bridge/src/workspace/claude-mcp.spec.ts",
+    "apps/studio-bridge/src/workspace/claude-mcp.ts",
+    "apps/studio/next-env.d.ts",
+    "apps/studio/src/components/modules/claude/ClaudeCenter.tsx",
+    "apps/studio/src/components/modules/claude/claude-module.spec.tsx",
+    "apps/studio/src/lib/i18n/modules/claude.ts",
+    "libs/studio-protocol/src/claude-tools.spec.ts",
+    "libs/studio-protocol/src/claude-tools.ts",
+    ".agents/skills/tucu-ui-design",
+    ".github/skills/tucu-ui-design",
+    ".mcp.json"
+  ],
+  "started_at": "2026-11-20T18:57:43.539Z",
+  "duration_ms": 3639,
+  "commands": [
+    {
+      "command": "pnpm --filter @sdd-studio/protocol run typecheck",
+      "exit_code": 0,
+      "duration_ms": 2185,
+      "skipped": false
+    },
+    {
+      "command": "pnpm --filter @sdd-studio/protocol run test",
+      "exit_code": 0,
+      "duration_ms": 1453,
+      "skipped": false
+    }
+  ]
+}

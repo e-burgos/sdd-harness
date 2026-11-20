@@ -448,10 +448,10 @@
       "file": "sdd/specs/spec-e-burgos-029-studio-claude-connect/spec-e-burgos-029-studio-claude-connect.spec.md",
       "module": "studio-claude-connect",
       "app": "apps/studio",
-      "status": "in-progress",
+      "status": "completed",
       "title": "Studio conecta Chrome y los MCP del dev sin salir de Studio",
       "created_at": "2026-11-20",
-      "completed_at": null,
+      "completed_at": "2026-11-20",
       "depends_on": [
         "spec-e-burgos-027-studio-claude-tools-global"
       ]

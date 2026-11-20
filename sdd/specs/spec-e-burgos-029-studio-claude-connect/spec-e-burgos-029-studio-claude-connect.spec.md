@@ -1,6 +1,6 @@
 # SPEC-e-burgos-029: Studio conecta Chrome y los MCP del dev sin salir de Studio
 
-> Estado: **in-progress** (2026-11-20). cycle-01 abierto (flow lite). Pedido del dev: «los MCP se tienen que poder reconectar o loguear desde
+> Estado: **completed** (2026-11-20). cycle-01 cerrado (flow lite, 7/7 tasks). Pedido del dev: «los MCP se tienen que poder reconectar o loguear desde
 > Studio» y «Chrome tiene que estar activo por defecto siempre; si no tiene el permiso, lo tiene que
 > solicitar al instante».
 

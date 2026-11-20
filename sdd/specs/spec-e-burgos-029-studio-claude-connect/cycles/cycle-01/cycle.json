@@ -14,9 +14,9 @@
     "Chrome conectado por defecto con pedido de permiso al instante (US-1)",
     "Login y reconexión de MCP desde Studio (US-2, US-3)"
   ],
-  "status": "in-progress",
+  "status": "completed",
   "started_at": "2026-11-20",
-  "completed_at": null,
+  "completed_at": "2026-11-20",
   "documents": {
     "plan": "sdd/specs/spec-e-burgos-029-studio-claude-connect/cycles/cycle-01/plan.md",
     "tasks": "sdd/specs/spec-e-burgos-029-studio-claude-connect/cycles/cycle-01/tasks.json"
@@ -26,20 +26,200 @@
   ],
   "metrics": {
     "tasks_total": 7,
-    "tasks_completed": 0,
+    "tasks_completed": 7,
     "story_points": 18,
-    "files_created": [],
-    "files_modified": [],
+    "files_created": [
+      "apps/studio-bridge/src/workspace/chrome-status.spec.ts",
+      "apps/studio-bridge/src/workspace/chrome-status.ts",
+      "apps/studio-bridge/src/workspace/claude-mcp.spec.ts",
+      "apps/studio-bridge/src/workspace/claude-mcp.ts",
+      "apps/studio-bridge/src/workspace/studio-chrome.spec.ts",
+      "apps/studio-bridge/src/workspace/studio-chrome.ts",
+      "apps/studio/src/components/ChromeBanner.tsx",
+      "apps/studio/src/components/modules/claude/use-chrome-status.ts"
+    ],
+    "files_modified": [
+      "apps/studio-bridge/src/engine/claude-sdk-engine.spec.ts",
+      "apps/studio-bridge/src/engine/claude-sdk-engine.ts",
+      "apps/studio-bridge/src/engine/fake-engine.ts",
+      "apps/studio-bridge/src/engine/types.ts",
+      "apps/studio-bridge/src/project/runtime.ts",
+      "apps/studio-bridge/src/server/router.spec.ts",
+      "apps/studio-bridge/src/server/router.ts",
+      "apps/studio-bridge/src/sessions/session-bindings.spec.ts",
+      "apps/studio-bridge/src/sessions/session-bindings.ts",
+      "apps/studio-bridge/src/sessions/session-manager.spec.ts",
+      "apps/studio-bridge/src/sessions/session-manager.ts",
+      "apps/studio-bridge/src/sessions/thread-link.spec.ts",
+      "apps/studio-bridge/src/sessions/thread-link.ts",
+      "apps/studio-bridge/src/workspace/claude-inventory.spec.ts",
+      "apps/studio/src/components/WorkspaceApp.tsx",
+      "apps/studio/src/components/modules/claude/ClaudeCenter.tsx",
+      "apps/studio/src/components/modules/claude/claude-model.ts",
+      "apps/studio/src/components/modules/claude/claude-module.spec.tsx",
+      "apps/studio/src/components/modules/claude/use-claude-tools.ts",
+      "apps/studio/src/components/workspace/ThreadLinkPicker.tsx",
+      "apps/studio/src/components/workspace/ThreadView.tsx",
+      "apps/studio/src/components/workspace/threadlink.spec.tsx",
+      "apps/studio/src/components/workspace/threadview.spec.tsx",
+      "apps/studio/src/lib/i18n/en.ts",
+      "apps/studio/src/lib/i18n/es.ts",
+      "apps/studio/src/lib/i18n/modules/claude.ts",
+      "libs/studio-protocol/src/claude-tools.spec.ts",
+      "libs/studio-protocol/src/claude-tools.ts",
+      "libs/studio-protocol/src/commands.spec.ts",
+      "libs/studio-protocol/src/commands.ts",
+      "libs/studio-protocol/src/events.spec.ts",
+      "libs/studio-protocol/src/events.ts",
+      "libs/studio-protocol/src/handshake.spec.ts",
+      "libs/studio-protocol/src/limits.ts"
+    ],
     "files_deleted": [],
     "usage": {
-      "tokens_in": 0,
-      "tokens_out": 0,
-      "by_agent": []
-    }
+      "tokens_in": 434738,
+      "tokens_out": 76717,
+      "approx": true,
+      "source": "declared-estimate",
+      "by_tier": {
+        "claude/opus": {
+          "tokens_in": 212500,
+          "tokens_out": 37500,
+          "approx": true,
+          "source": "declared-estimate"
+        },
+        "claude/sonnet": {
+          "tokens_in": 222238,
+          "tokens_out": 39217,
+          "approx": false,
+          "source": "agent-usage-notification"
+        }
+      },
+      "by_agent": [
+        {
+          "agent": "orchestrator",
+          "label": "solo: spec, pruebas reales (Chrome, login de MCP), cambio de diseño, verificación y cierre",
+          "provider_model": "claude/opus",
+          "effort": "high",
+          "tokens_in": 187000,
+          "tokens_out": 33000,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-20"
+        },
+        {
+          "agent": "orchestrator",
+          "label": "TASK-001 Prueba real: permiso de Chrome por WebSocket y claude mcp login del binario del SDK",
+          "provider_model": "claude/opus",
+          "effort": "high",
+          "tokens_in": 25500,
+          "tokens_out": 4500,
+          "tokens_total": 30000,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-20"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-002 Protocolo: ClaudeBrowserStatus, claude.browser.*, claude.mcp.login/reconnect, feature claude-connect y Chrome p",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 68473,
+          "tokens_out": 12083,
+          "tokens_total": 80556,
+          "source": "agent-usage-notification",
+          "approx": false,
+          "recorded_at": "2026-11-20"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-003 Puente: estado de Chrome, pedido al arrancar, abrir chrome://inspect, login y reconexión de MCP",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 26119,
+          "tokens_out": 4609,
+          "tokens_total": 30728,
+          "source": "agent-usage-notification",
+          "approx": false,
+          "recorded_at": "2026-11-20"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-004 Studio: aviso global de Chrome, sección Navegador con estado y acciones, Iniciar sesión y Reconectar en MCP",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 40638,
+          "tokens_out": 7171,
+          "tokens_total": 47809,
+          "source": "agent-usage-notification",
+          "approx": false,
+          "recorded_at": "2026-11-20"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-005 Verificación real y cierre",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 57192,
+          "tokens_out": 10093,
+          "tokens_total": 67285,
+          "source": "agent-usage-notification",
+          "approx": false,
+          "recorded_at": "2026-11-20"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-006 Puente: Chrome propio de Studio (lanzador, perfil persistente, puerto 9333), browserUrl en el motor y estado po",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 18663,
+          "tokens_out": 3293,
+          "tokens_total": 21956,
+          "source": "agent-usage-notification",
+          "approx": false,
+          "recorded_at": "2026-11-20"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-007 Studio: aviso y sección Navegador para el Chrome propio (abrir, estado, perfil)",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 11153,
+          "tokens_out": 1968,
+          "tokens_total": 13121,
+          "source": "agent-usage-notification",
+          "approx": false,
+          "recorded_at": "2026-11-20"
+        }
+      ]
+    },
+    "tasks_skipped": 0
   },
   "tables_created": [],
   "endpoints_implemented": [],
   "components_created": [],
-  "issues_found": [],
-  "reviewer_report": null
+  "issues_found": [
+    "--autoConnect hace que Chrome pida «Allow remote debugging?» en cada conexión nueva: se pasó a un Chrome propio de Studio (D-05/D-06)",
+    "El binario del motor no se resolvía desde el puente con pnpm: se resuelve desde el paquete del SDK",
+    "`claude mcp login` exige TTY aun abriendo el navegador: corre bajo pty (python3) con fallback a una terminal del sistema",
+    "Dos bugs de sesiones en Studio aparecidos durante el ciclo, resueltos como FIX-e-burgos-012 (reservas duplicadas con el mod) y FIX-e-burgos-014 (atadura trabada en una unidad cerrada)"
+  ],
+  "reviewer_report": {
+    "approved": true,
+    "date": "2026-11-20",
+    "ca_results": {
+      "US-1": "PASS - Chrome propio de Studio (perfil ~/.sdd-studio/chrome-profile, puerto 9333) lanzado por el chequeo: connected en 1.5 s y 40 ms después; chrome-devtools-mcp --browserUrl respondió list_pages en 69 ms sin ningún aviso de permiso; Navegador muestra «conectado» con Comprobar/Abrir Chrome de Studio y sin aviso global",
+      "US-2": "PASS - login real de plugin:operations:notion bajo pty: el dev autorizó en el navegador y el motor respondió «Authenticated with \"plugin:operations:notion\"» (exit 0, 26 s); not-oauth/header-auth/unknown-server mapeados según la prueba real; fallback a terminal cubierto por specs",
+      "US-3": "PASS - Reconectar visible en los 11 MCP con falla y en pending; refresca el inventario (specs del router y del módulo)"
+    },
+    "tests": {
+      "libs/studio-protocol": "verify full OK (B-01) y quick TASK-005",
+      "apps/studio-bridge": "verify full OK (B-02, B-04) y quick TASK-005; test real de resolución del binario del SDK",
+      "apps/studio": "verify full OK (B-03, B-05) y quick TASK-005"
+    },
+    "notes": "Prueba real del permiso de Chrome y del login en artifacts/spike.md. Chrome por defecto prendido en el producto (D-04).",
+    "follow_ups": [
+      "El primer turno con Chrome cerrado no espera al lanzamiento (startTurn síncrono): puede fallar el primer uso del navegador",
+      "Al abrir Studio corren dos chequeos de Chrome casi simultáneos (puente y web); con el Chrome propio ya no molestan pero se pueden unificar"
+    ]
+  }
 }
