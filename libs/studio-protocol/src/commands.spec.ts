@@ -274,3 +274,16 @@ describe('kit.verify.run', () => {
     expect(ClientCommand.safeParse({ ...cmd, level: undefined }).success).toBe(false);
   });
 });
+
+describe('kit.pack.stats', () => {
+  const cmd = { ...base, cmd: 'kit.pack.stats', spec: 'spec-e-burgos-031-studio-session-context', cycle: 'cycle-01' };
+  it('parses spec and cycle', () => {
+    expect(ClientCommand.parse(cmd)).toEqual(cmd);
+  });
+  it('rejects bad spec and cycle', () => {
+    expect(ClientCommand.safeParse({ ...cmd, spec: '../x' }).success).toBe(false);
+    expect(ClientCommand.safeParse({ ...cmd, spec: 'other' }).success).toBe(false);
+    expect(ClientCommand.safeParse({ ...cmd, cycle: 'cycle-1' }).success).toBe(false);
+    expect(ClientCommand.safeParse({ ...cmd, cycle: undefined }).success).toBe(false);
+  });
+});

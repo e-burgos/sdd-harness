@@ -107,6 +107,19 @@ export const ContextUsage = z.object({
 });
 export type ContextUsage = z.infer<typeof ContextUsage>;
 
+export const ThreadContextSource = z.discriminatedUnion('kind', [
+  z.object({
+    kind: z.literal('pack'),
+    spec: z.string().min(1).max(128),
+    cycle: z.string().regex(/^cycle-\d{2}$/),
+    role: z.string().min(1).max(64),
+    unit: z.string().max(64).nullable(),
+    bytes: z.number().int().nonnegative(),
+  }),
+  z.object({ kind: z.literal('base'), bytes: z.number().int().nonnegative() }),
+]);
+export type ThreadContextSource = z.infer<typeof ThreadContextSource>;
+
 export const ThreadInfo = z.object({
   id: z.string().min(1),
   channelId: ChannelId,
@@ -122,6 +135,7 @@ export const ThreadInfo = z.object({
   provider: ProviderId.optional(),
   sessionTitle: z.string().max(300).nullable().optional().catch(null),
   contextUsage: ContextUsage.nullable().optional().catch(null),
+  contextSource: ThreadContextSource.optional().catch(undefined),
 });
 export type ThreadInfo = z.infer<typeof ThreadInfo>;
 

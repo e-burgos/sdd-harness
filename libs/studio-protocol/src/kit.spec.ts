@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { KIT_SECTIONS, KitIntegrationSetResult, KitIntegrationStatus, KitEntry, KitIndex, MAX_KIT_ENTRIES, RtkGain, ToolsChange, ToolsSetResult } from './index';
+import { KIT_SECTIONS, KitIntegrationSetResult, KitIntegrationStatus, KitEntry, KitIndex, MAX_KIT_ENTRIES, KIT_HARNESS_ROLES, KitPackStats, RtkGain, ToolsChange, ToolsSetResult } from './index';
 
 const entry = { section: 'docs', role: 'doc', group: 'es', path: 'sdd/documentation/es/a.md', size: 10, mtime: '2026-10-27T00:00:00.000Z' };
 const tools = { status: 'ok', rtkEnabled: true, modEnabled: false, gate: 'block', modLinked: false, revision: 'a1b2c3d4e5f60718' };
 
 describe('KitEntry and KitIndex', () => {
-  it('lists the five known sections', () => {
-    expect(KIT_SECTIONS).toEqual(['docs', 'schemas', 'context', 'memory', 'registries']);
+  it('lists the six known sections', () => {
+    expect(KIT_SECTIONS).toEqual(['docs', 'schemas', 'context', 'memory', 'registries', 'harness']);
   });
   it('accepts a section the web does not know yet', () => {
     const future = { ...entry, section: 'future-section', role: 'future-role' };
@@ -90,5 +90,29 @@ describe('KitIntegrationStatus', () => {
     const result = { ok: false, exitCode: 1, output: 'boom', status };
     expect(KitIntegrationSetResult.parse(result)).toEqual(result);
     expect(KitIntegrationSetResult.safeParse({ ...result, output: 'x'.repeat(8 * 1024 + 1) }).success).toBe(false);
+  });
+});
+
+describe('harness entries', () => {
+  const rule = { ...entry, section: 'harness', role: 'harness-rule', group: null, path: 'sdd/dual-harness/rules/sdd-gates.md', trigger: 'always_on', description: 'Gates', bytes: 1200 };
+  it('carries trigger, description and bytes', () => {
+    expect(KIT_HARNESS_ROLES).toEqual(['harness-core', 'harness-rule', 'harness-project']);
+    expect(KitEntry.parse(rule)).toMatchObject({ trigger: 'always_on', description: 'Gates', bytes: 1200 });
+  });
+  it('tolerates a legacy entry and malformed optional fields', () => {
+    expect(KitEntry.parse(entry).trigger).toBeUndefined();
+    const bad = KitEntry.parse({ ...rule, trigger: 7, description: 'x'.repeat(513), bytes: -1 });
+    expect(bad.trigger).toBeUndefined();
+    expect(bad.description).toBeUndefined();
+    expect(bad.bytes).toBeUndefined();
+  });
+});
+
+describe('KitPackStats', () => {
+  const stats = { rows: [{ unit: 'B-01', role: 'implementor-back', packBytes: 100, sourceBytes: 400 }], total: { packBytes: 100, sourceBytes: 400 }, packMisses: 0 };
+  it('parses rows, totals and pack misses', () => {
+    expect(KitPackStats.parse(stats)).toEqual(stats);
+    expect(KitPackStats.safeParse({ ...stats, packMisses: -1 }).success).toBe(false);
+    expect(KitPackStats.safeParse({ ...stats, rows: [{ ...stats.rows[0], packBytes: -1 }] }).success).toBe(false);
   });
 });

@@ -276,3 +276,18 @@ describe('ThreadInfo contextUsage', () => {
     }
   });
 });
+
+describe('ThreadInfo contextSource', () => {
+  const base = { ...threadInfo };
+  it('accepts a pack and a base source and omits it for old bridges', () => {
+    const pack = { kind: 'pack', spec: 'spec-e-burgos-031-studio-session-context', cycle: 'cycle-01', role: 'implementor-back', unit: 'B-01', bytes: 9000 };
+    expect(ThreadInfo.parse({ ...base, contextSource: pack }).contextSource).toEqual(pack);
+    expect(ThreadInfo.parse({ ...base, contextSource: { ...pack, unit: null } }).contextSource).toMatchObject({ unit: null });
+    expect(ThreadInfo.parse({ ...base, contextSource: { kind: 'base', bytes: 5 } }).contextSource).toEqual({ kind: 'base', bytes: 5 });
+    expect(ThreadInfo.parse(base).contextSource).toBeUndefined();
+  });
+  it('falls back to undefined on a malformed source', () => {
+    expect(ThreadInfo.parse({ ...base, contextSource: { kind: 'other' } }).contextSource).toBeUndefined();
+    expect(ThreadInfo.parse({ ...base, contextSource: { kind: 'base', bytes: -1 } }).contextSource).toBeUndefined();
+  });
+});
