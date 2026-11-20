@@ -2107,9 +2107,12 @@
       "author": "e-burgos",
       "spec_id": null,
       "created_at": "2026-11-20",
-      "resolved_at": null,
-      "affected_files": [],
-      "test_reference": "",
+      "resolved_at": "2026-11-20",
+      "affected_files": [
+        "apps/studio-bridge/src/workspace/watcher.spec.ts",
+        "sdd/fixes/fix-e-burgos-017.md"
+      ],
+      "test_reference": "watcher.spec 10/10 aislado + suite @e-burgos/sdd-studio 2/2 (7f62797); kit-execution.spec no reproducible (27/27)",
       "cycle": null,
       "id": "FIX-e-burgos-017",
       "fix_document": "sdd/fixes/fix-e-burgos-017.md",
@@ -2122,7 +2125,19 @@
       "related_modules": [
         "studio-kit-execution"
       ],
-      "status": "in-progress"
+      "status": "validated",
+      "validated_at": "2026-11-20",
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "low",
+        "agent": "implementor-back",
+        "tokens_in": 20000,
+        "tokens_out": 3000,
+        "tokens_total": 23000,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-11-20"
+      }
     }
   ]
 }
