@@ -11,9 +11,9 @@
   "objectives": [
     "Las cuatro mejoras visuales de Studio (US-1..US-4)"
   ],
-  "status": "in-progress",
+  "status": "completed",
   "started_at": "2026-11-20",
-  "completed_at": null,
+  "completed_at": "2026-11-20",
   "documents": {
     "plan": "sdd/specs/spec-e-burgos-028-studio-ui-polish/cycles/cycle-01/plan.md",
     "tasks": "sdd/specs/spec-e-burgos-028-studio-ui-polish/cycles/cycle-01/tasks.json"
@@ -21,20 +21,140 @@
   "artifacts": [],
   "metrics": {
     "tasks_total": 4,
-    "tasks_completed": 0,
+    "tasks_completed": 4,
     "story_points": 8,
     "files_created": [],
-    "files_modified": [],
+    "files_modified": [
+      "apps/studio/src/components/mission-control/AgentInspectorDrawer.tsx",
+      "apps/studio/src/components/mission-control/AgentMapCanvas.tsx",
+      "apps/studio/src/components/mission-control/ChatDialogueCard.tsx",
+      "apps/studio/src/components/mission-control/DocumentViewerModal.tsx",
+      "apps/studio/src/components/mission-control/documentviewermodal.spec.tsx",
+      "apps/studio/src/components/modules/kit/KitParts.tsx",
+      "apps/studio/src/components/modules/kit/kit-module.spec.tsx",
+      "apps/studio/src/components/modules/metrics/PlanningView.tsx",
+      "apps/studio/src/components/modules/metrics/metrics-module.spec.tsx",
+      "apps/studio/src/components/workspace/Markdown.tsx",
+      "apps/studio/src/components/workspace/markdown.spec.tsx",
+      "apps/studio/src/lib/i18n/modules/metrics.ts"
+    ],
     "files_deleted": [],
     "usage": {
-      "tokens_in": 0,
-      "tokens_out": 0,
-      "by_agent": []
-    }
+      "tokens_in": 201153,
+      "tokens_out": 35499,
+      "approx": true,
+      "source": "declared-estimate",
+      "by_tier": {
+        "claude/opus": {
+          "tokens_in": 76500,
+          "tokens_out": 13500,
+          "approx": true,
+          "source": "declared-estimate"
+        },
+        "claude/sonnet": {
+          "tokens_in": 124653,
+          "tokens_out": 21999,
+          "approx": true,
+          "source": "agent-usage-notification"
+        }
+      },
+      "by_agent": [
+        {
+          "agent": "orchestrator",
+          "label": "solo: exploración, spec, plan, verificación visual headless y cierre",
+          "provider_model": "claude/opus",
+          "effort": "high",
+          "tokens_in": 76500,
+          "tokens_out": 13500,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-20"
+        },
+        {
+          "agent": "custom",
+          "label": "Explore: ubicación de los cuatro defectos de UI",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 41043,
+          "tokens_out": 7243,
+          "tokens_total": 48286,
+          "source": "agent-usage-notification",
+          "approx": true,
+          "recorded_at": "2026-11-20"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-001 Markdown único con formato completo y frontmatter como ficha; Kit, modal y chat lo usan",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 64417,
+          "tokens_out": 11368,
+          "tokens_total": 75785,
+          "source": "agent-usage-notification",
+          "approx": false,
+          "recorded_at": "2026-11-20"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-002 Ciclos colapsables y persistidos en Planificación",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 10118,
+          "tokens_out": 1786,
+          "tokens_total": 11904,
+          "source": "agent-usage-notification",
+          "approx": false,
+          "recorded_at": "2026-11-20"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-003 Modal de documentos: ruta en el pie del sidebar y alto sin hueco",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 6199,
+          "tokens_out": 1094,
+          "tokens_total": 7293,
+          "source": "agent-usage-notification",
+          "approx": false,
+          "recorded_at": "2026-11-20"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-004 Controles segmentados del Mapa en tamaño xs y verificación en el navegador",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 2876,
+          "tokens_out": 508,
+          "tokens_total": 3384,
+          "source": "agent-usage-notification",
+          "approx": false,
+          "recorded_at": "2026-11-20"
+        }
+      ]
+    },
+    "tasks_skipped": 0
   },
   "tables_created": [],
   "endpoints_implemented": [],
   "components_created": [],
-  "issues_found": [],
-  "reviewer_report": null
+  "issues_found": [
+    "Chrome DevTools MCP y Playwright MCP (modo extensión) sin conexión tras reiniciar el puente: la verificación visual se hizo con el Playwright headless de apps/studio contra un puente temporal"
+  ],
+  "reviewer_report": {
+    "approved": true,
+    "date": "2026-11-20",
+    "ca_results": {
+      "US-1": "PASS - Planificación: cycle-01 con chevron, colapsado muestra solo la barra; estado persistido (spec de re-montaje)",
+      "US-2": "PASS - modal fix-e-burgos-008.md: ruta en el pie de la barra lateral con etiqueta, sin encimado; cuerpo de 760px sin hueco",
+      "US-3": "PASS - Kit › crafted-motion en claro y oscuro: ficha de frontmatter, títulos con jerarquía y tabla con bordes; modal y chat usan el mismo Markdown",
+      "US-4": "PASS - Mapa: SegmentedControl xs en la topología y en el panel Enjambre (claro y oscuro)"
+    },
+    "tests": {
+      "apps/studio": "verify quick por task y full B-01 OK (typecheck, suite completa, build)"
+    },
+    "notes": "Verificación visual con capturas headless (es-AR, 1600x900) contra un puente temporal en :4471, ya apagado.",
+    "follow_ups": [
+      "En Kit la ruta del archivo queda alineada a la izquierda y el documento centrado (max-w 72ch): alinear si molesta"
+    ]
+  }
 }

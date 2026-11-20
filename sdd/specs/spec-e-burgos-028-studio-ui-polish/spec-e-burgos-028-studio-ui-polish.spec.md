@@ -1,6 +1,6 @@
 # SPEC-e-burgos-028: Pulido visual de Studio — markdown único, ciclos colapsables, modal de documentos y controles del Mapa
 
-> Estado: **in-progress** (2026-11-20). cycle-01 abierto (flow lite). Pedido del dev con capturas tras probar spec-e-burgos-026/027.
+> Estado: **completed** (2026-11-20). cycle-01 cerrado (flow lite, 4/4 tasks). Pedido del dev con capturas tras probar spec-e-burgos-026/027.
 
 ## Resumen ejecutivo
 Cuatro defectos visuales: (1) en Métricas › Planificación solo colapsan las specs, no los ciclos; (2) el

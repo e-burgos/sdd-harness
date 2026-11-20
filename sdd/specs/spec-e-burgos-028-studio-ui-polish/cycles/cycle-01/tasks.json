@@ -35,8 +35,29 @@
       "estimation_hours": 2,
       "story_points": 3,
       "depends_on": [],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/mission-control/ChatDialogueCard.tsx",
+        "apps/studio/src/components/mission-control/DocumentViewerModal.tsx",
+        "apps/studio/src/components/modules/kit/KitParts.tsx",
+        "apps/studio/src/components/modules/kit/kit-module.spec.tsx",
+        "apps/studio/src/components/workspace/Markdown.tsx",
+        "apps/studio/src/components/workspace/markdown.spec.tsx"
+      ],
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "tokens_in": 64417,
+        "tokens_out": 11368,
+        "tokens_total": 75785,
+        "approx": false,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-20",
+        "pack_misses": [
+          "apps/studio/src/components/modules/kit/KitParts.tsx"
+        ]
+      }
     },
     {
       "id": "TASK-002",
@@ -47,8 +68,27 @@
       "estimation_hours": 1,
       "story_points": 2,
       "depends_on": [],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/modules/metrics/PlanningView.tsx",
+        "apps/studio/src/components/modules/metrics/metrics-module.spec.tsx",
+        "apps/studio/src/lib/i18n/modules/metrics.ts"
+      ],
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "tokens_in": 10118,
+        "tokens_out": 1786,
+        "tokens_total": 11904,
+        "approx": false,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-20",
+        "pack_misses": [
+          "apps/studio/src/lib/use-collapsed-state.ts",
+          "apps/studio/src/lib/i18n/modules/metrics.ts"
+        ]
+      }
     },
     {
       "id": "TASK-003",
@@ -61,8 +101,25 @@
       "depends_on": [
         "TASK-001"
       ],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/mission-control/DocumentViewerModal.tsx",
+        "apps/studio/src/components/mission-control/documentviewermodal.spec.tsx"
+      ],
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "tokens_in": 6199,
+        "tokens_out": 1094,
+        "tokens_total": 7293,
+        "approx": false,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-20",
+        "pack_misses": [
+          "apps/studio/src/components/mission-control/documentviewermodal.spec.tsx"
+        ]
+      }
     },
     {
       "id": "TASK-004",
@@ -73,8 +130,22 @@
       "estimation_hours": 0.5,
       "story_points": 1,
       "depends_on": [],
-      "status": "pending",
-      "files": []
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/mission-control/AgentInspectorDrawer.tsx",
+        "apps/studio/src/components/mission-control/AgentMapCanvas.tsx"
+      ],
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "tokens_in": 2876,
+        "tokens_out": 508,
+        "tokens_total": 3384,
+        "approx": false,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-20"
+      }
     }
   ]
 }

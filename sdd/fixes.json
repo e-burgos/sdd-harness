@@ -1772,8 +1772,8 @@
         "sdd/fixes/fix-e-burgos-008.md",
         "sdd/components.json"
       ],
-      "test_reference": "sdd:verify apps/studio quick + full OK (typecheck, 1353 tests, build)",
-      "status": "implemented",
+      "test_reference": "sdd:verify apps/studio quick + full OK (typecheck, 1353 tests, build); navegador headless (Playwright de apps/studio): Agentes › Vulcan con el compositor abajo del centro y la ficha sin chat",
+      "status": "validated",
       "cycle": null,
       "usage": {
         "provider_model": "claude/sonnet",
@@ -1785,7 +1785,8 @@
         "approx": true,
         "source": "agent-usage-notification",
         "recorded_at": "2026-11-20"
-      }
+      },
+      "validated_at": "2026-11-20"
     }
   ]
 }
