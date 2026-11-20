@@ -7,6 +7,7 @@ import { NavProvider, useNav, type KnownEntities } from '@/lib/nav/use-nav';
 import { AppShell } from './AppShell';
 import { ErrorBoundary } from './ErrorBoundary';
 import { BridgeProvider, useBridge, useStudio } from './BridgeProvider';
+import { ChromeBanner } from './ChromeBanner';
 import { ConnectionBanner } from './ConnectionBanner';
 import { EntryWizard } from './entry/EntryWizard';
 import { StudioHeader } from './StudioHeader';
@@ -68,6 +69,7 @@ function ConnectedShell() {
       <AppShell>
         <StudioHeader launcher={launcher} />
         <ConnectionBanner connection={connection} syncError={syncError} onRetry={retrySync} switching={switching} onRetrySwitch={retrySwitch} />
+        <ChromeBanner />
         {launcher ? <LauncherShell /> : <StudioShell />}
       </AppShell>
     </NavProvider>

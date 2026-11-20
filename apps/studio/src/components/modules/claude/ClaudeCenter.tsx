@@ -1,7 +1,7 @@
 'use client';
 
 import { Badge, Button, Input, Switch } from '@e-burgos/tucu-ui';
-import { RefreshCw } from 'lucide-react';
+import { Loader2, RefreshCw } from 'lucide-react';
 import { useEffect, useState, type ReactNode } from 'react';
 import type { ClaudeInventory, ClaudeToolsConfig } from '@sdd-studio/protocol';
 import { useT, type TFunction } from '@/lib/i18n/i18n';
@@ -10,11 +10,13 @@ import { CenterFrame, Notice } from '../kit/KitParts';
 import { useClaude } from './ClaudeProvider';
 import {
   addedCounts,
+  connectorNote,
   costWarning,
   isValidBrowserUrl,
   mcpRows,
   normalizeBrowserUrl,
   pluginRows,
+  relativeTime,
   sectionOf,
   withBrowser,
   withMcpEnabled,
@@ -23,7 +25,8 @@ import {
   type ClaudeSection,
   type McpDisplayStatus,
 } from './claude-model';
-import type { ClaudeNotice } from './use-claude-tools';
+import type { ClaudeNotice, McpOp } from './use-claude-tools';
+import { useChromeStatus } from './use-chrome-status';
 
 type Key = Parameters<TFunction>[0];
 
@@ -39,7 +42,7 @@ const STATUS_TONE: Record<McpDisplayStatus, 'success' | 'warning' | 'danger' | '
 
 const COUNT_ROWS = ['skills', 'agents', 'plugins', 'mcpServers', 'mcpTools'] as const;
 
-function ToggleRow({ label, description, extra, children }: { label: ReactNode; description?: ReactNode; extra?: ReactNode; children: ReactNode }) {
+function ToggleRow({ label, description, extra, below, children }: { label: ReactNode; description?: ReactNode; extra?: ReactNode; below?: ReactNode; children: ReactNode }) {
   return (
     <div className="flex items-center justify-between gap-6 border-t border-foreground/10 py-3 first:border-t-0">
       <div className="min-w-0">
@@ -48,6 +51,7 @@ function ToggleRow({ label, description, extra, children }: { label: ReactNode; 
           {extra}
         </div>
         {description && <p className="text-small text-ink-400">{description}</p>}
+        {below}
       </div>
       <div className="shrink-0">{children}</div>
     </div>
@@ -214,8 +218,61 @@ function PluginsView({ config, inventory, disabled, save }: ViewProps) {
   );
 }
 
+function McpOpNote({ name, op, status }: { name: string; op: McpOp | undefined; status: McpDisplayStatus }) {
+  const { t } = useT();
+  if (!op) return null;
+  if (op.phase === 'running') {
+    return (
+      <p role="status" data-testid={`claude-mcp-op-${name}`} className="text-meta text-ink-300">
+        {t(op.kind === 'login' ? 'module.claude.mcp.loginRunning' : 'module.claude.mcp.reconnecting')}
+      </p>
+    );
+  }
+  if (op.phase === 'reconnect-failed') {
+    return (
+      <p role="alert" data-testid={`claude-mcp-op-${name}`} className="text-meta text-roseish">
+        {t('module.claude.mcp.reconnect.error')}
+      </p>
+    );
+  }
+  const informative = op.outcome === 'not-oauth' || op.outcome === 'header-auth';
+  const showNote = (status === 'failed' || status === 'needs-auth') && connectorNote(name, op.output);
+  return (
+    <div data-testid={`claude-mcp-op-${name}`} className="flex flex-col gap-1">
+      <p role={informative ? 'status' : 'alert'} className={`text-meta ${informative ? 'text-ink-300' : 'text-roseish'}`}>
+        {t(`module.claude.mcp.login.${op.outcome}` as Key)}
+      </p>
+      {showNote && <p className="text-meta text-ink-400">{t('module.claude.mcp.connectorsNote')}</p>}
+      {!informative && op.output.trim() !== '' && (
+        <details className="text-meta text-ink-400">
+          <summary className="cursor-pointer">{t('module.claude.mcp.details')}</summary>
+          <pre className="mt-1 max-h-32 overflow-auto whitespace-pre-wrap break-words rounded-md bg-ink-950 p-2 font-mono text-micro text-ink-300">{op.output}</pre>
+        </details>
+      )}
+    </div>
+  );
+}
+
+function McpActions({ name, status, op }: { name: string; status: McpDisplayStatus; op: McpOp | undefined }) {
+  const { t } = useT();
+  const { loginMcp, reconnectMcp, open } = useClaude();
+  const running = op?.phase === 'running';
+  const login = status === 'needs-auth';
+  const reconnect = status === 'failed' || status === 'pending';
+  if (!login && !reconnect) return null;
+  return (
+    <Button type="button" size="tiny" variant="outline" disabled={!open || running} onClick={() => void (login ? loginMcp(name) : reconnectMcp(name))}>
+      <span className="inline-flex items-center gap-1.5 text-meta">
+        {running && <Loader2 aria-hidden size={12} className="animate-spin" />}
+        {t(login ? 'module.claude.mcp.login' : 'module.claude.mcp.reconnect')}
+      </span>
+    </Button>
+  );
+}
+
 function McpView({ config, inventory, disabled, save }: ViewProps) {
   const { t } = useT();
+  const { connectSupported, mcpOps } = useClaude();
   const rows = mcpRows(inventory, config);
   if (!inventory) return <EmptyInventory />;
   if (rows.length === 0) return <p className="text-small text-ink-400">{t('module.claude.mcp.empty')}</p>;
@@ -227,14 +284,18 @@ function McpView({ config, inventory, disabled, save }: ViewProps) {
           <ToggleRow
             key={row.name}
             label={row.name}
-            description={row.status === 'needs-auth' ? t('module.claude.mcp.needsAuth') : row.ignoredBySource ? t('module.claude.ignoredBySource', { source: row.source }) : row.source}
+            description={row.status === 'needs-auth' && !connectSupported ? t('module.claude.mcp.needsAuth') : row.ignoredBySource ? t('module.claude.ignoredBySource', { source: row.source }) : row.source}
+            below={connectSupported ? <McpOpNote name={row.name} op={mcpOps[row.name]} status={row.status} /> : undefined}
             extra={
               <Badge variant="soft" size="micro" shape="pill" tone={STATUS_TONE[row.status]} data-testid={`claude-mcp-status-${row.name}`} className="px-2 py-0.5 text-micro">
                 {t(`module.claude.mcp.status.${row.status}` as Key)}
               </Badge>
             }
           >
-            <Switch checked={row.enabled} disabled={disabled} aria-label={row.name} onChange={(on) => void save(withMcpEnabled(config, row.name, on))} />
+            <div className="flex items-center gap-3">
+              {connectSupported && <McpActions name={row.name} status={row.status} op={mcpOps[row.name]} />}
+              <Switch checked={row.enabled} disabled={disabled} aria-label={row.name} onChange={(on) => void save(withMcpEnabled(config, row.name, on))} />
+            </div>
           </ToggleRow>
         ))}
       </Card>
@@ -281,6 +342,44 @@ function BrowserUrlField({ config, disabled, save }: Omit<ViewProps, 'inventory'
   );
 }
 
+const STATE_TONE = {
+  connected: 'success',
+  'permission-pending': 'warning',
+  'debugging-disabled': 'warning',
+  'chrome-closed': 'danger',
+  off: 'neutral',
+  unknown: 'neutral',
+} as const;
+
+function BrowserStatusLine() {
+  const { t, lang } = useT();
+  const { supported, status, checking, check, openSettings } = useChromeStatus();
+  if (!supported) return null;
+  return (
+    <div data-testid="claude-browser-status" className="flex flex-wrap items-center justify-between gap-2 border-t border-foreground/10 py-3">
+      <div className="flex min-w-0 flex-wrap items-center gap-2">
+        <p className="text-copy font-medium text-ink-100">{t('module.claude.browser.statusLabel')}</p>
+        {status && (
+          <>
+            <Badge variant="soft" size="micro" shape="pill" tone={STATE_TONE[status.state]} data-testid="claude-browser-state" className="px-2 py-0.5 text-micro">
+              {t(`module.claude.browser.state.${status.state}` as Key)}
+            </Badge>
+            <span className="text-meta text-ink-400">{t('module.claude.browser.checkedAt', { when: relativeTime(status.checkedAt, lang) })}</span>
+          </>
+        )}
+      </div>
+      <div className="flex items-center gap-2">
+        <Button type="button" size="tiny" variant="outline" disabled={checking} onClick={() => void check()}>
+          <span className="text-meta">{t(checking ? 'module.claude.browser.checking' : 'module.claude.browser.check')}</span>
+        </Button>
+        <Button type="button" size="tiny" variant="outline" onClick={() => void openSettings()}>
+          <span className="text-meta">{t('module.claude.chrome.action.openSettings')}</span>
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function BrowserView({ config, disabled, save, version }: Omit<ViewProps, 'inventory'> & { version: string }) {
   const { t } = useT();
   return (
@@ -293,6 +392,7 @@ function BrowserView({ config, disabled, save, version }: Omit<ViewProps, 'inven
         >
           <Switch checked={config.browser.enabled} disabled={disabled} aria-label={t('module.claude.browser.chrome')} onChange={(on) => void save(withBrowser(config, { enabled: on }))} />
         </ToggleRow>
+        <BrowserStatusLine />
         <BrowserUrlField config={config} disabled={disabled} save={save} />
       </Card>
       <NextTurn />

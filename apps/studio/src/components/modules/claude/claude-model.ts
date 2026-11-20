@@ -111,3 +111,17 @@ export const rowCount = (section: ClaudeSection, inventory: ClaudeInventory | nu
   if (section === 'mcp') return inventory?.mcpServers.length;
   return undefined;
 };
+
+const CONNECTOR_NAME = /^plugin:[^:]+:(gmail|google[ -]?calendar|google[ -]?drive)/i;
+
+export const connectorNote = (name: string, output: string): boolean => /claude\.ai/i.test(output) || CONNECTOR_NAME.test(name);
+
+export const relativeTime = (iso: string, lang: string, now: number = Date.now()): string => {
+  const at = new Date(iso).getTime();
+  if (Number.isNaN(at)) return iso;
+  const seconds = Math.round((at - now) / 1000);
+  const format = new Intl.RelativeTimeFormat(lang, { numeric: 'auto' });
+  if (Math.abs(seconds) < 60) return format.format(seconds, 'second');
+  if (Math.abs(seconds) < 3600) return format.format(Math.round(seconds / 60), 'minute');
+  return format.format(Math.round(seconds / 3600), 'hour');
+};

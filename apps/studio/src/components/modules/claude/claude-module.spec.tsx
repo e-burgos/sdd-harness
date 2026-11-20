@@ -2,6 +2,7 @@ import { act, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import { DEFAULT_CLAUDE_TOOLS_CONFIG, type ClaudeCounts, type ClaudeInventory, type ClaudeToolsConfig, type ServerEvent } from '@sdd-studio/protocol';
 import { BridgeError } from '@/lib/bridge/client';
 import { bridgeValue, renderShell } from '../../shell/shell-test-utils';
+import { ChromeBanner } from '../../ChromeBanner';
 import { claudeModule } from './index';
 
 const { Panel, Center, Scope } = claudeModule;
@@ -33,6 +34,8 @@ interface Options {
   refreshed?: ClaudeInventory;
   connected?: boolean;
   scope?: 'global' | 'project';
+  chrome?: { state: string; detail?: string | null };
+  handle?: (cmd: Record<string, unknown>) => unknown;
 }
 
 function setup(section: string | null, options: Options = {}) {
@@ -57,7 +60,10 @@ function setup(section: string | null, options: Options = {}) {
           return Promise.resolve({ config: options.config ?? DEFAULT_CLAUDE_TOOLS_CONFIG, revision: 'dddddddddddddddd', inventory: INVENTORY, browserMcpVersion: '1.13.0', scope: 'global', hasProjectOverride: false });
         case 'claude.inventory.refresh':
           return Promise.resolve({ inventory: options.refreshed ?? INVENTORY });
+        case 'claude.browser.check':
+          return Promise.resolve({ state: 'connected', detail: null, ...options.chrome, checkedAt: '2026-11-20T10:00:00Z' });
         default:
+          if (options.handle) return Promise.resolve(options.handle(cmd));
           return Promise.resolve({});
       }
     },
@@ -71,6 +77,7 @@ function setup(section: string | null, options: Options = {}) {
   }
   const view = renderShell(
     <Provider>
+      <ChromeBanner />
       <Panel />
       <Center />
     </Provider>,
@@ -253,6 +260,142 @@ describe('Claude module', () => {
       setup('sources', { features: ['claude-tools'], scope: 'global' });
       await screen.findByTestId('claude-sources', undefined, WAIT);
       expect(screen.queryByTestId('claude-scope')).toBeNull();
+    });
+  });
+
+  describe('claude-connect', () => {
+    const CONNECT = ['claude-tools', 'claude-connect'];
+    const mcp = (name: string, status: string): ClaudeInventory => ({ ...INVENTORY, mcpServers: [{ name, status: status as never, source: 'user' }] });
+
+    it('shows no banner without the feature', async () => {
+      const { requests } = setup('browser', { chrome: { state: 'permission-pending' } });
+      await screen.findByTestId('claude-browser', undefined, WAIT);
+      expect(screen.queryByTestId('chrome-banner')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('claude-browser-status')).not.toBeInTheDocument();
+      expect(requests.some((r) => r.cmd === 'claude.browser.check')).toBe(false);
+    });
+
+    it('shows nothing when Chrome is connected or off', async () => {
+      const { unmount } = setup('browser', { features: CONNECT });
+      await screen.findByTestId('claude-browser-state', undefined, WAIT);
+      expect(screen.queryByTestId('chrome-banner')).not.toBeInTheDocument();
+      unmount();
+      setup('browser', { features: CONNECT, chrome: { state: 'off' } });
+      await screen.findByTestId('claude-browser-state', undefined, WAIT);
+      expect(screen.queryByTestId('chrome-banner')).not.toBeInTheDocument();
+    });
+
+    it('asks again from the permission-pending banner and can be dismissed', async () => {
+      const { requests } = setup('browser', { features: CONNECT, chrome: { state: 'permission-pending' } });
+      const banner = await screen.findByTestId('chrome-banner', undefined, WAIT);
+      expect(banner).toHaveTextContent('Chrome está esperando que aceptes la conexión de Studio');
+      const before = requests.filter((r) => r.cmd === 'claude.browser.check').length;
+      fireEvent.click(within(banner).getByRole('button', { name: 'Pedir de nuevo' }));
+      await waitFor(() => expect(requests.filter((r) => r.cmd === 'claude.browser.check').length).toBeGreaterThan(before));
+      fireEvent.click(within(banner).getByRole('button', { name: /cerrar|dismiss/i }));
+      expect(screen.queryByTestId('chrome-banner')).not.toBeInTheDocument();
+    });
+
+    it('opens the Chrome settings from the debugging-disabled banner', async () => {
+      const { requests } = setup('browser', { features: CONNECT, chrome: { state: 'debugging-disabled' } });
+      const banner = await screen.findByTestId('chrome-banner', undefined, WAIT);
+      fireEvent.click(within(banner).getByRole('button', { name: 'Abrir configuración de Chrome' }));
+      await waitFor(() => expect(requests).toContainEqual({ cmd: 'claude.browser.openSettings' }));
+    });
+
+    it('offers to retry when Chrome is closed and follows claude-browser.changed', async () => {
+      const { emit } = setup('browser', { features: CONNECT, chrome: { state: 'chrome-closed' } });
+      const banner = await screen.findByTestId('chrome-banner', undefined, WAIT);
+      expect(within(banner).getByRole('button', { name: 'Reintentar' })).toBeInTheDocument();
+      emit({ kind: 'bot.event', channelId: 'general', botKind: 'claude-browser.changed', payload: { state: 'connected', checkedAt: '2026-11-20T10:01:00Z', detail: null } } as never);
+      await waitFor(() => expect(screen.queryByTestId('chrome-banner')).not.toBeInTheDocument());
+    });
+
+    it('shows the status badge and checks on demand in the Browser section', async () => {
+      const { requests } = setup('browser', { features: CONNECT, chrome: { state: 'chrome-closed' } });
+      const line = await screen.findByTestId('claude-browser-status', undefined, WAIT);
+      await waitFor(() => expect(within(line).getByTestId('claude-browser-state')).toHaveTextContent('Chrome cerrado'));
+      const before = requests.filter((r) => r.cmd === 'claude.browser.check').length;
+      fireEvent.click(within(line).getByRole('button', { name: 'Comprobar' }));
+      await waitFor(() => expect(requests.filter((r) => r.cmd === 'claude.browser.check').length).toBeGreaterThan(before));
+      fireEvent.click(within(line).getByRole('button', { name: 'Abrir configuración de Chrome' }));
+      await waitFor(() => expect(requests).toContainEqual({ cmd: 'claude.browser.openSettings' }));
+    });
+
+    it('signs in to an MCP and refreshes its status from the returned inventory', async () => {
+      const { requests } = setup('mcp', {
+        features: CONNECT,
+        inventory: mcp('docs', 'needs-auth'),
+        handle: (cmd) => (cmd.cmd === 'claude.mcp.login' ? { name: 'docs', outcome: 'ok', output: '', inventory: mcp('docs', 'connected') } : {}),
+      });
+      fireEvent.click(await screen.findByRole('button', { name: 'Iniciar sesión' }, WAIT));
+      await waitFor(() => expect(screen.getByTestId('claude-mcp-status-docs')).toHaveTextContent('conectado'));
+      expect(requests).toContainEqual({ cmd: 'claude.mcp.login', name: 'docs' });
+      expect(screen.queryByRole('button', { name: 'Iniciar sesión' })).not.toBeInTheDocument();
+    });
+
+    it('explains each non-ok login outcome and keeps the output in a collapsible detail', async () => {
+      const outcomes = [
+        ['not-oauth', 'Este servidor no usa OAuth (stdio)'],
+        ['header-auth', 'header Authorization'],
+        ['timeout', 'Se agotó el tiempo'],
+        ['failed', 'No se pudo iniciar sesión'],
+        ['unknown-server', 'no conoce este servidor'],
+      ] as const;
+      for (const [outcome, text] of outcomes) {
+        window.localStorage.clear();
+        const { unmount } = setup('mcp', {
+          features: CONNECT,
+          inventory: mcp('docs', 'needs-auth'),
+          handle: (cmd) => (cmd.cmd === 'claude.mcp.login' ? { name: 'docs', outcome, output: 'salida cruda', inventory: null } : {}),
+        });
+        fireEvent.click(await screen.findByRole('button', { name: 'Iniciar sesión' }, WAIT));
+        await waitFor(() => expect(screen.getByTestId('claude-mcp-op-docs')).toHaveTextContent(text), WAIT);
+        const note = screen.getByTestId('claude-mcp-op-docs');
+        const informative = outcome === 'not-oauth' || outcome === 'header-auth';
+        expect(Boolean(note.querySelector('details'))).toBe(!informative);
+        unmount();
+      }
+    });
+
+    it('shows progress while the login runs', async () => {
+      let finish: (value: unknown) => void = () => undefined;
+      setup('mcp', {
+        features: CONNECT,
+        inventory: mcp('docs', 'needs-auth'),
+        handle: (cmd) => (cmd.cmd === 'claude.mcp.login' ? new Promise((resolve) => (finish = resolve)) : {}),
+      });
+      fireEvent.click(await screen.findByRole('button', { name: 'Iniciar sesión' }, WAIT));
+      expect(await screen.findByText('Se abrió el navegador para autorizar…')).toBeInTheDocument();
+      await act(async () => finish({ name: 'docs', outcome: 'ok', output: '', inventory: mcp('docs', 'connected') }));
+    });
+
+    it('reconnects a failed MCP and shows its new status', async () => {
+      const { requests } = setup('mcp', {
+        features: CONNECT,
+        inventory: mcp('docs', 'failed'),
+        handle: (cmd) => (cmd.cmd === 'claude.mcp.reconnect' ? { name: 'docs', status: 'connected', inventory: mcp('docs', 'connected') } : {}),
+      });
+      fireEvent.click(await screen.findByRole('button', { name: 'Reconectar' }, WAIT));
+      await waitFor(() => expect(screen.getByTestId('claude-mcp-status-docs')).toHaveTextContent('conectado'));
+      expect(requests).toContainEqual({ cmd: 'claude.mcp.reconnect', name: 'docs' });
+    });
+
+    it('notes that claude.ai connectors do not load with an API key', async () => {
+      setup('mcp', {
+        features: CONNECT,
+        inventory: mcp('plugin:google:gmail', 'needs-auth'),
+        handle: (cmd) => (cmd.cmd === 'claude.mcp.login' ? { name: 'plugin:google:gmail', outcome: 'failed', output: 'x', inventory: null } : {}),
+      });
+      fireEvent.click(await screen.findByRole('button', { name: 'Iniciar sesión' }, WAIT));
+      expect(await screen.findByText('Los conectores de claude.ai no cargan con API key.')).toBeInTheDocument();
+    });
+
+    it('keeps today\'s hint and no buttons without the feature', async () => {
+      setup('mcp', { inventory: mcp('docs', 'needs-auth') });
+      await screen.findByTestId('claude-mcp', undefined, WAIT);
+      expect(screen.getByText('Autenticalo una vez desde Claude Code (/mcp).')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Iniciar sesión' })).not.toBeInTheDocument();
     });
   });
 });
