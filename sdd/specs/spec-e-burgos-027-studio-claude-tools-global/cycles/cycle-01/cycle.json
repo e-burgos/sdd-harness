@@ -1,0 +1,42 @@
+{
+  "$schema": "../../../../schemas/cycle.schema.json",
+  "cycle": 1,
+  "module": "studio-claude-tools-global",
+  "spec": "spec-e-burgos-027-studio-claude-tools-global",
+  "apps": [
+    "libs/studio-protocol",
+    "apps/studio-bridge",
+    "apps/studio"
+  ],
+  "phase": "studio-claude-tools-global",
+  "flow": "lite",
+  "objectives": [
+    "La configuración de Claude de Studio es global del usuario y cada proyecto la hereda, con override por proyecto (US-1..US-3)"
+  ],
+  "status": "in-progress",
+  "started_at": "2026-11-20",
+  "completed_at": null,
+  "documents": {
+    "plan": "sdd/specs/spec-e-burgos-027-studio-claude-tools-global/cycles/cycle-01/plan.md",
+    "tasks": "sdd/specs/spec-e-burgos-027-studio-claude-tools-global/cycles/cycle-01/tasks.json"
+  },
+  "artifacts": [],
+  "metrics": {
+    "tasks_total": 4,
+    "tasks_completed": 0,
+    "story_points": 9,
+    "files_created": [],
+    "files_modified": [],
+    "files_deleted": [],
+    "usage": {
+      "tokens_in": 0,
+      "tokens_out": 0,
+      "by_agent": []
+    }
+  },
+  "tables_created": [],
+  "endpoints_implemented": [],
+  "components_created": [],
+  "issues_found": [],
+  "reviewer_report": null
+}

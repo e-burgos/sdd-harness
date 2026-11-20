@@ -497,6 +497,22 @@
           "tasks_done": 6
         }
       }
+    },
+    "spec-e-burgos-027-studio-claude-tools-global": {
+      "cycles": {
+        "cycle-01": {
+          "file": "sdd/specs/spec-e-burgos-027-studio-claude-tools-global/cycles/cycle-01/tasks.json",
+          "module": "studio-claude-tools-global",
+          "apps": [
+            "libs/studio-protocol",
+            "apps/studio-bridge",
+            "apps/studio"
+          ],
+          "status": "in-progress",
+          "tasks_total": 4,
+          "tasks_done": 0
+        }
+      }
     }
   }
 }
