@@ -285,9 +285,7 @@
       "cycles_completed": 1,
       "description": "Módulo Claude en Studio: fuentes de configuración, plugins y MCP del dev con su estado, navegador por chrome-devtools-mcp y aviso de costo de contexto.",
       "completed_at": "2026-11-20"
-    }
-  ],
-  "in_progress_modules": [
+    },
     {
       "module": "studio-claude-tools-global",
       "spec": "spec-e-burgos-027-studio-claude-tools-global",
@@ -296,10 +294,12 @@
         "apps/studio-bridge",
         "apps/studio"
       ],
-      "cycles_completed": 0,
-      "description": "Configuración de Claude de Studio global del usuario (~/.sdd-studio) heredada por cada proyecto, con override por proyecto."
+      "cycles_completed": 1,
+      "description": "Configuración de Claude de Studio global del usuario (~/.sdd-studio) heredada por cada proyecto, con override por proyecto.",
+      "completed_at": "2026-11-20"
     }
   ],
+  "in_progress_modules": [],
   "pending_modules": [
     {
       "module": "studio-framework-vision",

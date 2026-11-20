@@ -418,10 +418,10 @@
       "file": "sdd/specs/spec-e-burgos-027-studio-claude-tools-global/spec-e-burgos-027-studio-claude-tools-global.spec.md",
       "module": "studio-claude-tools-global",
       "app": "apps/studio",
-      "status": "in-progress",
+      "status": "completed",
       "title": "La configuración de Claude de Studio es global del dev y cada proyecto la hereda",
       "created_at": "2026-11-20",
-      "completed_at": null,
+      "completed_at": "2026-11-20",
       "depends_on": [
         "spec-e-burgos-026-studio-claude-tools"
       ]

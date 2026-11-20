@@ -2455,7 +2455,7 @@
         "module": "studio-claude-tools",
         "spec": "sdd/specs/spec-e-burgos-026-studio-claude-tools",
         "path": "src/components/modules/claude/ClaudeCenter.tsx",
-        "status": "implemented",
+        "status": "updated",
         "created_in_cycle": 1,
         "updated_in_cycle": null,
         "description": "Vista de la sección elegida: interruptores de fuentes, plugins, MCP con estado, navegador chrome-devtools-mcp, aviso de costo y Claude in Chrome no disponible.",
@@ -2466,6 +2466,11 @@
             "cycle": 1,
             "date": "2026-11-20",
             "change": "Creado"
+          },
+          {
+            "cycle": 1,
+            "date": "2026-11-20",
+            "change": "spec-e-burgos-027: alcance de la configuración (global/proyecto), personalizar, volver a la global y guardar como global"
           }
         ]
       },
@@ -2497,7 +2502,7 @@
         "module": "studio-claude-tools",
         "spec": "sdd/specs/spec-e-burgos-026-studio-claude-tools",
         "path": "src/components/modules/claude/use-claude-tools.ts",
-        "status": "implemented",
+        "status": "updated",
         "created_in_cycle": 1,
         "updated_in_cycle": null,
         "description": "claude.tools.get/set con expectedRevision, re-pedido en conflicto y en el bot event claude-tools.changed, y claude.inventory.refresh.",
@@ -2508,6 +2513,11 @@
             "cycle": 1,
             "date": "2026-11-20",
             "change": "Creado"
+          },
+          {
+            "cycle": 1,
+            "date": "2026-11-20",
+            "change": "spec-e-burgos-027: alcance de la configuración (global/proyecto), personalizar, volver a la global y guardar como global"
           }
         ]
       }

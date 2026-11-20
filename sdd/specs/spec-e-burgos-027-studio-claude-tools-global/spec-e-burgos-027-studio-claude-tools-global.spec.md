@@ -1,6 +1,6 @@
 # SPEC-e-burgos-027: La configuración de Claude de Studio es global del dev y cada proyecto la hereda
 
-> Estado: **in-progress** (2026-11-20). cycle-01 abierto (flow lite). Pedido del dev tras cerrar spec-e-burgos-026: «todas las configuraciones
+> Estado: **completed** (2026-11-20). cycle-01 cerrado (flow lite, 4/4 tasks). Pedido del dev tras cerrar spec-e-burgos-026: «todas las configuraciones
 > que tenemos ahora deben ir por defecto en todos los proyectos». Decisión: global del usuario, no default
 > del producto.
 
