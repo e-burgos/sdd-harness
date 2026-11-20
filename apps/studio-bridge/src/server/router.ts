@@ -5,6 +5,7 @@ import type { AuthState } from '../auth-mode';
 import type { ClaudeLogin } from '../auth/claude-login';
 import { CHROME_DEVTOOLS_MCP_VERSION } from '../engine/chrome-devtools';
 import type { CommandRunner } from '../commands/runner';
+import { readVerifyConfig } from '../workspace/verify-config';
 import type { ProjectRuntime } from '../project/runtime';
 import type { AttachmentStore } from '../sessions/attachment-store';
 import { SessionError, type SessionManager } from '../sessions/session-manager';
@@ -40,7 +41,7 @@ export function createHandlers(d: {
   bridgeVersion: string;
   sessions: SessionManager;
   watcher: Pick<WorkspaceWatcher, 'current' | 'refresh'>;
-  runner: Pick<CommandRunner, 'run'>;
+  runner: Pick<CommandRunner, 'run' | 'verify'>;
   store: Pick<ThreadStore, 'botHistory' | 'appendBot'>;
   attachments: Pick<AttachmentStore, 'read'>;
   fileIndex: Pick<FileIndex, 'search'>;
@@ -245,6 +246,17 @@ export function createHandlers(d: {
           return d.login.login();
         case 'auth.logout':
           return d.login.logout();
+        case 'kit.verify.run': {
+          const entry = (await readVerifyConfig(d.root)).find((candidate) => candidate.app === command.app);
+          if (!entry) throw new SessionError('bad-request', `unknown verify app: ${command.app}`);
+          if (!entry.levels.includes(command.level)) throw new SessionError('bad-request', `${command.app} has no ${command.level} verify`);
+          const args = [command.app, command.level];
+          if (command.spec && command.cycle) args.push('--spec', command.spec, '--cycle', command.cycle);
+          if (command.unit) args.push('--unit', command.unit);
+          const runId = d.runner.verify(args, () => void d.watcher.refresh().catch(() => null));
+          if (!runId) throw new SessionError('conflict', 'busy: a verify is already running');
+          return { runId };
+        }
         case 'command.run':
           return { runId: d.runner.run(command.name, command.args) };
         default:

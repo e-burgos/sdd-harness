@@ -82,8 +82,9 @@ export async function startWorkspaceWatcher(opts: {
 
   const sddDir = path.join(opts.root, 'sdd');
   const ignoredRoots = IGNORED_DIRS.map((d) => path.join(sddDir, d));
+  const isVerifyLog = (p: string): boolean => p.split(path.sep).join('/').includes('/artifacts/verify/logs');
   const isIgnored = (p: string): boolean =>
-    ignoredRoots.some((r) => p === r || p.startsWith(r + path.sep));
+    isVerifyLog(p) || ignoredRoots.some((r) => p === r || p.startsWith(r + path.sep));
 
   const claudeDir = path.join(opts.root, '.claude');
   const watchers: FSWatcher[] = [chokidar.watch(sddDir, { ignoreInitial: true, ignored: isIgnored })];

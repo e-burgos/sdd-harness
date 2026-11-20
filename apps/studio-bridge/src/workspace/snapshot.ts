@@ -3,15 +3,20 @@ import path from 'node:path';
 import {
   MAX_CYCLE_DOCUMENTS,
   type Area,
+  type BatchSummary,
   type CycleSummary,
   type FixSummary,
   type KitToolsState,
   type SpecSummary,
   type TaskSummary,
+  type TaskUsageSummary,
   type WorkspaceSnapshot,
 } from '@sdd-studio/protocol';
 
 import { loadCatalog } from './catalog';
+import { readVerifyConfig } from './verify-config';
+import { readVerifyLease } from './verify-lease';
+import { loadVerifyResults } from './verify-results';
 import { computeToolsRevision, effectiveToolsValues, isModLinked, loadValidator } from './kit-tools';
 
 type Json = Record<string, any>;
@@ -42,11 +47,37 @@ async function readJson(file: string): Promise<ReadResult> {
   }
 }
 
-const toTask = (t: Json): TaskSummary => ({
+const num = (v: unknown): number | null => (typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : null);
+
+const toUsage = (raw: unknown): TaskUsageSummary | null => {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+  const u = raw as Json;
+  const tokensTotal = num(u.tokens_total) ?? (num(u.tokens_in) ?? 0) + (num(u.tokens_out) ?? 0);
+  return {
+    tokensTotal,
+    providerModel: strOrNull(u.provider_model) ?? strOrNull(u.model_tier),
+    effort: strOrNull(u.effort),
+    agent: strOrNull(u.agent),
+    approx: u.approx === true,
+  };
+};
+
+const toTask = (t: Json, batch: string | null): TaskSummary => ({
   id: str(t.id),
   title: str(t.title, str(t.id)),
   status: str(t.status, 'pending'),
   storyPoints: typeof t.story_points === 'number' ? t.story_points : null,
+  usage: toUsage(t.usage),
+  batch,
+  dependsOn: strings(t.depends_on),
+});
+
+const toBatch = (b: Json): BatchSummary => ({
+  id: str(b.id),
+  app: str(b.app),
+  role: str(b.role),
+  tasks: strings(b.tasks),
+  dependsOn: strings(b.depends_on),
 });
 
 const toSpec = (s: Json): SpecSummary => ({
@@ -169,7 +200,9 @@ async function loadSpecs(root: string, sdd: string) {
         continue;
       }
       if (cycle.value === null && tasks.value === null) continue;
-      const list = (Array.isArray(tasks.value?.tasks) ? tasks.value.tasks : []).map(toTask);
+      const batches = (Array.isArray(tasks.value?.batches) ? tasks.value.batches : []).map(toBatch).filter((b: BatchSummary) => /^B-\d{2}$/.test(b.id));
+      const batchOf = new Map<string, string>(batches.flatMap((b: BatchSummary) => b.tasks.map((id): [string, string] => [id, b.id])));
+      const list = (Array.isArray(tasks.value?.tasks) ? tasks.value.tasks : []).map((t: Json) => toTask(t, batchOf.get(str(t.id)) ?? null));
       const counted = list.filter((t: TaskSummary) => t.status !== 'skipped');
       cycles.push({
         specId: spec.id,
@@ -181,6 +214,8 @@ async function loadSpecs(root: string, sdd: string) {
         tasksTotal: counted.length,
         tasksDone: counted.filter((t: TaskSummary) => t.status === 'done').length,
         documents: await listCycleDocuments(path.join(dir, name)),
+        ...(batches.length > 0 ? { batches } : {}),
+        verifyResults: await loadVerifyResults(path.join(dir, name)),
       });
     }
   }
@@ -225,6 +260,8 @@ export async function loadWorkspaceSnapshot(root: string): Promise<LoadResult> {
     gateMode: tools?.claude_mod?.gate === 'warn' ? 'warn' : 'block',
     pricing: pricing && typeof pricing === 'object' ? pricing : null,
     tools: toolsState,
+    verifyConfig: await readVerifyConfig(root),
+    verifyLease: await readVerifyLease(root),
     stale: [],
   };
   return { snapshot, failed, missing };
@@ -237,7 +274,7 @@ const AREA_FIELDS: Record<Area, (keyof WorkspaceSnapshot)[]> = {
   agents: ['agents', 'skills'],
   tools: ['gateMode', 'tools'],
   pricing: ['pricing'],
-  kit: ['kitVersion'],
+  kit: ['kitVersion', 'verifyConfig', 'verifyLease'],
 };
 
 export function mergeSnapshot(prev: WorkspaceSnapshot | null, next: LoadResult): WorkspaceSnapshot {

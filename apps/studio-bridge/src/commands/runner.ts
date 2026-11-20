@@ -12,6 +12,7 @@ const SCRIPTS: Record<KitCommandName, string> = {
 
 export class CommandRunner {
   private readonly active = new Set<ChildProcess>();
+  private verifying = false;
 
   constructor(
     private readonly root: string,
@@ -29,8 +30,26 @@ export class CommandRunner {
 
   /** `args` is already validated by the protocol; passed without a shell. */
   run(name: KitCommandName, args: string[]): string {
+    return this.spawnScript(SCRIPTS[name], args);
+  }
+
+  verifyBusy(): boolean {
+    return this.verifying;
+  }
+
+  /** Args are validated by the caller against verify.json and the protocol regexes; one verify at a time. */
+  verify(args: string[], onExit: () => void): string | null {
+    if (this.verifying) return null;
+    this.verifying = true;
+    return this.spawnScript('sdd-verify.mjs', args, () => {
+      this.verifying = false;
+      onExit();
+    });
+  }
+
+  private spawnScript(file: string, args: string[], onClosed?: () => void): string {
     const runId = this.newId();
-    const script = path.join(this.root, 'sdd', 'scripts', SCRIPTS[name]);
+    const script = path.join(this.root, 'sdd', 'scripts', file);
     const child = spawn(process.execPath, [script, ...args], { cwd: this.root, shell: false, stdio: ['ignore', 'pipe', 'pipe'] });
     this.active.add(child);
     child.stdout.setEncoding('utf8');
@@ -41,6 +60,7 @@ export class CommandRunner {
       exited = true;
       this.active.delete(child);
       this.broadcast({ kind: 'command.exit', runId, exitCode });
+      onClosed?.();
     };
     child.stdout.on('data', (chunk: string) =>
       this.broadcast({ kind: 'command.output', runId, stream: 'stdout', chunk }),

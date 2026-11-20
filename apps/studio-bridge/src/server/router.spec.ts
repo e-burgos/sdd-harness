@@ -38,6 +38,7 @@ async function handlers(
   broadcast: (e: ServerEvent) => void = () => {},
   refresh: () => Promise<unknown> = async () => null,
   extra: { claudeInventory?: ClaudeInventoryService; rtkGain?: (root: string) => Promise<RtkGain>; now?: () => Date; integrations?: KitIntegrations; chromeStatus?: ChromeStatusService; claudeMcp?: ClaudeMcpService; openSettings?: OpenStudioChromeDeps } = {},
+  runner: CommandRunner = new CommandRunner(root, broadcast, () => 'run-1'),
 ) {
   const snapshot = (await loadWorkspaceSnapshot(root)).snapshot;
   const store = new ThreadStore(root);
@@ -52,7 +53,7 @@ async function handlers(
     root, auth, login, bridgeVersion: '0.1.0', sessions, store, attachments, fileIndex: createFileIndex(root),
     kitIndexer: new KitIndexer({ root, onChanged: () => undefined }), broadcast: (m) => broadcast(m as ServerEvent),
     chromeStatus: fakeChrome().service, claudeMcp: fakeMcp(), openSettings: { studio: { ensure: async () => ({ launched: true }) }, openTab: async () => true }, ...extra,
-    watcher: { current: () => snapshot, refresh: async () => { await refresh(); return null; } }, runner: new CommandRunner(root, broadcast, () => 'run-1'),
+    watcher: { current: () => snapshot, refresh: async () => { await refresh(); return null; } }, runner,
   });
 }
 const cmd = (c: Record<string, unknown>): ClientCommand => {
@@ -578,5 +579,61 @@ describe('claude connect commands', () => {
 
   it('announces claude-connect in the welcome features', () => {
     expect(BRIDGE_FEATURES).toContain('claude-connect');
+  });
+});
+
+describe('kit.verify.run', () => {
+  const writeVerifyKit = async (script: string) => {
+    await writeFile(path.join(root, 'sdd', 'verify.json'), JSON.stringify({ 'libs/x': { quick: ['c'], full: ['c'] }, 'apps/q': { quick: ['c'] } }));
+    await writeFile(path.join(root, 'sdd', 'scripts', 'sdd-verify.mjs'), script);
+  };
+  const echoArgs = "process.stdout.write(process.argv.slice(2).join(' '));\n";
+  const verify = (extra: Record<string, unknown> = {}) => cmd({ cmd: 'kit.verify.run', app: 'libs/x', level: 'quick', ...extra });
+
+  it('runs sdd-verify with app, level and the optional unit and cycle args', async () => {
+    await writeVerifyKit(echoArgs);
+    const events: ServerEvent[] = [];
+    const h = await handlers((e) => events.push(e));
+    expect(await h.handle(verify({ level: 'full', spec: 'spec-a', cycle: 'cycle-02', unit: 'B-01' }))).toEqual({ runId: 'run-1' });
+    await waitFor(() => events.find((e) => e.kind === 'command.exit'));
+    expect(events).toContainEqual({ kind: 'command.output', runId: 'run-1', stream: 'stdout', chunk: 'libs/x full --spec spec-a --cycle cycle-02 --unit B-01' });
+    expect(events).toContainEqual({ kind: 'command.exit', runId: 'run-1', exitCode: 0 });
+  });
+
+  it('reports a non-zero exit such as the lease timeout (75)', async () => {
+    await writeVerifyKit('process.exit(75);\n');
+    const events: ServerEvent[] = [];
+    const h = await handlers((e) => events.push(e));
+    await h.handle(verify());
+    expect(await waitFor(() => events.find((e) => e.kind === 'command.exit'))).toMatchObject({ exitCode: 75 });
+  });
+
+  it('refreshes the snapshot when the run ends', async () => {
+    await writeVerifyKit(echoArgs);
+    let refreshed = 0;
+    const h = await handlers(() => {}, async () => { refreshed++; });
+    await h.handle(verify());
+    await waitFor(() => refreshed > 0);
+  });
+
+  it('rejects an app that is not in verify.json and a level it does not have', async () => {
+    await writeVerifyKit(echoArgs);
+    const h = await handlers();
+    await expect(h.handle(verify({ app: 'libs/nope' }))).rejects.toMatchObject({ code: 'bad-request' });
+    await expect(h.handle(verify({ app: 'apps/q', level: 'full' }))).rejects.toMatchObject({ code: 'bad-request' });
+  });
+
+  it('answers conflict while another verify is running', async () => {
+    await writeVerifyKit('setInterval(() => undefined, 1000);\n');
+    const runner = new CommandRunner(root, () => {}, () => 'run-1');
+    const h = await handlers(undefined, undefined, {}, runner);
+    await h.handle(verify());
+    await expect(h.handle(verify())).rejects.toMatchObject({ code: 'conflict' });
+    runner.terminateAll();
+    await waitFor(() => runner.activeRuns() === 0);
+  });
+
+  it('announces kit-execution in the welcome features', async () => {
+    expect((await handlers()).welcome().features).toContain('kit-execution');
   });
 });
