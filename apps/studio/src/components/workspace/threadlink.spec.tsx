@@ -1,4 +1,4 @@
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import type { ThreadInfo, WorkspaceSnapshot } from '@sdd-studio/protocol';
 import { BridgeError } from '@/lib/bridge/client';
 import { openSelect, optionNames, pickOption } from '@/lib/test-utils/pick-option';
@@ -154,6 +154,50 @@ describe('ThreadLinkPicker with link-targets', () => {
     ],
   };
 
+  beforeEach(() => window.localStorage.clear());
+  const expand = () => fireEvent.click(screen.getByTestId('link-toggle'));
+
+  it('starts compact with the first chip and a +N button when there is more than one association', () => {
+    mountMulti(() => Promise.resolve(null), withTargets);
+    expect(screen.getByTestId('link-chip-cycle:s1/cycle-02')).toBeInTheDocument();
+    expect(screen.queryByTestId('link-chip-fix:FIX-gone-001')).toBeNull();
+    expect(screen.getByTestId('link-more')).toHaveTextContent('+1');
+    const toggle = screen.getByTestId('link-toggle');
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(toggle).toHaveAttribute('aria-controls', screen.getByTestId('link-chips').id);
+    expect(screen.getByLabelText('Asociado a')).toBeInTheDocument();
+  });
+
+  it('expands to every chip with the toggle or +N and folds back', () => {
+    mountMulti(() => Promise.resolve(null), withTargets);
+    fireEvent.click(screen.getByTestId('link-more'));
+    expect(screen.getByTestId('link-chip-fix:FIX-gone-001')).toBeInTheDocument();
+    expect(screen.queryByTestId('link-more')).toBeNull();
+    expect(screen.getByTestId('link-toggle')).toHaveAttribute('aria-expanded', 'true');
+    expand();
+    expect(screen.queryByTestId('link-chip-fix:FIX-gone-001')).toBeNull();
+    expect(screen.getByTestId('link-toggle')).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('remembers the choice across mounts', () => {
+    mountMulti(() => Promise.resolve(null), withTargets);
+    expand();
+    cleanup();
+    mountMulti(() => Promise.resolve(null), withTargets);
+    expect(screen.getByTestId('link-chip-fix:FIX-gone-001')).toBeInTheDocument();
+    expect(screen.getByTestId('link-toggle')).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  it('has no toggle with zero or one association', () => {
+    mountMulti(() => Promise.resolve(null), { target: { kind: 'fix', fixId: 'FIX-a-001' }, source: 'manual' });
+    expect(screen.getByTestId('link-chip-fix:FIX-a-001')).toBeInTheDocument();
+    expect(screen.queryByTestId('link-toggle')).toBeNull();
+    expect(screen.queryByTestId('link-more')).toBeNull();
+    cleanup();
+    mountMulti(() => Promise.resolve(null), { target: { kind: 'none' }, source: 'auto' });
+    expect(screen.queryByTestId('link-toggle')).toBeNull();
+  });
+
   it('bounds the chip list height and lets it scroll', () => {
     mountMulti(() => Promise.resolve(null), withTargets);
     expect(screen.getByTestId('link-chips')).toHaveClass('max-h-20', 'overflow-y-auto');
@@ -161,6 +205,7 @@ describe('ThreadLinkPicker with link-targets', () => {
 
   it('lists every association as a chip with origin and flags the unavailable ones', () => {
     mountMulti(() => Promise.resolve(null), withTargets);
+    expand();
     const live = screen.getByTestId('link-chip-cycle:s1/cycle-02');
     expect(live).toHaveTextContent('s1 · cycle-02');
     expect(live).toHaveTextContent('manual');
@@ -176,6 +221,7 @@ describe('ThreadLinkPicker with link-targets', () => {
       withTargets,
     );
     expect(optionNames(add)).toEqual(['Agregar asociación…', 's1', 's1 · cycle-01', 'FIX-a-001']);
+    expand();
     pickOption(add, 'FIX-a-001');
     await waitFor(() => expect(screen.getByTestId('link-chip-fix:FIX-a-001')).toBeInTheDocument());
     expect(client.request).toHaveBeenCalledWith({ cmd: 'thread.updateLinks', threadId: 't1', add: [{ kind: 'fix', fixId: 'FIX-a-001' }], remove: [] });
@@ -187,6 +233,7 @@ describe('ThreadLinkPicker with link-targets', () => {
       () => Promise.resolve(thread({ ...withTargets, targets: [{ kind: 'cycle', specId: 's1', cycle: 'cycle-02', origin: 'manual' }] })),
       withTargets,
     );
+    expand();
     fireEvent.click(screen.getByRole('button', { name: 'Quitar asociación FIX-gone-001' }));
     await waitFor(() => expect(screen.queryByTestId('link-chip-fix:FIX-gone-001')).toBeNull());
     expect(client.request).toHaveBeenCalledWith({ cmd: 'thread.updateLinks', threadId: 't1', add: [], remove: [{ kind: 'fix', fixId: 'FIX-gone-001' }] });
@@ -194,6 +241,7 @@ describe('ThreadLinkPicker with link-targets', () => {
 
   it('keeps the chips and shows the error when the update fails', async () => {
     mountMulti(() => Promise.reject(new BridgeError('not-found', 'the link target does not exist')), withTargets);
+    expand();
     fireEvent.click(screen.getByRole('button', { name: 'Quitar asociación FIX-gone-001' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('the link target does not exist');
     expect(screen.getByTestId('link-chip-fix:FIX-gone-001')).toBeInTheDocument();

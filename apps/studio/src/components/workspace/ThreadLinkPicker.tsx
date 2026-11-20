@@ -2,19 +2,21 @@
 
 import { MAX_LINK_TARGETS, ThreadInfo, type ThreadLinkRef, type ThreadLinkTarget } from '@sdd-studio/protocol';
 import { Tooltip } from '@e-burgos/tucu-ui';
-import { X } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { ChevronDown, ChevronRight, X } from 'lucide-react';
+import { useId, useMemo, useState } from 'react';
 import { bridgeErrorText } from '@/lib/bridge/error-text';
 import { useT } from '@/lib/i18n/i18n';
 import { deriveConversation } from '@/lib/conversation';
 import { deriveConversationGate } from '@/lib/conversation-gate';
 import { isLinkEntryAvailable, linkEntriesOf, linkRefKey, linkRefLabel, toLinkRef } from '@/lib/link-targets';
+import { useCollapsedState } from '@/lib/use-collapsed-state';
 import { useBridgeFeatures } from '@/lib/use-bridge-features';
 import { useBridge, useStudio } from '../BridgeProvider';
 import { CapabilityNotice } from '../mission-control/CapabilityNotice';
 import { HelpSelect, type HelpSelectOption } from '../HelpSelect';
 
 const NONE = 'none';
+const LINKS_COLLAPSE_ID = 'thread-links';
 const ring = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-400';
 
 export const encodeLinkTarget = (target: ThreadLinkTarget): string =>
@@ -51,6 +53,8 @@ export function ThreadLinkPicker({ threadId }: { threadId: string }) {
   const thread = useStudio((s) => s.threads[threadId]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const collapse = useCollapsedState(snapshot?.project ?? '');
+  const chipsId = useId();
 
   const entries = useMemo(() => (thread?.info ? linkEntriesOf(thread.info) : []), [thread?.info]);
 
@@ -131,12 +135,31 @@ export function ThreadLinkPicker({ threadId }: { threadId: string }) {
     );
   }
 
+  const collapsible = entries.length > 1;
+  const collapsed = collapsible && collapse.isCollapsed(LINKS_COLLAPSE_ID, true);
+  const visibleEntries = collapsed ? entries.slice(0, 1) : entries;
+  const hiddenCount = entries.length - visibleEntries.length;
+  const toggleLinks = () => collapse.setCollapsed(LINKS_COLLAPSE_ID, !collapsed, true);
+
   return (
     <div className="flex min-w-0 flex-wrap items-center gap-2 text-xs text-ink-300">
       <span aria-hidden>{t('link.label')}</span>
-      <ul data-testid="link-chips" className="flex max-h-20 min-w-0 flex-wrap items-center gap-1.5 overflow-y-auto">
+      {collapsible && (
+        <button
+          type="button"
+          data-testid="link-toggle"
+          aria-expanded={!collapsed}
+          aria-controls={chipsId}
+          aria-label={t(collapsed ? 'link.expand' : 'link.collapse')}
+          onClick={toggleLinks}
+          className={`shrink-0 rounded text-ink-400 hover:text-ink-100 ${ring}`}
+        >
+          {collapsed ? <ChevronRight size={14} aria-hidden /> : <ChevronDown size={14} aria-hidden />}
+        </button>
+      )}
+      <ul id={chipsId} data-testid="link-chips" className="flex max-h-20 min-w-0 flex-wrap items-center gap-1.5 overflow-y-auto">
         {entries.length === 0 && <li className="text-ink-400">{t('link.none')}</li>}
-        {entries.map((entry) => {
+        {visibleEntries.map((entry) => {
           const ref = toLinkRef(entry);
           const label = linkRefLabel(ref);
           const available = isLinkEntryAvailable(ref, snapshot);
@@ -159,6 +182,19 @@ export function ThreadLinkPicker({ threadId }: { threadId: string }) {
             </li>
           );
         })}
+        {hiddenCount > 0 && (
+          <li>
+            <button
+              type="button"
+              data-testid="link-more"
+              aria-label={t('link.more', { count: String(hiddenCount) })}
+              onClick={toggleLinks}
+              className={`rounded-md border border-ink-700 bg-ink-950 px-1.5 py-0.5 font-mono text-meta text-ink-300 hover:text-ink-100 ${ring}`}
+            >
+              +{hiddenCount}
+            </button>
+          </li>
+        )}
       </ul>
       <HelpSelect
         label={t('link.label')}
