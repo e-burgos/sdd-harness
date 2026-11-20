@@ -469,6 +469,22 @@
       "created_at": "2026-11-20",
       "completed_at": "2026-11-20",
       "depends_on": []
+    },
+    {
+      "id": "spec-e-burgos-031-studio-session-context",
+      "author": "e-burgos",
+      "slug": "studio-session-context",
+      "folder": "sdd/specs/spec-e-burgos-031-studio-session-context",
+      "file": "sdd/specs/spec-e-burgos-031-studio-session-context/spec-e-burgos-031-studio-session-context.spec.md",
+      "module": "studio-session-context",
+      "app": "apps/studio",
+      "status": "in-progress",
+      "title": "Las sesiones de Studio usan el contexto del kit: paquete por unidad, núcleo y reglas",
+      "created_at": "2026-11-20",
+      "completed_at": null,
+      "depends_on": [
+        "spec-e-burgos-030-studio-kit-execution"
+      ]
     }
   ]
 }

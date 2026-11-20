@@ -333,7 +333,19 @@
       "completed_at": "2026-11-20"
     }
   ],
-  "in_progress_modules": [],
+  "in_progress_modules": [
+    {
+      "module": "studio-session-context",
+      "spec": "spec-e-burgos-031-studio-session-context",
+      "apps": [
+        "libs/studio-protocol",
+        "apps/studio-bridge",
+        "apps/studio"
+      ],
+      "cycles_completed": 0,
+      "description": "Sesiones de Studio con el paquete de su unidad, y núcleo, reglas y paquetes del kit visibles."
+    }
+  ],
   "pending_modules": [
     {
       "module": "studio-framework-vision",
