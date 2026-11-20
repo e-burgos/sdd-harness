@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
+  CLAUDE_MCP_LOGIN_OUTCOMES,
+  ClaudeBrowserOpenSettingsResult,
+  ClaudeBrowserStatus,
   ClaudeInventory,
+  ClaudeMcpLoginResult,
+  ClaudeMcpReconnectResult,
   ClaudeToolsConfig,
   ClaudeToolsGetResult,
   ClaudeToolsScope,
@@ -87,5 +92,34 @@ describe('results', () => {
   it('scope enum accepts global and project only', () => {
     expect(ClaudeToolsScope.parse('global')).toBe('global');
     expect(ClaudeToolsScope.safeParse('team').success).toBe(false);
+  });
+});
+
+describe('claude connect results', () => {
+  it('defaults the browser to enabled', () => {
+    expect(DEFAULT_CLAUDE_TOOLS_CONFIG.browser.enabled).toBe(true);
+  });
+  it('parses a browser status and tolerates an unknown state', () => {
+    const status = { state: 'connected', checkedAt: '2026-11-20T00:00:00Z', detail: null };
+    expect(ClaudeBrowserStatus.parse(status)).toEqual(status);
+    expect(ClaudeBrowserStatus.parse({ ...status, state: 'futuro' }).state).toBe('unknown');
+    expect(ClaudeBrowserStatus.safeParse({ ...status, detail: 'x'.repeat(301) }).success).toBe(false);
+  });
+  it('parses the open settings result', () => {
+    expect(ClaudeBrowserOpenSettingsResult.parse({ opened: true })).toEqual({ opened: true });
+  });
+  it('parses every login outcome and bounds the output', () => {
+    for (const outcome of CLAUDE_MCP_LOGIN_OUTCOMES) {
+      const result = { name: 'm', outcome, output: 'ok', inventory: null };
+      expect(ClaudeMcpLoginResult.parse(result)).toEqual(result);
+    }
+    const base = { name: 'm', outcome: 'ok', inventory };
+    expect(ClaudeMcpLoginResult.parse({ ...base, output: '' }).inventory).toEqual(inventory);
+    expect(ClaudeMcpLoginResult.safeParse({ ...base, output: 'x'.repeat(4097) }).success).toBe(false);
+    expect(ClaudeMcpLoginResult.safeParse({ ...base, output: '', outcome: 'otro' }).success).toBe(false);
+  });
+  it('parses a reconnect result with or without a status', () => {
+    expect(ClaudeMcpReconnectResult.parse({ name: 'm', status: 'connected', inventory }).status).toBe('connected');
+    expect(ClaudeMcpReconnectResult.parse({ name: 'm', status: null, inventory }).status).toBeNull();
   });
 });

@@ -19,7 +19,7 @@ const claudeConfig = (over: Partial<ClaudeToolsConfig> = {}): ClaudeToolsConfig 
 describe('claude tools config', () => {
   it('matches the current options when no config is given and when the config is the default', () => {
     const plain = buildQueryOptions(input(), handlers());
-    const withDefault = buildQueryOptions(input(), { ...handlers(), claudeTools: DEFAULT_CLAUDE_TOOLS_CONFIG });
+    const withDefault = buildQueryOptions(input(), { ...handlers(), claudeTools: claudeConfig({ browser: { enabled: false, browserUrl: null } }) });
     expect(Object.keys(withDefault).sort()).toEqual(Object.keys(plain).sort());
     expect(withDefault.settingSources).toEqual(['project']);
     expect(withDefault.settings).toBeUndefined();

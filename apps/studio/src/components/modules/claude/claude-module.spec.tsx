@@ -142,7 +142,7 @@ describe('Claude module', () => {
     expect(card).toHaveTextContent('--autoConnect');
     fireEvent.click(within(card).getByRole('switch', { name: 'Chrome (DevTools)' }));
     await waitFor(() => expect(sets(requests)).toHaveLength(1), WAIT);
-    expect(sets(requests)[0]).toMatchObject({ config: { browser: { enabled: true, browserUrl: null } } });
+    expect(sets(requests)[0]).toMatchObject({ config: { browser: { enabled: false, browserUrl: null } } });
     const input = within(card).getByLabelText('URL de depuración (opcional)');
     fireEvent.change(input, { target: { value: 'ws://nope' } });
     expect(within(card).getByRole('alert')).toBeInTheDocument();

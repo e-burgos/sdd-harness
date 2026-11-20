@@ -237,3 +237,21 @@ describe('result schemas', () => {
     expect(FileSearchResult.safeParse({ ...result, source: 'find' }).success).toBe(false);
   });
 });
+
+describe('claude connect commands', () => {
+  it('parses browser check and openSettings', () => {
+    for (const name of ['claude.browser.check', 'claude.browser.openSettings']) {
+      const cmd = { ...base, cmd: name };
+      expect(ClientCommand.parse(cmd)).toEqual(cmd);
+    }
+  });
+  it('parses mcp login and reconnect with a bounded name', () => {
+    for (const name of ['claude.mcp.login', 'claude.mcp.reconnect']) {
+      const cmd = { ...base, cmd: name, name: 'plugin:p:s' };
+      expect(ClientCommand.parse(cmd)).toEqual(cmd);
+      expect(ClientCommand.safeParse({ ...base, cmd: name }).success).toBe(false);
+      expect(ClientCommand.safeParse({ ...cmd, name: '' }).success).toBe(false);
+      expect(ClientCommand.safeParse({ ...cmd, name: 'x'.repeat(201) }).success).toBe(false);
+    }
+  });
+});

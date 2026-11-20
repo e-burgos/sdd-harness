@@ -82,7 +82,7 @@ const fakeInventory = (over: Partial<ClaudeInventoryService> = {}): ClaudeInvent
 };
 
 describe('claude tools commands', () => {
-  const customConfig = { sources: { user: true, local: false }, disabledPlugins: [], disabledMcpServers: ['x'], browser: { enabled: false, browserUrl: null } };
+  const customConfig = { sources: { user: true, local: false }, disabledPlugins: [], disabledMcpServers: ['x'], browser: { enabled: true, browserUrl: null } };
 
   it('get returns defaults, a revision, no inventory and the browser mcp version', async () => {
     const h = await handlers(undefined, undefined, { claudeInventory: fakeInventory() });

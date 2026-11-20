@@ -19,7 +19,7 @@ export const DEFAULT_CLAUDE_TOOLS_CONFIG: ClaudeToolsConfig = {
   sources: { user: false, local: false },
   disabledPlugins: [],
   disabledMcpServers: [],
-  browser: { enabled: false, browserUrl: null },
+  browser: { enabled: true, browserUrl: null },
 };
 
 export const ClaudeToolsRevision = ToolsRevision;
@@ -74,3 +74,45 @@ export type ClaudeToolsSetResult = z.infer<typeof ClaudeToolsSetResult>;
 
 export const ClaudeInventoryRefreshResult = z.object({ inventory: ClaudeInventory });
 export type ClaudeInventoryRefreshResult = z.infer<typeof ClaudeInventoryRefreshResult>;
+
+export const CLAUDE_BROWSER_STATES = [
+  'connected',
+  'permission-pending',
+  'debugging-disabled',
+  'chrome-closed',
+  'off',
+  'unknown',
+] as const;
+export const ClaudeBrowserState = z.enum(CLAUDE_BROWSER_STATES).catch('unknown');
+export type ClaudeBrowserState = z.infer<typeof ClaudeBrowserState>;
+
+export const ClaudeBrowserStatus = z.object({
+  state: ClaudeBrowserState,
+  checkedAt: z.string().max(40),
+  detail: z.string().max(300).nullable(),
+});
+export type ClaudeBrowserStatus = z.infer<typeof ClaudeBrowserStatus>;
+
+export const ClaudeBrowserOpenSettingsResult = z.object({ opened: z.boolean() });
+export type ClaudeBrowserOpenSettingsResult = z.infer<typeof ClaudeBrowserOpenSettingsResult>;
+
+export const MAX_MCP_LOGIN_OUTPUT_BYTES = 4096;
+
+export const CLAUDE_MCP_LOGIN_OUTCOMES = ['ok', 'not-oauth', 'header-auth', 'unknown-server', 'failed', 'timeout'] as const;
+export const ClaudeMcpLoginOutcome = z.enum(CLAUDE_MCP_LOGIN_OUTCOMES);
+export type ClaudeMcpLoginOutcome = z.infer<typeof ClaudeMcpLoginOutcome>;
+
+export const ClaudeMcpLoginResult = z.object({
+  name: Name,
+  outcome: ClaudeMcpLoginOutcome,
+  output: z.string().max(MAX_MCP_LOGIN_OUTPUT_BYTES),
+  inventory: ClaudeInventory.nullable(),
+});
+export type ClaudeMcpLoginResult = z.infer<typeof ClaudeMcpLoginResult>;
+
+export const ClaudeMcpReconnectResult = z.object({
+  name: Name,
+  status: ClaudeMcpStatus.nullable(),
+  inventory: ClaudeInventory,
+});
+export type ClaudeMcpReconnectResult = z.infer<typeof ClaudeMcpReconnectResult>;
