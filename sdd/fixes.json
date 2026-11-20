@@ -2068,9 +2068,15 @@
       "author": "e-burgos",
       "spec_id": null,
       "created_at": "2026-11-20",
-      "resolved_at": null,
-      "affected_files": [],
-      "test_reference": "",
+      "resolved_at": "2026-11-20",
+      "affected_files": [
+        "apps/studio-bridge/src/sessions/pack-context.spec.ts",
+        "apps/studio-bridge/src/sessions/pack-context.ts",
+        "apps/studio-bridge/src/workspace/pack-runner.spec.ts",
+        "apps/studio-bridge/src/workspace/pack-runner.ts",
+        "sdd/fixes/fix-e-burgos-016.md"
+      ],
+      "test_reference": "sdd:verify apps/studio-bridge quick + full OK (8f9112d); specs: rol de ciclo multi-app con bloque pendiente ⇒ --app del bloque, sin bloques ⇒ primera app, stats multi-app unidas y sumadas, una app sin cambios",
       "cycle": null,
       "id": "FIX-e-burgos-016",
       "fix_document": "sdd/fixes/fix-e-burgos-016.md",
@@ -2083,7 +2089,19 @@
       "related_modules": [
         "studio-session-context"
       ],
-      "status": "pending"
+      "status": "validated",
+      "validated_at": "2026-11-20",
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "tokens_in": 63051,
+        "tokens_out": 11127,
+        "tokens_total": 74178,
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-20"
+      }
     },
     {
       "author": "e-burgos",
@@ -2104,7 +2122,7 @@
       "related_modules": [
         "studio-kit-execution"
       ],
-      "status": "pending"
+      "status": "in-progress"
     }
   ]
 }
