@@ -1,6 +1,6 @@
 # Context prompt — apps/studio
 
-> Última actualización: consolida los fragmentos de FIX-e-burgos-022-001, 006 y 007, spec-e-burgos-026 cycle-01 y 027 cycle-01 | Fecha: 2026-11-20
+> Última actualización: segunda consolidación del día: fragmentos de FIX-e-burgos-008 a 011 y spec-e-burgos-028 cycle-01 | Fecha: 2026-11-20
 
 > Entry point para agentes y desarrolladores trabajando en `sdd-studio-web`.
 > Leer este documento antes de realizar cambios en la UI, componentes de workspace o stores de Zustand.
@@ -13,7 +13,7 @@ Es la aplicación web frontend de **SDD Studio**: una interfaz tipo Slack que se
 
 - **Página principal y entrada:** `src/app/w/page.tsx` y `src/components/entry/` (`EntryWizard`, wizard de pantalla completa que se muestra sin puente conectado).
 - **Proveedor de WebSocket:** `src/components/BridgeProvider.tsx` y cliente en `src/lib/bridge/client.ts`.
-- **Shell y módulos:** `src/components/shell/` (`StudioShell`, `ModuleRail`, `ModulePanel`, `RightPanelFrame`), `src/components/modules/{home,specs,fixes,agents,activity,map,kit,claude,architecture,metrics}` (Kit incluye `KitIntegrations.tsx` y `use-kit-integrations.ts`: interruptores de tucu-ui y video-maker, feature `kit-integrations`; `claude/` es el módulo de herramientas de Claude con `ClaudePanel`, `ClaudeProvider` y `use-claude-tools.ts`, features `claude-tools` y `claude-tools-scope`; las fichas de agente usan `AgentChatList` y abren los hilos en el panel central) y navegación persistida en `src/lib/nav/`; estados SDD compartidos en `src/lib/sdd-status.ts`.
+- **Shell y módulos:** `src/components/shell/` (`StudioShell`, `ModuleRail`, `ModulePanel`, `RightPanelFrame`), `src/components/modules/{home,specs,fixes,agents,activity,map,kit,claude,architecture,metrics}` (Kit incluye `KitIntegrations.tsx` y `use-kit-integrations.ts`: interruptores de tucu-ui y video-maker, feature `kit-integrations`; `claude/` es el módulo de herramientas de Claude con `ClaudePanel`, `ClaudeProvider` y `use-claude-tools.ts`, features `claude-tools` y `claude-tools-scope`; el chat de agente vive en el panel central (`AgentsCenter` con su `Composer`; la ficha solo muestra datos)) y navegación persistida en `src/lib/nav/`; estados SDD compartidos en `src/lib/sdd-status.ts`.
 - **Nuevo proyecto (wizard):** `src/components/modules/new-project/` (incluye `motion/` y `steps/scope/`), `src/components/shell/LauncherShell.tsx`, `src/lib/wizard/`, `src/lib/motion/`; requiere las features `project-wizard` y `workspace-switch` del puente; el paso de forma ofrece la versión de Nx desde `catalog.nx` (`steps/ShapeStep.tsx`).
 - **Unidades abiertas:** `src/components/OpenUnitsPill.tsx`, `OpenUnitsList.tsx` y `src/lib/open-units.ts` (header y Mission Control; incluye reservas de archivo, PR y CI por ciclo).
 - **Primeros pasos y GitHub:** `src/components/onboarding/`, `src/lib/onboarding.ts`, `src/components/github/` (`GithubConnectPanel`, `GithubHeaderStatus`).
