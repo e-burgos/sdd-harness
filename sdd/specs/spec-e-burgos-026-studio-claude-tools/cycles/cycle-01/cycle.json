@@ -1,0 +1,43 @@
+{
+  "$schema": "../../../../schemas/cycle.schema.json",
+  "cycle": 1,
+  "module": "studio-claude-tools",
+  "spec": "spec-e-burgos-026-studio-claude-tools",
+  "apps": [
+    "libs/studio-protocol",
+    "apps/studio-bridge",
+    "apps/studio"
+  ],
+  "phase": "studio-claude-tools",
+  "flow": "lite",
+  "objectives": [
+    "Studio elige qué configuración de Claude Code del dev usa el motor y muestra su estado real (US-1..US-3, US-5, US-6)",
+    "Los agentes de Studio navegan con chrome-devtools-mcp sobre el Chrome del dev (US-4)"
+  ],
+  "status": "in-progress",
+  "started_at": "2026-11-20",
+  "completed_at": null,
+  "documents": {
+    "plan": "sdd/specs/spec-e-burgos-026-studio-claude-tools/cycles/cycle-01/plan.md",
+    "tasks": "sdd/specs/spec-e-burgos-026-studio-claude-tools/cycles/cycle-01/tasks.json"
+  },
+  "artifacts": [],
+  "metrics": {
+    "tasks_total": 6,
+    "tasks_completed": 0,
+    "story_points": 20,
+    "files_created": [],
+    "files_modified": [],
+    "files_deleted": [],
+    "usage": {
+      "tokens_in": 0,
+      "tokens_out": 0,
+      "by_agent": []
+    }
+  },
+  "tables_created": [],
+  "endpoints_implemented": [],
+  "components_created": [],
+  "issues_found": [],
+  "reviewer_report": null
+}

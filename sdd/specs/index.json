@@ -393,6 +393,22 @@
       "depends_on": [
         "spec-e-burgos-024-session-where"
       ]
+    },
+    {
+      "id": "spec-e-burgos-026-studio-claude-tools",
+      "author": "e-burgos",
+      "slug": "studio-claude-tools",
+      "folder": "sdd/specs/spec-e-burgos-026-studio-claude-tools",
+      "file": "sdd/specs/spec-e-burgos-026-studio-claude-tools/spec-e-burgos-026-studio-claude-tools.spec.md",
+      "module": "studio-claude-tools",
+      "app": "apps/studio",
+      "status": "in-progress",
+      "title": "Studio usa las herramientas de Claude Code del dev: skills, plugins, MCP y navegador",
+      "created_at": "2026-11-20",
+      "completed_at": null,
+      "depends_on": [
+        "spec-e-burgos-022-studio-kit-integrations"
+      ]
     }
   ]
 }
