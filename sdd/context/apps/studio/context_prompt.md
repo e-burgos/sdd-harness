@@ -1,6 +1,6 @@
 # Context prompt — apps/studio
 
-> Última actualización: segunda consolidación del día: fragmentos de FIX-e-burgos-008 a 011 y spec-e-burgos-028 cycle-01 | Fecha: 2026-11-20
+> Última actualización: tercera consolidación del día: fragmentos de spec-e-burgos-029 a 032 cycle-01 y FIX-e-burgos-019 | Fecha: 2026-11-20
 
 > Entry point para agentes y desarrolladores trabajando en `sdd-studio-web`.
 > Leer este documento antes de realizar cambios en la UI, componentes de workspace o stores de Zustand.
