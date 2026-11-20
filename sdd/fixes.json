@@ -2017,6 +2017,69 @@
         "recorded_at": "2026-11-20"
       },
       "validated_at": "2026-11-20"
+    },
+    {
+      "author": "e-burgos",
+      "spec_id": null,
+      "created_at": "2026-11-20",
+      "resolved_at": null,
+      "affected_files": [],
+      "test_reference": "",
+      "cycle": null,
+      "id": "FIX-e-burgos-015",
+      "fix_document": "sdd/fixes/fix-e-burgos-015.md",
+      "type": "BUGFIX",
+      "severity": "medium",
+      "title": "La integración tucu-ui convive con .claude/skills enlazado a sdd/skills",
+      "estimation_hours": 2,
+      "description": "setup-agents enlaza .claude/skills a sdd/skills y sdd-tucu necesita un enlace propio adentro: se pisan y Claude Code queda incompleto.",
+      "justification": "Cambio en el kit publicado: el dev pidió FIX GATE en vez de flow full (2026-11-20); sin contratos ni entidades nuevas.",
+      "related_modules": [
+        "kit-tucu-ui"
+      ],
+      "status": "in-progress"
+    },
+    {
+      "author": "e-burgos",
+      "spec_id": null,
+      "created_at": "2026-11-20",
+      "resolved_at": null,
+      "affected_files": [],
+      "test_reference": "",
+      "cycle": null,
+      "id": "FIX-e-burgos-016",
+      "fix_document": "sdd/fixes/fix-e-burgos-016.md",
+      "type": "IMPROVEMENT",
+      "severity": "low",
+      "title": "Paquetes de roles de ciclo en ciclos multi-app",
+      "estimation_hours": 1,
+      "description": "sdd-pack pide --app para roles de ciclo en ciclos multi-app: el puente cae al contexto base y las stats usan la primera app.",
+      "justification": "Pendiente de spec-e-burgos-031; perfil solo; sin contratos nuevos.",
+      "related_modules": [
+        "studio-session-context"
+      ],
+      "status": "pending"
+    },
+    {
+      "author": "e-burgos",
+      "spec_id": null,
+      "created_at": "2026-11-20",
+      "resolved_at": null,
+      "affected_files": [],
+      "test_reference": "",
+      "cycle": null,
+      "id": "FIX-e-burgos-017",
+      "fix_document": "sdd/fixes/fix-e-burgos-017.md",
+      "type": "BUGFIX",
+      "severity": "low",
+      "title": "Dos tests inestables de Studio",
+      "estimation_hours": 1,
+      "description": "watcher.spec (.claude catalog watching) y el spec de exit codes del panel de verify fallan de forma intermitente.",
+      "justification": "Pendiente de spec-e-burgos-030; perfil solo; solo tests.",
+      "related_modules": [
+        "studio-kit-execution"
+      ],
+      "status": "pending"
     }
   ]
 }
