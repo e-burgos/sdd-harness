@@ -104,6 +104,26 @@ describe('claude tools config', () => {
     expect(ensure).toHaveBeenCalledTimes(1);
     warn.mockRestore();
   });
+  it('holds the first prompt until the Studio Chrome is up', async () => {
+    const order: string[] = [];
+    let release: () => void = () => undefined;
+    const ensure = vi.fn(() => new Promise<void>((resolve) => { release = () => { order.push('chrome'); resolve(); }; }));
+    const fn: QueryFn = () => {
+      async function* run() {
+        order.push('query');
+        yield { type: 'result', subtype: 'success', is_error: false, result: '', total_cost_usd: 0, usage: {}, queued_turn_count: 0 };
+      }
+      return Object.assign(run(), { interrupt: async () => undefined, getContextUsage: async () => ({ totalTokens: 1, maxTokens: 2 }) }) as unknown as Query;
+    };
+    const engine = new ClaudeAgentSdkEngine(fn, undefined, 'stream', undefined, () => claudeConfig({ browser: { enabled: true, browserUrl: null } }), ensure);
+    const cb = { emit: () => {}, judgeTool: () => ({ kind: 'allow' as const }), onSessionId: () => {}, requestApproval: async () => ({ behavior: 'allow' as const }), ...noPending } as EngineCallbacks;
+    const turn = engine.startTurn(input(), cb);
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(order).toEqual([]);
+    release();
+    await turn.done;
+    expect(order).toEqual(['chrome', 'query']);
+  });
 });
 
 describe('buildQueryOptions', () => {

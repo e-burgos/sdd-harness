@@ -55,6 +55,7 @@ export function pickSessionTitle(
 }
 
 const CONTEXT_USAGE_TIMEOUT_MS = 2_000;
+const STUDIO_CHROME_READY_TIMEOUT_MS = 5_000;
 
 const withTimeout = <T,>(work: Promise<T>, ms: number): Promise<T> =>
   new Promise<T>((resolve, reject) => {
@@ -244,8 +245,12 @@ export class ClaudeAgentSdkEngine implements AgentEngine {
       Promise.all(messages.map((message) => toSdkUserMessage(message, cb.readAttachment)));
     const revert = (messages: OutgoingMessage[]): void => cb.revertPending(messages.map((message) => message.id));
     const tools = this.getClaudeTools?.();
+    let chromeReady: Promise<void> = Promise.resolve();
     if (tools?.browser.enabled && !tools.browser.browserUrl && this.ensureStudioChrome) {
-      this.ensureStudioChrome().catch((error: unknown) => console.warn('studio chrome could not be started:', error instanceof Error ? error.message : error));
+      chromeReady = withTimeout(this.ensureStudioChrome(), STUDIO_CHROME_READY_TIMEOUT_MS).then(
+        () => undefined,
+        (error: unknown) => console.warn('studio chrome could not be started:', error instanceof Error ? error.message : error),
+      );
     }
     const q = this.queryFn({
       prompt: channel,
@@ -325,6 +330,7 @@ export class ClaudeAgentSdkEngine implements AgentEngine {
     };
     const done = (async () => {
       try {
+        await chromeReady;
         const initial = await resolve(input.prompts);
         if (interrupted) revert(input.prompts);
         else channel.push(initial);
