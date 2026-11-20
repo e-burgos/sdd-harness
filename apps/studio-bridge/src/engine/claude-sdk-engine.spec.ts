@@ -46,10 +46,10 @@ describe('claude tools config', () => {
     });
     expect(o.settings).toEqual({ enabledPlugins: { 'a@m': false }, deniedMcpServers: [{ serverName: 'x' }] });
   });
-  it('adds the chrome-devtools server with autoConnect by default', () => {
+  it('points the chrome-devtools server at the Studio Chrome by default', () => {
     const o = buildQueryOptions(input(), { ...handlers(), claudeTools: claudeConfig({ browser: { enabled: true, browserUrl: null } }) });
     expect(o.mcpServers).toEqual({
-      'chrome-devtools': { type: 'stdio', command: 'npx', args: ['-y', `chrome-devtools-mcp@${CHROME_DEVTOOLS_MCP_VERSION}`, '--autoConnect'] },
+      'chrome-devtools': { type: 'stdio', command: 'npx', args: ['-y', `chrome-devtools-mcp@${CHROME_DEVTOOLS_MCP_VERSION}`, '--browserUrl', 'http://127.0.0.1:9333'] },
     });
   });
   it('uses browserUrl when the dev set one', () => {
@@ -82,6 +82,27 @@ describe('claude tools config', () => {
     await engine.startTurn(input(), cb).done;
     expect(seen.map((o) => o.settingSources)).toEqual([['project'], ['project', 'user']]);
     expect(infos[0]).toMatchObject({ counts: { skills: 1, agents: 0, plugins: 1, mcpServers: 1, mcpTools: 1 } });
+  });
+  it('ensures the Studio Chrome before a turn only with the browser on and no dev browserUrl, and never blocks on failure', async () => {
+    let config = claudeConfig({ browser: { enabled: true, browserUrl: null } });
+    const fn: QueryFn = () => {
+      async function* run() {
+        yield { type: 'result', subtype: 'success', is_error: false, result: '', total_cost_usd: 0, usage: {}, queued_turn_count: 0 };
+      }
+      return Object.assign(run(), { interrupt: async () => undefined, getContextUsage: async () => ({ totalTokens: 1, maxTokens: 2 }) }) as unknown as Query;
+    };
+    const ensure = vi.fn(async () => { throw new Error('no chrome'); });
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const engine = new ClaudeAgentSdkEngine(fn, undefined, 'stream', undefined, () => config, ensure);
+    const cb = { emit: () => {}, judgeTool: () => ({ kind: 'allow' as const }), onSessionId: () => {}, requestApproval: async () => ({ behavior: 'allow' as const }), ...noPending } as EngineCallbacks;
+    await engine.startTurn(input(), cb).done;
+    expect(ensure).toHaveBeenCalledTimes(1);
+    config = claudeConfig({ browser: { enabled: true, browserUrl: 'http://127.0.0.1:9222' } });
+    await engine.startTurn(input(), cb).done;
+    config = claudeConfig({ browser: { enabled: false, browserUrl: null } });
+    await engine.startTurn(input(), cb).done;
+    expect(ensure).toHaveBeenCalledTimes(1);
+    warn.mockRestore();
   });
 });
 

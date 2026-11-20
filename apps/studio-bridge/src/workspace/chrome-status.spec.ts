@@ -1,68 +1,60 @@
 import { describe, expect, it, vi } from 'vitest';
-import { checkChrome, createChromeStatus, devToolsActivePortFile, openChromeSettings, type ChromeCheckDeps } from './chrome-status';
+import { checkChrome, createChromeStatus, openStudioChrome, type ChromeCheckDeps } from './chrome-status';
+import { StudioChromeError } from './studio-chrome';
 
 const deps = (over: Partial<ChromeCheckDeps> = {}): ChromeCheckDeps => ({
-  platform: 'darwin',
-  homedir: () => '/home/u',
-  env: {},
-  readFile: async () => '9222\n/devtools/browser/abc',
-  isChromeRunning: async () => true,
-  connect: async () => ({ open: true, detail: null }),
   browserEnabled: () => true,
+  browserUrl: () => null,
+  probe: async () => true,
+  studio: { ensure: async () => ({ launched: false }) },
   now: () => new Date('2026-11-20T10:00:00Z'),
   ...over,
 });
 
-describe('devToolsActivePortFile', () => {
-  it('resolves the profile directory per platform', () => {
-    expect(devToolsActivePortFile('darwin', '/home/u', {})).toBe('/home/u/Library/Application Support/Google/Chrome/DevToolsActivePort');
-    expect(devToolsActivePortFile('linux', '/home/u', {})).toBe('/home/u/.config/google-chrome/DevToolsActivePort');
-    expect(devToolsActivePortFile('win32', 'C:\\Users\\u', { LOCALAPPDATA: 'C:\\L' })).toBe('C:\\L\\Google\\Chrome\\User Data\\DevToolsActivePort');
-  });
-});
-
 describe('checkChrome', () => {
-  it('is off when the browser is disabled and does not look at Chrome', async () => {
-    const isChromeRunning = vi.fn(async () => true);
-    expect(await checkChrome(deps({ browserEnabled: () => false, isChromeRunning }))).toMatchObject({ state: 'off', detail: null });
-    expect(isChromeRunning).not.toHaveBeenCalled();
+  it('is off when the browser is disabled without probing', async () => {
+    const probe = vi.fn(async () => true);
+    expect(await checkChrome(deps({ browserEnabled: () => false, probe }))).toMatchObject({ state: 'off', detail: null });
+    expect(probe).not.toHaveBeenCalled();
   });
-  it('is chrome-closed without a process', async () => {
-    expect((await checkChrome(deps({ isChromeRunning: async () => false }))).state).toBe('chrome-closed');
+  it('is connected when the Studio Chrome answers', async () => {
+    const probe = vi.fn(async () => true);
+    expect(await checkChrome(deps({ probe }))).toEqual({ state: 'connected', checkedAt: '2026-11-20T10:00:00.000Z', detail: null });
+    expect(probe).toHaveBeenCalledWith('http://127.0.0.1:9333');
   });
-  it('keeps going with the file when the process cannot be detected', async () => {
-    expect((await checkChrome(deps({ isChromeRunning: async () => null }))).state).toBe('connected');
+  it('launches Chrome when it does not answer and reports connected after re-probing', async () => {
+    let up = false;
+    const ensure = vi.fn(async () => {
+      up = true;
+      return { launched: true };
+    });
+    expect((await checkChrome(deps({ probe: async () => up, studio: { ensure } }))).state).toBe('connected');
+    expect(ensure).toHaveBeenCalledTimes(1);
   });
-  it('is debugging-disabled without the port file or with a malformed one', async () => {
-    expect((await checkChrome(deps({ readFile: async () => { throw new Error('ENOENT'); } }))).state).toBe('debugging-disabled');
-    expect((await checkChrome(deps({ readFile: async () => 'nope' }))).state).toBe('debugging-disabled');
+  it('is chrome-closed with the error when the launch fails or the re-probe fails', async () => {
+    const failing = deps({ probe: async () => false, studio: { ensure: async () => { throw new StudioChromeError('timeout', 'late'); } } });
+    expect(await checkChrome(failing)).toMatchObject({ state: 'chrome-closed', detail: 'late' });
+    expect((await checkChrome(deps({ probe: async () => false }))).state).toBe('chrome-closed');
   });
-  it('is connected when the websocket opens and uses the file url', async () => {
-    const connect = vi.fn(async () => ({ open: true, detail: null }));
-    const status = await checkChrome(deps({ connect }));
-    expect(status).toEqual({ state: 'connected', checkedAt: '2026-11-20T10:00:00.000Z', detail: null });
-    expect(connect).toHaveBeenCalledWith('ws://127.0.0.1:9222/devtools/browser/abc', 8000);
+  it('is unknown when there is no Chrome binary', async () => {
+    const noBinary = deps({ probe: async () => false, studio: { ensure: async () => { throw new StudioChromeError('no-binary', 'x'); } } });
+    expect(await checkChrome(noBinary)).toMatchObject({ state: 'unknown', detail: 'No se encontró Google Chrome' });
   });
-  it('is permission-pending on 403, timeout or error, with detail', async () => {
-    for (const detail of ['Chrome answered 403', 'Opening handshake has timed out', 'ECONNREFUSED']) {
-      const status = await checkChrome(deps({ connect: async () => ({ open: false, detail }) }));
-      expect(status).toMatchObject({ state: 'permission-pending', detail });
-    }
-  });
-  it('works the same on linux and windows', async () => {
-    const files: string[] = [];
-    for (const platform of ['linux', 'win32'] as const) {
-      await checkChrome(deps({ platform, env: { LOCALAPPDATA: 'C:\\L' }, readFile: async (file) => { files.push(file); return '1\n/x'; } }));
-    }
-    expect(files[0]).toContain('google-chrome');
-    expect(files[1]).toContain('User Data');
+  it('probes the dev browserUrl and never launches anything', async () => {
+    const probe = vi.fn(async () => false);
+    const ensure = vi.fn();
+    const status = await checkChrome(deps({ browserUrl: () => 'http://127.0.0.1:9222', probe, studio: { ensure } }));
+    expect(status).toMatchObject({ state: 'chrome-closed', detail: 'No responde http://127.0.0.1:9222' });
+    expect(probe).toHaveBeenCalledWith('http://127.0.0.1:9222');
+    expect(ensure).not.toHaveBeenCalled();
+    expect((await checkChrome(deps({ browserUrl: () => 'http://h:1' }))).state).toBe('connected');
   });
 });
 
 describe('createChromeStatus', () => {
   it('notifies only when the state changes and reuses an inflight check', async () => {
-    let state: 'connected' | 'closed' = 'closed';
-    const service = createChromeStatus(deps({ isChromeRunning: async () => state === 'connected' }));
+    let up = false;
+    const service = createChromeStatus(deps({ probe: async () => up }));
     const listener = vi.fn();
     service.subscribe(listener);
     const [a, b] = await Promise.all([service.check(), service.check()]);
@@ -70,36 +62,26 @@ describe('createChromeStatus', () => {
     expect(listener).toHaveBeenCalledTimes(1);
     await service.check();
     expect(listener).toHaveBeenCalledTimes(1);
-    state = 'connected';
+    up = true;
     await service.check();
     expect(listener).toHaveBeenCalledTimes(2);
     expect(service.current()?.state).toBe('connected');
   });
 });
 
-describe('openChromeSettings', () => {
-  const url = 'chrome://inspect/#remote-debugging';
-  const run = (platform: NodeJS.Platform, results: boolean[]) => {
-    const calls: string[][] = [];
-    const queue = [...results];
-    return { calls, deps: { platform, exec: async (file: string, args: string[]) => { calls.push([file, ...args]); return queue.shift() ?? false; } } };
-  };
-  it('uses open on macOS', async () => {
-    const { calls, deps: d } = run('darwin', [true]);
-    expect(await openChromeSettings(d)).toEqual({ opened: true });
-    expect(calls).toEqual([['open', '-a', 'Google Chrome', url]]);
+describe('openStudioChrome', () => {
+  it('reports opened when Chrome was launched, without opening a tab', async () => {
+    const openTab = vi.fn(async () => true);
+    expect(await openStudioChrome({ studio: { ensure: async () => ({ launched: true }) }, openTab })).toEqual({ opened: true });
+    expect(openTab).not.toHaveBeenCalled();
   });
-  it('uses cmd start on Windows', async () => {
-    const { calls, deps: d } = run('win32', [true]);
-    await openChromeSettings(d);
-    expect(calls).toEqual([['cmd', '/c', 'start', 'chrome', url]]);
+  it('opens a tab when Chrome was already running', async () => {
+    const openTab = vi.fn(async () => true);
+    expect(await openStudioChrome({ studio: { ensure: async () => ({ launched: false }) }, openTab })).toEqual({ opened: true });
+    expect(openTab).toHaveBeenCalledTimes(1);
   });
-  it('falls back to chromium on Linux', async () => {
-    const { calls, deps: d } = run('linux', [false, true]);
-    expect(await openChromeSettings(d)).toEqual({ opened: true });
-    expect(calls).toEqual([['google-chrome', url], ['chromium', url]]);
-  });
-  it('reports opened false when nothing launches', async () => {
-    expect(await openChromeSettings(run('linux', [false, false]).deps)).toEqual({ opened: false });
+  it('reports opened false when ensure fails', async () => {
+    const studio = { ensure: async () => { throw new StudioChromeError('no-binary', 'x'); } };
+    expect(await openStudioChrome({ studio, openTab: async () => true })).toEqual({ opened: false });
   });
 });

@@ -12,6 +12,7 @@ import {
   type SDKUserMessage,
 } from '@anthropic-ai/claude-agent-sdk';
 import { DEFAULT_AGENT, type ClaudeToolsConfig, type ThreadOptions } from '@sdd-studio/protocol';
+import { STUDIO_CHROME_URL } from '../workspace/studio-chrome';
 import { CHROME_DEVTOOLS_MCP_VERSION, CHROME_DEVTOOLS_SERVER_NAME } from './chrome-devtools';
 import { deriveInitInfo } from './claude-init';
 import { InputChannel } from './input-channel';
@@ -182,7 +183,7 @@ export function applyClaudeTools(options: Options, config: ClaudeToolsConfig): v
   }
   if (Object.keys(settings).length > 0) options.settings = settings;
   if (config.browser.enabled) {
-    const mode = config.browser.browserUrl ? ['--browserUrl', config.browser.browserUrl] : ['--autoConnect'];
+    const mode = ['--browserUrl', config.browser.browserUrl ?? STUDIO_CHROME_URL];
     options.mcpServers = {
       [CHROME_DEVTOOLS_SERVER_NAME]: {
         type: 'stdio',
@@ -215,6 +216,7 @@ export class ClaudeAgentSdkEngine implements AgentEngine {
     private readonly deliveryMode: DeliveryMode = 'stream',
     private readonly sessionInfoFn: SessionInfoFn = sdkGetSessionInfo,
     private readonly getClaudeTools?: () => ClaudeToolsConfig,
+    private readonly ensureStudioChrome?: () => Promise<unknown>,
   ) {}
 
   async readSessionTitle(sessionId: string, cwd: string): Promise<string | null> {
@@ -232,12 +234,16 @@ export class ClaudeAgentSdkEngine implements AgentEngine {
     const resolve = (messages: OutgoingMessage[]): Promise<SDKUserMessage[]> =>
       Promise.all(messages.map((message) => toSdkUserMessage(message, cb.readAttachment)));
     const revert = (messages: OutgoingMessage[]): void => cb.revertPending(messages.map((message) => message.id));
+    const tools = this.getClaudeTools?.();
+    if (tools?.browser.enabled && !tools.browser.browserUrl && this.ensureStudioChrome) {
+      this.ensureStudioChrome().catch((error: unknown) => console.warn('studio chrome could not be started:', error instanceof Error ? error.message : error));
+    }
     const q = this.queryFn({
       prompt: channel,
       options: buildQueryOptions(input, {
         abort,
         env: this.getEnv?.(),
-        claudeTools: this.getClaudeTools?.(),
+        claudeTools: tools,
         judgeTool: (toolName, toolInput, hookInput) =>
           cb.judgeTool(toolName, toolInput, {
             author: mapper.authorForAgentId(hookInput.agent_id),

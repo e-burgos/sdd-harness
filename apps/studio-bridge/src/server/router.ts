@@ -10,7 +10,7 @@ import type { AttachmentStore } from '../sessions/attachment-store';
 import { SessionError, type SessionManager } from '../sessions/session-manager';
 import type { ThreadStore } from '../sessions/store';
 import { createClaudeMcp, type ClaudeMcpService } from '../workspace/claude-mcp';
-import { createChromeStatus, defaultChromeCheckDeps, defaultOpenSettingsDeps, openChromeSettings, type ChromeStatusService, type OpenSettingsDeps } from '../workspace/chrome-status';
+import { createChromeStatus, defaultChromeCheckDeps, defaultOpenStudioChromeDeps, openStudioChrome, type ChromeStatusService, type OpenStudioChromeDeps } from '../workspace/chrome-status';
 import { createClaudeInventory, type ClaudeInventoryService } from '../workspace/claude-inventory';
 import { cachedClaudeTools, type ClaudeToolsState, readClaudeTools, setClaudeTools, useGlobalClaudeTools } from '../workspace/claude-tools';
 import type { FileIndex } from '../workspace/file-index';
@@ -51,14 +51,14 @@ export function createHandlers(d: {
   claudeInventory?: ClaudeInventoryService;
   chromeStatus?: ChromeStatusService;
   claudeMcp?: ClaudeMcpService;
-  openSettings?: OpenSettingsDeps;
+  openSettings?: OpenStudioChromeDeps;
   now?: () => Date;
 }): BridgeHandlers {
   const integrations = d.integrations ?? createKitIntegrations();
   const claudeInventory = d.claudeInventory ?? createClaudeInventory({ root: d.root });
-  const chromeStatus = d.chromeStatus ?? createChromeStatus(defaultChromeCheckDeps(() => cachedClaudeTools(d.root).browser.enabled));
+  const chromeStatus = d.chromeStatus ?? createChromeStatus(defaultChromeCheckDeps(() => cachedClaudeTools(d.root).browser.enabled, () => cachedClaudeTools(d.root).browser.browserUrl));
   const claudeMcp = d.claudeMcp ?? createClaudeMcp({ root: d.root, inventory: claudeInventory });
-  const openSettings = d.openSettings ?? defaultOpenSettingsDeps();
+  const openSettings = d.openSettings ?? defaultOpenStudioChromeDeps();
   chromeStatus.subscribe((browser) => {
     const event: BotEvent = {
       channelId: 'general',
@@ -197,7 +197,7 @@ export function createHandlers(d: {
         case 'claude.browser.check':
           return chromeStatus.check();
         case 'claude.browser.openSettings':
-          return openChromeSettings(openSettings);
+          return openStudioChrome(openSettings);
         case 'claude.mcp.login':
           return claudeMcp.login(command.name);
         case 'claude.mcp.reconnect':

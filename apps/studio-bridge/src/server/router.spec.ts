@@ -15,7 +15,7 @@ import { ThreadStore } from '../sessions/store';
 import { copyFixture, waitFor } from '../test-utils/fixture';
 import { loadWorkspaceSnapshot } from '../workspace/snapshot';
 import type { ClaudeBrowserStatus } from '@sdd-studio/protocol';
-import type { ChromeStatusService, OpenSettingsDeps } from '../workspace/chrome-status';
+import type { ChromeStatusService, OpenStudioChromeDeps } from '../workspace/chrome-status';
 import type { ClaudeMcpService } from '../workspace/claude-mcp';
 import type { ClaudeInventoryService } from '../workspace/claude-inventory';
 import type { KitIntegrations } from '../workspace/kit-integrations';
@@ -37,7 +37,7 @@ afterEach(async () => {
 async function handlers(
   broadcast: (e: ServerEvent) => void = () => {},
   refresh: () => Promise<unknown> = async () => null,
-  extra: { claudeInventory?: ClaudeInventoryService; rtkGain?: (root: string) => Promise<RtkGain>; now?: () => Date; integrations?: KitIntegrations; chromeStatus?: ChromeStatusService; claudeMcp?: ClaudeMcpService; openSettings?: OpenSettingsDeps } = {},
+  extra: { claudeInventory?: ClaudeInventoryService; rtkGain?: (root: string) => Promise<RtkGain>; now?: () => Date; integrations?: KitIntegrations; chromeStatus?: ChromeStatusService; claudeMcp?: ClaudeMcpService; openSettings?: OpenStudioChromeDeps } = {},
 ) {
   const snapshot = (await loadWorkspaceSnapshot(root)).snapshot;
   const store = new ThreadStore(root);
@@ -51,7 +51,7 @@ async function handlers(
   return createHandlers({
     root, auth, login, bridgeVersion: '0.1.0', sessions, store, attachments, fileIndex: createFileIndex(root),
     kitIndexer: new KitIndexer({ root, onChanged: () => undefined }), broadcast: (m) => broadcast(m as ServerEvent),
-    chromeStatus: fakeChrome().service, claudeMcp: fakeMcp(), openSettings: { platform: 'linux', exec: async () => true }, ...extra,
+    chromeStatus: fakeChrome().service, claudeMcp: fakeMcp(), openSettings: { studio: { ensure: async () => ({ launched: true }) }, openTab: async () => true }, ...extra,
     watcher: { current: () => snapshot, refresh: async () => { await refresh(); return null; } }, runner: new CommandRunner(root, broadcast, () => 'run-1'),
   });
 }
@@ -543,11 +543,15 @@ describe('claude connect commands', () => {
     expect(bot[0]).toMatchObject({ botKind: 'claude-browser.changed', payload: { state: 'connected' } });
   });
 
-  it('openSettings returns opened and runs the platform command', async () => {
-    const calls: string[][] = [];
-    const h = await handlers(undefined, undefined, { openSettings: { platform: 'darwin', exec: async (file, args) => { calls.push([file, ...args]); return true; } } });
+  it('openSettings launches Studio Chrome or opens a tab when it was already running', async () => {
+    let launched = true;
+    let tabs = 0;
+    const h = await handlers(undefined, undefined, { openSettings: { studio: { ensure: async () => ({ launched }) }, openTab: async () => { tabs += 1; return true; } } });
     expect(await h.handle(cmd({ cmd: 'claude.browser.openSettings' }))).toEqual({ opened: true });
-    expect(calls).toEqual([['open', '-a', 'Google Chrome', 'chrome://inspect/#remote-debugging']]);
+    expect(tabs).toBe(0);
+    launched = false;
+    expect(await h.handle(cmd({ cmd: 'claude.browser.openSettings' }))).toEqual({ opened: true });
+    expect(tabs).toBe(1);
   });
 
   it('mcp login and reconnect delegate to the service', async () => {
