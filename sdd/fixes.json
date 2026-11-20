@@ -1939,6 +1939,41 @@
         "source": "agent-usage-notification",
         "recorded_at": "2026-11-20"
       }
+    },
+    {
+      "id": "FIX-e-burgos-013",
+      "author": "e-burgos",
+      "spec_id": null,
+      "fix_document": "sdd/fixes/fix-e-burgos-013.md",
+      "type": "BUGFIX",
+      "severity": "low",
+      "created_at": "2026-11-20",
+      "resolved_at": "2026-11-20",
+      "title": "claude-inventory.spec no falla al limpiar su carpeta temporal",
+      "estimation_hours": 0.25,
+      "description": "El afterEach borra el tmpdir con una escritura atómica de la sonda todavía en curso (ENOTEMPTY intermitente).",
+      "justification": "Test inestable detectado al verificar FIX-e-burgos-012; perfil solo; solo spec.",
+      "related_modules": [
+        "studio-claude-tools"
+      ],
+      "affected_files": [
+        "apps/studio-bridge/src/workspace/claude-inventory.spec.ts",
+        "sdd/fixes/fix-e-burgos-013.md"
+      ],
+      "test_reference": "5 corridas aisladas verdes + sdd:verify apps/studio-bridge quick (suite completa) OK (5e856fd)",
+      "status": "validated",
+      "cycle": null,
+      "validated_at": "2026-11-20",
+      "usage": {
+        "provider_model": "claude/opus",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "tokens_in": 12000,
+        "tokens_out": 1500,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-11-20"
+      }
     }
   ]
 }
