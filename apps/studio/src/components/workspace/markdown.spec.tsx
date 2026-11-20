@@ -1,6 +1,13 @@
 import { render, screen, within } from '@testing-library/react';
 import { I18nProvider } from '@/lib/i18n/i18n';
-import { Markdown, splitFrontmatter } from './Markdown';
+import { Markdown, splitFrontmatter, stripHtmlComments } from './Markdown';
+
+describe('stripHtmlComments', () => {
+  it('drops html comments outside code fences and keeps them inside', () => {
+    const text = '<!-- regla-cero:start -->\n# Regla\n```html\n<!-- example -->\n```\nfin <!-- x -->';
+    expect(stripHtmlComments(text)).toBe('# Regla\n```html\n<!-- example -->\n```\nfin ');
+  });
+});
 
 describe('Markdown', () => {
   it('opens links safely and never loads images', () => {

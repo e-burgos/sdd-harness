@@ -51,6 +51,13 @@ function FrontmatterCard({ meta }: { meta: FrontmatterEntry[] }) {
   );
 }
 
+// react-markdown does not render raw HTML, so harness markers like <!-- regla-cero:start --> would show as text.
+export const stripHtmlComments = (text: string): string =>
+  text
+    .split(/(^```[\s\S]*?^```)/m)
+    .map((part) => (part.startsWith('```') ? part : part.replace(/<!--[\s\S]*?-->\n?/g, '')))
+    .join('');
+
 export function Markdown({ text, density = 'chat' }: { text: string; density?: MarkdownDensity }) {
   const { t } = useT();
   const components = useMemo<Components>(
@@ -62,7 +69,10 @@ export function Markdown({ text, density = 'chat' }: { text: string; density?: M
     }),
     [t],
   );
-  const { meta, body } = useMemo(() => (density === 'doc' ? splitFrontmatter(text) : { meta: null, body: text }), [text, density]);
+  const { meta, body } = useMemo(() => {
+    const split = density === 'doc' ? splitFrontmatter(text) : { meta: null, body: text };
+    return { meta: split.meta, body: stripHtmlComments(split.body) };
+  }, [text, density]);
   return (
     <div className={`${SHARED} ${DENSITY[density]}`}>
       {meta && <FrontmatterCard meta={meta} />}
