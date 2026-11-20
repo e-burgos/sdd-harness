@@ -1663,6 +1663,48 @@
         "source": "declared-estimate",
         "recorded_at": "2026-11-18"
       }
+    },
+    {
+      "author": "e-burgos",
+      "spec_id": null,
+      "created_at": "2026-11-20",
+      "resolved_at": null,
+      "related_modules": [
+        "studio-auto-conversation"
+      ],
+      "affected_files": [],
+      "test_reference": "",
+      "status": "in-progress",
+      "cycle": null,
+      "id": "FIX-e-burgos-006",
+      "fix_document": "sdd/fixes/fix-e-burgos-006.md",
+      "type": "BUGFIX",
+      "severity": "medium",
+      "estimation_hours": 1,
+      "title": "El aviso «Conversación nueva lista» no aparece para unidades ya en curso y se cierra solo",
+      "description": "Studio prepara una conversación y muestra el aviso aunque la conversación que creó la unidad ya la trabaja: el chequeo corre antes de la asociación y el aviso no se retira nunca.",
+      "justification": "Error confirmado en uso real (captura del dev); perfil solo; sin contratos ni entidades nuevas."
+    },
+    {
+      "author": "e-burgos",
+      "spec_id": null,
+      "created_at": "2026-11-20",
+      "resolved_at": null,
+      "related_modules": [
+        "studio-agents"
+      ],
+      "affected_files": [],
+      "test_reference": "",
+      "status": "pending",
+      "cycle": null,
+      "id": "FIX-e-burgos-007",
+      "fix_document": "sdd/fixes/fix-e-burgos-007.md",
+      "type": "IMPROVEMENT",
+      "severity": "medium",
+      "estimation_hours": 2,
+      "title": "El chat con un agente se abre en el panel central y las asociaciones tienen scroll",
+      "description": "La ficha del agente incrusta la conversación en una caja angosta donde las asociaciones se apilan sin scroll; toda conversación debe abrirse en el panel central.",
+      "justification": "Mejora de UX pedida por el dev; perfil solo; sin contratos ni entidades nuevas."
     }
   ]
 }
