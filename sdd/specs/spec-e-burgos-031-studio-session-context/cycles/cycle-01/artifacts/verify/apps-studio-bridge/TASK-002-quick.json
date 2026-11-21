@@ -1,0 +1,43 @@
+{
+  "app": "apps/studio-bridge",
+  "level": "quick",
+  "unit": "TASK-002",
+  "ok": true,
+  "commit": "6bd5304fac79ed3a5de7b6e4c785cb86243d434a",
+  "dirty": [
+    ".claude/settings.json",
+    ".gemini/settings.json",
+    "apps/studio-bridge/src/engine/stable-prefix.ts",
+    "apps/studio-bridge/src/server/router.spec.ts",
+    "apps/studio-bridge/src/server/router.ts",
+    "apps/studio-bridge/src/sessions/session-manager.spec.ts",
+    "apps/studio-bridge/src/sessions/session-manager.ts",
+    "apps/studio-bridge/src/sessions/store.ts",
+    "apps/studio-bridge/src/workspace/kit-index.spec.ts",
+    "apps/studio-bridge/src/workspace/kit-index.ts",
+    "apps/studio-bridge/src/workspace/watcher.ts",
+    ".agents/skills/tucu-ui-design",
+    ".github/skills/tucu-ui-design",
+    ".mcp.json",
+    "apps/studio-bridge/src/sessions/pack-context.spec.ts",
+    "apps/studio-bridge/src/sessions/pack-context.ts",
+    "apps/studio-bridge/src/workspace/pack-runner.spec.ts",
+    "apps/studio-bridge/src/workspace/pack-runner.ts"
+  ],
+  "started_at": "2026-11-20T19:32:06.762Z",
+  "duration_ms": 16910,
+  "commands": [
+    {
+      "command": "pnpm --filter @e-burgos/sdd-studio run typecheck",
+      "exit_code": 0,
+      "duration_ms": 5850,
+      "skipped": false
+    },
+    {
+      "command": "pnpm --filter @e-burgos/sdd-studio run test",
+      "exit_code": 0,
+      "duration_ms": 11059,
+      "skipped": false
+    }
+  ]
+}

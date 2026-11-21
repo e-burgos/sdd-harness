@@ -1,0 +1,40 @@
+{
+  "app": "apps/studio",
+  "level": "quick",
+  "unit": "TASK-003",
+  "ok": true,
+  "commit": "3c257ddf1a3e62bd24f0a84a23dfa994aff8e897",
+  "dirty": [
+    ".claude/settings.json",
+    ".gemini/settings.json",
+    "apps/studio/src/components/modules/specs/SpecPlanTab.tsx",
+    "apps/studio/src/components/modules/specs/specs-model.spec.ts",
+    "apps/studio/src/components/modules/specs/specs-model.ts",
+    "apps/studio/src/components/modules/specs/specs-module.spec.tsx",
+    "apps/studio/src/lib/i18n/en.ts",
+    "apps/studio/src/lib/i18n/es.ts",
+    "apps/studio/src/lib/i18n/modules/specs.ts",
+    "apps/studio/src/lib/use-bridge-features.ts",
+    ".agents/skills/tucu-ui-design",
+    ".github/skills/tucu-ui-design",
+    ".mcp.json",
+    "apps/studio/src/components/modules/specs/SpecGatePanel.tsx",
+    "apps/studio/src/components/modules/specs/spec-gate-panel.spec.tsx"
+  ],
+  "started_at": "2026-11-20T19:50:59.709Z",
+  "duration_ms": 43882,
+  "commands": [
+    {
+      "command": "pnpm --filter sdd-studio-web run typecheck",
+      "exit_code": 0,
+      "duration_ms": 3176,
+      "skipped": false
+    },
+    {
+      "command": "pnpm --filter sdd-studio-web run test",
+      "exit_code": 0,
+      "duration_ms": 40706,
+      "skipped": false
+    }
+  ]
+}

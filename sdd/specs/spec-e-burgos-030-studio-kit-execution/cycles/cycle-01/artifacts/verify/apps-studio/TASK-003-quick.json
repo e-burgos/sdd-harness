@@ -1,0 +1,46 @@
+{
+  "app": "apps/studio",
+  "level": "quick",
+  "unit": "TASK-003",
+  "ok": true,
+  "commit": "9de0aa855f6994452179e5cd8901156f331ebd50",
+  "dirty": [
+    ".claude/settings.json",
+    ".gemini/settings.json",
+    "apps/studio/next-env.d.ts",
+    "apps/studio/src/components/StudioHeader.tsx",
+    "apps/studio/src/components/modules/specs/SpecCard.tsx",
+    "apps/studio/src/components/modules/specs/SpecTasksTab.tsx",
+    "apps/studio/src/lib/i18n/en.ts",
+    "apps/studio/src/lib/i18n/es.ts",
+    "apps/studio/src/lib/i18n/modules/specs.ts",
+    "apps/studio/src/lib/nav/use-nav.ts",
+    "apps/studio/src/lib/use-bridge-features.ts",
+    ".agents/skills/tucu-ui-design",
+    ".github/skills/tucu-ui-design",
+    ".mcp.json",
+    "apps/studio/src/components/VerifyLeasePill.tsx",
+    "apps/studio/src/components/modules/specs/SpecVerifyTab.tsx",
+    "apps/studio/src/components/modules/specs/TaskBlockGroup.tsx",
+    "apps/studio/src/components/modules/specs/TaskRow.tsx",
+    "apps/studio/src/components/modules/specs/kit-execution.spec.tsx",
+    "apps/studio/src/lib/kit-execution.spec.ts",
+    "apps/studio/src/lib/kit-execution.ts"
+  ],
+  "started_at": "2026-11-20T19:20:54.878Z",
+  "duration_ms": 48073,
+  "commands": [
+    {
+      "command": "pnpm --filter sdd-studio-web run typecheck",
+      "exit_code": 0,
+      "duration_ms": 3476,
+      "skipped": false
+    },
+    {
+      "command": "pnpm --filter sdd-studio-web run test",
+      "exit_code": 0,
+      "duration_ms": 44597,
+      "skipped": false
+    }
+  ]
+}

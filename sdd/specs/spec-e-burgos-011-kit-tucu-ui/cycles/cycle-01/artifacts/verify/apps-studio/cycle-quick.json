@@ -1,0 +1,31 @@
+{
+  "app": "apps/studio",
+  "level": "quick",
+  "unit": "cycle",
+  "ok": true,
+  "commit": "97e0adc06e442547a792e2ca4851b6d7a98289d9",
+  "dirty": [
+    ".claude/settings.json",
+    ".gemini/settings.json",
+    "apps/studio/next-env.d.ts",
+    ".agents/skills/tucu-ui-design",
+    ".github/skills/tucu-ui-design",
+    ".mcp.json"
+  ],
+  "started_at": "2026-11-20T21:31:50.180Z",
+  "duration_ms": 52776,
+  "commands": [
+    {
+      "command": "pnpm --filter sdd-studio-web run typecheck",
+      "exit_code": 0,
+      "duration_ms": 3120,
+      "skipped": false
+    },
+    {
+      "command": "pnpm --filter sdd-studio-web run test",
+      "exit_code": 0,
+      "duration_ms": 49656,
+      "skipped": false
+    }
+  ]
+}

@@ -24,5 +24,16 @@
         ]
       }
     ]
+  },
+  "extraKnownMarketplaces": {
+    "video-maker": {
+      "source": {
+        "source": "github",
+        "repo": "e-burgos/video-maker"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "video-maker@video-maker": true
   }
 }

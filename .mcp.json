@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "tucu-ui": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@e-burgos/tucu-ui-mcp@0.16.0"
+      ]
+    }
+  }
+}

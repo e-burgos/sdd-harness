@@ -19,5 +19,21 @@
         ]
       }
     ]
+  },
+  "mcpServers": {
+    "tucu-ui": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@e-burgos/tucu-ui-mcp@0.16.0"
+      ]
+    },
+    "video-maker": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@e-burgos/video-maker-mcp@0.1.0"
+      ]
+    }
   }
 }

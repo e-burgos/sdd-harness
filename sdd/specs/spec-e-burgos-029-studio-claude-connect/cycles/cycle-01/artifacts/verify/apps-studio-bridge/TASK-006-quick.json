@@ -1,0 +1,39 @@
+{
+  "app": "apps/studio-bridge",
+  "level": "quick",
+  "unit": "TASK-006",
+  "ok": true,
+  "commit": "14b0a570b59d455474fb31d503a72cfd25b669cd",
+  "dirty": [
+    ".claude/settings.json",
+    ".gemini/settings.json",
+    "apps/studio-bridge/src/engine/claude-sdk-engine.spec.ts",
+    "apps/studio-bridge/src/engine/claude-sdk-engine.ts",
+    "apps/studio-bridge/src/project/runtime.ts",
+    "apps/studio-bridge/src/server/router.spec.ts",
+    "apps/studio-bridge/src/server/router.ts",
+    "apps/studio-bridge/src/workspace/chrome-status.spec.ts",
+    "apps/studio-bridge/src/workspace/chrome-status.ts",
+    ".agents/skills/tucu-ui-design",
+    ".github/skills/tucu-ui-design",
+    ".mcp.json",
+    "apps/studio-bridge/src/workspace/studio-chrome.spec.ts",
+    "apps/studio-bridge/src/workspace/studio-chrome.ts"
+  ],
+  "started_at": "2026-11-20T17:56:41.965Z",
+  "duration_ms": 16792,
+  "commands": [
+    {
+      "command": "pnpm --filter @e-burgos/sdd-studio run typecheck",
+      "exit_code": 0,
+      "duration_ms": 5464,
+      "skipped": false
+    },
+    {
+      "command": "pnpm --filter @e-burgos/sdd-studio run test",
+      "exit_code": 0,
+      "duration_ms": 11328,
+      "skipped": false
+    }
+  ]
+}
