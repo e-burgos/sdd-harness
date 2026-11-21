@@ -1,0 +1,45 @@
+{
+  "app": "apps/studio-bridge",
+  "level": "full",
+  "unit": "B-02",
+  "ok": true,
+  "commit": "7de97f47461067b80936c4bb426220a6f75f5ff6",
+  "dirty": [
+    ".claude/settings.json",
+    ".gemini/settings.json",
+    "apps/studio-bridge/src/gate/judge.spec.ts",
+    "apps/studio-bridge/src/gate/judge.ts",
+    "apps/studio-bridge/src/server/router.spec.ts",
+    "apps/studio-bridge/src/server/router.ts",
+    "apps/studio-bridge/src/workspace/snapshot.ts",
+    "libs/studio-protocol/src/snapshot.ts",
+    ".agents/skills/tucu-ui-design",
+    ".github/skills/tucu-ui-design",
+    ".mcp.json",
+    "apps/studio-bridge/src/gate/glob.ts",
+    "apps/studio-bridge/src/workspace/gate-runner.spec.ts",
+    "apps/studio-bridge/src/workspace/gate-runner.ts"
+  ],
+  "started_at": "2026-11-20T19:48:18.871Z",
+  "duration_ms": 15800,
+  "commands": [
+    {
+      "command": "pnpm --filter @e-burgos/sdd-studio run typecheck",
+      "exit_code": 0,
+      "duration_ms": 5502,
+      "skipped": false
+    },
+    {
+      "command": "pnpm --filter @e-burgos/sdd-studio run test",
+      "exit_code": 0,
+      "duration_ms": 9925,
+      "skipped": false
+    },
+    {
+      "command": "pnpm --filter @e-burgos/sdd-studio run build",
+      "exit_code": 0,
+      "duration_ms": 372,
+      "skipped": false
+    }
+  ]
+}

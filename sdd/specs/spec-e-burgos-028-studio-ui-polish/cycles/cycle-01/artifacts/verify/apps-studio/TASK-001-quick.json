@@ -1,0 +1,62 @@
+{
+  "app": "apps/studio",
+  "level": "quick",
+  "unit": "TASK-001",
+  "ok": true,
+  "commit": "3e4a353e204428b77d855549892df60365052941",
+  "dirty": [
+    ".claude/settings.json",
+    ".claude/skills",
+    ".gemini/settings.json",
+    "apps/studio/src/components/mission-control/ChatDialogueCard.tsx",
+    "apps/studio/src/components/mission-control/DocumentViewerModal.tsx",
+    "apps/studio/src/components/modules/kit/KitParts.tsx",
+    "apps/studio/src/components/modules/kit/kit-module.spec.tsx",
+    "apps/studio/src/components/workspace/Markdown.tsx",
+    "apps/studio/src/components/workspace/markdown.spec.tsx",
+    ".agents/skills/tucu-ui-design",
+    ".claude/skills/crafted-motion",
+    ".claude/skills/design-languages",
+    ".claude/skills/generate-api-contract",
+    ".claude/skills/generate-nestjs-module",
+    ".claude/skills/generate-prisma-schema",
+    ".claude/skills/generate-react-component",
+    ".claude/skills/generate-springboot-api",
+    ".claude/skills/init-nx-workspace",
+    ".claude/skills/nx-migration",
+    ".claude/skills/scaffold-nx",
+    ".claude/skills/sdd-architect",
+    ".claude/skills/sdd-data-schemas",
+    ".claude/skills/sdd-file-structure",
+    ".claude/skills/sdd-functional",
+    ".claude/skills/sdd-hermes",
+    ".claude/skills/sdd-implementor-back",
+    ".claude/skills/sdd-implementor-front",
+    ".claude/skills/sdd-mod",
+    ".claude/skills/sdd-orchestrator",
+    ".claude/skills/sdd-planner",
+    ".claude/skills/sdd-reviewer",
+    ".claude/skills/sdd-steward",
+    ".claude/skills/setup-graphify",
+    ".claude/skills/tucu-ui-design",
+    ".claude/skills/tucu-ui-pro",
+    ".github/skills/tucu-ui-design",
+    ".mcp.json"
+  ],
+  "started_at": "2026-11-20T16:57:48.106Z",
+  "duration_ms": 55068,
+  "commands": [
+    {
+      "command": "pnpm --filter sdd-studio-web run typecheck",
+      "exit_code": 0,
+      "duration_ms": 5085,
+      "skipped": false
+    },
+    {
+      "command": "pnpm --filter sdd-studio-web run test",
+      "exit_code": 0,
+      "duration_ms": 49982,
+      "skipped": false
+    }
+  ]
+}

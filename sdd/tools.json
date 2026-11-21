@@ -8,5 +8,17 @@
   "claude_mod": {
     "enabled": true,
     "gate": "block"
+  },
+  "tucu_ui": {
+    "enabled": true,
+    "skill": true,
+    "mcp": true,
+    "version": "0.16.0"
+  },
+  "video_maker": {
+    "enabled": true,
+    "plugin": true,
+    "mcp": true,
+    "version": "0.1.0"
   }
 }

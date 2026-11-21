@@ -1,0 +1,32 @@
+{
+  "app": "apps/studio",
+  "level": "quick",
+  "unit": "TASK-004",
+  "ok": true,
+  "commit": "a707a21b91ca875a55f1355d4cbf8082339cf742",
+  "dirty": [
+    ".claude/settings.json",
+    ".gemini/settings.json",
+    "apps/studio/src/components/workspace/Markdown.tsx",
+    "apps/studio/src/components/workspace/markdown.spec.tsx",
+    ".agents/skills/tucu-ui-design",
+    ".github/skills/tucu-ui-design",
+    ".mcp.json"
+  ],
+  "started_at": "2026-11-20T19:42:56.156Z",
+  "duration_ms": 46658,
+  "commands": [
+    {
+      "command": "pnpm --filter sdd-studio-web run typecheck",
+      "exit_code": 0,
+      "duration_ms": 4862,
+      "skipped": false
+    },
+    {
+      "command": "pnpm --filter sdd-studio-web run test",
+      "exit_code": 0,
+      "duration_ms": 41795,
+      "skipped": false
+    }
+  ]
+}

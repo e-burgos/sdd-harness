@@ -1,0 +1,49 @@
+{
+  "app": "apps/studio",
+  "level": "quick",
+  "unit": "TASK-003",
+  "ok": true,
+  "commit": "5972ff14774d2c9e401207d64fdcf7dfc46656cc",
+  "dirty": [
+    ".claude/settings.json",
+    ".gemini/settings.json",
+    "apps/studio/src/components/modules/kit/KitCenter.tsx",
+    "apps/studio/src/components/modules/kit/KitPanel.tsx",
+    "apps/studio/src/components/modules/kit/kit-model.ts",
+    "apps/studio/src/components/modules/kit/kit-module.spec.tsx",
+    "apps/studio/src/components/modules/specs/SpecVerifyTab.tsx",
+    "apps/studio/src/components/modules/specs/kit-execution.spec.tsx",
+    "apps/studio/src/components/workspace/ThreadView.tsx",
+    "apps/studio/src/lib/format.ts",
+    "apps/studio/src/lib/i18n/en.ts",
+    "apps/studio/src/lib/i18n/es.ts",
+    "apps/studio/src/lib/i18n/modules/kit.ts",
+    "apps/studio/src/lib/i18n/modules/specs.ts",
+    "apps/studio/src/lib/no-fabricated-data.spec.ts",
+    "apps/studio/src/lib/use-bridge-features.ts",
+    ".agents/skills/tucu-ui-design",
+    ".github/skills/tucu-ui-design",
+    ".mcp.json",
+    "apps/studio/src/components/modules/kit/CopyText.tsx",
+    "apps/studio/src/components/modules/kit/KitHarnessView.tsx",
+    "apps/studio/src/components/modules/specs/SpecPackStats.tsx",
+    "apps/studio/src/components/workspace/ContextSourceChip.tsx",
+    "apps/studio/src/components/workspace/context-source.spec.tsx"
+  ],
+  "started_at": "2026-11-20T19:38:25.483Z",
+  "duration_ms": 42373,
+  "commands": [
+    {
+      "command": "pnpm --filter sdd-studio-web run typecheck",
+      "exit_code": 0,
+      "duration_ms": 2962,
+      "skipped": false
+    },
+    {
+      "command": "pnpm --filter sdd-studio-web run test",
+      "exit_code": 0,
+      "duration_ms": 39409,
+      "skipped": false
+    }
+  ]
+}

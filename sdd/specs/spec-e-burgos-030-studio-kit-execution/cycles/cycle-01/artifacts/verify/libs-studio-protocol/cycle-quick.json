@@ -1,0 +1,30 @@
+{
+  "app": "libs/studio-protocol",
+  "level": "quick",
+  "unit": "cycle",
+  "ok": true,
+  "commit": "83cc83c8c9a68ef64b17aa4e7613a6c806732439",
+  "dirty": [
+    ".claude/settings.json",
+    ".gemini/settings.json",
+    ".agents/skills/tucu-ui-design",
+    ".github/skills/tucu-ui-design",
+    ".mcp.json"
+  ],
+  "started_at": "2026-11-20T19:23:38.030Z",
+  "duration_ms": 2868,
+  "commands": [
+    {
+      "command": "pnpm --filter @sdd-studio/protocol run typecheck",
+      "exit_code": 0,
+      "duration_ms": 1643,
+      "skipped": false
+    },
+    {
+      "command": "pnpm --filter @sdd-studio/protocol run test",
+      "exit_code": 0,
+      "duration_ms": 1225,
+      "skipped": false
+    }
+  ]
+}

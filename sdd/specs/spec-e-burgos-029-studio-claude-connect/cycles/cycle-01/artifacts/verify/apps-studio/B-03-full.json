@@ -1,0 +1,44 @@
+{
+  "app": "apps/studio",
+  "level": "full",
+  "unit": "B-03",
+  "ok": true,
+  "commit": "020ce13408cbef9df550cc10e73f9be371acb242",
+  "dirty": [
+    ".claude/settings.json",
+    ".gemini/settings.json",
+    "apps/studio/src/components/WorkspaceApp.tsx",
+    "apps/studio/src/components/modules/claude/ClaudeCenter.tsx",
+    "apps/studio/src/components/modules/claude/claude-model.ts",
+    "apps/studio/src/components/modules/claude/claude-module.spec.tsx",
+    "apps/studio/src/components/modules/claude/use-claude-tools.ts",
+    "apps/studio/src/lib/i18n/modules/claude.ts",
+    ".agents/skills/tucu-ui-design",
+    ".github/skills/tucu-ui-design",
+    ".mcp.json",
+    "apps/studio/src/components/ChromeBanner.tsx",
+    "apps/studio/src/components/modules/claude/use-chrome-status.ts"
+  ],
+  "started_at": "2026-11-20T17:49:14.605Z",
+  "duration_ms": 68755,
+  "commands": [
+    {
+      "command": "pnpm --filter sdd-studio-web run typecheck",
+      "exit_code": 0,
+      "duration_ms": 2988,
+      "skipped": false
+    },
+    {
+      "command": "pnpm --filter sdd-studio-web run test",
+      "exit_code": 0,
+      "duration_ms": 50973,
+      "skipped": false
+    },
+    {
+      "command": "pnpm --filter sdd-studio-web run build",
+      "exit_code": 0,
+      "duration_ms": 14792,
+      "skipped": false
+    }
+  ]
+}

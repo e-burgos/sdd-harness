@@ -1,0 +1,40 @@
+{
+  "app": "apps/studio",
+  "level": "full",
+  "unit": "B-05",
+  "ok": true,
+  "commit": "66acca28cfec37d729a76f862dd50a3e94ee77c2",
+  "dirty": [
+    ".claude/settings.json",
+    ".gemini/settings.json",
+    "apps/studio/src/components/ChromeBanner.tsx",
+    "apps/studio/src/components/modules/claude/ClaudeCenter.tsx",
+    "apps/studio/src/components/modules/claude/claude-module.spec.tsx",
+    "apps/studio/src/lib/i18n/modules/claude.ts",
+    ".agents/skills/tucu-ui-design",
+    ".github/skills/tucu-ui-design",
+    ".mcp.json"
+  ],
+  "started_at": "2026-11-20T18:00:05.141Z",
+  "duration_ms": 72724,
+  "commands": [
+    {
+      "command": "pnpm --filter sdd-studio-web run typecheck",
+      "exit_code": 0,
+      "duration_ms": 3461,
+      "skipped": false
+    },
+    {
+      "command": "pnpm --filter sdd-studio-web run test",
+      "exit_code": 0,
+      "duration_ms": 53561,
+      "skipped": false
+    },
+    {
+      "command": "pnpm --filter sdd-studio-web run build",
+      "exit_code": 0,
+      "duration_ms": 15701,
+      "skipped": false
+    }
+  ]
+}
