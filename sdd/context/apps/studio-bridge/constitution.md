@@ -1,6 +1,6 @@
 # Constitución — apps/studio-bridge
 
-> Versión 1.7 | Última actualización: consolida los fragmentos de spec-e-burgos-017 cycle-02, 014 cycle-02 y 022 cycle-01 (reservas de archivo, integración con GitHub, integraciones del kit) | Fecha: 2026-11-14
+> Versión 1.8 | Última actualización: consolida los fragmentos de spec-e-burgos-026, 027, 029, 030, 031 y 032 cycle-01 (herramientas de Claude y navegador, ejecución del kit, contexto de sesión, paridad del gate) | Fecha: 2026-11-20
 
 ## 1. Propósito y Alcance
 
@@ -32,13 +32,17 @@
 - `sdk-mapper.ts` & `tool-summary.ts`: Transforma los deltas de mensajes y tool calls del SDK a eventos estructurados del protocolo (`ThreadEvent`), extrayendo resúmenes y diffs unificados. `summarizeToolDetailed` con `BASH_SUMMARY_MAX = 600` (rutas `sdd/` completas); `summaryTruncated: true` solo cuando hubo recorte.
 - `fake-engine.ts`: Implementación mock de `AgentEngine` para tests y Playwright sin red; puntos de corte y marcadores (`#slow`, `#steps:N`, `#bash-git`, `#bad-attachment`, `#write-doc`, `#bash-doc`, `#title:<texto>`, `#ask`, `#ctx:N`, …) y ecos ` [attachments: …]` / ` [refs: …]`.
 - `stable-prefix.ts`: `STABLE_PREFIX_SOURCES` (context_prompt, constitution, lessons, en ese orden), `composeStablePrefix`, `createStablePrefixLoader`; límite 256 KiB, CRLF normalizado, archivos faltantes omitidos con un aviso por archivo. `EngineTurnInput.systemPrefix?` lo recibe `ClaudeAgentSdkEngine` como `systemPrompt: { preset: 'claude_code', append, excludeDynamicSections: true, snapshot: true }` (prompt caching; el efecto real no se midió).
+- Contexto por paquete (031): el prefijo se arma con el rol del agente (D-01) y la unidad del hilo ⇒ `sdd-pack.mjs … --stdout` (precalculado en `warmContext`, caché por unidad e invalidación por mtime de `tasks.json`/`packs.json`): lessons + línea de unidad + paquete. Sin paquete cae a la base (context_prompt + constitution + lessons); los roles de ciclo en ciclos multi-app caen a base (falta elegir `--app`). `contextSource` viaja en la info del hilo.
+- `claude-tools.ts`/`applyClaudeTools` (026): `settingSources` = `project` + fuentes prendidas; plugins apagados con `settings.enabledPlugins[id] = false`; MCP apagados con `settings.deniedMcpServers` (verificado con el SDK real: `toggleMcpServer` no hace falta). Ver 3.4.4.
+- `claude-init.ts` `deriveInitInfo` + `EngineCallbacks.onInit`: el `system/init` de cada turno actualiza el estado de los MCP del inventario.
 - `AgentEngine.provider` (`KnownProvider`) es obligatorio; `FakeEngine` registra `receivedSystemPrefixes`.
 - Motor único real: Claude (`claude-sdk-engine.ts`). Cada hilo nace con `engineSessionId: null` y `provider` del motor (`createThread`); la sesión nace en el primer turno, `start` solo la retoma dentro del mismo hilo y `sessionOwnedByAnotherThread` rechaza un id ya usado por otro hilo.
 
 ### 3.2 Enforcement del SPEC GATE (`src/gate/`)
 - `judge.ts`: Núcleo de validación de ediciones de código (`judgeEdit`); exporta `OPEN_FIX`.
   - Herramientas monitoreadas: `EDIT_TOOLS` (`Edit`, `Write`, `MultiEdit`, `NotebookEdit`).
-  - Carpetas exentas de gate: `sdd`, `.claude`, `.github`, `.gemini`, `.agents`, `.agent`, `.vscode`, `.idea`.
+  - Carpetas exentas de gate: `sdd`, `.claude`, `.github`, `.gemini`, `.agents`, `.agent`, `.vscode`, `.idea`. `isCodePath(rel, exempt)` es el port de la regla del mod (032): `EXEMPT_DIRS`, globs `exempt` (`gate/glob.ts`, desde `snapshot.tools.exempt`), code roots `apps`/`libs`/`tools`, y `.md`/`.mdx` fuera de code roots no son código; protegido por una tabla de paridad con el mod.
+  - `workspace/gate-runner.ts`: corre `spec-gate.mjs <spec> [cycle] --json` (exit 0/1 ⇒ resultado, 2 ⇒ bad-request, JSON inválido ⇒ internal) para `kit.gate.check`.
   - Regla: Toda edición fuera de carpetas exentas es RECHAZADA (`deny`) a menos que exista un ciclo con `status: "in-progress"` o un fix abierto con `status: "pending" | "in-progress"`. La decisión es por sesión, igual que el mod: con varias unidades abiertas se resuelve contra la atadura de la conversación (`SessionBindings`). Si el permiso está en modo warn, se deriva a la UI como solicitud de aprobación con aviso visible.
 
 ### 3.3 Gestión de Sesiones y Presencia (`src/sessions/`)
@@ -59,6 +63,8 @@
 - `catalog.ts`: `loadCatalog` — agentes de `.claude/agents` y `sdd/agents`, skills de `.claude/skills` y `sdd/skills`, prompts de `sdd/prompts`; dedupe por realpath canónico (symlinks `.claude` → `sdd/`), tope 200 por tipo, descripciones a 300 caracteres.
 - `paths.ts`: Sanitización estricta de rutas de archivos para evitar directory traversal fuera de la raíz del repo.
 - `kit-index.ts` (`kit.index`, evento `kit.changed`), `kit-tools.ts` (`kit.tools.set` con `expectedRevision` sha256-16, validación ajv contra el schema del kit, escritura atómica, test de paridad con los scripts del kit; conserva claves como `tucu_ui`; emite `tools.changed`), `kit-integrations.ts` (`createKitIntegrations`, `normalizeIntegrationStatus`: `kit.integration.status|set` corren `sdd/scripts/sdd-tucu.mjs` y `sdd-video.mjs` del workspace con `execFile` de `process.execPath`, sin shell, reusando `Exec` de `github/exec.ts`; `--status` con tope de 15 s, enable/disable de 180 s; sin el script responde `unavailable`; tras un `set` exitoso refresca el watcher y emite `integration.changed` en #general, oculto del historial salvo `includeKitEvents`; `sessions/store.ts` lo trata como `tools.changed`; handlers en `server/router.ts`) y `rtk-gain.ts` (`kit.rtkGain`).
+- Ejecución del kit (030): el snapshot lee `batches`, `usage` y `depends_on` de cada `tasks.json`, los resultados de `artifacts/verify/*/*.json` (el más reciente por app/nivel/unidad; sin `logs/`) y `sdd/verify.json`; el watcher ignora `artifacts/verify/logs`. `verify-lease.ts` importa en runtime `sdd/scripts/lib/verify-lease.mjs` (`resolveLockFile` + `judgeLease`) ⇒ `verifyLease` (área `kit`). `kit.verify.run` valida app/nivel contra `verify.json`, usa `CommandRunner.verify` (uno a la vez ⇒ `conflict` busy) y refresca el snapshot al salir.
+- `kit-index.ts` suma la sección `harness` (núcleo con bytes de la copia de la raíz, `project.md`, reglas con frontmatter); `kit.pack.stats` = `--stats --json` (primera app del ciclo si es multi-app).
 - `profile.ts`: `writeProfile` (`profile.set`, escritura atómica de `sdd/global.json`).
 
 ### 3.4.1 Host, runtime y launcher (`src/main.ts`, `src/project/`)
@@ -71,6 +77,14 @@
 
 ### 3.4.3 Integración con GitHub (`src/github/`)
 - `exec.ts`, `service.ts` (`GithubService`: `github.status` y `github.connect` delegan en la CLI del kit, `harness github … --json`, también en modo launcher sobre una generación `succeeded`) y `pr-feed.ts` (`createGithubFeed`, `reduceChecks`, `withGithub`: `snapshot.github` con PR y checks por ciclo en curso vía `gh pr view`, cada 60 s y al cambiar los ciclos, solo con remoto de GitHub y gh autenticado). `project/runtime.ts` compone el feed sobre el de sesiones (`refreshGithub`); `server/router.ts` y `main.ts` rutean `github.*` como comandos de host. Usa el `gh` del dev a través de la CLI del kit.
+
+### 3.4.4 Herramientas de Claude y navegador (`src/workspace/`, `src/engine/`)
+- `claude-tools.ts`: config de Claude **global** en `~/.sdd-studio/claude-tools.json` (`SDD_STUDIO_HOME` reemplaza el home; `src/test-utils/studio-home.ts` lo fija en un tmpdir en todos los specs vía `setupFiles`). Efectiva = override del proyecto (`<root>/.sdd-studio/claude-tools.json`) → global → defaults. Revisión = hash de alcance + bytes, escritura atómica, cola; reusa `KitToolsError`. `cachedClaudeTools(root)` alimenta el getter del motor; sin archivo ⇒ defaults ⇒ el motor arranca como antes.
+- `claude.tools.set` sin `scope` escribe en el alcance efectivo; `scope:'project'` crea el override; `scope:'global'` escribe la global sin tocar el override; `claude.tools.useGlobal` borra el override. Un cambio global recalcula la caché de todas las raíces del proceso.
+- `claude-inventory.ts`: sonda con dos `query()` (solo proyecto y todas las fuentes) abortadas al llegar el init, timeout 30 s, promesa en vuelo reusada; persiste en `.sdd-studio/claude-inventory.json`. Router: `claude.tools.get|set|useGlobal`, `claude.inventory.refresh`; bot event `claude-tools.changed`.
+- Navegador: `studio-chrome.ts` lanza un Chrome propio de Studio (`--remote-debugging-port=9333 --user-data-dir=~/.sdd-studio/chrome-profile`) si no responde; instancia única compartida por motor, estado y router. El motor lo expone como `mcpServers['chrome-devtools']` con `npx -y chrome-devtools-mcp@1.13.0 --browserUrl http://127.0.0.1:9333` (`engine/chrome-devtools.ts`). `chrome-status.ts`: estado por `GET /json/version` (nunca WebSocket: no dispara avisos), bot event al cambiar.
+- `claude-mcp.ts`: `claude mcp login` del binario del SDK (resuelto desde el paquete del SDK) bajo pty con `python3 -c 'import pty…'`; sin python3 o en Windows abre una terminal del sistema (`terminal`). `reconnect` = sonda de inventario.
+- Dependencias: Claude in Chrome exige login de claude.ai (con API key el motor la deja apagada), por eso el navegador va por chrome-devtools-mcp; `claude mcp login` exige TTY; el paquete de plataforma del SDK solo se ve desde el SDK con pnpm.
 
 ### 3.5 Servidor y Seguridad (`src/server/`)
 - `ws-server.ts`: Servidor WebSocket en `127.0.0.1` con autenticación estricta en el handshake (`handshake.ts`), `features` en el welcome y `maxPayload` = `MAX_FRAME_BYTES`.
@@ -104,6 +118,8 @@
 ## 6. Qué sigue
 
 - Segundo proveedor: reemplazar `deps.engine` por selección según `thread.provider`.
+- Otro proceso del puente ve un cambio de la config global de Claude recién en su próximo get/set; la config editada a mano no se ve hasta el próximo get/set.
+- Importar `dist/cli.js` arranca un puente (el bin ejecuta al cargar): no importarlo desde scripts.
 - Spike de cache real (`cache_read_input_tokens > 0` en la segunda sesión; `append` con `options.agent`).
 - Monitorear la performance del índice de archivos en workspaces de más de 50k archivos.
 - Bash en segundo plano (`run_in_background`) solo se observa mientras dura su tool; escrituras fuera de `sdd/` durante un Bash no se detectan; un `touch` sin cambio cuenta como `modified`. Si recorrer `sdd/` dos veces por Bash molesta, reusar la instantánea como índice vivo alimentado por el watcher.

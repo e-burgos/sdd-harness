@@ -4,6 +4,7 @@ import { EmptyState } from '@e-burgos/tucu-ui';
 import { useT } from '@/lib/i18n/i18n';
 import { useNav } from '@/lib/nav/use-nav';
 import { KitCapabilitiesView } from './KitCapabilitiesView';
+import { KitHarnessView } from './KitHarnessView';
 import { KitToolsView } from './KitToolsView';
 import { CenterFrame, EntryBrowser, FileViewer, IndexGate, fileLabel } from './KitParts';
 import { useKitIndex } from './KitProvider';
@@ -39,7 +40,7 @@ function SchemasView() {
   const { t } = useT();
   const title = t('module.kit.schemas.title');
   return (
-    <CenterFrame title={title}>
+    <CenterFrame title={title} scroll={false}>
       <IndexGate>
         {(entries) => <EntryBrowser title={title} mode="json" emptyTitle={t('module.kit.index.empty')} items={entriesOf(entries, 'schemas').map((entry) => ({ entry, label: fileLabel(entry) }))} />}
       </IndexGate>
@@ -51,7 +52,7 @@ function ContextView() {
   const { t } = useT();
   const title = t('module.kit.context.title');
   return (
-    <CenterFrame title={title}>
+    <CenterFrame title={title} scroll={false}>
       <IndexGate>
         {(entries) => (
           <EntryBrowser
@@ -86,7 +87,7 @@ function JournalView() {
   const { t } = useT();
   const title = t('module.kit.memory.journal');
   return (
-    <CenterFrame title={title}>
+    <CenterFrame title={title} scroll={false}>
       <IndexGate>
         {(entries) => <EntryBrowser title={title} mode="markdown" emptyTitle={t('module.kit.memory.journalEmpty')} items={journalEntries(entries).map((entry) => ({ entry, label: fileLabel(entry).replace(/\.md$/, '') }))} />}
       </IndexGate>
@@ -115,6 +116,8 @@ export function KitCenter() {
       return <SchemasView />;
     case 'context':
       return <ContextView />;
+    case 'harness':
+      return <KitHarnessView />;
     case 'memory':
       return view.which === 'lessons' ? <LessonsView /> : <JournalView />;
   }

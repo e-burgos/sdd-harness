@@ -162,6 +162,16 @@
             "cycle": 1,
             "date": "2026-10-26",
             "change": "los dos selectores pasan a HelpSelect con ayuda"
+          },
+          {
+            "cycle": 1,
+            "date": "2026-11-20",
+            "change": "FIX-e-burgos-007: chips de asociación con altura máxima y scroll (max-h-20 overflow-y-auto)"
+          },
+          {
+            "cycle": 1,
+            "date": "2026-11-20",
+            "change": "FIX-e-burgos-010: la fila «Asociado a» se pliega (primer chip + «+N») y se despliega con un toggle persistido"
           }
         ]
       },
@@ -622,12 +632,18 @@
         "type": "component",
         "module": "studio-session-flow",
         "spec": "sdd/specs/spec-e-burgos-008-studio-session-flow",
-        "status": "implemented",
+        "status": "updated",
         "created_in_cycle": 1,
         "updated_in_cycle": null,
         "consumes": [],
         "created_at": "2026-10-26",
-        "changelog": [],
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-11-20",
+            "change": "FIX-e-burgos-006: el aviso se descarta solo a los 20 s y se poda cuando la unidad ya tiene conversación"
+          }
+        ],
         "path": "src/components/workspace/PreparedConversations.tsx",
         "description": "Aviso de conversación nueva preparada y asociada a una spec, ciclo o fix recién creado, con el briefing mínimo listo para abrir."
       },
@@ -922,12 +938,23 @@
         "type": "component",
         "module": "studio-dual-sidebar",
         "spec": "sdd/specs/spec-e-burgos-010-studio-dual-sidebar",
-        "status": "defined",
+        "status": "updated",
         "created_in_cycle": 1,
         "updated_in_cycle": null,
         "consumes": [],
         "created_at": "2026-10-27",
-        "changelog": [],
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-11-20",
+            "change": "FIX-e-burgos-007: la ficha lista las conversaciones del agente (AgentChatList) en vez de incrustar el chat"
+          },
+          {
+            "cycle": 1,
+            "date": "2026-11-20",
+            "change": "FIX-e-burgos-008: la ficha queda solo con los datos del agente (sin Chat directo ni compositor)"
+          }
+        ],
         "path": "src/components/modules/agents/AgentCard.tsx",
         "description": "Ficha única de agente para Agentes y Mapa: presencia, descripción, modelo, origen, definición, documentos y diálogos de la conversación seleccionada y chat directo."
       },
@@ -937,12 +964,18 @@
         "type": "component",
         "module": "studio-dual-sidebar",
         "spec": "sdd/specs/spec-e-burgos-010-studio-dual-sidebar",
-        "status": "defined",
+        "status": "updated",
         "created_in_cycle": 1,
         "updated_in_cycle": null,
         "consumes": [],
         "created_at": "2026-10-27",
-        "changelog": [],
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-11-20",
+            "change": "FIX-e-burgos-007: queda solo para el chat flotante del mapa; la ficha ya no lo usa"
+          }
+        ],
         "path": "src/components/modules/agents/AgentDirectChat.tsx",
         "description": "Chat directo con un agente sobre su canal dm:<agente> (ThreadView compacto + Composer), deshabilitado con motivo sin conexión."
       },
@@ -2424,6 +2457,294 @@
             "cycle": 1,
             "date": "2026-11-13",
             "change": "Creado en spec-e-burgos-022 cycle-01."
+          }
+        ]
+      },
+      {
+        "id": "COMP-135",
+        "name": "ClaudePanel",
+        "type": "component",
+        "module": "studio-claude-tools",
+        "spec": "sdd/specs/spec-e-burgos-026-studio-claude-tools",
+        "path": "src/components/modules/claude/ClaudePanel.tsx",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "description": "Panel del módulo Claude: secciones Fuentes, Plugins, MCP y Navegador con conteos.",
+        "consumes": [],
+        "created_at": "2026-11-20",
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-11-20",
+            "change": "Creado"
+          }
+        ]
+      },
+      {
+        "id": "COMP-136",
+        "name": "ClaudeCenter",
+        "type": "component",
+        "module": "studio-claude-tools",
+        "spec": "sdd/specs/spec-e-burgos-026-studio-claude-tools",
+        "path": "src/components/modules/claude/ClaudeCenter.tsx",
+        "status": "updated",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "description": "Vista de la sección elegida: interruptores de fuentes, plugins, MCP con estado, navegador chrome-devtools-mcp, aviso de costo y Claude in Chrome no disponible.",
+        "consumes": [],
+        "created_at": "2026-11-20",
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-11-20",
+            "change": "Creado"
+          },
+          {
+            "cycle": 1,
+            "date": "2026-11-20",
+            "change": "spec-e-burgos-027: alcance de la configuración (global/proyecto), personalizar, volver a la global y guardar como global"
+          }
+        ]
+      },
+      {
+        "id": "COMP-137",
+        "name": "ClaudeProvider",
+        "type": "component",
+        "module": "studio-claude-tools",
+        "spec": "sdd/specs/spec-e-burgos-026-studio-claude-tools",
+        "path": "src/components/modules/claude/ClaudeProvider.tsx",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "description": "Scope del módulo Claude: estado compartido de config, revisión e inventario.",
+        "consumes": [],
+        "created_at": "2026-11-20",
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-11-20",
+            "change": "Creado"
+          }
+        ]
+      },
+      {
+        "id": "COMP-138",
+        "name": "useClaudeTools",
+        "type": "hook",
+        "module": "studio-claude-tools",
+        "spec": "sdd/specs/spec-e-burgos-026-studio-claude-tools",
+        "path": "src/components/modules/claude/use-claude-tools.ts",
+        "status": "updated",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "description": "claude.tools.get/set con expectedRevision, re-pedido en conflicto y en el bot event claude-tools.changed, y claude.inventory.refresh.",
+        "consumes": [],
+        "created_at": "2026-11-20",
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-11-20",
+            "change": "Creado"
+          },
+          {
+            "cycle": 1,
+            "date": "2026-11-20",
+            "change": "spec-e-burgos-027: alcance de la configuración (global/proyecto), personalizar, volver a la global y guardar como global"
+          }
+        ]
+      },
+      {
+        "id": "COMP-139",
+        "name": "AgentChatList",
+        "type": "component",
+        "module": "studio-dual-sidebar",
+        "spec": "sdd/specs/spec-e-burgos-010-studio-dual-sidebar",
+        "path": "src/components/modules/agents/AgentChatList.tsx",
+        "status": "deprecated",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "description": "Chat directo de la ficha del agente: 5 conversaciones recientes que se abren en el panel central y un Composer compacto que abre el hilo nuevo en el centro.",
+        "consumes": [],
+        "created_at": "2026-11-20",
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-11-20",
+            "change": "Creado en FIX-e-burgos-007"
+          },
+          {
+            "cycle": 1,
+            "date": "2026-11-20",
+            "change": "FIX-e-burgos-008: borrado; el compositor del agente pasó al panel central (AgentsCenter)"
+          }
+        ]
+      },
+      {
+        "id": "COMP-140",
+        "name": "SpecVerifyTab",
+        "type": "component",
+        "module": "studio-kit-execution",
+        "spec": "sdd/specs/spec-e-burgos-030-studio-kit-execution",
+        "path": "src/components/modules/specs/SpecVerifyTab.tsx",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "description": "Pestaña Verificación del ciclo: resultados de sdd:verify y correr quick/full con salida en vivo",
+        "consumes": [],
+        "created_at": "2026-11-20",
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-11-20",
+            "change": "Creado"
+          }
+        ]
+      },
+      {
+        "id": "COMP-141",
+        "name": "TaskBlockGroup",
+        "type": "component",
+        "module": "studio-kit-execution",
+        "spec": "sdd/specs/spec-e-burgos-030-studio-kit-execution",
+        "path": "src/components/modules/specs/TaskBlockGroup.tsx",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "description": "Bloque de tasks (batches) con app, rol, avance y tokens",
+        "consumes": [],
+        "created_at": "2026-11-20",
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-11-20",
+            "change": "Creado"
+          }
+        ]
+      },
+      {
+        "id": "COMP-142",
+        "name": "TaskRow",
+        "type": "component",
+        "module": "studio-kit-execution",
+        "spec": "sdd/specs/spec-e-burgos-030-studio-kit-execution",
+        "path": "src/components/modules/specs/TaskRow.tsx",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "description": "Fila de task con chip de consumo (usage)",
+        "consumes": [],
+        "created_at": "2026-11-20",
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-11-20",
+            "change": "Creado"
+          }
+        ]
+      },
+      {
+        "id": "COMP-143",
+        "name": "VerifyLeasePill",
+        "type": "component",
+        "module": "studio-kit-execution",
+        "spec": "sdd/specs/spec-e-burgos-030-studio-kit-execution",
+        "path": "src/components/VerifyLeasePill.tsx",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "description": "Pill del lease global de sdd:verify full en el encabezado",
+        "consumes": [],
+        "created_at": "2026-11-20",
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-11-20",
+            "change": "Creado"
+          }
+        ]
+      },
+      {
+        "id": "COMP-144",
+        "name": "ContextSourceChip",
+        "type": "component",
+        "module": "studio-session-context",
+        "spec": "sdd/specs/spec-e-burgos-031-studio-session-context",
+        "path": "src/components/workspace/ContextSourceChip.tsx",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "description": "Chip del contexto inyectado en la conversación (paquete de unidad/rol o base)",
+        "consumes": [],
+        "created_at": "2026-11-20",
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-11-20",
+            "change": "Creado"
+          }
+        ]
+      },
+      {
+        "id": "COMP-145",
+        "name": "KitHarnessView",
+        "type": "component",
+        "module": "studio-session-context",
+        "spec": "sdd/specs/spec-e-burgos-031-studio-session-context",
+        "path": "src/components/modules/kit/KitHarnessView.tsx",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "description": "Kit › Arnés: núcleo vs 6 KB, project.md, reglas con trigger y aviso de --split-project",
+        "consumes": [],
+        "created_at": "2026-11-20",
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-11-20",
+            "change": "Creado"
+          }
+        ]
+      },
+      {
+        "id": "COMP-146",
+        "name": "SpecPackStats",
+        "type": "component",
+        "module": "studio-session-context",
+        "spec": "sdd/specs/spec-e-burgos-031-studio-session-context",
+        "path": "src/components/modules/specs/SpecPackStats.tsx",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "description": "Contexto de los agentes: paquetes vs fuentes y pack-miss del ciclo",
+        "consumes": [],
+        "created_at": "2026-11-20",
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-11-20",
+            "change": "Creado"
+          }
+        ]
+      },
+      {
+        "id": "COMP-147",
+        "name": "SpecGatePanel",
+        "type": "component",
+        "module": "studio-gate-parity",
+        "spec": "sdd/specs/spec-e-burgos-032-studio-gate-parity",
+        "path": "src/components/modules/specs/SpecGatePanel.tsx",
+        "status": "implemented",
+        "created_in_cycle": 1,
+        "updated_in_cycle": null,
+        "description": "SPEC GATE en vivo (A o B) en la pestaña Plan: kit.gate.check con condiciones y detalle",
+        "consumes": [],
+        "created_at": "2026-11-20",
+        "changelog": [
+          {
+            "cycle": 1,
+            "date": "2026-11-20",
+            "change": "Creado"
           }
         ]
       }

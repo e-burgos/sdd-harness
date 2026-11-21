@@ -3,7 +3,7 @@
 import { useMemo } from 'react';
 import { useBridge } from '@/components/BridgeProvider';
 
-export type BridgeCapability = 'session-title' | 'link-targets' | 'document-touched' | 'project-wizard' | 'workspace-switch';
+export type BridgeCapability = 'session-title' | 'link-targets' | 'document-touched' | 'project-wizard' | 'workspace-switch' | 'claude-tools' | 'claude-tools-scope' | 'kit-execution' | 'session-context' | 'kit-gate';
 
 export interface BridgeFeatures {
   supports(capability: BridgeCapability): boolean;

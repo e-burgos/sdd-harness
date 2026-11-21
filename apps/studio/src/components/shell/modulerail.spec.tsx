@@ -29,7 +29,7 @@ describe('ModuleRail', () => {
 
   it('lists the ten modules in order with Más, new conversation and account below', () => {
     renderShell(<Harness />);
-    expect(railLabels()).toEqual(['Inicio', 'Specs', 'Fixes', 'Agentes', 'Actividad', 'Mapa', 'Kit', 'Arquitectura', 'Métricas', 'Nuevo proyecto']);
+    expect(railLabels()).toEqual(['Inicio', 'Specs', 'Fixes', 'Agentes', 'Actividad', 'Mapa', 'Kit', 'Claude', 'Arquitectura', 'Métricas', 'Nuevo proyecto']);
     expect(screen.getByRole('button', { name: 'Más' })).toBeInTheDocument();
     expect(screen.getByTestId('new-conversation-button')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Cuenta y conexión' })).toBeInTheDocument();
@@ -114,7 +114,7 @@ describe('ModuleRail', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Ocultar Fixes' }));
     fireEvent.click(screen.getByRole('button', { name: 'Subir Kit' }));
     fireEvent.click(screen.getByRole('button', { name: 'Restablecer riel' }));
-    expect(railLabels()).toEqual(['Inicio', 'Specs', 'Fixes', 'Agentes', 'Actividad', 'Mapa', 'Kit', 'Arquitectura', 'Métricas', 'Nuevo proyecto']);
+    expect(railLabels()).toEqual(['Inicio', 'Specs', 'Fixes', 'Agentes', 'Actividad', 'Mapa', 'Kit', 'Claude', 'Arquitectura', 'Métricas', 'Nuevo proyecto']);
     expect(window.localStorage.getItem(`${RAIL_KEY_PREFIX}fixture-project`)).toBeNull();
   });
 

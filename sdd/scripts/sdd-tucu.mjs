@@ -245,9 +245,7 @@ function prepareLinkParent(linkDir) {
   }
   const skills = existsSync(SKILLS_SOURCE) ? realpathSync.native(SKILLS_SOURCE) : null;
   if (resolved !== null && skills !== null && resolved === skills) {
-    const count = convertSkillsDirectory(parent, linkDir === '.claude/skills');
-    log(`converted dir    : ${linkDir} (symlink to sdd/skills → real directory with ${count} kit links)`);
-    return { ok: true, changed: true };
+    return { ok: true, changed: false, throughKitSkills: true };
   }
   warnLine(`${linkDir} is a link that does not point at sdd/skills — tucu-ui-design not linked there`);
   return { ok: false, changed: false };
@@ -267,10 +265,10 @@ function createKitLink(linkDir) {
   const parent = prepareLinkParent(linkDir);
   if (!parent.ok) return 'skipped';
   const link = kitLinkPath(ROOT, linkDir);
-  if (state === 'kit-dangling') removeSymlinkEntry(link);
+  if (state === 'kit-dangling' || state === 'kit-degraded') removeSymlinkEntry(link);
   if (IS_WINDOWS) symlinkSync(installDirPath(ROOT), link, 'junction');
   else symlinkSync(`../../${TUCU_UI_INSTALL_DIR}`, link);
-  log(`created  symlink : ${label}`);
+  log(`created  symlink : ${label}${parent.throughKitSkills ? ' (inside sdd/skills, where it points)' : ''}`);
   return 'created';
 }
 

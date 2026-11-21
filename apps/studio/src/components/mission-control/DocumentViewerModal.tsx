@@ -3,8 +3,7 @@
 import { Skeleton, SplitModal, type SplitModalAction, type SplitModalSection } from '@e-burgos/tucu-ui';
 import React, { useState, useEffect } from 'react';
 import { Code2, ClipboardList, Zap, FileText, Check, Copy, Link2 } from 'lucide-react';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import { Markdown } from '../workspace/Markdown';
 import type { AgentGeneratedDocument } from '@/lib/agent-documents';
 import { useT } from '@/lib/i18n/i18n';
 import { useBridge } from '../BridgeProvider';
@@ -125,21 +124,6 @@ export function DocumentViewerModal({ document: doc, onClose, related = [], onNa
           },
         ]
       : []),
-    {
-      id: 'info',
-      items: [
-        {
-          id: 'path',
-          kind: 'info' as const,
-          label: t('ui.doc.path'),
-          value: (
-            <span data-testid="document-viewer-path" className="block max-w-full truncate font-mono text-meta" title={path}>
-              {path}
-            </span>
-          ),
-        },
-      ],
-    },
   ];
 
   const handleSelect = (id: string) => {
@@ -195,7 +179,16 @@ export function DocumentViewerModal({ document: doc, onClose, related = [], onNa
       activeItemId={`${DOCUMENT_PREFIX}${path}`}
       onActiveItemChange={handleSelect}
       sidebarActions={sidebarActions}
+      sidebarFooter={
+        <div className="flex min-w-0 flex-col gap-0.5 border-t border-foreground/10 px-3 pt-2">
+          <span className="text-micro uppercase text-ink-500">{t('ui.doc.path')}</span>
+          <span data-testid="document-viewer-path" className="block max-w-full truncate font-mono text-meta text-ink-100" title={path}>
+            {path}
+          </span>
+        </div>
+      }
       maxWidth="64rem"
+      maxHeight="min(82vh, 52rem)"
       overlayClassName="bg-ink-950/80 backdrop-blur-md"
       closeLabel={t('ui.doc.closeAria')}
       closeTooltip={t('ui.doc.closeHint')}
@@ -223,9 +216,7 @@ export function DocumentViewerModal({ document: doc, onClose, related = [], onNa
               <pre className="whitespace-pre-wrap break-words">{content}</pre>
             </div>
           ) : (
-            <div className="prose-studio mx-auto max-w-[72ch] text-copy leading-7 select-text [&_h1]:text-xl [&_h1]:font-bold [&_h1]:text-ink-100 [&_h1]:border-b [&_h1]:border-foreground/10 [&_h1]:pb-2 [&_h1]:mb-4 [&_h2]:text-lg [&_h2]:font-bold [&_h2]:text-ink-100 [&_h2]:mt-6 [&_h2]:mb-3 [&_h3]:text-base [&_h3]:font-bold [&_h3]:text-ink-100 [&_h3]:mt-4 [&_h3]:mb-2 [&_p]:my-2.5 [&_p]:text-ink-100 [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:my-2 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:my-2 [&_li]:my-1 [&_li]:text-ink-100 [&_code]:rounded [&_code]:bg-foreground/10 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-xs [&_code]:text-emerald-300 [&_pre]:overflow-auto [&_pre]:rounded-xl [&_pre]:bg-ink-950 [&_pre]:p-4 [&_pre]:border [&_pre]:border-foreground/10 [&_blockquote]:border-l-2 [&_blockquote]:border-emerald-500/60 [&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-ink-300 [&_table]:w-full [&_table]:border-collapse [&_table]:my-4 [&_th]:border [&_th]:border-foreground/15 [&_th]:bg-foreground/5 [&_th]:p-2 [&_th]:text-left [&_th]:text-xs [&_th]:font-bold [&_td]:border [&_td]:border-foreground/10 [&_td]:p-2 [&_td]:text-xs">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
-            </div>
+            <Markdown text={content} density="doc" />
           )}
         </>
       )}

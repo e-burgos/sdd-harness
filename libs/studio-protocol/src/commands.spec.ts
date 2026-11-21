@@ -194,6 +194,35 @@ describe('kit integration commands', () => {
   });
 });
 
+describe('claude tools commands', () => {
+  const config = { sources: { user: true, local: false }, disabledPlugins: [], disabledMcpServers: [], browser: { enabled: false, browserUrl: null } };
+  it('parses get and refresh', () => {
+    for (const name of ['claude.tools.get', 'claude.inventory.refresh']) {
+      const cmd = { ...base, cmd: name };
+      expect(ClientCommand.parse(cmd)).toEqual(cmd);
+    }
+  });
+  it('set requires a config and a revision', () => {
+    const cmd = { ...base, cmd: 'claude.tools.set', config, expectedRevision: '0123456789abcdef' };
+    expect(ClientCommand.parse(cmd)).toEqual(cmd);
+    expect(ClientCommand.safeParse({ ...cmd, expectedRevision: 'bad' }).success).toBe(false);
+    expect(ClientCommand.safeParse({ ...cmd, config: { sources: config.sources } }).success).toBe(false);
+  });
+  it('set accepts an optional scope', () => {
+    const cmd = { ...base, cmd: 'claude.tools.set', config, expectedRevision: '0123456789abcdef' };
+    for (const scope of ['global', 'project']) {
+      expect(ClientCommand.parse({ ...cmd, scope })).toEqual({ ...cmd, scope });
+    }
+    expect(ClientCommand.safeParse({ ...cmd, scope: 'team' }).success).toBe(false);
+  });
+  it('useGlobal requires a revision', () => {
+    const cmd = { ...base, cmd: 'claude.tools.useGlobal', expectedRevision: '0123456789abcdef' };
+    expect(ClientCommand.parse(cmd)).toEqual(cmd);
+    expect(ClientCommand.safeParse({ ...base, cmd: 'claude.tools.useGlobal' }).success).toBe(false);
+    expect(ClientCommand.safeParse({ ...cmd, expectedRevision: 'bad' }).success).toBe(false);
+  });
+});
+
 describe('result schemas', () => {
   it('SendResult discriminates started and pending', () => {
     expect(SendResult.parse({ delivery: 'started' })).toEqual({ delivery: 'started' });
@@ -206,5 +235,76 @@ describe('result schemas', () => {
     expect(FileSearchResult.parse(result)).toEqual(result);
     expect(FileSearchResult.safeParse({ ...result, files: Array(51).fill({ path: 'a' }) }).success).toBe(false);
     expect(FileSearchResult.safeParse({ ...result, source: 'find' }).success).toBe(false);
+  });
+});
+
+describe('claude connect commands', () => {
+  it('parses browser check and openSettings', () => {
+    for (const name of ['claude.browser.check', 'claude.browser.openSettings']) {
+      const cmd = { ...base, cmd: name };
+      expect(ClientCommand.parse(cmd)).toEqual(cmd);
+    }
+  });
+  it('parses browser check with an optional force flag', () => {
+    const cmd = { ...base, cmd: 'claude.browser.check', force: true };
+    expect(ClientCommand.parse(cmd)).toEqual(cmd);
+    expect(ClientCommand.safeParse({ ...cmd, force: 'yes' }).success).toBe(false);
+  });
+  it('parses mcp login and reconnect with a bounded name', () => {
+    for (const name of ['claude.mcp.login', 'claude.mcp.reconnect']) {
+      const cmd = { ...base, cmd: name, name: 'plugin:p:s' };
+      expect(ClientCommand.parse(cmd)).toEqual(cmd);
+      expect(ClientCommand.safeParse({ ...base, cmd: name }).success).toBe(false);
+      expect(ClientCommand.safeParse({ ...cmd, name: '' }).success).toBe(false);
+      expect(ClientCommand.safeParse({ ...cmd, name: 'x'.repeat(201) }).success).toBe(false);
+    }
+  });
+});
+
+describe('kit.verify.run', () => {
+  const cmd = { ...base, cmd: 'kit.verify.run', app: 'apps/studio-bridge', level: 'quick' };
+  it('parses app and level with optional spec, cycle and unit', () => {
+    expect(ClientCommand.parse(cmd)).toEqual(cmd);
+    const full = { ...cmd, level: 'full', spec: 'spec-e-burgos-030-studio-kit-execution', cycle: 'cycle-01', unit: 'B-01' };
+    expect(ClientCommand.parse(full)).toEqual(full);
+    expect(ClientCommand.parse({ ...cmd, unit: 'TASK-001' })).toMatchObject({ unit: 'TASK-001' });
+  });
+  it('rejects bad level, app, cycle and unit', () => {
+    expect(ClientCommand.safeParse({ ...cmd, level: 'slow' }).success).toBe(false);
+    expect(ClientCommand.safeParse({ ...cmd, app: 'a b' }).success).toBe(false);
+    expect(ClientCommand.safeParse({ ...cmd, app: 'x'.repeat(121) }).success).toBe(false);
+    expect(ClientCommand.safeParse({ ...cmd, app: '' }).success).toBe(false);
+    expect(ClientCommand.safeParse({ ...cmd, cycle: 'cycle-1' }).success).toBe(false);
+    expect(ClientCommand.safeParse({ ...cmd, unit: 'cycle' }).success).toBe(false);
+    expect(ClientCommand.safeParse({ ...cmd, level: undefined }).success).toBe(false);
+  });
+});
+
+describe('kit.pack.stats', () => {
+  const cmd = { ...base, cmd: 'kit.pack.stats', spec: 'spec-e-burgos-031-studio-session-context', cycle: 'cycle-01' };
+  it('parses spec and cycle', () => {
+    expect(ClientCommand.parse(cmd)).toEqual(cmd);
+  });
+  it('rejects bad spec and cycle', () => {
+    expect(ClientCommand.safeParse({ ...cmd, spec: '../x' }).success).toBe(false);
+    expect(ClientCommand.safeParse({ ...cmd, spec: 'other' }).success).toBe(false);
+    expect(ClientCommand.safeParse({ ...cmd, cycle: 'cycle-1' }).success).toBe(false);
+    expect(ClientCommand.safeParse({ ...cmd, cycle: undefined }).success).toBe(false);
+  });
+});
+
+describe('kit.gate.check', () => {
+  const cmd = { ...base, cmd: 'kit.gate.check', spec: 'spec-e-burgos-032-studio-gate-parity' };
+  it('parses spec with and without cycle', () => {
+    expect(ClientCommand.parse(cmd)).toEqual(cmd);
+    expect(ClientCommand.parse({ ...cmd, cycle: 'cycle-01' })).toEqual({ ...cmd, cycle: 'cycle-01' });
+    expect(ClientCommand.parse({ ...cmd, spec: 'studio-gate-parity' }).cmd).toBe('kit.gate.check');
+  });
+  it('rejects bad spec and cycle', () => {
+    expect(ClientCommand.safeParse({ ...cmd, spec: '../x' }).success).toBe(false);
+    expect(ClientCommand.safeParse({ ...cmd, spec: 'Spec_A' }).success).toBe(false);
+    expect(ClientCommand.safeParse({ ...cmd, spec: '' }).success).toBe(false);
+    expect(ClientCommand.safeParse({ ...cmd, spec: 'a'.repeat(161) }).success).toBe(false);
+    expect(ClientCommand.safeParse({ ...cmd, cycle: 'cycle-1' }).success).toBe(false);
   });
 });

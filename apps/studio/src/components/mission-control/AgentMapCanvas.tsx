@@ -230,7 +230,7 @@ export function AgentMapCanvas({ selectedAgent, onSelectAgent, onSelectGate }: A
           <SegmentedControl<'cycle' | 'transversal' | 'all'>
             semantics="radio"
             aria-label={t('segment.gateFilter')}
-            size="sm"
+            size="xs"
             className="font-mono"
             value={gateFilter}
             onChange={setGateFilter}

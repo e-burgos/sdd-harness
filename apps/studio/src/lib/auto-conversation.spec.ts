@@ -1,5 +1,5 @@
 import type { BotEvent, ThreadInfo, WorkspaceSnapshot } from '@sdd-studio/protocol';
-import { briefingFor, MAX_PREPARED, prepareFromBotEvent, preparedIdOf, preparedLabelOf, type PreparedConversation } from './auto-conversation';
+import { briefingFor, MAX_PREPARED, prepareFromBotEvent, pruneAnswered, preparedIdOf, preparedLabelOf, type PreparedConversation } from './auto-conversation';
 
 const bot = (botKind: BotEvent['botKind'], payload: Record<string, unknown>, channelId = 'general'): BotEvent => ({ channelId, botKind, payload });
 const options = { agent: 'sdd-orchestrator', model: 'kit' as const, effort: null, permissionMode: 'default' as const };
@@ -117,5 +117,18 @@ describe('labels', () => {
     expect(preparedLabelOf({ kind: 'spec', specId: 's' })).toBe('s');
     expect(preparedLabelOf({ kind: 'cycle', specId: 's', cycle: 'cycle-01' })).toBe('s · cycle-01');
     expect(preparedLabelOf({ kind: 'fix', fixId: 'FIX-1', specId: null })).toBe('FIX-1');
+  });
+});
+
+describe('pruneAnswered', () => {
+  const cycle = prepareFromBotEvent(bot('cycle.opened', { specId: 'spec-a', cycle: 'cycle-01', status: 'in-progress' }), [], [], snapshot);
+  const linked = thread({ target: { kind: 'cycle', specId: 'spec-a', cycle: 'cycle-01' }, source: 'auto' });
+
+  it('keeps the same list when no thread is associated to the target', () => {
+    expect(pruneAnswered(cycle, [thread({ target: { kind: 'none' }, source: 'legacy' })])).toBe(cycle);
+  });
+
+  it('drops the prepared conversation whose target already has a thread', () => {
+    expect(pruneAnswered(cycle, [linked])).toEqual([]);
   });
 });

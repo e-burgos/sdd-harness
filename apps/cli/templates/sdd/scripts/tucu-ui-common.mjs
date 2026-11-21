@@ -117,6 +117,18 @@ function safeRealpath(path) {
 
 const normalize = (path) => resolve(path).replace(/[\\/]+$/, '').replace(/^\\\\\?\\/, '');
 
+const DEGRADED_LINK_MAX_BYTES = 512;
+
+function isDegradedKitLink(link, stat) {
+  if (!stat.isFile() || stat.size > DEGRADED_LINK_MAX_BYTES) return false;
+  try {
+    const target = readFileSync(link, 'utf8').trim().split('\\').join('/');
+    return target === `../../${TUCU_UI_INSTALL_DIR}`;
+  } catch {
+    return false;
+  }
+}
+
 export function kitLinkState(root, linkDir) {
   const link = kitLinkPath(root, linkDir);
   let stat;
@@ -125,7 +137,7 @@ export function kitLinkState(root, linkDir) {
   } catch {
     return 'absent';
   }
-  if (!stat.isSymbolicLink()) return 'foreign';
+  if (!stat.isSymbolicLink()) return isDegradedKitLink(link, stat) ? 'kit-degraded' : 'foreign';
   const installed = safeRealpath(installDirPath(root));
   const resolved = safeRealpath(link);
   if (installed && resolved) {

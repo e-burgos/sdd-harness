@@ -1,0 +1,159 @@
+{
+  "$schema": "../../../../schemas/cycle.schema.json",
+  "cycle": 1,
+  "module": "studio-claude-tools-global",
+  "spec": "spec-e-burgos-027-studio-claude-tools-global",
+  "apps": [
+    "libs/studio-protocol",
+    "apps/studio-bridge",
+    "apps/studio"
+  ],
+  "phase": "studio-claude-tools-global",
+  "flow": "lite",
+  "objectives": [
+    "La configuración de Claude de Studio es global del usuario y cada proyecto la hereda, con override por proyecto (US-1..US-3)"
+  ],
+  "status": "completed",
+  "started_at": "2026-11-20",
+  "completed_at": "2026-11-20",
+  "documents": {
+    "plan": "sdd/specs/spec-e-burgos-027-studio-claude-tools-global/cycles/cycle-01/plan.md",
+    "tasks": "sdd/specs/spec-e-burgos-027-studio-claude-tools-global/cycles/cycle-01/tasks.json"
+  },
+  "artifacts": [],
+  "metrics": {
+    "tasks_total": 4,
+    "tasks_completed": 4,
+    "story_points": 9,
+    "files_created": [
+      "apps/studio-bridge/src/test-utils/studio-home.ts"
+    ],
+    "files_modified": [
+      "apps/studio-bridge/src/server/router.spec.ts",
+      "apps/studio-bridge/src/server/router.ts",
+      "apps/studio-bridge/src/workspace/claude-tools.spec.ts",
+      "apps/studio-bridge/src/workspace/claude-tools.ts",
+      "apps/studio-bridge/vitest.config.ts",
+      "apps/studio/src/components/modules/claude/ClaudeCenter.tsx",
+      "apps/studio/src/components/modules/claude/claude-module.spec.tsx",
+      "apps/studio/src/components/modules/claude/use-claude-tools.ts",
+      "apps/studio/src/lib/i18n/en.ts",
+      "apps/studio/src/lib/i18n/es.ts",
+      "apps/studio/src/lib/i18n/modules/claude.ts",
+      "apps/studio/src/lib/use-bridge-features.ts",
+      "libs/studio-protocol/src/claude-tools.spec.ts",
+      "libs/studio-protocol/src/claude-tools.ts",
+      "libs/studio-protocol/src/commands.spec.ts",
+      "libs/studio-protocol/src/commands.ts",
+      "libs/studio-protocol/src/handshake.spec.ts",
+      "libs/studio-protocol/src/limits.ts"
+    ],
+    "files_deleted": [],
+    "usage": {
+      "tokens_in": 251305,
+      "tokens_out": 44348,
+      "approx": true,
+      "source": "declared-estimate",
+      "by_tier": {
+        "claude/opus": {
+          "tokens_in": 89250,
+          "tokens_out": 15750,
+          "approx": true,
+          "source": "declared-estimate"
+        },
+        "claude/sonnet": {
+          "tokens_in": 162055,
+          "tokens_out": 28598,
+          "approx": false,
+          "source": "agent-usage-notification"
+        }
+      },
+      "by_agent": [
+        {
+          "agent": "orchestrator",
+          "label": "solo: spec, plan, apertura, revisión y cierre",
+          "provider_model": "claude/opus",
+          "effort": "medium",
+          "tokens_in": 51000,
+          "tokens_out": 9000,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-20"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-001 Protocolo: ClaudeToolsScope, scope en get/set, claude.tools.useGlobal y feature claude-tools-scope",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 59398,
+          "tokens_out": 10482,
+          "tokens_total": 69880,
+          "source": "agent-usage-notification",
+          "approx": false,
+          "recorded_at": "2026-11-20"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-002 Puente: configuración global en ~/.sdd-studio, resolución proyecto→global→defaults, useGlobal y cachés",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 24372,
+          "tokens_out": 4301,
+          "tokens_total": 28673,
+          "source": "agent-usage-notification",
+          "approx": false,
+          "recorded_at": "2026-11-20"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-003 Studio: alcance en uso, personalizar proyecto, volver a la global y guardar como global",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 78285,
+          "tokens_out": 13815,
+          "tokens_total": 92100,
+          "source": "agent-usage-notification",
+          "approx": false,
+          "recorded_at": "2026-11-20"
+        },
+        {
+          "agent": "orchestrator",
+          "label": "TASK-004 Verificación real: promover la config de este repo a global y comprobar la herencia; cierre",
+          "provider_model": "claude/opus",
+          "effort": "medium",
+          "tokens_in": 38250,
+          "tokens_out": 6750,
+          "tokens_total": 45000,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-20"
+        }
+      ]
+    },
+    "tasks_skipped": 0
+  },
+  "tables_created": [],
+  "endpoints_implemented": [],
+  "components_created": [],
+  "issues_found": [
+    "Los puentes en otro proceso ven un cambio de la global recién en su próximo get/set (D-04, fuera de alcance)"
+  ],
+  "reviewer_report": {
+    "approved": true,
+    "date": "2026-11-20",
+    "ca_results": {
+      "US-1": "PASS - puente real: examples/v23-existing sin config propia arranca con scope global y hereda Usuario y Chrome DevTools prendidos desde ~/.sdd-studio/claude-tools.json",
+      "US-2": "PASS - set scope project crea el override; useGlobal lo borra (scope project→global, override true→false); la barra de alcance lo muestra (captura con puente nuevo en :4471)",
+      "US-3": "PASS - Guardar como global promovió la config de este repo (user on, browser on) a ~/.sdd-studio/claude-tools.json"
+    },
+    "tests": {
+      "libs/studio-protocol": "verify full OK — B-01",
+      "apps/studio-bridge": "verify full OK (typecheck + test + build) — B-02; specs con SDD_STUDIO_HOME en tmpdir (setupFiles), nunca el home real",
+      "apps/studio": "verify full OK (typecheck + test + build) — B-03; web nueva contra puente sin la feature: sin barra de alcance (compatibilidad verificada en el navegador)"
+    },
+    "notes": "Migración hecha: la configuración de este repo es ahora la global y el override del proyecto se borró. El puente del dev en :4330 corre el dist anterior hasta que se reinicie.",
+    "follow_ups": [
+      "Reiniciar el puente del dev para que use la global (pnpm studio:bridge)"
+    ]
+  }
+}

@@ -1,11 +1,22 @@
 'use client';
 
+import { useEffect } from 'react';
 import { Button } from '@e-burgos/tucu-ui';
 import { MessageSquarePlus, X } from 'lucide-react';
 import { briefingFor, preparedLabelOf, type PreparedConversation } from '@/lib/auto-conversation';
 import { useT } from '@/lib/i18n/i18n';
 import { useBridge, useStudio } from '../BridgeProvider';
 
+export const PREPARED_NOTICE_MS = 20_000;
+
+function AutoDismiss({ id }: { id: string }) {
+  const { store } = useBridge();
+  useEffect(() => {
+    const timer = setTimeout(() => store.getState().dismissPrepared(id), PREPARED_NOTICE_MS);
+    return () => clearTimeout(timer);
+  }, [id, store]);
+  return null;
+}
 
 export function PreparedConversations({ onOpen }: { onOpen(prepared: PreparedConversation, briefing: string): void }) {
   const { t } = useT();
@@ -17,6 +28,7 @@ export function PreparedConversations({ onOpen }: { onOpen(prepared: PreparedCon
     <ul data-testid="prepared-conversations" className="absolute left-1/2 top-2 z-20 flex w-[min(32rem,calc(100%-2rem))] -translate-x-1/2 flex-col gap-2">
       {prepared.map((item) => (
         <li key={item.id} className="flex items-center gap-2 rounded-lg border border-accent-400/40 bg-ink-900 px-3 py-2 text-xs shadow-lg">
+          <AutoDismiss id={item.id} />
           <MessageSquarePlus size={16} className="shrink-0 text-accent-300" aria-hidden />
           <span className="min-w-0 flex-1">
             <span className="block truncate font-medium text-ink-100">{t('prepared.title', { label: preparedLabelOf(item.target) })}</span>

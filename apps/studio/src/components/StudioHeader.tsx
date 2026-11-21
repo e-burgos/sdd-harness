@@ -11,6 +11,7 @@ import { useStudio } from './BridgeProvider';
 import { GateStatusModal } from './GateStatusModal';
 import { GithubHeaderStatus } from './github/GithubHeaderStatus';
 import { OpenUnitsPill } from './OpenUnitsPill';
+import { VerifyLeasePill } from './VerifyLeasePill';
 import { AgentAvatar } from './workspace/AgentAvatar';
 
 export function StudioHeader({ launcher = false }: { launcher?: boolean }) {
@@ -87,6 +88,8 @@ export function StudioHeader({ launcher = false }: { launcher?: boolean }) {
         </button>}
 
         {!launcher && <OpenUnitsPill />}
+
+        {!launcher && <VerifyLeasePill />}
 
         {!launcher && <GithubHeaderStatus />}
 

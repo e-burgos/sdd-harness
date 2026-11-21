@@ -1663,6 +1663,559 @@
         "source": "declared-estimate",
         "recorded_at": "2026-11-18"
       }
+    },
+    {
+      "author": "e-burgos",
+      "spec_id": null,
+      "created_at": "2026-11-20",
+      "resolved_at": "2026-11-20",
+      "related_modules": [
+        "studio-auto-conversation"
+      ],
+      "affected_files": [
+        "apps/studio/src/lib/auto-conversation.ts",
+        "apps/studio/src/lib/store/state.ts",
+        "apps/studio/src/components/workspace/PreparedConversations.tsx",
+        "apps/studio/src/lib/auto-conversation.spec.ts",
+        "apps/studio/src/lib/store/state.spec.ts",
+        "apps/studio/src/components/workspace/prepared.spec.tsx",
+        "sdd/fixes/fix-e-burgos-006.md"
+      ],
+      "test_reference": "pnpm sdd:verify apps/studio quick: typecheck y 1349 tests OK (pruneAnswered, poda en el reducer al llegar la asociación, autocierre a 20 s con fake timers)",
+      "status": "validated",
+      "cycle": null,
+      "id": "FIX-e-burgos-006",
+      "fix_document": "sdd/fixes/fix-e-burgos-006.md",
+      "type": "BUGFIX",
+      "severity": "medium",
+      "estimation_hours": 1,
+      "title": "El aviso «Conversación nueva lista» no aparece para unidades ya en curso y se cierra solo",
+      "description": "Studio prepara una conversación y muestra el aviso aunque la conversación que creó la unidad ya la trabaja: el chequeo corre antes de la asociación y el aviso no se retira nunca.",
+      "justification": "Error confirmado en uso real (captura del dev); perfil solo; sin contratos ni entidades nuevas.",
+      "validated_at": "2026-11-20",
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "tokens_in": 60075,
+        "tokens_out": 10602,
+        "tokens_total": 70677,
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-20"
+      }
+    },
+    {
+      "author": "e-burgos",
+      "spec_id": null,
+      "created_at": "2026-11-20",
+      "resolved_at": "2026-11-20",
+      "related_modules": [
+        "studio-agents"
+      ],
+      "affected_files": [
+        "apps/studio/src/components/modules/agents/AgentChatList.tsx",
+        "apps/studio/src/components/modules/agents/AgentCard.tsx",
+        "apps/studio/src/components/modules/agents/AgentDirectChat.tsx",
+        "apps/studio/src/components/modules/map/MapAgentChat.tsx",
+        "apps/studio/src/components/workspace/ThreadLinkPicker.tsx",
+        "apps/studio/src/components/modules/agents/agents.spec.tsx",
+        "apps/studio/src/components/workspace/threadlink.spec.tsx",
+        "sdd/fixes/fix-e-burgos-007.md",
+        "sdd/components.json"
+      ],
+      "test_reference": "sdd:verify apps/studio quick + full OK (typecheck, 1350 tests, build); navegador: la ficha de Clara lista sus conversaciones, el clic abre la conversación en el centro y link-chips tiene max-h-20 overflow-y-auto",
+      "status": "validated",
+      "cycle": null,
+      "id": "FIX-e-burgos-007",
+      "fix_document": "sdd/fixes/fix-e-burgos-007.md",
+      "type": "IMPROVEMENT",
+      "severity": "medium",
+      "estimation_hours": 2,
+      "title": "El chat con un agente se abre en el panel central y las asociaciones tienen scroll",
+      "description": "La ficha del agente incrusta la conversación en una caja angosta donde las asociaciones se apilan sin scroll; toda conversación debe abrirse en el panel central.",
+      "justification": "Mejora de UX pedida por el dev; perfil solo; sin contratos ni entidades nuevas.",
+      "validated_at": "2026-11-20",
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "tokens_in": 18709,
+        "tokens_out": 3301,
+        "tokens_total": 22010,
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-20"
+      }
+    },
+    {
+      "id": "FIX-e-burgos-008",
+      "author": "e-burgos",
+      "spec_id": null,
+      "fix_document": "sdd/fixes/fix-e-burgos-008.md",
+      "type": "IMPROVEMENT",
+      "severity": "medium",
+      "created_at": "2026-11-20",
+      "resolved_at": "2026-11-20",
+      "title": "El compositor del chat con un agente va en el panel central, no en la ficha",
+      "estimation_hours": 1,
+      "description": "Completa FIX-e-burgos-007: el compositor y la lista «Chat directo» siguen en la ficha del agente (panel derecho); el chat entero debe vivir en el panel central.",
+      "justification": "Corrección pedida por el dev tras probar FIX-e-burgos-007 (captura); perfil solo; sin contratos ni entidades nuevas.",
+      "related_modules": [
+        "studio-agents"
+      ],
+      "affected_files": [
+        "apps/studio/src/components/modules/agents/AgentsCenter.tsx",
+        "apps/studio/src/components/modules/agents/AgentCard.tsx",
+        "apps/studio/src/components/modules/agents/AgentChatList.tsx",
+        "apps/studio/src/components/modules/agents/agents.spec.tsx",
+        "sdd/fixes/fix-e-burgos-008.md",
+        "sdd/components.json"
+      ],
+      "test_reference": "sdd:verify apps/studio quick + full OK (typecheck, 1353 tests, build); navegador headless (Playwright de apps/studio): Agentes › Vulcan con el compositor abajo del centro y la ficha sin chat",
+      "status": "validated",
+      "cycle": null,
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "tokens_in": 9198,
+        "tokens_out": 1623,
+        "tokens_total": 10821,
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-20"
+      },
+      "validated_at": "2026-11-20"
+    },
+    {
+      "id": "FIX-e-burgos-009",
+      "author": "e-burgos",
+      "spec_id": null,
+      "fix_document": "sdd/fixes/fix-e-burgos-009.md",
+      "type": "IMPROVEMENT",
+      "severity": "low",
+      "created_at": "2026-11-20",
+      "resolved_at": "2026-11-20",
+      "title": "Kit: lista y documento con scroll propio, el documento vuelve arriba y la ruta alineada",
+      "estimation_hours": 1,
+      "description": "La lista de tarjetas y el documento del módulo Kit comparten scroll; al elegir una tarjeta el documento no vuelve arriba y la ruta queda desalineada.",
+      "justification": "Mejora de UX pedida por el dev con captura; perfil solo; sin contratos ni entidades nuevas.",
+      "related_modules": [
+        "studio-kit"
+      ],
+      "affected_files": [
+        "apps/studio/src/components/modules/kit/KitParts.tsx",
+        "apps/studio/src/components/modules/kit/KitCenter.tsx",
+        "apps/studio/src/components/modules/kit/KitCapabilitiesView.tsx",
+        "apps/studio/src/components/modules/kit/kit-module.spec.tsx",
+        "sdd/fixes/fix-e-burgos-009.md"
+      ],
+      "test_reference": "sdd:verify apps/studio quick OK (c857a42 y 0062845); headless: lista y documento con scroll propio (lista conserva 600px, documento vuelve a 0 al elegir otra tarjeta), ruta y documento alineados en x=804",
+      "status": "validated",
+      "cycle": null,
+      "validated_at": "2026-11-20",
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "tokens_in": 15116,
+        "tokens_out": 2667,
+        "tokens_total": 17783,
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-20"
+      }
+    },
+    {
+      "id": "FIX-e-burgos-010",
+      "author": "e-burgos",
+      "spec_id": null,
+      "fix_document": "sdd/fixes/fix-e-burgos-010.md",
+      "type": "IMPROVEMENT",
+      "severity": "low",
+      "created_at": "2026-11-20",
+      "resolved_at": "2026-11-20",
+      "title": "«Asociado a» se puede compactar en el encabezado de la conversación",
+      "estimation_hours": 1,
+      "description": "La fila de asociaciones del encabezado de la conversación muestra todos los chips y ocupa varias líneas.",
+      "justification": "Pedido del dev; perfil solo; sin contratos ni entidades nuevas.",
+      "related_modules": [
+        "studio-session-ux"
+      ],
+      "affected_files": [
+        "apps/studio/src/components/workspace/ThreadLinkPicker.tsx",
+        "apps/studio/src/components/workspace/threadlink.spec.tsx",
+        "apps/studio/src/lib/i18n/es.ts",
+        "apps/studio/src/lib/i18n/en.ts",
+        "sdd/fixes/fix-e-burgos-010.md",
+        "sdd/components.json"
+      ],
+      "test_reference": "sdd:verify apps/studio quick OK; headless sobre una conversación con 9 asociaciones: plegada = primer chip + «+8» en una línea, desplegada = 9 chips (aria-expanded)",
+      "status": "validated",
+      "cycle": null,
+      "validated_at": "2026-11-20",
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "tokens_in": 56060,
+        "tokens_out": 9893,
+        "tokens_total": 65953,
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-20"
+      }
+    },
+    {
+      "id": "FIX-e-burgos-011",
+      "author": "e-burgos",
+      "spec_id": null,
+      "fix_document": "sdd/fixes/fix-e-burgos-011.md",
+      "type": "IMPROVEMENT",
+      "severity": "low",
+      "created_at": "2026-11-20",
+      "resolved_at": "2026-11-20",
+      "title": "El encabezado de la conversación va en dos filas fijas",
+      "estimation_hours": 0.5,
+      "description": "El medidor de contexto sube a la primera fila junto al título y las asociaciones, y «Interrumpir» queda solo en la segunda.",
+      "justification": "Pedido del dev con captura; perfil solo; sin contratos ni entidades nuevas.",
+      "related_modules": [
+        "studio-session-ux"
+      ],
+      "affected_files": [
+        "apps/studio/src/components/workspace/ThreadView.tsx",
+        "apps/studio/src/components/workspace/threadview.spec.tsx",
+        "sdd/fixes/fix-e-burgos-011.md"
+      ],
+      "test_reference": "sdd:verify apps/studio quick OK (c39c9b5); spec: título y asociaciones en la fila 1, contexto/estado/Interrumpir en la fila 2",
+      "status": "validated",
+      "cycle": null,
+      "validated_at": "2026-11-20",
+      "usage": {
+        "provider_model": "claude/opus",
+        "effort": "low",
+        "agent": "implementor-front",
+        "tokens_in": 25000,
+        "tokens_out": 3000,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-11-20"
+      }
+    },
+    {
+      "id": "FIX-e-burgos-012",
+      "author": "e-burgos",
+      "spec_id": null,
+      "fix_document": "sdd/fixes/fix-e-burgos-012.md",
+      "type": "BUGFIX",
+      "severity": "high",
+      "created_at": "2026-11-20",
+      "resolved_at": "2026-11-20",
+      "title": "El puente y el mod no se bloquean entre sí por la misma conversación",
+      "estimation_hours": 1.5,
+      "description": "Con el mod prendido dentro de Studio, el mod reserva con el session_id del SDK y el puente juzga con su id studio-…: la conversación se bloquea a sí misma en cada edición.",
+      "justification": "Error confirmado en uso real (bloqueó FIX-e-burgos-011); perfil solo; sin contratos ni entidades nuevas.",
+      "related_modules": [
+        "studio-parallel-sessions"
+      ],
+      "affected_files": [
+        "apps/studio-bridge/src/sessions/session-bindings.ts",
+        "apps/studio-bridge/src/sessions/session-manager.ts",
+        "apps/studio-bridge/src/sessions/session-bindings.spec.ts",
+        "sdd/fixes/fix-e-burgos-012.md"
+      ],
+      "test_reference": "sdd:verify apps/studio-bridge full OK (5ffaa13); 4 specs nuevos de alias. Uso real: con el mod prendido, las ediciones de TASK-005 de spec-e-burgos-029 (25637e0, tres subproyectos) pasaron sin rechazos de reserva.",
+      "status": "validated",
+      "cycle": null,
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "tokens_in": 61135,
+        "tokens_out": 10789,
+        "tokens_total": 71924,
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-20"
+      },
+      "validated_at": "2026-11-20"
+    },
+    {
+      "id": "FIX-e-burgos-013",
+      "author": "e-burgos",
+      "spec_id": null,
+      "fix_document": "sdd/fixes/fix-e-burgos-013.md",
+      "type": "BUGFIX",
+      "severity": "low",
+      "created_at": "2026-11-20",
+      "resolved_at": "2026-11-20",
+      "title": "claude-inventory.spec no falla al limpiar su carpeta temporal",
+      "estimation_hours": 0.25,
+      "description": "El afterEach borra el tmpdir con una escritura atómica de la sonda todavía en curso (ENOTEMPTY intermitente).",
+      "justification": "Test inestable detectado al verificar FIX-e-burgos-012; perfil solo; solo spec.",
+      "related_modules": [
+        "studio-claude-tools"
+      ],
+      "affected_files": [
+        "apps/studio-bridge/src/workspace/claude-inventory.spec.ts",
+        "sdd/fixes/fix-e-burgos-013.md"
+      ],
+      "test_reference": "5 corridas aisladas verdes + sdd:verify apps/studio-bridge quick (suite completa) OK (5e856fd)",
+      "status": "validated",
+      "cycle": null,
+      "validated_at": "2026-11-20",
+      "usage": {
+        "provider_model": "claude/opus",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "tokens_in": 12000,
+        "tokens_out": 1500,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-11-20"
+      }
+    },
+    {
+      "id": "FIX-e-burgos-014",
+      "author": "e-burgos",
+      "spec_id": null,
+      "fix_document": "sdd/fixes/fix-e-burgos-014.md",
+      "type": "BUGFIX",
+      "severity": "high",
+      "created_at": "2026-11-20",
+      "resolved_at": "2026-11-20",
+      "title": "Studio ata la conversación a su unidad de forma automática y permisiva",
+      "estimation_hours": 2,
+      "description": "La unidad de un hilo es la última asociación de ciclo/fix en orden de lista: ignora specs, no descarta unidades cerradas, no reordena re-detecciones e ignora SDD-BIND; la conversación queda trabada en un fix cerrado.",
+      "justification": "Error confirmado en uso real (bloqueó la corrección de TASK-005 de spec-e-burgos-029); perfil solo; sin contratos ni entidades nuevas.",
+      "related_modules": [
+        "studio-parallel-sessions"
+      ],
+      "affected_files": [
+        "apps/studio-bridge/src/sessions/thread-link.ts",
+        "apps/studio-bridge/src/sessions/session-manager.ts",
+        "apps/studio-bridge/src/engine/types.ts",
+        "apps/studio-bridge/src/engine/claude-sdk-engine.ts",
+        "apps/studio-bridge/src/engine/fake-engine.ts",
+        "apps/studio-bridge/src/sessions/thread-link.spec.ts",
+        "apps/studio-bridge/src/sessions/session-manager.spec.ts",
+        "sdd/fixes/fix-e-burgos-014.md"
+      ],
+      "test_reference": "sdd:verify apps/studio-bridge full OK (ae08c39); specs con el caso real (spec-029·cycle-01 gana sobre FIX-013 cerrado). Uso real: tras `pnpm sdd:use spec-e-burgos-029 cycle-01` el hilo (con FIX-010..014 asociados después) quedó atado a la 029 y TASK-005 se editó sin rechazos del SPEC GATE.",
+      "status": "validated",
+      "cycle": null,
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "tokens_in": 76122,
+        "tokens_out": 13433,
+        "tokens_total": 89555,
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-20"
+      },
+      "validated_at": "2026-11-20"
+    },
+    {
+      "author": "e-burgos",
+      "spec_id": null,
+      "created_at": "2026-11-20",
+      "resolved_at": "2026-11-20",
+      "affected_files": [
+        "apps/cli/src/generators/__tests__/tucu-ui.integration.spec.ts",
+        "apps/cli/templates/sdd/scripts/rebuild-catalog.mjs",
+        "apps/cli/templates/sdd/scripts/sdd-tucu.mjs",
+        "apps/cli/templates/sdd/scripts/setup-agents.ps1",
+        "apps/cli/templates/sdd/scripts/setup-agents.sh",
+        "apps/cli/templates/sdd/scripts/tucu-ui-common.mjs",
+        "sdd/fixes/fix-e-burgos-015.md",
+        "sdd/scripts/rebuild-catalog.mjs",
+        "sdd/scripts/sdd-tucu.mjs",
+        "sdd/scripts/setup-agents.ps1",
+        "sdd/scripts/setup-agents.sh",
+        "sdd/scripts/tucu-ui-common.mjs"
+      ],
+      "test_reference": "pnpm --filter @e-burgos/sdd-harness test (998 OK, 55 de tucu con 4 casos nuevos) + typecheck + build; prueba real en examples/test-fix-015 con la CLI construida y tucu instalado de verdad: restaurar el symlink y re-correr setup-agents conserva el enlace, rebuild-catalog sin diff, validate sin aviso, update sdd lo mantiene. En este repo: sdd-tucu --status ⇒ claude complete y la skill tucu-ui-design aparece en la sesión.",
+      "cycle": null,
+      "id": "FIX-e-burgos-015",
+      "fix_document": "sdd/fixes/fix-e-burgos-015.md",
+      "type": "BUGFIX",
+      "severity": "medium",
+      "title": "La integración tucu-ui convive con .claude/skills enlazado a sdd/skills",
+      "estimation_hours": 2,
+      "description": "setup-agents enlaza .claude/skills a sdd/skills y sdd-tucu necesita un enlace propio adentro: se pisan y Claude Code queda incompleto.",
+      "justification": "Cambio en el kit publicado: el dev pidió FIX GATE en vez de flow full (2026-11-20); sin contratos ni entidades nuevas.",
+      "related_modules": [
+        "kit-tucu-ui"
+      ],
+      "status": "validated",
+      "validated_at": "2026-11-20",
+      "usage": {
+        "provider_model": "claude/opus",
+        "effort": "high",
+        "agent": "implementor-back",
+        "tokens_in": 114919,
+        "tokens_out": 20280,
+        "tokens_total": 135199,
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-20"
+      }
+    },
+    {
+      "author": "e-burgos",
+      "spec_id": null,
+      "created_at": "2026-11-20",
+      "resolved_at": "2026-11-20",
+      "affected_files": [
+        "apps/studio-bridge/src/sessions/pack-context.spec.ts",
+        "apps/studio-bridge/src/sessions/pack-context.ts",
+        "apps/studio-bridge/src/workspace/pack-runner.spec.ts",
+        "apps/studio-bridge/src/workspace/pack-runner.ts",
+        "sdd/fixes/fix-e-burgos-016.md"
+      ],
+      "test_reference": "sdd:verify apps/studio-bridge quick + full OK (8f9112d); specs: rol de ciclo multi-app con bloque pendiente ⇒ --app del bloque, sin bloques ⇒ primera app, stats multi-app unidas y sumadas, una app sin cambios",
+      "cycle": null,
+      "id": "FIX-e-burgos-016",
+      "fix_document": "sdd/fixes/fix-e-burgos-016.md",
+      "type": "IMPROVEMENT",
+      "severity": "low",
+      "title": "Paquetes de roles de ciclo en ciclos multi-app",
+      "estimation_hours": 1,
+      "description": "sdd-pack pide --app para roles de ciclo en ciclos multi-app: el puente cae al contexto base y las stats usan la primera app.",
+      "justification": "Pendiente de spec-e-burgos-031; perfil solo; sin contratos nuevos.",
+      "related_modules": [
+        "studio-session-context"
+      ],
+      "status": "validated",
+      "validated_at": "2026-11-20",
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "tokens_in": 63051,
+        "tokens_out": 11127,
+        "tokens_total": 74178,
+        "approx": true,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-20"
+      }
+    },
+    {
+      "author": "e-burgos",
+      "spec_id": null,
+      "created_at": "2026-11-20",
+      "resolved_at": "2026-11-20",
+      "affected_files": [
+        "apps/studio-bridge/src/workspace/watcher.spec.ts",
+        "sdd/fixes/fix-e-burgos-017.md"
+      ],
+      "test_reference": "watcher.spec 10/10 aislado + suite @e-burgos/sdd-studio 2/2 (7f62797); kit-execution.spec no reproducible (27/27)",
+      "cycle": null,
+      "id": "FIX-e-burgos-017",
+      "fix_document": "sdd/fixes/fix-e-burgos-017.md",
+      "type": "BUGFIX",
+      "severity": "low",
+      "title": "Dos tests inestables de Studio",
+      "estimation_hours": 1,
+      "description": "watcher.spec (.claude catalog watching) y el spec de exit codes del panel de verify fallan de forma intermitente.",
+      "justification": "Pendiente de spec-e-burgos-030; perfil solo; solo tests.",
+      "related_modules": [
+        "studio-kit-execution"
+      ],
+      "status": "validated",
+      "validated_at": "2026-11-20",
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "low",
+        "agent": "implementor-back",
+        "tokens_in": 20000,
+        "tokens_out": 3000,
+        "tokens_total": 23000,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-11-20"
+      }
+    },
+    {
+      "author": "e-burgos",
+      "spec_id": null,
+      "created_at": "2026-11-20",
+      "resolved_at": "2026-11-20",
+      "affected_files": [
+        "apps/studio-bridge/src/engine/claude-sdk-engine.ts",
+        "apps/studio-bridge/src/engine/claude-sdk-engine.spec.ts",
+        "sdd/fixes/fix-e-burgos-018.md"
+      ],
+      "test_reference": "specs: el prompt inicial espera al Chrome de Studio (2c3803f); suite del puente verde",
+      "cycle": null,
+      "id": "FIX-e-burgos-018",
+      "fix_document": "sdd/fixes/fix-e-burgos-018.md",
+      "type": "IMPROVEMENT",
+      "severity": "low",
+      "title": "Chrome de Studio listo antes del primer turno",
+      "estimation_hours": 1,
+      "description": "startTurn dispara ensureStudioChrome sin esperarlo: el primer uso del navegador del turno puede fallar si Chrome estaba cerrado.",
+      "justification": "Follow-up de spec-e-burgos-029; perfil solo; sin contratos nuevos.",
+      "related_modules": [
+        "studio-claude-connect"
+      ],
+      "status": "validated",
+      "validated_at": "2026-11-20",
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "low",
+        "agent": "implementor-back",
+        "tokens_in": 25000,
+        "tokens_out": 4000,
+        "tokens_total": 29000,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-11-20"
+      }
+    },
+    {
+      "author": "e-burgos",
+      "spec_id": null,
+      "created_at": "2026-11-20",
+      "resolved_at": "2026-11-20",
+      "affected_files": [
+        "libs/studio-protocol/src/commands.ts",
+        "libs/studio-protocol/src/commands.spec.ts",
+        "apps/studio-bridge/src/server/router.ts",
+        "apps/studio-bridge/src/server/router.spec.ts",
+        "apps/studio/src/components/modules/claude/use-chrome-status.ts",
+        "apps/studio/src/components/modules/claude/claude-module.spec.tsx",
+        "sdd/fixes/fix-e-burgos-019.md"
+      ],
+      "test_reference": "specs: router (cache vs force), protocolo (force), web (montaje force:false, reintento force:true) (3efac9b); suites protocol/bridge/web verdes",
+      "cycle": null,
+      "id": "FIX-e-burgos-019",
+      "fix_document": "sdd/fixes/fix-e-burgos-019.md",
+      "type": "IMPROVEMENT",
+      "severity": "low",
+      "title": "Un solo chequeo de Chrome al abrir Studio",
+      "estimation_hours": 1,
+      "description": "El puente chequea Chrome al arrancar y la web vuelve a pedir claude.browser.check al montar.",
+      "justification": "Follow-up de spec-e-burgos-029; perfil solo; parámetro opcional force en claude.browser.check.",
+      "related_modules": [
+        "studio-claude-connect"
+      ],
+      "status": "validated",
+      "validated_at": "2026-11-20",
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "low",
+        "agent": "implementor-back",
+        "tokens_in": 25000,
+        "tokens_out": 4000,
+        "tokens_total": 29000,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-11-20"
+      }
     }
   ]
 }

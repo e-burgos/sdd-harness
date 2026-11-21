@@ -9,6 +9,7 @@ import {
   type WorkspaceSnapshot,
 } from '@sdd-studio/protocol';
 import { OPEN_FIX } from '../gate/judge';
+import type { RegistryUnit } from './session-bindings';
 
 const NONE: ThreadLinkTarget = { kind: 'none' };
 
@@ -70,8 +71,15 @@ function specOfRef(snapshot: WorkspaceSnapshot, ref: ThreadLinkRef): string | nu
   return ref.specId;
 }
 
+function moveToEnd(entries: StoredLinkEntry[], index: number): StoredLinkEntry[] {
+  if (index === entries.length - 1) return entries;
+  return [...entries.filter((_, i) => i !== index), entries[index]!];
+}
+
 export function detectRef(entries: StoredLinkEntry[], ref: ThreadLinkRef, snapshot: WorkspaceSnapshot): StoredLinkEntry[] {
   if (!linkTargetExists(snapshot, ref)) return entries;
+  const existing = entries.findIndex((entry) => isActive(entry) && sameRef(entry, ref));
+  if (existing >= 0) return moveToEnd(entries, existing);
   if (entries.some((entry) => sameRef(entry, ref))) return entries;
   const specId = specOfRef(snapshot, ref);
   const active = entries.filter(isActive);
@@ -118,10 +126,70 @@ export function detectRefs(snapshot: WorkspaceSnapshot, rawPath: string): Thread
   return first ? [first] : [];
 }
 
+const BIND_LINE = /^SDD-BIND\s+(.+)$/gm;
+const CYCLE_ID = /^cycle-\d{2}$/;
+
+function bindRefOfFields(fields: string): ThreadLinkRef | null {
+  const values = new Map<string, string>();
+  for (const pair of fields.trim().split(/\s+/)) {
+    const [key, value, ...rest] = pair.split('=');
+    if (key && value && rest.length === 0) values.set(key, value);
+  }
+  const fix = values.get('fix');
+  if (fix) return { kind: 'fix', fixId: fix };
+  const spec = values.get('spec');
+  const cycle = values.get('cycle');
+  if (spec && cycle !== undefined) return CYCLE_ID.test(cycle) ? { kind: 'cycle', specId: spec, cycle } : null;
+  return spec ? { kind: 'spec', specId: spec } : null;
+}
+
+export function parseBindMarker(text: string): ThreadLinkRef | null {
+  let last: ThreadLinkRef | null = null;
+  for (const match of text.matchAll(BIND_LINE)) last = bindRefOfFields(match[1] ?? '') ?? last;
+  return last;
+}
+
+export function bindRef(entries: StoredLinkEntry[], ref: ThreadLinkRef, snapshot: WorkspaceSnapshot): StoredLinkEntry[] {
+  if (!linkTargetExists(snapshot, ref)) return entries;
+  const last = entries.filter(isActive).at(-1);
+  if (last && last.origin === 'manual' && sameRef(last, ref) && entries.at(-1) === last) return entries;
+  return addManual(entries, ref);
+}
+
+function openUnitOfEntry(entry: ThreadLinkEntry, openUnits: RegistryUnit[]): RegistryUnit | null {
+  if (entry.kind === 'fix') return openUnits.find((unit) => unit.kind === 'fix' && unit.fix === entry.fixId) ?? null;
+  if (entry.kind === 'cycle') return openUnits.find((unit) => unit.kind === 'cycle' && unit.spec === entry.specId && unit.cycle === entry.cycle) ?? null;
+  const cycles = openUnits.filter((unit) => unit.kind === 'cycle' && unit.spec === entry.specId);
+  return cycles.length === 1 ? cycles[0]! : null;
+}
+
+export interface ResolvedUnit {
+  unit: RegistryUnit;
+  entry: ThreadLinkEntry | null;
+}
+
+export function resolveThreadUnit(entries: StoredLinkEntry[], openUnits: RegistryUnit[]): ResolvedUnit | null {
+  for (const entry of activeEntries(entries).reverse()) {
+    const unit = openUnitOfEntry(entry, openUnits);
+    if (unit) return { unit, entry };
+  }
+  const [only] = openUnits;
+  return openUnits.length === 1 && only ? { unit: only, entry: null } : null;
+}
+
+const targetOfUnit = (unit: RegistryUnit): ThreadLinkTarget =>
+  unit.kind === 'fix' ? { kind: 'fix', fixId: unit.fix } : { kind: 'cycle', specId: unit.spec, cycle: unit.cycle };
+
 export function legacyTargetOf(
   entries: StoredLinkEntry[],
   fallbackSource: ThreadLink['source'] = 'auto',
+  openUnits?: RegistryUnit[],
 ): { target: ThreadLinkTarget; source: ThreadLink['source'] } {
+  if (openUnits) {
+    const resolved = resolveThreadUnit(entries, openUnits);
+    if (!resolved) return { target: NONE, source: fallbackSource };
+    return { target: targetOfUnit(resolved.unit), source: resolved.entry?.origin === 'manual' ? 'manual' : 'auto' };
+  }
   const latest = entries.filter(isActive).reverse().find((entry) => entry.kind !== 'spec');
   if (!latest) return { target: NONE, source: fallbackSource };
   const source = latest.origin === 'manual' ? 'manual' : 'auto';

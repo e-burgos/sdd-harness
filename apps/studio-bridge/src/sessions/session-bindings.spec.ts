@@ -200,4 +200,61 @@ describe('SessionBindings file leases', () => {
     expect(verdict?.kind).toBe('warn');
     expect(reasonOf(verdict)).toContain('from another worktree');
   });
+  describe('engine session alias', () => {
+    const registryDir = () => path.join(root, '.git', 'sdd-sessions').replace(/\\/g, '/');
+    const fsOf = () => ({
+      read: (file: string) => readFile(file, 'utf8'),
+      write: async (file: string, text: string) => {
+        await mkdir(path.dirname(file), { recursive: true });
+        await writeFile(file, text, 'utf8');
+      },
+      list: async (dir: string) => (await readdir(dir)).map((name) => ({ name })),
+    });
+    const holdAs = async (sessionId: string, unit: RegistryUnit = cycleA, at = NOW) => {
+      const lib = await import(path.join(root, 'sdd', 'scripts', 'lib', 'session-registry.mjs'));
+      await lib.acquireLease(fsOf(), registryDir(), { rel: 'src/auth.ts', sessionId, unit, worktree: root.replace(/\\/g, '/'), harness: 'claude-code', now: at });
+    };
+
+    it('lets the conversation edit a file leased by its engine session and renews the lease', async () => {
+      await installRegistry();
+      await holdAs('engine-abc');
+      const bindings = (await load())!;
+      bindings.sync('t1', cycleA);
+      bindings.setEngineSession('t1', 'engine-abc');
+      clock = NOW + 5 * 60_000;
+      expect(judge(bindings, 't1', cycleA)).toEqual({ kind: 'allow' });
+      const [lease] = await bindings.listLeases();
+      expect(lease.sessionId).toBe('engine-abc');
+      expect(lease.updatedAt).toBe(new Date(clock).toISOString());
+    });
+
+    it('still denies a file leased by a third session', async () => {
+      await installRegistry();
+      await holdAs('engine-other');
+      const bindings = (await load())!;
+      bindings.sync('t1', cycleA);
+      bindings.setEngineSession('t1', 'engine-abc');
+      expect(judge(bindings, 't1', cycleA)?.kind).toBe('deny');
+    });
+
+    it('keeps the current behavior without a known engine session', async () => {
+      await installRegistry();
+      await holdAs('engine-abc');
+      const bindings = (await load())!;
+      bindings.sync('t1', cycleA);
+      expect(judge(bindings, 't1', cycleA)?.kind).toBe('deny');
+    });
+
+    it('releases the leases of the engine session when the conversation ends', async () => {
+      await installRegistry();
+      await holdAs('engine-abc');
+      const bindings = (await load())!;
+      bindings.sync('t1', cycleA);
+      bindings.setEngineSession('t1', 'engine-abc');
+      await bindings.listLive();
+      bindings.end('t1');
+      await bindings.listLive();
+      expect(await bindings.listLeases()).toEqual([]);
+    });
+  });
 });

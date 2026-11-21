@@ -90,6 +90,27 @@ describe('Metrics module', () => {
     expect(screen.queryByText('Vista')).not.toBeInTheDocument();
   });
 
+  it('planning collapses a cycle keeping its progress and expands it back', () => {
+    renderMetrics('planning');
+    const toggle = screen.getByRole('button', { name: 'Mostrar u ocultar tareas de cycle-01' });
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    fireEvent.click(toggle);
+    expect(toggle).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByText('Vista')).not.toBeInTheDocument();
+    expect(screen.getAllByRole('progressbar').length).toBeGreaterThan(0);
+    fireEvent.click(toggle);
+    expect(screen.getByText('Vista')).toBeInTheDocument();
+  });
+
+  it('planning keeps the collapsed cycle after remounting', () => {
+    const first = renderMetrics('planning');
+    fireEvent.click(screen.getByRole('button', { name: 'Mostrar u ocultar tareas de cycle-01' }));
+    first.unmount();
+    renderMetrics('planning');
+    expect(screen.getByRole('button', { name: 'Mostrar u ocultar tareas de cycle-01' })).toHaveAttribute('aria-expanded', 'false');
+    expect(screen.queryByText('Vista')).not.toBeInTheDocument();
+  });
+
   it('costs shows the estimated cost from cycle usage and the pricing', async () => {
     renderMetrics('costs');
     await waitFor(() => expect(screen.getByText('Por agente')).toBeInTheDocument());

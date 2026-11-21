@@ -1,6 +1,7 @@
 import { AuthState } from '../auth-mode';
-import { BRIDGE_FEATURES, decodeClientMessage, defaultThreadOptions, type ClientCommand, type RtkGain, type ServerEvent } from '@sdd-studio/protocol';
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { BRIDGE_FEATURES, decodeClientMessage, defaultThreadOptions, type ClientCommand, type KitGateResult, type KitPackStats, type RtkGain, type ServerEvent } from '@sdd-studio/protocol';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { CommandRunner } from '../commands/runner';
@@ -10,21 +11,36 @@ import { KitIndexer } from '../workspace/kit-index';
 import { computeToolsRevision } from '../workspace/kit-tools';
 import { createAttachmentStore } from '../sessions/attachment-store';
 import { SessionManager } from '../sessions/session-manager';
+import { PackStatsError } from '../workspace/pack-runner';
+import { GateCheckError } from '../workspace/gate-runner';
 import { ThreadStore } from '../sessions/store';
 import { copyFixture, waitFor } from '../test-utils/fixture';
 import { loadWorkspaceSnapshot } from '../workspace/snapshot';
+import type { ClaudeBrowserStatus } from '@sdd-studio/protocol';
+import type { ChromeStatusService, OpenStudioChromeDeps } from '../workspace/chrome-status';
+import type { ClaudeMcpService } from '../workspace/claude-mcp';
+import type { ClaudeInventoryService } from '../workspace/claude-inventory';
 import type { KitIntegrations } from '../workspace/kit-integrations';
 import { createHandlers } from './router';
 
 let root: string;
 let cleanup: () => Promise<void>;
-beforeEach(async () => ({ root, cleanup } = await copyFixture()));
-afterEach(() => cleanup());
+let home: string;
+beforeEach(async () => {
+  ({ root, cleanup } = await copyFixture());
+  home = await mkdtemp(path.join(tmpdir(), 'router-home-'));
+  process.env.SDD_STUDIO_HOME = home;
+});
+afterEach(async () => {
+  await cleanup();
+  await rm(home, { recursive: true, force: true });
+});
 
 async function handlers(
   broadcast: (e: ServerEvent) => void = () => {},
   refresh: () => Promise<unknown> = async () => null,
-  extra: { rtkGain?: (root: string) => Promise<RtkGain>; now?: () => Date; integrations?: KitIntegrations } = {},
+  extra: { claudeInventory?: ClaudeInventoryService; rtkGain?: (root: string) => Promise<RtkGain>; packStats?: (root: string, spec: string, cycle: string) => Promise<KitPackStats>; gateCheck?: (root: string, spec: string, cycle: string | undefined) => Promise<KitGateResult>; now?: () => Date; integrations?: KitIntegrations; chromeStatus?: ChromeStatusService; claudeMcp?: ClaudeMcpService; openSettings?: OpenStudioChromeDeps } = {},
+  runner: CommandRunner = new CommandRunner(root, broadcast, () => 'run-1'),
 ) {
   const snapshot = (await loadWorkspaceSnapshot(root)).snapshot;
   const store = new ThreadStore(root);
@@ -37,8 +53,9 @@ async function handlers(
   const login = { status: async () => account, login: async () => ({ ...account, state: 'pending' as const }), logout: async () => account };
   return createHandlers({
     root, auth, login, bridgeVersion: '0.1.0', sessions, store, attachments, fileIndex: createFileIndex(root),
-    kitIndexer: new KitIndexer({ root, onChanged: () => undefined }), broadcast: (m) => broadcast(m as ServerEvent), ...extra,
-    watcher: { current: () => snapshot, refresh: async () => { await refresh(); return null; } }, runner: new CommandRunner(root, broadcast, () => 'run-1'),
+    kitIndexer: new KitIndexer({ root, onChanged: () => undefined }), broadcast: (m) => broadcast(m as ServerEvent),
+    chromeStatus: fakeChrome().service, claudeMcp: fakeMcp(), openSettings: { studio: { ensure: async () => ({ launched: true }) }, openTab: async () => true }, ...extra,
+    watcher: { current: () => snapshot, refresh: async () => { await refresh(); return null; } }, runner,
   });
 }
 const cmd = (c: Record<string, unknown>): ClientCommand => {
@@ -46,6 +63,130 @@ const cmd = (c: Record<string, unknown>): ClientCommand => {
   if (!parsed.ok || parsed.value.kind !== 'command') throw new Error(`invalid command in test: ${JSON.stringify(c)}`);
   return parsed.value;
 };
+
+const fakeChrome = (state: ClaudeBrowserStatus['state'] = 'permission-pending') => {
+  const listeners = new Set<(status: ClaudeBrowserStatus) => void>();
+  let last: ClaudeBrowserStatus | null = null;
+  const fake = {
+    calls: 0,
+    service: {
+      current: () => last,
+      check: async () => {
+        fake.calls += 1;
+        const next = { state, checkedAt: '2026-11-20T10:00:00.000Z', detail: null };
+        const changed = last?.state !== next.state;
+        last = next;
+        if (changed) for (const listener of listeners) listener(next);
+        return next;
+      },
+      subscribe: (listener: (status: ClaudeBrowserStatus) => void) => {
+        listeners.add(listener);
+        return () => listeners.delete(listener);
+      },
+    } satisfies ChromeStatusService,
+  };
+  return fake;
+};
+
+const fakeMcp = (): ClaudeMcpService => ({
+  login: async (name) => ({ name, outcome: 'ok', output: 'done', inventory: null }),
+  reconnect: async (name) => ({ name, status: 'connected', inventory: fakeInventory().current() as never }),
+});
+
+const fakeInventory = (over: Partial<ClaudeInventoryService> = {}): ClaudeInventoryService & { calls: number } => {
+  const inventory = {
+    capturedAt: '2026-11-20T10:00:00.000Z',
+    plugins: [],
+    mcpServers: [],
+    counts: {
+      project: { skills: 1, agents: 1, plugins: 0, mcpServers: 0, mcpTools: 0 },
+      all: { skills: 5, agents: 2, plugins: 1, mcpServers: 1, mcpTools: 3 },
+    },
+  };
+  const service = {
+    calls: 0,
+    current: () => null,
+    load: async () => undefined,
+    refresh: async () => {
+      service.calls += 1;
+      return inventory;
+    },
+    applyInit: () => undefined,
+    ...over,
+  };
+  return service;
+};
+
+describe('claude tools commands', () => {
+  const customConfig = { sources: { user: true, local: false }, disabledPlugins: [], disabledMcpServers: ['x'], browser: { enabled: true, browserUrl: null } };
+
+  it('get returns defaults, a revision, no inventory and the browser mcp version', async () => {
+    const h = await handlers(undefined, undefined, { claudeInventory: fakeInventory() });
+    const result = (await h.handle(cmd({ cmd: 'claude.tools.get' }))) as { config: unknown; revision: string; inventory: unknown; browserMcpVersion: string };
+    expect(result.inventory).toBeNull();
+    expect(result.revision).toMatch(/^[a-f0-9]{16}$/);
+    expect(result.browserMcpVersion).toMatch(/^\d+\.\d+\.\d+$/);
+  });
+
+  it('set stores the config and announces claude-tools.changed once', async () => {
+    const events: ServerEvent[] = [];
+    const h = await handlers((e) => events.push(e), undefined, { claudeInventory: fakeInventory(), now: () => new Date('2026-11-20T10:00:00Z') });
+    const { revision } = (await h.handle(cmd({ cmd: 'claude.tools.get' }))) as { revision: string };
+    const result = (await h.handle(cmd({ cmd: 'claude.tools.set', config: customConfig, expectedRevision: revision }))) as { changed: boolean; revision: string };
+    expect(result.changed).toBe(true);
+    const bot = events.filter((e) => e.kind === 'bot.event');
+    expect(bot).toHaveLength(1);
+    expect(bot[0]).toMatchObject({ channelId: 'general', botKind: 'claude-tools.changed', payload: { changed: ['sources', 'mcp'] } });
+    await h.handle(cmd({ cmd: 'claude.tools.set', config: customConfig, expectedRevision: result.revision }));
+    expect(events.filter((e) => e.kind === 'bot.event')).toHaveLength(1);
+  });
+
+  it('get reports the effective scope', async () => {
+    const h = await handlers(undefined, undefined, { claudeInventory: fakeInventory() });
+    const result = (await h.handle(cmd({ cmd: 'claude.tools.get' }))) as { scope: string; hasProjectOverride: boolean };
+    expect(result).toMatchObject({ scope: 'global', hasProjectOverride: false });
+  });
+
+  it('set with scope project creates the override and useGlobal drops it, announcing both', async () => {
+    const events: ServerEvent[] = [];
+    const h = await handlers((e) => events.push(e), undefined, { claudeInventory: fakeInventory() });
+    const { revision } = (await h.handle(cmd({ cmd: 'claude.tools.get' }))) as { revision: string };
+    const set = (await h.handle(cmd({ cmd: 'claude.tools.set', config: customConfig, expectedRevision: revision, scope: 'project' }))) as { scope: string; hasProjectOverride: boolean; revision: string };
+    expect(set).toMatchObject({ scope: 'project', hasProjectOverride: true });
+    const back = (await h.handle(cmd({ cmd: 'claude.tools.useGlobal', expectedRevision: set.revision }))) as { scope: string; hasProjectOverride: boolean; config: unknown; inventory: unknown };
+    expect(back).toMatchObject({ scope: 'global', hasProjectOverride: false });
+    const bot = events.filter((e) => e.kind === 'bot.event');
+    expect(bot).toHaveLength(2);
+    expect(bot[0]).toMatchObject({ botKind: 'claude-tools.changed', payload: { scope: 'project' } });
+    expect(bot[1]).toMatchObject({ botKind: 'claude-tools.changed', payload: { scope: 'global', changed: ['sources', 'mcp'] } });
+  });
+
+  it('useGlobal without an override changes nothing and announces nothing', async () => {
+    const events: ServerEvent[] = [];
+    const h = await handlers((e) => events.push(e), undefined, { claudeInventory: fakeInventory() });
+    const { revision } = (await h.handle(cmd({ cmd: 'claude.tools.get' }))) as { revision: string };
+    await h.handle(cmd({ cmd: 'claude.tools.useGlobal', expectedRevision: revision }));
+    expect(events.filter((e) => e.kind === 'bot.event')).toHaveLength(0);
+  });
+
+  it('useGlobal reports conflict on a stale revision', async () => {
+    const h = await handlers(undefined, undefined, { claudeInventory: fakeInventory() });
+    await expect(h.handle(cmd({ cmd: 'claude.tools.useGlobal', expectedRevision: 'ffffffffffffffff' }))).rejects.toMatchObject({ code: 'conflict' });
+  });
+
+  it('set reports conflict on a stale revision', async () => {
+    const h = await handlers(undefined, undefined, { claudeInventory: fakeInventory() });
+    await expect(h.handle(cmd({ cmd: 'claude.tools.set', config: customConfig, expectedRevision: 'ffffffffffffffff' }))).rejects.toMatchObject({ code: 'conflict' });
+  });
+
+  it('refresh runs the probe and returns the inventory', async () => {
+    const inventory = fakeInventory();
+    const h = await handlers(undefined, undefined, { claudeInventory: inventory });
+    const result = (await h.handle(cmd({ cmd: 'claude.inventory.refresh' }))) as { inventory: { counts: { all: { skills: number } } } };
+    expect(result.inventory.counts.all.skills).toBe(5);
+    expect(inventory.calls).toBe(1);
+  });
+});
 
 describe('createHandlers', () => {
   it('question.answer rejects an unknown question as not-found', async () => {
@@ -75,6 +216,26 @@ describe('createHandlers', () => {
     const index = (await (await handlers()).handle(cmd({ cmd: 'kit.index' }))) as { entries: { path: string; section: string }[]; truncated: boolean };
     expect(index.truncated).toBe(false);
     expect(index.entries).toContainEqual(expect.objectContaining({ path: 'sdd/memory/lessons.md', section: 'memory' }));
+  });
+
+  it('kit.pack.stats delegates to the reader and maps typed failures to session errors', async () => {
+    const stats: KitPackStats = { rows: [{ unit: 'B-01', role: 'implementor-back', packBytes: 1, sourceBytes: 2 }], total: { packBytes: 1, sourceBytes: 2 }, packMisses: 0 };
+    const calls: string[][] = [];
+    const h = await handlers(undefined, undefined, { packStats: async (r, spec, cycle) => { calls.push([r, spec, cycle]); return stats; } });
+    expect(await h.handle(cmd({ cmd: 'kit.pack.stats', spec: 'spec-a-001-b', cycle: 'cycle-01' }))).toEqual(stats);
+    expect(calls).toEqual([[root, 'spec-a-001-b', 'cycle-01']]);
+    const failing = await handlers(undefined, undefined, { packStats: async () => { throw new PackStatsError('not-found', 'nope'); } });
+    await expect(failing.handle(cmd({ cmd: 'kit.pack.stats', spec: 'spec-a-001-b', cycle: 'cycle-01' }))).rejects.toMatchObject({ code: 'not-found' });
+  });
+
+  it('kit.gate.check delegates to the runner and maps typed failures to session errors', async () => {
+    const result: KitGateResult = { spec: 's-a', gate: 'B', passed: true, checks: [], flow: 'lite', cycle: 'cycle-01' };
+    const calls: unknown[][] = [];
+    const h = await handlers(undefined, undefined, { gateCheck: async (r, spec, cycle) => { calls.push([r, spec, cycle]); return result; } });
+    expect(await h.handle(cmd({ cmd: 'kit.gate.check', spec: 's-a', cycle: 'cycle-01' }))).toEqual(result);
+    expect(calls).toEqual([[root, 's-a', 'cycle-01']]);
+    const failing = await handlers(undefined, undefined, { gateCheck: async () => { throw new GateCheckError('bad-request', 'unknown spec'); } });
+    await expect(failing.handle(cmd({ cmd: 'kit.gate.check', spec: 's-a' }))).rejects.toMatchObject({ code: 'bad-request', message: 'unknown spec' });
   });
 
   it('kit.rtkGain delegates to the reader with the workspace root', async () => {
@@ -387,5 +548,125 @@ describe('createHandlers', () => {
     expect(await types({})).not.toContain('document.touched');
     expect(await types({ includeDocumentTouched: false })).not.toContain('document.touched');
     expect(await types({ includeDocumentTouched: true })).toContain('document.touched');
+  });
+});
+
+describe('claude connect commands', () => {
+  const offConfig = { sources: { user: false, local: false }, disabledPlugins: [] as string[], disabledMcpServers: [] as string[], browser: { enabled: false, browserUrl: null } };
+  const onConfig = { ...offConfig, browser: { enabled: true, browserUrl: null } };
+
+  it('browser.check returns the status and announces claude-browser.changed once', async () => {
+    const events: ServerEvent[] = [];
+    const chrome = fakeChrome('connected');
+    const h = await handlers((e) => events.push(e), undefined, { chromeStatus: chrome.service });
+    expect(await h.handle(cmd({ cmd: 'claude.browser.check' }))).toMatchObject({ state: 'connected', detail: null });
+    await h.handle(cmd({ cmd: 'claude.browser.check' }));
+    const bot = events.filter((e) => e.kind === 'bot.event');
+    expect(bot).toHaveLength(1);
+    expect(bot[0]).toMatchObject({ botKind: 'claude-browser.changed', payload: { state: 'connected' } });
+  });
+
+  it('browser.check serves the cached status unless force is set', async () => {
+    const chrome = fakeChrome('connected');
+    const h = await handlers(undefined, undefined, { chromeStatus: chrome.service });
+    await h.handle(cmd({ cmd: 'claude.browser.check' }));
+    expect(chrome.calls).toBe(1);
+    await h.handle(cmd({ cmd: 'claude.browser.check' }));
+    expect(chrome.calls).toBe(1);
+    await h.handle(cmd({ cmd: 'claude.browser.check', force: true }));
+    expect(chrome.calls).toBe(2);
+  });
+
+  it('openSettings launches Studio Chrome or opens a tab when it was already running', async () => {
+    let launched = true;
+    let tabs = 0;
+    const h = await handlers(undefined, undefined, { openSettings: { studio: { ensure: async () => ({ launched }) }, openTab: async () => { tabs += 1; return true; } } });
+    expect(await h.handle(cmd({ cmd: 'claude.browser.openSettings' }))).toEqual({ opened: true });
+    expect(tabs).toBe(0);
+    launched = false;
+    expect(await h.handle(cmd({ cmd: 'claude.browser.openSettings' }))).toEqual({ opened: true });
+    expect(tabs).toBe(1);
+  });
+
+  it('mcp login and reconnect delegate to the service', async () => {
+    const h = await handlers(undefined, undefined, { claudeMcp: fakeMcp() });
+    expect(await h.handle(cmd({ cmd: 'claude.mcp.login', name: 'docs' }))).toMatchObject({ name: 'docs', outcome: 'ok' });
+    expect(await h.handle(cmd({ cmd: 'claude.mcp.reconnect', name: 'docs' }))).toMatchObject({ name: 'docs', status: 'connected' });
+  });
+
+  it('checks Chrome when tools.set turns the browser on, not when it stays on or turns off', async () => {
+    const chrome = fakeChrome();
+    const h = await handlers(undefined, undefined, { claudeInventory: fakeInventory(), chromeStatus: chrome.service });
+    let { revision } = (await h.handle(cmd({ cmd: 'claude.tools.get' }))) as { revision: string };
+    const set = async (config: typeof onConfig) => {
+      const result = (await h.handle(cmd({ cmd: 'claude.tools.set', config, expectedRevision: revision }))) as { revision: string };
+      revision = result.revision;
+    };
+    await set(offConfig);
+    await set(onConfig);
+    await waitFor(() => chrome.calls === 1);
+    await set({ ...onConfig, disabledMcpServers: ['x'] });
+    await set(offConfig);
+    expect(chrome.calls).toBe(1);
+  });
+
+  it('announces claude-connect in the welcome features', () => {
+    expect(BRIDGE_FEATURES).toContain('claude-connect');
+  });
+});
+
+describe('kit.verify.run', () => {
+  const writeVerifyKit = async (script: string) => {
+    await writeFile(path.join(root, 'sdd', 'verify.json'), JSON.stringify({ 'libs/x': { quick: ['c'], full: ['c'] }, 'apps/q': { quick: ['c'] } }));
+    await writeFile(path.join(root, 'sdd', 'scripts', 'sdd-verify.mjs'), script);
+  };
+  const echoArgs = "process.stdout.write(process.argv.slice(2).join(' '));\n";
+  const verify = (extra: Record<string, unknown> = {}) => cmd({ cmd: 'kit.verify.run', app: 'libs/x', level: 'quick', ...extra });
+
+  it('runs sdd-verify with app, level and the optional unit and cycle args', async () => {
+    await writeVerifyKit(echoArgs);
+    const events: ServerEvent[] = [];
+    const h = await handlers((e) => events.push(e));
+    expect(await h.handle(verify({ level: 'full', spec: 'spec-a', cycle: 'cycle-02', unit: 'B-01' }))).toEqual({ runId: 'run-1' });
+    await waitFor(() => events.find((e) => e.kind === 'command.exit'));
+    expect(events).toContainEqual({ kind: 'command.output', runId: 'run-1', stream: 'stdout', chunk: 'libs/x full --spec spec-a --cycle cycle-02 --unit B-01' });
+    expect(events).toContainEqual({ kind: 'command.exit', runId: 'run-1', exitCode: 0 });
+  });
+
+  it('reports a non-zero exit such as the lease timeout (75)', async () => {
+    await writeVerifyKit('process.exit(75);\n');
+    const events: ServerEvent[] = [];
+    const h = await handlers((e) => events.push(e));
+    await h.handle(verify());
+    expect(await waitFor(() => events.find((e) => e.kind === 'command.exit'))).toMatchObject({ exitCode: 75 });
+  });
+
+  it('refreshes the snapshot when the run ends', async () => {
+    await writeVerifyKit(echoArgs);
+    let refreshed = 0;
+    const h = await handlers(() => {}, async () => { refreshed++; });
+    await h.handle(verify());
+    await waitFor(() => refreshed > 0);
+  });
+
+  it('rejects an app that is not in verify.json and a level it does not have', async () => {
+    await writeVerifyKit(echoArgs);
+    const h = await handlers();
+    await expect(h.handle(verify({ app: 'libs/nope' }))).rejects.toMatchObject({ code: 'bad-request' });
+    await expect(h.handle(verify({ app: 'apps/q', level: 'full' }))).rejects.toMatchObject({ code: 'bad-request' });
+  });
+
+  it('answers conflict while another verify is running', async () => {
+    await writeVerifyKit('setInterval(() => undefined, 1000);\n');
+    const runner = new CommandRunner(root, () => {}, () => 'run-1');
+    const h = await handlers(undefined, undefined, {}, runner);
+    await h.handle(verify());
+    await expect(h.handle(verify())).rejects.toMatchObject({ code: 'conflict' });
+    runner.terminateAll();
+    await waitFor(() => runner.activeRuns() === 0);
+  });
+
+  it('announces kit-execution in the welcome features', async () => {
+    expect((await handlers()).welcome().features).toContain('kit-execution');
   });
 });

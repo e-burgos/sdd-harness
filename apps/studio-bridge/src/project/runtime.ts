@@ -11,6 +11,10 @@ import { SessionManager } from '../sessions/session-manager';
 import { SessionBindings } from '../sessions/session-bindings';
 import { ThreadStore } from '../sessions/store';
 import { createGithubFeed, type GithubFeed } from '../github/pr-feed';
+import { createChromeStatus, defaultChromeCheckDeps } from '../workspace/chrome-status';
+import { studioChrome } from '../workspace/studio-chrome';
+import { createClaudeInventory } from '../workspace/claude-inventory';
+import { cachedClaudeTools, readClaudeTools } from '../workspace/claude-tools';
 import { createFileIndex } from '../workspace/file-index';
 import { KitIndexer } from '../workspace/kit-index';
 import { createSessionsFeed, type SessionsFeed } from '../workspace/sessions-feed';
@@ -83,10 +87,14 @@ export async function openProjectRuntime(root: string, deps: ProjectRuntimeDeps)
   void githubFeed.refresh().catch(() => undefined);
 
   const runner = new CommandRunner(root, broadcast);
+  const claudeInventory = createClaudeInventory({ root });
+  const chromeStatus = createChromeStatus(defaultChromeCheckDeps(() => cachedClaudeTools(root).browser.enabled, () => cachedClaudeTools(root).browser.browserUrl));
   let sessions: SessionManager;
   let handlers: BridgeHandlers;
   try {
-    const engine = deps.engine === 'fake' ? new FakeEngine() : new ClaudeAgentSdkEngine(undefined, () => auth.env());
+    await readClaudeTools(root).catch(() => undefined);
+    await claudeInventory.load();
+    const engine = deps.engine === 'fake' ? new FakeEngine() : new ClaudeAgentSdkEngine(undefined, () => auth.env(), 'stream', undefined, () => cachedClaudeTools(root), () => studioChrome.ensure());
     sessions = new SessionManager({
       root,
       attachments,
@@ -95,6 +103,7 @@ export async function openProjectRuntime(root: string, deps: ProjectRuntimeDeps)
       snapshot: () => watcher.current(),
       broadcast,
       refreshSnapshot: () => watcher.refresh().then(() => undefined),
+      onEngineInit: (info) => claudeInventory.applyInit(info),
       ...(bindings ? { bindings } : {}),
     });
     await sessions.recover();
@@ -111,7 +120,10 @@ export async function openProjectRuntime(root: string, deps: ProjectRuntimeDeps)
       fileIndex,
       kitIndexer,
       broadcast,
+      claudeInventory,
+      chromeStatus,
     });
+    if (deps.engine !== 'fake') void chromeStatus.check().catch(() => undefined);
   } catch (error) {
     kitIndexer.close();
     feed.close();

@@ -42,7 +42,7 @@ const FILES: Record<string, string> = {
   'sdd/context/apps/studio/constitution.md': '# Constitution base',
   'sdd/context/apps/studio/updates/2026-10-01-x.md': '# Fragmento nuevo',
   'sdd/memory/lessons.md': '# Lecciones',
-  'sdd/skills/sdd-steward/SKILL.md': '# Steward definition',
+  'sdd/skills/sdd-steward/SKILL.md': '---\nname: sdd-steward\ndescription: Conserje del kit\n---\n# Steward definition',
   'sdd/prompts/start.md': '# Start prompt',
 };
 
@@ -159,6 +159,7 @@ describe('Kit center content', () => {
     const { requests } = setup('skills');
     expect(await screen.findByRole('heading', { name: 'Steward definition' })).toBeInTheDocument();
     expect(requests).toContainEqual({ cmd: 'workspace.readFile', path: 'sdd/skills/sdd-steward/SKILL.md' });
+    expect(within(screen.getByTestId('markdown-frontmatter')).getByText('name')).toBeInTheDocument();
   });
 
   describe('open skill refresh', () => {
@@ -286,6 +287,37 @@ describe('Kit center content', () => {
     expect(await screen.findByRole('heading', { name: 'Constitution base' })).toBeInTheDocument();
     fireEvent.click(within(nav).getByRole('button', { name: /2026-10-01-x/ }));
     expect(await screen.findByRole('heading', { name: 'Fragmento nuevo' })).toBeInTheDocument();
+  });
+
+  it('scrolls the list and the document independently and keeps the path inside the document', async () => {
+    setup('context');
+    const list = await screen.findByTestId('kit-list-scroll');
+    const documentPane = screen.getByTestId('kit-document-scroll');
+    expect(list.className).toContain('overflow-y-auto');
+    expect(documentPane.className).toContain('overflow-y-auto');
+    expect(list).not.toContainElement(documentPane);
+    expect(documentPane).not.toContainElement(list);
+    const file = await screen.findByTestId('kit-file');
+    expect(documentPane).toContainElement(file);
+    expect(file.className).toContain('max-w-[72ch]');
+    expect(within(file).getByText('sdd/context/apps/studio/constitution.md')).toBeInTheDocument();
+  });
+
+  it('returns the document to the top when another card is chosen', async () => {
+    const scrollTo = vi.fn();
+    const original = Element.prototype.scrollTo;
+    Element.prototype.scrollTo = scrollTo as unknown as typeof Element.prototype.scrollTo;
+    try {
+      setup('context');
+      const nav = await screen.findByRole('navigation', { name: 'Archivos de Contexto' });
+      await screen.findByRole('heading', { name: 'Constitution base' });
+      scrollTo.mockClear();
+      fireEvent.click(within(nav).getByRole('button', { name: /2026-10-01-x/ }));
+      await screen.findByRole('heading', { name: 'Fragmento nuevo' });
+      expect(scrollTo).toHaveBeenCalledWith(expect.objectContaining({ top: 0 }));
+    } finally {
+      Element.prototype.scrollTo = original;
+    }
   });
 
   it('shows lessons and the journal index', async () => {
@@ -524,5 +556,54 @@ describe('Kit integrations', () => {
     setup('tools', { features: FEATURES, tools: TOOLS, integrationStatus: both(), connected: false });
     expect(screen.getByRole('switch', { name: 'tucu-ui' })).toBeDisabled();
     expect(screen.getByTestId('kit-integrations')).toHaveTextContent('Sin conexión');
+  });
+});
+
+describe('Kit harness section', () => {
+  const harness = (path: string, role: string, bytes: number, extra: Record<string, unknown> = {}) => ({ ...entry('harness', role, null, path), bytes, ...extra });
+  const withHarness = (entries: ReturnType<typeof harness>[]) => {
+    INDEX.entries.push(...entries);
+    FILES['sdd/dual-harness/rules/sdd-gates.md'] = '# Gates rule';
+  };
+  afterEach(() => {
+    INDEX.entries = INDEX.entries.filter((e) => e.section !== 'harness');
+  });
+
+  it('does not list the group without harness entries', async () => {
+    const { container } = setup(null);
+    await waitFor(() => expect(container.querySelector('[data-panel-group="project"]')).toBeTruthy());
+    expect(container.querySelector('[data-panel-group="harness"]')).toBeNull();
+  });
+
+  it('warns and offers the split recipe when a core file exceeds 6 KB', async () => {
+    withHarness([
+      harness('sdd/dual-harness/CLAUDE.md', 'harness-core', 7000),
+      harness('sdd/dual-harness/AGENTS.md', 'harness-core', 3000),
+      harness('sdd/dual-harness/project.md', 'harness-project', 500),
+      harness('sdd/dual-harness/rules/sdd-gates.md', 'harness-rule', 2048, { trigger: 'always_on', description: 'Gates del ciclo' }),
+    ]);
+    setup('harness');
+    const advice = await screen.findByTestId('harness-split-advice');
+    expect(advice).toHaveTextContent('Conviene separar las instrucciones propias del núcleo');
+    expect(advice).toHaveTextContent('npx @e-burgos/sdd-harness update sdd --split-project');
+    const sizes = screen.getAllByTestId('harness-size');
+    expect(sizes.map((s) => s.getAttribute('data-over'))).toEqual(['false', 'true']);
+    const rule = document.querySelector('[data-harness-rule="sdd-gates.md"]') as HTMLElement;
+    expect(rule).toHaveTextContent('always_on');
+    expect(rule).toHaveTextContent('Gates del ciclo');
+    fireEvent.click(within(rule).getByRole('button'));
+    expect(await screen.findByText('Gates rule')).toBeTruthy();
+  });
+
+  it('flags a missing project.md and shows no advice when everything fits', async () => {
+    withHarness([harness('sdd/dual-harness/CLAUDE.md', 'harness-core', 1000)]);
+    const first = setup('harness');
+    expect(await screen.findByTestId('harness-split-advice')).toHaveTextContent('Falta project.md');
+    expect(screen.getByText('falta')).toBeTruthy();
+    first.unmount();
+    INDEX.entries.push(harness('sdd/dual-harness/project.md', 'harness-project', 500));
+    setup('harness');
+    await screen.findAllByTestId('harness-size');
+    expect(screen.queryByTestId('harness-split-advice')).toBeNull();
   });
 });

@@ -1,10 +1,11 @@
 import { z } from 'zod';
 import { AttachmentMime, AttachmentUpload, PromptRefs, Sha256 } from './attachments';
 import { AuthPreference, ChannelId, DevProfile, MAX_QUESTIONS, QuestionAnswer, ThreadLinkRef, ThreadLinkTarget, ThreadOptions } from './domain';
+import { ClaudeToolsConfig, ClaudeToolsRevision, ClaudeToolsScope } from './claude-tools';
 import { GithubConnectRequest } from './github';
 import { KitIntegrationId, ToolsChange } from './kit';
 import { FILE_SEARCH_MAX, MAX_ATTACHMENTS } from './limits';
-import { ToolsRevision } from './snapshot';
+import { ToolsRevision, VerifyLevel } from './snapshot';
 import { AbsPathInput, ConfigDraft, GenerationId } from './wizard';
 
 const Id = z.string().min(1).max(64);
@@ -69,6 +70,29 @@ export const ClientCommand = z.discriminatedUnion('cmd', [
   z.object({ ...cmd('kit.tools.set'), change: ToolsChange, expectedRevision: ToolsRevision }),
   z.object({ ...cmd('kit.integration.status'), integration: KitIntegrationId }),
   z.object({ ...cmd('kit.integration.set'), integration: KitIntegrationId, enabled: z.boolean() }),
+  z.object({
+    ...cmd('kit.verify.run'),
+    app: z.string().regex(/^\S{1,120}$/),
+    level: VerifyLevel,
+    spec: SafeArg.optional(),
+    cycle: z.string().regex(/^cycle-\d{2}$/).optional(),
+    unit: z.string().regex(/^(TASK-\d{3,}|B-\d{2})$/).optional(),
+  }),
+  z.object({ ...cmd('kit.pack.stats'), spec: z.string().regex(/^spec-[a-z0-9-]{1,120}$/), cycle: z.string().regex(/^cycle-\d{2}$/) }),
+  z.object({ ...cmd('kit.gate.check'), spec: z.string().min(1).max(160).regex(/^[a-z0-9-]+$/), cycle: z.string().regex(/^cycle-\d{2}$/).optional() }),
+  z.object({ ...cmd('claude.tools.get') }),
+  z.object({
+    ...cmd('claude.tools.set'),
+    config: ClaudeToolsConfig,
+    expectedRevision: ClaudeToolsRevision,
+    scope: ClaudeToolsScope.optional(),
+  }),
+  z.object({ ...cmd('claude.tools.useGlobal'), expectedRevision: ClaudeToolsRevision }),
+  z.object({ ...cmd('claude.inventory.refresh') }),
+  z.object({ ...cmd('claude.browser.check'), force: z.boolean().optional() }),
+  z.object({ ...cmd('claude.browser.openSettings') }),
+  z.object({ ...cmd('claude.mcp.login'), name: z.string().min(1).max(200) }),
+  z.object({ ...cmd('claude.mcp.reconnect'), name: z.string().min(1).max(200) }),
   z.object({
     ...cmd('approval.respond'),
     approvalId: Id,

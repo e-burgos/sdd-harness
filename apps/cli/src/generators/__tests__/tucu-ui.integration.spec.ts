@@ -207,7 +207,7 @@ describe.skipIf(process.platform === 'win32')('sdd:tucu (integration, POSIX)', (
       writeJson('.vscode/mcp.json', { inputs: [{ id: 'k' }], servers: { mine: { command: 'mine' } } });
     };
 
-    it('instala la skill, enlaza los tres lugares, convierte .claude/skills y escribe los tres archivos MCP', () => {
+    it('instala la skill, enlaza los tres lugares sin convertir .claude/skills y escribe los tres archivos MCP', () => {
       setupAgents();
       expect(lstatSync(resolve(ws, '.claude/skills')).isSymbolicLink()).toBe(true);
       foreignMcp();
@@ -224,13 +224,13 @@ describe.skipIf(process.platform === 'win32')('sdd:tucu (integration, POSIX)', (
       }
       expect(fs.readdirSync(resolve(ws, 'sdd/integrations/skills'))).toEqual(['tucu-ui-design']);
 
-      expect(lstatSync(resolve(ws, '.claude/skills')).isSymbolicLink()).toBe(false);
-      for (const name of ['sdd-orchestrator', 'sdd-steward', 'sdd-mod']) {
-        expect(fs.existsSync(resolve(ws, '.claude/skills', name))).toBe(true);
-        expect(isLink(resolve(ws, '.claude/skills', name))).toBe(true);
-      }
+      expect(lstatSync(resolve(ws, '.claude/skills')).isSymbolicLink()).toBe(true);
+      expect(readlinkSync(resolve(ws, '.claude/skills'))).toBe('../sdd/skills');
+      expect(out.stdout).toContain('created  symlink : .claude/skills/tucu-ui-design (inside sdd/skills, where it points)');
+      expect(isLink(resolve(ws, 'sdd/skills/tucu-ui-design'))).toBe(true);
+      expect(readlinkSync(resolve(ws, 'sdd/skills/tucu-ui-design'))).toBe(`../../${SKILL_DIR}`);
       expect(fs.existsSync(resolve(ws, '.claude/skills/sdd-mod/.claude-plugin/plugin.json'))).toBe(true);
-      expect(fs.existsSync(resolve(ws, 'sdd/skills/tucu-ui-design'))).toBe(false);
+      expect(readlinkSync(resolve(ws, '.github/skills/tucu-ui-design'))).toBe(`../../${SKILL_DIR}`);
       for (const dir of ['.claude/skills', '.github/skills', '.agents/skills']) {
         const link = resolve(ws, dir, 'tucu-ui-design');
         expect(isLink(link)).toBe(true);
@@ -493,13 +493,59 @@ describe.skipIf(process.platform === 'win32')('sdd:tucu (integration, POSIX)', (
       expect(stubCalls().filter((c) => c.startsWith('claude mcp add'))).toHaveLength(1);
     });
 
-    it('no toca sdd/skills ni catalog.json', () => {
+    it('en sdd/skills solo agrega su enlace, y ni catalog.json ni validate-sdd lo ven como skill del kit', () => {
       setupAgents();
       const skillsBefore = Object.entries(snapshot(ws)).filter(([k]) => k.startsWith('sdd/skills'));
       const catalogBefore = fs.readFileSync(resolve(ws, 'sdd/catalog.json'), 'utf8');
       expect(tucu(['--enable']).status).toBe(0);
-      expect(Object.entries(snapshot(ws)).filter(([k]) => k.startsWith('sdd/skills'))).toEqual(skillsBefore);
+      const skillsAfter = Object.entries(snapshot(ws)).filter(([k]) => k.startsWith('sdd/skills'));
+      expect(skillsAfter).toEqual(
+        [...skillsBefore, ['sdd/skills/tucu-ui-design', `link:../../${SKILL_DIR}`]].sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0)),
+      );
+      execFileSync(process.execPath, [resolve(ws, 'sdd/scripts/rebuild-catalog.mjs')], { cwd: ws, stdio: 'ignore' });
       expect(fs.readFileSync(resolve(ws, 'sdd/catalog.json'), 'utf8')).toBe(catalogBefore);
+      const validate = spawnSync(process.execPath, [resolve(ws, 'sdd/scripts/validate-sdd.mjs')], {
+        cwd: ws,
+        encoding: 'utf8',
+        env: env(),
+      });
+      expect(validate.stdout + validate.stderr).not.toContain('catalog.json');
+      expect(validate.stdout + validate.stderr).not.toContain('tucu_ui on but');
+    });
+
+    it('el enlace sobrevive a restaurar el symlink .claude/skills y a re-correr setup-agents', () => {
+      setupAgents();
+      expect(tucu(['--enable']).status).toBe(0);
+      const after = snapshot(ws);
+      fs.removeSync(resolve(ws, '.claude/skills'));
+      fs.symlinkSync('../sdd/skills', resolve(ws, '.claude/skills'));
+      setupAgents();
+      expect(snapshot(ws)).toEqual(after);
+      expect(isLink(resolve(ws, '.claude/skills/tucu-ui-design'))).toBe(true);
+      for (const dir of ['.github/skills', '.agents/skills']) {
+        expect(readlinkSync(resolve(ws, dir, 'tucu-ui-design'))).toBe(`../../${SKILL_DIR}`);
+      }
+      expect(status().harnesses).toEqual({ claude: 'complete', copilot: 'complete', gemini: 'complete', antigravity: 'complete' });
+    });
+
+    it('un .claude/skills convertido por una versión anterior sigue funcionando', () => {
+      setupAgents();
+      fs.removeSync(resolve(ws, '.claude/skills'));
+      fs.mkdirSync(resolve(ws, '.claude/skills'));
+      expect(tucu(['--enable']).status).toBe(0);
+      expect(lstatSync(resolve(ws, '.claude/skills')).isSymbolicLink()).toBe(false);
+      expect(isLink(resolve(ws, '.claude/skills/tucu-ui-design'))).toBe(true);
+      expect(fs.existsSync(resolve(ws, 'sdd/skills/tucu-ui-design'))).toBe(false);
+      expect(status().harnesses.claude).toBe('complete');
+    });
+
+    it('un enlace degradado a texto plano (checkout sin core.symlinks) se recrea como enlace', () => {
+      setupAgents();
+      fs.writeFileSync(resolve(ws, 'sdd/skills/tucu-ui-design'), `../../${SKILL_DIR}\n`);
+      expect(status().skill.links['.claude/skills']).toBe('missing');
+      expect(tucu(['--enable']).status).toBe(0);
+      expect(isLink(resolve(ws, 'sdd/skills/tucu-ui-design'))).toBe(true);
+      expect(status().harnesses.claude).toBe('complete');
     });
   });
 

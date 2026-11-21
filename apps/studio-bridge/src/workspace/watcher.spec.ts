@@ -118,13 +118,13 @@ describe('onPath hook', () => {
   });
 });
 
+const CATALOG_RESCAN_MS = 300;
+
 describe('.claude catalog watching', () => {
   const restart = async () => {
     await watcher!.close();
     updates.length = 0;
-    // chokidar can miss a moved directory on Windows; the periodic rescan is the documented recovery.
-    const rescanIntervalMs = process.platform === 'win32' ? 300 : undefined;
-    watcher = await startWorkspaceWatcher({ root, debounceMs: 50, rescanIntervalMs, onUpdate: (u) => updates.push(u) });
+    watcher = await startWorkspaceWatcher({ root, debounceMs: 50, rescanIntervalMs: CATALOG_RESCAN_MS, onUpdate: (u) => updates.push(u) });
   };
   const addSkill = async (name: string) => {
     const staged = await mkdtemp(path.join(root, '.staged-skill-'));
@@ -135,7 +135,7 @@ describe('.claude catalog watching', () => {
 
   afterEach(() => vi.restoreAllMocks());
 
-  it('refreshes the catalog when a skill appears under .claude/skills', { retry: 2 }, async () => {
+  it('refreshes the catalog when a skill appears under .claude/skills', async () => {
     await addSkill('first');
     await restart();
     expect(watcher!.current().skills.map((s) => s.id)).toEqual(['first']);

@@ -1,6 +1,13 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { I18nProvider } from '@/lib/i18n/i18n';
-import { Markdown } from './Markdown';
+import { Markdown, splitFrontmatter, stripHtmlComments } from './Markdown';
+
+describe('stripHtmlComments', () => {
+  it('drops html comments outside code fences and keeps them inside', () => {
+    const text = '<!-- regla-cero:start -->\n# Regla\n```html\n<!-- example -->\n```\nfin <!-- x -->';
+    expect(stripHtmlComments(text)).toBe('# Regla\n```html\n<!-- example -->\n```\nfin ');
+  });
+});
 
 describe('Markdown', () => {
   it('opens links safely and never loads images', () => {
@@ -16,5 +23,37 @@ describe('Markdown', () => {
   it('translates the image label', () => {
     render(<I18nProvider initial="en"><Markdown text="![x](https://example.com/a.png)" /></I18nProvider>);
     expect(screen.getByRole('link', { name: '[image: x]' })).toBeInTheDocument();
+  });
+
+  it('renders tables with border classes in doc density', () => {
+    const { container } = render(<I18nProvider initial="es"><Markdown density="doc" text={'| a | b |\n|---|---|\n| 1 | 2 |'} /></I18nProvider>);
+    expect(container.querySelector('table')).not.toBeNull();
+    expect(container.firstElementChild?.className).toContain('[&_td]:border');
+    expect(container.firstElementChild?.className).toContain('[&_table]:border-collapse');
+  });
+
+  it('shows the frontmatter card only in doc density', () => {
+    const text = '---\nname: steward\n---\n# Body';
+    const doc = render(<I18nProvider initial="es"><Markdown density="doc" text={text} /></I18nProvider>);
+    expect(within(doc.getByTestId('markdown-frontmatter')).getByText('steward')).toBeInTheDocument();
+    expect(doc.getByRole('heading', { name: 'Body' })).toBeInTheDocument();
+    doc.unmount();
+    const chat = render(<I18nProvider initial="es"><Markdown text={text} /></I18nProvider>);
+    expect(chat.queryByTestId('markdown-frontmatter')).toBeNull();
+  });
+});
+
+describe('splitFrontmatter', () => {
+  it('returns no meta without a leading block', () => {
+    expect(splitFrontmatter('# Title\n---\nx: y\n---')).toEqual({ meta: null, body: '# Title\n---\nx: y\n---' });
+  });
+  it('extracts pairs and keeps colons inside values', () => {
+    const { meta, body } = splitFrontmatter('---\nname: sdd-steward\ndescription: Use when: asked\n---\n# Hi');
+    expect(meta).toEqual([['name', 'sdd-steward'], ['description', 'Use when: asked']]);
+    expect(body).toBe('# Hi');
+  });
+  it('folds continuation lines into the previous value', () => {
+    const { meta } = splitFrontmatter('---\ntags:\n  - a\n  - b\n---\nbody');
+    expect(meta).toEqual([['tags', '- a - b']]);
   });
 });

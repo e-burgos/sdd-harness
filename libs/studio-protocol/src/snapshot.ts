@@ -1,19 +1,64 @@
 import { z } from 'zod';
 import { CatalogId } from './attachments';
 import { SnapshotGithub } from './github';
-import { MAX_CYCLE_DOCUMENTS } from './limits';
+import { MAX_CYCLE_BATCHES, MAX_CYCLE_DOCUMENTS, MAX_VERIFY_APPS, MAX_VERIFY_COMMANDS, MAX_VERIFY_RESULTS } from './limits';
 
 export const AREAS = ['global', 'specs', 'fixes', 'agents', 'tools', 'pricing', 'kit'] as const;
 export const Area = z.enum(AREAS);
 export type Area = z.infer<typeof Area>;
+
+export const TaskUsageSummary = z.object({
+  tokensTotal: z.number().nonnegative(),
+  providerModel: z.string().max(128).nullable(),
+  effort: z.string().max(32).nullable(),
+  agent: z.string().max(64).nullable(),
+  approx: z.boolean(),
+});
+export type TaskUsageSummary = z.infer<typeof TaskUsageSummary>;
 
 export const TaskSummary = z.object({
   id: z.string(),
   title: z.string(),
   status: z.string(),
   storyPoints: z.number().nullable(),
+  usage: TaskUsageSummary.nullable().optional().catch(undefined),
+  batch: z.string().max(16).nullable().optional().catch(undefined),
+  dependsOn: z.array(z.string().max(64)).max(64).optional().catch(undefined),
 });
 export type TaskSummary = z.infer<typeof TaskSummary>;
+
+export const BatchSummary = z.object({
+  id: z.string().regex(/^B-\d{2}$/),
+  app: z.string().max(120),
+  role: z.string().max(64),
+  tasks: z.array(z.string().max(64)).max(256),
+  dependsOn: z.array(z.string().max(16)).max(32),
+});
+export type BatchSummary = z.infer<typeof BatchSummary>;
+
+export const VerifyLevel = z.enum(['quick', 'full']);
+export type VerifyLevel = z.infer<typeof VerifyLevel>;
+
+export const VerifyCommandResult = z.object({
+  command: z.string().max(512),
+  exitCode: z.number().int().nullable(),
+  durationMs: z.number().nonnegative(),
+  skipped: z.boolean(),
+});
+export type VerifyCommandResult = z.infer<typeof VerifyCommandResult>;
+
+export const VerifyResultSummary = z.object({
+  app: z.string().max(120),
+  level: VerifyLevel,
+  unit: z.string().max(32),
+  ok: z.boolean(),
+  commit: z.string().max(64).nullable(),
+  startedAt: z.string(),
+  durationMs: z.number().nonnegative(),
+  reused: z.boolean(),
+  commands: z.array(VerifyCommandResult).max(MAX_VERIFY_COMMANDS),
+});
+export type VerifyResultSummary = z.infer<typeof VerifyResultSummary>;
 
 export const CycleSummary = z.object({
   specId: z.string(),
@@ -25,6 +70,8 @@ export const CycleSummary = z.object({
   tasksTotal: z.number().int().nonnegative(),
   tasksDone: z.number().int().nonnegative(),
   documents: z.array(z.string().min(1).max(256)).max(MAX_CYCLE_DOCUMENTS).optional().catch(undefined),
+  batches: z.array(BatchSummary).max(MAX_CYCLE_BATCHES).optional().catch(undefined),
+  verifyResults: z.array(VerifyResultSummary).max(MAX_VERIFY_RESULTS).optional().catch(undefined),
 });
 export type CycleSummary = z.infer<typeof CycleSummary>;
 
@@ -86,6 +133,7 @@ export const KitToolsState = z.object({
   gate: GateMode.nullable(),
   modLinked: z.boolean(),
   revision: ToolsRevision.nullable(),
+  exempt: z.array(z.string().min(1).max(256)).max(64).optional().catch(undefined),
 });
 export type KitToolsState = z.infer<typeof KitToolsState>;
 
@@ -122,6 +170,25 @@ export type FileLeaseSummary = z.infer<typeof FileLeaseSummary>;
 
 export const MAX_FILE_LEASES = 256;
 
+export const VerifyConfigEntry = z.object({
+  app: z.string().min(1).max(120),
+  levels: z.array(VerifyLevel).max(2),
+});
+export type VerifyConfigEntry = z.infer<typeof VerifyConfigEntry>;
+
+export const VerifyLeaseState = z.enum(['live', 'stale', 'dead']);
+export type VerifyLeaseState = z.infer<typeof VerifyLeaseState>;
+
+export const VerifyLeaseSummary = z.object({
+  app: z.string().max(120),
+  repo: z.string().max(1024),
+  host: z.string().max(256),
+  pid: z.number().int().nonnegative(),
+  startedAt: z.string(),
+  state: VerifyLeaseState,
+});
+export type VerifyLeaseSummary = z.infer<typeof VerifyLeaseSummary>;
+
 export const WorkspaceSnapshot = z.object({
   project: z.string(),
   profile: z.string(),
@@ -137,6 +204,8 @@ export const WorkspaceSnapshot = z.object({
   sessions: z.array(SessionBinding).max(MAX_SESSION_BINDINGS).optional().catch(undefined),
   leases: z.array(FileLeaseSummary).max(MAX_FILE_LEASES).optional().catch(undefined),
   github: SnapshotGithub.optional().catch(undefined),
+  verifyConfig: z.array(VerifyConfigEntry).max(MAX_VERIFY_APPS).optional().catch(undefined),
+  verifyLease: VerifyLeaseSummary.nullable().optional().catch(undefined),
   stale: z.array(Area),
 });
 export type WorkspaceSnapshot = z.infer<typeof WorkspaceSnapshot>;

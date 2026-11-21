@@ -1,0 +1,166 @@
+{
+  "$schema": "../../../../schemas/cycle.schema.json",
+  "cycle": 1,
+  "module": "studio-gate-parity",
+  "spec": "spec-e-burgos-032-studio-gate-parity",
+  "apps": [
+    "libs/studio-protocol",
+    "apps/studio-bridge",
+    "apps/studio"
+  ],
+  "phase": "studio-gate-parity",
+  "flow": "lite",
+  "objectives": [
+    "La regla de código y los gates de Studio coinciden con el kit (US-1..US-3)"
+  ],
+  "status": "completed",
+  "started_at": "2026-11-20",
+  "completed_at": "2026-11-20",
+  "documents": {
+    "plan": "sdd/specs/spec-e-burgos-032-studio-gate-parity/cycles/cycle-01/plan.md",
+    "tasks": "sdd/specs/spec-e-burgos-032-studio-gate-parity/cycles/cycle-01/tasks.json"
+  },
+  "artifacts": [],
+  "metrics": {
+    "tasks_total": 4,
+    "tasks_completed": 4,
+    "story_points": 8,
+    "files_created": [
+      "apps/studio-bridge/src/gate/glob.ts",
+      "apps/studio-bridge/src/workspace/gate-runner.spec.ts",
+      "apps/studio-bridge/src/workspace/gate-runner.ts",
+      "apps/studio/src/components/modules/specs/SpecGatePanel.tsx",
+      "apps/studio/src/components/modules/specs/spec-gate-panel.spec.tsx"
+    ],
+    "files_modified": [
+      "apps/studio-bridge/src/gate/judge.spec.ts",
+      "apps/studio-bridge/src/gate/judge.ts",
+      "apps/studio-bridge/src/server/router.spec.ts",
+      "apps/studio-bridge/src/server/router.ts",
+      "apps/studio-bridge/src/workspace/snapshot.ts",
+      "apps/studio/src/components/modules/specs/SpecPlanTab.tsx",
+      "apps/studio/src/components/modules/specs/specs-model.spec.ts",
+      "apps/studio/src/components/modules/specs/specs-model.ts",
+      "apps/studio/src/components/modules/specs/specs-module.spec.tsx",
+      "apps/studio/src/lib/i18n/en.ts",
+      "apps/studio/src/lib/i18n/es.ts",
+      "apps/studio/src/lib/i18n/modules/specs.ts",
+      "apps/studio/src/lib/use-bridge-features.ts",
+      "libs/studio-protocol/src/commands.spec.ts",
+      "libs/studio-protocol/src/commands.ts",
+      "libs/studio-protocol/src/handshake.spec.ts",
+      "libs/studio-protocol/src/kit.spec.ts",
+      "libs/studio-protocol/src/kit.ts",
+      "libs/studio-protocol/src/limits.ts",
+      "libs/studio-protocol/src/snapshot.ts"
+    ],
+    "files_deleted": [],
+    "usage": {
+      "tokens_in": 202939,
+      "tokens_out": 35812,
+      "approx": true,
+      "source": "declared-estimate",
+      "by_tier": {
+        "claude/opus": {
+          "tokens_in": 51000,
+          "tokens_out": 9000,
+          "approx": true,
+          "source": "declared-estimate"
+        },
+        "claude/sonnet": {
+          "tokens_in": 151939,
+          "tokens_out": 26812,
+          "approx": true,
+          "source": "agent-usage-notification"
+        }
+      },
+      "by_agent": [
+        {
+          "agent": "orchestrator",
+          "label": "solo: spec, plan, apertura y cierre",
+          "provider_model": "claude/opus",
+          "effort": "high",
+          "tokens_in": 25500,
+          "tokens_out": 4500,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-20"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-001 Protocolo: kit.gate.check y KitGateResult, feature kit-gate",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 25500,
+          "tokens_out": 4500,
+          "tokens_total": 30000,
+          "source": "agent-usage-notification",
+          "approx": true,
+          "recorded_at": "2026-11-20"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-002 Puente: regla de código igual al mod con exempt y tabla de paridad; runner de spec-gate --json",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 59429,
+          "tokens_out": 10487,
+          "tokens_total": 69916,
+          "source": "agent-usage-notification",
+          "approx": true,
+          "recorded_at": "2026-11-20"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-003 Studio: panel SPEC GATE en la spec y documentos por flow alineados al kit",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 67010,
+          "tokens_out": 11825,
+          "tokens_total": 78835,
+          "source": "agent-usage-notification",
+          "approx": false,
+          "recorded_at": "2026-11-20"
+        },
+        {
+          "agent": "orchestrator",
+          "label": "TASK-004 Verificación real y cierre",
+          "provider_model": "claude/opus",
+          "effort": "high",
+          "tokens_in": 25500,
+          "tokens_out": 4500,
+          "tokens_total": 30000,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-20"
+        }
+      ]
+    },
+    "tasks_skipped": 0
+  },
+  "tables_created": [],
+  "endpoints_implemented": [],
+  "components_created": [
+    "COMP-147"
+  ],
+  "issues_found": [
+    "snapshot.tools no traía claude_mod.exempt: se agregó KitToolsState.exempt (aditivo) para que el juez lo use",
+    "El hook block-no-verify del plugin everything-claude-code bloquea comandos cuyo texto contiene el nombre del flag (falso positivo, también rechazó una vez un commit normal)"
+  ],
+  "reviewer_report": {
+    "approved": true,
+    "date": "2026-11-20",
+    "ca_results": {
+      "US-1": "PASS - tabla de paridad en judge.spec (EXEMPT_DIRS, .md/.mdx en raíz y docs/, code roots case-insensitive, globs exempt) con matchesGlob portado",
+      "US-2": "PASS - kit.gate.check real: 032 B aprobado (B1-B5), 015 A aprobado con next cycle-01/lite, 031 A bloqueado (A2, A5), spec inexistente ⇒ bad-request; panel en la pestaña Plan muestra APROBADO · Gate B con condiciones y detalle",
+      "US-3": "PASS - expectedPlanDocuments = DOCS_BY_FLOW (full con brief.yaml, reduced brief, lite plan.md) con specs"
+    },
+    "tests": {
+      "libs/studio-protocol": "verify full OK (B-01)",
+      "apps/studio-bridge": "verify full OK (B-02)",
+      "apps/studio": "verify full OK (B-03)"
+    },
+    "notes": "Verificación con WebSocket y captura headless contra un puente temporal en :4471 (ya apagado); consola sin errores.",
+    "follow_ups": []
+  }
+}

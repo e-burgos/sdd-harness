@@ -9,6 +9,7 @@ import { useStickToBottom } from '@/lib/use-stick-to-bottom';
 import { useBridge, useStudio } from '../BridgeProvider';
 import { ActivityIndicator, INDICATED_STATUSES } from './ActivityIndicator';
 import { ContextMeter } from './ContextMeter';
+import { ContextSourceChip } from './ContextSourceChip';
 import { StatusBadge } from './StatusBadge';
 import { ThreadLinkPicker } from './ThreadLinkPicker';
 import { Timeline } from './Timeline';
@@ -52,21 +53,28 @@ export function ThreadView({ threadId, onBack, composer, onNewConversation }: { 
   const info = thread?.info;
   return (
     <section className="flex h-full min-w-0 flex-col">
-      <header className="flex flex-wrap items-center gap-3 border-b border-ink-800 px-5 py-3">
-        <Button type="button" variant="transparent" color="gray" shape="circle" size="mini" aria-label={t('thread.back')} onClick={onBack}>
-          <ArrowLeft size={18} />
-        </Button>
-        <h1 className="min-w-0 flex-1 truncate text-base font-semibold">{info?.title ?? '…'}</h1>
-        <ThreadLinkPicker threadId={threadId} />
-        {info && <ContextMeter usage={info.contextUsage} onNewConversation={onNewConversation} />}
-        {info && <StatusBadge status={info.status} />}
-        {info && BUSY.has(info.status) && (
-          <Button type="button" variant="ghost" color="danger" size="tiny" onClick={interrupt}>
-            <StopCircle size={14} /> {t('thread.interrupt')}
+      <header className="flex flex-col gap-2 border-b border-ink-800 px-5 py-3">
+        <div data-testid="thread-header-main" className="flex min-w-0 items-center gap-3">
+          <Button type="button" variant="transparent" color="gray" shape="circle" size="mini" aria-label={t('thread.back')} onClick={onBack}>
+            <ArrowLeft size={18} />
           </Button>
+          <h1 className="min-w-0 flex-1 truncate text-base font-semibold">{info?.title ?? '…'}</h1>
+          <ThreadLinkPicker threadId={threadId} />
+        </div>
+        {info && (
+          <div data-testid="thread-header-status" className="flex min-w-0 flex-wrap items-center gap-3 pl-9">
+            <ContextMeter usage={info.contextUsage} onNewConversation={onNewConversation} />
+            <ContextSourceChip source={info.contextSource} />
+            <StatusBadge status={info.status} />
+            {BUSY.has(info.status) && (
+              <Button type="button" variant="ghost" color="danger" size="tiny" onClick={interrupt}>
+                <StopCircle size={14} /> {t('thread.interrupt')}
+              </Button>
+            )}
+          </div>
         )}
         {interruptError && (
-          <p role="alert" className="basis-full text-xs text-roseish">
+          <p role="alert" className="text-xs text-roseish">
             {interruptError}
           </p>
         )}

@@ -1,8 +1,9 @@
-import { Activity, BarChart3, Bot, Boxes, FileText, FolderPlus, Home, Network, Package, Wrench, type LucideIcon } from 'lucide-react';
+import { Activity, BarChart3, Bot, Boxes, FileText, FolderPlus, Home, Network, Package, Plug, Wrench, type LucideIcon } from 'lucide-react';
 import type { Dict } from '@/lib/i18n/es';
 import { activityModule } from '@/components/modules/activity';
 import { agentsModule } from '@/components/modules/agents';
 import { architectureModule } from '@/components/modules/architecture';
+import { claudeModule } from '@/components/modules/claude';
 import { fixesModule } from '@/components/modules/fixes';
 import { homeModule } from '@/components/modules/home';
 import { kitModule } from '@/components/modules/kit';
@@ -29,6 +30,7 @@ const ICONS: Record<ModuleId, LucideIcon> = {
   activity: Activity,
   map: Network,
   kit: Package,
+  claude: Plug,
   architecture: Boxes,
   metrics: BarChart3,
   'new-project': FolderPlus,
@@ -42,6 +44,7 @@ const SLOTS: Record<ModuleId, ModuleSlots> = {
   activity: activityModule,
   map: mapModule,
   kit: kitModule,
+  claude: claudeModule,
   architecture: architectureModule,
   metrics: metricsModule,
   'new-project': newProjectModule,

@@ -1,10 +1,12 @@
 import type { WorkspaceSnapshot } from '@sdd-studio/protocol';
 import type { RegistryUnit } from '../sessions/session-bindings';
+import { matchesGlob } from './glob';
 
 export type Verdict = { kind: 'allow' } | { kind: 'warn'; reason: string } | { kind: 'deny'; reason: string };
 
-// Same rule as sdd-mod (templates/sdd/skills/sdd-mod/hooks/.src/sdd.ts): keep in sync.
+// Port of the sdd-mod code rule: its source of truth is sdd/skills/sdd-mod/hooks/.src/sdd.ts.
 const EXEMPT_DIRS = new Set(['sdd', '.claude', '.github', '.gemini', '.agents', '.agent', '.vscode', '.idea']);
+const CODE_ROOTS = new Set(['apps', 'libs', 'tools']);
 const CLOSED_SPEC = new Set(['completed', 'cancelled']);
 export const OPEN_FIX = new Set(['pending', 'in-progress']);
 export const EDIT_TOOLS = new Set(['Edit', 'Write', 'MultiEdit', 'NotebookEdit']);
@@ -44,10 +46,14 @@ export function relativeToRoot(root: string, filePath: string): string | null {
   return full.slice(base.length).join('/');
 }
 
-export function isCodePath(rel: string): boolean {
-  const [first, ...rest] = rel.split('/');
-  if (rest.length === 0) return !/\.md$/i.test(first ?? '');
-  return !EXEMPT_DIRS.has(first ?? '');
+export function isCodePath(rel: string, exempt: readonly string[] = []): boolean {
+  const path = rel.replace(/\\/g, '/');
+  const [first = ''] = path.split('/');
+  const nested = path.includes('/');
+  if (EXEMPT_DIRS.has(first) && nested) return false;
+  if (exempt.some((glob) => matchesGlob(path, glob))) return false;
+  if (CODE_ROOTS.has(first.toLowerCase()) && nested) return true;
+  return !/\.mdx?$/i.test(path);
 }
 
 export type SessionJudge = (input: { rel: string; openUnits: RegistryUnit[]; gate: 'block' | 'warn' }) => Verdict | null;
@@ -66,7 +72,7 @@ export function judgeEdit(snapshot: WorkspaceSnapshot, root: string, filePath: s
   // Without good spec data (never readable) there is no basis to judge; with earlier data, judge on the last good one.
   if (snapshot.stale.includes('specs') && snapshot.specs.length === 0) return { kind: 'allow' };
   const rel = relativeToRoot(root, filePath);
-  if (rel === null || !isCodePath(rel)) return { kind: 'allow' };
+  if (rel === null || !isCodePath(rel, snapshot.tools?.exempt ?? [])) return { kind: 'allow' };
   const openUnits = openUnitsOfSnapshot(snapshot);
   if (openUnits.length > 0) return sessionJudge?.({ rel, openUnits, gate: snapshot.gateMode }) ?? { kind: 'allow' };
   const reason =

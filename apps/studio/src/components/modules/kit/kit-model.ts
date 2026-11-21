@@ -16,6 +16,7 @@ export type KitView =
   | { kind: 'doc'; doc: KitDocId }
   | { kind: 'schemas' }
   | { kind: 'context' }
+  | { kind: 'harness' }
   | { kind: 'memory'; which: MemoryKind };
 
 export const KIT_TOOLS_SELECTION = 'tools';
@@ -32,6 +33,8 @@ export const kitSelectionOf = (view: KitView): string => {
       return 'schemas';
     case 'context':
       return 'context';
+    case 'harness':
+      return 'harness';
     case 'memory':
       return `memory:${view.which}`;
   }
@@ -43,6 +46,7 @@ export function parseKitSelection(value: string | null): KitView | null {
   if (value === KIT_TOOLS_SELECTION) return { kind: 'tools' };
   if (value === 'schemas') return { kind: 'schemas' };
   if (value === 'context') return { kind: 'context' };
+  if (value === 'harness') return { kind: 'harness' };
   if (value === 'memory:lessons' || value === 'memory:journal') return { kind: 'memory', which: value.slice('memory:'.length) as MemoryKind };
   if (value.startsWith('doc:')) {
     const doc = DOC_FILES.find((candidate) => candidate.id === value.slice('doc:'.length));
@@ -118,7 +122,30 @@ export function kitSearchTerms(view: KitView, snapshot: WorkspaceSnapshot | null
       return view.which === 'journal' && entries ? names(journalEntries(entries)) : [];
     case 'doc':
       return [DOC_FILES.find((candidate) => candidate.id === view.doc)?.file ?? ''];
+    case 'harness':
+      return entries ? names(entriesOf(entries, 'harness')) : [];
     case 'tools':
       return [];
   }
+}
+
+export const HARNESS_CORE_LIMIT_BYTES = 6 * 1024;
+export const SPLIT_PROJECT_RECIPE = 'npx @e-burgos/sdd-harness update sdd --split-project';
+
+export const harnessBytes = (entry: KitEntry): number => entry.bytes ?? entry.size;
+
+export interface HarnessModel {
+  core: KitEntry[];
+  project: KitEntry | null;
+  rules: KitEntry[];
+  oversized: boolean;
+  needsSplit: boolean;
+}
+
+export function harnessModel(entries: readonly KitEntry[]): HarnessModel {
+  const core = entriesOf(entries, 'harness', 'harness-core').sort((a, b) => a.path.localeCompare(b.path));
+  const project = entriesOf(entries, 'harness', 'harness-project')[0] ?? null;
+  const rules = entriesOf(entries, 'harness', 'harness-rule').sort((a, b) => a.path.localeCompare(b.path));
+  const oversized = core.some((entry) => harnessBytes(entry) > HARNESS_CORE_LIMIT_BYTES);
+  return { core, project, rules, oversized, needsSplit: oversized || project === null };
 }

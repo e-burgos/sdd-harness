@@ -204,6 +204,9 @@ function Link-Items {
     foreach ($item in Get-ChildItem $sourceDir -Filter $filter -Force) {
         # `*.new` is a merge artifact of `update sdd`, not a surface to expose.
         if ($item.Name -like "*.new") { continue }
+        # A link inside sdd/skills belongs to an integration (tucu-ui-design), which links
+        # every harness itself: re-linking it here would re-point or duplicate its links.
+        if ((Is-Link $item) -or (Is-DegradedLink $item)) { continue }
         # A Claude Code plugin (sdd/skills/sdd-mod) has no SKILL.md: only .claude/ gets it.
         if ((Test-Path (Join-Path $item.FullName ".claude-plugin")) -and -not $label.StartsWith(".claude/")) { continue }
         Link-Item (Join-Path $dir $item.Name) $item.FullName "$label/$($item.Name)"

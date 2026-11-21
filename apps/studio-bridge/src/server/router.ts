@@ -1,22 +1,40 @@
 import { constants } from 'node:fs';
 import { open } from 'node:fs/promises';
-import { BRIDGE_FEATURES, MAX_READ_FILE_BYTES, type BotEvent, type ClientCommand, type RtkGain, type ServerMessage } from '@sdd-studio/protocol';
+import { BRIDGE_FEATURES, type ClaudeToolsConfig, type ClaudeToolsGetResult, MAX_READ_FILE_BYTES, type BotEvent, type ClientCommand, type KitGateResult, type KitPackStats, type RtkGain, type ServerMessage } from '@sdd-studio/protocol';
 import type { AuthState } from '../auth-mode';
 import type { ClaudeLogin } from '../auth/claude-login';
+import { CHROME_DEVTOOLS_MCP_VERSION } from '../engine/chrome-devtools';
 import type { CommandRunner } from '../commands/runner';
+import { readVerifyConfig } from '../workspace/verify-config';
 import type { ProjectRuntime } from '../project/runtime';
 import type { AttachmentStore } from '../sessions/attachment-store';
 import { SessionError, type SessionManager } from '../sessions/session-manager';
 import type { ThreadStore } from '../sessions/store';
+import { createClaudeMcp, type ClaudeMcpService } from '../workspace/claude-mcp';
+import { createChromeStatus, defaultChromeCheckDeps, defaultOpenStudioChromeDeps, openStudioChrome, type ChromeStatusService, type OpenStudioChromeDeps } from '../workspace/chrome-status';
+import { createClaudeInventory, type ClaudeInventoryService } from '../workspace/claude-inventory';
+import { cachedClaudeTools, type ClaudeToolsState, readClaudeTools, setClaudeTools, useGlobalClaudeTools } from '../workspace/claude-tools';
 import type { FileIndex } from '../workspace/file-index';
 import type { KitIndexer } from '../workspace/kit-index';
 import { createKitIntegrations, type KitIntegrations } from '../workspace/kit-integrations';
 import { setKitTool } from '../workspace/kit-tools';
+import { GateCheckError, readGateCheck } from '../workspace/gate-runner';
+import { PackStatsError, readPackStats } from '../workspace/pack-runner';
 import { readRtkGain } from '../workspace/rtk-gain';
 import { resolveSddPath } from '../workspace/paths';
 import { ProfileError, writeProfile } from '../workspace/profile';
 import type { WorkspaceWatcher } from '../workspace/watcher';
 import type { BridgeHandlers } from './ws-server';
+
+function changedClaudeAreas(before: ClaudeToolsConfig, after: ClaudeToolsConfig): string[] {
+  const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
+  const areas: string[] = [];
+  if (!same(before.sources, after.sources)) areas.push('sources');
+  if (!same(before.disabledPlugins, after.disabledPlugins)) areas.push('plugins');
+  if (!same(before.disabledMcpServers, after.disabledMcpServers)) areas.push('mcp');
+  if (!same(before.browser, after.browser)) areas.push('browser');
+  return areas;
+}
 
 export function createHandlers(d: {
   root: string;
@@ -25,17 +43,58 @@ export function createHandlers(d: {
   bridgeVersion: string;
   sessions: SessionManager;
   watcher: Pick<WorkspaceWatcher, 'current' | 'refresh'>;
-  runner: Pick<CommandRunner, 'run'>;
+  runner: Pick<CommandRunner, 'run' | 'verify'>;
   store: Pick<ThreadStore, 'botHistory' | 'appendBot'>;
   attachments: Pick<AttachmentStore, 'read'>;
   fileIndex: Pick<FileIndex, 'search'>;
   kitIndexer: Pick<KitIndexer, 'index'>;
   broadcast: (message: ServerMessage) => void;
   rtkGain?: (root: string) => Promise<RtkGain>;
+  packStats?: (root: string, spec: string, cycle: string) => Promise<KitPackStats>;
+  gateCheck?: (root: string, spec: string, cycle: string | undefined) => Promise<KitGateResult>;
   integrations?: KitIntegrations;
+  claudeInventory?: ClaudeInventoryService;
+  chromeStatus?: ChromeStatusService;
+  claudeMcp?: ClaudeMcpService;
+  openSettings?: OpenStudioChromeDeps;
   now?: () => Date;
 }): BridgeHandlers {
   const integrations = d.integrations ?? createKitIntegrations();
+  const claudeInventory = d.claudeInventory ?? createClaudeInventory({ root: d.root });
+  const chromeStatus = d.chromeStatus ?? createChromeStatus(defaultChromeCheckDeps(() => cachedClaudeTools(d.root).browser.enabled, () => cachedClaudeTools(d.root).browser.browserUrl));
+  const claudeMcp = d.claudeMcp ?? createClaudeMcp({ root: d.root, inventory: claudeInventory });
+  const openSettings = d.openSettings ?? defaultOpenStudioChromeDeps();
+  chromeStatus.subscribe((browser) => {
+    const event: BotEvent = {
+      channelId: 'general',
+      botKind: 'claude-browser.changed',
+      payload: { state: browser.state, checkedAt: browser.checkedAt, detail: browser.detail },
+      at: (d.now?.() ?? new Date()).toISOString(),
+    };
+    d.store.appendBot(event);
+    d.broadcast({ kind: 'bot.event', ...event });
+  });
+  const requestChromeOnEnable = (before: ClaudeToolsConfig, after: ClaudeToolsConfig) => {
+    if (!before.browser.enabled && after.browser.enabled) void chromeStatus.check().catch(() => undefined);
+  };
+  const claudeToolsResult = (state: ClaudeToolsState): ClaudeToolsGetResult => ({
+    config: state.config,
+    revision: state.revision,
+    inventory: claudeInventory.current(),
+    browserMcpVersion: CHROME_DEVTOOLS_MCP_VERSION,
+    scope: state.scope,
+    hasProjectOverride: state.hasProjectOverride,
+  });
+  const announceClaudeTools = (before: ClaudeToolsConfig, after: ClaudeToolsState) => {
+    const event: BotEvent = {
+      channelId: 'general',
+      botKind: 'claude-tools.changed',
+      payload: { changed: changedClaudeAreas(before, after.config), revision: after.revision, scope: after.scope },
+      at: (d.now?.() ?? new Date()).toISOString(),
+    };
+    d.store.appendBot(event);
+    d.broadcast({ kind: 'bot.event', ...event });
+  };
   return {
     welcome: () => {
       const snapshot = d.watcher.current();
@@ -105,6 +164,16 @@ export function createHandlers(d: {
           return d.kitIndexer.index();
         case 'kit.rtkGain':
           return (d.rtkGain ?? readRtkGain)(d.root);
+        case 'kit.pack.stats':
+          return (d.packStats ?? readPackStats)(d.root, command.spec, command.cycle).catch((error: unknown) => {
+            if (error instanceof PackStatsError) throw new SessionError(error.code, error.message);
+            throw error;
+          });
+        case 'kit.gate.check':
+          return (d.gateCheck ?? readGateCheck)(d.root, command.spec, command.cycle).catch((error: unknown) => {
+            if (error instanceof GateCheckError && error.code === 'bad-request') throw new SessionError('bad-request', error.message);
+            throw error;
+          });
         case 'kit.tools.set': {
           const result = await setKitTool(d.root, command.change, command.expectedRevision);
           if (result.changed) {
@@ -120,6 +189,36 @@ export function createHandlers(d: {
           }
           return result;
         }
+        case 'claude.tools.get':
+          return claudeToolsResult(await readClaudeTools(d.root));
+        case 'claude.tools.set': {
+          const before = (await readClaudeTools(d.root)).config;
+          const result = await setClaudeTools(d.root, command.config, command.expectedRevision, command.scope);
+          if (result.changed) {
+            announceClaudeTools(before, result);
+            requestChromeOnEnable(before, result.config);
+          }
+          return { config: result.config, revision: result.revision, changed: result.changed, scope: result.scope, hasProjectOverride: result.hasProjectOverride };
+        }
+        case 'claude.tools.useGlobal': {
+          const before = (await readClaudeTools(d.root)).config;
+          const result = await useGlobalClaudeTools(d.root, command.expectedRevision);
+          if (result.changed) {
+            announceClaudeTools(before, result);
+            requestChromeOnEnable(before, result.config);
+          }
+          return claudeToolsResult(result);
+        }
+        case 'claude.browser.check':
+          return (!command.force && chromeStatus.current()) || chromeStatus.check();
+        case 'claude.browser.openSettings':
+          return openStudioChrome(openSettings);
+        case 'claude.mcp.login':
+          return claudeMcp.login(command.name);
+        case 'claude.mcp.reconnect':
+          return claudeMcp.reconnect(command.name);
+        case 'claude.inventory.refresh':
+          return { inventory: await claudeInventory.refresh() };
         case 'kit.integration.status':
           return integrations.status(d.root, command.integration);
         case 'kit.integration.set': {
@@ -161,6 +260,17 @@ export function createHandlers(d: {
           return d.login.login();
         case 'auth.logout':
           return d.login.logout();
+        case 'kit.verify.run': {
+          const entry = (await readVerifyConfig(d.root)).find((candidate) => candidate.app === command.app);
+          if (!entry) throw new SessionError('bad-request', `unknown verify app: ${command.app}`);
+          if (!entry.levels.includes(command.level)) throw new SessionError('bad-request', `${command.app} has no ${command.level} verify`);
+          const args = [command.app, command.level];
+          if (command.spec && command.cycle) args.push('--spec', command.spec, '--cycle', command.cycle);
+          if (command.unit) args.push('--unit', command.unit);
+          const runId = d.runner.verify(args, () => void d.watcher.refresh().catch(() => null));
+          if (!runId) throw new SessionError('conflict', 'busy: a verify is already running');
+          return { runId };
+        }
         case 'command.run':
           return { runId: d.runner.run(command.name, command.args) };
         default:

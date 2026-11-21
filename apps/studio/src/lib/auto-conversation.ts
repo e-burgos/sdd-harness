@@ -50,6 +50,11 @@ const alreadyHasThread = (target: PreparedTarget, threads: ThreadInfo[]): boolea
     ),
   );
 
+export const pruneAnswered = (prepared: PreparedConversation[], threads: ThreadInfo[]): PreparedConversation[] => {
+  const pending = prepared.filter((p) => !alreadyHasThread(p.target, threads));
+  return pending.length === prepared.length ? prepared : pending;
+};
+
 export function prepareFromBotEvent(event: BotEvent, threads: ThreadInfo[], current: PreparedConversation[], snapshot: WorkspaceSnapshot | null): PreparedConversation[] {
   const target = targetOf(event, snapshot);
   if (!target) return current;

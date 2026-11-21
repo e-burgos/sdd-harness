@@ -6,6 +6,7 @@ import { FakeEngine } from '../engine/fake-engine';
 import type { AgentEngine, EngineCallbacks, EngineTurn, EngineTurnInput } from '../engine/types';
 import { copyFixture, waitFor } from '../test-utils/fixture';
 import { loadWorkspaceSnapshot } from '../workspace/snapshot';
+import { createPackContext, type PackContext, type PackTarget, type ThreadContext } from './pack-context';
 import { createAttachmentStore, type AttachmentStore } from './attachment-store';
 import { SessionError, SessionManager, type SessionManagerDeps } from './session-manager';
 import { ThreadStore } from './store';
@@ -282,6 +283,77 @@ describe('SessionManager', () => {
       await waitFor(() => inputs.length === 2);
       expect(inputs.map((i) => i.systemPrefix)).toEqual(['PREFIX', 'PREFIX']);
       expect(inputs[1]?.resumeSessionId).toBe(`sess-of-${t.id}`);
+    });
+
+    describe('pack context', () => {
+      const batchOf = (id: string, role: string, tasks: string[]) => ({ id, app: 'apps/api', role, tasks, dependsOn: [] });
+      const withBatches = (status: string): void => {
+        snapshot = {
+          ...snapshot,
+          cycles: snapshot.cycles.map((c) => ({
+            ...c,
+            tasks: [{ id: 'TASK-001', title: 't', status, storyPoints: 1 }],
+            batches: [batchOf('B-01', 'implementor-back', ['TASK-001'])],
+          })),
+        };
+      };
+      const fakePack = (context: ThreadContext | null) => {
+        const loads: PackTarget[] = [];
+        const pack: PackContext = {
+          targetOf: (agent, unit, cycle) => createPackContext({ root, readLessons: () => '', run: async () => ({ code: 0, stdout: '' }) }).targetOf(agent, unit, cycle),
+          peek: (target) => (loads.some((l) => l.unit === target.unit && l.role === target.role) ? context : undefined),
+          load: async (target) => {
+            loads.push(target);
+            return context;
+          },
+        };
+        return { pack, loads };
+      };
+      const packContext: ThreadContext = {
+        prefix: 'LESSONS\n\nUnidad SDD → pack',
+        source: { kind: 'pack', spec: 'spec-dev-001-pagos', cycle: 'cycle-01', role: 'implementor-back', unit: 'B-01', bytes: 42 },
+      };
+      const backOpts = { ...opts, agent: 'sdd-implementor-back' as const };
+      const packsJson = async () => writeFile(path.join(root, 'sdd/packs.json'), JSON.stringify({ roles: { 'implementor-back': { unit: 'batch' } } }));
+
+      it('sends the pack prefix and reports contextSource for a thread bound to a cycle with a pending block', async () => {
+        await packsJson();
+        withBatches('pending');
+        const inputs: EngineTurnInput[] = [];
+        const { pack, loads } = fakePack(packContext);
+        const { m } = await manager(idleEngine(inputs, () => null), undefined, { stablePrefix: () => 'BASE', packContext: pack });
+        const t = await m.createThread({ channelId: 'spec:spec-dev-001-pagos', options: backOpts, text: 'uno' });
+        await waitFor(() => inputs.length === 1);
+        expect(loads[0]).toEqual({ spec: 'spec-dev-001-pagos', cycle: 'cycle-01', role: 'implementor-back', unit: 'B-01' });
+        expect(inputs[0]?.systemPrefix).toBe(packContext.prefix);
+        expect(m.list().find((x) => x.id === t.id)?.contextSource).toEqual(packContext.source);
+        expect(threadUpdates(t.id).some((info) => info.contextSource?.kind === 'pack')).toBe(true);
+      });
+
+      it('falls back to the base prefix and a base contextSource when the pack fails', async () => {
+        await packsJson();
+        withBatches('pending');
+        const inputs: EngineTurnInput[] = [];
+        const { pack } = fakePack(null);
+        const { m } = await manager(idleEngine(inputs, () => null), undefined, { stablePrefix: () => 'BASE', packContext: pack });
+        const t = await m.createThread({ channelId: 'spec:spec-dev-001-pagos', options: backOpts, text: 'uno' });
+        await waitFor(() => inputs.length === 1);
+        expect(inputs[0]?.systemPrefix).toBe('BASE');
+        expect(m.list().find((x) => x.id === t.id)?.contextSource).toEqual({ kind: 'base', bytes: 4 });
+      });
+
+      it('keeps the base prefix for agents without a pack role and when no block is pending', async () => {
+        await packsJson();
+        withBatches('done');
+        const inputs: EngineTurnInput[] = [];
+        const { pack, loads } = fakePack(packContext);
+        const { m } = await manager(idleEngine(inputs, () => null), undefined, { stablePrefix: () => 'BASE', packContext: pack });
+        await m.createThread({ channelId: 'spec:spec-dev-001-pagos', options: backOpts, text: 'uno' });
+        await m.createThread({ channelId: 'spec:spec-dev-001-pagos', options: { ...opts, agent: 'sdd-orchestrator' as const }, text: 'dos' });
+        await waitFor(() => inputs.length === 2);
+        expect(inputs.map((i) => i.systemPrefix)).toEqual(['BASE', 'BASE']);
+        expect(loads).toEqual([]);
+      });
     });
 
     it('omits the system prefix when there is none', async () => {
@@ -1278,6 +1350,15 @@ describe('SessionManager', () => {
         expect(targetsOf(m, id)).toEqual([]);
       });
 
+      it('an SDD-BIND line in a Bash output binds the thread to that unit as a manual association', async () => {
+        const { m, id } = await idleThread();
+        m.updateLinks(id, { add: [CYCLE], remove: [] });
+        await m.send(id, { text: '#bash-bind' });
+        await waitFor(() => m.list().find((t) => t.id === id)?.link.target.kind === 'fix');
+        await idleOf(m, id);
+        expect(targetsOf(m, id)?.at(-1)).toEqual({ ...FIX, origin: 'manual' });
+      });
+
       it('legacy setLink adds only the primary association and keeps the others', async () => {
         const { m, id } = await idleThread();
         m.updateLinks(id, { add: [SPEC, FIX], remove: [] });
@@ -1292,8 +1373,10 @@ describe('SessionManager', () => {
         const info = m.setLink(id, { kind: 'none' });
         expect(info.link.targets).toEqual([{ ...SPEC, origin: 'manual' }, { ...FIX, origin: 'manual' }]);
         expect(info.link.target).toEqual(FIX);
-        expect(m.setLink(id, { kind: 'none' }).link.targets).toEqual([{ ...SPEC, origin: 'manual' }]);
-        expect(m.setLink(id, { kind: 'none' }).link).toMatchObject({ target: { kind: 'none' }, targets: [{ ...SPEC, origin: 'manual' }] });
+        const afterFix = m.setLink(id, { kind: 'none' });
+        expect(afterFix.link.targets).toEqual([{ ...SPEC, origin: 'manual' }]);
+        expect(afterFix.link.target).toEqual(CYCLE);
+        expect(m.setLink(id, { kind: 'none' }).link).toMatchObject({ target: { kind: 'none' }, targets: [] });
       });
 
       it('persists the associations across a restart', async () => {

@@ -341,3 +341,51 @@ describe('tools state and documents in the snapshot', () => {
     expect(WorkspaceSnapshot.safeParse(snapshot).success).toBe(true);
   });
 });
+
+describe('kit execution data', () => {
+  const cycleDir = () => path.join(root, 'sdd/specs/spec-dev-001-pagos/cycles/cycle-01');
+  const writeTasks = async () => {
+    await writeFile(tasksFile(), JSON.stringify({
+      tasks: [
+        { id: 'TASK-001', title: 'a', status: 'done', story_points: 2, depends_on: [], usage: { tokens_in: 100, tokens_out: 50, provider_model: 'sonnet', effort: 'medium', agent: 'implementor-back', approx: true } },
+        { id: 'TASK-002', title: 'b', status: 'pending', depends_on: ['TASK-001'], usage: { tokens_in: 1, tokens_out: 1, tokens_total: 900, model_tier: 'opus' } },
+        { id: 'TASK-003', title: 'c', status: 'pending' },
+      ],
+      batches: [{ id: 'B-01', app: 'apps/api', role: 'implementor-back', tasks: ['TASK-001', 'TASK-002'], depends_on: [] }],
+    }));
+  };
+
+  it('maps batches, usage, dependencies and the batch of each task', async () => {
+    await writeTasks();
+    const cycle = (await loadWorkspaceSnapshot(root)).snapshot.cycles[0];
+    expect(cycle?.batches).toEqual([{ id: 'B-01', app: 'apps/api', role: 'implementor-back', tasks: ['TASK-001', 'TASK-002'], dependsOn: [] }]);
+    expect(cycle?.tasks[0]).toMatchObject({ batch: 'B-01', dependsOn: [], usage: { tokensTotal: 150, providerModel: 'sonnet', effort: 'medium', agent: 'implementor-back', approx: true } });
+    expect(cycle?.tasks[1]).toMatchObject({ batch: 'B-01', dependsOn: ['TASK-001'], usage: { tokensTotal: 900, providerModel: 'opus', effort: null, agent: null, approx: false } });
+    expect(cycle?.tasks[2]).toMatchObject({ batch: null, usage: null });
+  });
+
+  it('omits batches when the cycle has none and still validates against the protocol', async () => {
+    const { snapshot } = await loadWorkspaceSnapshot(root);
+    expect(snapshot.cycles[0]?.batches).toBeUndefined();
+    expect(WorkspaceSnapshot.safeParse(snapshot).success).toBe(true);
+  });
+
+  it('reads verify results per cycle and verify.json into verifyConfig', async () => {
+    await mkdir(path.join(cycleDir(), 'artifacts/verify/apps-api'), { recursive: true });
+    await writeFile(path.join(cycleDir(), 'artifacts/verify/apps-api/TASK-001-quick.json'), JSON.stringify({
+      app: 'apps/api', level: 'quick', unit: 'TASK-001', ok: true, commit: 'abc', started_at: '2026-11-20T10:00:00.000Z', duration_ms: 10, commands: [],
+    }));
+    await writeFile(path.join(root, 'sdd/verify.json'), JSON.stringify({ $schema: 'x', 'apps/api': { quick: ['c'], full: ['c'] } }));
+    const { snapshot } = await loadWorkspaceSnapshot(root);
+    expect(snapshot.cycles[0]?.verifyResults).toHaveLength(1);
+    expect(snapshot.verifyConfig).toEqual([{ app: 'apps/api', levels: ['quick', 'full'] }]);
+    expect(WorkspaceSnapshot.safeParse(snapshot).success).toBe(true);
+  });
+
+  it('reports a verify result change in the cycle and a config change in the kit area', async () => {
+    const prev = mergeSnapshot(null, await loadWorkspaceSnapshot(root));
+    await writeFile(path.join(root, 'sdd/verify.json'), JSON.stringify({ 'apps/api': { quick: ['c'] } }));
+    const next = mergeSnapshot(prev, await loadWorkspaceSnapshot(root));
+    expect(changedAreas(prev, next)).toEqual(['kit']);
+  });
+});

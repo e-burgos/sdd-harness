@@ -1,0 +1,188 @@
+{
+  "$schema": "../../../../schemas/cycle.schema.json",
+  "cycle": 1,
+  "module": "studio-session-context",
+  "spec": "spec-e-burgos-031-studio-session-context",
+  "apps": [
+    "libs/studio-protocol",
+    "apps/studio-bridge",
+    "apps/studio"
+  ],
+  "phase": "studio-session-context",
+  "flow": "lite",
+  "objectives": [
+    "Las sesiones de Studio cargan el paquete de su unidad y el kit muestra núcleo, reglas y paquetes (US-1..US-4)"
+  ],
+  "status": "completed",
+  "started_at": "2026-11-20",
+  "completed_at": "2026-11-20",
+  "documents": {
+    "plan": "sdd/specs/spec-e-burgos-031-studio-session-context/cycles/cycle-01/plan.md",
+    "tasks": "sdd/specs/spec-e-burgos-031-studio-session-context/cycles/cycle-01/tasks.json"
+  },
+  "artifacts": [],
+  "metrics": {
+    "tasks_total": 4,
+    "tasks_completed": 4,
+    "story_points": 14,
+    "files_created": [
+      "apps/studio-bridge/src/sessions/pack-context.spec.ts",
+      "apps/studio-bridge/src/sessions/pack-context.ts",
+      "apps/studio-bridge/src/workspace/pack-runner.spec.ts",
+      "apps/studio-bridge/src/workspace/pack-runner.ts",
+      "apps/studio/src/components/modules/kit/CopyText.tsx",
+      "apps/studio/src/components/modules/kit/KitHarnessView.tsx",
+      "apps/studio/src/components/modules/specs/SpecPackStats.tsx",
+      "apps/studio/src/components/workspace/ContextSourceChip.tsx",
+      "apps/studio/src/components/workspace/context-source.spec.tsx"
+    ],
+    "files_modified": [
+      "apps/studio-bridge/src/engine/stable-prefix.ts",
+      "apps/studio-bridge/src/server/router.spec.ts",
+      "apps/studio-bridge/src/server/router.ts",
+      "apps/studio-bridge/src/sessions/session-manager.spec.ts",
+      "apps/studio-bridge/src/sessions/session-manager.ts",
+      "apps/studio-bridge/src/sessions/store.ts",
+      "apps/studio-bridge/src/workspace/kit-index.spec.ts",
+      "apps/studio-bridge/src/workspace/kit-index.ts",
+      "apps/studio-bridge/src/workspace/watcher.ts",
+      "apps/studio/src/components/modules/kit/KitCenter.tsx",
+      "apps/studio/src/components/modules/kit/KitPanel.tsx",
+      "apps/studio/src/components/modules/kit/kit-model.ts",
+      "apps/studio/src/components/modules/kit/kit-module.spec.tsx",
+      "apps/studio/src/components/modules/specs/SpecVerifyTab.tsx",
+      "apps/studio/src/components/modules/specs/kit-execution.spec.tsx",
+      "apps/studio/src/components/workspace/Markdown.tsx",
+      "apps/studio/src/components/workspace/ThreadView.tsx",
+      "apps/studio/src/components/workspace/markdown.spec.tsx",
+      "apps/studio/src/lib/format.ts",
+      "apps/studio/src/lib/i18n/en.ts",
+      "apps/studio/src/lib/i18n/es.ts",
+      "apps/studio/src/lib/i18n/modules/kit.ts",
+      "apps/studio/src/lib/i18n/modules/specs.ts",
+      "apps/studio/src/lib/no-fabricated-data.spec.ts",
+      "apps/studio/src/lib/use-bridge-features.ts",
+      "libs/studio-protocol/src/commands.spec.ts",
+      "libs/studio-protocol/src/commands.ts",
+      "libs/studio-protocol/src/domain.spec.ts",
+      "libs/studio-protocol/src/domain.ts",
+      "libs/studio-protocol/src/handshake.spec.ts",
+      "libs/studio-protocol/src/kit.spec.ts",
+      "libs/studio-protocol/src/kit.ts",
+      "libs/studio-protocol/src/limits.ts"
+    ],
+    "files_deleted": [],
+    "usage": {
+      "tokens_in": 302634,
+      "tokens_out": 53406,
+      "approx": true,
+      "source": "declared-estimate",
+      "by_tier": {
+        "claude/opus": {
+          "tokens_in": 68000,
+          "tokens_out": 12000,
+          "approx": true,
+          "source": "declared-estimate"
+        },
+        "claude/sonnet": {
+          "tokens_in": 234634,
+          "tokens_out": 41406,
+          "approx": false,
+          "source": "agent-usage-notification"
+        }
+      },
+      "by_agent": [
+        {
+          "agent": "orchestrator",
+          "label": "solo: spec, plan, apertura y cierre",
+          "provider_model": "claude/opus",
+          "effort": "high",
+          "tokens_in": 29750,
+          "tokens_out": 5250,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-20"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-001 Protocolo: contextSource del hilo, índice del arnés, kit.pack.stats y feature session-context",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 64497,
+          "tokens_out": 11382,
+          "tokens_total": 75879,
+          "source": "agent-usage-notification",
+          "approx": false,
+          "recorded_at": "2026-11-20"
+        },
+        {
+          "agent": "implementor-back",
+          "label": "TASK-002 Puente: prefijo por paquete con caché y fallback, índice del arnés y stats de paquetes",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 74189,
+          "tokens_out": 13092,
+          "tokens_total": 87281,
+          "source": "agent-usage-notification",
+          "approx": false,
+          "recorded_at": "2026-11-20"
+        },
+        {
+          "agent": "implementor-front",
+          "label": "TASK-003 Studio: chip de contexto, sección Arnés en Kit y stats de paquetes en el ciclo",
+          "provider_model": "claude/sonnet",
+          "effort": "medium",
+          "tokens_in": 95948,
+          "tokens_out": 16932,
+          "tokens_total": 112880,
+          "source": "agent-usage-notification",
+          "approx": false,
+          "recorded_at": "2026-11-20"
+        },
+        {
+          "agent": "orchestrator",
+          "label": "TASK-004 Verificación real y cierre",
+          "provider_model": "claude/opus",
+          "effort": "high",
+          "tokens_in": 38250,
+          "tokens_out": 6750,
+          "tokens_total": 45000,
+          "source": "declared-estimate",
+          "approx": true,
+          "recorded_at": "2026-11-20"
+        }
+      ]
+    },
+    "tasks_skipped": 0
+  },
+  "tables_created": [],
+  "endpoints_implemented": [],
+  "components_created": [
+    "COMP-144",
+    "COMP-145",
+    "COMP-146"
+  ],
+  "issues_found": [
+    "Roles de ciclo (reviewer/planner/architect/functional) en ciclos multi-app: sdd-pack pide --app y el puente cae al prefijo base",
+    "El visor mostraba comentarios HTML del núcleo (<!-- regla-cero:start -->) como texto: corregido en TASK-004"
+  ],
+  "reviewer_report": {
+    "approved": true,
+    "date": "2026-11-20",
+    "ca_results": {
+      "US-1": "PASS - puente: prefijo con lessons + línea de unidad + paquete (sdd-pack --stdout) para roles con paquete, caché por unidad y fallback a base (specs con fakes); en ciclos multi-app los roles de ciclo caen a base (anotado)",
+      "US-2": "PASS por specs (ContextSourceChip pack/base; contextSource calculado al crear/enviar). No se creó un hilo de prueba para no dejar conversaciones basura en la lista del dev",
+      "US-3": "PASS - Kit › Arnés real: AGENTS.md/CLAUDE.md 5 KB con barra vs 6 KB, project.md 20 KB, 7 reglas con trigger, descripción y KB, visor del documento (comentarios HTML ocultos)",
+      "US-4": "PASS - pestaña Verificación de la 031: paquetes 39 % de las fuentes (112,2 KB / 286,5 KB), 0 pack-miss, filas por bloque y rol"
+    },
+    "tests": {
+      "libs/studio-protocol": "verify full OK (B-01)",
+      "apps/studio-bridge": "verify full OK (B-02)",
+      "apps/studio": "verify full OK (B-03) y quick TASK-004"
+    },
+    "notes": "Capturas headless contra un puente temporal en :4471 (ya apagado); consola sin errores.",
+    "follow_ups": [
+      "Elegir --app para paquetes de roles de ciclo en ciclos multi-app (p. ej. por la app de los archivos del hilo o la del primer bloque pendiente)"
+    ]
+  }
+}

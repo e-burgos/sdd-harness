@@ -13,12 +13,15 @@ import { StatusBadge } from './SpecParts';
 import { SpecPlanTab } from './SpecPlanTab';
 import { SpecSummaryTab } from './SpecSummaryTab';
 import { SpecTasksTab } from './SpecTasksTab';
-import { currentCycleOf } from '@/lib/sdd-status';
+import { SpecVerifyTab } from './SpecVerifyTab';
+import { useBridgeFeatures } from '@/lib/use-bridge-features';
+import { currentCycleOf, cyclesOf } from '@/lib/sdd-status';
 
 const TAB_VIEW: Record<SpecTab, (props: { spec: SpecSummary }) => React.JSX.Element | null> = {
   summary: SpecSummaryTab,
   plan: SpecPlanTab,
   tasks: SpecTasksTab,
+  verify: SpecVerifyTab,
   documents: SpecDocumentsTab,
   conversations: SpecConversationsTab,
 };
@@ -35,7 +38,11 @@ export function SpecCard({ spec }: { spec: SpecSummary }) {
   const tab = useNav((s) => s.specTab);
   const setSpecTab = useNav((s) => s.setSpecTab);
   const current = currentCycleOf(cycles, spec.id);
-  const View = TAB_VIEW[tab];
+  const { supports } = useBridgeFeatures();
+  const showVerify = supports('kit-execution') || cyclesOf(cycles, spec.id).some((c) => (c.verifyResults?.length ?? 0) > 0);
+  const tabs = SPEC_TABS.filter((id) => id !== 'verify' || showVerify);
+  const activeTab: SpecTab = tabs.includes(tab) ? tab : 'summary';
+  const View = TAB_VIEW[activeTab];
 
   return (
     <article data-testid="spec-card" aria-label={spec.title} className="flex h-full min-h-0 min-w-0 flex-col bg-ink-950">
@@ -54,13 +61,13 @@ export function SpecCard({ spec }: { spec: SpecSummary }) {
         <AnimatedTabs<SpecTab>
           size="sm"
           mobile="scroll"
-          activeTab={tab}
+          activeTab={activeTab}
           onChange={setSpecTab}
-          tabs={SPEC_TABS.map((id) => ({ id, label: <span className="text-ui">{t(`specs.tab.${id}`)}</span> }))}
+          tabs={tabs.map((id) => ({ id, label: <span className="text-ui">{t(`specs.tab.${id}`)}</span> }))}
         />
       </header>
       <div className="min-h-0 flex-1 overflow-y-auto px-4 py-4">
-        <ModuleBoundary resetKey={`${spec.id}:${tab}`}>
+        <ModuleBoundary resetKey={`${spec.id}:${activeTab}`}>
           <View spec={spec} />
         </ModuleBoundary>
       </div>

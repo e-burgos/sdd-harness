@@ -11,7 +11,8 @@ export const LEGACY_VIEW_KEY = 'sdd-studio.active-view';
 
 export const METRICS_VIEWS = ['dashboard', 'planning', 'costs', 'ecosystem', 'telemetry'] as const;
 export const ARCHITECTURE_SECTIONS = ['db', 'api', 'components'] as const;
-export const SPEC_TABS = ['summary', 'plan', 'tasks', 'documents', 'conversations'] as const;
+export const CLAUDE_SECTIONS = ['sources', 'plugins', 'mcp', 'browser'] as const;
+export const SPEC_TABS = ['summary', 'plan', 'tasks', 'verify', 'documents', 'conversations'] as const;
 export const ACTIVITY_ORIGINS = ['approval', 'question', 'task', 'spec', 'fix', 'tools', 'conversation'] as const;
 const LEGACY_ACTIVITY_ORIGINS = ['spec', 'fix', 'agent', 'tools'];
 const PRE_CONVERSATION_ORIGINS = ['approval', 'question', 'task', 'spec', 'fix', 'tools'];
@@ -46,6 +47,7 @@ const PersistedNav = z.object({
     fixes: nullable(z.string().max(256)),
     agents: nullable(z.string().max(256)),
     kit: nullable(z.string().max(512)),
+    claude: nullable(z.enum(CLAUDE_SECTIONS)).default(null),
     architecture: nullable(z.enum(ARCHITECTURE_SECTIONS)),
     metrics: nullable(z.enum(METRICS_VIEWS)),
   }),
@@ -96,7 +98,7 @@ export interface KnownEntities {
 
 export const defaultNav = (): PersistedNavValue => ({
   module: 'home',
-  selection: { specs: null, fixes: null, agents: null, kit: null, architecture: null, metrics: null },
+  selection: { specs: null, fixes: null, agents: null, kit: null, claude: null, architecture: null, metrics: null },
   specTab: 'summary',
   specCycle: null,
   home: { kind: 'channel', channelId: 'general' },

@@ -56,7 +56,7 @@ export function MapAgentChat() {
             <X aria-hidden size={16} />
           </Button>
         </header>
-        <AgentDirectChat agentId={agentId} floating disabledReason={available ? undefined : t('module.agents.chat.unavailable')} />
+        <AgentDirectChat agentId={agentId} disabledReason={available ? undefined : t('module.agents.chat.unavailable')} />
       </section>
     </div>
   );

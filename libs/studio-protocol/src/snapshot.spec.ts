@@ -117,3 +117,58 @@ describe('WorkspaceSnapshot kit additions', () => {
     expect(AREAS).toEqual(['global', 'specs', 'fixes', 'agents', 'tools', 'pricing', 'kit']);
   });
 });
+
+describe('kit execution additions', () => {
+  const snapshot = {
+    project: 'p', profile: 'team', kitVersion: null, specs: [], cycles: [], fixes: [],
+    agents: [], skills: [], gateMode: 'block', pricing: null, stale: [],
+  };
+  const cycle = { specId: 's', cycle: 'cycle-01', status: 'in-progress', flow: 'lite', apps: [], tasks: [], tasksTotal: 0, tasksDone: 0 };
+  const usage = { tokensTotal: 1200, providerModel: 'sonnet', effort: 'medium', agent: 'implementor-back', approx: true };
+  const task = { id: 'TASK-001', title: 't', status: 'done', storyPoints: 3, usage, batch: 'B-01', dependsOn: [] };
+  const verifyResult = {
+    app: 'libs/x', level: 'quick', unit: 'TASK-001', ok: true, commit: 'abc1234', startedAt: '2026-11-20T10:00:00Z',
+    durationMs: 1200, reused: false, commands: [{ command: 'pnpm test', exitCode: 0, durationMs: 1100, skipped: false }],
+  };
+  const lease = { app: 'libs/x', repo: '/r', host: 'h', pid: 10, startedAt: '2026-11-20T10:00:00Z', state: 'live' };
+
+  it('parses a cycle without any new field', () => {
+    const parsed = WorkspaceSnapshot.parse({ ...snapshot, cycles: [cycle] });
+    expect(parsed.cycles[0]?.batches).toBeUndefined();
+    expect(parsed.cycles[0]?.verifyResults).toBeUndefined();
+    expect(parsed.verifyConfig).toBeUndefined();
+    expect(parsed.verifyLease).toBeUndefined();
+  });
+  it('parses batches, task usage, verify results, config and lease', () => {
+    const batches = [{ id: 'B-01', app: 'libs/x', role: 'implementor-back', tasks: ['TASK-001'], dependsOn: [] }];
+    const parsed = WorkspaceSnapshot.parse({
+      ...snapshot,
+      cycles: [{ ...cycle, tasks: [task], batches, verifyResults: [verifyResult] }],
+      verifyConfig: [{ app: 'libs/x', levels: ['quick', 'full'] }],
+      verifyLease: lease,
+    });
+    expect(parsed.cycles[0]?.tasks[0]).toEqual(task);
+    expect(parsed.cycles[0]?.batches).toEqual(batches);
+    expect(parsed.cycles[0]?.verifyResults).toEqual([verifyResult]);
+    expect(parsed.verifyConfig).toEqual([{ app: 'libs/x', levels: ['quick', 'full'] }]);
+    expect(parsed.verifyLease).toEqual(lease);
+  });
+  it('accepts a null lease and a null usage', () => {
+    const parsed = WorkspaceSnapshot.parse({ ...snapshot, cycles: [{ ...cycle, tasks: [{ ...task, usage: null }] }], verifyLease: null });
+    expect(parsed.verifyLease).toBeNull();
+    expect(parsed.cycles[0]?.tasks[0]?.usage).toBeNull();
+  });
+  it('drops malformed additions instead of failing the snapshot', () => {
+    const parsed = WorkspaceSnapshot.parse({
+      ...snapshot,
+      cycles: [{ ...cycle, tasks: [{ ...task, usage: { tokensTotal: 'x' } }], batches: [{ id: 'bad' }], verifyResults: [{ app: 1 }] }],
+      verifyConfig: 'nope',
+      verifyLease: { state: 'zombie' },
+    });
+    expect(parsed.cycles[0]?.tasks[0]?.usage).toBeUndefined();
+    expect(parsed.cycles[0]?.batches).toBeUndefined();
+    expect(parsed.cycles[0]?.verifyResults).toBeUndefined();
+    expect(parsed.verifyConfig).toBeUndefined();
+    expect(parsed.verifyLease).toBeUndefined();
+  });
+});

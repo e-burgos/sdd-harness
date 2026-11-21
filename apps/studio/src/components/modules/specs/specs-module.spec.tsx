@@ -96,7 +96,7 @@ describe('spec card tabs', () => {
     const card = openTab('Plan');
     expect(within(card).getByRole('button', { name: 'Abrir functional.md' })).toBeTruthy();
     expect(within(card).getByText('planner.md')).toBeTruthy();
-    expect(within(card).getAllByText('pendiente')).toHaveLength(1);
+    expect(within(card).getAllByText('pendiente')).toHaveLength(2);
     expect(within(card).queryByText('plan.md')).toBeNull();
   });
 

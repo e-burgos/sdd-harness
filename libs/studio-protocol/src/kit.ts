@@ -2,8 +2,11 @@ import { z } from 'zod';
 import { MAX_KIT_ENTRIES } from './limits';
 import { GateMode, KitToolsState } from './snapshot';
 
-export const KIT_SECTIONS = ['docs', 'schemas', 'context', 'memory', 'registries'] as const;
+export const KIT_SECTIONS = ['docs', 'schemas', 'context', 'memory', 'registries', 'harness'] as const;
 export type KitSection = (typeof KIT_SECTIONS)[number];
+
+export const KIT_HARNESS_ROLES = ['harness-core', 'harness-rule', 'harness-project'] as const;
+export type KitHarnessRole = (typeof KIT_HARNESS_ROLES)[number];
 
 export const KitEntry = z.object({
   section: z.string().min(1).max(32),
@@ -12,6 +15,9 @@ export const KitEntry = z.object({
   path: z.string().min(1).max(512).regex(/^sdd\//),
   size: z.number().int().nonnegative(),
   mtime: z.string().max(40),
+  trigger: z.string().max(32).optional().catch(undefined),
+  description: z.string().max(512).optional().catch(undefined),
+  bytes: z.number().int().nonnegative().optional().catch(undefined),
 });
 export type KitEntry = z.infer<typeof KitEntry>;
 
@@ -83,3 +89,45 @@ export const KitIntegrationSetResult = z.object({
   status: KitIntegrationStatus,
 });
 export type KitIntegrationSetResult = z.infer<typeof KitIntegrationSetResult>;
+
+export const KitPackStatsRow = z.object({
+  unit: z.string().max(64),
+  role: z.string().max(64),
+  packBytes: z.number().int().nonnegative(),
+  sourceBytes: z.number().int().nonnegative(),
+});
+export type KitPackStatsRow = z.infer<typeof KitPackStatsRow>;
+
+export const MAX_PACK_STATS_ROWS = 256;
+
+export const KitPackStats = z.object({
+  rows: z.array(KitPackStatsRow).max(MAX_PACK_STATS_ROWS),
+  total: z.object({ packBytes: z.number().int().nonnegative(), sourceBytes: z.number().int().nonnegative() }),
+  packMisses: z.number().int().nonnegative(),
+});
+export type KitPackStats = z.infer<typeof KitPackStats>;
+
+export const KitGateCheck = z.object({
+  id: z.string().max(64),
+  label: z.string().max(256),
+  ok: z.boolean(),
+  detail: z.string().max(1024).catch(''),
+});
+export type KitGateCheck = z.infer<typeof KitGateCheck>;
+
+export const MAX_GATE_CHECKS = 64;
+
+export const KitGateResult = z.object({
+  spec: z.string().max(160),
+  gate: z.enum(['A', 'B']),
+  passed: z.boolean(),
+  checks: z.array(KitGateCheck).max(MAX_GATE_CHECKS),
+  next: z
+    .object({ cycle: z.string().max(32), flow: z.string().max(16), profile: z.string().max(16) })
+    .partial()
+    .optional()
+    .catch(undefined),
+  flow: z.string().max(16).optional().catch(undefined),
+  cycle: z.string().max(32).optional().catch(undefined),
+});
+export type KitGateResult = z.infer<typeof KitGateResult>;

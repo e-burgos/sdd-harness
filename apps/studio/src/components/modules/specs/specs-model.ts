@@ -57,17 +57,16 @@ export function countByFilter(snapshot: WorkspaceSnapshot): Record<SpecFilter, n
   };
 }
 
-export type PlanDocumentName = 'plan.md' | 'functional.md' | 'planner.md' | 'architect.md';
+export type PlanDocumentName = 'brief.yaml' | 'plan.md' | 'functional.md' | 'planner.md' | 'architect.md';
 
 export interface ExpectedPlan {
   names: PlanDocumentName[];
-  optional: boolean;
 }
 
 export function expectedPlanDocuments(flow: string): ExpectedPlan {
-  if (flow === 'lite') return { names: ['plan.md'], optional: false };
-  if (flow === 'reduced') return { names: ['planner.md', 'architect.md'], optional: true };
-  return { names: ['functional.md', 'planner.md', 'architect.md'], optional: false };
+  if (flow === 'lite') return { names: ['plan.md'] };
+  if (flow === 'reduced') return { names: ['brief.yaml'] };
+  return { names: ['brief.yaml', 'functional.md', 'planner.md', 'architect.md'] };
 }
 
 export const cycleDirectory = (spec: SpecSummary, cycle: string): string => `${spec.folder.replace(/\/+$/, '')}/cycles/${cycle}`;
@@ -82,15 +81,15 @@ export interface PlanItem {
   state: PlanItemState;
 }
 
-export function planItemsOf(spec: SpecSummary, cycle: CycleSummary): { items: PlanItem[]; optional: boolean } {
-  const { names, optional } = expectedPlanDocuments(cycle.flow);
+export function planItemsOf(spec: SpecSummary, cycle: CycleSummary): { items: PlanItem[] } {
+  const { names } = expectedPlanDocuments(cycle.flow);
   const known = cycle.documents;
   const items = names.map((name): PlanItem => ({
     name,
     path: cycleDocumentPath(spec, cycle.cycle, name),
     state: known === undefined ? 'unknown' : known.includes(name) ? 'present' : 'pending',
   }));
-  return { items, optional };
+  return { items };
 }
 
 export const fileNameOf = (path: string): string => path.slice(path.lastIndexOf('/') + 1);

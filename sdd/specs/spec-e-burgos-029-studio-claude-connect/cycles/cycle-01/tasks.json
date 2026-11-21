@@ -1,0 +1,325 @@
+{
+  "$schema": "../../../../schemas/cycle-tasks.schema.json",
+  "spec": "spec-e-burgos-029-studio-claude-connect",
+  "cycle": 1,
+  "module": "studio-claude-connect",
+  "apps": [
+    "libs/studio-protocol",
+    "apps/studio-bridge",
+    "apps/studio"
+  ],
+  "flow": "lite",
+  "user_stories_generated": true,
+  "prerequisites": {
+    "tasks_generated": true
+  },
+  "batches": [
+    {
+      "id": "B-01",
+      "app": "libs/studio-protocol",
+      "role": "implementor-back",
+      "tasks": [
+        "TASK-001",
+        "TASK-002"
+      ],
+      "depends_on": []
+    },
+    {
+      "id": "B-02",
+      "app": "apps/studio-bridge",
+      "role": "implementor-back",
+      "tasks": [
+        "TASK-003"
+      ],
+      "depends_on": [
+        "B-01"
+      ]
+    },
+    {
+      "id": "B-03",
+      "app": "apps/studio",
+      "role": "implementor-front",
+      "tasks": [
+        "TASK-004"
+      ],
+      "depends_on": [
+        "B-02"
+      ]
+    },
+    {
+      "id": "B-04",
+      "app": "apps/studio-bridge",
+      "role": "implementor-back",
+      "tasks": [
+        "TASK-006"
+      ],
+      "depends_on": [
+        "B-03"
+      ]
+    },
+    {
+      "id": "B-05",
+      "app": "apps/studio",
+      "role": "implementor-front",
+      "tasks": [
+        "TASK-007"
+      ],
+      "depends_on": [
+        "B-04"
+      ]
+    },
+    {
+      "id": "B-06",
+      "app": "apps/studio",
+      "role": "implementor-front",
+      "tasks": [
+        "TASK-005"
+      ],
+      "depends_on": [
+        "B-05"
+      ]
+    }
+  ],
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "Prueba real: permiso de Chrome por WebSocket y claude mcp login del binario del SDK",
+      "user_stories": [
+        "US-1",
+        "US-2"
+      ],
+      "estimation_hours": 1,
+      "story_points": 2,
+      "depends_on": [],
+      "status": "done",
+      "files": [
+        "sdd/specs/spec-e-burgos-029-studio-claude-connect/cycles/cycle-01/artifacts/spike.md"
+      ],
+      "usage": {
+        "provider_model": "claude/opus",
+        "effort": "high",
+        "agent": "orchestrator",
+        "tokens_in": 25500,
+        "tokens_out": 4500,
+        "tokens_total": 30000,
+        "approx": true,
+        "source": "declared-estimate",
+        "recorded_at": "2026-11-20"
+      }
+    },
+    {
+      "id": "TASK-002",
+      "title": "Protocolo: ClaudeBrowserStatus, claude.browser.*, claude.mcp.login/reconnect, feature claude-connect y Chrome por defecto",
+      "user_stories": [
+        "US-1",
+        "US-2",
+        "US-3"
+      ],
+      "estimation_hours": 1,
+      "story_points": 2,
+      "depends_on": [
+        "TASK-001"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio-bridge/src/engine/claude-sdk-engine.spec.ts",
+        "apps/studio-bridge/src/server/router.spec.ts",
+        "apps/studio/src/components/modules/claude/claude-module.spec.tsx",
+        "libs/studio-protocol/src/claude-tools.spec.ts",
+        "libs/studio-protocol/src/claude-tools.ts",
+        "libs/studio-protocol/src/commands.spec.ts",
+        "libs/studio-protocol/src/commands.ts",
+        "libs/studio-protocol/src/events.spec.ts",
+        "libs/studio-protocol/src/events.ts",
+        "libs/studio-protocol/src/handshake.spec.ts",
+        "libs/studio-protocol/src/limits.ts"
+      ],
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "tokens_in": 68473,
+        "tokens_out": 12083,
+        "tokens_total": 80556,
+        "approx": false,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-20"
+      }
+    },
+    {
+      "id": "TASK-003",
+      "title": "Puente: estado de Chrome, pedido al arrancar, abrir chrome://inspect, login y reconexión de MCP",
+      "user_stories": [
+        "US-1",
+        "US-2",
+        "US-3"
+      ],
+      "estimation_hours": 3,
+      "story_points": 5,
+      "depends_on": [
+        "TASK-002"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio-bridge/src/project/runtime.ts",
+        "apps/studio-bridge/src/server/router.spec.ts",
+        "apps/studio-bridge/src/server/router.ts",
+        "apps/studio-bridge/src/workspace/chrome-status.spec.ts",
+        "apps/studio-bridge/src/workspace/chrome-status.ts",
+        "apps/studio-bridge/src/workspace/claude-mcp.spec.ts",
+        "apps/studio-bridge/src/workspace/claude-mcp.ts"
+      ],
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "tokens_in": 26119,
+        "tokens_out": 4609,
+        "tokens_total": 30728,
+        "approx": false,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-20"
+      }
+    },
+    {
+      "id": "TASK-004",
+      "title": "Studio: aviso global de Chrome, sección Navegador con estado y acciones, Iniciar sesión y Reconectar en MCP",
+      "user_stories": [
+        "US-1",
+        "US-2",
+        "US-3"
+      ],
+      "estimation_hours": 2,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-003"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/ChromeBanner.tsx",
+        "apps/studio/src/components/WorkspaceApp.tsx",
+        "apps/studio/src/components/modules/claude/ClaudeCenter.tsx",
+        "apps/studio/src/components/modules/claude/claude-model.ts",
+        "apps/studio/src/components/modules/claude/claude-module.spec.tsx",
+        "apps/studio/src/components/modules/claude/use-chrome-status.ts",
+        "apps/studio/src/components/modules/claude/use-claude-tools.ts",
+        "apps/studio/src/lib/i18n/modules/claude.ts"
+      ],
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "tokens_in": 40638,
+        "tokens_out": 7171,
+        "tokens_total": 47809,
+        "approx": false,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-20",
+        "pack_misses": [
+          "apps/studio/src/components/WorkspaceApp.tsx",
+          "apps/studio/src/lib/use-bridge-features.ts"
+        ]
+      }
+    },
+    {
+      "id": "TASK-005",
+      "title": "Verificación real y cierre",
+      "user_stories": [
+        "US-1",
+        "US-2",
+        "US-3"
+      ],
+      "estimation_hours": 1,
+      "story_points": 1,
+      "depends_on": [
+        "TASK-007"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio-bridge/src/workspace/claude-mcp.spec.ts",
+        "apps/studio-bridge/src/workspace/claude-mcp.ts",
+        "apps/studio/src/components/modules/claude/ClaudeCenter.tsx",
+        "apps/studio/src/components/modules/claude/claude-module.spec.tsx",
+        "apps/studio/src/lib/i18n/modules/claude.ts",
+        "libs/studio-protocol/src/claude-tools.spec.ts",
+        "libs/studio-protocol/src/claude-tools.ts"
+      ],
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "tokens_in": 57192,
+        "tokens_out": 10093,
+        "tokens_total": 67285,
+        "approx": false,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-20"
+      }
+    },
+    {
+      "id": "TASK-006",
+      "title": "Puente: Chrome propio de Studio (lanzador, perfil persistente, puerto 9333), browserUrl en el motor y estado por HTTP",
+      "user_stories": [
+        "US-1"
+      ],
+      "estimation_hours": 2,
+      "story_points": 3,
+      "depends_on": [
+        "TASK-004"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio-bridge/src/engine/claude-sdk-engine.spec.ts",
+        "apps/studio-bridge/src/engine/claude-sdk-engine.ts",
+        "apps/studio-bridge/src/project/runtime.ts",
+        "apps/studio-bridge/src/server/router.spec.ts",
+        "apps/studio-bridge/src/server/router.ts",
+        "apps/studio-bridge/src/workspace/chrome-status.spec.ts",
+        "apps/studio-bridge/src/workspace/chrome-status.ts",
+        "apps/studio-bridge/src/workspace/studio-chrome.spec.ts",
+        "apps/studio-bridge/src/workspace/studio-chrome.ts"
+      ],
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-back",
+        "tokens_in": 18663,
+        "tokens_out": 3293,
+        "tokens_total": 21956,
+        "approx": false,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-20"
+      }
+    },
+    {
+      "id": "TASK-007",
+      "title": "Studio: aviso y sección Navegador para el Chrome propio (abrir, estado, perfil)",
+      "user_stories": [
+        "US-1"
+      ],
+      "estimation_hours": 1,
+      "story_points": 2,
+      "depends_on": [
+        "TASK-006"
+      ],
+      "status": "done",
+      "files": [
+        "apps/studio/src/components/ChromeBanner.tsx",
+        "apps/studio/src/components/modules/claude/ClaudeCenter.tsx",
+        "apps/studio/src/components/modules/claude/claude-module.spec.tsx",
+        "apps/studio/src/lib/i18n/modules/claude.ts"
+      ],
+      "usage": {
+        "provider_model": "claude/sonnet",
+        "effort": "medium",
+        "agent": "implementor-front",
+        "tokens_in": 11153,
+        "tokens_out": 1968,
+        "tokens_total": 13121,
+        "approx": false,
+        "source": "agent-usage-notification",
+        "recorded_at": "2026-11-20"
+      }
+    }
+  ]
+}

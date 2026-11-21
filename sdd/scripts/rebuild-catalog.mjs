@@ -1,6 +1,6 @@
 import {
   readdirSync,
-  statSync,
+  lstatSync,
   writeFileSync,
   readFileSync,
   existsSync,
@@ -35,7 +35,7 @@ export function buildCatalog() {
       .sort()
       .map((file) => ({ file })),
     skills: readdirSync(skillsDir)
-      .filter((entry) => statSync(join(skillsDir, entry)).isDirectory())
+      .filter((entry) => lstatSync(join(skillsDir, entry)).isDirectory())
       .sort()
       .flatMap((dir) =>
         readdirSync(join(skillsDir, dir)).includes('SKILL.md')

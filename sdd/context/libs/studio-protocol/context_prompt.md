@@ -1,6 +1,6 @@
 # Context prompt — libs/studio-protocol
 
-> Última actualización: consolida los fragmentos de spec-e-burgos-017 (cycle-02), 014 (cycle-02), 022 (cycle-01) y 023 (cycle-01) | Fecha: 2026-11-14
+> Última actualización: consolida los fragmentos de spec-e-burgos-026, 027, 029, 030, 031 y 032 cycle-01 | Fecha: 2026-11-20
 
 > Entry point para agentes y desarrolladores trabajando en `@sdd-studio/protocol`.
 > Leer este documento antes de tocar tipos, esquemas o mensajes del protocolo.
@@ -16,7 +16,8 @@ Es la librería que define los tipos, esquemas Zod y códec binario/JSON para la
 - `src/events.ts`: Eventos en streaming (texto, deltas, diffs de herramientas, aprobaciones).
 - `src/handshake.ts`: Validación de tokens de pairing y protocolo de conexión inicial.
 - `src/snapshot.ts`: Definición del estado reactivo del workspace (specs, tasks, fixes, agentes, skills, global, tools, `sessions`, `leases` y `github`).
-- `src/kit.ts`: contrato del índice del kit, `tools.json`, `rtk-gain` e integraciones del kit (`kit.integration.status|set`).
+- `src/kit.ts`: contrato del índice del kit (con sección `harness`), `tools.json` (`exempt?`), `rtk-gain`, integraciones del kit (`kit.integration.status|set`), `kit.verify.run`, `kit.pack.stats` y `kit.gate.check`.
+- `src/claude-tools.ts`: config de Claude (global con override por proyecto, `scope`), inventario, estado del navegador y login/reconexión de MCP (`claude.*`).
 - `src/github.ts`: contrato de la integración con GitHub (`github.status`, `github.connect`, `SnapshotGithub`).
 - `src/wizard.ts`: contrato del wizard «Nuevo proyecto» y del cambio de workspace (`ConfigCatalog.nx` opcional con la matriz de Nx).
 - `src/limits.ts`: límites compartidos (frame, adjuntos, refs, búsqueda, pendientes, config, generación) y `BRIDGE_FEATURES` (lista de capacidades del puente; máx. 32).

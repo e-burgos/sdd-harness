@@ -3,6 +3,7 @@ import path from 'node:path';
 import chokidar, { type FSWatcher } from 'chokidar';
 import type { Area, BotEvent, WorkspaceSnapshot } from '@sdd-studio/protocol';
 import { diffSnapshots } from './diff';
+import { KIT_ROOT_HARNESS_FILES } from './kit-index';
 import { changedAreas, loadWorkspaceSnapshot, mergeSnapshot } from './snapshot';
 
 export interface WorkspaceUpdate {
@@ -82,8 +83,9 @@ export async function startWorkspaceWatcher(opts: {
 
   const sddDir = path.join(opts.root, 'sdd');
   const ignoredRoots = IGNORED_DIRS.map((d) => path.join(sddDir, d));
+  const isVerifyLog = (p: string): boolean => p.split(path.sep).join('/').includes('/artifacts/verify/logs');
   const isIgnored = (p: string): boolean =>
-    ignoredRoots.some((r) => p === r || p.startsWith(r + path.sep));
+    isVerifyLog(p) || ignoredRoots.some((r) => p === r || p.startsWith(r + path.sep));
 
   const claudeDir = path.join(opts.root, '.claude');
   const watchers: FSWatcher[] = [chokidar.watch(sddDir, { ignoreInitial: true, ignored: isIgnored })];
@@ -96,6 +98,8 @@ export async function startWorkspaceWatcher(opts: {
       }),
     );
   }
+  const rootHarnessFiles = KIT_ROOT_HARNESS_FILES.map((name) => path.join(opts.root, name)).filter((file) => existsSync(file));
+  if (rootHarnessFiles.length > 0) watchers.push(chokidar.watch(rootHarnessFiles, { ignoreInitial: true }));
   for (const watcher of watchers) {
     watcher.on('all', (_event, changedPath) => {
       opts.onPath?.(changedPath);

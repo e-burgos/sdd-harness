@@ -226,3 +226,55 @@ describe('KitIndexer', () => {
     expect(onChanged).not.toHaveBeenCalled();
   });
 });
+
+describe('harness section', () => {
+  const rule = (trigger: string, description: string): string => `---\ntrigger: ${trigger}\ndescription: "${description}"\n---\n# body\n`;
+
+  it('indexes the core, project.md and every rule with frontmatter and bytes', async () => {
+    await put('sdd/dual-harness/CLAUDE.md', 'core');
+    await put('sdd/dual-harness/project.md', 'project text');
+    await put('sdd/dual-harness/rules/sdd-gates.md', rule('always_on', 'Gates'));
+    await put('sdd/dual-harness/rules/no-front.md', '# plain');
+    const { index } = await buildKitIndex(root);
+    const harness = index.entries.filter((entry) => entry.section === 'harness');
+    expect(KitIndexSchema.safeParse(index).success).toBe(true);
+    expect(harness.map((entry) => [entry.path, entry.role])).toEqual([
+      ['sdd/dual-harness/CLAUDE.md', 'harness-core'],
+      ['sdd/dual-harness/project.md', 'harness-project'],
+      ['sdd/dual-harness/rules/no-front.md', 'harness-rule'],
+      ['sdd/dual-harness/rules/sdd-gates.md', 'harness-rule'],
+    ]);
+    expect(harness.find((entry) => entry.path.endsWith('sdd-gates.md'))).toMatchObject({ trigger: 'always_on', description: 'Gates', bytes: rule('always_on', 'Gates').length });
+    expect(harness.find((entry) => entry.path.endsWith('no-front.md'))?.trigger).toBeUndefined();
+    expect(harness.find((entry) => entry.role === 'harness-project')?.bytes).toBe('project text'.length);
+  });
+
+  it('measures the core by the root copy that actually loads', async () => {
+    await put('sdd/dual-harness/AGENTS.md', 'short');
+    await put('AGENTS.md', 'x'.repeat(7000));
+    const { index } = await buildKitIndex(root);
+    expect(index.entries.find((entry) => entry.role === 'harness-core')).toMatchObject({ path: 'sdd/dual-harness/AGENTS.md', bytes: 7000, size: 7000 });
+  });
+
+  it('reports no project.md entry when the file is absent', async () => {
+    await put('sdd/dual-harness/CLAUDE.md', 'core');
+    const { index } = await buildKitIndex(root);
+    expect(index.entries.some((entry) => entry.role === 'harness-project')).toBe(false);
+  });
+
+  it('watches the dual-harness folder and the root core files', () => {
+    expect(isKitPath(root, path.join(root, 'sdd/dual-harness/rules/x.md'))).toBe(true);
+    expect(isKitPath(root, path.join(root, 'CLAUDE.md'))).toBe(true);
+    expect(isKitPath(root, path.join(root, 'AGENTS.md'))).toBe(true);
+    expect(isKitPath(root, path.join(root, 'README.md'))).toBe(false);
+  });
+
+  it('changes the harness fingerprint when a rule changes', async () => {
+    await put('sdd/dual-harness/rules/a.md', rule('always_on', 'one'));
+    const before = (await buildKitIndex(root)).fingerprints;
+    const file = await put('sdd/dual-harness/rules/a.md', rule('always_on', 'one and more'));
+    await utimes(file, new Date(Date.now() + 5_000), new Date(Date.now() + 5_000));
+    const after = (await buildKitIndex(root)).fingerprints;
+    expect(changedKitSections(before, after)).toEqual(['harness']);
+  });
+});

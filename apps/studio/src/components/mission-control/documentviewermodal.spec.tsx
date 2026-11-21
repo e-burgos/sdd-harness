@@ -138,7 +138,7 @@ describe('DocumentViewerModal', () => {
     expect(await screen.findByTestId('document-load-error')).toHaveTextContent(sampleDoc.path);
   });
 
-  it('shows the path as an info item and the copy actions in the sidebar, with the close button and its hint in the header', async () => {
+  it('shows the path in the sidebar footer and the copy actions in the sidebar, with the close button and its hint in the header', async () => {
     mockClient.request.mockResolvedValue({ path: sampleDoc.path, content: '# x' });
     const writeText = vi.fn().mockResolvedValue(undefined);
     Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
@@ -152,6 +152,9 @@ describe('DocumentViewerModal', () => {
     expect(path).toHaveAttribute('title', sampleDoc.path);
     expect(path.className).toContain('truncate');
     expect(dialog).toContainElement(path);
+    expect(path.textContent).toBe(sampleDoc.path);
+    expect(within(dialog).getAllByText('Ruta')).toHaveLength(1);
+    expect(path.parentElement).toContainElement(within(dialog).getByText('Ruta'));
     await screen.findByText('x');
     fireEvent.click(within(dialog).getByRole('button', { name: /Copiar ruta/ }));
     expect(writeText).toHaveBeenCalledWith(sampleDoc.path);
