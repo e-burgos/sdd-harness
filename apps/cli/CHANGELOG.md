@@ -5,6 +5,20 @@ All notable changes to `@e-burgos/sdd-harness` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.24.0] - 2026-11-20
+
+### Added
+- SDD Studio drives the dev's Claude Code tools (sources, plugins, MCP, browser through
+  chrome-devtools-mcp), with a global configuration inherited per project, its own Chrome profile
+  and MCP login/reconnect, kit execution (task blocks, usage, `sdd:verify` with lease), pack-based
+  session context and a live SPEC GATE panel (specs 026–032).
+
+### Fixed
+- tucu-ui integration keeps `.claude/skills` linked to `sdd/skills` instead of turning the symlink
+  into a folder (FIX-e-burgos-015).
+- Studio Chrome is on by default and is up before the first turn of a session
+  (FIX-e-burgos-018, FIX-e-burgos-019).
+
 ## [0.23.1] - 2026-11-18
 
 ### Fixed
